@@ -3,26 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة درب | طريقك للقمة</title>
+    <title>منصة درب | القمة تنتظرك</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --bg-color: #0d1117;
-            --card-bg: #161b22;
-            --main-gold: #c6a355;
-            --text-white: #ffffff;
-            --input-bg: #0d1117;
+            --bg: #0b0e14;
+            --card: #151921;
+            --gold: #d4af37;
+            --text: #e6edf3;
+            --accent: #1f6feb;
         }
 
         body {
             font-family: 'Tajawal', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-white);
+            background-color: var(--bg);
+            color: var(--text);
             margin: 0;
             display: flex;
             flex-direction: column;
-            align-items: center;
             min-height: 100vh;
         }
 
@@ -32,165 +31,239 @@
             justify-content: space-between;
             align-items: center;
             padding: 15px 5%;
-            background: var(--card-bg);
-            width: 100%;
-            position: fixed;
+            background: var(--card);
+            border-bottom: 1px solid #30363d;
+            position: sticky;
             top: 0;
             z-index: 1000;
-            box-sizing: border-box;
-            border-bottom: 1px solid #30363d;
         }
 
-        /* كروت الميزات */
-        .content {
-            margin-top: 100px;
-            width: 90%;
-            max-width: 600px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            padding-bottom: 50px;
+        .logo { font-size: 24px; font-weight: bold; color: var(--gold); }
+
+        .btn-login {
+            background: var(--gold);
+            color: #000;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
         }
 
-        .feature-card {
-            background: var(--card-bg);
+        /* المحتوى الرئيسي */
+        .container {
             padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .hero { text-align: center; margin-bottom: 40px; }
+        .hero h1 { color: var(--gold); font-size: 2.5rem; }
+
+        .feature-grid {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+
+        .card {
+            background: var(--card);
+            padding: 25px;
             border-radius: 15px;
             border: 1px solid #30363d;
-            cursor: pointer;
+            text-align: center;
             transition: 0.3s;
+            cursor: pointer;
             position: relative;
-            overflow: hidden;
         }
 
-        .feature-card:hover { transform: scale(1.02); border-color: var(--main-gold); }
+        .card:hover { border-color: var(--gold); transform: translateY(-5px); }
 
-        .lock-icon {
-            position: absolute;
-            left: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--main-gold);
-            font-size: 20px;
+        .lock-badge {
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--gold);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+            margin-top: 10px;
         }
 
-        /* نافذة الدخول المنبثقة */
-        .modal-overlay {
+        /* نافذة تسجيل الدخول */
+        .modal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.9);
             display: none;
             justify-content: center;
             align-items: center;
             z-index: 2000;
+            padding: 20px;
         }
 
-        .auth-container {
-            width: 90%;
-            max-width: 380px;
-            background: var(--card-bg);
+        .modal-content {
+            background: var(--card);
+            width: 100%;
+            max-width: 400px;
             padding: 30px;
             border-radius: 20px;
-            text-align: center;
-            border: 1px solid var(--main-gold);
+            position: relative;
+            border: 1px solid var(--gold);
         }
+
+        .close-btn { position: absolute; left: 20px; top: 20px; cursor: pointer; }
 
         input {
             width: 100%;
             padding: 12px;
             margin: 10px 0;
-            border-radius: 10px;
+            border-radius: 8px;
             border: 1px solid #30363d;
-            background: var(--input-bg);
-            color: white;
+            background: #0b0e14;
+            color: #fff;
             box-sizing: border-box;
         }
 
-        .main-btn {
+        .submit-btn {
             width: 100%;
             padding: 12px;
-            background: var(--main-gold);
+            background: var(--gold);
             border: none;
-            border-radius: 10px;
-            color: #000;
+            border-radius: 8px;
             font-weight: bold;
+            margin-top: 15px;
             cursor: pointer;
-            margin-top: 10px;
+        }
+
+        .social-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
         }
 
         .social-btn {
-            width: 100%;
             padding: 10px;
-            margin-top: 10px;
-            border-radius: 10px;
+            border-radius: 8px;
             border: 1px solid #30363d;
             background: transparent;
-            color: white;
+            color: #fff;
             cursor: pointer;
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             gap: 10px;
         }
+
+        /* واجهة إنشاء حساب (البيانات) */
+        #signup-section { display: none; }
+        .user-type-btn {
+            padding: 10px;
+            border: 1px solid var(--gold);
+            margin: 5px;
+            border-radius: 8px;
+            background: transparent;
+            color: #fff;
+            cursor: pointer;
+        }
+        .user-type-btn.active { background: var(--gold); color: #000; }
+
     </style>
 </head>
 <body>
 
-    <nav>
-        <div style="font-size: 24px; color: var(--main-gold); font-weight: bold;">🦅 درب</div>
-        <button class="main-btn" style="width: auto; padding: 5px 20px; margin:0;" onclick="openAuth()">دخول</button>
-    </nav>
+<nav>
+    <div class="logo">🦅 دَرْب</div>
+    <button class="btn-login" onclick="showModal('login')">دخول</button>
+</nav>
 
-    <div class="content">
-        <h2 style="text-align: center;">مرحباً بك في درب القمة 🚀</h2>
-        
-        <div class="feature-card" onclick="checkAuth('المدار')">
-            <h3>⏱️ المدار</h3>
-            <p>نظم وقت مذاكرتك للتحصيلي بذكاء.</p>
-            <i class="fas fa-lock lock-icon"></i>
-        </div>
-
-        <div class="feature-card" onclick="checkAuth('الخزنة')">
-            <h3>📦 الخزنة</h3>
-            <p>احفظ الأسئلة الصعبة وراجعها لاحقاً.</p>
-            <i class="fas fa-lock lock-icon"></i>
-        </div>
-
-        <div class="feature-card" onclick="checkAuth('الرادار')">
-            <h3>📡 الرادار</h3>
-            <p>تتبع تقدمك ومستواك بين الطلاب.</p>
-            <i class="fas fa-lock lock-icon"></i>
-        </div>
+<div class="container">
+    <div class="hero">
+        <h1>طريقك للـ +90 في التحصيلي</h1>
+        <p>منصة ذكية تتابع مستواك، تحفظ أخطاءك، وتنظم وقتك.</p>
     </div>
 
-    <div id="auth-modal" class="modal-overlay">
-        <div class="auth-container">
-            <div style="text-align: left; cursor: pointer;" onclick="closeAuth()">✕</div>
-            <h2 id="modal-title">تسجيل الدخول</h2>
+    <div class="feature-grid">
+        <div class="card" onclick="checkAccess('المدار')">
+            <i class="fas fa-history fa-2x" style="color:var(--gold)"></i>
+            <h3>المدار</h3>
+            <p>مؤقت ذكي يحسب ساعات تركيزك.</p>
+            <div class="lock-badge"><i class="fas fa-lock"></i> يحتاج تسجيل</div>
+        </div>
+
+        <div class="card" onclick="checkAccess('الخزنة')">
+            <i class="fas fa-vault fa-2x" style="color:var(--gold)"></i>
+            <h3>الخزنة</h3>
+            <p>بنك الأسئلة اللي غلطت فيها.</p>
+            <div class="lock-badge"><i class="fas fa-lock"></i> يحتاج تسجيل</div>
+        </div>
+
+        <div class="card" onclick="checkAccess('الرادار')">
+            <i class="fas fa-chart-line fa-2x" style="color:var(--gold)"></i>
+            <h3>الرادار</h3>
+            <p>قارن مستواك مع طلاب منطقتك.</p>
+            <div class="lock-badge"><i class="fas fa-lock"></i> يحتاج تسجيل</div>
+        </div>
+    </div>
+</div>
+
+<div id="main-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="hideModal()">✕</span>
+        
+        <div id="login-section">
+            <h2 style="text-align:center">تسجيل الدخول</h2>
             <input type="email" placeholder="البريد الإلكتروني">
             <input type="password" placeholder="كلمة المرور">
-            <button class="main-btn">دخول</button>
-            <p style="font-size: 13px;">ليس لديك حساب؟ <a href="#" onclick="openSignUp()" style="color:var(--main-gold)">إنشاء حساب جديد</a></p>
-            <hr style="border: 0.1px solid #30363d; margin: 20px 0;">
-            <button class="social-btn" style="color: #db4437;"><i class="fab fa-google"></i> جوجل</button>
-            <button class="social-btn"><i class="fab fa-apple"></i> أبل</button>
-            <button class="social-btn" style="color: #4267B2;"><i class="fab fa-facebook"></i> فيسبوك</button>
+            <button class="submit-btn">دخول</button>
+            <p style="text-align:center; font-size:14px">ما عندك حساب؟ <a href="#" onclick="showSection('signup')" style="color:var(--gold)">إنشاء حساب جديد</a></p>
+            
+            <div style="text-align:center; margin:15px 0; color:#8b949e">أو عبر</div>
+            <div class="social-group">
+                <button class="social-btn"><i class="fab fa-google" style="color:#db4437"></i> باستخدام جوجل</button>
+                <button class="social-btn"><i class="fab fa-apple"></i> باستخدام أبل</button>
+                <button class="social-btn"><i class="fab fa-facebook" style="color:#1877f2"></i> باستخدام فيسبوك</button>
+            </div>
+        </div>
+
+        <div id="signup-section">
+            <h2 style="text-align:center">بيانات المبدع الجديد</h2>
+            <p style="font-size:12px; text-align:center">أهلاً بك في درب، عرفنا عليك أكثر</p>
+            <input type="text" placeholder="الاسم الكريم">
+            <div style="margin:10px 0">
+                <label style="font-size:14px">من أنت؟</label><br>
+                <button class="user-type-btn active">طالب</button>
+                <button class="user-type-btn">ولي أمر</button>
+                <button class="user-type-btn">مشرف</button>
+            </div>
+            <input type="text" placeholder="المدينة (مثال: بقيق)">
+            <button class="submit-btn">ابدأ الرحلة 🚀</button>
+            <p style="text-align:center; font-size:14px"><a href="#" onclick="showSection('login')" style="color:var(--gold)">أنا مسجل مسبقاً</a></p>
         </div>
     </div>
+</div>
 
-    <script>
-        function openAuth() { document.getElementById('auth-modal').style.display = 'flex'; }
-        function closeAuth() { document.getElementById('auth-modal').style.display = 'none'; }
-        
-        function checkAuth(name) {
-            alert("عذراً! ميزة " + name + " تتطلب تسجيل دخول أولاً.");
-            openAuth();
+<script>
+    function showModal() { document.getElementById('main-modal').style.display = 'flex'; }
+    function hideModal() { document.getElementById('main-modal').style.display = 'none'; }
+    
+    function showSection(section) {
+        if(section === 'signup') {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('signup-section').style.display = 'block';
+        } else {
+            document.getElementById('login-section').style.display = 'block';
+            document.getElementById('signup-section').style.display = 'none';
         }
+    }
 
-        function openSignUp() {
-            alert("جاري تحويلك لصفحة إنشاء الحساب والبيانات الشخصية...");
-            // هنا مستقبلاً بنحط رابط صفحة الـ Sign up
-        }
-    </script>
+    function checkAccess(feature) {
+        alert("يا مهندس، ميزة " + feature + " خاصة بالمشتركين. سجل دخولك وخذ مكانك!");
+        showModal();
+    }
+</script>
+
 </body>
 </html>
