@@ -1,410 +1,1766 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>دَرْب | المنصة التعليمية</title>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        /* المتغيرات البصرية (UI/UX Variables) */
-        :root {
-            --bg-dark: #121212;
-            --bg-card: #1E1E1E;
-            --gold: #FFD700;
-            --gold-hover: #E5C100;
-            --blue-dark: #001F3F;
-            --blue-light: #007BFF;
-            --text-main: #FFFFFF;
-            --text-muted: #A0A0A0;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>درب 🦅 — منصة الانضباط الأكاديمي</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#07090F;--s1:#0C1020;--s2:#111827;--card:#131D2E;--card2:#172030;
+  --border:#1A2840;--border2:#223058;
+  --blue:#1D4ED8;--bl:#3B82F6;--bxl:#60A5FA;--bglow:#1D4ED833;
+  --green:#10B981;--amber:#F59E0B;--red:#EF4444;--purple:#8B5CF6;--cyan:#06B6D4;
+  --text:#EEF4FF;--t2:#6B82A8;--t3:#2E3E5C;
+  --mono:'IBM Plex Mono',monospace;--r:13px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;direction:rtl}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
+::-webkit-scrollbar-thumb:hover{background:var(--blue)}
+::selection{background:var(--blue);color:#fff}
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Tajawal', sans-serif;
-        }
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 18px var(--bglow)}50%{box-shadow:0 0 36px #1D4ED855}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes coinPop{0%{transform:scale(0) translateY(0);opacity:1}100%{transform:scale(1.4) translateY(-50px);opacity:0}}
+@keyframes birdBounce{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes streakFire{0%,100%{transform:scale(1) rotate(-3deg)}50%{transform:scale(1.1) rotate(3deg)}}
+@keyframes slideIn{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
+@keyframes haloSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
-        body {
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            padding-bottom: 70px; /* مساحة للشريط السفلي */
-            overflow-x: hidden;
-        }
+/* LAYOUT */
+.shell{display:flex;min-height:100vh}
+.sidebar{width:234px;min-height:100vh;background:var(--s1);border-left:1px solid var(--border);position:fixed;top:0;right:0;bottom:0;z-index:200;display:flex;flex-direction:column;overflow:hidden;transition:width .3s}
+.main{margin-right:234px;flex:1;padding:26px;min-height:100vh;overflow-x:hidden}
+.page{display:none;animation:fadeUp .35s ease both}
+.page.on{display:block}
 
-        /* الهيدر والشعار */
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            background-color: var(--bg-card);
-            border-bottom: 2px solid var(--blue-dark);
-        }
+/* SIDEBAR */
+.sb-logo{padding:18px 16px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.sb-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--blue),var(--bl));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 4px 14px #1D4ED855;flex-shrink:0}
+.sb-title{font-size:18px;font-weight:900;background:linear-gradient(135deg,var(--bxl),#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.5px}
+.sb-ver{font-size:9px;color:var(--t3);font-family:var(--mono);-webkit-text-fill-color:var(--t3);display:block;margin-top:-2px}
+.sb-user{margin:10px 10px 0;padding:11px 12px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.ava{width:33px;height:33px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;position:relative}
+.ava-shield{position:absolute;bottom:-2px;right:-2px;font-size:10px}
+.ava-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ava-tier{font-size:9px;padding:2px 7px;border-radius:99px;font-weight:700;font-family:var(--mono);display:inline-block;margin-top:2px}
+.ts{background:#1D4ED822;color:var(--bxl);border:1px solid #1D4ED844}
+.tn{background:#F59E0B22;color:var(--amber);border:1px solid #F59E0B44}
+.ta{background:#8B5CF622;color:var(--purple);border:1px solid #8B5CF644}
+.sb-nav{flex:1;padding:8px 7px;overflow-y:auto;overflow-x:hidden}
+.ng{font-size:9px;font-weight:700;color:var(--t3);letter-spacing:2px;padding:9px 10px 4px;font-family:var(--mono);text-transform:uppercase}
+.ni{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:9px;cursor:pointer;margin-bottom:1px;color:var(--t2);font-size:13px;font-weight:500;transition:all .15s;border:1px solid transparent;position:relative;user-select:none;white-space:nowrap}
+.ni:hover{background:var(--card);color:var(--text);border-color:var(--border)}
+.ni.on{background:linear-gradient(135deg,#1D4ED820,#3B82F610);color:var(--bxl);border-color:#1D4ED840;font-weight:700}
+.ni.on::before{content:'';position:absolute;right:-7px;top:50%;transform:translateY(-50%);width:3px;height:60%;background:var(--bl);border-radius:99px}
+.ni-ico{font-size:16px;width:19px;text-align:center;flex-shrink:0}
+.ni-badge{font-size:9px;background:var(--blue);color:#fff;padding:1px 6px;border-radius:99px;font-family:var(--mono);font-weight:700;margin-right:auto;flex-shrink:0}
+.ni-lock{font-size:10px;margin-right:auto;opacity:.35;flex-shrink:0}
+.sb-bot{padding:8px 10px;border-top:1px solid var(--border);flex-shrink:0}
+.economy-strip{display:flex;gap:6px}
+.econ-pill{flex:1;display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--card2);border:1px solid var(--border2);border-radius:9px}
+.econ-val{font-size:15px;font-weight:900;font-family:var(--mono)}
+.econ-lbl{font-size:9px;color:var(--t2)}
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 24px;
-            font-weight: 800;
-            color: var(--gold);
-        }
+/* TOPBAR */
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;gap:12px}
+.pg-title{font-size:21px;font-weight:900;letter-spacing:-.5px}
+.pg-sub{font-size:12px;color:var(--t2);margin-top:2px}
+.tb-acts{display:flex;gap:7px;align-items:center;flex-shrink:0}
+.ib{width:34px;height:34px;background:var(--card);border:1px solid var(--border);border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:all .15s;color:var(--t2);flex-shrink:0}
+.ib:hover{border-color:#1D4ED860;color:var(--bxl)}
 
-        /* إدارة الأقسام (Sections) */
-        .section {
-            display: none;
-            padding: 20px;
-            animation: fadeIn 0.3s ease;
-        }
-        .section.active {
-            display: block;
-        }
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;transition:border-color .2s}
+.card-hover:hover{border-color:var(--border2);transform:translateY(-2px)}
+.ct{font-size:10px;font-weight:700;color:var(--t2);letter-spacing:.6px;text-transform:uppercase;margin-bottom:13px;display:flex;align-items:center;gap:7px;font-family:var(--mono)}
+.ct .dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+/* STATS GRID */
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;position:relative;overflow:hidden;transition:all .2s;cursor:default}
+.sc:hover{transform:translateY(-2px);border-color:var(--border2)}
+.sc::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ac,var(--blue));border-radius:0}
+.sc-ico{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:11px}
+.sc-val{font-size:24px;font-weight:900;font-family:var(--mono);letter-spacing:-1px}
+.sc-lbl{font-size:11px;color:var(--t2);margin-top:3px}
+.sc-ch{font-size:10px;margin-top:5px;font-weight:700;font-family:var(--mono)}
+.cup{color:var(--green)}.cdn{color:var(--red)}.cnt{color:var(--t2)}
 
-        /* البطاقات وتنسيقات الرادار (Radar) */
-        .card {
-            background-color: var(--bg-card);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 1px solid #333;
-        }
+/* GRID LAYOUTS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+.g12{display:grid;grid-template-columns:1fr 2fr;gap:13px}
+.g21{display:grid;grid-template-columns:2fr 1fr;gap:13px}
+.mt{margin-top:13px}.mb{margin-bottom:13px}
+.mt8{margin-top:8px}.mt16{margin-top:16px}.mt20{margin-top:20px}
+.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}
 
-        .radar-leaderboard .student-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid #333;
-        }
-        .radar-leaderboard .student-row:last-child { border-bottom: none; }
-        
-        .student-info h4 { color: var(--gold); }
-        .student-info p { font-size: 12px; color: var(--text-muted); }
+/* PROGRESS */
+.pw{background:var(--border);border-radius:99px;overflow:hidden}
+.pf{height:100%;background:linear-gradient(90deg,var(--blue),var(--bl));border-radius:99px;transition:width .8s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden}
+.pf::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.13),transparent);background-size:200% 100%;animation:shimmer 2s infinite}
 
-        /* مؤقت المدار (Orbit Timer) */
-        .timer-container {
-            text-align: center;
-            padding: 40px 0;
-        }
-        .timer-display {
-            font-size: 72px;
-            font-weight: 800;
-            color: var(--blue-light);
-            text-shadow: 0 0 15px rgba(0, 123, 255, 0.4);
-            margin-bottom: 20px;
-        }
-        .btn {
-            background-color: var(--blue-dark);
-            color: var(--text-main);
-            border: 1px solid var(--blue-light);
-            padding: 12px 30px;
-            border-radius: 25px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .btn:hover { background-color: var(--blue-light); }
-        .btn-gold { background-color: var(--gold); color: var(--bg-dark); border: none; }
-        .btn-gold:hover { background-color: var(--gold-hover); }
+/* TIMER */
+.timer-wrap{display:flex;flex-direction:column;align-items:center;padding:18px 14px}
+.ring-wrap{position:relative;width:200px;height:200px;margin-bottom:18px;animation:float 4s ease-in-out infinite;cursor:pointer}
+.ring-wrap:hover{animation:birdBounce .4s ease}
+.ring-svg{width:100%;height:100%;transform:rotate(-90deg)}
+.r-track{fill:none;stroke:var(--border2);stroke-width:10}
+.r-prog{fill:none;stroke:url(#rg1);stroke-width:10;stroke-linecap:round;stroke-dasharray:565;stroke-dashoffset:565;transition:stroke-dashoffset .5s ease}
+.r-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.r-time{font-size:44px;font-weight:900;font-family:var(--mono);letter-spacing:-2px;line-height:1}
+.r-lbl{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:1px}
+.phase-badge{padding:5px 16px;border-radius:99px;font-size:11px;font-weight:700;margin-bottom:14px;transition:all .3s}
+.pb-focus{background:#1D4ED820;color:var(--bxl);border:1px solid #1D4ED844}
+.pb-rest{background:#10B98120;color:var(--green);border:1px solid #10B98144}
+.timer-btns{display:flex;gap:9px}
+.tbt{padding:10px 24px;border-radius:10px;border:none;font-family:'Tajawal';font-size:14px;font-weight:700;cursor:pointer;transition:all .15s}
+.tbt-go{background:linear-gradient(135deg,var(--blue),var(--bl));color:#fff;animation:glow 3s infinite}
+.tbt-go:hover{transform:translateY(-2px)}
+.tbt-rs{background:var(--card2);color:var(--t2);border:1px solid var(--border2)}
+.tbt-rs:hover{color:var(--text)}
+.streak-box{display:flex;align-items:center;gap:12px;padding:13px 16px;background:var(--card2);border:1px solid var(--border2);border-radius:11px;width:100%}
+.sk-num{font-size:32px;font-weight:900;color:var(--amber);font-family:var(--mono);animation:streakFire 2s infinite}
+.sk-lbl{font-size:10px;color:var(--t2)}.sk-val{font-size:13px;font-weight:700;margin-top:2px}
 
-        /* شريط التنقل السفلي (Bottom Nav) */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            background-color: var(--bg-card);
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0;
-            border-top: 1px solid #333;
-            z-index: 100;
-        }
-        .nav-item {
-            color: var(--text-muted);
-            text-align: center;
-            font-size: 12px;
-            cursor: pointer;
-            flex: 1;
-            transition: 0.3s;
-        }
-        .nav-item i {
-            display: block;
-            font-size: 20px;
-            margin-bottom: 5px;
-        }
-        .nav-item.active, .nav-item:hover {
-            color: var(--gold);
-        }
+/* HEATMAP */
+.hm{display:grid;grid-template-columns:repeat(13,1fr);gap:3px;margin:8px 0}
+.hmc{aspect-ratio:1;border-radius:3px;cursor:pointer;transition:transform .1s}
+.hmc:hover{transform:scale(1.3)}
+.h0{background:var(--border)}.h1{background:#1D4ED840}.h2{background:#1D4ED870}.h3{background:#1D4ED8AA}.h4{background:var(--blue)}
 
-        /* نافذة تسجيل الدخول المنبثقة (Auth Modal) */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-        .auth-modal {
-            background-color: var(--bg-card);
-            width: 90%;
-            max-width: 400px;
-            padding: 30px;
-            border-radius: 20px;
-            text-align: center;
-            border: 1px solid var(--gold);
-        }
-        .auth-btn {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border-radius: 10px;
-            border: none;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        .btn-google { background-color: #DB4437; color: white; }
-        .btn-apple { background-color: #000000; color: white; border: 1px solid #333; }
-        .close-modal { color: var(--text-muted); margin-top: 15px; cursor: pointer; text-decoration: underline; }
-    </style>
+/* BIRD */
+.bird-stage{display:flex;flex-direction:column;align-items:center;padding:24px 14px;position:relative;cursor:pointer;user-select:none}
+.bird-halo{position:absolute;width:130px;height:130px;border-radius:50%;top:20px;pointer-events:none}
+.bird-halo.silver{background:radial-gradient(circle,rgba(192,192,192,.2),transparent 70%);animation:pulse 2.5s infinite}
+.bird-halo.gold{border:2px solid rgba(245,158,11,.3);animation:haloSpin 8s linear infinite}
+.bird-emoji{font-size:74px;transition:transform .3s;filter:drop-shadow(0 0 22px #1D4ED866);animation:float 3s ease-in-out infinite;line-height:1}
+.bird-emoji:hover{transform:scale(1.12)}
+.bird-name{font-size:16px;font-weight:900;color:var(--bxl);margin-top:10px}
+.bird-lvl{font-size:11px;color:var(--t2);margin-top:3px}
+.xp-bar{width:150px;height:5px;background:var(--border);border-radius:99px;margin-top:10px;overflow:hidden}
+.xp-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--purple));border-radius:99px;transition:width 1s ease}
+
+/* VAULT */
+.vq{padding:15px;background:var(--card2);border:1px solid var(--border2);border-radius:11px;margin-bottom:9px;animation:slideIn .3s ease}
+.vq-text{font-size:14px;margin-bottom:11px;line-height:1.7}
+.vq-opts{display:flex;flex-direction:column;gap:6px}
+.vo{padding:9px 13px;border:1px solid var(--border2);border-radius:8px;cursor:pointer;font-size:13px;transition:all .15s;background:var(--card);text-align:right}
+.vo:hover{border-color:#1D4ED855;background:#1D4ED808}
+.vo.correct{border-color:var(--green)!important;background:#10B98120!important;color:var(--green)!important}
+.vo.wrong{border-color:var(--red)!important;background:#EF444420!important;color:var(--red)!important}
+.vq-tip{padding:9px 11px;background:#10B98110;border-right:3px solid var(--green);border-radius:7px;font-size:12px;color:var(--green);margin-top:9px;display:none}
+.vq-tip.show{display:block;animation:fadeIn .3s ease}
+
+/* FEATHERS */
+.feather-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.feather{padding:15px;border-radius:12px;border:1px solid var(--border2);background:var(--card2);cursor:pointer;transition:all .2s}
+.feather:hover{transform:translateY(-3px)}
+.feather.open{border-color:var(--bl)44}
+.f-ico{font-size:26px;margin-bottom:7px}
+.f-ttl{font-size:13px;font-weight:800;margin-bottom:4px}
+.f-dsc{font-size:11px;color:var(--t2);line-height:1.6}
+.f-body{display:none;margin-top:12px;padding:12px;background:var(--card);border-radius:9px;border:1px solid var(--border)}
+.f-body.show{display:block;animation:fadeIn .3s ease}
+.f-msgs{max-height:180px;overflow-y:auto;margin-bottom:8px}
+.msg-bbl{padding:10px 12px;background:var(--card2);border-radius:9px;border:1px solid var(--border);margin-bottom:7px;animation:slideIn .3s ease}
+.msg-meta{display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-bottom:4px;font-family:var(--mono)}
+.msg-txt{font-size:12px;line-height:1.7}
+.f-inp{width:100%;padding:9px 11px;background:var(--s1);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:'Tajawal';font-size:13px;outline:none;transition:border-color .2s}
+.f-inp:focus{border-color:#1D4ED855}
+.f-inp::placeholder{color:var(--t3)}
+textarea.f-inp{resize:vertical;min-height:70px;line-height:1.7}
+
+/* SOCIAL */
+.srch{width:100%;padding:10px 13px;background:var(--card2);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-family:'Tajawal';font-size:14px;outline:none;transition:border-color .2s;direction:rtl}
+.srch:focus{border-color:#1D4ED855}
+.srch::placeholder{color:var(--t3)}
+.f-card{display:flex;align-items:center;gap:11px;padding:11px 13px;background:var(--card2);border:1px solid var(--border2);border-radius:11px;margin-bottom:7px;transition:all .2s;cursor:pointer}
+.f-card:hover{border-color:#1D4ED840;background:#1D4ED808}
+.f-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0}
+.f-name{font-size:13px;font-weight:700;margin-bottom:2px}
+.f-meta{display:flex;gap:7px;font-size:11px;color:var(--t2);align-items:center;flex-wrap:wrap}
+.f-sk{color:var(--amber);font-weight:700}
+.f-pm{width:44px;height:4px;background:var(--border);border-radius:99px;overflow:hidden}
+.f-pf{height:100%;background:var(--bl);border-radius:99px}
+.add-btn{padding:5px 12px;border-radius:7px;background:#1D4ED820;color:var(--bxl);border:1px solid #1D4ED840;font-family:'Tajawal';font-size:11px;font-weight:700;cursor:pointer;margin-right:auto;transition:all .15s;flex-shrink:0}
+.add-btn:hover{background:#1D4ED840}
+.pvt-b{font-size:9px;color:var(--t3);background:var(--border);padding:2px 6px;border-radius:99px}
+
+/* PRICING */
+.prg{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;max-width:870px;margin:0 auto}
+.prc{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;position:relative;overflow:hidden;transition:all .25s}
+.prc:hover{transform:translateY(-4px);box-shadow:0 16px 40px #00000044}
+.prc.feat{border-color:#F59E0B77;background:linear-gradient(160deg,var(--card2),var(--card))}
+.prc.feat::before{content:'الأكثر طلباً';position:absolute;top:0;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,var(--amber),#D97706);color:#000;font-size:9px;font-weight:800;padding:4px 14px;border-radius:0 0 9px 9px;font-family:var(--mono)}
+.prc.elit{border-color:#8B5CF655}
+.pr-tier{font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;margin-bottom:9px;font-family:var(--mono)}
+.pr-price .am{font-size:42px;font-weight:900;font-family:var(--mono);letter-spacing:-2px;line-height:1}
+.pr-price .cu{font-size:15px;color:var(--t2)}
+.pr-per{font-size:10px;color:var(--t2);margin-bottom:14px}
+.pr-desc{font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:14px;padding:9px;background:var(--s1);border-radius:7px;border:1px solid var(--border)}
+.pr-fl{list-style:none;margin-bottom:18px;display:flex;flex-direction:column;gap:7px}
+.pr-fl li{display:flex;gap:7px;font-size:11px;color:var(--t2);align-items:flex-start;line-height:1.5}
+.pr-fl .ic{flex-shrink:0;font-size:12px}
+.pfy{color:var(--green)}.pfn{color:var(--t3)}.pfs{color:var(--purple)}
+.p-btn{width:100%;padding:11px;border-radius:9px;border:none;cursor:pointer;font-family:'Tajawal';font-size:14px;font-weight:800;transition:all .15s}
+.pb1{background:var(--card2);color:var(--text);border:1px solid var(--border2)}.pb1:hover{border-color:#1D4ED855}
+.pb2{background:linear-gradient(135deg,var(--amber),#D97706);color:#000}.pb2:hover{box-shadow:0 4px 18px #F59E0B44;transform:translateY(-1px)}
+.pb3{background:linear-gradient(135deg,var(--purple),#6D28D9);color:#fff}.pb3:hover{box-shadow:0 4px 18px #8B5CF644;transform:translateY(-1px)}
+
+/* LEADERBOARD */
+.lb-row{display:flex;align-items:center;gap:11px;padding:11px 13px;background:var(--card2);border:1px solid var(--border2);border-radius:11px;margin-bottom:7px;transition:all .2s}
+.lb-row:hover{border-color:var(--border2);background:var(--card)}
+.lb-rank{font-size:16px;font-weight:900;font-family:var(--mono);width:26px;text-align:center;flex-shrink:0}
+.lb-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
+.lb-info{flex:1}.lb-name{font-size:13px;font-weight:700}.lb-city{font-size:10px;color:var(--t2)}
+.lb-score{font-size:15px;font-weight:900;font-family:var(--mono);color:var(--amber)}
+
+/* TOGGLE */
+.tog{width:40px;height:21px;border-radius:99px;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.tog-b{position:absolute;top:3px;width:15px;height:15px;background:#fff;border-radius:50%;transition:all .2s}
+.tog.on{background:var(--blue)}.tog.on .tog-b{right:3px;left:auto}
+.tog.off{background:var(--border2)}.tog.off .tog-b{left:3px;right:auto}
+
+/* ALERT ROWS */
+.al{display:flex;gap:11px;align-items:flex-start;padding:11px 12px;background:var(--card2);border:1px solid var(--border2);border-radius:10px;margin-bottom:7px}
+.al-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.al-body{flex:1}.al-t{font-size:12px;font-weight:700;margin-bottom:2px}.al-s{font-size:11px;color:var(--t2)}
+.al-time{font-size:9px;color:var(--t3);font-family:var(--mono);white-space:nowrap}
+
+/* BADGES */
+.bdg{padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;font-family:var(--mono);display:inline-block}
+.b-bl{background:#1D4ED820;color:var(--bxl);border:1px solid #1D4ED830}
+.b-gr{background:#10B98120;color:var(--green);border:1px solid #10B98130}
+.b-am{background:#F59E0B20;color:var(--amber);border:1px solid #F59E0B30}
+.b-pu{background:#8B5CF620;color:var(--purple);border:1px solid #8B5CF630}
+.b-re{background:#EF444420;color:var(--red);border:1px solid #EF444430}
+.b-cy{background:#06B6D420;color:var(--cyan);border:1px solid #06B6D430}
+
+/* UTILS */
+.fbb{display:flex;align-items:center;justify-content:space-between}
+.fbc{display:flex;align-items:center}
+.g8{gap:8px}.g12{gap:12px}
+.ts{font-size:13px}.txs{font-size:11px}.ttiny{font-size:10px}.tm{color:var(--t2)}
+.fw{font-weight:700}.fw9{font-weight:900}
+.mono{font-family:var(--mono)}
+.w100{width:100%}.tc{text-align:center}
+.divider{height:1px;background:var(--border);margin:14px 0}
+.btn{padding:9px 18px;border-radius:9px;border:none;cursor:pointer;font-family:'Tajawal';font-size:13px;font-weight:700;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-bl{background:linear-gradient(135deg,var(--blue),var(--bl));color:#fff}.btn-bl:hover{transform:translateY(-1px);box-shadow:0 4px 16px var(--bglow)}
+.btn-gh{background:var(--card2);color:var(--t2);border:1px solid var(--border2)}.btn-gh:hover{color:var(--text);border-color:var(--border2)}
+.btn-re{background:#EF444420;color:var(--red);border:1px solid #EF444430}.btn-re:hover{background:#EF444430}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(70px);z-index:9999;padding:10px 16px;border-radius:11px;background:var(--card2);border:1px solid var(--border2);box-shadow:0 8px 28px #00000077;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s;opacity:0;max-width:320px;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.ok{border-color:#10B98144}
+.toast.info{border-color:#1D4ED844}
+
+/* COIN POP */
+.cpop{position:fixed;pointer-events:none;font-size:18px;font-weight:900;font-family:var(--mono);z-index:9998;animation:coinPop .7s ease forwards}
+
+/* ARENA */
+.arena-card{padding:15px;background:var(--card2);border:1px solid var(--border2);border-radius:11px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .2s}
+.arena-card:hover{border-color:#EF444444;background:#EF444408}
+
+/* ROADMAP STEP */
+.rm-step{display:flex;gap:13px;padding:13px;margin-bottom:7px;background:var(--card);border:1px solid var(--border);border-radius:11px;transition:all .2s;cursor:pointer}
+.rm-step:hover{border-color:#1D4ED840}
+.rm-step.done{border-color:#10B98140;background:#10B98108}
+.rm-step.act{border-color:#1D4ED880;background:#1D4ED808}
+.rm-ico{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.rm-body{flex:1;min-width:0}
+.rm-title{font-size:13px;font-weight:700;margin-bottom:3px}
+.rm-desc{font-size:11px;color:var(--t2);line-height:1.6}
+.rm-meta{display:flex;gap:6px;margin-top:7px;align-items:center;flex-wrap:wrap}
+
+/* PARENT */
+.parent-locked{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:360px;text-align:center;padding:24px}
+
+/* RESPONSIVE */
+@media(max-width:820px){
+  .sidebar{width:56px}
+  .sb-title,.sb-ver,.ava-name,.ava-tier,
+  .ni span:not(.ni-ico),.ni-badge,.ni-lock,
+  .econ-lbl,.sb-bot .econ-val{display:none}
+  .sb-user{padding:8px;justify-content:center}
+  .ni{justify-content:center;padding:10px 0}
+  .sb-bot{padding:6px}
+  .economy-strip{flex-direction:column;gap:4px}
+  .main{margin-right:56px;padding:14px}
+  .sg{grid-template-columns:repeat(2,1fr)}
+  .prg,.g3{grid-template-columns:1fr}
+  .g2,.g12,.g21{grid-template-columns:1fr}
+  .feather-grid{grid-template-columns:1fr}
+}
+</style>
 </head>
 <body>
 
-    <header>
-        <div class="logo">
-            <i class="fa-solid fa-crow"></i> <span>دَرْب</span>
-        </div>
-        <div id="user-info">
-            <button class="btn btn-gold" onclick="openAuthModal()" style="padding: 5px 15px; font-size: 14px;">دخول</button>
-        </div>
-    </header>
+<div class="toast" id="toast"></div>
 
-    <main>
-        <section id="view-home" class="section active">
-            <h2 style="margin-bottom: 20px;">أهلاً بك في مسارك نحو القمة</h2>
-            <div class="card">
-                <h3>إحصائياتك السريعة</h3>
-                <p>ساعات التركيز هذا الأسبوع: 0</p>
-                <p>الأسئلة المراجعة: 0</p>
-            </div>
-            <div class="card" style="border-left: 4px solid var(--blue-light);">
-                <h3><i class="fa-solid fa-bell text-gold"></i> تنبيه المشرف</h3>
-                <p>تذكر مراجعة أسئلة التحصيلي الخاصة بقسم الفيزياء في الخزنة اليوم.</p>
-            </div>
-        </section>
+<div class="shell">
 
-        <section id="view-orbit" class="section">
-            <div class="timer-container">
-                <h2 style="color: var(--gold); margin-bottom: 10px;">محرك الانضباط (50/10)</h2>
-                <div class="timer-display" id="time-display">50:00</div>
-                <button class="btn" id="start-timer-btn"><i class="fa-solid fa-play"></i> بدء جلسة التركيز</button>
-            </div>
-        </section>
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-icon">🦅</div>
+    <div>
+      <div class="sb-title">درب</div>
+      <span class="sb-ver">v2.0 DARB</span>
+    </div>
+  </div>
 
-        <section id="view-vault" class="section">
-            <h2>خزنة الأخطاء (Vault)</h2>
-            <p style="color: var(--text-muted); margin-bottom: 20px;">سيتم جلب الأسئلة الصعبة من Firestore هنا.</p>
-            <div class="card">
-                <p>يرجى تسجيل الدخول لعرض بنك الأسئلة الخاص بك.</p>
-            </div>
-        </section>
+  <div class="sb-user">
+    <div class="ava" id="sbAva">م<span class="ava-shield" id="sbShield" style="display:none">🛡</span></div>
+    <div style="min-width:0">
+      <div class="ava-name" id="sbName">محمد</div>
+      <span class="ava-tier ts" id="sbTier">الشاهين</span>
+    </div>
+  </div>
 
-        <section id="view-radar" class="section">
-            <h2>الرادار <i class="fa-solid fa-satellite-dish" style="color: var(--blue-light);"></i></h2>
-            <div class="card radar-leaderboard mt-3">
-                <div class="student-row">
-                    <div class="student-info">
-                        <h4>1. خالد</h4>
-                        <p>بقيق | الهدف: هندسة صناعية</p>
-                    </div>
-                    <div style="color: var(--gold); font-weight: bold;">1250 نقطة</div>
-                </div>
-                <div class="student-row">
-                    <div class="student-info">
-                        <h4>2. عبدالله</h4>
-                        <p>الخبر | الهدف: طب وجراحة</p>
-                    </div>
-                    <div style="color: var(--gold); font-weight: bold;">1120 نقطة</div>
-                </div>
-            </div>
-        </section>
-    </main>
+  <nav class="sb-nav">
+    <div class="ng">الرئيسي</div>
+    <div class="ni on" onclick="go('dash')"><span class="ni-ico">⊞</span><span>الرئيسية</span></div>
+    <div class="ni" onclick="go('timer')"><span class="ni-ico">⏱</span><span>مؤقت المدار</span><span class="ni-badge">50/10</span></div>
+    <div class="ni" onclick="go('bird')"><span class="ni-ico">🦅</span><span>طائري</span></div>
+    <div class="ni" onclick="go('roadmap')"><span class="ni-ico">🗺</span><span>خارطة الدرب</span></div>
+    <div class="ni" onclick="go('vault')"><span class="ni-ico">🏛</span><span>الخزنة</span><span class="ni-badge" id="vBadge">0</span></div>
 
-    <nav class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('view-home', this)">
-            <i class="fa-solid fa-house"></i> الرئيسية
-        </div>
-        <div class="nav-item" onclick="switchTab('view-orbit', this)">
-            <i class="fa-solid fa-stopwatch"></i> المدار
-        </div>
-        <div class="nav-item" onclick="switchTab('view-vault', this)">
-            <i class="fa-solid fa-vault"></i> الخزنة
-        </div>
-        <div class="nav-item" onclick="switchTab('view-radar', this)">
-            <i class="fa-solid fa-crosshairs"></i> الرادار
-        </div>
-    </nav>
+    <div class="ng">المجتمع</div>
+    <div class="ni" onclick="go('social')"><span class="ni-ico">👥</span><span>الأصدقاء</span></div>
+    <div class="ni" onclick="go('arena')"><span class="ni-ico">⚔</span><span>الميدان 1vs1</span></div>
+    <div class="ni" onclick="go('regions')"><span class="ni-ico">🏆</span><span>صراع المناطق</span></div>
 
-    <div class="modal-overlay" id="auth-modal">
-        <div class="auth-modal">
-            <h2 style="color: var(--gold); margin-bottom: 20px;">تسجيل الدخول / إنشاء حساب</h2>
-            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">ادخل إلى منصة درب لحفظ تقدمك</p>
-            
-            <button class="auth-btn btn-google" id="btn-google-login">
-                <i class="fa-brands fa-google"></i> المتابعة باستخدام Google
-            </button>
-            <button class="auth-btn btn-apple">
-                <i class="fa-brands fa-apple"></i> المتابعة باستخدام Apple
-            </button>
-            
-            <div class="close-modal" onclick="closeAuthModal()">إلغاء والمتابعة كزائر</div>
+    <div class="ng">المتقدمة</div>
+    <div class="ni" onclick="go('parent')" id="navParent"><span class="ni-ico">👨‍👩‍👦</span><span>بوابة الأهل</span><span class="ni-lock" id="pLock">🔒</span></div>
+    <div class="ni" onclick="go('feathers')"><span class="ni-ico">🪶</span><span>ريش الطائر</span></div>
+    <div class="ni" onclick="go('career')"><span class="ni-ico">💼</span><span>مسار المهنة</span></div>
+
+    <div class="ng">الحساب</div>
+    <div class="ni" onclick="go('pricing')"><span class="ni-ico">💎</span><span>الباقات</span></div>
+    <div class="ni" onclick="go('settings')"><span class="ni-ico">⚙</span><span>الإعدادات</span></div>
+  </nav>
+
+  <div class="sb-bot">
+    <div class="economy-strip">
+      <div class="econ-pill">
+        <span>🪙</span>
+        <div><div class="econ-val" id="sbSilver" style="color:#C8C8C8">0</div><div class="econ-lbl">فضة</div></div>
+      </div>
+      <div class="econ-pill">
+        <span>🥇</span>
+        <div><div class="econ-val" id="sbGold" style="color:var(--amber)">0</div><div class="econ-lbl">ذهب</div></div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ══════════════ MAIN ══════════════ -->
+<main class="main">
+
+<!-- ══ DASHBOARD ══ -->
+<div class="page on" id="page-dash">
+  <div class="topbar">
+    <div><div class="pg-title" id="dashGreet">أهلاً 👋</div><div class="pg-sub">تابع مسيرتك في منصة درب</div></div>
+    <div class="tb-acts">
+      <div class="ib" onclick="go('pricing')" title="رفع الباقة">⚡</div>
+      <div class="ib" onclick="showNotif()" title="الإشعارات">🔔</div>
+    </div>
+  </div>
+
+  <div class="sg">
+    <div class="sc" style="--ac:var(--blue)"><div class="sc-ico" style="background:#1D4ED820">📊</div><div class="sc-val">73%</div><div class="sc-lbl">التقدم الكلي</div><div class="sc-ch cup">↑ +5% هذا الأسبوع</div></div>
+    <div class="sc" style="--ac:var(--amber)"><div class="sc-ico" style="background:#F59E0B20">🔥</div><div class="sc-val" id="dStreak">0</div><div class="sc-lbl">سلسلة الأيام</div><div class="sc-ch cup">↑ استمر!</div></div>
+    <div class="sc" style="--ac:var(--green)"><div class="sc-ico" style="background:#10B98120">⏱</div><div class="sc-val" id="dSess">0</div><div class="sc-lbl">جلسات اليوم</div><div class="sc-ch cnt">50 دقيقة / جلسة</div></div>
+    <div class="sc" style="--ac:var(--purple)"><div class="sc-ico" style="background:#8B5CF620">🪙</div><div class="sc-val" id="dSilver">0</div><div class="sc-lbl">فضة مكتسبة</div><div class="sc-ch cnt">اليوم</div></div>
+  </div>
+
+  <div class="g21 mt">
+    <div class="card">
+      <div class="ct"><div class="dot" style="background:var(--blue)"></div>خارطة التقدم</div>
+      <div id="dashBars"></div>
+      <div class="divider"></div>
+      <div class="fbb">
+        <span class="ts tm">الإجمالي</span>
+        <span style="font-size:20px;font-weight:900;color:var(--bxl);font-family:var(--mono)">73%</span>
+      </div>
+      <div class="pw mt8" style="height:9px"><div class="pf" style="width:73%;height:100%"></div></div>
+    </div>
+    <div>
+      <div class="card mb" style="margin-bottom:12px">
+        <div class="ct"><div class="dot" style="background:var(--amber)"></div>نشاط آخر 91 يوم</div>
+        <div class="hm" id="dashHm"></div>
+        <div style="display:flex;align-items:center;gap:4px;justify-content:flex-end;margin-top:4px">
+          <span class="ttiny tm">أقل</span>
+          <div style="width:10px;height:10px;border-radius:2px" class="h0"></div>
+          <div style="width:10px;height:10px;border-radius:2px" class="h1"></div>
+          <div style="width:10px;height:10px;border-radius:2px" class="h2"></div>
+          <div style="width:10px;height:10px;border-radius:2px" class="h3"></div>
+          <div style="width:10px;height:10px;border-radius:2px" class="h4"></div>
+          <span class="ttiny tm">أكثر</span>
         </div>
+      </div>
+      <div class="card">
+        <div class="ct"><div class="dot" style="background:var(--green)"></div>الاقتصاد الرقمي</div>
+        <div class="g2 g8">
+          <div style="text-align:center;padding:12px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)">
+            <div style="font-size:22px;font-weight:900;font-family:var(--mono);color:#C8C8C8" id="ecSilver">0</div>
+            <div class="txs tm mt8">🪙 فضة</div>
+            <div class="ttiny" style="color:var(--t3);margin-top:3px">1/دقيقة</div>
+          </div>
+          <div style="text-align:center;padding:12px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)">
+            <div style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--amber)" id="ecGold">0</div>
+            <div class="txs tm mt8">🥇 ذهب</div>
+            <div class="ttiny" style="color:var(--t3);margin-top:3px">عنقاء فقط</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="g3 mt">
+    <div class="card card-hover" style="cursor:pointer" onclick="go('timer')" onmouseenter="this.style.borderColor='#1D4ED855'" onmouseleave="this.style.borderColor='var(--border)'">
+      <div style="font-size:30px;margin-bottom:9px">⏱</div>
+      <div class="ts fw mb8">ابدأ جلسة تركيز</div>
+      <div class="txs tm">50 دقيقة بدون أي تشتت</div>
+      <div class="bdg b-bl mt8">50/10 المدار</div>
+    </div>
+    <div class="card card-hover" style="cursor:pointer" onclick="go('vault')" onmouseenter="this.style.borderColor='#EF444455'" onmouseleave="this.style.borderColor='var(--border)'">
+      <div style="font-size:30px;margin-bottom:9px">🏛</div>
+      <div class="ts fw mb8">الخزنة</div>
+      <div class="txs tm">راجع أسئلتك الخاطئة</div>
+      <div class="bdg b-re mt8" id="vDashBadge">0 أسئلة</div>
+    </div>
+    <div class="card card-hover" style="cursor:pointer" onclick="go('bird')" onmouseenter="this.style.borderColor='#8B5CF655'" onmouseleave="this.style.borderColor='var(--border)'">
+      <div style="font-size:30px;margin-bottom:9px">🦅</div>
+      <div class="ts fw mb8">طائري</div>
+      <div class="txs tm">شاهد تطور شخصيتك</div>
+      <div class="bdg b-pu mt8" id="birdDashBadge">المستوى 1</div>
+    </div>
+  </div>
+
+  <div class="card mt" id="dailyLimitCard">
+    <div class="fbb mb8">
+      <div class="ct" style="margin-bottom:0"><div class="dot" style="background:var(--amber)"></div>حد الأسئلة اليومي — الشاهين</div>
+      <span class="bdg b-am">5/يوم</span>
+    </div>
+    <div class="fbb mb8"><span class="ts">استُخدم 3 من 5 أسئلة</span><span class="ts mono" style="color:var(--amber)">3/5</span></div>
+    <div class="pw" style="height:8px"><div class="pf" style="width:60%;height:100%;background:linear-gradient(90deg,var(--amber),#FBBF24)"></div></div>
+    <p class="txs tm mt8">رفّع للسند لإزالة الحد. <span style="color:var(--bxl);cursor:pointer;font-weight:700" onclick="go('pricing')">ترقية الآن ←</span></p>
+  </div>
+</div>
+
+<!-- ══ TIMER ══ -->
+<div class="page" id="page-timer">
+  <div class="topbar">
+    <div><div class="pg-title">مؤقت المدار ⏱</div><div class="pg-sub">50 دقيقة تركيز مطلق — 10 دقائق راحة</div></div>
+  </div>
+  <div class="g2">
+    <div class="card tc">
+      <div class="timer-wrap">
+        <div class="ring-wrap" onclick="birdTap()" title="انقر لـ XP مجاني!">
+          <svg class="ring-svg" viewBox="0 0 200 200">
+            <defs>
+              <linearGradient id="rg1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#1D4ED8"/><stop offset="100%" style="stop-color:#60A5FA"/>
+              </linearGradient>
+              <linearGradient id="rg2" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#10B981"/><stop offset="100%" style="stop-color:#34D399"/>
+              </linearGradient>
+            </defs>
+            <circle class="r-track" cx="100" cy="100" r="90"/>
+            <circle class="r-prog" id="rProg" cx="100" cy="100" r="90"/>
+          </svg>
+          <div class="r-center">
+            <div class="r-time" id="tDisp">50:00</div>
+            <div class="r-lbl" id="tLbl">تركيز</div>
+          </div>
+        </div>
+        <div class="phase-badge pb-focus" id="pBadge">🎯 وضع التركيز</div>
+        <div class="timer-btns">
+          <button class="tbt tbt-go" id="tBtn" onclick="toggleTimer()">▶ ابدأ</button>
+          <button class="tbt tbt-rs" onclick="resetTimer()">↺ إعادة</button>
+        </div>
+        <div class="streak-box w100 mt16">
+          <div style="font-size:24px">🔥</div>
+          <div class="sk-info">
+            <div class="sk-lbl">سلسلة الأيام</div>
+            <div class="sk-val"><span class="sk-num" id="tStreak">0</span> يوم</div>
+          </div>
+          <div style="text-align:center;margin-right:auto">
+            <div class="mono fw9" style="font-size:22px;color:var(--green)" id="tSessions">0</div>
+            <div class="txs tm">جلسات</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card mb">
+        <div class="ct"><div class="dot" style="background:var(--amber)"></div>⚡ وقت الذروة — الفجر</div>
+        <div style="padding:12px;background:#F59E0B10;border:1px solid #F59E0B30;border-radius:9px">
+          <div class="ts fw" style="color:var(--amber);margin-bottom:5px">4:00 — 6:30 صباحاً</div>
+          <div class="txs tm">الفضة تتضاعف ×2 في هذه الساعات المباركة</div>
+          <div class="bdg b-am mt8" id="peakBadge">تحقق الآن...</div>
+        </div>
+      </div>
+      <div class="card mb">
+        <div class="ct"><div class="dot" style="background:var(--blue)"></div>إحصاءات هذا الأسبوع</div>
+        <div class="g2 g8">
+          <div style="text-align:center;padding:12px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)">
+            <div class="mono fw9" style="font-size:22px;color:var(--bxl)" id="wSess">0</div>
+            <div class="txs tm mt8">جلسات</div>
+          </div>
+          <div style="text-align:center;padding:12px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)">
+            <div class="mono fw9" style="font-size:22px;color:var(--green)" id="wHrs">0h</div>
+            <div class="txs tm mt8">ساعات</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct"><div class="dot" style="background:var(--green)"></div>نصائح التركيز</div>
+        <div class="al mb8"><div style="font-size:16px">📱</div><div class="al-body"><div class="al-t">الجوال وجهاً للأسفل</div><div class="al-s">يقلل التشتت بنسبة 20%</div></div></div>
+        <div class="al mb8"><div style="font-size:16px">💧</div><div class="al-body"><div class="al-t">اشرب ماء قبل الجلسة</div><div class="al-s">الجفاف يضعف التركيز</div></div></div>
+        <div class="al"><div style="font-size:16px">🎵</div><div class="al-body"><div class="al-t">موسيقى Lofi للتركيز</div><div class="al-s">ابحث lofi study على يوتيوب</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BIRD AVATAR ══ -->
+<div class="page" id="page-bird">
+  <div class="topbar">
+    <div><div class="pg-title">طائري 🦅</div><div class="pg-sub">شخصيتك الأكاديمية — تتطور معك</div></div>
+  </div>
+  <div class="g2">
+    <div class="card tc">
+      <div class="bird-stage" onclick="birdTap()" id="birdStage">
+        <div class="bird-halo silver" id="birdHalo"></div>
+        <div class="bird-emoji" id="birdEmoji">🦅</div>
+        <div class="bird-name" id="birdNameD">الشاهين</div>
+        <div class="bird-lvl" id="birdLvlD">المستوى 1 — مبتدئ</div>
+        <div class="xp-bar"><div class="xp-fill" id="xpFill" style="width:10%"></div></div>
+        <div class="txs tm mt8"><span id="xpNum">100</span> / 1000 XP</div>
+      </div>
+      <div class="divider"></div>
+      <div class="txs tm mb8">اضغط الطائر +5🪙 +10XP</div>
+      <div class="g2 g8">
+        <div style="text-align:center;padding:11px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)">
+          <div class="mono fw9" style="font-size:20px;color:#C8C8C8" id="bSilver">0</div>
+          <div class="txs tm">🪙 فضة</div>
+        </div>
+        <div style="text-align:center;padding:11px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)">
+          <div class="mono fw9" style="font-size:20px;color:var(--amber)" id="bGold">0</div>
+          <div class="txs tm">🥇 ذهب</div>
+        </div>
+      </div>
+      <div class="mt16">
+        <div class="ct"><div class="dot" style="background:var(--amber)"></div>الأوسمة</div>
+        <div id="badgesWrap"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card mb">
+        <div class="ct"><div class="dot" style="background:var(--purple)"></div>مسار التطور</div>
+        <div id="birdPath"></div>
+      </div>
+      <div class="card">
+        <div class="ct"><div class="dot" style="background:var(--cyan)"></div>الهالات المتاحة</div>
+        <div class="al mb8" style="cursor:pointer" onclick="buyHalo('silver')">
+          <div style="font-size:16px">⚪</div>
+          <div class="al-body"><div class="al-t">هالة الفضة</div><div class="al-s">500 فضة</div></div>
+          <button class="btn btn-gh" style="padding:4px 10px;font-size:11px" onclick="event.stopPropagation();buyHalo('silver')">شراء</button>
+        </div>
+        <div class="al" style="cursor:pointer" onclick="buyHalo('gold')">
+          <div style="font-size:16px">🌀</div>
+          <div class="al-body"><div class="al-t">هالة الذهب المتحركة</div><div class="al-s">100 ذهب — عنقاء فقط</div></div>
+          <button class="btn btn-gh" style="padding:4px 10px;font-size:11px" onclick="event.stopPropagation();buyHalo('gold')">شراء</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ROADMAP ══ -->
+<div class="page" id="page-roadmap">
+  <div class="topbar">
+    <div><div class="pg-title">خارطة الدرب 🗺</div><div class="pg-sub">مسارك من الصفر إلى +95</div></div>
+    <div class="tb-acts"><span class="bdg b-bl" id="rmBadge">0 / 12</span></div>
+  </div>
+  <div class="g21">
+    <div>
+      <div class="card mb">
+        <div class="fbb mb12">
+          <div class="ct" style="margin-bottom:0"><div class="dot" style="background:var(--blue)"></div>التقدم الكلي</div>
+          <span style="font-size:19px;font-weight:900;color:var(--bxl);font-family:var(--mono)">42%</span>
+        </div>
+        <div class="pw" style="height:11px"><div class="pf" style="width:42%;height:100%"></div></div>
+      </div>
+      <div id="rmSteps"></div>
+    </div>
+    <div>
+      <div class="card mb">
+        <div class="ct"><div class="dot" style="background:var(--green)"></div>المرحلة الحالية</div>
+        <div class="ts fw mb8">القدرات — الكمي ▶</div>
+        <p class="txs tm mb12">أنت في الجزء الرابع. ركز على الهندسة والاحتمالات هذا الأسبوع.</p>
+        <div class="bdg b-gr mb12">70% منجزة</div>
+        <div class="pw" style="height:7px"><div class="pf" style="width:70%;height:100%"></div></div>
+      </div>
+      <div class="card mb">
+        <div class="ct"><div class="dot" style="background:var(--amber)"></div>المواعيد</div>
+        <div class="al mb8"><div class="al-dot" style="background:var(--red)"></div><div class="al-body"><div class="al-t">اختبار تجريبي — اللفظي</div><div class="al-s">بعد 3 أيام</div></div><div class="al-time">12 أبريل</div></div>
+        <div class="al"><div class="al-dot" style="background:var(--blue)"></div><div class="al-body"><div class="al-t">مراجعة القسم الكمي</div><div class="al-s">بعد أسبوع</div></div><div class="al-time">16 أبريل</div></div>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,#F59E0B08,var(--card));border-color:#F59E0B33">
+        <div class="ct"><div class="dot" style="background:var(--amber)"></div>تجميد الوهج</div>
+        <div class="ts fw mb8" style="color:var(--amber)">500 فضة — مرتين/شهر</div>
+        <div class="txs tm mb12">خسرت يوماً؟ جمّد السلسلة بدل تصفير الكل.</div>
+        <button class="btn btn-bl w100" onclick="freezeStreak()">تجميد الوهج 🧊</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VAULT ══ -->
+<div class="page" id="page-vault">
+  <div class="topbar">
+    <div><div class="pg-title">الخزنة 🏛</div><div class="pg-sub">أسئلتك الخاطئة — مكافأة +15🪙 لكل حل صحيح</div></div>
+    <div class="tb-acts"><span class="bdg b-re" id="vTotal">0 أسئلة</span></div>
+  </div>
+  <div class="g2">
+    <div>
+      <div class="card mb">
+        <div class="ct"><div class="dot" style="background:var(--red)"></div>أسئلة في الخزنة</div>
+        <div id="vaultList"></div>
+        <button class="btn btn-bl w100 mt" onclick="addSampleQ()">+ إضافة سؤال تدريبي</button>
+      </div>
+    </div>
+    <div>
+      <div class="card mb">
+        <div class="ct"><div class="dot" style="background:var(--amber)"></div>نظام التكرار المتباعد</div>
+        <div class="al mb8"><div class="al-dot" style="background:var(--blue)"></div><div class="al-body"><div class="al-t">المرحلة الأولى — 3 أيام</div><div class="al-s">الظهور بعد 3 أيام من الخطأ</div></div></div>
+        <div class="al mb8"><div class="al-dot" style="background:var(--green)"></div><div class="al-body"><div class="al-t">المرحلة الثانية — أسبوع</div><div class="al-s">بعد الإجابة الصحيحة الأولى</div></div></div>
+        <div class="al"><div class="al-dot" style="background:var(--purple)"></div><div class="al-body"><div class="al-t">التثبيت النهائي — شهر</div><div class="al-s">تثبيت كامل للمعلومة</div></div></div>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,#F59E0B08,var(--card));border-color:#F59E0B33">
+        <div class="ct"><div class="dot" style="background:var(--amber)"></div>المكافأة</div>
+        <div style="font-size:30px;font-weight:900;color:var(--amber);font-family:var(--mono)">+15 🪙</div>
+        <div class="txs tm mt8">لكل سؤال تحله صحيحاً من الخزنة</div>
+        <div class="divider"></div>
+        <div style="font-size:22px;font-weight:900;color:var(--blue);font-family:var(--mono)">+5 🪙</div>
+        <div class="txs tm mt8">لكل سؤال صحيح في التدريب العادي</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SOCIAL ══ -->
+<div class="page" id="page-social">
+  <div class="topbar">
+    <div><div class="pg-title">الأصدقاء 👥</div><div class="pg-sub">تابع زملاءك في الدرب</div></div>
+  </div>
+  <div class="g21">
+    <div>
+      <div class="card mb">
+        <div class="ct mb8"><div class="dot" style="background:var(--blue)"></div>بحث بالاسم أو الكود</div>
+        <input class="srch" id="fSearch" type="text" placeholder="ابحث... @ahmed أو محمد" oninput="filterFriends(this.value)">
+      </div>
+      <div id="friendsList"></div>
+    </div>
+    <div>
+      <div class="card mb">
+        <div class="ct"><div class="dot" style="background:var(--green)"></div>أصدقائي (<span id="myFCount">0</span>)</div>
+        <div id="myFriendsList"></div>
+      </div>
+      <div class="card">
+        <div class="ct"><div class="dot" style="background:var(--purple)"></div>الخصوصية</div>
+        <div class="fbb mb12">
+          <div><div class="ts fw">إظهار تقدمي</div><div class="txs tm">الأصدقاء يرون نسبتك</div></div>
+          <div class="tog on" id="togProg" onclick="togglePv('progress',this)"><div class="tog-b"></div></div>
+        </div>
+        <div class="fbb">
+          <div><div class="ts fw">إظهار سلسلتي</div><div class="txs tm">الأصدقاء يرون streak حقك</div></div>
+          <div class="tog off" id="togStreak" onclick="togglePv('streak',this)"><div class="tog-b"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ARENA ══ -->
+<div class="page" id="page-arena">
+  <div class="topbar">
+    <div><div class="pg-title">الميدان ⚔</div><div class="pg-sub">تحديات 1vs1 — شرف لا رهانات</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ct"><div class="dot" style="background:var(--red)"></div>تحدِّ خصماً</div>
+      <div id="arenaList"></div>
+    </div>
+    <div>
+      <div class="card mb">
+        <div class="ct"><div class="dot" style="background:var(--amber)"></div>قواعد الميدان</div>
+        <div class="al mb8"><div style="font-size:16px">⚔</div><div class="al-body"><div class="al-t">10 أسئلة في 5 دقائق</div><div class="al-s">الأعلى دقةً يفوز</div></div></div>
+        <div class="al mb8"><div style="font-size:16px">🪙</div><div class="al-body"><div class="al-t">+20 فضة للفائز</div><div class="al-s">من المنصة — لا رهان بين الطلاب</div></div></div>
+        <div class="al"><div style="font-size:16px">🚫</div><div class="al-body"><div class="al-t">ممنوع الرهان</div><div class="al-s">المنافسة للشرف والتعلم فقط</div></div></div>
+      </div>
+      <div class="card">
+        <div class="ct"><div class="dot" style="background:var(--green)"></div>سجلك في الميدان</div>
+        <div class="g2 g8">
+          <div style="text-align:center;padding:12px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)">
+            <div class="mono fw9" style="font-size:22px;color:var(--green)" id="arenaW">0</div>
+            <div class="txs tm">انتصارات</div>
+          </div>
+          <div style="text-align:center;padding:12px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)">
+            <div class="mono fw9" style="font-size:22px;color:var(--red)" id="arenaL">0</div>
+            <div class="txs tm">خسائر</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ REGIONS ══ -->
+<div class="page" id="page-regions">
+  <div class="topbar">
+    <div><div class="pg-title">صراع المناطق 🏆</div><div class="pg-sub">أفضل مدينة في المذاكرة هذا الأسبوع</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ct"><div class="dot" style="background:var(--amber)"></div>لوحة الصدارة — المدن</div>
+      <div id="regionsList"></div>
+    </div>
+    <div>
+      <div class="card mb" style="background:linear-gradient(135deg,#1D4ED808,var(--card));border-color:#1D4ED833">
+        <div class="ct"><div class="dot" style="background:var(--blue)"></div>مدينتك — بقيق 🏭</div>
+        <div style="text-align:center;padding:16px">
+          <div style="font-size:42px;margin-bottom:8px">🏭</div>
+          <div class="ts fw mb8">بقيق — المنطقة الشرقية</div>
+          <div class="bdg b-bl mb12">المرتبة 5 هذا الأسبوع</div>
+          <div class="pw mb8" style="height:7px"><div class="pf" style="width:55%;height:100%"></div></div>
+          <div class="txs tm">55% من هدف الأسبوع</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct"><div class="dot" style="background:var(--green)"></div>الميدان البصري</div>
+        <div style="padding:14px;text-align:center;background:var(--card2);border:1px dashed var(--border2);border-radius:9px">
+          <div style="font-size:24px;margin-bottom:7px">📸</div>
+          <div class="txs tm mb12">ارفع صورة ركن مذاكرتك يومياً (+10🪙)</div>
+          <button class="btn btn-bl" onclick="addCoin(10,'📸 صورة الميدان')">محاكاة رفع صورة +10🪙</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PARENT HUB ══ -->
+<div class="page" id="page-parent">
+  <div class="topbar">
+    <div><div class="pg-title">بوابة الأهل 👨‍👩‍👦</div><div class="pg-sub">لوحة المراقبة الحية</div></div>
+    <div id="parentBadge"></div>
+  </div>
+  <div id="parentContent"></div>
+</div>
+
+<!-- ══ FEATHERS ══ -->
+<div class="page" id="page-feathers">
+  <div class="topbar">
+    <div><div class="pg-title">ريش الطائر 🪶</div><div class="pg-sub">ذاكرتك الخاصة — ستبقى معك 20 سنة</div></div>
+  </div>
+  <div class="feather-grid">
+
+    <div class="feather" style="border-color:#ffffff20" onclick="toggleFeather('white',this)">
+      <div class="f-ico">🤍</div>
+      <div class="f-ttl" style="color:#E8E8FF">الريشة البيضاء — صدى الفخر</div>
+      <div class="f-dsc">رسائل والدك الصوتية والنصية — أرشيف إلى الأبد</div>
+      <div class="f-body" id="fb-white">
+        <div class="f-msgs" id="fm-white"></div>
+        <input class="f-inp mb8" id="fi-white" placeholder="رسالة من والدك...">
+        <button class="btn btn-bl w100" onclick="addMsg('white')">حفظ 🤍</button>
+      </div>
     </div>
 
-    <script type="module">
-        // 1. استيراد دوال Firebase من الـ CDN (الإصدار 9 Modular SDK)
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    <div class="feather" style="border-color:#F59E0B33" onclick="toggleFeather('gold',this)">
+      <div class="f-ico">💛</div>
+      <div class="f-ttl" style="color:var(--amber)">الريشة الذهبية — رسائل المستقبل</div>
+      <div class="f-dsc">اكتب لنفسك في لحظة حماس — اقرأها وقت الإحباط</div>
+      <div class="f-body" id="fb-gold">
+        <div class="f-msgs" id="fm-gold"></div>
+        <textarea class="f-inp mb8" id="fi-gold" placeholder="رسالة لنفسك في المستقبل..." rows="3"></textarea>
+        <button class="btn btn-bl w100" onclick="addMsg('gold')">أرسل للمستقبل 💛</button>
+      </div>
+    </div>
 
-        // 2. إعدادات Firebase (استبدلها بمفاتيحك من Vercel Environment Variables لاحقاً)
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "your-project.firebaseapp.com",
-            projectId: "your-project",
-            storageBucket: "your-project.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
+    <div class="feather" style="border-color:#10B98133" onclick="toggleFeather('green',this)">
+      <div class="f-ico">💚</div>
+      <div class="f-ttl" style="color:var(--green)">الريشة الخضراء — جدار الميدان</div>
+      <div class="f-dsc">ألبوم صور ركن مذاكرتك وتطورك عبر الزمن</div>
+      <div class="f-body" id="fb-green">
+        <div style="padding:16px;text-align:center;background:var(--s2);border-radius:9px;border:1px dashed var(--border2)">
+          <div style="font-size:28px;margin-bottom:7px">📸</div>
+          <div class="txs tm mb12">ارفع صورة ركن مذاكرتك (+10🪙)</div>
+          <button class="btn btn-bl" onclick="addCoin(10,'📸 ريشة الميدان')">محاكاة رفع صورة</button>
+        </div>
+        <div class="f-msgs mt8" id="fm-green"></div>
+      </div>
+    </div>
 
-        // 3. تهيئة Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const provider = new GoogleAuthProvider();
+    <div class="feather" style="border-color:#6B82A833" onclick="toggleFeather('gray',this)">
+      <div class="f-ico">🩶</div>
+      <div class="f-ttl" style="color:var(--t2)">الريشة الرمادية — سجل الصمود</div>
+      <div class="f-dsc">فرّغ إحباطاتك — النظام يرد بدعم حقيقي</div>
+      <div class="f-body" id="fb-gray">
+        <div class="f-msgs" id="fm-gray"></div>
+        <textarea class="f-inp mb8" id="fi-gray" placeholder="ما الذي يضغط عليك الآن؟..." rows="3"></textarea>
+        <button class="btn btn-gh w100" onclick="addGrayMsg()">أفرّغ 🩶</button>
+      </div>
+    </div>
 
-        // --- واجهة المستخدم (UI Logic) ---
-        
-        // تبديل النوافذ (Tabs)
-        window.switchTab = function(viewId, element) {
-            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-            document.getElementById(viewId).classList.add('active');
-            element.classList.add('active');
-            
-            // طلب تسجيل الدخول إذا ذهب للخزنة وهو غير مسجل
-            if(viewId === 'view-vault' && !auth.currentUser) {
-                openAuthModal();
-            }
-        };
+    <div class="feather" style="border-color:#60A5FA33;grid-column:1/-1" onclick="toggleFeather('blue',this)">
+      <div class="f-ico">💙</div>
+      <div class="f-ttl" style="color:var(--bxl)">الريشة الزرقاء — الاستكشاف</div>
+      <div class="f-dsc">بعد القدرات والتحصيلي — دورات ومهارات لتطوير CV حقيقي</div>
+      <div class="f-body" id="fb-blue">
+        <div class="g3 mt8" style="margin-top:0">
+          <div style="padding:13px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)"><div style="font-size:22px;margin-bottom:7px">💻</div><div class="ts fw">Python CS50</div><div class="txs tm mt8">Harvard — مجاني كامل</div></div>
+          <div style="padding:13px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)"><div style="font-size:22px;margin-bottom:7px">🤖</div><div class="ts fw">ذكاء اصطناعي</div><div class="txs tm mt8">SDAIA — دورات مجانية</div></div>
+          <div style="padding:13px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)"><div style="font-size:22px;margin-bottom:7px">🛢</div><div class="ts fw">أرامكو CPC</div><div class="txs tm mt8">تدريب صيفي — سجّل الآن</div></div>
+        </div>
+      </div>
+    </div>
 
-        // النوافذ المنبثقة (Modals)
-        window.openAuthModal = () => document.getElementById('auth-modal').style.display = 'flex';
-        window.closeAuthModal = () => document.getElementById('auth-modal').style.display = 'none';
+  </div>
+</div>
 
-        // --- منطق المدار (Pomodoro Timer Logic) ---
-        let timerInterval;
-        let isRunning = false;
-        let timeLeft = 50 * 60; // 50 دقيقة
+<!-- ══ CAREER ══ -->
+<div class="page" id="page-career">
+  <div class="topbar">
+    <div><div class="pg-title">مسار المهنة 💼</div><div class="pg-sub">حوّل انضباطك إلى وثائق رسمية</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ct"><div class="dot" style="background:var(--blue)"></div>صانع الـ CV</div>
+      <div style="padding:14px;background:var(--card2);border-radius:9px;border:1px solid var(--border2);margin-bottom:12px">
+        <div class="ts fw mb8">📄 مهاراتك المكتسبة في درب</div>
+        <div id="cvSkills"></div>
+      </div>
+      <button class="btn btn-bl w100" onclick="genCV()">توليد CV احترافي 📄</button>
+    </div>
+    <div class="card">
+      <div class="ct"><div class="dot" style="background:var(--amber)"></div>شهادة الانضباط الرقمية</div>
+      <div style="padding:18px;text-align:center;background:linear-gradient(135deg,#1D4ED810,var(--card2));border:1px solid #1D4ED833;border-radius:11px;margin-bottom:12px">
+        <div style="font-size:34px;margin-bottom:9px">🏅</div>
+        <div class="ts fw mb8">شهادة الانضباط الأكاديمي</div>
+        <div class="txs tm mb12">تُثبت ساعات تركيزك الفعلي للجامعات وأرامكو</div>
+        <div class="bdg b-bl" id="certHours">0 ساعة موثّقة</div>
+      </div>
+      <button class="btn btn-bl w100" onclick="genCert()">توليد الشهادة 🏅</button>
+    </div>
+  </div>
+</div>
 
-        const timerDisplay = document.getElementById('time-display');
-        const startBtn = document.getElementById('start-timer-btn');
+<!-- ══ PRICING ══ -->
+<div class="page" id="page-pricing">
+  <div class="topbar">
+    <div><div class="pg-title">الباقات 💎</div><div class="pg-sub">اختر مسارك في درب</div></div>
+  </div>
+  <div class="prg">
+    <div class="prc">
+      <div class="pr-tier" style="color:var(--bxl)">SHAHEEN — الشاهين</div>
+      <div class="pr-price"><span class="am">29</span><span class="cu"> ر.س</span></div>
+      <div class="pr-per">/ شهرياً</div>
+      <div class="pr-desc">البداية القوية — المؤقت والخارطة والرادار وتقارير واتساب للأب.</div>
+      <ul class="pr-fl">
+        <li><span class="ic pfy">✓</span>مؤقت المدار 50/10</li>
+        <li><span class="ic pfy">✓</span>خارطة الدرب الكاملة</li>
+        <li><span class="ic pfy">✓</span>5 أسئلة تدريبية/يوم</li>
+        <li><span class="ic pfy">✓</span>الخزنة والتكرار المتباعد</li>
+        <li><span class="ic pfy">✓</span>تقارير واتساب نصية للأب</li>
+        <li><span class="ic pfy">✓</span>الطائر والريشات الأساسية</li>
+        <li><span class="ic pfn">✗</span><span style="opacity:.4">لوحة الأهل الحية</span></li>
+        <li><span class="ic pfn">✗</span><span style="opacity:.4">رواق النخبة والذهب</span></li>
+      </ul>
+      <button class="p-btn pb1" onclick="selectTier('shaheen')">الباقة الحالية ✓</button>
+    </div>
+    <div class="prc feat">
+      <div class="pr-tier" style="color:var(--amber)">SANAD — السند</div>
+      <div class="pr-price"><span class="am" style="color:var(--amber)">59</span><span class="cu"> ر.س</span></div>
+      <div class="pr-per">/ شهرياً + خصم 50% للأخ الثاني</div>
+      <div class="pr-desc" style="border-color:#F59E0B20">مخصص لأولياء الأمور. راقب ابنك لحظةً بلحظة.</div>
+      <ul class="pr-fl">
+        <li><span class="ic pfy">✓</span>كل مزايا الشاهين</li>
+        <li><span class="ic" style="color:var(--amber)">★</span>لوحة مراقبة حية Real-time</li>
+        <li><span class="ic" style="color:var(--amber)">★</span>رسوم بيانية أسبوعية وشهرية</li>
+        <li><span class="ic" style="color:var(--amber)">★</span>تنبيهات الإنجاز الفورية</li>
+        <li><span class="ic" style="color:var(--amber)">★</span>شارة الدرع في البروفايل</li>
+        <li><span class="ic" style="color:var(--amber)">★</span>تطبيق الأب المستقل</li>
+        <li><span class="ic" style="color:var(--amber)">★</span>دليل الانتقال الجامعي للأهل</li>
+        <li><span class="ic pfn">✗</span><span style="opacity:.4">رواق النخبة والذهب</span></li>
+      </ul>
+      <button class="p-btn pb2" onclick="selectTier('sanad')">ارتقِ للسند ★</button>
+    </div>
+    <div class="prc elit">
+      <div class="pr-tier" style="color:var(--purple)">ANQA — العنقاء</div>
+      <div class="pr-price"><span class="am" style="color:var(--purple)">119</span><span class="cu"> ر.س</span></div>
+      <div class="pr-per">دفعة واحدة — مدى الحياة</div>
+      <div class="pr-desc" style="border-color:#8B5CF620">كل شيء + الذهب + رواق النخبة + الواجهات المتحركة.</div>
+      <ul class="pr-fl">
+        <li><span class="ic pfy">✓</span>كل مزايا السند</li>
+        <li><span class="ic pfs">◈</span>عملة الذهب التلقائية</li>
+        <li><span class="ic pfs">◈</span>رواق النخبة الخاص</li>
+        <li><span class="ic pfs">◈</span>واجهات متحركة نابضة</li>
+        <li><span class="ic pfs">◈</span>الريشات الخمس كاملة</li>
+        <li><span class="ic pfs">◈</span>هالة الذهب المتحركة</li>
+        <li><span class="ic pfs">◈</span>شهادة الانضباط الرسمية</li>
+        <li><span class="ic pfs">◈</span>أو 50,000 فضة بديلاً</li>
+      </ul>
+      <button class="p-btn pb3" onclick="selectTier('anqa')">احصل على العنقاء ◈</button>
+    </div>
+  </div>
+  <div class="card mt20" style="max-width:870px;margin:20px auto 0;background:linear-gradient(135deg,#F59E0B06,var(--card));border-color:#F59E0B33">
+    <div class="ct"><div class="dot" style="background:var(--amber)"></div>العبور العظيم — طريق المجتهد الذي لا يملك المال</div>
+    <div style="padding:14px;background:#F59E0B08;border-radius:9px;border:1px solid #F59E0B22">
+      <div class="ts fw" style="color:var(--amber);margin-bottom:5px">🏆 50,000 فضة = العنقاء مجاناً</div>
+      <div class="txs tm mb12">الطالب المجتهد الذي يذاكر بانضباط يصل للعنقاء بعمله لا بماله.</div>
+      <div class="fbb">
+        <div class="pw" style="height:7px;flex:1;margin-left:10px"><div class="pf" id="vProgress" style="width:0%;height:100%;background:linear-gradient(90deg,var(--amber),#FBBF24)"></div></div>
+        <span class="mono ttiny" style="color:var(--amber)" id="vProgressLbl">0 / 50,000</span>
+      </div>
+    </div>
+  </div>
+</div>
 
-        function updateTimerDisplay() {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
+<!-- ══ SETTINGS ══ -->
+<div class="page" id="page-settings">
+  <div class="topbar">
+    <div><div class="pg-title">الإعدادات ⚙</div><div class="pg-sub">تخصيص تجربتك في درب</div></div>
+  </div>
+  <div class="g2">
+    <div>
+      <div class="card mb">
+        <div class="ct"><div class="dot" style="background:var(--blue)"></div>الملف الشخصي</div>
+        <div style="display:flex;align-items:center;gap:13px;margin-bottom:16px">
+          <div class="ava" style="width:54px;height:54px;font-size:20px" id="settAva">م</div>
+          <div><div style="font-size:16px;font-weight:800" id="settName">محمد الأحمدي</div><div class="txs tm" id="settUser">@mohammed_ahmadi</div></div>
+        </div>
+        <label class="txs tm" style="display:block;margin-bottom:5px">الاسم الكامل</label>
+        <input class="srch mb12" id="inpName" value="محمد الأحمدي">
+        <label class="txs tm" style="display:block;margin-bottom:5px">اسم المستخدم</label>
+        <input class="srch mb16" id="inpUser" value="@mohammed_ahmadi">
+        <button class="btn btn-bl" onclick="saveSettings()">حفظ التغييرات ✓</button>
+      </div>
+    </div>
+    <div>
+      <div class="card mb">
+        <div class="ct"><div class="dot" style="background:var(--amber)"></div>إعدادات المؤقت</div>
+        <div class="fbb mb12">
+          <div><div class="ts fw">مدة التركيز</div><div class="txs tm">افتراضي 50 دقيقة</div></div>
+          <select id="focusDur" style="background:var(--card2);border:1px solid var(--border2);border-radius:7px;padding:6px 10px;color:var(--text);font-family:'Tajawal';font-size:13px">
+            <option value="25">25 دقيقة</option><option value="50" selected>50 دقيقة</option><option value="90">90 دقيقة</option>
+          </select>
+        </div>
+        <div class="fbb">
+          <div><div class="ts fw">مدة الراحة</div><div class="txs tm">افتراضي 10 دقائق</div></div>
+          <select id="restDur" style="background:var(--card2);border:1px solid var(--border2);border-radius:7px;padding:6px 10px;color:var(--text);font-family:'Tajawal';font-size:13px">
+            <option value="5">5 دقائق</option><option value="10" selected>10 دقائق</option><option value="15">15 دقيقة</option>
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct"><div class="dot" style="background:var(--purple)"></div>الإشعارات</div>
+        <div class="fbb mb12"><div class="ts fw">تنبيه نهاية الجلسة</div><div class="tog on"><div class="tog-b"></div></div></div>
+        <div class="fbb mb12"><div class="ts fw">تذكير يومي بالمذاكرة</div><div class="tog on"><div class="tog-b"></div></div></div>
+        <div class="fbb"><div class="ts fw">تقرير واتساب للأب</div><div class="tog on"><div class="tog-b"></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
 
-        startBtn.addEventListener('click', () => {
-            if (!isRunning) {
-                isRunning = true;
-                startBtn.innerHTML = '<i class="fa-solid fa-pause"></i> إيقاف مؤقت';
-                startBtn.style.backgroundColor = 'var(--gold)';
-                startBtn.style.color = 'var(--bg-dark)';
-                
-                timerInterval = setInterval(() => {
-                    if (timeLeft > 0) {
-                        timeLeft--;
-                        updateTimerDisplay();
-                    } else {
-                        clearInterval(timerInterval);
-                        alert("انتهت جلسة التركيز العميق! حان وقت الراحة (10 دقائق).");
-                        // هنا يتم رفع الجلسة إلى Firestore (سيتم برمجتها لاحقاً)
-                        isRunning = false;
-                        timeLeft = 10 * 60; // تحويل إلى استراحة
-                        updateTimerDisplay();
-                    }
-                }, 1000);
-            } else {
-                clearInterval(timerInterval);
-                isRunning = false;
-                startBtn.innerHTML = '<i class="fa-solid fa-play"></i> استئناف';
-                startBtn.style.backgroundColor = 'var(--blue-dark)';
-                startBtn.style.color = 'var(--text-main)';
-            }
-        });
+</main>
+</div>
 
-        // --- منطق توثيق Firebase (Google Auth) ---
-        const btnGoogleLogin = document.getElementById('btn-google-login');
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════ -->
+<script>
+// ══════════ STATE ══════════
+const S = {
+  tier:       ls('tier')       || 'shaheen',
+  silver:     lsN('silver')    || 0,
+  gold:       lsN('gold')      || 0,
+  streak:     lsN('streak')    || 0,
+  sessions:   lsN('sessions')  || 0,
+  weekSess:   lsN('weekSess')  || 0,
+  totalMins:  lsN('totalMins') || 0,
+  xp:         lsN('xp')        || 100,
+  lastDay:    ls('lastDay')    || '',
+  vaultQ:     lsJ('vaultQ')    || [],
+  feathers:   lsJ('feathers')  || {white:[],gold:[],gray:[]},
+  privacy:    lsJ('privacy')   || {progress:true,streak:false},
+  myFriends:  lsJ('myFriends') || [],
+  arenaW:     lsN('arenaW')    || 0,
+  arenaL:     lsN('arenaL')    || 0,
+  halo:       ls('halo')       || 'none',
+};
 
-        btnGoogleLogin.addEventListener('click', async () => {
-            try {
-                const result = await signInWithPopup(auth, provider);
-                const user = result.user;
-                
-                // حفظ أو تحديث بيانات المستخدم في Firestore
-                const userRef = doc(db, 'users', user.uid);
-                const userSnap = await getDoc(userRef);
-                
-                if (!userSnap.exists()) {
-                    // مستخدم جديد
-                    await setDoc(userRef, {
-                        name: user.displayName,
-                        email: user.email,
-                        role: 'student', // الافتراضي
-                        createdAt: new Date(),
-                        totalFocusHours: 0
-                    });
-                }
-                
-                closeAuthModal();
-                alert(`أهلاً بك يا ${user.displayName} في درب!`);
-                
-            } catch (error) {
-                console.error("خطأ في تسجيل الدخول: ", error);
-                alert("حدث خطأ أثناء تسجيل الدخول. تأكد من إعدادات Firebase.");
-            }
-        });
+function ls(k){ return localStorage.getItem(k); }
+function lsN(k){ return parseInt(localStorage.getItem(k)||0); }
+function lsJ(k){ try{return JSON.parse(localStorage.getItem(k));}catch{return null;} }
+function sv(k){ localStorage.setItem(k, typeof S[k]==='object'?JSON.stringify(S[k]):S[k]); }
+function svAll(){ Object.keys(S).forEach(k=>sv(k)); }
 
-        // مراقبة حالة المستخدم (Auth State Observer)
-        onAuthStateChanged(auth, (user) => {
-            const userInfoDiv = document.getElementById('user-info');
-            if (user) {
-                // المستخدم مسجل دخوله
-                userInfoDiv.innerHTML = `<span style="color:var(--gold); font-weight:bold;">${user.displayName.split(' ')[0]}</span>`;
-            } else {
-                // زائر
-                userInfoDiv.innerHTML = `<button class="btn btn-gold" onclick="openAuthModal()" style="padding: 5px 15px; font-size: 14px;">دخول</button>`;
-            }
-        });
+// ══════════ NAVIGATION ══════════
+function go(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
+  const pg = document.getElementById('page-'+page);
+  if(pg) pg.classList.add('on');
+  document.querySelectorAll('.ni').forEach(n=>{
+    if(n.getAttribute('onclick')?.includes(`'${page}'`)) n.classList.add('on');
+  });
+  const renders = {
+    dash:()=>{renderHm();updateDash();},
+    bird:renderBird, roadmap:renderRoadmap, vault:renderVault,
+    social:renderSocial, arena:renderArena, regions:renderRegions,
+    parent:renderParent, career:renderCareer,
+    pricing:updateVaultProgress, feathers:()=>{},
+  };
+  renders[page]?.();
+}
 
-    </script>
+// ══════════ TOAST ══════════
+let toastT;
+function toast(msg,type='info',icon='💡'){
+  const t=document.getElementById('toast');
+  t.innerHTML=`<span>${icon}</span><span>${msg}</span>`;
+  t.className=`toast show ${type}`;
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>t.className='toast',3000);
+}
+
+// ══════════ COIN SYSTEM ══════════
+function addCoin(n,reason='',isGold=false){
+  if(isGold){
+    if(S.tier!=='anqa'){toast('الذهب للعنقاء فقط 🔒','','🥇');return;}
+    S.gold+=n; sv('gold');
+  } else {
+    const isPeak=checkPeak();
+    const actual = isPeak?n*2:n;
+    S.silver+=actual; sv('silver');
+    if(isPeak&&n>0) toast(`⚡ وقت الذروة! +${actual}🪙 بدل ${n}`,'ok','🌅');
+  }
+  updateCoins();
+  if(n>0){
+    const p=document.createElement('div');
+    p.className='cpop';
+    p.textContent=`+${n}${isGold?'🥇':'🪙'}`;
+    p.style.cssText=`left:${20+Math.random()*60}%;top:${30+Math.random()*30}%`;
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),700);
+  }
+  updateVaultProgress();
+}
+
+function updateCoins(){
+  ['sbSilver','ecSilver','dSilver','bSilver'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.textContent=S.silver;
+  });
+  ['sbGold','ecGold','bGold'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.textContent=S.gold;
+  });
+}
+
+function checkPeak(){
+  const h=new Date().getHours();
+  return h>=4&&h<7;
+}
+
+function updateVaultProgress(){
+  const pct=Math.min(100,(S.silver/50000)*100);
+  const el=document.getElementById('vProgress');
+  const lb=document.getElementById('vProgressLbl');
+  if(el) el.style.width=pct+'%';
+  if(lb) lb.textContent=S.silver.toLocaleString()+' / 50,000';
+}
+
+// ══════════ TIER ══════════
+function selectTier(t){
+  S.tier=t; sv('tier');
+  const L={shaheen:'الشاهين',sanad:'السند',anqa:'العنقاء'};
+  const C={shaheen:'ts',sanad:'tn',anqa:'ta'};
+  const I={shaheen:'🦅',sanad:'🛡',anqa:'🔥'};
+  const badge=document.getElementById('sbTier');
+  badge.className='ava-tier '+C[t];
+  badge.textContent=L[t];
+  document.getElementById('pLock').style.display=(t==='shaheen')?'':'none';
+  const shield=document.getElementById('sbShield');
+  shield.style.display=(t==='sanad'||t==='anqa')?'':'none';
+  const dlc=document.getElementById('dailyLimitCard');
+  if(dlc) dlc.style.display=(t==='shaheen')?'':'none';
+  toast(`تم الترقية إلى ${L[t]} بنجاح!`,'ok',I[t]);
+  // anqa dynamic UI
+  if(t==='anqa'){
+    document.body.style.setProperty('--blue','#6D28D9');
+    document.body.style.setProperty('--bl','#8B5CF6');
+    document.body.style.setProperty('--bxl','#A78BFA');
+    setTimeout(()=>{
+      document.body.style.removeProperty('--blue');
+      document.body.style.removeProperty('--bl');
+      document.body.style.removeProperty('--bxl');
+    },3000);
+  }
+  setTimeout(()=>go('dash'),700);
+}
+
+// ══════════ TIMER ══════════
+let tRun=false,tPhase='focus',tElapsed=0,tIv=null;
+const CIRC=565;
+
+function getFD(){ return parseInt(document.getElementById('focusDur')?.value||50)*60; }
+function getRD(){ return parseInt(document.getElementById('restDur')?.value||10)*60; }
+
+function toggleTimer(){
+  if(tRun){
+    clearInterval(tIv);tRun=false;
+    document.getElementById('tBtn').textContent='▶ استمر';
+  } else {
+    tRun=true;
+    document.getElementById('tBtn').textContent='⏸ إيقاف';
+    tIv=setInterval(tick,1000);
+  }
+}
+
+function tick(){
+  tElapsed++;
+  const dur=tPhase==='focus'?getFD():getRD();
+  const left=dur-tElapsed;
+  const m=String(Math.floor(left/60)).padStart(2,'0');
+  const s=String(left%60).padStart(2,'0');
+  const disp=document.getElementById('tDisp');
+  if(disp) disp.textContent=`${m}:${s}`;
+  const prog=document.getElementById('rProg');
+  if(prog) prog.style.strokeDashoffset=CIRC*(1-tElapsed/dur);
+
+  // earn silver per minute
+  if(tPhase==='focus'&&tElapsed%60===0){
+    addCoin(1,'⏱ دقيقة تركيز');
+    S.totalMins++; sv('totalMins');
+  }
+
+  if(tElapsed>=dur){
+    tElapsed=0;
+    if(tPhase==='focus'){
+      tPhase='rest';
+      S.sessions++; S.weekSess++;
+      sv('sessions'); sv('weekSess');
+      const today=new Date().toDateString();
+      if(S.lastDay!==today){S.streak++;S.lastDay=today;sv('streak');sv('lastDay');}
+      S.xp+=60; sv('xp');
+      addCoin(10,'🎯 جلسة مكتملة');
+      if(S.tier==='anqa') addCoin(2,'🥇 جلسة عنقاء',true);
+      updateStreaks();
+      if(prog) prog.setAttribute('stroke','url(#rg2)');
+      const pb=document.getElementById('pBadge');
+      const tl=document.getElementById('tLbl');
+      if(pb){pb.className='phase-badge pb-rest';pb.textContent='☕ وقت الراحة';}
+      if(tl) tl.textContent='راحة';
+      if(disp) disp.textContent=`${String(Math.floor(getRD()/60)).padStart(2,'0')}:00`;
+      toast('أحسنت! 50 دقيقة منجزة 🎉 — استرح الآن','ok','🏆');
+    } else {
+      tPhase='focus';
+      if(prog) prog.setAttribute('stroke','url(#rg1)');
+      const pb=document.getElementById('pBadge');
+      const tl=document.getElementById('tLbl');
+      if(pb){pb.className='phase-badge pb-focus';pb.textContent='🎯 وضع التركيز';}
+      if(tl) tl.textContent='تركيز';
+      if(disp) disp.textContent=`${String(Math.floor(getFD()/60)).padStart(2,'0')}:00`;
+      toast('الراحة انتهت! ابدأ جلسة جديدة 🚀','','⏱');
+    }
+    if(prog) prog.style.strokeDashoffset=CIRC;
+  }
+
+  // peak status
+  const pb2=document.getElementById('peakBadge');
+  if(pb2){
+    pb2.textContent=checkPeak()?'🔥 نشط — فضة ×2!':'غير نشط الآن';
+    pb2.className=checkPeak()?'bdg b-am':'bdg b-gr';
+  }
+
+  // week hours
+  const wh=document.getElementById('wHrs');
+  if(wh) wh.textContent=Math.round(S.weekSess*50/60*10)/10+'h';
+}
+
+function resetTimer(){
+  clearInterval(tIv);tRun=false;tPhase='focus';tElapsed=0;
+  document.getElementById('tBtn').textContent='▶ ابدأ';
+  const pb=document.getElementById('pBadge');
+  const tl=document.getElementById('tLbl');
+  const disp=document.getElementById('tDisp');
+  const prog=document.getElementById('rProg');
+  if(pb){pb.className='phase-badge pb-focus';pb.textContent='🎯 وضع التركيز';}
+  if(tl) tl.textContent='تركيز';
+  if(disp) disp.textContent='50:00';
+  if(prog){prog.style.strokeDashoffset=CIRC;prog.setAttribute('stroke','url(#rg1)');}
+}
+
+function updateStreaks(){
+  ['tStreak','dStreak'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=S.streak;});
+  ['tSessions','dSess'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=S.sessions;});
+  const wk=document.getElementById('wSess');
+  if(wk) wk.textContent=S.weekSess;
+}
+
+// ══════════ HEATMAP ══════════
+function renderHm(){
+  const c=document.getElementById('dashHm');
+  if(!c)return;
+  c.innerHTML='';
+  Array.from({length:91},()=>Math.floor(Math.random()*5)).forEach(v=>{
+    const d=document.createElement('div');
+    d.className='hmc h'+v;
+    d.title=v+' جلسات';
+    c.appendChild(d);
+  });
+}
+
+// ══════════ DASHBOARD ══════════
+function updateDash(){
+  updateStreaks();
+  updateCoins();
+  document.getElementById('dashGreet').textContent=getGreet();
+  const bars=[
+    {l:'القدرات — اللفظي',v:85,c:'var(--blue)'},
+    {l:'القدرات — الكمي',v:70,c:'var(--blue)'},
+    {l:'التحصيلي — الرياضيات',v:60,c:'var(--amber)'},
+    {l:'التحصيلي — العلوم',v:90,c:'var(--green)'},
+  ];
+  const dp=document.getElementById('dashBars');
+  if(dp) dp.innerHTML=bars.map(b=>`
+    <div class="fbb mb8"><span class="ts">${b.l}</span><span class="ts mono" style="color:var(--bxl)">${b.v}%</span></div>
+    <div class="pw mb12" style="height:6px"><div class="pf" style="width:${b.v}%;height:100%;background:linear-gradient(90deg,${b.c},${b.c}BB)"></div></div>
+  `).join('');
+}
+
+function getGreet(){
+  const h=new Date().getHours();
+  const n='محمد';
+  if(h<5)return `طالب الفجر ${n} 🌙`;
+  if(h<12)return `صباح الانضباط، ${n} ☀️`;
+  if(h<17)return `أهلاً، ${n} 👋`;
+  if(h<20)return `مساء الإنجاز، ${n} 🌆`;
+  return `وقت المذاكرة، ${n} 🌙`;
+}
+
+// ══════════ BIRD ══════════
+const BIRDS=[
+  {name:'الصقر',emoji:'🦅',lvl:1,min:0,max:500,desc:'مبتدئ'},
+  {name:'الهدهد',emoji:'🪶',lvl:2,min:500,max:1500,desc:'متقدم'},
+  {name:'البومة',emoji:'🦉',lvl:3,min:1500,max:3000,desc:'حكيم'},
+  {name:'الحمامة',emoji:'🕊',lvl:4,min:3000,max:5000,desc:'مسالم'},
+  {name:'العنقاء',emoji:'🔥',lvl:5,min:5000,max:10000,desc:'نخبة'},
+];
+
+function getCurBird(){ return BIRDS.slice().reverse().find(b=>S.xp>=b.min)||BIRDS[0]; }
+
+function renderBird(){
+  const b=getCurBird();
+  const pct=Math.min(100,((S.xp-b.min)/(b.max-b.min))*100);
+  ['birdEmoji','bird-emoji-disp'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=b.emoji;});
+  const em=document.getElementById('birdEmoji'); if(em) em.textContent=b.emoji;
+  const nd=document.getElementById('birdNameD'); if(nd) nd.textContent=b.name;
+  const ld=document.getElementById('birdLvlD'); if(ld) ld.textContent=`المستوى ${b.lvl} — ${b.desc}`;
+  const xf=document.getElementById('xpFill'); if(xf) xf.style.width=pct+'%';
+  const xn=document.getElementById('xpNum'); if(xn) xn.textContent=S.xp;
+  const bd=document.getElementById('birdDashBadge'); if(bd) bd.textContent=`المستوى ${b.lvl}`;
+
+  // halo
+  const halo=document.getElementById('birdHalo');
+  if(halo){
+    if(S.halo==='silver'){halo.className='bird-halo silver';}
+    else if(S.halo==='gold'){halo.className='bird-halo gold';}
+    else{halo.style.display='none';}
+  }
+
+  // path
+  const path=document.getElementById('birdPath');
+  if(path) path.innerHTML=BIRDS.map(lv=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:9px;margin-bottom:5px;background:${S.xp>=lv.min?'#1D4ED810':'var(--card2)'};border:1px solid ${S.xp>=lv.min?'#1D4ED840':'var(--border2)'}">
+      <div style="font-size:22px">${lv.emoji}</div>
+      <div style="flex:1"><div class="ts fw" style="color:${S.xp>=lv.min?'var(--bxl)':'var(--t2)'}">${lv.name}</div><div class="txs tm">${lv.min.toLocaleString()} XP</div></div>
+      ${S.xp>=lv.min?'<span class="bdg b-gr">✓ مكتسب</span>':'<span class="bdg" style="background:var(--border);color:var(--t3)">مقفل</span>'}
+    </div>
+  `).join('');
+
+  // badges
+  const bw=document.getElementById('badgesWrap');
+  if(bw){
+    const badges=[
+      {ico:'⚔',name:'فارس الدرب',cond:S.sessions>=10,desc:'10 جلسات'},
+      {ico:'🔥',name:'سلسلة أسبوع',cond:S.streak>=7,desc:'7 أيام'},
+      {ico:'💡',name:'الحكيم',cond:S.xp>=1500,desc:'1500 XP'},
+      {ico:'🏆',name:'المتميز',cond:S.silver>=1000,desc:'1000 فضة'},
+      {ico:'⏱',name:'المجتهد',cond:S.totalMins>=500,desc:'500 دقيقة'},
+      {ico:'🎯',name:'الدقيق',cond:S.arenaW>=5,desc:'5 انتصارات'},
+    ];
+    bw.innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px">'+
+      badges.map(b=>`
+        <div style="padding:10px;border-radius:9px;border:1px solid ${b.cond?'#F59E0B44':'var(--border2)'};background:${b.cond?'#F59E0B10':'var(--card2)'};text-align:center;opacity:${b.cond?1:.35};transition:all .2s">
+          <div style="font-size:22px">${b.ico}</div>
+          <div style="font-size:10px;font-weight:800;margin-top:4px;color:${b.cond?'var(--amber)':'var(--t2)'}">${b.name}</div>
+          <div class="ttiny tm">${b.desc}</div>
+        </div>
+      `).join('')+'</div>';
+  }
+  updateCoins();
+}
+
+function birdTap(){
+  addCoin(5,'🦅 طائر');
+  S.xp+=10; sv('xp');
+  toast('+5🪙 +10 XP 🦅','','✨');
+  renderBird();
+}
+
+function buyHalo(type){
+  if(type==='silver'){
+    if(S.silver<500){toast('تحتاج 500 فضة لشراء الهالة','','🪙');return;}
+    S.silver-=500; sv('silver'); S.halo='silver'; sv('halo');
+    toast('تم شراء هالة الفضة! ✨','ok','⚪');
+  } else {
+    if(S.tier!=='anqa'){toast('هالة الذهب للعنقاء فقط','','🔒');return;}
+    if(S.gold<100){toast('تحتاج 100 ذهب','','🥇');return;}
+    S.gold-=100; sv('gold'); S.halo='gold'; sv('halo');
+    toast('تم شراء الهالة الذهبية المتحركة! 🌀','ok','🥇');
+  }
+  updateCoins(); renderBird();
+}
+
+// ══════════ ROADMAP ══════════
+const RM=[
+  {t:'القدرات — اللفظي: الأجزاء 1-3',d:'المفردات والتناظر وإكمال الجمل',s:'done',h:'8h'},
+  {t:'القدرات — اللفظي: الأجزاء 4-6',d:'الفهم القرائي والاستنتاج',s:'done',h:'6h'},
+  {t:'القدرات — الكمي: الأجزاء 1-3',d:'الأعداد والعمليات الأساسية',s:'done',h:'7h'},
+  {t:'القدرات — الكمي: الأجزاء 4-5',d:'الجبر والمعادلات',s:'done',h:'5h'},
+  {t:'القدرات — الكمي: الأجزاء 6-8',d:'الهندسة والاحتمالات',s:'done',h:'6h'},
+  {t:'القدرات — الكمي: الأجزاء 9-12',d:'مسائل متقدمة وتجميعات',s:'active',h:'8h'},
+  {t:'اختبار تجريبي كامل — القدرات',d:'محاكاة موقوتة كاملة',s:'locked',h:'2h'},
+  {t:'التحصيلي — الرياضيات',d:'المنهج الكامل للثانوية',s:'locked',h:'12h'},
+  {t:'التحصيلي — الفيزياء',d:'الميكانيكا والكهرباء والموجات',s:'locked',h:'10h'},
+  {t:'التحصيلي — الكيمياء',d:'الجدول الدوري والتفاعلات',s:'locked',h:'8h'},
+  {t:'التحصيلي — الأحياء',d:'الخلية والجينات والبيئة',s:'locked',h:'6h'},
+  {t:'اختبار تجريبي كامل — التحصيلي',d:'محاكاة موقوتة كاملة',s:'locked',h:'2h'},
+];
+
+function renderRoadmap(){
+  const done=RM.filter(r=>r.s==='done').length;
+  const b=document.getElementById('rmBadge'); if(b) b.textContent=done+' / '+RM.length;
+  const c=document.getElementById('rmSteps'); if(!c) return;
+  c.innerHTML=RM.map((r,i)=>`
+    <div class="rm-step ${r.s==='done'?'done':r.s==='active'?'act':''}" onclick="rmClick(${i})">
+      <div class="rm-ico" style="background:${r.s==='done'?'#10B98120':r.s==='active'?'#1D4ED820':'var(--border)'};border:1px solid ${r.s==='done'?'#10B98140':r.s==='active'?'#1D4ED840':'var(--border2)'}">
+        ${r.s==='done'?'✅':r.s==='active'?'▶':'🔒'}
+      </div>
+      <div class="rm-body">
+        <div class="rm-title">${r.t}</div>
+        <div class="rm-desc">${r.d}</div>
+        <div class="rm-meta">
+          <span class="bdg ${r.s==='done'?'b-gr':r.s==='active'?'b-bl':''}" style="${r.s==='locked'?'background:var(--border);color:var(--t3)':''}">${r.h}</span>
+          <span style="margin-right:auto;font-size:11px;color:${r.s==='done'?'var(--green)':r.s==='active'?'var(--bxl)':'var(--t3)'}">
+            ${r.s==='done'?'✓ مكتملة':r.s==='active'?'جارية الآن ▶':'مقفلة 🔒'}
+          </span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function rmClick(i){
+  if(RM[i].s==='locked'){toast('أكمل المراحل السابقة أولاً 🔒','','');return;}
+  if(RM[i].s==='active') toast(`تعمل الآن على: ${RM[i].t} 🎯`,'ok','');
+  else toast(`✅ ${RM[i].t} — منجزة`,'ok','');
+}
+
+function freezeStreak(){
+  if(S.silver<500){toast('تحتاج 500 فضة لتجميد الوهج','','🧊');return;}
+  S.silver-=500; sv('silver'); updateCoins();
+  toast('تم تجميد الوهج! سلسلتك محمية 🧊','ok','🔥');
+}
+
+// ══════════ VAULT ══════════
+const DEF_VAULT=[
+  {q:'إذا كان x+y=10 وx-y=4، فإن xy=?',opts:['21','24','16','12'],correct:0,done:false,tip:'استخدم: (x+y)² = x²+2xy+y²'},
+  {q:'اختر المرادف لكلمة "مقتضب"',opts:['مختصر','مطوّل','مفصّل','مبهم'],correct:0,done:false,tip:'مقتضب = موجز ومختصر'},
+  {q:'إذا كان محيط مربع 24سم فإن مساحته=?',opts:['36','48','24','16'],correct:0,done:false,tip:'الضلع = 24÷4 = 6، المساحة = 6² = 36'},
+];
+
+function renderVault(){
+  const all=[...DEF_VAULT,...S.vaultQ];
+  const pend=all.filter(q=>!q.done).length;
+  ['vBadge','vTotal','vDashBadge'].forEach(id=>{
+    const e=document.getElementById(id);
+    if(e) e.textContent=pend+(id==='vBadge'?'':' أسئلة');
+  });
+  const c=document.getElementById('vaultList');
+  if(!c) return;
+  if(!all.length){
+    c.innerHTML='<div style="text-align:center;padding:28px;color:var(--t2)">الخزنة فارغة 🏛<br><span class="txs">أجب على أسئلة خاطئة وستظهر هنا تلقائياً</span></div>';
+    return;
+  }
+  c.innerHTML=all.map((q,i)=>`
+    <div class="vq" id="vq${i}">
+      <div class="fbb mb8">
+        <span class="bdg ${q.done?'b-gr':'b-re'}">${q.done?'✓ محلول':'⏳ معلق'}</span>
+        <span class="txs tm">+15🪙 عند الحل الصحيح</span>
+      </div>
+      <div class="vq-text">${q.q}</div>
+      <div class="vq-opts">
+        ${q.opts.map((o,j)=>`<div class="vo" id="vo${i}-${j}" onclick="ansVault(${i},${j})">${o}</div>`).join('')}
+      </div>
+      <div class="vq-tip" id="vt${i}">💡 ${q.tip}</div>
+    </div>
+  `).join('');
+}
+
+function ansVault(qi,oi){
+  const all=[...DEF_VAULT,...S.vaultQ];
+  const q=all[qi];
+  if(q.done) return;
+  const isCorrect=oi===q.correct;
+  const optEl=document.getElementById(`vo${qi}-${oi}`);
+  const correctEl=document.getElementById(`vo${qi}-${q.correct}`);
+  const tipEl=document.getElementById(`vt${qi}`);
+  if(isCorrect){
+    if(optEl) optEl.classList.add('correct');
+    q.done=true;
+    addCoin(15,'🏛 حل صحيح من الخزنة');
+    S.xp+=20; sv('xp');
+    toast('صحيح! +15🪙 +20XP 🏆','ok','✅');
+  } else {
+    if(optEl) optEl.classList.add('wrong');
+    if(correctEl) setTimeout(()=>correctEl.classList.add('correct'),400);
+    toast('خطأ! راجع التلميح 💡','','❌');
+  }
+  if(tipEl) tipEl.classList.add('show');
+  setTimeout(()=>renderVault(),1200);
+}
+
+function addSampleQ(){
+  const samples=[
+    {q:'ما ناتج (3+4i)(3-4i)؟',opts:['25','7','0','12'],correct:0,done:false,tip:'(a+b)(a-b) = a²+b² لأن i²=-1'},
+    {q:'اختر مضاد كلمة "شحيح"',opts:['بخيل','سخي','قليل','نادر'],correct:1,done:false,tip:'شحيح = بخيل، ضده سخي = كريم'},
+  ];
+  const s=samples[Math.floor(Math.random()*samples.length)];
+  S.vaultQ.push({...s}); sv('vaultQ');
+  renderVault();
+  toast('تمت إضافة سؤال للخزنة 🏛','ok','');
+}
+
+// ══════════ SOCIAL ══════════
+const ALL_FRIENDS=[
+  {name:'أحمد الشهري',user:'@ahmed_sh',av:'أ',col:'#1D4ED8',streak:18,progress:82,pub:true,grade:'ثالث ثانوي'},
+  {name:'سلطان العتيبي',user:'@sultan_e',av:'س',col:'#7C3AED',streak:7,progress:55,pub:true,grade:'ثاني ثانوي'},
+  {name:'فاطمة الزهراني',user:'@fatima_z',av:'ف',col:'#9F1239',streak:25,progress:91,pub:false,grade:'ثالث ثانوي'},
+  {name:'عبدالله الدوسري',user:'@abdullahd',av:'ع',col:'#0F766E',streak:3,progress:40,pub:true,grade:'أول جامعي'},
+  {name:'نورة السعد',user:'@noura_s',av:'ن',col:'#B45309',streak:14,progress:68,pub:true,grade:'ثالث ثانوي'},
+  {name:'خالد الغامدي',user:'@khaled_g',av:'خ',col:'#1D4ED8',streak:22,progress:77,pub:true,grade:'ثاني ثانوي'},
+];
+
+function renderSocial(){
+  renderFriends(ALL_FRIENDS);
+  renderMyFriends();
+  document.getElementById('myFCount').textContent=S.myFriends.length;
+}
+
+function renderFriends(list){
+  const c=document.getElementById('friendsList'); if(!c) return;
+  c.innerHTML=list.length?list.map(f=>fCard(f)).join(''):'<div style="text-align:center;padding:24px;color:var(--t2)">لا نتائج</div>';
+}
+
+function fCard(f){
+  const isMy=S.myFriends.includes(f.user);
+  const show=f.pub||isMy;
+  return `
+    <div class="f-card">
+      <div class="f-av" style="background:${f.col}">${f.av}</div>
+      <div style="flex:1;min-width:0">
+        <div class="f-name">${f.name}</div>
+        <div class="f-meta">
+          <span class="mono" style="color:var(--t3);font-size:10px">${f.user}</span>
+          ${show?`<span class="f-sk">🔥${f.streak}</span>`:'<span class="pvt-b">🔒 خاص</span>'}
+          ${show?`<div class="f-pm"><div class="f-pf" style="width:${f.progress}%"></div></div><span style="font-size:10px;color:var(--t2)">${f.progress}%</span>`:''}
+        </div>
+        <div class="ttiny tm">${f.grade}</div>
+      </div>
+      ${isMy?'<span class="bdg b-gr" style="flex-shrink:0">✓ صديق</span>':
+        `<button class="add-btn" onclick="addFriend('${f.user}',event)">+ إضافة</button>`}
+    </div>`;
+}
+
+function renderMyFriends(){
+  const c=document.getElementById('myFriendsList'); if(!c) return;
+  const list=ALL_FRIENDS.filter(f=>S.myFriends.includes(f.user));
+  c.innerHTML=list.length?list.map(f=>`
+    <div class="fbb mb8" style="padding:9px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="f-av" style="background:${f.col};width:30px;height:30px;font-size:11px">${f.av}</div>
+        <div><div class="ts fw">${f.name}</div><div class="ttiny tm">${f.user}</div></div>
+      </div>
+      <span class="bdg b-am">🔥${f.streak}</span>
+    </div>
+  `).join(''):'<div class="txs tm" style="text-align:center;padding:16px">أضف أصدقاء من القائمة</div>';
+}
+
+function filterFriends(q){
+  const fl=ALL_FRIENDS.filter(f=>f.name.includes(q)||f.user.includes(q.toLowerCase()));
+  renderFriends(fl);
+}
+
+function addFriend(user,e){
+  if(e) e.stopPropagation();
+  if(!S.myFriends.includes(user)){
+    S.myFriends.push(user); sv('myFriends');
+    toast('تمت إضافة الصديق 👥','ok','');
+    renderSocial();
+  }
+}
+
+function togglePv(key,el){
+  S.privacy[key]=!S.privacy[key]; sv('privacy');
+  el.className='tog '+(S.privacy[key]?'on':'off');
+  toast(`${key==='progress'?'إظهار التقدم':'إظهار السلسلة'}: ${S.privacy[key]?'مفعّل':'مخفي'}`,'','🔐');
+}
+
+// ══════════ ARENA ══════════
+function renderArena(){
+  const el=document.getElementById('arenaList'); if(!el) return;
+  const aw=document.getElementById('arenaW'); if(aw) aw.textContent=S.arenaW;
+  const al=document.getElementById('arenaL'); if(al) al.textContent=S.arenaL;
+  const opponents=ALL_FRIENDS.slice(0,4);
+  el.innerHTML=opponents.map(f=>`
+    <div class="arena-card" onclick="startArena('${f.user}','${f.name}')">
+      <div class="f-av" style="background:${f.col};width:36px;height:36px;font-size:13px">${f.av}</div>
+      <div style="flex:1"><div class="ts fw">${f.name}</div><div class="txs tm">🔥 ${f.streak} — ${f.grade}</div></div>
+      <button class="btn btn-re" style="padding:6px 12px;font-size:12px">تحدَّ ⚔</button>
+    </div>
+  `).join('');
+}
+
+function startArena(user,name){
+  const win=Math.random()>0.4;
+  if(win){S.arenaW++;sv('arenaW');addCoin(20,'⚔ انتصار الميدان');toast(`انتصرت على ${name}! +20🪙 🏆`,'ok','⚔');}
+  else{S.arenaL++;sv('arenaL');toast(`خسرت أمام ${name}. تدرّب أكثر!`,'','😤');}
+  renderArena();
+}
+
+// ══════════ REGIONS ══════════
+function renderRegions(){
+  const c=document.getElementById('regionsList'); if(!c) return;
+  const regions=[
+    {name:'الرياض',city:'الرياض',score:9840,av:'ر',col:'#1D4ED8'},
+    {name:'جدة',city:'مكة المكرمة',score:8720,av:'ج',col:'#0F766E'},
+    {name:'الدمام',city:'المنطقة الشرقية',score:7950,av:'د',col:'#7C3AED'},
+    {name:'مكة',city:'مكة المكرمة',score:7100,av:'م',col:'#9F1239'},
+    {name:'بقيق',city:'المنطقة الشرقية',score:6200,av:'ب',col:'#B45309'},
+    {name:'أبها',city:'عسير',score:5800,av:'أ',col:'#065F46'},
+  ];
+  const medals=['🥇','🥈','🥉'];
+  c.innerHTML=regions.map((r,i)=>`
+    <div class="lb-row" style="${r.name==='بقيق'?'border-color:#1D4ED855;background:#1D4ED808':''}">
+      <div class="lb-rank">${medals[i]||i+1}</div>
+      <div class="lb-av" style="background:${r.col}">${r.av}</div>
+      <div class="lb-info">
+        <div class="lb-name">${r.name} ${r.name==='بقيق'?'🏠':''}</div>
+        <div class="lb-city">${r.city}</div>
+      </div>
+      <div class="lb-score">${r.score.toLocaleString()}</div>
+    </div>
+  `).join('');
+}
+
+// ══════════ PARENT HUB ══════════
+function renderParent(){
+  const badge=document.getElementById('parentBadge');
+  const c=document.getElementById('parentContent');
+  if(!c) return;
+  if(S.tier==='shaheen'){
+    if(badge) badge.innerHTML='<span class="bdg b-bl">مقفل — يحتاج السند</span>';
+    c.innerHTML=`
+      <div class="parent-locked">
+        <div style="font-size:56px;opacity:.3;margin-bottom:18px">👨‍👩‍👦</div>
+        <div style="font-size:20px;font-weight:800;margin-bottom:8px">بوابة الأهل — حصرية للسند والعنقاء</div>
+        <p class="ts tm" style="max-width:340px;line-height:1.8;margin-bottom:22px">لوحة تحكم حية تُظهر لولي الأمر تقدم ابنه لحظةً بلحظة. رسوم بيانية، تنبيهات فورية، ودليل الانتقال الجامعي.</p>
+        <button class="btn btn-bl" onclick="go('pricing')">ارتقِ للسند ★ — 59 ر.س/شهر</button>
+      </div>`;
+    return;
+  }
+  if(badge) badge.innerHTML='<span class="bdg b-am">السند ★ مفعّل</span>';
+  c.innerHTML=`
+    <div class="sg">
+      <div class="sc" style="--ac:var(--green)"><div class="sc-ico" style="background:#10B98120">📈</div><div class="sc-val">+18%</div><div class="sc-lbl">تحسن هذا الأسبوع</div><div class="sc-ch cup">↑ رائع!</div></div>
+      <div class="sc" style="--ac:var(--blue)"><div class="sc-ico" style="background:#1D4ED820">⏱</div><div class="sc-val">${(S.weekSess*.83).toFixed(1)}h</div><div class="sc-lbl">دراسة هذا الأسبوع</div><div class="sc-ch cup">↑ فوق الهدف</div></div>
+      <div class="sc" style="--ac:var(--amber)"><div class="sc-ico" style="background:#F59E0B20">🔥</div><div class="sc-val">${S.streak}</div><div class="sc-lbl">السلسلة الحالية</div><div class="sc-ch cup">↑ أفضل شخصي</div></div>
+      <div class="sc" style="--ac:var(--purple)"><div class="sc-ico" style="background:#8B5CF620">🎯</div><div class="sc-val">73%</div><div class="sc-lbl">إكمال الخطة</div><div class="sc-ch cup">↑ على المسار</div></div>
+    </div>
+    <div class="g2 mt">
+      <div class="card">
+        <div class="ct"><div class="dot" style="background:var(--amber)"></div>تنبيهات الإنجاز</div>
+        <div class="al mb8"><div class="al-dot" style="background:var(--amber)"></div><div class="al-body"><div class="al-t">🏆 أنجز 7 أيام متتالية!</div><div class="al-s">أفضل سلسلة هذا الشهر</div></div><div class="al-time">منذ ساعة</div></div>
+        <div class="al mb8"><div class="al-dot" style="background:var(--green)"></div><div class="al-body"><div class="al-t">📊 أتم قسم القدرات اللفظي</div><div class="al-s">درجة المحاكاة: 88%</div></div><div class="al-time">أمس</div></div>
+        <div class="al"><div class="al-dot" style="background:var(--blue)"></div><div class="al-body"><div class="al-t">⏱ ${S.sessions} جلسات مكتملة هذا الأسبوع</div><div class="al-s">كل جلسة 50 دقيقة</div></div><div class="al-time">اليوم</div></div>
+      </div>
+      <div class="card">
+        <div class="ct"><div class="dot" style="background:var(--green)"></div>دليل الانتقال الجامعي للأهل</div>
+        <div class="al mb8"><div style="font-size:16px">🏛</div><div class="al-body"><div class="al-t">اختيار الجامعة المناسبة</div><div class="al-s">معايير الاختيار حسب المعدل والمنطقة</div></div></div>
+        <div class="al mb8"><div style="font-size:16px">📋</div><div class="al-body"><div class="al-t">متطلبات القبول</div><div class="al-s">القدرات والتحصيلي وكيف تُحسب الموزونة</div></div></div>
+        <div class="al"><div style="font-size:16px">💼</div><div class="al-body"><div class="al-t">التسجيل والإجراءات</div><div class="al-s">حساب المواطن والقبول الموحد</div></div></div>
+      </div>
+    </div>`;
+}
+
+// ══════════ FEATHERS ══════════
+function toggleFeather(key,el){
+  const body=document.getElementById('fb-'+key);
+  if(!body) return;
+  const isOpen=body.classList.contains('show');
+  document.querySelectorAll('.f-body').forEach(b=>b.classList.remove('show'));
+  document.querySelectorAll('.feather').forEach(f=>f.classList.remove('open'));
+  if(!isOpen){
+    body.classList.add('show');
+    el.classList.add('open');
+    renderFeatherMsgs(key);
+  }
+}
+
+function renderFeatherMsgs(key){
+  const c=document.getElementById('fm-'+key); if(!c) return;
+  const msgs=S.feathers[key]||[];
+  c.innerHTML=msgs.length?msgs.slice().reverse().map(m=>`
+    <div class="msg-bbl">
+      <div class="msg-meta"><span>${m.by||'أنت'}</span><span>${m.date}</span></div>
+      <div class="msg-txt">${m.text}</div>
+    </div>
+  `).join(''):'<div class="txs tm tc" style="padding:12px">لا رسائل بعد</div>';
+}
+
+function addMsg(key){
+  const inp=document.getElementById('fi-'+key); if(!inp||!inp.value.trim()) return;
+  if(!S.feathers[key]) S.feathers[key]=[];
+  S.feathers[key].push({text:inp.value.trim(),date:new Date().toLocaleDateString('ar-SA'),by:'أنت'});
+  sv('feathers'); inp.value='';
+  renderFeatherMsgs(key);
+  addCoin(2,'🪶 ريشة');
+  toast('تم حفظ الرسالة 🪶','ok','');
+}
+
+function addGrayMsg(){
+  const inp=document.getElementById('fi-gray'); if(!inp||!inp.value.trim()) return;
+  if(!S.feathers.gray) S.feathers.gray=[];
+  S.feathers.gray.push({text:inp.value.trim(),date:new Date().toLocaleDateString('ar-SA'),by:'أنت'});
+  sv('feathers'); inp.value='';
+  renderFeatherMsgs('gray');
+  // System response
+  const responses=[
+    'الإحساس بالضغط طبيعي جداً — هذا يعني إنك تهتم. تنفس وعد.',
+    'كل طالب مرّ بما تشعر به. الفرق هو من يصمد. أنت ستصمد.',
+    'الخزنة تحفظ كل مشاعرك — وكل إنجازاتك. استمر.',
+    'الفجر قريب. ما تحس فيه الآن سيتحول لقوة بعد الاختبار.',
+  ];
+  const resp=responses[Math.floor(Math.random()*responses.length)];
+  setTimeout(()=>{
+    S.feathers.gray.push({text:'💙 درب: '+resp,date:new Date().toLocaleDateString('ar-SA'),by:'درب 🤖'});
+    sv('feathers'); renderFeatherMsgs('gray');
+    toast(resp.slice(0,40)+'...','ok','💙');
+  },800);
+}
+
+// ══════════ CAREER ══════════
+function renderCareer(){
+  const skills=[
+    {ico:'⏱',name:'إدارة الوقت',desc:`${Math.round(S.totalMins/60)} ساعة تركيز موثّقة`},
+    {ico:'🧠',name:'الانضباط الأكاديمي',desc:`${S.sessions} جلسات مكتملة`},
+    {ico:'🔥',name:'الثبات والاستمرارية',desc:`${S.streak} يوم سلسلة`},
+    {ico:'🏛',name:'التعلم الذاتي',desc:`${(DEF_VAULT.length+S.vaultQ.length)} أسئلة تدريبية`},
+  ];
+  const c=document.getElementById('cvSkills');
+  if(c) c.innerHTML=skills.map(s=>`
+    <div class="fbc g8 mb8" style="padding:9px;background:var(--s1);border-radius:7px;border:1px solid var(--border)">
+      <span style="font-size:16px">${s.ico}</span>
+      <div><div class="ts fw">${s.name}</div><div class="txs tm">${s.desc}</div></div>
+    </div>
+  `).join('');
+  const ch=document.getElementById('certHours');
+  if(ch) ch.textContent=Math.round(S.totalMins/60)+' ساعة موثّقة';
+}
+
+function genCV(){
+  const b=getCurBird();
+  toast(`تم توليد CV — ${S.sessions} جلسة، ${S.streak} يوم، المستوى ${b.lvl} 📄`,'ok','💼');
+}
+
+function genCert(){
+  if(S.tier!=='anqa'){toast('الشهادة الرسمية للعنقاء فقط 🔒','','🏅');return;}
+  toast(`شهادة انضباط موثّقة — ${Math.round(S.totalMins/60)} ساعة 🏅`,'ok','');
+}
+
+// ══════════ SETTINGS ══════════
+function saveSettings(){
+  const n=document.getElementById('inpName')?.value;
+  const u=document.getElementById('inpUser')?.value;
+  if(n){
+    document.getElementById('sbName').textContent=n.split(' ')[0];
+    document.getElementById('settName').textContent=n;
+    document.getElementById('sbAva').textContent=n.charAt(0);
+  }
+  if(u) document.getElementById('settUser').textContent=u;
+  toast('تم حفظ الإعدادات ✓','ok','⚙');
+}
+
+// ══════════ NOTIFICATIONS ══════════
+function showNotif(){
+  toast(`${S.sessions} جلسات اليوم 🔥 ${S.streak} يوم سلسلة — رائع!`,'ok','🔔');
+}
+
+// ══════════ INIT ══════════
+function init(){
+  // Set tier visuals
+  const T=S.tier;
+  const C={shaheen:'ts',sanad:'tn',anqa:'ta'};
+  const L={shaheen:'الشاهين',sanad:'السند',anqa:'العنقاء'};
+  const badge=document.getElementById('sbTier');
+  badge.className='ava-tier '+C[T]; badge.textContent=L[T];
+  document.getElementById('pLock').style.display=(T==='shaheen')?'':'none';
+  const shield=document.getElementById('sbShield');
+  shield.style.display=(T==='sanad'||T==='anqa')?'':'none';
+  const dlc=document.getElementById('dailyLimitCard');
+  if(dlc) dlc.style.display=(T==='shaheen')?'':'none';
+
+  // Init all displays
+  updateCoins();
+  updateStreaks();
+  updateVaultProgress();
+  renderHm();
+  updateDash();
+
+  // Peak badge
+  const pb=document.getElementById('peakBadge');
+  if(pb){pb.textContent=checkPeak()?'🔥 نشط — فضة ×2!':'غير نشط الآن';pb.className=checkPeak()?'bdg b-am':'bdg b-gr';}
+  if(S.tier==='anqa') addCoin(1,'🥇 ذكرى يومية',true);
+}
+
+// Run
+document.addEventListener('DOMContentLoaded',init);
+</script>
 </body>
 </html>
