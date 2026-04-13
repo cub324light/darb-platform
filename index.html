@@ -13,9 +13,6 @@
             --main-gold: #c6a355;
             --text-white: #ffffff;
             --input-bg: #0d1117;
-            --google-red: #db4437;
-            --apple-black: #000000;
-            --fb-blue: #4267B2;
         }
 
         body {
@@ -24,71 +21,90 @@
             color: var(--text-white);
             margin: 0;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            overflow-x: hidden;
+        }
+
+        /* القائمة العلوية */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 5%;
+            background: var(--card-bg);
+            width: 100%;
+            position: fixed;
+            top: 0;
+            z-index: 1000;
+            box-sizing: border-box;
+            border-bottom: 1px solid #30363d;
+        }
+
+        /* كروت الميزات */
+        .content {
+            margin-top: 100px;
+            width: 90%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding-bottom: 50px;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid #30363d;
+            cursor: pointer;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card:hover { transform: scale(1.02); border-color: var(--main-gold); }
+
+        .lock-icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--main-gold);
+            font-size: 20px;
+        }
+
+        /* نافذة الدخول المنبثقة */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
         }
 
         .auth-container {
             width: 90%;
-            max-width: 400px;
+            max-width: 380px;
             background: var(--card-bg);
             padding: 30px;
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             text-align: center;
-            border: 1px solid #30363d;
-        }
-
-        .falcon-logo {
-            font-size: 50px;
-            color: var(--main-gold);
-            margin-bottom: 10px;
-        }
-
-        h2 { margin-bottom: 30px; font-weight: 700; }
-
-        .tabs {
-            display: flex;
-            margin-bottom: 25px;
-            background: var(--input-bg);
-            border-radius: 10px;
-            padding: 5px;
-        }
-
-        .tab {
-            flex: 1;
-            padding: 10px;
-            cursor: pointer;
-            border-radius: 8px;
-            transition: 0.3s;
-        }
-
-        .tab.active {
-            background: var(--main-gold);
-            color: #000;
-            font-weight: bold;
-        }
-
-        .input-group {
-            margin-bottom: 15px;
-            text-align: right;
+            border: 1px solid var(--main-gold);
         }
 
         input {
             width: 100%;
             padding: 12px;
-            margin-top: 5px;
+            margin: 10px 0;
             border-radius: 10px;
             border: 1px solid #30363d;
             background: var(--input-bg);
             color: white;
             box-sizing: border-box;
-            outline: none;
         }
-
-        input:focus { border-color: var(--main-gold); }
 
         .main-btn {
             width: 100%;
@@ -98,114 +114,82 @@
             border-radius: 10px;
             color: #000;
             font-weight: bold;
-            font-size: 16px;
             cursor: pointer;
             margin-top: 10px;
-            transition: 0.3s;
-        }
-
-        .main-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(198, 163, 85, 0.3); }
-
-        .divider {
-            margin: 25px 0;
-            position: relative;
-            border-bottom: 1px solid #30363d;
-        }
-
-        .divider span {
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--card-bg);
-            padding: 0 15px;
-            color: #8b949e;
-            font-size: 14px;
-        }
-
-        .social-btns {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
         }
 
         .social-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+            width: 100%;
             padding: 10px;
+            margin-top: 10px;
             border-radius: 10px;
-            cursor: pointer;
             border: 1px solid #30363d;
-            transition: 0.3s;
-            font-size: 14px;
+            background: transparent;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
         }
-
-        .btn-google { color: var(--google-red); }
-        .btn-apple { color: #fff; background: #000; }
-        .btn-fb { color: var(--fb-blue); }
-
-        .social-btn:hover { background: #30363d; }
-
     </style>
 </head>
 <body>
 
-    <div class="auth-container">
-        <div class="falcon-logo">
-            <i class="fas fa-feather-alt"></i> </div>
-        <h2 id="auth-title">منصة درب</h2>
+    <nav>
+        <div style="font-size: 24px; color: var(--main-gold); font-weight: bold;">🦅 درب</div>
+        <button class="main-btn" style="width: auto; padding: 5px 20px; margin:0;" onclick="openAuth()">دخول</button>
+    </nav>
 
-        <div class="tabs">
-            <div class="tab active" onclick="switchTab('signin')">دخول</div>
-            <div class="tab" onclick="switchTab('signup')">تسجيل جديد</div>
+    <div class="content">
+        <h2 style="text-align: center;">مرحباً بك في درب القمة 🚀</h2>
+        
+        <div class="feature-card" onclick="checkAuth('المدار')">
+            <h3>⏱️ المدار</h3>
+            <p>نظم وقت مذاكرتك للتحصيلي بذكاء.</p>
+            <i class="fas fa-lock lock-icon"></i>
         </div>
 
-        <div id="auth-form">
-            <div class="input-group">
-                <input type="email" placeholder="البريد الإلكتروني">
-            </div>
-            <div class="input-group">
-                <input type="password" placeholder="كلمة المرور">
-            </div>
-            <button class="main-btn" id="submit-btn">تسجيل الدخول</button>
+        <div class="feature-card" onclick="checkAuth('الخزنة')">
+            <h3>📦 الخزنة</h3>
+            <p>احفظ الأسئلة الصعبة وراجعها لاحقاً.</p>
+            <i class="fas fa-lock lock-icon"></i>
         </div>
 
-        <div class="divider">
-            <span>أو عبر</span>
+        <div class="feature-card" onclick="checkAuth('الرادار')">
+            <h3>📡 الرادار</h3>
+            <p>تتبع تقدمك ومستواك بين الطلاب.</p>
+            <i class="fas fa-lock lock-icon"></i>
         </div>
+    </div>
 
-        <div class="social-btns">
-            <div class="social-btn btn-google">
-                <i class="fab fa-google"></i> متابعة باستخدام جوجل
-            </div>
-            <div class="social-btn btn-apple">
-                <i class="fab fa-apple"></i> متابعة باستخدام أبل
-            </div>
-            <div class="social-btn btn-fb">
-                <i class="fab fa-facebook"></i> متابعة باستخدام فيسبوك
-            </div>
+    <div id="auth-modal" class="modal-overlay">
+        <div class="auth-container">
+            <div style="text-align: left; cursor: pointer;" onclick="closeAuth()">✕</div>
+            <h2 id="modal-title">تسجيل الدخول</h2>
+            <input type="email" placeholder="البريد الإلكتروني">
+            <input type="password" placeholder="كلمة المرور">
+            <button class="main-btn">دخول</button>
+            <p style="font-size: 13px;">ليس لديك حساب؟ <a href="#" onclick="openSignUp()" style="color:var(--main-gold)">إنشاء حساب جديد</a></p>
+            <hr style="border: 0.1px solid #30363d; margin: 20px 0;">
+            <button class="social-btn" style="color: #db4437;"><i class="fab fa-google"></i> جوجل</button>
+            <button class="social-btn"><i class="fab fa-apple"></i> أبل</button>
+            <button class="social-btn" style="color: #4267B2;"><i class="fab fa-facebook"></i> فيسبوك</button>
         </div>
     </div>
 
     <script>
-        function switchTab(type) {
-            const tabs = document.querySelectorAll('.tab');
-            const submitBtn = document.getElementById('submit-btn');
-            const authTitle = document.getElementById('auth-title');
+        function openAuth() { document.getElementById('auth-modal').style.display = 'flex'; }
+        function closeAuth() { document.getElementById('auth-modal').style.display = 'none'; }
+        
+        function checkAuth(name) {
+            alert("عذراً! ميزة " + name + " تتطلب تسجيل دخول أولاً.");
+            openAuth();
+        }
 
-            tabs.forEach(t => t.classList.remove('active'));
-            
-            if(type === 'signin') {
-                tabs[0].classList.add('active');
-                submitBtn.innerText = 'تسجيل الدخول';
-                authTitle.innerText = 'منصة درب - دخول';
-            } else {
-                tabs[1].classList.add('active');
-                submitBtn.innerText = 'إنشاء حساب';
-                authTitle.innerText = 'منصة درب - تسجيل';
-            }
+        function openSignUp() {
+            alert("جاري تحويلك لصفحة إنشاء الحساب والبيانات الشخصية...");
+            // هنا مستقبلاً بنحط رابط صفحة الـ Sign up
         }
     </script>
 </body>
