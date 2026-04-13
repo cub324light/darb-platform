@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>درب - بيئة التركيز والانضباط</title>
+    <style>
+        /* هندسة الألوان (الهوية البصرية) */
+        :root {
+            --dark-bg: #0f0f1a;
+            --panel-bg: #1a1a2e;
+            --gold: #f9a826;
+            --silver: #e0e0e0;
+            --danger: #e94560;
+            --success: #4CAF50;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            text-align: center;
+        }
+
+        /* الشريط العلوي (الاقتصاد والوهج) */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 30px;
+            background-color: var(--panel-bg);
+            border-bottom: 2px solid var(--gold);
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .silver-text { color: var(--silver); }
+        .gold-text { color: var(--gold); }
+        .streak-text { color: var(--danger); }
+
+        /* منطقة الطائر */
+        .avatar-section {
+            margin: 40px auto;
+        }
+        .avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 4px solid var(--gold);
+            cursor: pointer;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+            /* استخدمنا صورة مؤقتة للعنقاء */
+            background: url('https://img.freepik.com/free-vector/phoenix-bird-concept-illustration_114360-6421.jpg') center/cover;
+            box-shadow: 0 0 30px rgba(249, 168, 38, 0.4);
+            margin: 0 auto;
+        }
+        .avatar:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 50px rgba(249, 168, 38, 0.8);
+        }
+        .hint { color: #888; font-size: 0.9rem; margin-top: 10px; }
+
+        /* محرك المدار (المؤقت) */
+        .timer-panel {
+            background-color: var(--panel-bg);
+            width: 300px;
+            margin: 20px auto;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .time-display {
+            font-size: 4rem;
+            color: var(--gold);
+            margin: 20px 0;
+            font-weight: bold;
+            font-variant-numeric: tabular-nums;
+        }
+        .btn {
+            background-color: var(--gold);
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 100%;
+        }
+        .btn:hover { background-color: #e09600; transform: translateY(-3px); }
+        .btn-danger { background-color: transparent; color: var(--danger); border: 2px solid var(--danger); margin-top: 10px; }
+        .btn-danger:hover { background-color: var(--danger); color: white; }
+
+        /* عقل الطائر (The Inner Sanctum) - الشاشة المنبثقة */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .modal-content {
+            margin-top: 15vh;
+        }
+        .feathers-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 40px;
+        }
+        .feather {
+            width: 120px;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid;
+            cursor: pointer;
+            transition: 0.3s;
+            background: rgba(255,255,255,0.05);
+        }
+        .feather:hover { transform: translateY(-10px); background: rgba(255,255,255,0.1); }
+        .f-white { border-color: white; color: white; }
+        .f-gold { border-color: var(--gold); color: var(--gold); }
+        .f-green { border-color: var(--success); color: var(--success); }
+        
+        .close-modal {
+            margin-top: 50px;
+            background: transparent;
+            border: none;
+            color: #888;
+            font-size: 1.2rem;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="streak-text">🔥 الوهج: <span id="streakCount">0</span> أيام</div>
+        <div>
+            <span class="silver-text">🪙 <span id="silverCount">0</span> فضة</span> | 
+            <span class="gold-text">👑 <span id="goldCount">0</span> ذهب</span>
+        </div>
+    </div>
+
+    <div class="avatar-section">
+        <div class="avatar" onclick="openSanctum()"></div>
+        <div class="hint">(اضغط على العنقاء لدخول عقل الطائر)</div>
+    </div>
+
+    <div class="timer-panel">
+        <h3 style="margin:0;">محرك المدار (50/10)</h3>
+        <div class="time-display" id="timeDisplay">50:00</div>
+        <button class="btn" id="mainBtn" onclick="toggleTimer()">ابدأ المدار</button>
+        <button class="btn btn-danger" id="resetBtn" onclick="resetTimer()" style="display:none;">كسر المدار (انسحاب)</button>
+    </div>
+
+    <div class="modal" id="sanctumModal">
+        <div class="modal-content">
+            <h1 class="gold-text">ملاذك السري (عقل العنقاء)</h1>
+            <p>هنا تُحفظ ذكرياتك، انتصاراتك، ودوافعك الحقيقية.</p>
+            
+            <div class="feathers-container">
+                <div class="feather f-white" onclick="alert('صوت الوالد: كفو يا ولدي، أدري إنك تتعب في دراستك، فخور فيك واستمر!')">
+                    <h3>🎧</h3>
+                    <p>ريشة صدى الفخر</p>
+                </div>
+                <div class="feather f-gold" onclick="alert('رسالتك لنفسك: تذكر أن هدفك هو الهندسة، لا تسمح للتعب أن يسرق حلمك.')">
+                    <h3>🚀</h3>
+                    <p>ريشة المستقبل</p>
+                </div>
+                <div class="feather f-green" onclick="alert('جاري فتح ألبوم صور الميدان الخاص بك...')">
+                    <h3>📸</h3>
+                    <p>ريشة الميدان</p>
+                </div>
+            </div>
+
+            <button class="close-modal" onclick="closeSanctum()">خروج (خفقان أجنحة)</button>
+        </div>
+    </div>
+
+    <script>
+        // 1. استدعاء البيانات من الذاكرة المحلية (كي لا تضيع عند التحديث)
+        let silver = parseInt(localStorage.getItem('darb_silver')) || 0;
+        let streak = parseInt(localStorage.getItem('darb_streak')) || 1;
+        let gold = parseInt(localStorage.getItem('darb_gold')) || 0; // لطبقة العنقاء فقط
+        
+        let timerInterval;
+        let timeLeft = 50 * 60; // 50 دقيقة بالثواني
+        let isRunning = false;
+        let elapsedMinutes = 0;
+
+        // 2. تحديث الواجهة
+        function updateStatsUI() {
+            document.getElementById('silverCount').innerText = silver;
+            document.getElementById('streakCount').innerText = streak;
+            document.getElementById('goldCount').innerText = gold;
+        }
+
+        function updateTimerUI() {
+            let minutes = Math.floor(timeLeft / 60);
+            let seconds = timeLeft % 60;
+            document.getElementById('timeDisplay').innerText = 
+                (minutes < 10 ? '0' : '') + minutes + ':' + 
+                (seconds < 10 ? '0' : '') + seconds;
+        }
+
+        // 3. هندسة المؤقت (المدار)
+        function toggleTimer() {
+            let btn = document.getElementById('mainBtn');
+            let resetBtn = document.getElementById('resetBtn');
+
+            if (isRunning) {
+                // إيقاف مؤقت
+                clearInterval(timerInterval);
+                btn.innerText = "أكمل المدار";
+                isRunning = false;
+            } else {
+                // بدء أو استكمال
+                btn.innerText = "إيقاف مؤقت";
+                resetBtn.style.display = "block";
+                isRunning = true;
+                
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    updateTimerUI();
+
+                    // مكافأة فضة لكل دقيقة تمر
+                    if (timeLeft % 60 === 0 && timeLeft !== 50*60) {
+                        silver += 1;
+                        localStorage.setItem('darb_silver', silver);
+                        updateStatsUI();
+                    }
+
+                    // عند انتهاء المدار
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        isRunning = false;
+                        silver += 50; // بونص الخاتمة
+                        localStorage.setItem('darb_silver', silver);
+                        updateStatsUI();
+                        
+                        alert("كفو يا بطل! تم إنهاء المدار وإضافة 50 فضة مكافأة.");
+                        
+                        // تجهيز وقت الاستراحة
+                        timeLeft = 10 * 60;
+                        updateTimerUI();
+                        btn.innerText = "ابدأ الاستراحة (10د)";
+                        resetBtn.style.display = "none";
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetTimer() {
+            if(confirm("إذا كسرت المدار الآن لن تحصل على بونص الخاتمة. هل أنت متأكد؟")) {
+                clearInterval(timerInterval);
+                isRunning = false;
+                timeLeft = 50 * 60;
+                updateTimerUI();
+                document.getElementById('mainBtn').innerText = "ابدأ المدار";
+                document.getElementById('resetBtn').style.display = "none";
+            }
+        }
+
+        // 4. التفاعل مع عقل الطائر
+        function openSanctum() {
+            document.getElementById('sanctumModal').style.display = 'block';
+        }
+
+        function closeSanctum() {
+            document.getElementById('sanctumModal').style.display = 'none';
+        }
+
+        // التهيئة الأولى عند فتح الصفحة
+        updateStatsUI();
+        updateTimerUI();
+    </script>
+</body>
+</html>
