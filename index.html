@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>درب | التطبيق الرسمي</title>
+    <title>درب | DARB</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #050708;
@@ -11,104 +12,182 @@
             --border: #21262d;
             --gold: #f0b90b;
             --gold-dim: #947a1c;
+            --text-main: #ffffff;
             --text-sec: #8b949e;
-            --danger: #f85149;
+            --accent: #007aff;
         }
 
         body {
-            margin: 0; background: var(--bg); color: white;
-            font-family: 'Tajawal', sans-serif; display: flex; height: 100vh; overflow: hidden;
+            margin: 0; background: var(--bg); color: var(--text-main);
+            font-family: 'Tajawal', sans-serif; display: flex; flex-direction: column;
+            height: 100vh; overflow: hidden;
         }
 
-        /* Sidebar - مستوحى من كود ريبلت */
+        /* شريط علوي للجوال */
+        header {
+            background: var(--surface); padding: 15px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border); z-index: 100;
+        }
+
+        .menu-btn { background: none; border: none; color: var(--gold); fontSize: 24px; cursor: pointer; }
+
+        /* القائمة الجانبية المخصصة للجوال */
         aside {
-            width: 240px; background: var(--surface); border-left: 1px solid var(--border);
-            display: flex; flexDirection: column; padding: 20px; box-sizing: border-box;
+            position: fixed; top: 0; right: -250px; width: 250px; height: 100%;
+            background: var(--surface); transition: 0.3s; z-index: 1000;
+            padding: 20px; border-left: 1px solid var(--border);
             display: flex; flex-direction: column;
         }
+        aside.open { right: 0; }
+        .close-aside { align-self: flex-start; margin-bottom: 20px; cursor: pointer; color: var(--text-sec); }
 
-        .logo { font-size: 26px; font-weight: 900; color: var(--gold); margin-bottom: 30px; }
-
-        nav { flex: 1; }
         .nav-item {
-            display: flex; align-items: center; gap: 12px; padding: 12px;
-            color: var(--text-sec); text-decoration: none; border-radius: 12px;
-            transition: 0.2s; cursor: pointer; margin-bottom: 5px;
+            padding: 15px; color: var(--text-sec); text-decoration: none;
+            display: flex; align-items: center; gap: 10px; border-radius: 10px;
+            margin-bottom: 5px; cursor: pointer;
         }
-        .nav-item.active { background: rgba(240, 185, 11, 0.1); color: var(--gold); font-weight: bold; }
+        .nav-item.active { background: rgba(240, 185, 11, 0.1); color: var(--gold); }
 
-        .upgrade-btn {
-            background: linear-gradient(135deg, var(--gold), var(--gold-dim));
-            border: none; padding: 12px; border-radius: 10px; color: #050708;
-            font-weight: 800; cursor: pointer; margin-bottom: 15px;
+        /* المحتوى الرئيسي */
+        main {
+            flex: 1; padding: 20px; overflow-y: auto;
+            display: flex; flex-direction: column; align-items: center;
         }
 
-        /* Main Content */
-        main { flex: 1; padding: 30px; overflow-y: auto; text-align: center; }
-
-        .header { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 30px; }
-
-        /* Timer Card */
+        /* كرت المدار */
         .timer-card {
-            background: var(--surface); padding: 40px; border-radius: 30px;
-            border: 1px solid var(--border); display: inline-block; width: 100%; max-width: 400px;
+            background: var(--surface); width: 100%; max-width: 350px;
+            padding: 40px 20px; border-radius: 30px; border: 1px solid var(--border);
+            text-align: center; margin-top: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        .timer-display { font-size: 5rem; font-weight: 900; margin: 20px 0; }
-        .btn-main {
-            background: var(--gold); color: black; border: none; padding: 18px 40px;
-            border-radius: 15px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%;
+        .timer-display { font-size: 4.5rem; font-weight: 900; margin: 20px 0; color: var(--text-main); }
+        
+        .btn-orbit {
+            background: var(--gold); color: black; border: none; width: 100%;
+            padding: 18px; border-radius: 15px; font-size: 1.2rem; font-weight: 900;
+            cursor: pointer; transition: 0.2s;
+        }
+        .btn-orbit:active { transform: scale(0.95); }
+
+        /* شبكة الإحصائيات */
+        .stats-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
+            width: 100%; max-width: 350px; margin-top: 25px;
+        }
+        .stat-box {
+            background: var(--surface); padding: 15px; border-radius: 15px;
+            border: 1px solid var(--border); text-align: center;
+        }
+        .stat-val { display: block; font-weight: 900; color: var(--gold); font-size: 1.2rem; }
+
+        /* العنقاء */
+        .phoenix-icon {
+            width: 80px; height: 80px; margin-top: 20px;
+            filter: drop-shadow(0 0 10px var(--gold)); cursor: pointer;
         }
 
+        .overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 2000; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center;
+        }
     </style>
 </head>
 <body>
 
-    <aside>
-        <div class="logo">درب</div>
-        <nav>
-            <div class="nav-item active">🏠 الرئيسية</div>
-            <div class="nav-item">📊 خارطة التقدم</div>
-            <div class="nav-item">👨‍👩‍👧 مركز الأسرة</div>
-            <div class="nav-item">⭐ تقييم الأساتذة</div>
-            <div class="nav-item">🔍 البحث عن صديق</div>
-        </nav>
+    <header>
+        <div style="font-weight: 900; font-size: 1.5rem; color: var(--gold);">درب</div>
+        <button class="menu-btn" onclick="toggleMenu(true)">☰</button>
+    </header>
 
-        <button class="upgrade-btn">ترقية الخطة 👑</button>
-        
-        <div style="border-top: 1px solid var(--border); padding-top: 15px;">
-            <div style="font-size: 14px; font-weight: bold;">{displayName}</div>
-            <div style="font-size: 12px; color: var(--text-sec);">🔥 12 يوم | ⏱️ 420د</div>
+    <aside id="sidebar">
+        <div class="close-aside" onclick="toggleMenu(false)">✕ إغلاق</div>
+        <div class="nav-item active">🏠 الرئيسية</div>
+        <div class="nav-item">📊 خارطة التقدم</div>
+        <div class="nav-item">👨‍👩‍👧 مركز الأسرة</div>
+        <div class="nav-item" onclick="alert('الخزنة: قريباً ستحفظ أخطاءك البرمجية هنا')">📦 الخزنة</div>
+        <div style="margin-top: auto;">
+            <div style="font-weight: bold; margin-bottom: 5px;">محمد عبدالله</div>
+            <div style="font-size: 12px; color: var(--text-sec);">🔥 12 يوم | ⏱️ <span id="totalMin">420</span>د</div>
         </div>
     </aside>
 
     <main>
-        <div class="header">
-            <h2 style="font-size: 16px; color: var(--text-sec);">لوحة التحكم</h2>
-            <div style="color: var(--gold);">👑 نخبة (Elite)</div>
-        </div>
+        <svg class="phoenix-icon" onclick="openSanctum()" viewBox="0 0 100 100">
+            <path fill="var(--gold)" d="M50 10 C30 30 15 55 15 75 C15 85 25 95 50 95 C75 95 85 85 85 75 C85 55 70 30 50 10 Z" />
+            <circle fill="white" cx="50" cy="55" r="5" />
+        </svg>
 
         <div class="timer-card">
-            <div style="color: var(--text-sec);">المدار الحالي (50 دقيقة)</div>
-            <div class="timer-display" id="clock">50:00</div>
-            <button class="btn-main" onclick="startTimer()">ابدأ المدار</button>
+            <div style="color: var(--text-sec); font-size: 0.9rem;">المدار الحالي (50 دقيقة)</div>
+            <div class="timer-display" id="time">50:00</div>
+            <button class="btn-orbit" id="orbitBtn" onclick="toggleOrbit()">ابدأ المدار</button>
         </div>
-        
-        <p style="margin-top: 20px; color: var(--text-sec);">مرحباً بك يا محمد، جاهز للتحصيلي اليوم؟</p>
+
+        <div class="stats-grid">
+            <div class="stat-box"><span class="stat-label">فضة</span><span class="stat-val" id="silver">0</span></div>
+            <div class="stat-box"><span class="stat-label">ذهب</span><span class="stat-val">0</span></div>
+        </div>
     </main>
+
+    <div id="sanctum" class="overlay">
+        <h1 style="color: var(--gold);">عقل العنقاء</h1>
+        <p style="padding: 20px; color: var(--text-sec);">هنا يتم شحن عزيمتك برسائل الوالد وأهدافك المستقبلية.</p>
+        <button class="btn-orbit" style="width: 200px;" onclick="closeSanctum()">العودة</button>
+    </div>
 
     <script>
         let timeLeft = 50 * 60;
-        function startTimer() {
-            setInterval(() => {
-                if(timeLeft > 0) {
-                    timeLeft--;
-                    let m = Math.floor(timeLeft / 60);
-                    let s = timeLeft % 60;
-                    document.getElementById('clock').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-                }
-            }, 1000);
+        let isRunning = false;
+        let timer;
+        let silver = parseInt(localStorage.getItem('silver')) || 0;
+
+        function toggleMenu(show) {
+            document.getElementById('sidebar').classList.toggle('open', show);
         }
+
+        function toggleOrbit() {
+            const btn = document.getElementById('orbitBtn');
+            if (isRunning) {
+                clearInterval(timer);
+                btn.innerText = "أكمل المدار";
+                isRunning = false;
+            } else {
+                isRunning = true;
+                btn.innerText = "توقف مؤقت";
+                // المؤقت الحقيقي (ثانية بثانية)
+                timer = setInterval(() => {
+                    if (timeLeft > 0) {
+                        timeLeft--;
+                        if (timeLeft % 60 === 0) {
+                            silver += 1;
+                            localStorage.setItem('silver', silver);
+                            updateUI();
+                        }
+                        updateUI();
+                    } else {
+                        clearInterval(timer);
+                        alert("كفو! انتهى المدار.");
+                        timeLeft = 50 * 60;
+                        updateUI();
+                    }
+                }, 1000); // 1000 ملي ثانية = 1 ثانية بالضبط
+            }
+        }
+
+        function updateUI() {
+            let m = Math.floor(timeLeft / 60);
+            let s = timeLeft % 60;
+            document.getElementById('time').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+            document.getElementById('silver').innerText = silver;
+        }
+
+        function openSanctum() { document.getElementById('sanctum').style.display = 'flex'; }
+        function closeSanctum() { document.getElementById('sanctum').style.display = 'none'; }
+
+        updateUI();
     </script>
 </body>
 </html>
