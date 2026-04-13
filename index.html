@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة دَرْب | المعاينة الكاملة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #090c10;
+            --card: #161b22;
+            --gold: #d29922;
+            --text: #f0f6fc;
+            --gray: #8b949e;
+            --nav-bg: #0d1117;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding-bottom: 80px; /* مساحة للنوافذ السفلية */
+            overflow-x: hidden;
+        }
+
+        /* القائمة العلوية */
+        header {
+            background: var(--nav-bg);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #30363d;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo { font-size: 22px; font-weight: bold; color: var(--gold); }
+        .role-badge { background: var(--gold); color: #000; padding: 2px 10px; border-radius: 5px; font-size: 12px; font-weight: bold; }
+
+        /* الشاشات الرئيسية */
+        .page { display: none; padding: 20px; animation: fadeIn 0.3s ease; }
+        .active-page { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* الكروت والميزات */
+        .card { background: var(--card); border-radius: 15px; padding: 20px; margin-bottom: 20px; border: 1px solid #30363d; }
+        
+        /* واجهة المدار (المؤقت) */
+        .timer-circle {
+            width: 200px; height: 200px; border: 8px solid var(--gold); border-radius: 50%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            margin: 40px auto; box-shadow: 0 0 20px rgba(210, 153, 34, 0.2);
+        }
+        .timer-val { font-size: 40px; font-weight: bold; }
+
+        /* واجهة الخزنة */
+        .vault-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #30363d; }
+
+        /* التنقل السفلي (الموبايل) */
+        .bottom-nav {
+            position: fixed; bottom: 0; width: 100%; background: var(--nav-bg);
+            display: flex; justify-content: space-around; padding: 10px 0;
+            border-top: 1px solid #30363d; box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
+        }
+        .nav-item { text-align: center; color: var(--gray); cursor: pointer; transition: 0.3s; font-size: 12px; }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; }
+        .nav-item.active { color: var(--gold); }
+
+        /* أزرار المشرف والآباء */
+        .btn { width: 100%; padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-gold { background: var(--gold); color: #000; }
+        .btn-outline { background: transparent; border: 1px solid var(--gray); color: var(--text); }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">🦅 دَرْب</div>
+    <div id="current-role" class="role-badge">وضع الطالب</div>
+</header>
+
+<div id="home" class="page active-page">
+    <h1>مرحباً يا بطل 🚀</h1>
+    <div class="card">
+        <h3>إحصائيات اليوم</h3>
+        <p>ساعات المذاكرة: <span style="color:var(--gold)">4.5 ساعة</span></p>
+        <p>الأسئلة في الخزنة: <span style="color:var(--gold)">12 سؤال</span></p>
+    </div>
+    <div class="card">
+        <h3>تنبيه المشرف 📢</h3>
+        <p>لا تنسَ مراجعة تجميعات 2024 في قسم الفيزياء!</p>
+    </div>
+</div>
+
+<div id="orbit" class="page">
+    <h2 style="text-align:center">مدار التركيز ⏱️</h2>
+    <div class="timer-circle">
+        <div class="timer-val" id="time">25:00</div>
+        <div style="font-size:12px; color:var(--gray)">تركيز عميق</div>
+    </div>
+    <div style="display:flex; gap:10px">
+        <button class="btn btn-gold" onclick="alert('بدأ المدار!')">ابدأ</button>
+        <button class="btn btn-outline" onclick="alert('توقف المدار')">إيقاف</button>
+    </div>
+</div>
+
+<div id="vault" class="page">
+    <h2>خزانة الأخطاء 📦</h2>
+    <div class="card">
+        <div class="vault-item">
+            <div>
+                <b>سؤال في الكيمياء</b>
+                <div style="font-size:12px; color:var(--gray)">تم الحفظ: منذ ساعتين</div>
+            </div>
+            <i class="fas fa-chevron-left"></i>
+        </div>
+        <div class="vault-item">
+            <div>
+                <b>مسألة في الرياضيات</b>
+                <div style="font-size:12px; color:var(--gray)">تم الحفظ: أمس</div>
+            </div>
+            <i class="fas fa-chevron-left"></i>
+        </div>
+    </div>
+</div>
+
+<div id="radar" class="page">
+    <h2>الرادار 📡</h2>
+    <div class="card">
+        <h3>لوحة المتصدرين (بقيق)</h3>
+        <p>1. محمد (أنت) - 1500 نقطة ⭐</p>
+        <p>2. أحمد - 1420 نقطة</p>
+        <p>3. سارة - 1380 نقطة</p>
+    </div>
+</div>
+
+<div id="profile" class="page">
+    <h2>إعدادات المنصة ⚙️</h2>
+    <div class="card">
+        <h3>تغيير الواجهة (للتجربة)</h3>
+        <button class="btn btn-outline" onclick="changeRole('طالب')">واجهة الطالب</button>
+        <button class="btn btn-outline" onclick="changeRole('ولي أمر')">واجهة ولي الأمر</button>
+        <button class="btn btn-outline" onclick="changeRole('مشرف')">واجهة المشرف</button>
+    </div>
+    <button class="btn btn-gold" style="background:#ff4444; color:white">تسجيل الخروج</button>
+</div>
+
+<div class="bottom-nav">
+    <div class="nav-item active" onclick="showPage('home', this)"><i class="fas fa-home"></i>الرئيسية</div>
+    <div class="nav-item" onclick="showPage('orbit', this)"><i class="fas fa-clock"></i>المدار</div>
+    <div class="nav-item" onclick="showPage('vault', this)"><i class="fas fa-vault"></i>الخزنة</div>
+    <div class="nav-item" onclick="showPage('radar', this)"><i class="fas fa-bullseye"></i>الرادار</div>
+    <div class="nav-item" onclick="showPage('profile', this)"><i class="fas fa-user"></i>الحساب</div>
+</div>
+
+<script>
+    function showPage(pageId, element) {
+        // إخفاء كل الصفحات
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
+        // إظهار الصفحة المطلوبة
+        document.getElementById(pageId).classList.add('active-page');
+        
+        // تغيير حالة الأزرار في القائمة السفلية
+        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+        element.classList.add('active');
+    }
+
+    function changeRole(role) {
+        document.getElementById('current-role').innerText = 'وضع ' + role;
+        alert('تم الانتقال لـ واجهة الـ ' + role);
+    }
+</script>
+
+</body>
+</html>
