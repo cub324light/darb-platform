@@ -3,191 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>درب | DARB</title>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    <title>منصة درب | طريقك للقمة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --bg: #050708;
-            --surface: #0d1117;
-            --border: #21262d;
-            --gold: #f0b90b;
-            --gold-dim: #947a1c;
-            --text-main: #ffffff;
-            --text-sec: #8b949e;
-            --accent: #007aff;
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --main-gold: #c6a355;
+            --text-white: #ffffff;
+            --input-bg: #0d1117;
+            --google-red: #db4437;
+            --apple-black: #000000;
+            --fb-blue: #4267B2;
         }
 
         body {
-            margin: 0; background: var(--bg); color: var(--text-main);
-            font-family: 'Tajawal', sans-serif; display: flex; flex-direction: column;
-            height: 100vh; overflow: hidden;
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-white);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        /* شريط علوي للجوال */
-        header {
-            background: var(--surface); padding: 15px 20px;
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid var(--border); z-index: 100;
+        .auth-container {
+            width: 90%;
+            max-width: 400px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+            border: 1px solid #30363d;
         }
 
-        .menu-btn { background: none; border: none; color: var(--gold); fontSize: 24px; cursor: pointer; }
-
-        /* القائمة الجانبية المخصصة للجوال */
-        aside {
-            position: fixed; top: 0; right: -250px; width: 250px; height: 100%;
-            background: var(--surface); transition: 0.3s; z-index: 1000;
-            padding: 20px; border-left: 1px solid var(--border);
-            display: flex; flex-direction: column;
-        }
-        aside.open { right: 0; }
-        .close-aside { align-self: flex-start; margin-bottom: 20px; cursor: pointer; color: var(--text-sec); }
-
-        .nav-item {
-            padding: 15px; color: var(--text-sec); text-decoration: none;
-            display: flex; align-items: center; gap: 10px; border-radius: 10px;
-            margin-bottom: 5px; cursor: pointer;
-        }
-        .nav-item.active { background: rgba(240, 185, 11, 0.1); color: var(--gold); }
-
-        /* المحتوى الرئيسي */
-        main {
-            flex: 1; padding: 20px; overflow-y: auto;
-            display: flex; flex-direction: column; align-items: center;
+        .falcon-logo {
+            font-size: 50px;
+            color: var(--main-gold);
+            margin-bottom: 10px;
         }
 
-        /* كرت المدار */
-        .timer-card {
-            background: var(--surface); width: 100%; max-width: 350px;
-            padding: 40px 20px; border-radius: 30px; border: 1px solid var(--border);
-            text-align: center; margin-top: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        h2 { margin-bottom: 30px; font-weight: 700; }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 25px;
+            background: var(--input-bg);
+            border-radius: 10px;
+            padding: 5px;
         }
 
-        .timer-display { font-size: 4.5rem; font-weight: 900; margin: 20px 0; color: var(--text-main); }
-        
-        .btn-orbit {
-            background: var(--gold); color: black; border: none; width: 100%;
-            padding: 18px; border-radius: 15px; font-size: 1.2rem; font-weight: 900;
-            cursor: pointer; transition: 0.2s;
-        }
-        .btn-orbit:active { transform: scale(0.95); }
-
-        /* شبكة الإحصائيات */
-        .stats-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
-            width: 100%; max-width: 350px; margin-top: 25px;
-        }
-        .stat-box {
-            background: var(--surface); padding: 15px; border-radius: 15px;
-            border: 1px solid var(--border); text-align: center;
-        }
-        .stat-val { display: block; font-weight: 900; color: var(--gold); font-size: 1.2rem; }
-
-        /* العنقاء */
-        .phoenix-icon {
-            width: 80px; height: 80px; margin-top: 20px;
-            filter: drop-shadow(0 0 10px var(--gold)); cursor: pointer;
+        .tab {
+            flex: 1;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: 0.3s;
         }
 
-        .overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 2000; flex-direction: column;
-            justify-content: center; align-items: center; text-align: center;
+        .tab.active {
+            background: var(--main-gold);
+            color: #000;
+            font-weight: bold;
         }
+
+        .input-group {
+            margin-bottom: 15px;
+            text-align: right;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 5px;
+            border-radius: 10px;
+            border: 1px solid #30363d;
+            background: var(--input-bg);
+            color: white;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        input:focus { border-color: var(--main-gold); }
+
+        .main-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--main-gold);
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+
+        .main-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(198, 163, 85, 0.3); }
+
+        .divider {
+            margin: 25px 0;
+            position: relative;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .divider span {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--card-bg);
+            padding: 0 15px;
+            color: #8b949e;
+            font-size: 14px;
+        }
+
+        .social-btns {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 1px solid #30363d;
+            transition: 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-google { color: var(--google-red); }
+        .btn-apple { color: #fff; background: #000; }
+        .btn-fb { color: var(--fb-blue); }
+
+        .social-btn:hover { background: #30363d; }
+
     </style>
 </head>
 <body>
 
-    <header>
-        <div style="font-weight: 900; font-size: 1.5rem; color: var(--gold);">درب</div>
-        <button class="menu-btn" onclick="toggleMenu(true)">☰</button>
-    </header>
+    <div class="auth-container">
+        <div class="falcon-logo">
+            <i class="fas fa-feather-alt"></i> </div>
+        <h2 id="auth-title">منصة درب</h2>
 
-    <aside id="sidebar">
-        <div class="close-aside" onclick="toggleMenu(false)">✕ إغلاق</div>
-        <div class="nav-item active">🏠 الرئيسية</div>
-        <div class="nav-item">📊 خارطة التقدم</div>
-        <div class="nav-item">👨‍👩‍👧 مركز الأسرة</div>
-        <div class="nav-item" onclick="alert('الخزنة: قريباً ستحفظ أخطاءك البرمجية هنا')">📦 الخزنة</div>
-        <div style="margin-top: auto;">
-            <div style="font-weight: bold; margin-bottom: 5px;">محمد عبدالله</div>
-            <div style="font-size: 12px; color: var(--text-sec);">🔥 12 يوم | ⏱️ <span id="totalMin">420</span>د</div>
-        </div>
-    </aside>
-
-    <main>
-        <svg class="phoenix-icon" onclick="openSanctum()" viewBox="0 0 100 100">
-            <path fill="var(--gold)" d="M50 10 C30 30 15 55 15 75 C15 85 25 95 50 95 C75 95 85 85 85 75 C85 55 70 30 50 10 Z" />
-            <circle fill="white" cx="50" cy="55" r="5" />
-        </svg>
-
-        <div class="timer-card">
-            <div style="color: var(--text-sec); font-size: 0.9rem;">المدار الحالي (50 دقيقة)</div>
-            <div class="timer-display" id="time">50:00</div>
-            <button class="btn-orbit" id="orbitBtn" onclick="toggleOrbit()">ابدأ المدار</button>
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('signin')">دخول</div>
+            <div class="tab" onclick="switchTab('signup')">تسجيل جديد</div>
         </div>
 
-        <div class="stats-grid">
-            <div class="stat-box"><span class="stat-label">فضة</span><span class="stat-val" id="silver">0</span></div>
-            <div class="stat-box"><span class="stat-label">ذهب</span><span class="stat-val">0</span></div>
+        <div id="auth-form">
+            <div class="input-group">
+                <input type="email" placeholder="البريد الإلكتروني">
+            </div>
+            <div class="input-group">
+                <input type="password" placeholder="كلمة المرور">
+            </div>
+            <button class="main-btn" id="submit-btn">تسجيل الدخول</button>
         </div>
-    </main>
 
-    <div id="sanctum" class="overlay">
-        <h1 style="color: var(--gold);">عقل العنقاء</h1>
-        <p style="padding: 20px; color: var(--text-sec);">هنا يتم شحن عزيمتك برسائل الوالد وأهدافك المستقبلية.</p>
-        <button class="btn-orbit" style="width: 200px;" onclick="closeSanctum()">العودة</button>
+        <div class="divider">
+            <span>أو عبر</span>
+        </div>
+
+        <div class="social-btns">
+            <div class="social-btn btn-google">
+                <i class="fab fa-google"></i> متابعة باستخدام جوجل
+            </div>
+            <div class="social-btn btn-apple">
+                <i class="fab fa-apple"></i> متابعة باستخدام أبل
+            </div>
+            <div class="social-btn btn-fb">
+                <i class="fab fa-facebook"></i> متابعة باستخدام فيسبوك
+            </div>
+        </div>
     </div>
 
     <script>
-        let timeLeft = 50 * 60;
-        let isRunning = false;
-        let timer;
-        let silver = parseInt(localStorage.getItem('silver')) || 0;
+        function switchTab(type) {
+            const tabs = document.querySelectorAll('.tab');
+            const submitBtn = document.getElementById('submit-btn');
+            const authTitle = document.getElementById('auth-title');
 
-        function toggleMenu(show) {
-            document.getElementById('sidebar').classList.toggle('open', show);
-        }
-
-        function toggleOrbit() {
-            const btn = document.getElementById('orbitBtn');
-            if (isRunning) {
-                clearInterval(timer);
-                btn.innerText = "أكمل المدار";
-                isRunning = false;
+            tabs.forEach(t => t.classList.remove('active'));
+            
+            if(type === 'signin') {
+                tabs[0].classList.add('active');
+                submitBtn.innerText = 'تسجيل الدخول';
+                authTitle.innerText = 'منصة درب - دخول';
             } else {
-                isRunning = true;
-                btn.innerText = "توقف مؤقت";
-                // المؤقت الحقيقي (ثانية بثانية)
-                timer = setInterval(() => {
-                    if (timeLeft > 0) {
-                        timeLeft--;
-                        if (timeLeft % 60 === 0) {
-                            silver += 1;
-                            localStorage.setItem('silver', silver);
-                            updateUI();
-                        }
-                        updateUI();
-                    } else {
-                        clearInterval(timer);
-                        alert("كفو! انتهى المدار.");
-                        timeLeft = 50 * 60;
-                        updateUI();
-                    }
-                }, 1000); // 1000 ملي ثانية = 1 ثانية بالضبط
+                tabs[1].classList.add('active');
+                submitBtn.innerText = 'إنشاء حساب';
+                authTitle.innerText = 'منصة درب - تسجيل';
             }
         }
-
-        function updateUI() {
-            let m = Math.floor(timeLeft / 60);
-            let s = timeLeft % 60;
-            document.getElementById('time').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-            document.getElementById('silver').innerText = silver;
-        }
-
-        function openSanctum() { document.getElementById('sanctum').style.display = 'flex'; }
-        function closeSanctum() { document.getElementById('sanctum').style.display = 'none'; }
-
-        updateUI();
     </script>
 </body>
 </html>
