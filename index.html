@@ -3,269 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>درب - DARB Platform</title>
+    <title>درب | التطبيق الرسمي</title>
     <style>
         :root {
-            --bg: #050508;
-            --panel: #0d1117;
-            --accent: #007aff;
-            --gold: #ffaa00;
-            --silver: #bdc3c7;
-            --streak: #ff4757;
-            --text: #ffffff;
+            --bg: #050708;
+            --surface: #0d1117;
+            --border: #21262d;
+            --gold: #f0b90b;
+            --gold-dim: #947a1c;
+            --text-sec: #8b949e;
+            --danger: #f85149;
         }
 
         body {
-            background-color: var(--bg);
-            color: var(--text);
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            overflow-x: hidden;
+            margin: 0; background: var(--bg); color: white;
+            font-family: 'Tajawal', sans-serif; display: flex; height: 100vh; overflow: hidden;
         }
 
-        /* الاقتصاد العلوي */
-        .top-bar {
-            width: 100%;
-            padding: 15px 20px;
-            background: var(--panel);
-            display: flex;
-            justify-content: space-around;
-            border-bottom: 1px solid #21262d;
-            box-sizing: border-box;
-            position: sticky;
-            top: 0;
-            z-index: 100;
+        /* Sidebar - مستوحى من كود ريبلت */
+        aside {
+            width: 240px; background: var(--surface); border-left: 1px solid var(--border);
+            display: flex; flexDirection: column; padding: 20px; box-sizing: border-box;
+            display: flex; flex-direction: column;
         }
 
-        .stat { font-weight: bold; font-size: 0.9rem; }
-        .s-val { color: var(--silver); }
-        .g-val { color: var(--gold); }
-        .st-val { color: var(--streak); }
+        .logo { font-size: 26px; font-weight: 900; color: var(--gold); margin-bottom: 30px; }
 
-        /* منطقة الطائر */
-        .avatar-container {
-            margin: 40px 0 20px 0;
-            text-align: center;
+        nav { flex: 1; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px;
+            color: var(--text-sec); text-decoration: none; border-radius: 12px;
+            transition: 0.2s; cursor: pointer; margin-bottom: 5px;
+        }
+        .nav-item.active { background: rgba(240, 185, 11, 0.1); color: var(--gold); font-weight: bold; }
+
+        .upgrade-btn {
+            background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+            border: none; padding: 12px; border-radius: 10px; color: #050708;
+            font-weight: 800; cursor: pointer; margin-bottom: 15px;
         }
 
-        .phoenix-svg {
-            width: 150px;
-            height: 150px;
-            cursor: pointer;
-            filter: drop-shadow(0 0 10px var(--accent));
-            transition: 0.4s;
-        }
+        /* Main Content */
+        main { flex: 1; padding: 30px; overflow-y: auto; text-align: center; }
 
-        .phoenix-svg:hover {
-            transform: scale(1.1) rotate(5deg);
-            filter: drop-shadow(0 0 20px var(--accent));
-        }
+        .header { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 30px; }
 
-        /* لوحة المدار */
+        /* Timer Card */
         .timer-card {
-            background: var(--panel);
-            width: 90%;
-            max-width: 350px;
-            padding: 30px;
-            border-radius: 25px;
-            border: 1px solid #30363d;
-            text-align: center;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            background: var(--surface); padding: 40px; border-radius: 30px;
+            border: 1px solid var(--border); display: inline-block; width: 100%; max-width: 400px;
         }
 
-        .timer-display {
-            font-size: 5rem;
-            font-weight: 800;
-            margin: 10px 0;
-            font-variant-numeric: tabular-nums;
-            text-shadow: 0 0 20px rgba(0,122,255,0.2);
-        }
-
+        .timer-display { font-size: 5rem; font-weight: 900; margin: 20px 0; }
         .btn-main {
-            background: var(--accent);
-            color: white;
-            border: none;
-            width: 100%;
-            padding: 18px;
-            border-radius: 15px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .btn-main:active { transform: scale(0.95); }
-
-        .btn-reset {
-            background: transparent;
-            color: var(--streak);
-            border: 1px solid var(--streak);
-            margin-top: 15px;
-            width: 100%;
-            padding: 10px;
-            border-radius: 10px;
-            cursor: pointer;
-        }
-
-        /* القائمة الجانبية (الميزات الإضافية) */
-        .features-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            width: 90%;
-            max-width: 350px;
-            margin-top: 25px;
-        }
-
-        .f-box {
-            background: var(--panel);
-            padding: 15px;
-            border-radius: 15px;
-            text-align: center;
-            font-size: 0.8rem;
-            border: 1px solid #30363d;
-        }
-
-        /* عقل الطائر (Modal) */
-        .sanctum {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.98);
-            z-index: 1000;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-        }
-
-        .feather-item {
-            margin: 15px;
-            padding: 20px;
-            border: 1px solid var(--accent);
-            border-radius: 20px;
-            width: 250px;
-            background: rgba(0,122,255,0.05);
-            cursor: pointer;
-        }
-
-        .close-btn {
-            margin-top: 40px;
-            color: #888;
-            cursor: pointer;
-            text-decoration: underline;
+            background: var(--gold); color: black; border: none; padding: 18px 40px;
+            border-radius: 15px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%;
         }
 
     </style>
 </head>
 <body>
 
-    <div class="top-bar">
-        <div class="stat st-val">🔥 <span id="st-count">1</span></div>
-        <div class="stat s-val">🪙 <span id="s-count">0</span></div>
-        <div class="stat g-val">👑 <span id="g-count">0</span></div>
-    </div>
+    <aside>
+        <div class="logo">درب</div>
+        <nav>
+            <div class="nav-item active">🏠 الرئيسية</div>
+            <div class="nav-item">📊 خارطة التقدم</div>
+            <div class="nav-item">👨‍👩‍👧 مركز الأسرة</div>
+            <div class="nav-item">⭐ تقييم الأساتذة</div>
+            <div class="nav-item">🔍 البحث عن صديق</div>
+        </nav>
 
-    <div class="avatar-container">
-        <svg class="phoenix-svg" onclick="openSanctum()" viewBox="0 0 100 100">
-            <path fill="#007aff" d="M50 10 C30 30 10 50 10 70 C10 85 25 95 50 95 C75 95 90 85 90 70 C90 50 70 30 50 10 Z" />
-            <path fill="#ffffff" opacity="0.5" d="M50 20 L40 40 L60 40 Z" />
-            <circle fill="#ffffff" cx="50" cy="50" r="5" />
-        </svg>
-        <div style="font-size: 0.8rem; color: #555; margin-top: 10px;">(اضغط على العنقاء للدخول للعقل)</div>
-    </div>
-
-    <div class="timer-card">
-        <div style="color: #888; font-size: 0.9rem;">المدار الحالي (50 دقيقة)</div>
-        <div class="timer-display" id="display">50:00</div>
-        <button class="btn-main" id="startBtn" onclick="toggleTimer()">ابدأ المدار</button>
-        <button class="btn-reset" onclick="resetTimer()">كسر المدار</button>
-    </div>
-
-    <div class="features-grid">
-        <div class="f-box">📦 الخزنة<br><small>أخطاءك محفوظة</small></div>
-        <div class="f-box">📈 الرادار<br><small>جاهزية أرامكو</small></div>
-        <div class="f-box">🛡️ صانع CV<br><small>قريباً</small></div>
-        <div class="f-box">💬 المجلس<br><small>اسأل زملائك</small></div>
-    </div>
-
-    <div class="sanctum" id="sanctum">
-        <h1 style="color: var(--accent);">عقل العنقاء</h1>
-        <div class="feather-item" onclick="alert('رسالة الوالد: فخور فيك يا بطل، كمل دربك!')">
-            <h3>🎧 ريشة صدى الفخر</h3>
-            <small>رسائل الوالد</small>
+        <button class="upgrade-btn">ترقية الخطة 👑</button>
+        
+        <div style="border-top: 1px solid var(--border); padding-top: 15px;">
+            <div style="font-size: 14px; font-weight: bold;">{displayName}</div>
+            <div style="font-size: 12px; color: var(--text-sec);">🔥 12 يوم | ⏱️ 420د</div>
         </div>
-        <div class="feather-item" onclick="alert('رسالتك لنفسك: الهندسة تستاهل التعب.')">
-            <h3>🚀 ريشة المستقبل</h3>
-            <small>أهدافك الشخصية</small>
+    </aside>
+
+    <main>
+        <div class="header">
+            <h2 style="font-size: 16px; color: var(--text-sec);">لوحة التحكم</h2>
+            <div style="color: var(--gold);">👑 نخبة (Elite)</div>
         </div>
-        <div class="close-btn" onclick="closeSanctum()">العودة للميدان</div>
-    </div>
+
+        <div class="timer-card">
+            <div style="color: var(--text-sec);">المدار الحالي (50 دقيقة)</div>
+            <div class="timer-display" id="clock">50:00</div>
+            <button class="btn-main" onclick="startTimer()">ابدأ المدار</button>
+        </div>
+        
+        <p style="margin-top: 20px; color: var(--text-sec);">مرحباً بك يا محمد، جاهز للتحصيلي اليوم؟</p>
+    </main>
 
     <script>
-        let silver = parseInt(localStorage.getItem('silver')) || 0;
-        let gold = parseInt(localStorage.getItem('gold')) || 0;
-        let streak = 1;
         let timeLeft = 50 * 60;
-        let timer = null;
-
-        function updateUI() {
-            document.getElementById('s-count').innerText = silver;
-            document.getElementById('g-count').innerText = gold;
-            document.getElementById('st-count').innerText = streak;
-            
-            let min = Math.floor(timeLeft / 60);
-            let sec = timeLeft % 60;
-            document.getElementById('display').innerText = `${min < 10 ? '0' : ''}${min}:${sec < 10 ? '0' : ''}${sec}`;
+        function startTimer() {
+            setInterval(() => {
+                if(timeLeft > 0) {
+                    timeLeft--;
+                    let m = Math.floor(timeLeft / 60);
+                    let s = timeLeft % 60;
+                    document.getElementById('clock').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+                }
+            }, 1000);
         }
-
-        function toggleTimer() {
-            let btn = document.getElementById('startBtn');
-            if (timer) {
-                clearInterval(timer);
-                timer = null;
-                btn.innerText = "أكمل المدار";
-            } else {
-                btn.innerText = "توقف مؤقت";
-                timer = setInterval(() => {
-                    if (timeLeft > 0) {
-                        timeLeft--;
-                        if (timeLeft % 60 === 0) { silver++; save(); }
-                        updateUI();
-                    } else {
-                        clearInterval(timer);
-                        silver += 50;
-                        save();
-                        alert("تم إنهاء المدار! +50 فضة");
-                        resetTimer();
-                    }
-                }, 1000);
-            }
-        }
-
-        function resetTimer() {
-            clearInterval(timer);
-            timer = null;
-            timeLeft = 50 * 60;
-            document.getElementById('startBtn').innerText = "ابدأ المدار";
-            updateUI();
-        }
-
-        function save() {
-            localStorage.setItem('silver', silver);
-            localStorage.setItem('gold', gold);
-        }
-
-        function openSanctum() { document.getElementById('sanctum').style.display = 'flex'; }
-        function closeSanctum() { document.getElementById('sanctum').style.display = 'none'; }
-
-        updateUI();
     </script>
 </body>
 </html>
-
