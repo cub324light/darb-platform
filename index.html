@@ -3,198 +3,269 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>درب - بيئة التركيز والانضباط</title>
+    <title>درب - DARB Platform</title>
     <style>
-        /* هندسة الألوان (الهوية البصرية الجديدة: أسود وأزرق ملكي) */
         :root {
-            --dark-bg: #050509; /* أسود ملكي عميق */
-            --panel-bg: #0e101a; /* رمادي كربوني داكن للبنلات */
-            --royal-blue: #007bff; /* أزرق ملكي نيون للتركيز */
-            --silver: #e0e0e0;
-            --gold: #f9a826;
-            --danger: #ff4d4d;
-            --text-main: #ffffff;
-            --text-muted: #8b949e;
+            --bg: #050508;
+            --panel: #0d1117;
+            --accent: #007aff;
+            --gold: #ffaa00;
+            --silver: #bdc3c7;
+            --streak: #ff4757;
+            --text: #ffffff;
         }
 
         body {
-            background-color: var(--dark-bg);
-            color: var(--text-main);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', Roboto, sans-serif;
             margin: 0;
-            text-align: center;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
             overflow-x: hidden;
         }
 
-        /* الشريط العلوي (الاقتصاد والوهج) */
-        .header {
-            display: flex;
-            justify-content: space-between;
+        /* الاقتصاد العلوي */
+        .top-bar {
+            width: 100%;
             padding: 15px 20px;
-            background-color: var(--panel-bg);
-            border-bottom: 1px solid #1f2937;
-            font-size: 1rem;
-            font-weight: bold;
+            background: var(--panel);
+            display: flex;
+            justify-content: space-around;
+            border-bottom: 1px solid #21262d;
+            box-sizing: border-box;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-        .silver-text { color: var(--silver); display: flex; align-items: center; gap: 5px; }
-        .gold-text { color: var(--gold); display: flex; align-items: center; gap: 5px; }
-        .streak-text { color: var(--danger); display: flex; align-items: center; gap: 5px; }
+
+        .stat { font-weight: bold; font-size: 0.9rem; }
+        .s-val { color: var(--silver); }
+        .g-val { color: var(--gold); }
+        .st-val { color: var(--streak); }
 
         /* منطقة الطائر */
-        .avatar-section {
-            margin: 30px auto;
-            position: relative;
+        .avatar-container {
+            margin: 40px 0 20px 0;
+            text-align: center;
         }
-        .avatar {
-            width: 140px;
-            height: 140px;
-            border-radius: 50%;
-            border: 3px solid var(--royal-blue);
-            cursor: pointer;
-            transition: transform 0.4s ease, box-shadow 0.4s ease;
-            /* استبدال الصورة بعنقاء فخمة */
-            background: url('https://i.pinimg.com/7364x/41/5a/29/415a298818f9dfd6e49492167d4a66a1.jpg') center/cover;
-            box-shadow: 0 0 20px rgba(0, 123, 255, 0.3);
-            margin: 0 auto;
-        }
-        .avatar:hover {
-            transform: scale(1.05) rotate(3deg);
-            box-shadow: 0 0 40px rgba(0, 123, 255, 0.7);
-        }
-        .hint { color: var(--text-muted); font-size: 0.85rem; margin-top: 10px; }
 
-        /* محرك المدار (المؤقت) */
-        .timer-panel {
-            background-color: var(--panel-bg);
-            width: 85%;
-            max-width: 340px;
-            margin: 20px auto;
-            padding: 25px;
-            border-radius: 20px;
-            border: 1px solid #1f2937;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        .phoenix-svg {
+            width: 150px;
+            height: 150px;
+            cursor: pointer;
+            filter: drop-shadow(0 0 10px var(--accent));
+            transition: 0.4s;
         }
-        .panel-title {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin: 0 0 15px 0;
-            letter-spacing: 1px;
+
+        .phoenix-svg:hover {
+            transform: scale(1.1) rotate(5deg);
+            filter: drop-shadow(0 0 20px var(--accent));
         }
-        .time-display {
-            font-size: 4.5rem;
-            color: var(--text-main);
+
+        /* لوحة المدار */
+        .timer-card {
+            background: var(--panel);
+            width: 90%;
+            max-width: 350px;
+            padding: 30px;
+            border-radius: 25px;
+            border: 1px solid #30363d;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        }
+
+        .timer-display {
+            font-size: 5rem;
+            font-weight: 800;
             margin: 10px 0;
-            font-weight: bold;
             font-variant-numeric: tabular-nums;
-            text-shadow: 0 0 15px rgba(255,255,255,0.1);
+            text-shadow: 0 0 20px rgba(0,122,255,0.2);
         }
-        .btn {
-            background-color: var(--royal-blue);
+
+        .btn-main {
+            background: var(--accent);
             color: white;
             border: none;
-            padding: 16px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: 0.3s ease;
             width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-        }
-        .btn:hover { background-color: #0062cc; transform: translateY(-2px); }
-        .btn:active { transform: translateY(1px); }
-        
-        .btn-danger { background-color: transparent; color: var(--danger); border: 2px solid var(--danger); margin-top: 10px; padding: 12px; font-size: 1rem;}
-        .btn-danger:hover { background-color: var(--danger); color: white; }
-
-        /* إحصائيات اليوم (جلسات اليوم) */
-        .stats-panel {
-            background-color: var(--panel-bg);
-            width: 85%;
-            max-width: 340px;
-            margin: 20px auto;
-            padding: 15px 25px;
+            padding: 18px;
             border-radius: 15px;
-            border: 1px solid #1f2937;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
         }
-        .stat-item { text-align: right; }
-        .stat-label { color: var(--text-muted); font-size: 0.85rem; }
-        .stat-value { color: var(--text-main); font-size: 1.5rem; font-weight: bold; }
 
-        /* عقل الطائر (The Inner Sanctum) */
-        .modal {
+        .btn-main:active { transform: scale(0.95); }
+
+        .btn-reset {
+            background: transparent;
+            color: var(--streak);
+            border: 1px solid var(--streak);
+            margin-top: 15px;
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        /* القائمة الجانبية (الميزات الإضافية) */
+        .features-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 90%;
+            max-width: 350px;
+            margin-top: 25px;
+        }
+
+        .f-box {
+            background: var(--panel);
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 0.8rem;
+            border: 1px solid #30363d;
+        }
+
+        /* عقل الطائر (Modal) */
+        .sanctum {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.97);
+            background: rgba(0,0,0,0.98);
             z-index: 1000;
-            animation: fadeIn 0.4s ease;
-            backdrop-filter: blur(5px);
-        }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
-        .modal-content { margin-top: 10vh; padding: 20px; }
-        .feathers-container {
-            display: flex;
+            flex-direction: column;
+            align-items: center;
             justify-content: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 30px;
-        }
-        .feather {
-            width: 100px;
-            padding: 15px;
-            border-radius: 12px;
-            border: 1px solid;
-            cursor: pointer;
-            transition: 0.3s;
-            background: rgba(255,255,255,0.03);
             text-align: center;
         }
-        .feather:hover { transform: translateY(-5px); background: rgba(255,255,255,0.07); }
-        .f-white { border-color: #333; color: white; }
-        .f-blue { border-color: var(--royal-blue); color: var(--royal-blue); }
-        .f-green { border-color: var(--success); color: var(--success); }
-        .feather h3 { margin: 0 0 10px 0; font-size: 1.5rem; }
-        .feather p { margin: 0; font-size: 0.8rem; color: var(--text-main); }
-        
-        .close-modal {
+
+        .feather-item {
+            margin: 15px;
+            padding: 20px;
+            border: 1px solid var(--accent);
+            border-radius: 20px;
+            width: 250px;
+            background: rgba(0,122,255,0.05);
+            cursor: pointer;
+        }
+
+        .close-btn {
             margin-top: 40px;
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            font-size: 1rem;
+            color: #888;
             cursor: pointer;
             text-decoration: underline;
         }
+
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="streak-text"><span>🔥</span> <span id="streakCount">1</span> أيام</div>
-        <div style="display:flex; gap: 15px;">
-            <span class="silver-text"><span>🪙</span> <span id="silverCount">0</span> فضة</span> 
-            <span class="gold-text"><span>👑</span> <span id="goldCount">0</span> ذهب</span>
+    <div class="top-bar">
+        <div class="stat st-val">🔥 <span id="st-count">1</span></div>
+        <div class="stat s-val">🪙 <span id="s-count">0</span></div>
+        <div class="stat g-val">👑 <span id="g-count">0</span></div>
+    </div>
+
+    <div class="avatar-container">
+        <svg class="phoenix-svg" onclick="openSanctum()" viewBox="0 0 100 100">
+            <path fill="#007aff" d="M50 10 C30 30 10 50 10 70 C10 85 25 95 50 95 C75 95 90 85 90 70 C90 50 70 30 50 10 Z" />
+            <path fill="#ffffff" opacity="0.5" d="M50 20 L40 40 L60 40 Z" />
+            <circle fill="#ffffff" cx="50" cy="50" r="5" />
+        </svg>
+        <div style="font-size: 0.8rem; color: #555; margin-top: 10px;">(اضغط على العنقاء للدخول للعقل)</div>
+    </div>
+
+    <div class="timer-card">
+        <div style="color: #888; font-size: 0.9rem;">المدار الحالي (50 دقيقة)</div>
+        <div class="timer-display" id="display">50:00</div>
+        <button class="btn-main" id="startBtn" onclick="toggleTimer()">ابدأ المدار</button>
+        <button class="btn-reset" onclick="resetTimer()">كسر المدار</button>
+    </div>
+
+    <div class="features-grid">
+        <div class="f-box">📦 الخزنة<br><small>أخطاءك محفوظة</small></div>
+        <div class="f-box">📈 الرادار<br><small>جاهزية أرامكو</small></div>
+        <div class="f-box">🛡️ صانع CV<br><small>قريباً</small></div>
+        <div class="f-box">💬 المجلس<br><small>اسأل زملائك</small></div>
+    </div>
+
+    <div class="sanctum" id="sanctum">
+        <h1 style="color: var(--accent);">عقل العنقاء</h1>
+        <div class="feather-item" onclick="alert('رسالة الوالد: فخور فيك يا بطل، كمل دربك!')">
+            <h3>🎧 ريشة صدى الفخر</h3>
+            <small>رسائل الوالد</small>
         </div>
+        <div class="feather-item" onclick="alert('رسالتك لنفسك: الهندسة تستاهل التعب.')">
+            <h3>🚀 ريشة المستقبل</h3>
+            <small>أهدافك الشخصية</small>
+        </div>
+        <div class="close-btn" onclick="closeSanctum()">العودة للميدان</div>
     </div>
 
-    <div class="avatar-section">
-        <div class="avatar" onclick="openSanctum()"></div>
-        <div class="hint">(اضغط على العنقاء لدخول عقل الطائر)</div>
-    </div>
+    <script>
+        let silver = parseInt(localStorage.getItem('silver')) || 0;
+        let gold = parseInt(localStorage.getItem('gold')) || 0;
+        let streak = 1;
+        let timeLeft = 50 * 60;
+        let timer = null;
 
-    <div class="timer-panel">
-        <p class="panel-title">محرك المدار (50/10)</p>
-        <div class="time-display" id="timeDisplay">50:00</div>
-        <button class="btn" id="mainBtn" onclick="toggleTimer()">
-            <span>▶️</span> ابدأ المدار
-        </button>
-        <button class="btn btn-danger" id="resetBtn" onclick="resetTimer()" style="display:none;">كسر المدار (انسحاب)</button>
-    </div>
+        function updateUI() {
+            document.getElementById('s-count').innerText = silver;
+            document.getElementById('g-count').innerText = gold;
+            document.getElementById('st-count').innerText = streak;
+            
+            let min = Math.floor(timeLeft / 60);
+            let sec = timeLeft % 60;
+            document.getElementById('display').innerText = `${min < 10 ? '0' : ''}${min}:${sec < 10 ? '0' : ''}${sec}`;
+        }
+
+        function toggleTimer() {
+            let btn = document.getElementById('startBtn');
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+                btn.innerText = "أكمل المدار";
+            } else {
+                btn.innerText = "توقف مؤقت";
+                timer = setInterval(() => {
+                    if (timeLeft > 0) {
+                        timeLeft--;
+                        if (timeLeft % 60 === 0) { silver++; save(); }
+                        updateUI();
+                    } else {
+                        clearInterval(timer);
+                        silver += 50;
+                        save();
+                        alert("تم إنهاء المدار! +50 فضة");
+                        resetTimer();
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timer);
+            timer = null;
+            timeLeft = 50 * 60;
+            document.getElementById('startBtn').innerText = "ابدأ المدار";
+            updateUI();
+        }
+
+        function save() {
+            localStorage.setItem('silver', silver);
+            localStorage.setItem('gold', gold);
+        }
+
+        function openSanctum() { document.getElementById('sanctum').style.display = 'flex'; }
+        function closeSanctum() { document.getElementById('sanctum').style.display = 'none'; }
+
+        updateUI();
+    </script>
+</body>
+</html>
+
