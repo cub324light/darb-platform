@@ -2,154 +2,111 @@
 <html lang="ar" dir="rtl" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>درب</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>درب | المنصة الشاملة</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-/* الوضع الليلي: 90% أسود نقي، 10% أزرق ملكي للتفاصيل */
+/* =========================================
+   1. COLOR SYSTEM (DARK & LIGHT)
+   ========================================= */
 [data-theme="dark"]{
-  --bg: #050505; --s1: #0A0A0A; --s2: #121212; --card: #111111; --card2: #181818;
-  --b1: #222222; --b2: #333333; --b3: #444444;
-  --text: #F3F4F6; --t2: #9CA3AF; --t3: #6B7280;
-  --g1: #1D4ED8; --g2: #3B82F6; --gg: linear-gradient(135deg, #1D4ED8, #3B82F6);
-  --g-rgb: 59, 130, 246; --sh: 0 8px 28px rgba(0,0,0,.7); --ibg: #111;
+  --bg:#050505; --s1:#0A0A0A; --card:#111111; --card2:#181818;
+  --b1:#222222; --b2:#333333; --text:#F3F4F6; --t2:#9CA3AF;
+  --g1:#1D4ED8; --g2:#3B82F6; --gg:linear-gradient(135deg, #1D4ED8, #3B82F6);
+  --g-rgb:59,130,246; --red:#EF4444; --green:#10B981;
 }
-/* الوضع النهاري: 90% أبيض نقي، 10% ذهبي للتفاصيل */
 [data-theme="light"]{
-  --bg: #F9FAFB; --s1: #FFFFFF; --s2: #F3F4F6; --card: #FFFFFF; --card2: #F9FAFB;
-  --b1: #E5E7EB; --b2: #D1D5DB; --b3: #9CA3AF;
-  --text: #111827; --t2: #4B5563; --t3: #6B7280;
-  --g1: #B45309; --g2: #D97706; --gg: linear-gradient(135deg, #D97706, #F59E0B);
-  --g-rgb: 217, 119, 6; --sh: 0 4px 16px rgba(0,0,0,.05); --ibg: #FFF;
+  --bg:#F9FAFB; --s1:#FFFFFF; --card:#FFFFFF; --card2:#F3F4F6;
+  --b1:#E5E7EB; --b2:#D1D5DB; --text:#111827; --t2:#4B5563;
+  --g1:#B45309; --g2:#D97706; --gg:linear-gradient(135deg, #D97706, #F59E0B);
+  --g-rgb:217,119,6; --red:#DC2626; --green:#059669;
 }
 
+/* =========================================
+   2. RESET & BASE (FULL WIDTH FIX)
+   ========================================= */
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-/* تكبير الخط الأساسي ليناسب شاشات الجوال */
-html{font-size:18px}
-body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;direction:rtl;transition:background .3s,color .3s}
-::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--b2);border-radius:99px}
-::selection{background:var(--g1);color:#fff}
+html{font-size:16px; width:100%; overflow-x:hidden}
+body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);width:100%;min-height:100vh;overflow-x:hidden;direction:rtl;transition:background .3s,color .3s}
+::-webkit-scrollbar{width:0} /* إخفاء الشريط لتجربة تطبيق حقيقية */
 
-@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-@keyframes soar{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.app{display:flex;flex-direction:column;min-height:100vh;width:100%;max-width:100%;margin:0 auto;background:var(--bg)}
 
-.app{display:flex;flex-direction:column;min-height:100vh;max-width:480px;margin:0 auto;background:var(--bg)}
-
-/* HEADER */
-.hdr{position:sticky;top:0;z-index:100;background:var(--s1);border-bottom:1px solid var(--b1);padding:14px 18px;display:flex;align-items:center;justify-content:space-between}
-.hdr-logo{font-size:22px;font-weight:900;letter-spacing:-.5px;background:var(--gg);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.hdr-r{display:flex;gap:8px;align-items:center}
-.tp{font-size:11px;padding:5px 12px;border-radius:99px;font-weight:700;font-family:'IBM Plex Mono';border:1px solid;cursor:pointer}
-.tp-a{background:rgba(var(--g-rgb),.05);color:var(--g2);border-color:rgba(var(--g-rgb),.3)}
-
-/* BOTTOM NAV (أيقونات هندسية واضحة) */
-.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:100;background:var(--s1);border-top:1px solid var(--b1);display:flex;padding:8px 4px calc(8px + env(safe-area-inset-bottom))}
-.bni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 2px;cursor:pointer;border-radius:10px;color:var(--t3);min-height:50px;gap:4px;transition:all .2s}
-.bni.on{color:var(--g2)}
-.bni svg{width:22px;height:22px;stroke-width:2.5;transition:transform .2s;stroke:currentColor;fill:none;stroke-linecap:round;stroke-linejoin:round}
-.bni.on svg{transform:scale(1.15)}
-.bni-l{font-size:10px;font-weight:700;white-space:nowrap}
-
-/* PAGES */
-.pages{flex:1;overflow-y:auto;padding-bottom:calc(80px + env(safe-area-inset-bottom))}
-.pg{display:none;padding:18px;animation:fadeUp .3s ease both}
-.pg.on{display:block}
-
-/* TYPOGRAPHY */
-.sec-t{font-size:1.2rem;font-weight:800;letter-spacing:-.3px}
+/* =========================================
+   3. TYPOGRAPHY & UTILITIES
+   ========================================= */
+.sec-t{font-size:1.3rem;font-weight:900;letter-spacing:-.5px}
 .sec-s{font-size:0.85rem;color:var(--t2);margin-top:2px}
-.ts{font-size:0.9rem}.txs{font-size:0.75rem}
-.tm{color:var(--t2)}.t3{color:var(--t3)}
-.fw7{font-weight:700}.fw8{font-weight:800}.fw9{font-weight:900}
-.mono{font-family:'IBM Plex Mono'}
-
-/* CARDS */
-.card{background:var(--card);border:1px solid var(--b1);border-radius:16px;padding:18px;margin-bottom:14px}
-/* تم إزالة الخلفية الملونة والاكتفاء بتحديد الإطار لتخفيف الألوان */
-.gc{background:var(--card);border-color:rgba(var(--g-rgb),.4)}
-.cl{font-size:0.75rem;font-weight:700;color:var(--t2);letter-spacing:.5px;margin-bottom:14px;display:flex;align-items:center;gap:6px}
-.cl::before{content:'';width:4px;height:12px;background:var(--g1);border-radius:99px;flex-shrink:0}
-
-/* LAYOUT */
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.rb{display:flex;align-items:center}
-.rbb{display:flex;align-items:center;justify-content:space-between}
-.g8{gap:8px}.mb10{margin-bottom:14px}.mt10{margin-top:14px}.mb12{margin-bottom:16px}
-.dv{height:1px;background:var(--b1);margin:16px 0}
-.sdv{height:10px;background:var(--s2);margin:0 -18px 18px}
+.ts{font-size:0.95rem}.txs{font-size:0.8rem}.tm{color:var(--t2)}
+.fw7{font-weight:700}.fw9{font-weight:900}.mono{font-family:'IBM Plex Mono'}
+.rb{display:flex;align-items:center}.rbb{display:flex;align-items:center;justify-content:space-between}
+.g8{gap:8px}.mb10{margin-bottom:12px}.mb16{margin-bottom:16px}.mt10{margin-top:12px}
 .w100{width:100%}.tc{text-align:center}
 
-/* PROGRESS */
-.pw{background:var(--b1);border-radius:99px;overflow:hidden}
-.pf{height:100%;border-radius:99px;transition:width .8s ease}
-.pg-bar{background:var(--gg)}
-
-/* STATS */
-.sb{background:var(--card);border:1px solid var(--b1);border-radius:14px;padding:14px;position:relative;overflow:hidden}
-.sb::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--sbc,var(--g1))}
-.sbv{font-size:1.6rem;font-weight:900;font-family:'IBM Plex Mono'}
-.sbl{font-size:0.7rem;color:var(--t2);margin-top:4px}
-
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 18px;border-radius:12px;border:none;cursor:pointer;font-family:'Tajawal';font-size:0.9rem;font-weight:700;transition:all .15s}
-.bp{background:var(--gg);color:#fff}.bp:hover{opacity:0.9}
-.bg{background:var(--card2);color:var(--text);border:1px solid var(--b2)}.bg:hover{background:var(--b1)}
-
-/* BADGES */
-.bdg{display:inline-block;padding:3px 9px;border-radius:99px;font-size:0.7rem;font-weight:700;font-family:'IBM Plex Mono';border:1px solid}
+/* =========================================
+   4. UI COMPONENTS (CARDS, BUTTONS, BADGES)
+   ========================================= */
+.card{background:var(--card);border:1px solid var(--b1);border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:0 4px 20px rgba(0,0,0,0.02)}
+.gc{background:var(--card);border-color:rgba(var(--g-rgb),.4)}
+.cl{font-size:0.8rem;font-weight:800;color:var(--t2);letter-spacing:.5px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.cl::before{content:'';width:4px;height:14px;background:var(--g1);border-radius:99px}
+.pw{background:var(--b1);border-radius:99px;overflow:hidden;height:6px}
+.pf{height:100%;border-radius:99px;background:var(--gg);transition:width .8s ease}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 20px;border-radius:14px;border:none;cursor:pointer;font-family:'Tajawal';font-size:0.95rem;font-weight:800;transition:all .2s}
+.bp{background:var(--gg);color:#fff}.bg{background:var(--card2);color:var(--text);border:1px solid var(--b2)}
+.bdg{padding:4px 10px;border-radius:99px;font-size:0.75rem;font-weight:700;font-family:'IBM Plex Mono';border:1px solid}
 .bg-g{background:rgba(var(--g-rgb),.08);color:var(--g2);border-color:rgba(var(--g-rgb),.3)}
-.bg-gr{background:rgba(16,185,129,.08);color:#34D399;border-color:rgba(16,185,129,.3)}
-.bg-mt{background:var(--card2);color:var(--t2);border-color:var(--b2)}
 
-/* INPUT & TOGGLE */
-.inp{width:100%;padding:14px 16px;background:var(--ibg);border:1px solid var(--b2);border-radius:12px;color:var(--text);font-family:'Tajawal';font-size:0.95rem;outline:none;transition:border-color .2s}
-.inp:focus{border-color:var(--g2)}
-.tog{width:46px;height:26px;border-radius:99px;cursor:pointer;position:relative;transition:background .2s;border:none;padding:0;flex-shrink:0}
-.tog.on{background:var(--gg)}.tog.off{background:var(--b2)}
-.tob{position:absolute;top:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:all .2s;box-shadow:0 2px 4px rgba(0,0,0,.3)}
-.tog.on .tob{right:3px;left:auto}.tog.off .tob{left:3px;right:auto}
+/* =========================================
+   5. HEADER & BOTTOM NAV
+   ========================================= */
+.hdr{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--b1);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;backdrop-filter:blur(10px)}
+.hdr-logo{font-size:24px;font-weight:900;letter-spacing:-1px;background:var(--gg);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.role-badge{font-size:10px;padding:4px 10px;border-radius:6px;font-weight:800;background:rgba(var(--g-rgb),.1);color:var(--g2);border:1px solid rgba(var(--g-rgb),.3)}
 
-/* LIST ITEMS */
-.li{display:flex;align-items:center;gap:12px;padding:14px;background:var(--card2);border:1px solid var(--b1);border-radius:12px;margin-bottom:8px;cursor:pointer}
-.li-b{flex:1;min-width:0}.li-t{font-size:0.85rem;font-weight:700}.li-s{font-size:0.75rem;color:var(--t2);margin-top:3px}
+.bnav{position:fixed;bottom:0;width:100%;z-index:100;background:var(--bg);border-top:1px solid var(--b1);display:flex;padding:10px 4px calc(10px + env(safe-area-inset-bottom));backdrop-filter:blur(10px)}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--t2);gap:4px;transition:all .2s;cursor:pointer}
+.bni.on{color:var(--g2)}
+.bni svg{width:24px;height:24px;stroke-width:2;stroke:currentColor;fill:none;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+.bni.on svg{transform:scale(1.15);stroke-width:2.5}
+.bni-l{font-size:11px;font-weight:800}
 
-/* EAGLE SVG */
-.eagle-stage{display:flex;flex-direction:column;align-items:center;padding:10px 0}
-.eagle-svg{width:140px;height:120px;animation:soar 4s ease-in-out infinite}
-.eagle-nm{font-size:1.1rem;font-weight:900;color:var(--g2);margin-top:12px}
+/* =========================================
+   6. VIEWS & PAGES
+   ========================================= */
+.pages{flex:1;padding:20px;padding-bottom:calc(100px + env(safe-area-inset-bottom))}
+.pg{display:none;animation:fadeUp .3s ease both}
+.pg.on{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:none}}
 
-/* TIMER RING */
-.ring-w{position:relative;width:220px;height:220px;margin:0 auto 16px}
+/* =========================================
+   7. CUSTOM MODULES (TIMER, CHART, CHAT)
+   ========================================= */
+.ring-w{position:relative;width:240px;height:240px;margin:0 auto 20px}
 .rsvg{width:100%;height:100%;transform:rotate(-90deg)}
-.rt{fill:none;stroke:var(--b2);stroke-width:8}
-.rp{fill:none;stroke:url(#ggGrad);stroke-width:8;stroke-linecap:round;stroke-dasharray:630;stroke-dashoffset:630;transition:stroke-dashoffset .5s ease}
+.rt{fill:none;stroke:var(--b1);stroke-width:8}
+.rp{fill:none;stroke:url(#ggGrad);stroke-width:8;stroke-linecap:round;stroke-dasharray:710;stroke-dashoffset:710;transition:stroke-dashoffset .5s linear}
 .rc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.rt2{font-size:3rem;font-weight:900;font-family:'IBM Plex Mono';letter-spacing:-2px}
-.rl{font-size:0.8rem;color:var(--t2)}
 
-/* ROADMAP STEP */
-.rms{display:flex;gap:12px;padding:14px;background:var(--card2);border:1px solid var(--b1);border-radius:12px;margin-bottom:8px}
-.rms.act{border-color:rgba(var(--g-rgb),.4);background:rgba(var(--g-rgb),.03)}
-.rmi{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.chart-box{width:100%;height:150px;position:relative;margin-top:10px}
+.chart-svg{width:100%;height:100%;overflow:visible}
+.chart-line{fill:none;stroke:var(--g2);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.chart-fill{fill:url(#chartFill);opacity:0.3}
+.chart-pt{fill:var(--bg);stroke:var(--g2);stroke-width:2;r:4}
 
-/* CHAT (المحادثات) */
-.chat-w{height:450px;display:flex;flex-direction:column}
-.chat-l{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding-bottom:10px;padding-left:5px}
-.c-msg{display:flex;gap:10px;align-items:flex-end}
-.c-msg.me{flex-direction:row-reverse}
-.c-av{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;color:#fff;flex-shrink:0}
-.c-bb{background:var(--card2);padding:10px 14px;border-radius:16px 16px 0 16px;border:1px solid var(--b1);max-width:85%}
-.c-msg.me .c-bb{background:rgba(var(--g-rgb),.1);border-color:rgba(var(--g-rgb),.3);border-radius:16px 16px 16px 0}
-.c-nm{font-size:0.7rem;font-weight:700;margin-bottom:4px;color:var(--t2);display:flex;justify-content:space-between;gap:10px}
-.c-tx{font-size:0.85rem;line-height:1.5}
+.chat-msg{display:flex;gap:12px;margin-bottom:16px;align-items:flex-end}
+.chat-msg.me{flex-direction:row-reverse}
+.chat-av{width:40px;height:40px;border-radius:14px;background:var(--b2);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:14px}
+.chat-bb{background:var(--card2);padding:12px 16px;border-radius:18px 18px 0 18px;border:1px solid var(--b1);max-width:80%}
+.chat-msg.me .chat-bb{background:rgba(var(--g-rgb),.08);border-color:rgba(var(--g-rgb),.2);border-radius:18px 18px 18px 0}
 
-/* PRICING */
-.prc{background:var(--card);border:1px solid var(--b1);border-radius:16px;padding:20px;margin-bottom:12px}
-.prc.feat{border-color:rgba(var(--g-rgb),.5);background:var(--card2)}
-.ptr{font-size:0.7rem;font-weight:800;letter-spacing:1px;font-family:'IBM Plex Mono';margin-bottom:8px}
-.pam{font-size:2.5rem;font-weight:900;font-family:'IBM Plex Mono';letter-spacing:-1px}
-.pfl{list-style:none;margin:16px 0;display:flex;flex-direction:column;gap:8px}
-.pfl li{display:flex;gap:8px;font-size:0.8rem;color:var(--t2);align-items:center}
+/* =========================================
+   8. ROLE SWITCHER STYLES
+   ========================================= */
+.role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.role-btn{padding:12px;border-radius:12px;border:1px solid var(--b2);background:var(--card2);color:var(--text);font-family:'Tajawal';font-weight:800;font-size:12px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:6px}
+.role-btn.active{background:rgba(var(--g-rgb),.1);border-color:var(--g2);color:var(--g2)}
+.role-btn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 </style>
 </head>
 <body>
@@ -158,303 +115,277 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 <div class="hdr">
   <div class="hdr-logo">درب</div>
   <div class="hdr-r">
-    <div class="tp tp-a" id="tpill">الشاهين</div>
+    <div class="role-badge" id="currRoleBadge">طالب (بقيق)</div>
   </div>
 </div>
 
 <div class="pages">
 
-<div class="pg on" id="pg-home">
-  <div class="rbb mb10">
-    <div><div class="sec-t">مرحباً يا بطل</div><div class="sec-s">تابع مسيرتك الأكاديمية</div></div>
-    <div style="text-align:left">
-      <div class="txs tm">فضة</div>
-      <div style="font-size:1.1rem;font-weight:900;font-family:'IBM Plex Mono';color:var(--t2)" id="hSilv">0</div>
+  <div class="pg on role-view" data-role="student" id="pg-s-home">
+    <div class="rbb mb16">
+      <div><div class="sec-t">مرحباً روابي</div><div class="sec-s">استمري في التفوق، الهدف 95+</div></div>
+      <div style="text-align:left">
+        <div class="txs tm">فضة</div><div style="font-size:1.2rem" class="fw9 mono tm">1,250</div>
+      </div>
     </div>
-  </div>
-
-  <div class="card gc tc mb10">
-    <div class="eagle-stage">
-      <svg class="eagle-svg" viewBox="0 0 200 200">
+    <div class="card gc tc">
+      <svg width="120" height="120" viewBox="0 0 200 200" style="margin:0 auto">
         <g transform="translate(0, 10)">
           <polygon points="100,130 80,180 100,165 120,180" fill="var(--b2)" />
-          <polygon points="100,60 30,100 80,120" fill="var(--b1)" />
-          <polygon points="100,60 170,100 120,120" fill="var(--b1)" />
           <polygon points="100,60 10,65 40,110" fill="var(--g1)" />
           <polygon points="100,60 190,65 160,110" fill="var(--g1)" />
           <polygon points="40,110 20,150 80,120" fill="var(--g2)" />
           <polygon points="160,110 180,150 120,120" fill="var(--g2)" />
           <polygon points="100,30 85,90 100,150 115,90" fill="var(--text)" />
           <polygon points="100,10 90,40 110,40" fill="var(--g2)" />
-          <polygon points="100,35 95,50 105,50" fill="var(--g1)" />
         </g>
       </svg>
-      <div class="eagle-nm" id="eNm">الصقر</div>
-      <div class="txs tm mt10" id="eLv">متاح للجميع</div>
-      <div class="pw mt10" style="height:4px;width:150px;margin:10px auto"><div class="pf pg-bar" style="width:10%"></div></div>
+      <div class="fw9 mt10 ts" style="color:var(--g2)">الصقر المهيب</div>
+      <div class="pw mt10" style="width:120px;margin:10px auto"><div class="pf" style="width:45%"></div></div>
+    </div>
+    <div class="card">
+      <div class="cl">التقدم الدراسي</div>
+      <div class="rbb mb8"><span class="ts fw7">القدرات - اللفظي</span><span class="txs mono" style="color:var(--g2)">85%</span></div>
+      <div class="pw mb16"><div class="pf" style="width:85%"></div></div>
+      <div class="rbb mb8"><span class="ts fw7">التحصيلي - فيزياء</span><span class="txs mono" style="color:var(--g2)">60%</span></div>
+      <div class="pw"><div class="pf" style="width:60%"></div></div>
     </div>
   </div>
 
-  <div class="g2 mb10">
-    <div class="sb" style="--sbc:var(--g1)"><div class="sbv">12</div><div class="sbl">سلسلة الأيام</div></div>
-    <div class="sb" style="--sbc:#10B981"><div class="sbv">45</div><div class="sbl">جلسة مكتملة</div></div>
-  </div>
-
-  <div class="card">
-    <div class="cl">التقدم الدراسي</div>
-    <div class="rbb mb8"><span class="ts">القدرات - اللفظي</span><span class="txs mono" style="color:var(--g2)">85%</span></div>
-    <div class="pw mb12" style="height:6px"><div class="pf pg-bar" style="width:85%"></div></div>
-    <div class="rbb mb8"><span class="ts">التحصيلي - رياضيات</span><span class="txs mono" style="color:var(--g2)">60%</span></div>
-    <div class="pw" style="height:6px"><div class="pf pg-bar" style="width:60%"></div></div>
-  </div>
-</div>
-
-<div class="pg" id="pg-study">
-  <div class="rbb mb10"><div><div class="sec-t">المدار</div><div class="sec-s">مؤقت التركيز العميق (50/10)</div></div></div>
-
-  <div class="card gc">
-    <div style="display:flex;flex-direction:column;align-items:center;padding:10px 0">
-      <div class="ring-w">
-        <svg class="rsvg" viewBox="0 0 220 220">
-          <defs>
-            <linearGradient id="ggGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="var(--g1)" /><stop offset="100%" stop-color="var(--g2)" />
-            </linearGradient>
-          </defs>
-          <circle class="rt" cx="110" cy="110" r="100"/>
-          <circle class="rp" id="rProg" cx="110" cy="110" r="100"/>
+  <div class="pg role-view" data-role="student" id="pg-s-study">
+    <div class="sec-t mb10">محرك التركيز 50/10</div>
+    <div class="card gc tc">
+      <div class="ring-w mt10">
+        <svg class="rsvg" viewBox="0 0 240 240">
+          <defs><linearGradient id="ggGrad"><stop offset="0%" stop-color="var(--g1)"/><stop offset="100%" stop-color="var(--g2)"/></linearGradient></defs>
+          <circle class="rt" cx="120" cy="120" r="110"/><circle class="rp" id="rProg" cx="120" cy="120" r="110"/>
         </svg>
         <div class="rc">
-          <div class="rt2" id="tD">50:00</div>
-          <div class="rl">تركيز</div>
+          <div class="rt2" style="font-size:3.5rem" id="tD">50:00</div><div class="ts tm">تركيز عميق</div>
         </div>
       </div>
-      <div class="rb g8 mt10 w100">
+      <div class="rb g8 w100">
         <button class="btn bp" style="flex:2" id="tBtn" onclick="toggleTimer()">بدء الجلسة</button>
         <button class="btn bg" style="flex:1" onclick="resetTimer()">إعادة</button>
       </div>
     </div>
   </div>
 
-  <div class="sdv"></div>
-  <div class="rbb mb10"><div><div class="sec-t">خارطة الدرب</div><div class="sec-s">مسارك نحو 95+</div></div></div>
-  
-  <div class="rms done">
-    <div class="rmi" style="background:rgba(16,185,129,.1);color:#10B981">&#10003;</div>
-    <div class="rmb">
-      <div class="ts fw7">القدرات اللفظي</div><div class="txs tm mt10">المفردات والتناظر</div>
-    </div>
-  </div>
-  <div class="rms act">
-    <div class="rmi" style="background:rgba(var(--g-rgb),.1);color:var(--g2)">&#9654;</div>
-    <div class="rmb">
-      <div class="ts fw7">القدرات الكمي</div><div class="txs tm mt10">الجبر والمعادلات</div>
-    </div>
-  </div>
-</div>
-
-<div class="pg" id="pg-sched">
-  <div class="rbb mb10">
-    <div><div class="sec-t">الجدول الدراسي</div><div class="sec-s">تنظيم أسبوعك الأكاديمي</div></div>
-  </div>
-  <div class="card gc mb12">
-    <div class="rbb">
-      <span class="ts fw7">المخطط الأسبوعي</span>
-      <span style="font-size:1.4rem;font-weight:900;font-family:'IBM Plex Mono';color:var(--g2)">18 ساعة</span>
-    </div>
-  </div>
-  
-  <div class="card" style="padding:0; overflow:hidden;">
-    <div style="padding:16px; border-bottom:1px solid var(--b1); display:flex; justify-content:space-between; align-items:center;">
-      <div class="ts fw7">يوم الأحد</div>
-      <div class="txs" style="color:var(--g2)">2 جلسة</div>
-    </div>
-    <div style="padding:16px; background:var(--card2);">
-      <div class="rb mb10" style="gap:12px">
-        <span class="txs mono tm">05:30 م</span>
-        <span class="ts fw7">الكمي - الجبر</span>
-      </div>
-      <div class="rb" style="gap:12px">
-        <span class="txs mono tm">07:30 م</span>
-        <span class="ts fw7">اللفظي - قراءة</span>
-      </div>
-    </div>
-  </div>
-  
-  <div class="card" style="padding:0; overflow:hidden;">
-    <div style="padding:16px; border-bottom:1px solid var(--b1); display:flex; justify-content:space-between; align-items:center;">
-      <div class="ts fw7">يوم الإثنين</div>
-      <div class="txs" style="color:var(--g2)">1 جلسة</div>
-    </div>
-  </div>
-</div>
-
-<div class="pg" id="pg-comm">
-  <div class="sec-t mb10">المجلس العام</div>
-  <div class="sec-s mb12">تواصل مع زملائك، اطرح أسئلتك، وشارك إنجازك.</div>
-  
-  <div class="card chat-w">
-    <div class="chat-l">
-      <div class="c-msg">
-        <div class="c-av" style="background:#304060">خ</div>
-        <div class="c-bb">
-          <div class="c-nm">خالد المري <span class="mono fw7">10:42 ص</span></div>
-          <div class="c-tx">يا شباب، كيف تذاكرون قسم الفيزياء للتحصيلي؟ أحس القوانين كثيرة وما تثبت.</div>
+  <div class="pg role-view" data-role="student" id="pg-s-comm">
+    <div class="sec-t mb16">المجلس العام والتحديات</div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="height:350px;overflow-y:auto;padding:18px;display:flex;flex-direction:column;justify-content:flex-end">
+        <div class="chat-msg">
+          <div class="chat-av" style="background:#304060">ع</div>
+          <div class="chat-bb"><div class="txs fw7 tm mb8">علي (الرياض)</div><div class="ts">يا شباب احد عنده تجميعات غشام للفيزياء؟</div></div>
+        </div>
+        <div class="chat-msg me">
+          <div class="chat-av" style="background:var(--g1)">ر</div>
+          <div class="chat-bb"><div class="txs fw7 tm mb8">روابي (بقيق)</div><div class="ts">موجودة بالخزنة هنا في المنصة، ركز على قوانين نيوتن.</div></div>
         </div>
       </div>
-      <div class="c-msg">
-        <div class="c-av" style="background:#603040">س</div>
-        <div class="c-bb">
-          <div class="c-nm">سارة <span class="mono fw7">10:45 ص</span></div>
-          <div class="c-tx">أنصحك بتجميعات غشام، ركز على الفهم مو الحفظ، وسجل كل قانون بالخزنة هنا في درب.</div>
-        </div>
-      </div>
-      <div class="c-msg me">
-        <div class="c-av" style="background:var(--g1)">أ</div>
-        <div class="c-bb">
-          <div class="c-nm">أنت <span class="mono fw7">10:46 ص</span></div>
-          <div class="c-tx">فعلاً كلام سارة صحيح، التكرار المتباعد ساعدني جداً.</div>
-        </div>
+      <div class="rb g8" style="padding:14px;border-top:1px solid var(--b1);background:var(--card2)">
+        <input type="text" class="inp" placeholder="شارك زملاءك..." style="padding:10px 14px">
+        <button class="btn bp" style="padding:10px 18px">إرسال</button>
       </div>
     </div>
-    <div style="display:flex; gap:8px; margin-top:14px; border-top:1px solid var(--b1); padding-top:14px;">
-      <input type="text" class="inp" placeholder="اكتب رسالتك...">
-      <button class="btn bp" style="padding:14px">إرسال</button>
-    </div>
-  </div>
-  
-  <div class="sdv"></div>
-  <div class="sec-t mb10">صراع المناطق (المتصدرين)</div>
-  <div class="li" style="border-color:rgba(var(--g-rgb),.4); background:rgba(var(--g-rgb),.05)">
-    <div class="ts fw9 mono" style="color:var(--g2);width:20px">1</div>
-    <div class="c-av" style="background:#405030">ب</div>
-    <div class="li-b"><div class="ts fw7">بقيق &#9733;</div></div>
-    <div class="ts fw9 mono" style="color:var(--g2)">9,840</div>
-  </div>
-  <div class="li">
-    <div class="ts fw9 mono tm" style="width:20px">2</div>
-    <div class="c-av" style="background:#304060">ر</div>
-    <div class="li-b"><div class="ts fw7">الرياض</div></div>
-    <div class="ts fw9 mono">8,720</div>
-  </div>
-</div>
-
-<div class="pg" id="pg-prof">
-  <div class="sec-t mb12">الملف الشخصي والإعدادات</div>
-  
-  <div class="card">
-    <div class="cl">المظهر والسمات</div>
-    <div class="rbb mb12">
-      <div><div class="ts fw7">الوضع</div><div class="txs tm">تغيير ألوان المنصة</div></div>
-      <button class="tog on" id="thTog" onclick="toggleTheme()"><div class="tob"></div></button>
-    </div>
   </div>
 
-  <div class="card">
-    <div class="cl">الشخصية الأكاديمية</div>
-    <div class="txs tm mb10" style="line-height:1.7">بناءً على نمط دراستك في المدار:</div>
-    <div class="g2">
-      <div class="sb" style="--sbc:var(--b2)"><div class="sbv" style="color:var(--g2)">78%</div><div class="sbl">تحليلي</div></div>
-      <div class="sb" style="--sbc:var(--b2)"><div class="sbv" style="color:var(--g2)">82%</div><div class="sbl">بصري</div></div>
+  <div class="pg role-view" data-role="parent" id="pg-p-home">
+    <div class="sec-t mb16">مرحباً بولي الأمر</div>
+    
+    <div class="card gc">
+      <div class="rbb mb10">
+        <div class="rb g8">
+          <div class="chat-av" style="background:var(--g1)">ر</div>
+          <div><div class="ts fw9">الابنة: روابي</div><div class="txs tm">الصف: ثالث ثانوي</div></div>
+        </div>
+        <span class="bdg" style="background:rgba(16,185,129,.1);color:#10B981;border-color:#10B981">تذاكر الآن</span>
+      </div>
+      <div class="dv"></div>
+      <div class="ts fw7 mb10">أداء الأسبوع الماضي</div>
+      <div class="chart-box">
+        <svg class="chart-svg" viewBox="0 0 300 100" preserveAspectRatio="none">
+          <defs><linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--g2)"/><stop offset="100%" stop-color="var(--bg)" stop-opacity="0"/></linearGradient></defs>
+          <path class="chart-fill" d="M0,100 L0,70 L50,30 L100,50 L150,20 L200,60 L250,10 L300,40 L300,100 Z"/>
+          <polyline class="chart-line" points="0,70 50,30 100,50 150,20 200,60 250,10 300,40"/>
+          <circle cx="50" cy="30" class="chart-pt"/><circle cx="150" cy="20" class="chart-pt"/><circle cx="250" cy="10" class="chart-pt"/>
+        </svg>
+      </div>
+      <div class="rbb mt10 txs tm mono">
+        <span>الأحد</span><span>الثلاثاء</span><span>الخميس</span><span>السبت</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cl">الدعم العاطفي</div>
+      <div class="txs tm mb10" style="line-height:1.6">أرسل رسالة تحفيزية تظهر لروابي فور انتهائها من جلسة المذاكرة الحالية.</div>
+      <button class="btn bp w100"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> تسجيل رسالة صوتية (فخور بك)</button>
     </div>
   </div>
 
-  <div class="card">
-    <div class="cl">ريش الطائر (أرشيفك)</div>
-    <div class="li" style="background:var(--bg)">
-      <div class="c-av" style="background:var(--g2);color:#fff">&#10022;</div>
-      <div class="li-b"><div class="ts fw7">الريشة الذهبية</div><div class="txs tm">رسائل لنفسك في المستقبل</div></div>
+  <div class="pg role-view" data-role="admin" id="pg-a-home">
+    <div class="sec-t mb16" style="color:var(--g2)">لوحة تحكم النظام (God Mode)</div>
+    
+    <div class="g2 mb16">
+      <div class="card tc mb0" style="margin-bottom:0">
+        <div class="txs tm fw7 mb8">الطلاب المتصلين</div>
+        <div class="sec-t mono" style="color:#10B981;font-size:2rem">1,402</div>
+      </div>
+      <div class="card tc mb0" style="margin-bottom:0">
+        <div class="txs tm fw7 mb8">ساعات التركيز اليوم</div>
+        <div class="sec-t mono" style="color:var(--g2);font-size:2rem">8,930</div>
+      </div>
     </div>
-    <div class="li" style="background:var(--bg)">
-      <div class="c-av" style="background:#6B7280;color:#fff">&#10022;</div>
-      <div class="li-b"><div class="ts fw7">الريشة الرمادية</div><div class="txs tm">سجل الصمود والتحديات</div></div>
+
+    <div class="card">
+      <div class="cl">بث رسالة عامة (Push Notification)</div>
+      <input type="text" class="inp mb10" placeholder="عنوان الرسالة (مثال: تحديث المنهج)">
+      <textarea class="inp mb10" rows="3" placeholder="نص الرسالة لجميع الطلاب..."></textarea>
+      <button class="btn bg w100" style="color:var(--g2);border-color:var(--g2)">إرسال للكل</button>
+    </div>
+
+    <div class="card gc">
+      <div class="cl">حالة السيرفر (Vercel / Firebase)</div>
+      <div class="rbb mb10"><span class="ts">Firebase Auth</span> <span class="bdg" style="background:#10B981;color:#fff;border:none">متصل</span></div>
+      <div class="rbb mb10"><span class="ts">Firestore Vault</span> <span class="bdg" style="background:#10B981;color:#fff;border:none">متصل</span></div>
+      <div class="rbb"><span class="ts">Load (الضغط)</span> <span class="txs mono tm">12%</span></div>
     </div>
   </div>
 
-  <div class="sdv"></div>
-  <div class="sec-t mb10">الباقات والترقيات</div>
-  <div class="sec-s mb12">افتح الميزات الكاملة لمنصة درب.</div>
+  <div class="pg role-view" data-role="all" id="pg-all-prof">
+    <div class="sec-t mb16">الإعدادات والمظهر</div>
+    <div class="card">
+      <div class="cl">المظهر (Theme)</div>
+      <div class="rbb mb10">
+        <div><div class="ts fw7">الوضع</div><div class="txs tm" id="thDesc">داكن (أسود نقي وأزرق)</div></div>
+        <button class="tog on" id="thTog" onclick="toggleTheme()"><div class="tob"></div></button>
+      </div>
+    </div>
 
-  <div class="prc">
-    <div class="ptr" style="color:var(--g2)">SHAHEEN — الشاهين</div>
-    <div class="pam">29 <span class="ts tm">ر.س</span></div>
-    <ul class="pfl">
-      <li>&#10003; مؤقت المدار 50/10</li>
-      <li>&#10003; خارطة الدرب الكاملة</li>
-    </ul>
-    <button class="btn bg w100">باقَتُك الحالية</button>
+    <div class="card gc">
+      <div class="cl" style="color:var(--g2)">وضع التطوير (تبديل الواجهات)</div>
+      <div class="txs tm mb10" style="line-height:1.6">هذا القسم خاص بك كمشرف لمعاينة المنصة بجميع أدوارها بكل دقة.</div>
+      <div class="role-grid">
+        <div class="role-btn active" id="btn-role-student" onclick="setRole('student')">
+          <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> طالب
+        </div>
+        <div class="role-btn" id="btn-role-parent" onclick="setRole('parent')">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> ولي أمر
+        </div>
+        <div class="role-btn" id="btn-role-admin" onclick="setRole('admin')">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg> مشرف
+        </div>
+      </div>
+    </div>
   </div>
-  
-  <div class="prc feat">
-    <div class="ptr" style="color:#A78BFA">SANAD — السند</div>
-    <div class="pam" style="color:#A78BFA">59 <span class="ts tm">ر.س</span></div>
-    <ul class="pfl">
-      <li>&#10003; كل مزايا الشاهين</li>
-      <li>&#9733; طائر الهدهد أو اليمامة</li>
-      <li>&#9733; لوحة مراقبة الأهل المباشرة</li>
-    </ul>
-    <button class="btn bp w100">ارتقِ للسند</button>
-  </div>
-</div>
 
-</div><div class="bnav">
-  <div class="bni on" onclick="gp('home',this)">
-    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    <div class="bni-l">الرئيسية</div>
+</div><div class="bnav" id="mainNav">
   </div>
-  <div class="bni" onclick="gp('study',this)">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-    <div class="bni-l">المدار</div>
-  </div>
-  <div class="bni" onclick="gp('sched',this)">
-    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-    <div class="bni-l">الجدول</div>
-  </div>
-  <div class="bni" onclick="gp('comm',this)">
-    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-    <div class="bni-l">المجتمع</div>
-  </div>
-  <div class="bni" onclick="gp('prof',this)">
-    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    <div class="bni-l">حسابي</div>
-  </div>
-</div>
 </div>
 
 <script>
-// NAV SYSTEM
-function gp(pg,el){
-  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
-  document.querySelectorAll('.bni').forEach(n=>n.classList.remove('on'));
-  document.getElementById('pg-'+pg).classList.add('on');
-  el.classList.add('on');
-  window.scrollTo(0,0);
-}
-
-// THEME SYSTEM
+// ==========================================
+// THEME LOGIC
+// ==========================================
 let isDark = true;
 function toggleTheme(){
   isDark = !isDark;
   document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-  const tog = document.getElementById('thTog');
-  if(tog) {
-    tog.className = isDark ? 'tog on' : 'tog off';
-  }
+  document.getElementById('thTog').className = isDark ? 'tog on' : 'tog off';
+  document.getElementById('thDesc').textContent = isDark ? 'داكن (أسود نقي وأزرق)' : 'فاتح (أبيض نقي وذهبي)';
 }
 
-// TIMER SYSTEM
-let tRun=false, tEl=0, tIv=null;
-const CIRC=630; // 2 * PI * r (r=100)
-function toggleTimer(){
+// ==========================================
+// ROLE ROUTER LOGIC
+// ==========================================
+let currentRole = 'student'; // Default
+
+// Navigation definitions per role
+const NAV_MENU = {
+  student: [
+    { id:'s-home', icon:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>', label:'الرئيسية' },
+    { id:'s-study', icon:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>', label:'المدار' },
+    { id:'s-comm', icon:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>', label:'المجتمع' },
+    { id:'all-prof', icon:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>', label:'الإعدادات' }
+  ],
+  parent: [
+    { id:'p-home', icon:'<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>', label:'لوحة العائلة' },
+    { id:'all-prof', icon:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>', label:'الإعدادات' }
+  ],
+  admin: [
+    { id:'a-home', icon:'<rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>', label:'إدارة النظام' },
+    { id:'all-prof', icon:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>', label:'الإعدادات' }
+  ]
+};
+
+const BADGE_LABELS = {
+  student: 'طالب (بقيق)',
+  parent: 'ولي أمر (العائلة)',
+  admin: 'مشرف (God Mode)'
+};
+
+function setRole(role) {
+  currentRole = role;
+  
+  // 1. Update Header Badge
+  document.getElementById('currRoleBadge').textContent = BADGE_LABELS[role];
+  
+  // 2. Update Role Switcher Buttons UI
+  document.querySelectorAll('.role-btn').forEach(btn => btn.classList.remove('active'));
+  document.getElementById('btn-role-' + role).classList.add('active');
+
+  // 3. Render Bottom Nav
+  renderNav();
+}
+
+function renderNav() {
+  const navContainer = document.getElementById('mainNav');
+  const items = NAV_MENU[currentRole];
+  
+  navContainer.innerHTML = items.map((item, index) => `
+    <div class="bni ${index === 0 ? 'on' : ''}" onclick="goToPage('${item.id}', this)">
+      <svg viewBox="0 0 24 24">${item.icon}</svg>
+      <div class="bni-l">${item.label}</div>
+    </div>
+  `).join('');
+
+  // Auto-navigate to the first page of the new role
+  goToPage(items[0].id, navContainer.firstElementChild);
+}
+
+function goToPage(pageId, el) {
+  // Hide all pages
+  document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
+  // Remove 'on' from all nav items
+  document.querySelectorAll('.bni').forEach(n => n.classList.remove('on'));
+  
+  // Show target page
+  const targetPage = document.getElementById('pg-' + pageId);
+  if(targetPage) targetPage.classList.add('on');
+  
+  // Highlight nav item
+  if(el) el.classList.add('on');
+  
+  // Scroll to top
+  window.scrollTo(0,0);
+}
+
+// ==========================================
+// TIMER LOGIC (المدار 50/10)
+// ==========================================
+let tRun = false, tEl = 0, tIv = null;
+const CIRC = 710; // SVG Circle Dasharray
+function toggleTimer() {
   const btn = document.getElementById('tBtn');
-  if(tRun){
-    clearInterval(tIv); tRun=false; btn.textContent='استمرار';
+  if(tRun) {
+    clearInterval(tIv); tRun = false; btn.textContent = 'استمرار';
   } else {
-    tRun=true; btn.textContent='إيقاف';
-    tIv=setInterval(timerTick,1000);
+    tRun = true; btn.textContent = 'إيقاف';
+    tIv = setInterval(timerTick, 1000);
   }
 }
-function timerTick(){
+function timerTick() {
   tEl++;
   const dur = 50 * 60; // 50 mins
   const left = dur - tEl;
@@ -462,15 +393,20 @@ function timerTick(){
   
   const m = String(Math.floor(left/60)).padStart(2,'0');
   const s = String(left%60).padStart(2,'0');
-  document.getElementById('tD').textContent = m+':'+s;
-  document.getElementById('rProg').style.strokeDashoffset = CIRC*(1 - tEl/dur);
+  document.getElementById('tD').textContent = m + ':' + s;
+  document.getElementById('rProg').style.strokeDashoffset = CIRC * (1 - tEl/dur);
 }
-function resetTimer(){
-  clearInterval(tIv); tRun=false; tEl=0;
-  document.getElementById('tBtn').textContent='بدء الجلسة';
-  document.getElementById('tD').textContent='50:00';
-  document.getElementById('rProg').style.strokeDashoffset=CIRC;
+function resetTimer() {
+  clearInterval(tIv); tRun = false; tEl = 0;
+  document.getElementById('tBtn').textContent = 'بدء الجلسة';
+  document.getElementById('tD').textContent = '50:00';
+  document.getElementById('rProg').style.strokeDashoffset = CIRC;
 }
+
+// Initialize on Load
+document.addEventListener('DOMContentLoaded', () => {
+  setRole('student'); // Start as student
+});
 </script>
 </body>
 </html>
