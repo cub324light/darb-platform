@@ -1,1766 +1,1221 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>درب 🦅 — منصة الانضباط الأكاديمي</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>درب</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#07090F;--s1:#0C1020;--s2:#111827;--card:#131D2E;--card2:#172030;
-  --border:#1A2840;--border2:#223058;
-  --blue:#1D4ED8;--bl:#3B82F6;--bxl:#60A5FA;--bglow:#1D4ED833;
-  --green:#10B981;--amber:#F59E0B;--red:#EF4444;--purple:#8B5CF6;--cyan:#06B6D4;
-  --text:#EEF4FF;--t2:#6B82A8;--t3:#2E3E5C;
-  --mono:'IBM Plex Mono',monospace;--r:13px;
+/* الوضع الليلي: أسود مع تفاصيل أزرق ملكي */
+[data-theme="dark"]{
+  --bg: #121212; --s1: #181818; --s2: #1e1e1e; --card: #1a1a1a; --card2: #222222;
+  --b1: #333333; --b2: #444444; --b3: #555555;
+  --text: #FFFFFF; --t2: #A0A0A0; --t3: #777777;
+  --g1: #0056b3; --g2: #007BFF; --gg: linear-gradient(135deg, #0056b3, #007BFF);
+  --g-rgb: 0, 123, 255;
+  --sh: 0 8px 28px rgba(0,0,0,.7); --ibg: #181818;
 }
-html{scroll-behavior:smooth}
-body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;direction:rtl}
-::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
-::-webkit-scrollbar-thumb:hover{background:var(--blue)}
-::selection{background:var(--blue);color:#fff}
+/* الوضع النهاري: أبيض مع تفاصيل ذهبية */
+[data-theme="light"]{
+  --bg: #F9F9F9; --s1: #F0F0F0; --s2: #E8E8E8; --card: #FFFFFF; --card2: #FAFAFA;
+  --b1: #E0E0E0; --b2: #CCCCCC; --b3: #BBBBBB;
+  --text: #121212; --t2: #666666; --t3: #888888;
+  --g1: #B88010; --g2: #D49A15; --gg: linear-gradient(135deg, #B88010, #D49A15);
+  --g-rgb: 212, 154, 21;
+  --sh: 0 4px 16px rgba(0,0,0,.1); --ibg: #F0F0F0;
+}
 
-/* ANIMATIONS */
-@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes glow{0%,100%{box-shadow:0 0 18px var(--bglow)}50%{box-shadow:0 0 36px #1D4ED855}}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{font-size:16px}
+body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;direction:rtl;transition:background .3s,color .3s}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--b2);border-radius:99px}
+::selection{background:var(--g1);color:#fff}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
 @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-@keyframes coinPop{0%{transform:scale(0) translateY(0);opacity:1}100%{transform:scale(1.4) translateY(-50px);opacity:0}}
-@keyframes birdBounce{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
-@keyframes streakFire{0%,100%{transform:scale(1) rotate(-3deg)}50%{transform:scale(1.1) rotate(3deg)}}
-@keyframes slideIn{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
-@keyframes haloSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes soar{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes fIn{from{opacity:0}to{opacity:1}}
 
-/* LAYOUT */
-.shell{display:flex;min-height:100vh}
-.sidebar{width:234px;min-height:100vh;background:var(--s1);border-left:1px solid var(--border);position:fixed;top:0;right:0;bottom:0;z-index:200;display:flex;flex-direction:column;overflow:hidden;transition:width .3s}
-.main{margin-right:234px;flex:1;padding:26px;min-height:100vh;overflow-x:hidden}
-.page{display:none;animation:fadeUp .35s ease both}
-.page.on{display:block}
+/* APP SHELL */
+.app{display:flex;flex-direction:column;min-height:100vh;max-width:480px;margin:0 auto;background:var(--bg)}
 
-/* SIDEBAR */
-.sb-logo{padding:18px 16px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
-.sb-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--blue),var(--bl));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 4px 14px #1D4ED855;flex-shrink:0}
-.sb-title{font-size:18px;font-weight:900;background:linear-gradient(135deg,var(--bxl),#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.5px}
-.sb-ver{font-size:9px;color:var(--t3);font-family:var(--mono);-webkit-text-fill-color:var(--t3);display:block;margin-top:-2px}
-.sb-user{margin:10px 10px 0;padding:11px 12px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);display:flex;align-items:center;gap:10px;flex-shrink:0}
-.ava{width:33px;height:33px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;position:relative}
-.ava-shield{position:absolute;bottom:-2px;right:-2px;font-size:10px}
-.ava-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ava-tier{font-size:9px;padding:2px 7px;border-radius:99px;font-weight:700;font-family:var(--mono);display:inline-block;margin-top:2px}
-.ts{background:#1D4ED822;color:var(--bxl);border:1px solid #1D4ED844}
-.tn{background:#F59E0B22;color:var(--amber);border:1px solid #F59E0B44}
-.ta{background:#8B5CF622;color:var(--purple);border:1px solid #8B5CF644}
-.sb-nav{flex:1;padding:8px 7px;overflow-y:auto;overflow-x:hidden}
-.ng{font-size:9px;font-weight:700;color:var(--t3);letter-spacing:2px;padding:9px 10px 4px;font-family:var(--mono);text-transform:uppercase}
-.ni{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:9px;cursor:pointer;margin-bottom:1px;color:var(--t2);font-size:13px;font-weight:500;transition:all .15s;border:1px solid transparent;position:relative;user-select:none;white-space:nowrap}
-.ni:hover{background:var(--card);color:var(--text);border-color:var(--border)}
-.ni.on{background:linear-gradient(135deg,#1D4ED820,#3B82F610);color:var(--bxl);border-color:#1D4ED840;font-weight:700}
-.ni.on::before{content:'';position:absolute;right:-7px;top:50%;transform:translateY(-50%);width:3px;height:60%;background:var(--bl);border-radius:99px}
-.ni-ico{font-size:16px;width:19px;text-align:center;flex-shrink:0}
-.ni-badge{font-size:9px;background:var(--blue);color:#fff;padding:1px 6px;border-radius:99px;font-family:var(--mono);font-weight:700;margin-right:auto;flex-shrink:0}
-.ni-lock{font-size:10px;margin-right:auto;opacity:.35;flex-shrink:0}
-.sb-bot{padding:8px 10px;border-top:1px solid var(--border);flex-shrink:0}
-.economy-strip{display:flex;gap:6px}
-.econ-pill{flex:1;display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--card2);border:1px solid var(--border2);border-radius:9px}
-.econ-val{font-size:15px;font-weight:900;font-family:var(--mono)}
-.econ-lbl{font-size:9px;color:var(--t2)}
+/* HEADER */
+.hdr{position:sticky;top:0;z-index:100;background:var(--s1);border-bottom:1px solid var(--b1);padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
+.hdr-logo{font-size:19px;font-weight:900;letter-spacing:-.5px;background:var(--gg);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hdr-r{display:flex;gap:6px;align-items:center}
+.hb{width:33px;height:33px;border-radius:8px;background:var(--card);border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--t2);-webkit-text-fill-color:var(--t2);transition:all .15s;font-family:'IBM Plex Mono';font-weight:600}
+.hb:hover{border-color:var(--g1);color:var(--g2);-webkit-text-fill-color:var(--g2)}
+.tp{font-size:9px;padding:3px 8px;border-radius:99px;font-weight:700;font-family:'IBM Plex Mono';border:1px solid;cursor:pointer}
+.tp-a{background:rgba(var(--g-rgb),.1);color:var(--g2);border-color:rgba(var(--g-rgb),.3)}
+.tp-b{background:rgba(139,92,246,.1);color:#A78BFA;border-color:rgba(139,92,246,.3)}
+.tp-c{background:rgba(239,68,68,.1);color:#F87171;border-color:rgba(239,68,68,.3)}
 
-/* TOPBAR */
-.topbar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;gap:12px}
-.pg-title{font-size:21px;font-weight:900;letter-spacing:-.5px}
-.pg-sub{font-size:12px;color:var(--t2);margin-top:2px}
-.tb-acts{display:flex;gap:7px;align-items:center;flex-shrink:0}
-.ib{width:34px;height:34px;background:var(--card);border:1px solid var(--border);border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:all .15s;color:var(--t2);flex-shrink:0}
-.ib:hover{border-color:#1D4ED860;color:var(--bxl)}
+/* BOTTOM NAV */
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:100;background:var(--s1);border-top:1px solid var(--b1);display:flex;padding:5px 2px calc(5px + env(safe-area-inset-bottom))}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 1px;cursor:pointer;border-radius:7px;color:var(--t3);min-height:46px;gap:2px;transition:color .15s}
+.bni.on{color:var(--g2)}
+.bni-i{font-size:18px;line-height:1;transition:transform .2s}
+.bni.on .bni-i{transform:scale(1.1)}
+.bni-l{font-size:9px;font-weight:600;white-space:nowrap}
+
+/* PAGES */
+.pages{flex:1;overflow-y:auto;padding-bottom:calc(60px + env(safe-area-inset-bottom))}
+.pg{display:none;padding:14px;animation:fadeUp .3s ease both}
+.pg.on{display:block}
+
+/* TYPOGRAPHY */
+.sec-t{font-size:16px;font-weight:800;letter-spacing:-.3px}
+.sec-s{font-size:11px;color:var(--t2);margin-top:1px}
+.ts{font-size:13px}.txs{font-size:11px}.ttny{font-size:10px}
+.tm{color:var(--t2)}.t3{color:var(--t3)}
+.fw7{font-weight:700}.fw8{font-weight:800}.fw9{font-weight:900}
+.mono{font-family:'IBM Plex Mono'}
 
 /* CARDS */
-.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;transition:border-color .2s}
-.card-hover:hover{border-color:var(--border2);transform:translateY(-2px)}
-.ct{font-size:10px;font-weight:700;color:var(--t2);letter-spacing:.6px;text-transform:uppercase;margin-bottom:13px;display:flex;align-items:center;gap:7px;font-family:var(--mono)}
-.ct .dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.card{background:var(--card);border:1px solid var(--b1);border-radius:13px;padding:14px;margin-bottom:10px}
+.gc{background:linear-gradient(135deg,rgba(var(--g-rgb),.05),var(--card));border-color:rgba(var(--g-rgb),.18)}
+.cl{font-size:9px;font-weight:700;color:var(--t2);letter-spacing:.7px;text-transform:uppercase;margin-bottom:10px;font-family:'IBM Plex Mono';display:flex;align-items:center;gap:5px}
+.cl::before{content:'';width:3px;height:10px;background:var(--g1);border-radius:99px;flex-shrink:0}
 
-/* STATS GRID */
-.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-.sc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;position:relative;overflow:hidden;transition:all .2s;cursor:default}
-.sc:hover{transform:translateY(-2px);border-color:var(--border2)}
-.sc::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ac,var(--blue));border-radius:0}
-.sc-ico{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:11px}
-.sc-val{font-size:24px;font-weight:900;font-family:var(--mono);letter-spacing:-1px}
-.sc-lbl{font-size:11px;color:var(--t2);margin-top:3px}
-.sc-ch{font-size:10px;margin-top:5px;font-weight:700;font-family:var(--mono)}
-.cup{color:var(--green)}.cdn{color:var(--red)}.cnt{color:var(--t2)}
-
-/* GRID LAYOUTS */
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:13px}
-.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
-.g12{display:grid;grid-template-columns:1fr 2fr;gap:13px}
-.g21{display:grid;grid-template-columns:2fr 1fr;gap:13px}
-.mt{margin-top:13px}.mb{margin-bottom:13px}
-.mt8{margin-top:8px}.mt16{margin-top:16px}.mt20{margin-top:20px}
-.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}
+/* LAYOUT */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.rb{display:flex;align-items:center}
+.rbb{display:flex;align-items:center;justify-content:space-between}
+.g6{gap:6px}.g8{gap:8px}.g10{gap:10px}
+.mt8{margin-top:8px}.mt10{margin-top:10px}.mt12{margin-top:12px}
+.mb8{margin-bottom:8px}.mb10{margin-bottom:10px}.mb12{margin-bottom:12px}
+.dv{height:1px;background:var(--b1);margin:12px 0}
+.sdv{height:8px;background:var(--s2);margin:0 -14px 14px}
+.w100{width:100%}.tc{text-align:center}
 
 /* PROGRESS */
-.pw{background:var(--border);border-radius:99px;overflow:hidden}
-.pf{height:100%;background:linear-gradient(90deg,var(--blue),var(--bl));border-radius:99px;transition:width .8s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden}
-.pf::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.13),transparent);background-size:200% 100%;animation:shimmer 2s infinite}
+.pw{background:var(--b1);border-radius:99px;overflow:hidden}
+.pf{height:100%;border-radius:99px;transition:width .8s ease;position:relative;overflow:hidden}
+.pf::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);background-size:200% 100%;animation:shimmer 2.5s infinite}
+.pg{background:linear-gradient(90deg,var(--g1),var(--g2))}
 
-/* TIMER */
-.timer-wrap{display:flex;flex-direction:column;align-items:center;padding:18px 14px}
-.ring-wrap{position:relative;width:200px;height:200px;margin-bottom:18px;animation:float 4s ease-in-out infinite;cursor:pointer}
-.ring-wrap:hover{animation:birdBounce .4s ease}
-.ring-svg{width:100%;height:100%;transform:rotate(-90deg)}
-.r-track{fill:none;stroke:var(--border2);stroke-width:10}
-.r-prog{fill:none;stroke:url(#rg1);stroke-width:10;stroke-linecap:round;stroke-dasharray:565;stroke-dashoffset:565;transition:stroke-dashoffset .5s ease}
-.r-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
-.r-time{font-size:44px;font-weight:900;font-family:var(--mono);letter-spacing:-2px;line-height:1}
-.r-lbl{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:1px}
-.phase-badge{padding:5px 16px;border-radius:99px;font-size:11px;font-weight:700;margin-bottom:14px;transition:all .3s}
-.pb-focus{background:#1D4ED820;color:var(--bxl);border:1px solid #1D4ED844}
-.pb-rest{background:#10B98120;color:var(--green);border:1px solid #10B98144}
-.timer-btns{display:flex;gap:9px}
-.tbt{padding:10px 24px;border-radius:10px;border:none;font-family:'Tajawal';font-size:14px;font-weight:700;cursor:pointer;transition:all .15s}
-.tbt-go{background:linear-gradient(135deg,var(--blue),var(--bl));color:#fff;animation:glow 3s infinite}
-.tbt-go:hover{transform:translateY(-2px)}
-.tbt-rs{background:var(--card2);color:var(--t2);border:1px solid var(--border2)}
-.tbt-rs:hover{color:var(--text)}
-.streak-box{display:flex;align-items:center;gap:12px;padding:13px 16px;background:var(--card2);border:1px solid var(--border2);border-radius:11px;width:100%}
-.sk-num{font-size:32px;font-weight:900;color:var(--amber);font-family:var(--mono);animation:streakFire 2s infinite}
-.sk-lbl{font-size:10px;color:var(--t2)}.sk-val{font-size:13px;font-weight:700;margin-top:2px}
+/* STATS */
+.sb{background:var(--card);border:1px solid var(--b1);border-radius:11px;padding:12px;position:relative;overflow:hidden}
+.sb::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--sbc,var(--g1))}
+.sbv{font-size:23px;font-weight:900;font-family:'IBM Plex Mono';letter-spacing:-1px}
+.sbl{font-size:10px;color:var(--t2);margin-top:2px}
+.sbc-t{font-size:9px;margin-top:3px;font-weight:700;font-family:'IBM Plex Mono'}
+.cup{color:#10B981}.cdn{color:#EF4444}.cnt{color:var(--t2)}
 
-/* HEATMAP */
-.hm{display:grid;grid-template-columns:repeat(13,1fr);gap:3px;margin:8px 0}
-.hmc{aspect-ratio:1;border-radius:3px;cursor:pointer;transition:transform .1s}
-.hmc:hover{transform:scale(1.3)}
-.h0{background:var(--border)}.h1{background:#1D4ED840}.h2{background:#1D4ED870}.h3{background:#1D4ED8AA}.h4{background:var(--blue)}
-
-/* BIRD */
-.bird-stage{display:flex;flex-direction:column;align-items:center;padding:24px 14px;position:relative;cursor:pointer;user-select:none}
-.bird-halo{position:absolute;width:130px;height:130px;border-radius:50%;top:20px;pointer-events:none}
-.bird-halo.silver{background:radial-gradient(circle,rgba(192,192,192,.2),transparent 70%);animation:pulse 2.5s infinite}
-.bird-halo.gold{border:2px solid rgba(245,158,11,.3);animation:haloSpin 8s linear infinite}
-.bird-emoji{font-size:74px;transition:transform .3s;filter:drop-shadow(0 0 22px #1D4ED866);animation:float 3s ease-in-out infinite;line-height:1}
-.bird-emoji:hover{transform:scale(1.12)}
-.bird-name{font-size:16px;font-weight:900;color:var(--bxl);margin-top:10px}
-.bird-lvl{font-size:11px;color:var(--t2);margin-top:3px}
-.xp-bar{width:150px;height:5px;background:var(--border);border-radius:99px;margin-top:10px;overflow:hidden}
-.xp-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--purple));border-radius:99px;transition:width 1s ease}
-
-/* VAULT */
-.vq{padding:15px;background:var(--card2);border:1px solid var(--border2);border-radius:11px;margin-bottom:9px;animation:slideIn .3s ease}
-.vq-text{font-size:14px;margin-bottom:11px;line-height:1.7}
-.vq-opts{display:flex;flex-direction:column;gap:6px}
-.vo{padding:9px 13px;border:1px solid var(--border2);border-radius:8px;cursor:pointer;font-size:13px;transition:all .15s;background:var(--card);text-align:right}
-.vo:hover{border-color:#1D4ED855;background:#1D4ED808}
-.vo.correct{border-color:var(--green)!important;background:#10B98120!important;color:var(--green)!important}
-.vo.wrong{border-color:var(--red)!important;background:#EF444420!important;color:var(--red)!important}
-.vq-tip{padding:9px 11px;background:#10B98110;border-right:3px solid var(--green);border-radius:7px;font-size:12px;color:var(--green);margin-top:9px;display:none}
-.vq-tip.show{display:block;animation:fadeIn .3s ease}
-
-/* FEATHERS */
-.feather-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.feather{padding:15px;border-radius:12px;border:1px solid var(--border2);background:var(--card2);cursor:pointer;transition:all .2s}
-.feather:hover{transform:translateY(-3px)}
-.feather.open{border-color:var(--bl)44}
-.f-ico{font-size:26px;margin-bottom:7px}
-.f-ttl{font-size:13px;font-weight:800;margin-bottom:4px}
-.f-dsc{font-size:11px;color:var(--t2);line-height:1.6}
-.f-body{display:none;margin-top:12px;padding:12px;background:var(--card);border-radius:9px;border:1px solid var(--border)}
-.f-body.show{display:block;animation:fadeIn .3s ease}
-.f-msgs{max-height:180px;overflow-y:auto;margin-bottom:8px}
-.msg-bbl{padding:10px 12px;background:var(--card2);border-radius:9px;border:1px solid var(--border);margin-bottom:7px;animation:slideIn .3s ease}
-.msg-meta{display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-bottom:4px;font-family:var(--mono)}
-.msg-txt{font-size:12px;line-height:1.7}
-.f-inp{width:100%;padding:9px 11px;background:var(--s1);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:'Tajawal';font-size:13px;outline:none;transition:border-color .2s}
-.f-inp:focus{border-color:#1D4ED855}
-.f-inp::placeholder{color:var(--t3)}
-textarea.f-inp{resize:vertical;min-height:70px;line-height:1.7}
-
-/* SOCIAL */
-.srch{width:100%;padding:10px 13px;background:var(--card2);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-family:'Tajawal';font-size:14px;outline:none;transition:border-color .2s;direction:rtl}
-.srch:focus{border-color:#1D4ED855}
-.srch::placeholder{color:var(--t3)}
-.f-card{display:flex;align-items:center;gap:11px;padding:11px 13px;background:var(--card2);border:1px solid var(--border2);border-radius:11px;margin-bottom:7px;transition:all .2s;cursor:pointer}
-.f-card:hover{border-color:#1D4ED840;background:#1D4ED808}
-.f-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0}
-.f-name{font-size:13px;font-weight:700;margin-bottom:2px}
-.f-meta{display:flex;gap:7px;font-size:11px;color:var(--t2);align-items:center;flex-wrap:wrap}
-.f-sk{color:var(--amber);font-weight:700}
-.f-pm{width:44px;height:4px;background:var(--border);border-radius:99px;overflow:hidden}
-.f-pf{height:100%;background:var(--bl);border-radius:99px}
-.add-btn{padding:5px 12px;border-radius:7px;background:#1D4ED820;color:var(--bxl);border:1px solid #1D4ED840;font-family:'Tajawal';font-size:11px;font-weight:700;cursor:pointer;margin-right:auto;transition:all .15s;flex-shrink:0}
-.add-btn:hover{background:#1D4ED840}
-.pvt-b{font-size:9px;color:var(--t3);background:var(--border);padding:2px 6px;border-radius:99px}
-
-/* PRICING */
-.prg{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;max-width:870px;margin:0 auto}
-.prc{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;position:relative;overflow:hidden;transition:all .25s}
-.prc:hover{transform:translateY(-4px);box-shadow:0 16px 40px #00000044}
-.prc.feat{border-color:#F59E0B77;background:linear-gradient(160deg,var(--card2),var(--card))}
-.prc.feat::before{content:'الأكثر طلباً';position:absolute;top:0;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,var(--amber),#D97706);color:#000;font-size:9px;font-weight:800;padding:4px 14px;border-radius:0 0 9px 9px;font-family:var(--mono)}
-.prc.elit{border-color:#8B5CF655}
-.pr-tier{font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;margin-bottom:9px;font-family:var(--mono)}
-.pr-price .am{font-size:42px;font-weight:900;font-family:var(--mono);letter-spacing:-2px;line-height:1}
-.pr-price .cu{font-size:15px;color:var(--t2)}
-.pr-per{font-size:10px;color:var(--t2);margin-bottom:14px}
-.pr-desc{font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:14px;padding:9px;background:var(--s1);border-radius:7px;border:1px solid var(--border)}
-.pr-fl{list-style:none;margin-bottom:18px;display:flex;flex-direction:column;gap:7px}
-.pr-fl li{display:flex;gap:7px;font-size:11px;color:var(--t2);align-items:flex-start;line-height:1.5}
-.pr-fl .ic{flex-shrink:0;font-size:12px}
-.pfy{color:var(--green)}.pfn{color:var(--t3)}.pfs{color:var(--purple)}
-.p-btn{width:100%;padding:11px;border-radius:9px;border:none;cursor:pointer;font-family:'Tajawal';font-size:14px;font-weight:800;transition:all .15s}
-.pb1{background:var(--card2);color:var(--text);border:1px solid var(--border2)}.pb1:hover{border-color:#1D4ED855}
-.pb2{background:linear-gradient(135deg,var(--amber),#D97706);color:#000}.pb2:hover{box-shadow:0 4px 18px #F59E0B44;transform:translateY(-1px)}
-.pb3{background:linear-gradient(135deg,var(--purple),#6D28D9);color:#fff}.pb3:hover{box-shadow:0 4px 18px #8B5CF644;transform:translateY(-1px)}
-
-/* LEADERBOARD */
-.lb-row{display:flex;align-items:center;gap:11px;padding:11px 13px;background:var(--card2);border:1px solid var(--border2);border-radius:11px;margin-bottom:7px;transition:all .2s}
-.lb-row:hover{border-color:var(--border2);background:var(--card)}
-.lb-rank{font-size:16px;font-weight:900;font-family:var(--mono);width:26px;text-align:center;flex-shrink:0}
-.lb-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
-.lb-info{flex:1}.lb-name{font-size:13px;font-weight:700}.lb-city{font-size:10px;color:var(--t2)}
-.lb-score{font-size:15px;font-weight:900;font-family:var(--mono);color:var(--amber)}
-
-/* TOGGLE */
-.tog{width:40px;height:21px;border-radius:99px;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
-.tog-b{position:absolute;top:3px;width:15px;height:15px;background:#fff;border-radius:50%;transition:all .2s}
-.tog.on{background:var(--blue)}.tog.on .tog-b{right:3px;left:auto}
-.tog.off{background:var(--border2)}.tog.off .tog-b{left:3px;right:auto}
-
-/* ALERT ROWS */
-.al{display:flex;gap:11px;align-items:flex-start;padding:11px 12px;background:var(--card2);border:1px solid var(--border2);border-radius:10px;margin-bottom:7px}
-.al-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px}
-.al-body{flex:1}.al-t{font-size:12px;font-weight:700;margin-bottom:2px}.al-s{font-size:11px;color:var(--t2)}
-.al-time{font-size:9px;color:var(--t3);font-family:var(--mono);white-space:nowrap}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 15px;border-radius:9px;border:none;cursor:pointer;font-family:'Tajawal';font-size:13px;font-weight:700;transition:all .15s;white-space:nowrap}
+.bp{background:var(--gg);color:#fff}.bp:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(var(--g-rgb),.3)}
+.bg{background:var(--card2);color:var(--text);border:1px solid var(--b2)}.bg:hover{background:var(--b1)}
+.btn-r{background:rgba(239,68,68,.08);color:#F87171;border:1px solid rgba(239,68,68,.2)}
 
 /* BADGES */
-.bdg{padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;font-family:var(--mono);display:inline-block}
-.b-bl{background:#1D4ED820;color:var(--bxl);border:1px solid #1D4ED830}
-.b-gr{background:#10B98120;color:var(--green);border:1px solid #10B98130}
-.b-am{background:#F59E0B20;color:var(--amber);border:1px solid #F59E0B30}
-.b-pu{background:#8B5CF620;color:var(--purple);border:1px solid #8B5CF630}
-.b-re{background:#EF444420;color:var(--red);border:1px solid #EF444430}
-.b-cy{background:#06B6D420;color:var(--cyan);border:1px solid #06B6D430}
+.bdg{display:inline-block;padding:2px 7px;border-radius:99px;font-size:9px;font-weight:700;font-family:'IBM Plex Mono';border:1px solid}
+.bg-g{background:rgba(var(--g-rgb),.1);color:var(--g2);border-color:rgba(var(--g-rgb),.25)}
+.bg-gr{background:rgba(16,185,129,.08);color:#34D399;border-color:rgba(16,185,129,.2)}
+.bg-re{background:rgba(239,68,68,.08);color:#F87171;border-color:rgba(239,68,68,.2)}
+.bg-pu{background:rgba(139,92,246,.08);color:#A78BFA;border-color:rgba(139,92,246,.2)}
+.bg-mt{background:var(--card2);color:var(--t2);border-color:var(--b2)}
 
-/* UTILS */
-.fbb{display:flex;align-items:center;justify-content:space-between}
-.fbc{display:flex;align-items:center}
-.g8{gap:8px}.g12{gap:12px}
-.ts{font-size:13px}.txs{font-size:11px}.ttiny{font-size:10px}.tm{color:var(--t2)}
-.fw{font-weight:700}.fw9{font-weight:900}
-.mono{font-family:var(--mono)}
-.w100{width:100%}.tc{text-align:center}
-.divider{height:1px;background:var(--border);margin:14px 0}
-.btn{padding:9px 18px;border-radius:9px;border:none;cursor:pointer;font-family:'Tajawal';font-size:13px;font-weight:700;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
-.btn-bl{background:linear-gradient(135deg,var(--blue),var(--bl));color:#fff}.btn-bl:hover{transform:translateY(-1px);box-shadow:0 4px 16px var(--bglow)}
-.btn-gh{background:var(--card2);color:var(--t2);border:1px solid var(--border2)}.btn-gh:hover{color:var(--text);border-color:var(--border2)}
-.btn-re{background:#EF444420;color:var(--red);border:1px solid #EF444430}.btn-re:hover{background:#EF444430}
+/* INPUT */
+.inp{width:100%;padding:10px 12px;background:var(--ibg);border:1px solid var(--b2);border-radius:9px;color:var(--text);font-family:'Tajawal';font-size:13px;outline:none;transition:border-color .2s;direction:rtl}
+.inp:focus{border-color:rgba(var(--g-rgb),.5)}
+.inp::placeholder{color:var(--t3)}
+textarea.inp{resize:vertical;min-height:70px;line-height:1.7}
+
+/* TOGGLE */
+.tog{width:38px;height:21px;border-radius:99px;cursor:pointer;position:relative;transition:background .2s;border:none;padding:0;flex-shrink:0}
+.tog.on{background:var(--gg)}.tog.off{background:var(--b2)}
+.tob{position:absolute;top:3px;width:15px;height:15px;background:#fff;border-radius:50%;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.tog.on .tob{right:3px;left:auto}.tog.off .tob{left:3px;right:auto}
+
+/* LIST ITEMS */
+.li{display:flex;align-items:center;gap:9px;padding:10px 12px;background:var(--card2);border:1px solid var(--b1);border-radius:9px;margin-bottom:6px;cursor:pointer;transition:all .15s}
+.li:hover{border-color:var(--b2)}
+.li-b{flex:1;min-width:0}.li-t{font-size:12px;font-weight:700}.li-s{font-size:10px;color:var(--t2);margin-top:1px}
 
 /* TOAST */
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(70px);z-index:9999;padding:10px 16px;border-radius:11px;background:var(--card2);border:1px solid var(--border2);box-shadow:0 8px 28px #00000077;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s;opacity:0;max-width:320px;white-space:nowrap}
+.toast{position:fixed;bottom:calc(56px + env(safe-area-inset-bottom) + 8px);left:50%;transform:translateX(-50%) translateY(70px);z-index:9999;padding:9px 14px;border-radius:10px;background:var(--card2);border:1px solid var(--b3);box-shadow:var(--sh);font-size:12px;font-weight:600;opacity:0;white-space:nowrap;transition:all .3s cubic-bezier(.4,0,.2,1);max-width:90vw;text-align:center}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
-.toast.ok{border-color:#10B98144}
-.toast.info{border-color:#1D4ED844}
+.toast.ok{border-color:rgba(16,185,129,.3);color:#34D399}
+.toast.warn{border-color:rgba(var(--g-rgb),.3);color:var(--g2)}
 
-/* COIN POP */
-.cpop{position:fixed;pointer-events:none;font-size:18px;font-weight:900;font-family:var(--mono);z-index:9998;animation:coinPop .7s ease forwards}
+/* MODAL */
+.mov{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;display:none;align-items:flex-end;justify-content:center}
+.mov.show{display:flex;animation:fIn .2s ease}
+.msh{background:var(--s1);border-radius:18px 18px 0 0;width:100%;max-width:480px;padding:16px;max-height:88vh;overflow-y:auto;animation:slideUp .3s ease;border-top:1px solid var(--b2)}
+.mhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}
+.mt2{font-size:14px;font-weight:800}
+.mcl{width:26px;height:26px;background:var(--card2);border:1px solid var(--b2);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--t2)}
 
-/* ARENA */
-.arena-card{padding:15px;background:var(--card2);border:1px solid var(--border2);border-radius:11px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .2s}
-.arena-card:hover{border-color:#EF444444;background:#EF444408}
+/* HEATMAP */
+.hm{display:grid;grid-template-columns:repeat(13,1fr);gap:2px;margin:7px 0}
+.hmc{aspect-ratio:1;border-radius:2px}
+.h0{background:var(--b1)}.h1{background:rgba(var(--g-rgb),.2)}.h2{background:rgba(var(--g-rgb),.45)}.h3{background:rgba(var(--g-rgb),.7)}.h4{background:var(--g1)}
+
+/* EAGLE SVG (Geometric / Modern) */
+.eagle-stage{display:flex;flex-direction:column;align-items:center;padding:16px 0 10px}
+.eagle-svg{width:160px;height:145px;animation:soar 4s ease-in-out infinite}
+.eagle-nm{font-size:16px;font-weight:900;color:var(--g2);margin-top:8px}
+.eagle-lv{font-size:10px;color:var(--t2);margin-top:2px}
+.xp-bar{width:130px;height:3px;background:var(--b1);border-radius:99px;margin-top:8px;overflow:hidden}
+.xp-f{height:100%;background:var(--gg);border-radius:99px;transition:width 1s ease}
+
+/* TIMER RING */
+.ring-w{position:relative;width:190px;height:190px;margin:0 auto 12px}
+.rsvg{width:100%;height:100%;transform:rotate(-90deg)}
+.rt{fill:none;stroke:var(--b2);stroke-width:9}
+.rp{fill:none;stroke:url(#ggGrad);stroke-width:9;stroke-linecap:round;stroke-dasharray:534;stroke-dashoffset:534;transition:stroke-dashoffset .5s ease}
+.rp.rest{stroke:url(#grGrad)}
+.rc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.rt2{font-size:42px;font-weight:900;font-family:'IBM Plex Mono';letter-spacing:-2px;line-height:1}
+.rl{font-size:9px;color:var(--t2);text-transform:uppercase;letter-spacing:1px}
+.tph{font-size:9px;padding:4px 12px;border-radius:99px;font-weight:700;letter-spacing:.5px;margin-bottom:11px;border:1px solid;font-family:'IBM Plex Mono'}
+.tpf{background:rgba(var(--g-rgb),.07);color:var(--g2);border-color:rgba(var(--g-rgb),.22)}
+.tpr{background:rgba(16,185,129,.07);color:#34D399;border-color:rgba(16,185,129,.18)}
+.skbox{display:flex;align-items:center;gap:10px;padding:11px 14px;background:linear-gradient(135deg,rgba(var(--g-rgb),.05),var(--card));border:1px solid rgba(var(--g-rgb),.18);border-radius:11px}
+.skn{font-size:30px;font-weight:900;font-family:'IBM Plex Mono';color:var(--g2)}
 
 /* ROADMAP STEP */
-.rm-step{display:flex;gap:13px;padding:13px;margin-bottom:7px;background:var(--card);border:1px solid var(--border);border-radius:11px;transition:all .2s;cursor:pointer}
-.rm-step:hover{border-color:#1D4ED840}
-.rm-step.done{border-color:#10B98140;background:#10B98108}
-.rm-step.act{border-color:#1D4ED880;background:#1D4ED808}
-.rm-ico{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
-.rm-body{flex:1;min-width:0}
-.rm-title{font-size:13px;font-weight:700;margin-bottom:3px}
-.rm-desc{font-size:11px;color:var(--t2);line-height:1.6}
-.rm-meta{display:flex;gap:6px;margin-top:7px;align-items:center;flex-wrap:wrap}
+.rms{display:flex;gap:10px;padding:11px 12px;background:var(--card2);border:1px solid var(--b1);border-radius:9px;margin-bottom:6px;cursor:pointer;transition:border-color .15s}
+.rms:hover{border-color:var(--b2)}
+.rms.done{border-color:rgba(16,185,129,.18);background:rgba(16,185,129,.03)}
+.rms.act{border-color:rgba(var(--g-rgb),.22);background:rgba(var(--g-rgb),.03)}
+.rms.lock{opacity:.5;cursor:not-allowed}
+.rmi{width:35px;height:35px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.rmb{flex:1;min-width:0}.rmt{font-size:12px;font-weight:700;margin-bottom:2px}.rmd{font-size:10px;color:var(--t2)}
+.rmf{display:flex;gap:5px;margin-top:5px;align-items:center;flex-wrap:wrap}
 
-/* PARENT */
-.parent-locked{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:360px;text-align:center;padding:24px}
+/* VAULT */
+.vq{padding:12px;background:var(--card2);border:1px solid var(--b1);border-radius:9px;margin-bottom:6px}
+.vo{padding:8px 11px;border:1px solid var(--b2);border-radius:7px;cursor:pointer;font-size:12px;transition:all .15s;margin-bottom:4px}
+.vo:hover{border-color:rgba(var(--g-rgb),.3)}
+.vo.cr{border-color:#10B981!important;background:rgba(16,185,129,.05)!important;color:#34D399!important}
+.vo.wr{border-color:#EF4444!important;background:rgba(239,68,68,.05)!important;color:#F87171!important}
+.vtip{display:none;padding:7px 10px;background:rgba(16,185,129,.05);border-right:3px solid #10B981;border-radius:6px;font-size:10px;color:#34D399;margin-top:6px}
+.vtip.sh{display:block;animation:fIn .3s ease}
 
-/* RESPONSIVE */
-@media(max-width:820px){
-  .sidebar{width:56px}
-  .sb-title,.sb-ver,.ava-name,.ava-tier,
-  .ni span:not(.ni-ico),.ni-badge,.ni-lock,
-  .econ-lbl,.sb-bot .econ-val{display:none}
-  .sb-user{padding:8px;justify-content:center}
-  .ni{justify-content:center;padding:10px 0}
-  .sb-bot{padding:6px}
-  .economy-strip{flex-direction:column;gap:4px}
-  .main{margin-right:56px;padding:14px}
-  .sg{grid-template-columns:repeat(2,1fr)}
-  .prg,.g3{grid-template-columns:1fr}
-  .g2,.g12,.g21{grid-template-columns:1fr}
-  .feather-grid{grid-template-columns:1fr}
-}
+/* CEFR */
+.cefr-g{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}
+.cfb{padding:10px;border-radius:8px;border:1px solid var(--b1);text-align:center;cursor:pointer;transition:all .2s}
+.cfb:hover{border-color:var(--g1)}
+.cfb.on{background:rgba(var(--g-rgb),.07);border-color:rgba(var(--g-rgb),.3)}
+.cfc{font-size:16px;font-weight:900;font-family:'IBM Plex Mono';color:var(--g2)}
+.cfn{font-size:9px;color:var(--t2);margin-top:2px}
+
+/* PERSONALITY */
+.pt-g{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.ptb{padding:10px;border-radius:8px;background:var(--card2);border:1px solid var(--b1)}
+.ptv{font-size:19px;font-weight:900;font-family:'IBM Plex Mono';color:var(--g2)}
+.ptn{font-size:9px;color:var(--t2);margin-top:2px}
+
+/* SCHEDULE */
+.dslot{background:var(--card2);border:1px solid var(--b1);border-radius:9px;margin-bottom:5px;overflow:hidden}
+.dh{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;cursor:pointer}
+.dn{font-size:13px;font-weight:700}
+.dhr{font-size:9px;font-family:'IBM Plex Mono';color:var(--g2)}
+.dsess{padding:0 12px 8px;display:none}
+.dsess.op{display:block;animation:fIn .2s ease}
+.sblk{display:flex;align-items:center;gap:7px;padding:6px 0;border-top:1px solid var(--b1)}
+.stm{font-size:9px;font-family:'IBM Plex Mono';color:var(--t2);width:70px;flex-shrink:0}
+.ssub{font-size:11px;font-weight:600;flex:1}
+.stype{font-size:9px;padding:2px 6px;border-radius:99px;font-weight:700}
+.st-s{background:rgba(var(--g-rgb),.09);color:var(--g2)}
+.st-r{background:rgba(16,185,129,.09);color:#34D399}
+.st-t{background:rgba(239,68,68,.09);color:#F87171}
+
+/* SOCIAL */
+.sc{display:flex;align-items:center;gap:9px;padding:10px 12px;background:var(--card2);border:1px solid var(--b1);border-radius:9px;margin-bottom:6px;cursor:pointer;transition:border-color .15s}
+.sc:hover{border-color:var(--b2)}
+.uav{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0}
+.un{font-size:12px;font-weight:700;margin-bottom:1px}
+.um{display:flex;gap:6px;font-size:10px;color:var(--t2);align-items:center;flex-wrap:wrap}
+.pmi{width:40px;height:3px;background:var(--b1);border-radius:99px;overflow:hidden}
+.pmf{height:100%;background:var(--gg);border-radius:99px}
+
+/* LESSON CARD */
+.lc{display:flex;align-items:center;gap:10px;padding:11px 12px;background:var(--card2);border:1px solid var(--b1);border-radius:9px;margin-bottom:6px;cursor:pointer;transition:border-color .15s}
+.lc:hover{border-color:var(--b2)}
+.lc.done{border-color:rgba(16,185,129,.18)}
+.lc.lock{opacity:.5;cursor:not-allowed}
+.lplay{width:40px;height:40px;border-radius:8px;background:var(--gg);display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;flex-shrink:0}
+.lth{width:40px;height:40px;border-radius:8px;background:var(--card);border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;color:var(--t2)}
+.lb{flex:1;min-width:0}
+.lt2{font-size:12px;font-weight:700;margin-bottom:2px}
+.lm{font-size:10px;color:var(--t2);display:flex;gap:6px;align-items:center}
+
+/* FEATHERS */
+.fi{background:var(--card);border:1px solid var(--b1);border-radius:11px;margin-bottom:8px;overflow:hidden}
+.fih{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer}
+.fid{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.fit{font-size:12px;font-weight:700;flex:1}
+.fia{color:var(--t3);font-size:12px;transition:transform .2s}
+.fi.op .fia{transform:rotate(90deg)}
+.fib{display:none;padding:0 14px 12px}
+.fi.op .fib{display:block;animation:fIn .2s ease}
+.fmsgs{max-height:170px;overflow-y:auto;margin-bottom:7px}
+.fmsg{padding:8px 10px;background:var(--card2);border-radius:7px;border:1px solid var(--b1);margin-bottom:4px}
+.fmm{display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-bottom:3px;font-family:'IBM Plex Mono'}
+.fmt{font-size:11px;line-height:1.7}
+
+/* PRICING */
+.prc{background:var(--card);border:1px solid var(--b1);border-radius:13px;padding:16px;margin-bottom:9px;position:relative;overflow:hidden;transition:all .2s}
+.prc:hover{transform:translateY(-2px)}
+.prc.feat{border-color:rgba(var(--g-rgb),.3);background:linear-gradient(160deg,rgba(var(--g-rgb),.04),var(--card))}
+.prc.feat::before{content:'الأفضل';position:absolute;top:0;right:0;background:var(--gg);color:#fff;font-size:9px;font-weight:800;padding:3px 11px;border-radius:0 0 0 8px;font-family:'IBM Plex Mono'}
+.ptr{font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;font-family:'IBM Plex Mono';margin-bottom:6px}
+.pam{font-size:36px;font-weight:900;font-family:'IBM Plex Mono';letter-spacing:-2px;line-height:1}
+.pper{font-size:9px;color:var(--t2);margin-bottom:10px}
+.pfl{list-style:none;margin-bottom:12px;display:flex;flex-direction:column;gap:5px}
+.pfl li{display:flex;gap:6px;font-size:11px;color:var(--t2);align-items:flex-start;line-height:1.5}
+.pfy{color:#34D399}.pfn{color:var(--t3)}.pfg{color:var(--g2)}
+
+/* VIDEO */
+.vw{aspect-ratio:16/9;background:#000;border-radius:9px;overflow:hidden;margin-bottom:11px}
+.vph{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;background:linear-gradient(135deg,var(--s2),var(--card))}
+.vpb{width:48px;height:48px;background:var(--gg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;color:#fff;cursor:pointer;transition:transform .2s}
+.vpb:hover{transform:scale(1.08)}
 </style>
 </head>
 <body>
+<div class="toast" id="T"></div>
 
-<div class="toast" id="toast"></div>
-
-<div class="shell">
-
-<!-- ══════════════ SIDEBAR ══════════════ -->
-<aside class="sidebar">
-  <div class="sb-logo">
-    <div class="sb-icon">🦅</div>
-    <div>
-      <div class="sb-title">درب</div>
-      <span class="sb-ver">v2.0 DARB</span>
-    </div>
-  </div>
-
-  <div class="sb-user">
-    <div class="ava" id="sbAva">م<span class="ava-shield" id="sbShield" style="display:none">🛡</span></div>
-    <div style="min-width:0">
-      <div class="ava-name" id="sbName">محمد</div>
-      <span class="ava-tier ts" id="sbTier">الشاهين</span>
-    </div>
-  </div>
-
-  <nav class="sb-nav">
-    <div class="ng">الرئيسي</div>
-    <div class="ni on" onclick="go('dash')"><span class="ni-ico">⊞</span><span>الرئيسية</span></div>
-    <div class="ni" onclick="go('timer')"><span class="ni-ico">⏱</span><span>مؤقت المدار</span><span class="ni-badge">50/10</span></div>
-    <div class="ni" onclick="go('bird')"><span class="ni-ico">🦅</span><span>طائري</span></div>
-    <div class="ni" onclick="go('roadmap')"><span class="ni-ico">🗺</span><span>خارطة الدرب</span></div>
-    <div class="ni" onclick="go('vault')"><span class="ni-ico">🏛</span><span>الخزنة</span><span class="ni-badge" id="vBadge">0</span></div>
-
-    <div class="ng">المجتمع</div>
-    <div class="ni" onclick="go('social')"><span class="ni-ico">👥</span><span>الأصدقاء</span></div>
-    <div class="ni" onclick="go('arena')"><span class="ni-ico">⚔</span><span>الميدان 1vs1</span></div>
-    <div class="ni" onclick="go('regions')"><span class="ni-ico">🏆</span><span>صراع المناطق</span></div>
-
-    <div class="ng">المتقدمة</div>
-    <div class="ni" onclick="go('parent')" id="navParent"><span class="ni-ico">👨‍👩‍👦</span><span>بوابة الأهل</span><span class="ni-lock" id="pLock">🔒</span></div>
-    <div class="ni" onclick="go('feathers')"><span class="ni-ico">🪶</span><span>ريش الطائر</span></div>
-    <div class="ni" onclick="go('career')"><span class="ni-ico">💼</span><span>مسار المهنة</span></div>
-
-    <div class="ng">الحساب</div>
-    <div class="ni" onclick="go('pricing')"><span class="ni-ico">💎</span><span>الباقات</span></div>
-    <div class="ni" onclick="go('settings')"><span class="ni-ico">⚙</span><span>الإعدادات</span></div>
-  </nav>
-
-  <div class="sb-bot">
-    <div class="economy-strip">
-      <div class="econ-pill">
-        <span>🪙</span>
-        <div><div class="econ-val" id="sbSilver" style="color:#C8C8C8">0</div><div class="econ-lbl">فضة</div></div>
-      </div>
-      <div class="econ-pill">
-        <span>🥇</span>
-        <div><div class="econ-val" id="sbGold" style="color:var(--amber)">0</div><div class="econ-lbl">ذهب</div></div>
-      </div>
-    </div>
-  </div>
-</aside>
-
-<!-- ══════════════ MAIN ══════════════ -->
-<main class="main">
-
-<!-- ══ DASHBOARD ══ -->
-<div class="page on" id="page-dash">
-  <div class="topbar">
-    <div><div class="pg-title" id="dashGreet">أهلاً 👋</div><div class="pg-sub">تابع مسيرتك في منصة درب</div></div>
-    <div class="tb-acts">
-      <div class="ib" onclick="go('pricing')" title="رفع الباقة">⚡</div>
-      <div class="ib" onclick="showNotif()" title="الإشعارات">🔔</div>
-    </div>
-  </div>
-
-  <div class="sg">
-    <div class="sc" style="--ac:var(--blue)"><div class="sc-ico" style="background:#1D4ED820">📊</div><div class="sc-val">73%</div><div class="sc-lbl">التقدم الكلي</div><div class="sc-ch cup">↑ +5% هذا الأسبوع</div></div>
-    <div class="sc" style="--ac:var(--amber)"><div class="sc-ico" style="background:#F59E0B20">🔥</div><div class="sc-val" id="dStreak">0</div><div class="sc-lbl">سلسلة الأيام</div><div class="sc-ch cup">↑ استمر!</div></div>
-    <div class="sc" style="--ac:var(--green)"><div class="sc-ico" style="background:#10B98120">⏱</div><div class="sc-val" id="dSess">0</div><div class="sc-lbl">جلسات اليوم</div><div class="sc-ch cnt">50 دقيقة / جلسة</div></div>
-    <div class="sc" style="--ac:var(--purple)"><div class="sc-ico" style="background:#8B5CF620">🪙</div><div class="sc-val" id="dSilver">0</div><div class="sc-lbl">فضة مكتسبة</div><div class="sc-ch cnt">اليوم</div></div>
-  </div>
-
-  <div class="g21 mt">
-    <div class="card">
-      <div class="ct"><div class="dot" style="background:var(--blue)"></div>خارطة التقدم</div>
-      <div id="dashBars"></div>
-      <div class="divider"></div>
-      <div class="fbb">
-        <span class="ts tm">الإجمالي</span>
-        <span style="font-size:20px;font-weight:900;color:var(--bxl);font-family:var(--mono)">73%</span>
-      </div>
-      <div class="pw mt8" style="height:9px"><div class="pf" style="width:73%;height:100%"></div></div>
-    </div>
-    <div>
-      <div class="card mb" style="margin-bottom:12px">
-        <div class="ct"><div class="dot" style="background:var(--amber)"></div>نشاط آخر 91 يوم</div>
-        <div class="hm" id="dashHm"></div>
-        <div style="display:flex;align-items:center;gap:4px;justify-content:flex-end;margin-top:4px">
-          <span class="ttiny tm">أقل</span>
-          <div style="width:10px;height:10px;border-radius:2px" class="h0"></div>
-          <div style="width:10px;height:10px;border-radius:2px" class="h1"></div>
-          <div style="width:10px;height:10px;border-radius:2px" class="h2"></div>
-          <div style="width:10px;height:10px;border-radius:2px" class="h3"></div>
-          <div style="width:10px;height:10px;border-radius:2px" class="h4"></div>
-          <span class="ttiny tm">أكثر</span>
-        </div>
-      </div>
-      <div class="card">
-        <div class="ct"><div class="dot" style="background:var(--green)"></div>الاقتصاد الرقمي</div>
-        <div class="g2 g8">
-          <div style="text-align:center;padding:12px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)">
-            <div style="font-size:22px;font-weight:900;font-family:var(--mono);color:#C8C8C8" id="ecSilver">0</div>
-            <div class="txs tm mt8">🪙 فضة</div>
-            <div class="ttiny" style="color:var(--t3);margin-top:3px">1/دقيقة</div>
-          </div>
-          <div style="text-align:center;padding:12px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)">
-            <div style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--amber)" id="ecGold">0</div>
-            <div class="txs tm mt8">🥇 ذهب</div>
-            <div class="ttiny" style="color:var(--t3);margin-top:3px">عنقاء فقط</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="g3 mt">
-    <div class="card card-hover" style="cursor:pointer" onclick="go('timer')" onmouseenter="this.style.borderColor='#1D4ED855'" onmouseleave="this.style.borderColor='var(--border)'">
-      <div style="font-size:30px;margin-bottom:9px">⏱</div>
-      <div class="ts fw mb8">ابدأ جلسة تركيز</div>
-      <div class="txs tm">50 دقيقة بدون أي تشتت</div>
-      <div class="bdg b-bl mt8">50/10 المدار</div>
-    </div>
-    <div class="card card-hover" style="cursor:pointer" onclick="go('vault')" onmouseenter="this.style.borderColor='#EF444455'" onmouseleave="this.style.borderColor='var(--border)'">
-      <div style="font-size:30px;margin-bottom:9px">🏛</div>
-      <div class="ts fw mb8">الخزنة</div>
-      <div class="txs tm">راجع أسئلتك الخاطئة</div>
-      <div class="bdg b-re mt8" id="vDashBadge">0 أسئلة</div>
-    </div>
-    <div class="card card-hover" style="cursor:pointer" onclick="go('bird')" onmouseenter="this.style.borderColor='#8B5CF655'" onmouseleave="this.style.borderColor='var(--border)'">
-      <div style="font-size:30px;margin-bottom:9px">🦅</div>
-      <div class="ts fw mb8">طائري</div>
-      <div class="txs tm">شاهد تطور شخصيتك</div>
-      <div class="bdg b-pu mt8" id="birdDashBadge">المستوى 1</div>
-    </div>
-  </div>
-
-  <div class="card mt" id="dailyLimitCard">
-    <div class="fbb mb8">
-      <div class="ct" style="margin-bottom:0"><div class="dot" style="background:var(--amber)"></div>حد الأسئلة اليومي — الشاهين</div>
-      <span class="bdg b-am">5/يوم</span>
-    </div>
-    <div class="fbb mb8"><span class="ts">استُخدم 3 من 5 أسئلة</span><span class="ts mono" style="color:var(--amber)">3/5</span></div>
-    <div class="pw" style="height:8px"><div class="pf" style="width:60%;height:100%;background:linear-gradient(90deg,var(--amber),#FBBF24)"></div></div>
-    <p class="txs tm mt8">رفّع للسند لإزالة الحد. <span style="color:var(--bxl);cursor:pointer;font-weight:700" onclick="go('pricing')">ترقية الآن ←</span></p>
+<div class="mov" id="Mlesson">
+  <div class="msh">
+    <div class="mhd"><div class="mt2" id="MLtitle"></div><div class="mcl" onclick="cM('Mlesson')">x</div></div>
+    <div class="vw"><div class="vph" id="Vcon"><div class="vpb" id="Vpb">&#9654;</div><div style="font-size:11px;color:var(--t2)" id="Vt">اضغط للتشغيل</div></div></div>
+    <div id="MLbody"></div>
   </div>
 </div>
 
-<!-- ══ TIMER ══ -->
-<div class="page" id="page-timer">
-  <div class="topbar">
-    <div><div class="pg-title">مؤقت المدار ⏱</div><div class="pg-sub">50 دقيقة تركيز مطلق — 10 دقائق راحة</div></div>
+<div class="mov" id="Msett">
+  <div class="msh">
+    <div class="mhd"><div class="mt2">الاعدادات</div><div class="mcl" onclick="cM('Msett')">x</div></div>
+    <div id="Sbody"></div>
   </div>
-  <div class="g2">
-    <div class="card tc">
-      <div class="timer-wrap">
-        <div class="ring-wrap" onclick="birdTap()" title="انقر لـ XP مجاني!">
-          <svg class="ring-svg" viewBox="0 0 200 200">
-            <defs>
-              <linearGradient id="rg1" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#1D4ED8"/><stop offset="100%" style="stop-color:#60A5FA"/>
-              </linearGradient>
-              <linearGradient id="rg2" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#10B981"/><stop offset="100%" style="stop-color:#34D399"/>
-              </linearGradient>
-            </defs>
-            <circle class="r-track" cx="100" cy="100" r="90"/>
-            <circle class="r-prog" id="rProg" cx="100" cy="100" r="90"/>
-          </svg>
-          <div class="r-center">
-            <div class="r-time" id="tDisp">50:00</div>
-            <div class="r-lbl" id="tLbl">تركيز</div>
-          </div>
-        </div>
-        <div class="phase-badge pb-focus" id="pBadge">🎯 وضع التركيز</div>
-        <div class="timer-btns">
-          <button class="tbt tbt-go" id="tBtn" onclick="toggleTimer()">▶ ابدأ</button>
-          <button class="tbt tbt-rs" onclick="resetTimer()">↺ إعادة</button>
-        </div>
-        <div class="streak-box w100 mt16">
-          <div style="font-size:24px">🔥</div>
-          <div class="sk-info">
-            <div class="sk-lbl">سلسلة الأيام</div>
-            <div class="sk-val"><span class="sk-num" id="tStreak">0</span> يوم</div>
-          </div>
-          <div style="text-align:center;margin-right:auto">
-            <div class="mono fw9" style="font-size:22px;color:var(--green)" id="tSessions">0</div>
-            <div class="txs tm">جلسات</div>
-          </div>
-        </div>
-      </div>
+</div>
+
+<div class="app">
+<div class="hdr">
+  <div class="hdr-logo">درب</div>
+  <div class="hdr-r">
+    <div class="hb" id="thBtn" onclick="toggleTheme()">&#9680;</div>
+    <div class="tp tp-a" id="tpill" onclick="oSett()">الشاهين</div>
+    <div class="hb" onclick="oSett()">&#9881;</div>
+  </div>
+</div>
+
+<div class="pages">
+
+<div class="pg on" id="pg-home">
+  <div class="rbb mb10">
+    <div><div class="sec-t" id="hGr">مرحباً</div><div class="sec-s">تابع مسيرتك الاكاديمية</div></div>
+    <div style="text-align:right">
+      <div style="font-size:10px;color:var(--t2)">فضة</div>
+      <div style="font-size:16px;font-weight:900;font-family:'IBM Plex Mono';color:#C8C8C8" id="hSilv">0</div>
     </div>
-    <div>
-      <div class="card mb">
-        <div class="ct"><div class="dot" style="background:var(--amber)"></div>⚡ وقت الذروة — الفجر</div>
-        <div style="padding:12px;background:#F59E0B10;border:1px solid #F59E0B30;border-radius:9px">
-          <div class="ts fw" style="color:var(--amber);margin-bottom:5px">4:00 — 6:30 صباحاً</div>
-          <div class="txs tm">الفضة تتضاعف ×2 في هذه الساعات المباركة</div>
-          <div class="bdg b-am mt8" id="peakBadge">تحقق الآن...</div>
-        </div>
-      </div>
-      <div class="card mb">
-        <div class="ct"><div class="dot" style="background:var(--blue)"></div>إحصاءات هذا الأسبوع</div>
-        <div class="g2 g8">
-          <div style="text-align:center;padding:12px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)">
-            <div class="mono fw9" style="font-size:22px;color:var(--bxl)" id="wSess">0</div>
-            <div class="txs tm mt8">جلسات</div>
-          </div>
-          <div style="text-align:center;padding:12px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)">
-            <div class="mono fw9" style="font-size:22px;color:var(--green)" id="wHrs">0h</div>
-            <div class="txs tm mt8">ساعات</div>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="ct"><div class="dot" style="background:var(--green)"></div>نصائح التركيز</div>
-        <div class="al mb8"><div style="font-size:16px">📱</div><div class="al-body"><div class="al-t">الجوال وجهاً للأسفل</div><div class="al-s">يقلل التشتت بنسبة 20%</div></div></div>
-        <div class="al mb8"><div style="font-size:16px">💧</div><div class="al-body"><div class="al-t">اشرب ماء قبل الجلسة</div><div class="al-s">الجفاف يضعف التركيز</div></div></div>
-        <div class="al"><div style="font-size:16px">🎵</div><div class="al-body"><div class="al-t">موسيقى Lofi للتركيز</div><div class="al-s">ابحث lofi study على يوتيوب</div></div></div>
-      </div>
+  </div>
+
+  <div class="card gc tc mb10">
+    <div class="eagle-stage">
+      <svg class="eagle-svg" viewBox="0 0 200 200" id="eSvg">
+        <defs>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        <g transform="translate(0, 10)">
+          <polygon points="100,130 80,180 100,165 120,180" fill="var(--b2)" />
+          <polygon points="100,60 30,100 80,120" fill="var(--b1)" />
+          <polygon points="100,60 170,100 120,120" fill="var(--b1)" />
+          <polygon points="100,60 10,65 40,110" fill="var(--g1)" />
+          <polygon points="100,60 190,65 160,110" fill="var(--g1)" />
+          <polygon points="40,110 20,150 80,120" fill="var(--g2)" />
+          <polygon points="160,110 180,150 120,120" fill="var(--g2)" />
+          <polygon points="100,30 85,90 100,150 115,90" fill="var(--text)" />
+          <polygon points="100,60 90,90 100,110 110,90" fill="var(--bg)" opacity="0.3" />
+          <polygon points="100,10 90,40 110,40" fill="var(--g2)" filter="url(#glow)" />
+          <polygon points="100,35 95,50 105,50" fill="var(--g1)" />
+        </g>
+      </svg>
+      <div class="eagle-nm" id="eNm">الصقر</div>
+      <div class="eagle-lv" id="eLv">متاح للجميع</div>
+      <div class="xp-bar"><div class="xp-f" id="xpF" style="width:10%"></div></div>
+      <div style="font-size:9px;color:var(--t2);margin-top:3px"><span id="xpN">100</span> / 1000 XP</div>
+    </div>
+  </div>
+
+  <div class="g2 mb10">
+    <div class="sb" style="--sbc:var(--g1)"><div class="sbv" id="stSt">0</div><div class="sbl">سلسلة الايام</div><div class="sbc-t cup">استمر</div></div>
+    <div class="sb" style="--sbc:#10B981"><div class="sbv" id="stSe">0</div><div class="sbl">جلسات مكتملة</div><div class="sbc-t cnt">50 دق / جلسة</div></div>
+  </div>
+
+  <div class="card">
+    <div class="cl">التقدم الدراسي</div>
+    <div class="rbb mb8"><span class="ts">القدرات - اللفظي</span><span class="txs mono" style="color:var(--g2)">85%</span></div>
+    <div class="pw mb10" style="height:5px"><div class="pf pg" style="width:85%;height:100%"></div></div>
+    <div class="rbb mb8"><span class="ts">القدرات - الكمي</span><span class="txs mono" style="color:var(--g2)">70%</span></div>
+    <div class="pw mb10" style="height:5px"><div class="pf pg" style="width:70%;height:100%"></div></div>
+    <div class="rbb mb8"><span class="ts">التحصيلي - رياضيات</span><span class="txs mono" style="color:var(--g2)">60%</span></div>
+    <div class="pw mb10" style="height:5px"><div class="pf pg" style="width:60%;height:100%"></div></div>
+    <div class="rbb mb8"><span class="ts">التحصيلي - علوم</span><span class="txs mono" style="color:var(--g2)">90%</span></div>
+    <div class="pw" style="height:5px"><div class="pf pg" style="width:90%;height:100%"></div></div>
+    <div class="dv"></div>
+    <div class="rbb">
+      <span class="ts tm">الاجمالي</span>
+      <span style="font-size:20px;font-weight:900;color:var(--g2);font-family:'IBM Plex Mono'">73%</span>
+    </div>
+    <div class="pw mt8" style="height:7px"><div class="pf pg" style="width:73%;height:100%"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="cl">نشاط 91 يوم</div>
+    <div class="hm" id="hmH"></div>
+    <div class="rb g6" style="justify-content:flex-end;margin-top:5px">
+      <span style="font-size:9px;color:var(--t3)">اقل</span>
+      <div style="width:8px;height:8px;border-radius:2px" class="h0"></div>
+      <div style="width:8px;height:8px;border-radius:2px" class="h1"></div>
+      <div style="width:8px;height:8px;border-radius:2px" class="h2"></div>
+      <div style="width:8px;height:8px;border-radius:2px" class="h3"></div>
+      <div style="width:8px;height:8px;border-radius:2px" class="h4"></div>
+      <span style="font-size:9px;color:var(--t3)">اكثر</span>
     </div>
   </div>
 </div>
 
-<!-- ══ BIRD AVATAR ══ -->
-<div class="page" id="page-bird">
-  <div class="topbar">
-    <div><div class="pg-title">طائري 🦅</div><div class="pg-sub">شخصيتك الأكاديمية — تتطور معك</div></div>
-  </div>
-  <div class="g2">
-    <div class="card tc">
-      <div class="bird-stage" onclick="birdTap()" id="birdStage">
-        <div class="bird-halo silver" id="birdHalo"></div>
-        <div class="bird-emoji" id="birdEmoji">🦅</div>
-        <div class="bird-name" id="birdNameD">الشاهين</div>
-        <div class="bird-lvl" id="birdLvlD">المستوى 1 — مبتدئ</div>
-        <div class="xp-bar"><div class="xp-fill" id="xpFill" style="width:10%"></div></div>
-        <div class="txs tm mt8"><span id="xpNum">100</span> / 1000 XP</div>
-      </div>
-      <div class="divider"></div>
-      <div class="txs tm mb8">اضغط الطائر +5🪙 +10XP</div>
-      <div class="g2 g8">
-        <div style="text-align:center;padding:11px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)">
-          <div class="mono fw9" style="font-size:20px;color:#C8C8C8" id="bSilver">0</div>
-          <div class="txs tm">🪙 فضة</div>
+<div class="pg" id="pg-study">
+  <div class="rbb mb10"><div><div class="sec-t">الدراسة</div><div class="sec-s">مؤقت التركيز وخارطة المنهج</div></div></div>
+
+  <div class="card gc">
+    <div class="cl">مؤقت المدار 50/10</div>
+    <div style="display:flex;flex-direction:column;align-items:center;padding:4px 0 10px">
+      <div class="ring-w">
+        <svg class="rsvg" viewBox="0 0 220 220">
+          <defs>
+            <linearGradient id="ggGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="var(--g1)" />
+              <stop offset="100%" stop-color="var(--g2)" />
+            </linearGradient>
+            <linearGradient id="grGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#10B981" />
+              <stop offset="100%" stop-color="#34D399" />
+            </linearGradient>
+          </defs>
+          <circle class="rt" cx="110" cy="110" r="85"/>
+          <circle class="rp" id="rProg" cx="110" cy="110" r="85"/>
+        </svg>
+        <div class="rc">
+          <div class="rt2" id="tD">50:00</div>
+          <div class="rl" id="tL">تركيز</div>
         </div>
-        <div style="text-align:center;padding:11px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)">
-          <div class="mono fw9" style="font-size:20px;color:var(--amber)" id="bGold">0</div>
-          <div class="txs tm">🥇 ذهب</div>
-        </div>
       </div>
-      <div class="mt16">
-        <div class="ct"><div class="dot" style="background:var(--amber)"></div>الأوسمة</div>
-        <div id="badgesWrap"></div>
+      <div class="tph tpf" id="tPh">وضع التركيز</div>
+      <div class="rb g8">
+        <button class="btn bp" id="tBtn" onclick="toggleTimer()">تشغيل</button>
+        <button class="btn bg" onclick="resetTimer()">اعادة</button>
       </div>
     </div>
-    <div>
-      <div class="card mb">
-        <div class="ct"><div class="dot" style="background:var(--purple)"></div>مسار التطور</div>
-        <div id="birdPath"></div>
+    <div class="skbox">
+      <div style="font-size:20px;color:var(--g2)">&#9670;</div>
+      <div style="flex:1">
+        <div class="txs tm">سلسلة الايام</div>
+        <div><span class="skn" id="tSt">0</span> <span class="ts tm">يوم</span></div>
       </div>
-      <div class="card">
-        <div class="ct"><div class="dot" style="background:var(--cyan)"></div>الهالات المتاحة</div>
-        <div class="al mb8" style="cursor:pointer" onclick="buyHalo('silver')">
-          <div style="font-size:16px">⚪</div>
-          <div class="al-body"><div class="al-t">هالة الفضة</div><div class="al-s">500 فضة</div></div>
-          <button class="btn btn-gh" style="padding:4px 10px;font-size:11px" onclick="event.stopPropagation();buyHalo('silver')">شراء</button>
-        </div>
-        <div class="al" style="cursor:pointer" onclick="buyHalo('gold')">
-          <div style="font-size:16px">🌀</div>
-          <div class="al-body"><div class="al-t">هالة الذهب المتحركة</div><div class="al-s">100 ذهب — عنقاء فقط</div></div>
-          <button class="btn btn-gh" style="padding:4px 10px;font-size:11px" onclick="event.stopPropagation();buyHalo('gold')">شراء</button>
-        </div>
+      <div class="tc">
+        <div style="font-size:20px;font-weight:900;font-family:'IBM Plex Mono';color:var(--g2)" id="tSe">0</div>
+        <div class="txs tm">جلسات</div>
       </div>
+    </div>
+  </div>
+
+  <div class="sdv"></div>
+
+  <div class="rbb mb10">
+    <div><div class="sec-t">خارطة الدرب</div><div class="sec-s">مسارك نحو 95+</div></div>
+    <span class="bdg bg-g"><span id="rmD">5</span>/12</span>
+  </div>
+  <div class="rbb mb8">
+    <span class="txs tm">التقدم الكلي</span>
+    <span style="font-size:18px;font-weight:900;font-family:'IBM Plex Mono';color:var(--g2)">42%</span>
+  </div>
+  <div class="pw mb12" style="height:6px"><div class="pf pg" style="width:42%;height:100%"></div></div>
+  <div id="rmList"></div>
+
+  <div class="sdv"></div>
+
+  <div class="rbb mb10">
+    <div><div class="sec-t">الخزنة</div><div class="sec-s">اسئلتك الخاطئة — +15 فضة للحل الصحيح</div></div>
+    <span class="bdg bg-re" id="vBdg">0</span>
+  </div>
+  <div id="vList"></div>
+  <button class="btn bg w100 mb10" onclick="addSV()">اضافة سؤال تدريبي</button>
+</div>
+
+<div class="pg" id="pg-eng">
+  <div class="sec-t mb10">الانجليزي</div>
+
+  <div class="card">
+    <div class="cl">رادار المستوى CEFR</div>
+    <div class="cefr-g" id="cefrG">
+      <div class="cfb" onclick="sCEFR('A1',this)"><div class="cfc">A1</div><div class="cfn">مبتدئ</div></div>
+      <div class="cfb" onclick="sCEFR('A2',this)"><div class="cfc">A2</div><div class="cfn">اساسي</div></div>
+      <div class="cfb on" onclick="sCEFR('B1',this)"><div class="cfc">B1</div><div class="cfn">متوسط</div></div>
+      <div class="cfb" onclick="sCEFR('B2',this)"><div class="cfc">B2</div><div class="cfn">فوق المتوسط</div></div>
+      <div class="cfb" onclick="sCEFR('C1',this)"><div class="cfc">C1</div><div class="cfn">متقدم</div></div>
+      <div class="cfb" onclick="sCEFR('C2',this)"><div class="cfc">C2</div><div class="cfn">احترافي</div></div>
+    </div>
+    <div class="card gc mt8" id="cRec">
+      <div class="txs fw7 mb8" style="color:var(--g2)">توصية B1</div>
+      <div class="txs tm" style="line-height:1.8" id="cRecT">ركز على المفردات وفهم القراءة. هدفك STEP 65+. 3-5 اشهر كافية.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cl">الشخصية الاكاديمية</div>
+    <div class="txs tm mb10" style="line-height:1.7">بناء على نمط دراستك في المنصة:</div>
+    <div class="pt-g">
+      <div class="ptb"><div class="ptv">78%</div><div class="ptn">تحليلي</div></div>
+      <div class="ptb"><div class="ptv">65%</div><div class="ptn">منتظم</div></div>
+      <div class="ptb"><div class="ptv">82%</div><div class="ptn">بصري</div></div>
+      <div class="ptb"><div class="ptv">70%</div><div class="ptn">تحت الضغط</div></div>
+    </div>
+    <div class="card gc mt8">
+      <div class="txs fw7 mb6" style="color:var(--g2)">تحليل نمطك</div>
+      <div class="txs tm" style="line-height:1.8">انت تحليلي بصري — تحب الفهم قبل الحفظ. خطر: تنشغل بالتخطيط على حساب التطبيق الفعلي.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cl">دروس STEP و IELTS</div>
+    <div id="engL"></div>
+  </div>
+</div>
+
+<div class="pg" id="pg-sched">
+  <div class="rbb mb10">
+    <div><div class="sec-t">الجدول الدراسي</div><div class="sec-s">جدولك الاسبوعي المخصص</div></div>
+    <button class="btn bp" style="padding:7px 11px;font-size:11px" onclick="toast('تعديل الجدول — قريباً','warn')">تعديل</button>
+  </div>
+  <div class="card gc mb10">
+    <div class="rbb">
+      <span class="ts fw7">الوقت المحجوز هذا الاسبوع</span>
+      <span style="font-size:20px;font-weight:900;font-family:'IBM Plex Mono';color:var(--g2)">18 ساعة</span>
+    </div>
+  </div>
+  <div id="schedG"></div>
+  <div class="card mt10">
+    <div class="cl">نصائح الجدول</div>
+    <div class="li mb4" style="cursor:default">
+      <div style="width:28px;height:28px;border-radius:7px;background:rgba(var(--g-rgb),.08);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono';font-size:11px;font-weight:900;color:var(--g2);flex-shrink:0">1</div>
+      <div class="li-b"><div class="li-t">ثبت اطار وقت الدراسة</div><div class="li-s">المرونة داخله — الاطار ثابت لا يتغير</div></div>
+    </div>
+    <div class="li mb4" style="cursor:default">
+      <div style="width:28px;height:28px;border-radius:7px;background:rgba(var(--g-rgb),.08);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono';font-size:11px;font-weight:900;color:var(--g2);flex-shrink:0">2</div>
+      <div class="li-b"><div class="li-t">ابدأ بالاصعب دائما</div><div class="li-s">طاقتك في اعلى مستوياتها في البداية</div></div>
+    </div>
+    <div class="li" style="cursor:default">
+      <div style="width:28px;height:28px;border-radius:7px;background:rgba(var(--g-rgb),.08);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono';font-size:11px;font-weight:900;color:var(--g2);flex-shrink:0">3</div>
+      <div class="li-b"><div class="li-t">راجع كل يوم احد</div><div class="li-s">المراجعة الاسبوعية تثبت المعلومة 70%</div></div>
     </div>
   </div>
 </div>
 
-<!-- ══ ROADMAP ══ -->
-<div class="page" id="page-roadmap">
-  <div class="topbar">
-    <div><div class="pg-title">خارطة الدرب 🗺</div><div class="pg-sub">مسارك من الصفر إلى +95</div></div>
-    <div class="tb-acts"><span class="bdg b-bl" id="rmBadge">0 / 12</span></div>
+<div class="pg" id="pg-comm">
+  <div class="sec-t mb10">المجتمع</div>
+  <input class="inp mb10" id="fSrch" type="text" placeholder="بحث بالاسم او الكود..." oninput="filtF(this.value)">
+  <div class="card mb10"><div class="cl">اصدقائي (<span id="myFC">0</span>)</div><div id="myFL"><div class="txs tm tc" style="padding:8px">اضف اصدقاء</div></div></div>
+  <div class="txs fw7 tm mb8" style="letter-spacing:.5px;font-family:'IBM Plex Mono'">اكتشف</div>
+  <div id="allFL"></div>
+
+  <div class="sdv"></div>
+  <div class="sec-t mb10">صراع المناطق</div>
+  <div id="regL"></div>
+
+  <div class="sdv"></div>
+  <div class="rbb mb10">
+    <div><div class="sec-t">الميدان</div><div class="sec-s">تحديات 1vs1 — شرف لا رهانات</div></div>
   </div>
-  <div class="g21">
-    <div>
-      <div class="card mb">
-        <div class="fbb mb12">
-          <div class="ct" style="margin-bottom:0"><div class="dot" style="background:var(--blue)"></div>التقدم الكلي</div>
-          <span style="font-size:19px;font-weight:900;color:var(--bxl);font-family:var(--mono)">42%</span>
-        </div>
-        <div class="pw" style="height:11px"><div class="pf" style="width:42%;height:100%"></div></div>
-      </div>
-      <div id="rmSteps"></div>
+  <div class="card mb10">
+    <div class="g2 g8">
+      <div style="text-align:center;padding:9px;background:var(--card2);border-radius:7px"><div style="font-size:19px;font-weight:900;font-family:'IBM Plex Mono';color:#34D399" id="arW">0</div><div class="txs tm">انتصارات</div></div>
+      <div style="text-align:center;padding:9px;background:var(--card2);border-radius:7px"><div style="font-size:19px;font-weight:900;font-family:'IBM Plex Mono';color:#F87171" id="arL">0</div><div class="txs tm">خسائر</div></div>
     </div>
-    <div>
-      <div class="card mb">
-        <div class="ct"><div class="dot" style="background:var(--green)"></div>المرحلة الحالية</div>
-        <div class="ts fw mb8">القدرات — الكمي ▶</div>
-        <p class="txs tm mb12">أنت في الجزء الرابع. ركز على الهندسة والاحتمالات هذا الأسبوع.</p>
-        <div class="bdg b-gr mb12">70% منجزة</div>
-        <div class="pw" style="height:7px"><div class="pf" style="width:70%;height:100%"></div></div>
-      </div>
-      <div class="card mb">
-        <div class="ct"><div class="dot" style="background:var(--amber)"></div>المواعيد</div>
-        <div class="al mb8"><div class="al-dot" style="background:var(--red)"></div><div class="al-body"><div class="al-t">اختبار تجريبي — اللفظي</div><div class="al-s">بعد 3 أيام</div></div><div class="al-time">12 أبريل</div></div>
-        <div class="al"><div class="al-dot" style="background:var(--blue)"></div><div class="al-body"><div class="al-t">مراجعة القسم الكمي</div><div class="al-s">بعد أسبوع</div></div><div class="al-time">16 أبريل</div></div>
-      </div>
-      <div class="card" style="background:linear-gradient(135deg,#F59E0B08,var(--card));border-color:#F59E0B33">
-        <div class="ct"><div class="dot" style="background:var(--amber)"></div>تجميد الوهج</div>
-        <div class="ts fw mb8" style="color:var(--amber)">500 فضة — مرتين/شهر</div>
-        <div class="txs tm mb12">خسرت يوماً؟ جمّد السلسلة بدل تصفير الكل.</div>
-        <button class="btn btn-bl w100" onclick="freezeStreak()">تجميد الوهج 🧊</button>
-      </div>
+  </div>
+  <div id="arenaL"></div>
+
+  <div class="sdv"></div>
+  <div class="sec-t mb10">الباقات</div>
+  <div id="prcW"></div>
+  <div class="card gc mt8">
+    <div class="ts fw7 mb6" style="color:var(--g2)">العبور العظيم</div>
+    <div class="txs tm mb10">50,000 فضة = العنقاء مجاناً — الانضباط يفتح ما لا يفتحه المال</div>
+    <div class="rbb">
+      <div class="pw" style="height:5px;flex:1;margin-left:8px"><div class="pf pg" id="vPrg" style="width:0%;height:100%"></div></div>
+      <span class="ttny mono" style="color:var(--g2)" id="vPrgL">0 / 50,000</span>
     </div>
   </div>
 </div>
 
-<!-- ══ VAULT ══ -->
-<div class="page" id="page-vault">
-  <div class="topbar">
-    <div><div class="pg-title">الخزنة 🏛</div><div class="pg-sub">أسئلتك الخاطئة — مكافأة +15🪙 لكل حل صحيح</div></div>
-    <div class="tb-acts"><span class="bdg b-re" id="vTotal">0 أسئلة</span></div>
+<div class="pg" id="pg-feat">
+  <div class="sec-t mb4">ريش الطائر</div>
+  <div class="sec-s mb12">ارشيفك الشخصي — يبقى معك للابد</div>
+  <div class="card gc mb12"><div class="txs tm" style="line-height:1.8">اكتب رسائل لنفسك، احفظ كلمات والدك، سجل احباطاتك. بعد سنوات ستعود وترى من كنت.</div></div>
+  <div id="featsW"></div>
+  <div class="sdv"></div>
+  <div class="sec-t mb10">مسار المهنة</div>
+  <div class="card">
+    <div class="cl">شهادة الانضباط الرقمية</div>
+    <div style="padding:13px;text-align:center;background:linear-gradient(135deg,rgba(var(--g-rgb),.05),var(--card2));border:1px solid rgba(var(--g-rgb),.15);border-radius:9px;margin-bottom:10px">
+      <div style="font-size:24px;margin-bottom:6px">&#9670;</div>
+      <div class="ts fw7 mb6" style="color:var(--g2)">شهادة الانضباط الاكاديمي</div>
+      <div class="txs tm mb10">تثبت ساعات تركيزك للجامعات وارامكو</div>
+      <div class="bdg bg-g" id="certH">0 ساعة موثقة</div>
+    </div>
+    <button class="btn bp w100" onclick="genCert()">توليد الشهادة</button>
   </div>
-  <div class="g2">
-    <div>
-      <div class="card mb">
-        <div class="ct"><div class="dot" style="background:var(--red)"></div>أسئلة في الخزنة</div>
-        <div id="vaultList"></div>
-        <button class="btn btn-bl w100 mt" onclick="addSampleQ()">+ إضافة سؤال تدريبي</button>
-      </div>
-    </div>
-    <div>
-      <div class="card mb">
-        <div class="ct"><div class="dot" style="background:var(--amber)"></div>نظام التكرار المتباعد</div>
-        <div class="al mb8"><div class="al-dot" style="background:var(--blue)"></div><div class="al-body"><div class="al-t">المرحلة الأولى — 3 أيام</div><div class="al-s">الظهور بعد 3 أيام من الخطأ</div></div></div>
-        <div class="al mb8"><div class="al-dot" style="background:var(--green)"></div><div class="al-body"><div class="al-t">المرحلة الثانية — أسبوع</div><div class="al-s">بعد الإجابة الصحيحة الأولى</div></div></div>
-        <div class="al"><div class="al-dot" style="background:var(--purple)"></div><div class="al-body"><div class="al-t">التثبيت النهائي — شهر</div><div class="al-s">تثبيت كامل للمعلومة</div></div></div>
-      </div>
-      <div class="card" style="background:linear-gradient(135deg,#F59E0B08,var(--card));border-color:#F59E0B33">
-        <div class="ct"><div class="dot" style="background:var(--amber)"></div>المكافأة</div>
-        <div style="font-size:30px;font-weight:900;color:var(--amber);font-family:var(--mono)">+15 🪙</div>
-        <div class="txs tm mt8">لكل سؤال تحله صحيحاً من الخزنة</div>
-        <div class="divider"></div>
-        <div style="font-size:22px;font-weight:900;color:var(--blue);font-family:var(--mono)">+5 🪙</div>
-        <div class="txs tm mt8">لكل سؤال صحيح في التدريب العادي</div>
-      </div>
-    </div>
+  <div class="card mt10">
+    <div class="cl">مهاراتك في درب</div>
+    <div id="cvSk"></div>
   </div>
 </div>
 
-<!-- ══ SOCIAL ══ -->
-<div class="page" id="page-social">
-  <div class="topbar">
-    <div><div class="pg-title">الأصدقاء 👥</div><div class="pg-sub">تابع زملاءك في الدرب</div></div>
-  </div>
-  <div class="g21">
-    <div>
-      <div class="card mb">
-        <div class="ct mb8"><div class="dot" style="background:var(--blue)"></div>بحث بالاسم أو الكود</div>
-        <input class="srch" id="fSearch" type="text" placeholder="ابحث... @ahmed أو محمد" oninput="filterFriends(this.value)">
-      </div>
-      <div id="friendsList"></div>
-    </div>
-    <div>
-      <div class="card mb">
-        <div class="ct"><div class="dot" style="background:var(--green)"></div>أصدقائي (<span id="myFCount">0</span>)</div>
-        <div id="myFriendsList"></div>
-      </div>
-      <div class="card">
-        <div class="ct"><div class="dot" style="background:var(--purple)"></div>الخصوصية</div>
-        <div class="fbb mb12">
-          <div><div class="ts fw">إظهار تقدمي</div><div class="txs tm">الأصدقاء يرون نسبتك</div></div>
-          <div class="tog on" id="togProg" onclick="togglePv('progress',this)"><div class="tog-b"></div></div>
-        </div>
-        <div class="fbb">
-          <div><div class="ts fw">إظهار سلسلتي</div><div class="txs tm">الأصدقاء يرون streak حقك</div></div>
-          <div class="tog off" id="togStreak" onclick="togglePv('streak',this)"><div class="tog-b"></div></div>
-        </div>
-      </div>
-    </div>
-  </div>
+</div><div class="bnav">
+  <div class="bni on" onclick="gp('home',this)"><div class="bni-i">&#8962;</div><div class="bni-l">الرئيسية</div></div>
+  <div class="bni" onclick="gp('study',this)"><div class="bni-i">&#8987;</div><div class="bni-l">الدراسة</div></div>
+  <div class="bni" onclick="gp('eng',this)"><div class="bni-i">&#9733;</div><div class="bni-l">الانجليزي</div></div>
+  <div class="bni" onclick="gp('sched',this)"><div class="bni-i">&#8942;</div><div class="bni-l">الجدول</div></div>
+  <div class="bni" onclick="gp('comm',this)"><div class="bni-i">&#9825;</div><div class="bni-l">المجتمع</div></div>
+  <div class="bni" onclick="gp('feat',this)"><div class="bni-i">&#10022;</div><div class="bni-l">ارشيفي</div></div>
+</div>
 </div>
 
-<!-- ══ ARENA ══ -->
-<div class="page" id="page-arena">
-  <div class="topbar">
-    <div><div class="pg-title">الميدان ⚔</div><div class="pg-sub">تحديات 1vs1 — شرف لا رهانات</div></div>
-  </div>
-  <div class="g2">
-    <div class="card">
-      <div class="ct"><div class="dot" style="background:var(--red)"></div>تحدِّ خصماً</div>
-      <div id="arenaList"></div>
-    </div>
-    <div>
-      <div class="card mb">
-        <div class="ct"><div class="dot" style="background:var(--amber)"></div>قواعد الميدان</div>
-        <div class="al mb8"><div style="font-size:16px">⚔</div><div class="al-body"><div class="al-t">10 أسئلة في 5 دقائق</div><div class="al-s">الأعلى دقةً يفوز</div></div></div>
-        <div class="al mb8"><div style="font-size:16px">🪙</div><div class="al-body"><div class="al-t">+20 فضة للفائز</div><div class="al-s">من المنصة — لا رهان بين الطلاب</div></div></div>
-        <div class="al"><div style="font-size:16px">🚫</div><div class="al-body"><div class="al-t">ممنوع الرهان</div><div class="al-s">المنافسة للشرف والتعلم فقط</div></div></div>
-      </div>
-      <div class="card">
-        <div class="ct"><div class="dot" style="background:var(--green)"></div>سجلك في الميدان</div>
-        <div class="g2 g8">
-          <div style="text-align:center;padding:12px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)">
-            <div class="mono fw9" style="font-size:22px;color:var(--green)" id="arenaW">0</div>
-            <div class="txs tm">انتصارات</div>
-          </div>
-          <div style="text-align:center;padding:12px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)">
-            <div class="mono fw9" style="font-size:22px;color:var(--red)" id="arenaL">0</div>
-            <div class="txs tm">خسائر</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ REGIONS ══ -->
-<div class="page" id="page-regions">
-  <div class="topbar">
-    <div><div class="pg-title">صراع المناطق 🏆</div><div class="pg-sub">أفضل مدينة في المذاكرة هذا الأسبوع</div></div>
-  </div>
-  <div class="g2">
-    <div class="card">
-      <div class="ct"><div class="dot" style="background:var(--amber)"></div>لوحة الصدارة — المدن</div>
-      <div id="regionsList"></div>
-    </div>
-    <div>
-      <div class="card mb" style="background:linear-gradient(135deg,#1D4ED808,var(--card));border-color:#1D4ED833">
-        <div class="ct"><div class="dot" style="background:var(--blue)"></div>مدينتك — بقيق 🏭</div>
-        <div style="text-align:center;padding:16px">
-          <div style="font-size:42px;margin-bottom:8px">🏭</div>
-          <div class="ts fw mb8">بقيق — المنطقة الشرقية</div>
-          <div class="bdg b-bl mb12">المرتبة 5 هذا الأسبوع</div>
-          <div class="pw mb8" style="height:7px"><div class="pf" style="width:55%;height:100%"></div></div>
-          <div class="txs tm">55% من هدف الأسبوع</div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="ct"><div class="dot" style="background:var(--green)"></div>الميدان البصري</div>
-        <div style="padding:14px;text-align:center;background:var(--card2);border:1px dashed var(--border2);border-radius:9px">
-          <div style="font-size:24px;margin-bottom:7px">📸</div>
-          <div class="txs tm mb12">ارفع صورة ركن مذاكرتك يومياً (+10🪙)</div>
-          <button class="btn btn-bl" onclick="addCoin(10,'📸 صورة الميدان')">محاكاة رفع صورة +10🪙</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ PARENT HUB ══ -->
-<div class="page" id="page-parent">
-  <div class="topbar">
-    <div><div class="pg-title">بوابة الأهل 👨‍👩‍👦</div><div class="pg-sub">لوحة المراقبة الحية</div></div>
-    <div id="parentBadge"></div>
-  </div>
-  <div id="parentContent"></div>
-</div>
-
-<!-- ══ FEATHERS ══ -->
-<div class="page" id="page-feathers">
-  <div class="topbar">
-    <div><div class="pg-title">ريش الطائر 🪶</div><div class="pg-sub">ذاكرتك الخاصة — ستبقى معك 20 سنة</div></div>
-  </div>
-  <div class="feather-grid">
-
-    <div class="feather" style="border-color:#ffffff20" onclick="toggleFeather('white',this)">
-      <div class="f-ico">🤍</div>
-      <div class="f-ttl" style="color:#E8E8FF">الريشة البيضاء — صدى الفخر</div>
-      <div class="f-dsc">رسائل والدك الصوتية والنصية — أرشيف إلى الأبد</div>
-      <div class="f-body" id="fb-white">
-        <div class="f-msgs" id="fm-white"></div>
-        <input class="f-inp mb8" id="fi-white" placeholder="رسالة من والدك...">
-        <button class="btn btn-bl w100" onclick="addMsg('white')">حفظ 🤍</button>
-      </div>
-    </div>
-
-    <div class="feather" style="border-color:#F59E0B33" onclick="toggleFeather('gold',this)">
-      <div class="f-ico">💛</div>
-      <div class="f-ttl" style="color:var(--amber)">الريشة الذهبية — رسائل المستقبل</div>
-      <div class="f-dsc">اكتب لنفسك في لحظة حماس — اقرأها وقت الإحباط</div>
-      <div class="f-body" id="fb-gold">
-        <div class="f-msgs" id="fm-gold"></div>
-        <textarea class="f-inp mb8" id="fi-gold" placeholder="رسالة لنفسك في المستقبل..." rows="3"></textarea>
-        <button class="btn btn-bl w100" onclick="addMsg('gold')">أرسل للمستقبل 💛</button>
-      </div>
-    </div>
-
-    <div class="feather" style="border-color:#10B98133" onclick="toggleFeather('green',this)">
-      <div class="f-ico">💚</div>
-      <div class="f-ttl" style="color:var(--green)">الريشة الخضراء — جدار الميدان</div>
-      <div class="f-dsc">ألبوم صور ركن مذاكرتك وتطورك عبر الزمن</div>
-      <div class="f-body" id="fb-green">
-        <div style="padding:16px;text-align:center;background:var(--s2);border-radius:9px;border:1px dashed var(--border2)">
-          <div style="font-size:28px;margin-bottom:7px">📸</div>
-          <div class="txs tm mb12">ارفع صورة ركن مذاكرتك (+10🪙)</div>
-          <button class="btn btn-bl" onclick="addCoin(10,'📸 ريشة الميدان')">محاكاة رفع صورة</button>
-        </div>
-        <div class="f-msgs mt8" id="fm-green"></div>
-      </div>
-    </div>
-
-    <div class="feather" style="border-color:#6B82A833" onclick="toggleFeather('gray',this)">
-      <div class="f-ico">🩶</div>
-      <div class="f-ttl" style="color:var(--t2)">الريشة الرمادية — سجل الصمود</div>
-      <div class="f-dsc">فرّغ إحباطاتك — النظام يرد بدعم حقيقي</div>
-      <div class="f-body" id="fb-gray">
-        <div class="f-msgs" id="fm-gray"></div>
-        <textarea class="f-inp mb8" id="fi-gray" placeholder="ما الذي يضغط عليك الآن؟..." rows="3"></textarea>
-        <button class="btn btn-gh w100" onclick="addGrayMsg()">أفرّغ 🩶</button>
-      </div>
-    </div>
-
-    <div class="feather" style="border-color:#60A5FA33;grid-column:1/-1" onclick="toggleFeather('blue',this)">
-      <div class="f-ico">💙</div>
-      <div class="f-ttl" style="color:var(--bxl)">الريشة الزرقاء — الاستكشاف</div>
-      <div class="f-dsc">بعد القدرات والتحصيلي — دورات ومهارات لتطوير CV حقيقي</div>
-      <div class="f-body" id="fb-blue">
-        <div class="g3 mt8" style="margin-top:0">
-          <div style="padding:13px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)"><div style="font-size:22px;margin-bottom:7px">💻</div><div class="ts fw">Python CS50</div><div class="txs tm mt8">Harvard — مجاني كامل</div></div>
-          <div style="padding:13px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)"><div style="font-size:22px;margin-bottom:7px">🤖</div><div class="ts fw">ذكاء اصطناعي</div><div class="txs tm mt8">SDAIA — دورات مجانية</div></div>
-          <div style="padding:13px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)"><div style="font-size:22px;margin-bottom:7px">🛢</div><div class="ts fw">أرامكو CPC</div><div class="txs tm mt8">تدريب صيفي — سجّل الآن</div></div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<!-- ══ CAREER ══ -->
-<div class="page" id="page-career">
-  <div class="topbar">
-    <div><div class="pg-title">مسار المهنة 💼</div><div class="pg-sub">حوّل انضباطك إلى وثائق رسمية</div></div>
-  </div>
-  <div class="g2">
-    <div class="card">
-      <div class="ct"><div class="dot" style="background:var(--blue)"></div>صانع الـ CV</div>
-      <div style="padding:14px;background:var(--card2);border-radius:9px;border:1px solid var(--border2);margin-bottom:12px">
-        <div class="ts fw mb8">📄 مهاراتك المكتسبة في درب</div>
-        <div id="cvSkills"></div>
-      </div>
-      <button class="btn btn-bl w100" onclick="genCV()">توليد CV احترافي 📄</button>
-    </div>
-    <div class="card">
-      <div class="ct"><div class="dot" style="background:var(--amber)"></div>شهادة الانضباط الرقمية</div>
-      <div style="padding:18px;text-align:center;background:linear-gradient(135deg,#1D4ED810,var(--card2));border:1px solid #1D4ED833;border-radius:11px;margin-bottom:12px">
-        <div style="font-size:34px;margin-bottom:9px">🏅</div>
-        <div class="ts fw mb8">شهادة الانضباط الأكاديمي</div>
-        <div class="txs tm mb12">تُثبت ساعات تركيزك الفعلي للجامعات وأرامكو</div>
-        <div class="bdg b-bl" id="certHours">0 ساعة موثّقة</div>
-      </div>
-      <button class="btn btn-bl w100" onclick="genCert()">توليد الشهادة 🏅</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══ PRICING ══ -->
-<div class="page" id="page-pricing">
-  <div class="topbar">
-    <div><div class="pg-title">الباقات 💎</div><div class="pg-sub">اختر مسارك في درب</div></div>
-  </div>
-  <div class="prg">
-    <div class="prc">
-      <div class="pr-tier" style="color:var(--bxl)">SHAHEEN — الشاهين</div>
-      <div class="pr-price"><span class="am">29</span><span class="cu"> ر.س</span></div>
-      <div class="pr-per">/ شهرياً</div>
-      <div class="pr-desc">البداية القوية — المؤقت والخارطة والرادار وتقارير واتساب للأب.</div>
-      <ul class="pr-fl">
-        <li><span class="ic pfy">✓</span>مؤقت المدار 50/10</li>
-        <li><span class="ic pfy">✓</span>خارطة الدرب الكاملة</li>
-        <li><span class="ic pfy">✓</span>5 أسئلة تدريبية/يوم</li>
-        <li><span class="ic pfy">✓</span>الخزنة والتكرار المتباعد</li>
-        <li><span class="ic pfy">✓</span>تقارير واتساب نصية للأب</li>
-        <li><span class="ic pfy">✓</span>الطائر والريشات الأساسية</li>
-        <li><span class="ic pfn">✗</span><span style="opacity:.4">لوحة الأهل الحية</span></li>
-        <li><span class="ic pfn">✗</span><span style="opacity:.4">رواق النخبة والذهب</span></li>
-      </ul>
-      <button class="p-btn pb1" onclick="selectTier('shaheen')">الباقة الحالية ✓</button>
-    </div>
-    <div class="prc feat">
-      <div class="pr-tier" style="color:var(--amber)">SANAD — السند</div>
-      <div class="pr-price"><span class="am" style="color:var(--amber)">59</span><span class="cu"> ر.س</span></div>
-      <div class="pr-per">/ شهرياً + خصم 50% للأخ الثاني</div>
-      <div class="pr-desc" style="border-color:#F59E0B20">مخصص لأولياء الأمور. راقب ابنك لحظةً بلحظة.</div>
-      <ul class="pr-fl">
-        <li><span class="ic pfy">✓</span>كل مزايا الشاهين</li>
-        <li><span class="ic" style="color:var(--amber)">★</span>لوحة مراقبة حية Real-time</li>
-        <li><span class="ic" style="color:var(--amber)">★</span>رسوم بيانية أسبوعية وشهرية</li>
-        <li><span class="ic" style="color:var(--amber)">★</span>تنبيهات الإنجاز الفورية</li>
-        <li><span class="ic" style="color:var(--amber)">★</span>شارة الدرع في البروفايل</li>
-        <li><span class="ic" style="color:var(--amber)">★</span>تطبيق الأب المستقل</li>
-        <li><span class="ic" style="color:var(--amber)">★</span>دليل الانتقال الجامعي للأهل</li>
-        <li><span class="ic pfn">✗</span><span style="opacity:.4">رواق النخبة والذهب</span></li>
-      </ul>
-      <button class="p-btn pb2" onclick="selectTier('sanad')">ارتقِ للسند ★</button>
-    </div>
-    <div class="prc elit">
-      <div class="pr-tier" style="color:var(--purple)">ANQA — العنقاء</div>
-      <div class="pr-price"><span class="am" style="color:var(--purple)">119</span><span class="cu"> ر.س</span></div>
-      <div class="pr-per">دفعة واحدة — مدى الحياة</div>
-      <div class="pr-desc" style="border-color:#8B5CF620">كل شيء + الذهب + رواق النخبة + الواجهات المتحركة.</div>
-      <ul class="pr-fl">
-        <li><span class="ic pfy">✓</span>كل مزايا السند</li>
-        <li><span class="ic pfs">◈</span>عملة الذهب التلقائية</li>
-        <li><span class="ic pfs">◈</span>رواق النخبة الخاص</li>
-        <li><span class="ic pfs">◈</span>واجهات متحركة نابضة</li>
-        <li><span class="ic pfs">◈</span>الريشات الخمس كاملة</li>
-        <li><span class="ic pfs">◈</span>هالة الذهب المتحركة</li>
-        <li><span class="ic pfs">◈</span>شهادة الانضباط الرسمية</li>
-        <li><span class="ic pfs">◈</span>أو 50,000 فضة بديلاً</li>
-      </ul>
-      <button class="p-btn pb3" onclick="selectTier('anqa')">احصل على العنقاء ◈</button>
-    </div>
-  </div>
-  <div class="card mt20" style="max-width:870px;margin:20px auto 0;background:linear-gradient(135deg,#F59E0B06,var(--card));border-color:#F59E0B33">
-    <div class="ct"><div class="dot" style="background:var(--amber)"></div>العبور العظيم — طريق المجتهد الذي لا يملك المال</div>
-    <div style="padding:14px;background:#F59E0B08;border-radius:9px;border:1px solid #F59E0B22">
-      <div class="ts fw" style="color:var(--amber);margin-bottom:5px">🏆 50,000 فضة = العنقاء مجاناً</div>
-      <div class="txs tm mb12">الطالب المجتهد الذي يذاكر بانضباط يصل للعنقاء بعمله لا بماله.</div>
-      <div class="fbb">
-        <div class="pw" style="height:7px;flex:1;margin-left:10px"><div class="pf" id="vProgress" style="width:0%;height:100%;background:linear-gradient(90deg,var(--amber),#FBBF24)"></div></div>
-        <span class="mono ttiny" style="color:var(--amber)" id="vProgressLbl">0 / 50,000</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ SETTINGS ══ -->
-<div class="page" id="page-settings">
-  <div class="topbar">
-    <div><div class="pg-title">الإعدادات ⚙</div><div class="pg-sub">تخصيص تجربتك في درب</div></div>
-  </div>
-  <div class="g2">
-    <div>
-      <div class="card mb">
-        <div class="ct"><div class="dot" style="background:var(--blue)"></div>الملف الشخصي</div>
-        <div style="display:flex;align-items:center;gap:13px;margin-bottom:16px">
-          <div class="ava" style="width:54px;height:54px;font-size:20px" id="settAva">م</div>
-          <div><div style="font-size:16px;font-weight:800" id="settName">محمد الأحمدي</div><div class="txs tm" id="settUser">@mohammed_ahmadi</div></div>
-        </div>
-        <label class="txs tm" style="display:block;margin-bottom:5px">الاسم الكامل</label>
-        <input class="srch mb12" id="inpName" value="محمد الأحمدي">
-        <label class="txs tm" style="display:block;margin-bottom:5px">اسم المستخدم</label>
-        <input class="srch mb16" id="inpUser" value="@mohammed_ahmadi">
-        <button class="btn btn-bl" onclick="saveSettings()">حفظ التغييرات ✓</button>
-      </div>
-    </div>
-    <div>
-      <div class="card mb">
-        <div class="ct"><div class="dot" style="background:var(--amber)"></div>إعدادات المؤقت</div>
-        <div class="fbb mb12">
-          <div><div class="ts fw">مدة التركيز</div><div class="txs tm">افتراضي 50 دقيقة</div></div>
-          <select id="focusDur" style="background:var(--card2);border:1px solid var(--border2);border-radius:7px;padding:6px 10px;color:var(--text);font-family:'Tajawal';font-size:13px">
-            <option value="25">25 دقيقة</option><option value="50" selected>50 دقيقة</option><option value="90">90 دقيقة</option>
-          </select>
-        </div>
-        <div class="fbb">
-          <div><div class="ts fw">مدة الراحة</div><div class="txs tm">افتراضي 10 دقائق</div></div>
-          <select id="restDur" style="background:var(--card2);border:1px solid var(--border2);border-radius:7px;padding:6px 10px;color:var(--text);font-family:'Tajawal';font-size:13px">
-            <option value="5">5 دقائق</option><option value="10" selected>10 دقائق</option><option value="15">15 دقيقة</option>
-          </select>
-        </div>
-      </div>
-      <div class="card">
-        <div class="ct"><div class="dot" style="background:var(--purple)"></div>الإشعارات</div>
-        <div class="fbb mb12"><div class="ts fw">تنبيه نهاية الجلسة</div><div class="tog on"><div class="tog-b"></div></div></div>
-        <div class="fbb mb12"><div class="ts fw">تذكير يومي بالمذاكرة</div><div class="tog on"><div class="tog-b"></div></div></div>
-        <div class="fbb"><div class="ts fw">تقرير واتساب للأب</div><div class="tog on"><div class="tog-b"></div></div></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-</main>
-</div>
-
-<!-- ══════════════════════════════════════════
-     JAVASCRIPT
-══════════════════════════════════════════ -->
 <script>
-// ══════════ STATE ══════════
-const S = {
-  tier:       ls('tier')       || 'shaheen',
-  silver:     lsN('silver')    || 0,
-  gold:       lsN('gold')      || 0,
-  streak:     lsN('streak')    || 0,
-  sessions:   lsN('sessions')  || 0,
-  weekSess:   lsN('weekSess')  || 0,
-  totalMins:  lsN('totalMins') || 0,
-  xp:         lsN('xp')        || 100,
-  lastDay:    ls('lastDay')    || '',
-  vaultQ:     lsJ('vaultQ')    || [],
-  feathers:   lsJ('feathers')  || {white:[],gold:[],gray:[]},
-  privacy:    lsJ('privacy')   || {progress:true,streak:false},
-  myFriends:  lsJ('myFriends') || [],
-  arenaW:     lsN('arenaW')    || 0,
-  arenaL:     lsN('arenaL')    || 0,
-  halo:       ls('halo')       || 'none',
+// STATE
+const S={
+  tier:ls('tier')||'a',gender:ls('gender')||'m',
+  silver:ln('silver'),gold:ln('gold'),streak:ln('streak'),
+  sessions:ln('sessions'),totalMins:ln('totalMins'),xp:ln('xp')||100,
+  lastDay:ls('lastDay')||'',theme:ls('theme')||'dark',
+  vaultQ:lj('vaultQ')||[],feathers:lj('feathers')||{w:[],g:[],gray:[]},
+  myFriends:lj('myFriends')||[],arenaW:ln('arenaW'),arenaL:ln('arenaL'),
+  cefrLevel:ls('cefrLevel')||'B1'
 };
+function ls(k){return localStorage.getItem(k);}
+function ln(k){return parseInt(localStorage.getItem(k)||0)||0;}
+function lj(k){try{return JSON.parse(localStorage.getItem(k));}catch{return null;}}
+function sv(k){localStorage.setItem(k,typeof S[k]==='object'?JSON.stringify(S[k]):String(S[k]));}
 
-function ls(k){ return localStorage.getItem(k); }
-function lsN(k){ return parseInt(localStorage.getItem(k)||0); }
-function lsJ(k){ try{return JSON.parse(localStorage.getItem(k));}catch{return null;} }
-function sv(k){ localStorage.setItem(k, typeof S[k]==='object'?JSON.stringify(S[k]):S[k]); }
-function svAll(){ Object.keys(S).forEach(k=>sv(k)); }
-
-// ══════════ NAVIGATION ══════════
-function go(page){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
-  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
-  const pg = document.getElementById('page-'+page);
-  if(pg) pg.classList.add('on');
-  document.querySelectorAll('.ni').forEach(n=>{
-    if(n.getAttribute('onclick')?.includes(`'${page}'`)) n.classList.add('on');
-  });
-  const renders = {
-    dash:()=>{renderHm();updateDash();},
-    bird:renderBird, roadmap:renderRoadmap, vault:renderVault,
-    social:renderSocial, arena:renderArena, regions:renderRegions,
-    parent:renderParent, career:renderCareer,
-    pricing:updateVaultProgress, feathers:()=>{},
-  };
-  renders[page]?.();
+// NAV
+function gp(pg,el){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.bni').forEach(n=>n.classList.remove('on'));
+  document.getElementById('pg-'+pg)?.classList.add('on');
+  el?.classList.add('on');
+  document.querySelector('.pages')?.scrollTo(0,0);
+  ({home:iHome,study:iStudy,eng:iEng,sched:iSched,comm:iComm,feat:iFeat})[pg]?.();
 }
 
-// ══════════ TOAST ══════════
-let toastT;
-function toast(msg,type='info',icon='💡'){
-  const t=document.getElementById('toast');
-  t.innerHTML=`<span>${icon}</span><span>${msg}</span>`;
-  t.className=`toast show ${type}`;
-  clearTimeout(toastT);
-  toastT=setTimeout(()=>t.className='toast',3000);
+// TOAST
+let tT;
+function toast(msg,type=''){
+  const t=document.getElementById('T');
+  t.textContent=msg;t.className='toast show '+(type||'');
+  clearTimeout(tT);tT=setTimeout(()=>t.className='toast',3200);
 }
 
-// ══════════ COIN SYSTEM ══════════
-function addCoin(n,reason='',isGold=false){
-  if(isGold){
-    if(S.tier!=='anqa'){toast('الذهب للعنقاء فقط 🔒','','🥇');return;}
-    S.gold+=n; sv('gold');
-  } else {
-    const isPeak=checkPeak();
-    const actual = isPeak?n*2:n;
-    S.silver+=actual; sv('silver');
-    if(isPeak&&n>0) toast(`⚡ وقت الذروة! +${actual}🪙 بدل ${n}`,'ok','🌅');
-  }
-  updateCoins();
-  if(n>0){
-    const p=document.createElement('div');
-    p.className='cpop';
-    p.textContent=`+${n}${isGold?'🥇':'🪙'}`;
-    p.style.cssText=`left:${20+Math.random()*60}%;top:${30+Math.random()*30}%`;
-    document.body.appendChild(p);
-    setTimeout(()=>p.remove(),700);
-  }
-  updateVaultProgress();
+// THEME
+function toggleTheme(){
+  S.theme=S.theme==='dark'?'light':'dark';sv('theme');
+  document.documentElement.setAttribute('data-theme',S.theme);
+  document.getElementById('thBtn').innerHTML=S.theme==='dark'?'&#9680;':'&#9681;';
+  toast(S.theme==='dark'?'الوضع الليلي: أزرق ملكي':'الوضع النهاري: ذهبي فخم');
 }
 
-function updateCoins(){
-  ['sbSilver','ecSilver','dSilver','bSilver'].forEach(id=>{
-    const el=document.getElementById(id); if(el) el.textContent=S.silver;
-  });
-  ['sbGold','ecGold','bGold'].forEach(id=>{
-    const el=document.getElementById(id); if(el) el.textContent=S.gold;
-  });
+// COINS
+function addCoin(n,gold=false){
+  if(gold){if(S.tier!=='c')return;S.gold+=n;sv('gold');}
+  else{S.silver+=n;sv('silver');}
+  updCoins();updVP();
+}
+function updCoins(){
+  ['hSilv','sSilv'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=S.silver;});
+  ['sGold'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=S.gold;});
+}
+function updVP(){
+  const p=Math.min(100,(S.silver/50000)*100);
+  const e=document.getElementById('vPrg');const l=document.getElementById('vPrgL');
+  if(e)e.style.width=p+'%';if(l)l.textContent=S.silver.toLocaleString()+' / 50,000';
 }
 
-function checkPeak(){
-  const h=new Date().getHours();
-  return h>=4&&h<7;
+// TIER
+function setTier(t){
+  S.tier=t;sv('tier');
+  const L={a:'الشاهين',b:'السند',c:'العنقاء'};
+  const C={a:'tp-a',b:'tp-b',c:'tp-c'};
+  const p=document.getElementById('tpill');
+  if(p){p.textContent=L[t];p.className='tp '+C[t];}
+  updEagle();
+  toast('الترقية الى '+L[t],'ok');
+  cM('Msett');setTimeout(()=>gp('home',document.querySelector('.bni')),400);
 }
 
-function updateVaultProgress(){
-  const pct=Math.min(100,(S.silver/50000)*100);
-  const el=document.getElementById('vProgress');
-  const lb=document.getElementById('vProgressLbl');
-  if(el) el.style.width=pct+'%';
-  if(lb) lb.textContent=S.silver.toLocaleString()+' / 50,000';
+// BIRD SYSTEM
+const BIRDS={
+  a:{m:{name:'الصقر',desc:'متاح للجميع',max:1000},f:{name:'الصقر',desc:'متاح للجميع',max:1000}},
+  b:{m:{name:'الهدهد',desc:'المشتركون',max:3000},f:{name:'اليمامة',desc:'المشتركات',max:3000}},
+  c:{m:{name:'الهدهد والعنقاء',desc:'النخبة',max:10000},f:{name:'اليمامة والعنقاء',desc:'النخبة',max:10000}}
+};
+function updEagle(){
+  const b=BIRDS[S.tier][S.gender];
+  const pct=Math.min(100,(S.xp/b.max)*100);
+  const nm=document.getElementById('eNm');const lv=document.getElementById('eLv');
+  const xf=document.getElementById('xpF');const xn=document.getElementById('xpN');
+  if(nm)nm.textContent=b.name;if(lv)lv.textContent=b.desc;
+  if(xf)xf.style.width=pct+'%';if(xn)xn.textContent=S.xp;
 }
 
-// ══════════ TIER ══════════
-function selectTier(t){
-  S.tier=t; sv('tier');
-  const L={shaheen:'الشاهين',sanad:'السند',anqa:'العنقاء'};
-  const C={shaheen:'ts',sanad:'tn',anqa:'ta'};
-  const I={shaheen:'🦅',sanad:'🛡',anqa:'🔥'};
-  const badge=document.getElementById('sbTier');
-  badge.className='ava-tier '+C[t];
-  badge.textContent=L[t];
-  document.getElementById('pLock').style.display=(t==='shaheen')?'':'none';
-  const shield=document.getElementById('sbShield');
-  shield.style.display=(t==='sanad'||t==='anqa')?'':'none';
-  const dlc=document.getElementById('dailyLimitCard');
-  if(dlc) dlc.style.display=(t==='shaheen')?'':'none';
-  toast(`تم الترقية إلى ${L[t]} بنجاح!`,'ok',I[t]);
-  // anqa dynamic UI
-  if(t==='anqa'){
-    document.body.style.setProperty('--blue','#6D28D9');
-    document.body.style.setProperty('--bl','#8B5CF6');
-    document.body.style.setProperty('--bxl','#A78BFA');
-    setTimeout(()=>{
-      document.body.style.removeProperty('--blue');
-      document.body.style.removeProperty('--bl');
-      document.body.style.removeProperty('--bxl');
-    },3000);
-  }
-  setTimeout(()=>go('dash'),700);
-}
-
-// ══════════ TIMER ══════════
-let tRun=false,tPhase='focus',tElapsed=0,tIv=null;
-const CIRC=565;
-
-function getFD(){ return parseInt(document.getElementById('focusDur')?.value||50)*60; }
-function getRD(){ return parseInt(document.getElementById('restDur')?.value||10)*60; }
-
+// TIMER
+let tRun=false,tPhase='focus',tEl=0,tIv=null;
+const CIRC=534;
+function getFD(){return (parseInt(ls('focD')||'50'))*60;}
+function getRD(){return (parseInt(ls('restD')||'10'))*60;}
 function toggleTimer(){
-  if(tRun){
-    clearInterval(tIv);tRun=false;
-    document.getElementById('tBtn').textContent='▶ استمر';
-  } else {
-    tRun=true;
-    document.getElementById('tBtn').textContent='⏸ إيقاف';
-    tIv=setInterval(tick,1000);
-  }
+  if(tRun){clearInterval(tIv);tRun=false;document.getElementById('tBtn').textContent='استمر';}
+  else{tRun=true;document.getElementById('tBtn').textContent='ايقاف';tIv=setInterval(timerTick,1000);}
 }
-
-function tick(){
-  tElapsed++;
-  const dur=tPhase==='focus'?getFD():getRD();
-  const left=dur-tElapsed;
+function timerTick(){
+  tEl++;const dur=tPhase==='focus'?getFD():getRD();
+  const left=dur-tEl;
   const m=String(Math.floor(left/60)).padStart(2,'0');
   const s=String(left%60).padStart(2,'0');
-  const disp=document.getElementById('tDisp');
-  if(disp) disp.textContent=`${m}:${s}`;
-  const prog=document.getElementById('rProg');
-  if(prog) prog.style.strokeDashoffset=CIRC*(1-tElapsed/dur);
-
-  // earn silver per minute
-  if(tPhase==='focus'&&tElapsed%60===0){
-    addCoin(1,'⏱ دقيقة تركيز');
-    S.totalMins++; sv('totalMins');
-  }
-
-  if(tElapsed>=dur){
-    tElapsed=0;
+  const d=document.getElementById('tD');if(d)d.textContent=m+':'+s;
+  const rp=document.getElementById('rProg');if(rp)rp.style.strokeDashoffset=CIRC*(1-tEl/dur);
+  if(tPhase==='focus'&&tEl%60===0){addCoin(1);S.totalMins++;sv('totalMins');}
+  if(tEl>=dur){
+    tEl=0;
     if(tPhase==='focus'){
-      tPhase='rest';
-      S.sessions++; S.weekSess++;
-      sv('sessions'); sv('weekSess');
+      tPhase='rest';S.sessions++;sv('sessions');
       const today=new Date().toDateString();
       if(S.lastDay!==today){S.streak++;S.lastDay=today;sv('streak');sv('lastDay');}
-      S.xp+=60; sv('xp');
-      addCoin(10,'🎯 جلسة مكتملة');
-      if(S.tier==='anqa') addCoin(2,'🥇 جلسة عنقاء',true);
-      updateStreaks();
-      if(prog) prog.setAttribute('stroke','url(#rg2)');
-      const pb=document.getElementById('pBadge');
-      const tl=document.getElementById('tLbl');
-      if(pb){pb.className='phase-badge pb-rest';pb.textContent='☕ وقت الراحة';}
-      if(tl) tl.textContent='راحة';
-      if(disp) disp.textContent=`${String(Math.floor(getRD()/60)).padStart(2,'0')}:00`;
-      toast('أحسنت! 50 دقيقة منجزة 🎉 — استرح الآن','ok','🏆');
-    } else {
+      S.xp+=50;sv('xp');addCoin(10);
+      if(S.tier==='c')addCoin(2,true);
+      updAll();
+      if(rp){rp.className='rp rest';rp.style.strokeDashoffset=CIRC;}
+      const pb=document.getElementById('tPh');const tl=document.getElementById('tL');
+      if(pb){pb.className='tph tpr';pb.textContent='وقت الراحة';}
+      if(tl)tl.textContent='راحة';
+      if(d)d.textContent=String(Math.floor(getRD()/60)).padStart(2,'0')+':00';
+      toast('جلسة مكتملة — استرح الان','ok');
+    }else{
       tPhase='focus';
-      if(prog) prog.setAttribute('stroke','url(#rg1)');
-      const pb=document.getElementById('pBadge');
-      const tl=document.getElementById('tLbl');
-      if(pb){pb.className='phase-badge pb-focus';pb.textContent='🎯 وضع التركيز';}
-      if(tl) tl.textContent='تركيز';
-      if(disp) disp.textContent=`${String(Math.floor(getFD()/60)).padStart(2,'0')}:00`;
-      toast('الراحة انتهت! ابدأ جلسة جديدة 🚀','','⏱');
+      if(rp){rp.className='rp';rp.style.strokeDashoffset=CIRC;}
+      const pb=document.getElementById('tPh');const tl=document.getElementById('tL');
+      if(pb){pb.className='tph tpf';pb.textContent='وضع التركيز';}
+      if(tl)tl.textContent='تركيز';
+      if(d)d.textContent=String(Math.floor(getFD()/60)).padStart(2,'0')+':00';
+      toast('الراحة انتهت — ابدا جلسة جديدة');
     }
-    if(prog) prog.style.strokeDashoffset=CIRC;
+    if(rp)rp.style.strokeDashoffset=CIRC;
   }
-
-  // peak status
-  const pb2=document.getElementById('peakBadge');
-  if(pb2){
-    pb2.textContent=checkPeak()?'🔥 نشط — فضة ×2!':'غير نشط الآن';
-    pb2.className=checkPeak()?'bdg b-am':'bdg b-gr';
-  }
-
-  // week hours
-  const wh=document.getElementById('wHrs');
-  if(wh) wh.textContent=Math.round(S.weekSess*50/60*10)/10+'h';
+  ['tSt','stSt'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=S.streak;});
+  ['tSe','stSe'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=S.sessions;});
 }
-
 function resetTimer(){
-  clearInterval(tIv);tRun=false;tPhase='focus';tElapsed=0;
-  document.getElementById('tBtn').textContent='▶ ابدأ';
-  const pb=document.getElementById('pBadge');
-  const tl=document.getElementById('tLbl');
-  const disp=document.getElementById('tDisp');
-  const prog=document.getElementById('rProg');
-  if(pb){pb.className='phase-badge pb-focus';pb.textContent='🎯 وضع التركيز';}
-  if(tl) tl.textContent='تركيز';
-  if(disp) disp.textContent='50:00';
-  if(prog){prog.style.strokeDashoffset=CIRC;prog.setAttribute('stroke','url(#rg1)');}
+  clearInterval(tIv);tRun=false;tPhase='focus';tEl=0;
+  document.getElementById('tBtn').textContent='تشغيل';
+  const pb=document.getElementById('tPh');const tl=document.getElementById('tL');
+  const d=document.getElementById('tD');const rp=document.getElementById('rProg');
+  if(pb){pb.className='tph tpf';pb.textContent='وضع التركيز';}
+  if(tl)tl.textContent='تركيز';if(d)d.textContent='50:00';
+  if(rp){rp.className='rp';rp.style.strokeDashoffset=CIRC;}
+}
+function updAll(){
+  ['stSt','tSt'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=S.streak;});
+  ['stSe','tSe'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=S.sessions;});
+  updCoins();updEagle();updVP();
+  const ch=document.getElementById('certH');if(ch)ch.textContent=Math.round(S.totalMins/60)+' ساعة موثقة';
 }
 
-function updateStreaks(){
-  ['tStreak','dStreak'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=S.streak;});
-  ['tSessions','dSess'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=S.sessions;});
-  const wk=document.getElementById('wSess');
-  if(wk) wk.textContent=S.weekSess;
-}
-
-// ══════════ HEATMAP ══════════
-function renderHm(){
-  const c=document.getElementById('dashHm');
-  if(!c)return;
-  c.innerHTML='';
+// HEATMAP
+function renderHm(id){
+  const c=document.getElementById(id);if(!c)return;c.innerHTML='';
   Array.from({length:91},()=>Math.floor(Math.random()*5)).forEach(v=>{
-    const d=document.createElement('div');
-    d.className='hmc h'+v;
-    d.title=v+' جلسات';
-    c.appendChild(d);
+    const d=document.createElement('div');d.className='hmc h'+v;c.appendChild(d);
   });
 }
 
-// ══════════ DASHBOARD ══════════
-function updateDash(){
-  updateStreaks();
-  updateCoins();
-  document.getElementById('dashGreet').textContent=getGreet();
-  const bars=[
-    {l:'القدرات — اللفظي',v:85,c:'var(--blue)'},
-    {l:'القدرات — الكمي',v:70,c:'var(--blue)'},
-    {l:'التحصيلي — الرياضيات',v:60,c:'var(--amber)'},
-    {l:'التحصيلي — العلوم',v:90,c:'var(--green)'},
-  ];
-  const dp=document.getElementById('dashBars');
-  if(dp) dp.innerHTML=bars.map(b=>`
-    <div class="fbb mb8"><span class="ts">${b.l}</span><span class="ts mono" style="color:var(--bxl)">${b.v}%</span></div>
-    <div class="pw mb12" style="height:6px"><div class="pf" style="width:${b.v}%;height:100%;background:linear-gradient(90deg,${b.c},${b.c}BB)"></div></div>
-  `).join('');
-}
-
-function getGreet(){
-  const h=new Date().getHours();
-  const n='محمد';
-  if(h<5)return `طالب الفجر ${n} 🌙`;
-  if(h<12)return `صباح الانضباط، ${n} ☀️`;
-  if(h<17)return `أهلاً، ${n} 👋`;
-  if(h<20)return `مساء الإنجاز، ${n} 🌆`;
-  return `وقت المذاكرة، ${n} 🌙`;
-}
-
-// ══════════ BIRD ══════════
-const BIRDS=[
-  {name:'الصقر',emoji:'🦅',lvl:1,min:0,max:500,desc:'مبتدئ'},
-  {name:'الهدهد',emoji:'🪶',lvl:2,min:500,max:1500,desc:'متقدم'},
-  {name:'البومة',emoji:'🦉',lvl:3,min:1500,max:3000,desc:'حكيم'},
-  {name:'الحمامة',emoji:'🕊',lvl:4,min:3000,max:5000,desc:'مسالم'},
-  {name:'العنقاء',emoji:'🔥',lvl:5,min:5000,max:10000,desc:'نخبة'},
-];
-
-function getCurBird(){ return BIRDS.slice().reverse().find(b=>S.xp>=b.min)||BIRDS[0]; }
-
-function renderBird(){
-  const b=getCurBird();
-  const pct=Math.min(100,((S.xp-b.min)/(b.max-b.min))*100);
-  ['birdEmoji','bird-emoji-disp'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=b.emoji;});
-  const em=document.getElementById('birdEmoji'); if(em) em.textContent=b.emoji;
-  const nd=document.getElementById('birdNameD'); if(nd) nd.textContent=b.name;
-  const ld=document.getElementById('birdLvlD'); if(ld) ld.textContent=`المستوى ${b.lvl} — ${b.desc}`;
-  const xf=document.getElementById('xpFill'); if(xf) xf.style.width=pct+'%';
-  const xn=document.getElementById('xpNum'); if(xn) xn.textContent=S.xp;
-  const bd=document.getElementById('birdDashBadge'); if(bd) bd.textContent=`المستوى ${b.lvl}`;
-
-  // halo
-  const halo=document.getElementById('birdHalo');
-  if(halo){
-    if(S.halo==='silver'){halo.className='bird-halo silver';}
-    else if(S.halo==='gold'){halo.className='bird-halo gold';}
-    else{halo.style.display='none';}
-  }
-
-  // path
-  const path=document.getElementById('birdPath');
-  if(path) path.innerHTML=BIRDS.map(lv=>`
-    <div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:9px;margin-bottom:5px;background:${S.xp>=lv.min?'#1D4ED810':'var(--card2)'};border:1px solid ${S.xp>=lv.min?'#1D4ED840':'var(--border2)'}">
-      <div style="font-size:22px">${lv.emoji}</div>
-      <div style="flex:1"><div class="ts fw" style="color:${S.xp>=lv.min?'var(--bxl)':'var(--t2)'}">${lv.name}</div><div class="txs tm">${lv.min.toLocaleString()} XP</div></div>
-      ${S.xp>=lv.min?'<span class="bdg b-gr">✓ مكتسب</span>':'<span class="bdg" style="background:var(--border);color:var(--t3)">مقفل</span>'}
-    </div>
-  `).join('');
-
-  // badges
-  const bw=document.getElementById('badgesWrap');
-  if(bw){
-    const badges=[
-      {ico:'⚔',name:'فارس الدرب',cond:S.sessions>=10,desc:'10 جلسات'},
-      {ico:'🔥',name:'سلسلة أسبوع',cond:S.streak>=7,desc:'7 أيام'},
-      {ico:'💡',name:'الحكيم',cond:S.xp>=1500,desc:'1500 XP'},
-      {ico:'🏆',name:'المتميز',cond:S.silver>=1000,desc:'1000 فضة'},
-      {ico:'⏱',name:'المجتهد',cond:S.totalMins>=500,desc:'500 دقيقة'},
-      {ico:'🎯',name:'الدقيق',cond:S.arenaW>=5,desc:'5 انتصارات'},
-    ];
-    bw.innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px">'+
-      badges.map(b=>`
-        <div style="padding:10px;border-radius:9px;border:1px solid ${b.cond?'#F59E0B44':'var(--border2)'};background:${b.cond?'#F59E0B10':'var(--card2)'};text-align:center;opacity:${b.cond?1:.35};transition:all .2s">
-          <div style="font-size:22px">${b.ico}</div>
-          <div style="font-size:10px;font-weight:800;margin-top:4px;color:${b.cond?'var(--amber)':'var(--t2)'}">${b.name}</div>
-          <div class="ttiny tm">${b.desc}</div>
-        </div>
-      `).join('')+'</div>';
-  }
-  updateCoins();
-}
-
-function birdTap(){
-  addCoin(5,'🦅 طائر');
-  S.xp+=10; sv('xp');
-  toast('+5🪙 +10 XP 🦅','','✨');
-  renderBird();
-}
-
-function buyHalo(type){
-  if(type==='silver'){
-    if(S.silver<500){toast('تحتاج 500 فضة لشراء الهالة','','🪙');return;}
-    S.silver-=500; sv('silver'); S.halo='silver'; sv('halo');
-    toast('تم شراء هالة الفضة! ✨','ok','⚪');
-  } else {
-    if(S.tier!=='anqa'){toast('هالة الذهب للعنقاء فقط','','🔒');return;}
-    if(S.gold<100){toast('تحتاج 100 ذهب','','🥇');return;}
-    S.gold-=100; sv('gold'); S.halo='gold'; sv('halo');
-    toast('تم شراء الهالة الذهبية المتحركة! 🌀','ok','🥇');
-  }
-  updateCoins(); renderBird();
-}
-
-// ══════════ ROADMAP ══════════
+// ROADMAP
 const RM=[
-  {t:'القدرات — اللفظي: الأجزاء 1-3',d:'المفردات والتناظر وإكمال الجمل',s:'done',h:'8h'},
-  {t:'القدرات — اللفظي: الأجزاء 4-6',d:'الفهم القرائي والاستنتاج',s:'done',h:'6h'},
-  {t:'القدرات — الكمي: الأجزاء 1-3',d:'الأعداد والعمليات الأساسية',s:'done',h:'7h'},
-  {t:'القدرات — الكمي: الأجزاء 4-5',d:'الجبر والمعادلات',s:'done',h:'5h'},
-  {t:'القدرات — الكمي: الأجزاء 6-8',d:'الهندسة والاحتمالات',s:'done',h:'6h'},
-  {t:'القدرات — الكمي: الأجزاء 9-12',d:'مسائل متقدمة وتجميعات',s:'active',h:'8h'},
-  {t:'اختبار تجريبي كامل — القدرات',d:'محاكاة موقوتة كاملة',s:'locked',h:'2h'},
-  {t:'التحصيلي — الرياضيات',d:'المنهج الكامل للثانوية',s:'locked',h:'12h'},
-  {t:'التحصيلي — الفيزياء',d:'الميكانيكا والكهرباء والموجات',s:'locked',h:'10h'},
-  {t:'التحصيلي — الكيمياء',d:'الجدول الدوري والتفاعلات',s:'locked',h:'8h'},
-  {t:'التحصيلي — الأحياء',d:'الخلية والجينات والبيئة',s:'locked',h:'6h'},
-  {t:'اختبار تجريبي كامل — التحصيلي',d:'محاكاة موقوتة كاملة',s:'locked',h:'2h'},
+  {t:'القدرات - اللفظي 1-3',d:'المفردات والتناظر',s:'done',h:'8h'},
+  {t:'القدرات - اللفظي 4-6',d:'الفهم القرائي',s:'done',h:'6h'},
+  {t:'القدرات - الكمي 1-3',d:'الاعداد والجبر',s:'done',h:'7h'},
+  {t:'القدرات - الكمي 4-5',d:'المعادلات والدوال',s:'done',h:'5h'},
+  {t:'القدرات - الكمي 6-8',d:'الهندسة والاحتمالات',s:'done',h:'6h'},
+  {t:'القدرات - الكمي 9-12',d:'مسائل متقدمة',s:'act',h:'8h'},
+  {t:'اختبار تجريبي - القدرات',d:'محاكاة كاملة',s:'lock',h:'2h'},
+  {t:'التحصيلي - الرياضيات',d:'منهج الثانوية',s:'lock',h:'12h'},
+  {t:'التحصيلي - الفيزياء',d:'ميكانيكا وكهرباء',s:'lock',h:'10h'},
+  {t:'التحصيلي - الكيمياء',d:'الجدول الدوري',s:'lock',h:'8h'},
+  {t:'التحصيلي - الاحياء',d:'الخلية والجينات',s:'lock',h:'6h'},
+  {t:'اختبار تجريبي - التحصيلي',d:'محاكاة كاملة',s:'lock',h:'2h'}
 ];
-
-function renderRoadmap(){
-  const done=RM.filter(r=>r.s==='done').length;
-  const b=document.getElementById('rmBadge'); if(b) b.textContent=done+' / '+RM.length;
-  const c=document.getElementById('rmSteps'); if(!c) return;
+function renderRM(){
+  const c=document.getElementById('rmList');if(!c)return;
   c.innerHTML=RM.map((r,i)=>`
-    <div class="rm-step ${r.s==='done'?'done':r.s==='active'?'act':''}" onclick="rmClick(${i})">
-      <div class="rm-ico" style="background:${r.s==='done'?'#10B98120':r.s==='active'?'#1D4ED820':'var(--border)'};border:1px solid ${r.s==='done'?'#10B98140':r.s==='active'?'#1D4ED840':'var(--border2)'}">
-        ${r.s==='done'?'✅':r.s==='active'?'▶':'🔒'}
+    <div class="rms ${r.s}" onclick="openLesson(${i})">
+      <div class="rmi" style="background:${r.s==='done'?'rgba(16,185,129,.08)':r.s==='act'?'rgba(var(--g-rgb),.08)':'var(--card)'};border:1px solid ${r.s==='done'?'rgba(16,185,129,.18)':r.s==='act'?'rgba(var(--g-rgb),.2)':'var(--b1)'}">
+        ${r.s==='done'?'&#10003;':r.s==='act'?'&#9654;':'&#8212;'}
       </div>
-      <div class="rm-body">
-        <div class="rm-title">${r.t}</div>
-        <div class="rm-desc">${r.d}</div>
-        <div class="rm-meta">
-          <span class="bdg ${r.s==='done'?'b-gr':r.s==='active'?'b-bl':''}" style="${r.s==='locked'?'background:var(--border);color:var(--t3)':''}">${r.h}</span>
-          <span style="margin-right:auto;font-size:11px;color:${r.s==='done'?'var(--green)':r.s==='active'?'var(--bxl)':'var(--t3)'}">
-            ${r.s==='done'?'✓ مكتملة':r.s==='active'?'جارية الآن ▶':'مقفلة 🔒'}
-          </span>
+      <div class="rmb">
+        <div class="rmt">${r.t}</div>
+        <div class="rmd">${r.d}</div>
+        <div class="rmf">
+          <span class="bdg ${r.s==='done'?'bg-gr':r.s==='act'?'bg-g':'bg-mt'}">${r.h}</span>
+          <span class="txs tm" style="margin-right:auto">${r.s==='done'?'مكتملة':r.s==='act'?'جارية':'مقفلة'}</span>
         </div>
       </div>
+    </div>`).join('');
+}
+const LC={
+  0:{exp:'الاجزاء 1-3: المفردات والتناظر والاستكمال. ركز على حفظ 50 كلمة اسبوعياً وفهم علاقات المعنى بين الكلمات.'},
+  1:{exp:'الفهم القرائي: اقرا الفقرة مرتين — الاولى للفهم العام والثانية للتفاصيل. لا تجب قبل قراءة جميع الاسئلة.'},
+  5:{exp:'الكمي المتقدم: الهندسة والاحتمالات. احفظ صيغ المساحات والحجوم، وافهم مبادئ الاحتمالات البسيطة والمركبة.'}
+};
+function openLesson(i){
+  const r=RM[i];
+  if(r.s==='lock'){toast('اكمل المراحل السابقة اولاً');return;}
+  document.getElementById('MLtitle').textContent=r.t;
+  document.getElementById('Vcon').innerHTML=`<div class="vph"><div class="vpb" onclick="playL(${i})">&#9654;</div><div style="font-size:11px;color:var(--t2);margin-top:5px">${r.t}</div></div>`;
+  document.getElementById('MLbody').innerHTML=`
+    <div class="txs fw7 mb8" style="color:var(--g2)">الشرح والتلخيص</div>
+    <div class="txs tm mb12" style="line-height:1.8">${LC[i]?.exp||'شرح هذا الجزء متاح عند تفعيل المحتوى الكامل. راجع منصة قياس الرسمية للمواد.'}</div>
+    <div class="rb g8 mb12" style="flex-wrap:wrap">
+      <span class="bdg ${r.s==='done'?'bg-gr':'bg-g'}">${r.h}</span>
+      <span class="bdg ${r.s==='done'?'bg-gr':'bg-g'}">${r.s==='done'?'مكتملة':'جارية'}</span>
     </div>
-  `).join('');
+    <div class="card gc">
+      <div class="txs fw7 mb8" style="color:var(--g2)">مصادر موصى بها</div>
+      <div class="li mb4" onclick="toast('يفتح المصدر...')">
+        <div class="li-b"><div class="li-t">منصة قياس الرسمية</div><div class="li-s">نماذج رسمية ومحاكاة — qiyas.sa</div></div>
+        <div style="font-size:11px;color:var(--g2)">&#8592;</div>
+      </div>
+      <div class="li" onclick="toast('يفتح المصدر...')">
+        <div class="li-b"><div class="li-t">تجميعات السنوات السابقة</div><div class="li-s">افضل طريقة للتحضير</div></div>
+        <div style="font-size:11px;color:var(--g2)">&#8592;</div>
+      </div>
+    </div>
+    ${r.s==='act'?`<button class="btn bp w100 mt10" onclick="markDone(${i})">تحديد كمكتملة</button>`:''}`;
+  document.getElementById('Mlesson').classList.add('show');
+}
+function playL(i){
+  const r=RM[i];
+  document.getElementById('Vcon').innerHTML=`<div class="vph" style="cursor:default"><div style="font-size:11px;color:var(--t2)">ابحث على يوتيوب:</div><div style="font-size:11px;color:var(--g2);margin-top:3px">${r.t} قياس</div></div>`;
+  toast('ابحث: '+r.t+' قياس');
+}
+function markDone(i){
+  if(RM[i])RM[i].s='done';addCoin(50);S.xp+=30;sv('xp');
+  toast('مكتملة! +50 فضة','ok');cM('Mlesson');renderRM();updEagle();
 }
 
-function rmClick(i){
-  if(RM[i].s==='locked'){toast('أكمل المراحل السابقة أولاً 🔒','','');return;}
-  if(RM[i].s==='active') toast(`تعمل الآن على: ${RM[i].t} 🎯`,'ok','');
-  else toast(`✅ ${RM[i].t} — منجزة`,'ok','');
-}
-
-function freezeStreak(){
-  if(S.silver<500){toast('تحتاج 500 فضة لتجميد الوهج','','🧊');return;}
-  S.silver-=500; sv('silver'); updateCoins();
-  toast('تم تجميد الوهج! سلسلتك محمية 🧊','ok','🔥');
-}
-
-// ══════════ VAULT ══════════
-const DEF_VAULT=[
-  {q:'إذا كان x+y=10 وx-y=4، فإن xy=?',opts:['21','24','16','12'],correct:0,done:false,tip:'استخدم: (x+y)² = x²+2xy+y²'},
-  {q:'اختر المرادف لكلمة "مقتضب"',opts:['مختصر','مطوّل','مفصّل','مبهم'],correct:0,done:false,tip:'مقتضب = موجز ومختصر'},
-  {q:'إذا كان محيط مربع 24سم فإن مساحته=?',opts:['36','48','24','16'],correct:0,done:false,tip:'الضلع = 24÷4 = 6، المساحة = 6² = 36'},
+// VAULT
+const DV=[
+  {q:'اذا x+y=10 وx-y=4, فإن xy=?',opts:['21','24','16','12'],ans:0,done:false,tip:'استخدم: (x+y)²=x²+2xy+y²'},
+  {q:'مرادف كلمة "مقتضب"',opts:['مختصر','مطول','مبهم','مكثف'],ans:0,done:false,tip:'مقتضب = موجز ومختصر'},
+  {q:'مساحة مربع محيطه 24سم',opts:['36 سم²','48 سم²','24 سم²','16 سم²'],ans:0,done:false,tip:'الضلع=6, المساحة=36'}
 ];
-
 function renderVault(){
-  const all=[...DEF_VAULT,...S.vaultQ];
-  const pend=all.filter(q=>!q.done).length;
-  ['vBadge','vTotal','vDashBadge'].forEach(id=>{
-    const e=document.getElementById(id);
-    if(e) e.textContent=pend+(id==='vBadge'?'':' أسئلة');
-  });
-  const c=document.getElementById('vaultList');
-  if(!c) return;
-  if(!all.length){
-    c.innerHTML='<div style="text-align:center;padding:28px;color:var(--t2)">الخزنة فارغة 🏛<br><span class="txs">أجب على أسئلة خاطئة وستظهر هنا تلقائياً</span></div>';
-    return;
-  }
+  const all=[...DV,...S.vaultQ];const p=all.filter(q=>!q.done).length;
+  const b=document.getElementById('vBdg');if(b)b.textContent=p;
+  const c=document.getElementById('vList');if(!c)return;
+  if(!all.length){c.innerHTML='<div class="txs tm tc" style="padding:14px">الخزنة فارغة</div>';return;}
   c.innerHTML=all.map((q,i)=>`
     <div class="vq" id="vq${i}">
-      <div class="fbb mb8">
-        <span class="bdg ${q.done?'b-gr':'b-re'}">${q.done?'✓ محلول':'⏳ معلق'}</span>
-        <span class="txs tm">+15🪙 عند الحل الصحيح</span>
+      <div class="rbb mb8">
+        <span class="bdg ${q.done?'bg-gr':'bg-re'}">${q.done?'محلول':'معلق'}</span>
+        <span class="txs tm">+15 فضة</span>
       </div>
-      <div class="vq-text">${q.q}</div>
-      <div class="vq-opts">
-        ${q.opts.map((o,j)=>`<div class="vo" id="vo${i}-${j}" onclick="ansVault(${i},${j})">${o}</div>`).join('')}
-      </div>
-      <div class="vq-tip" id="vt${i}">💡 ${q.tip}</div>
-    </div>
-  `).join('');
+      <div style="font-size:13px;line-height:1.7;margin-bottom:9px">${q.q}</div>
+      <div>${q.opts.map((o,j)=>`<div class="vo" id="vo${i}-${j}" onclick="ansV(${i},${j})">${o}</div>`).join('')}</div>
+      <div class="vtip" id="vt${i}">التلميح: ${q.tip}</div>
+    </div>`).join('');
 }
-
-function ansVault(qi,oi){
-  const all=[...DEF_VAULT,...S.vaultQ];
-  const q=all[qi];
-  if(q.done) return;
-  const isCorrect=oi===q.correct;
-  const optEl=document.getElementById(`vo${qi}-${oi}`);
-  const correctEl=document.getElementById(`vo${qi}-${q.correct}`);
-  const tipEl=document.getElementById(`vt${qi}`);
-  if(isCorrect){
-    if(optEl) optEl.classList.add('correct');
-    q.done=true;
-    addCoin(15,'🏛 حل صحيح من الخزنة');
-    S.xp+=20; sv('xp');
-    toast('صحيح! +15🪙 +20XP 🏆','ok','✅');
-  } else {
-    if(optEl) optEl.classList.add('wrong');
-    if(correctEl) setTimeout(()=>correctEl.classList.add('correct'),400);
-    toast('خطأ! راجع التلميح 💡','','❌');
-  }
-  if(tipEl) tipEl.classList.add('show');
-  setTimeout(()=>renderVault(),1200);
+function ansV(qi,oi){
+  const all=[...DV,...S.vaultQ];const q=all[qi];if(q.done)return;
+  const ok=oi===q.ans;
+  const op=document.getElementById(`vo${qi}-${oi}`);
+  const cr=document.getElementById(`vo${qi}-${q.ans}`);
+  const tp=document.getElementById(`vt${qi}`);
+  if(ok){if(op)op.classList.add('cr');q.done=true;addCoin(15);S.xp+=15;sv('xp');toast('+15 فضة — صحيح','ok');}
+  else{if(op)op.classList.add('wr');setTimeout(()=>{if(cr)cr.classList.add('cr');},400);toast('خطا — راجع التلميح');}
+  if(tp)tp.classList.add('sh');setTimeout(()=>renderVault(),1500);
 }
-
-function addSampleQ(){
-  const samples=[
-    {q:'ما ناتج (3+4i)(3-4i)؟',opts:['25','7','0','12'],correct:0,done:false,tip:'(a+b)(a-b) = a²+b² لأن i²=-1'},
-    {q:'اختر مضاد كلمة "شحيح"',opts:['بخيل','سخي','قليل','نادر'],correct:1,done:false,tip:'شحيح = بخيل، ضده سخي = كريم'},
+function addSV(){
+  const s=[
+    {q:'ناتج (3+4i)(3-4i)؟',opts:['25','7','0','12'],ans:0,done:false,tip:'(a+bi)(a-bi)=a²+b²'},
+    {q:'مضاد كلمة "شحيح"',opts:['بخيل','سخي','قليل','نادر'],ans:1,done:false,tip:'ضده سخي'}
   ];
-  const s=samples[Math.floor(Math.random()*samples.length)];
-  S.vaultQ.push({...s}); sv('vaultQ');
-  renderVault();
-  toast('تمت إضافة سؤال للخزنة 🏛','ok','');
+  S.vaultQ.push({...s[Math.floor(Math.random()*s.length)]});sv('vaultQ');renderVault();toast('تمت الاضافة','ok');
 }
 
-// ══════════ SOCIAL ══════════
-const ALL_FRIENDS=[
-  {name:'أحمد الشهري',user:'@ahmed_sh',av:'أ',col:'#1D4ED8',streak:18,progress:82,pub:true,grade:'ثالث ثانوي'},
-  {name:'سلطان العتيبي',user:'@sultan_e',av:'س',col:'#7C3AED',streak:7,progress:55,pub:true,grade:'ثاني ثانوي'},
-  {name:'فاطمة الزهراني',user:'@fatima_z',av:'ف',col:'#9F1239',streak:25,progress:91,pub:false,grade:'ثالث ثانوي'},
-  {name:'عبدالله الدوسري',user:'@abdullahd',av:'ع',col:'#0F766E',streak:3,progress:40,pub:true,grade:'أول جامعي'},
-  {name:'نورة السعد',user:'@noura_s',av:'ن',col:'#B45309',streak:14,progress:68,pub:true,grade:'ثالث ثانوي'},
-  {name:'خالد الغامدي',user:'@khaled_g',av:'خ',col:'#1D4ED8',streak:22,progress:77,pub:true,grade:'ثاني ثانوي'},
+// ENGLISH
+const EL=[
+  {t:'Vocabulary Building B1',d:'500 كلمة اساسية لـ STEP',dur:'45 دق',done:true},
+  {t:'Reading Comprehension',d:'Skim, scan, understand',dur:'50 دق',done:true},
+  {t:'Grammar — Tenses Review',d:'12 tenses simplified',dur:'60 دق',done:false},
+  {t:'STEP Test Structure',d:'تعرف على بنية الاختبار',dur:'30 دق',done:false},
+  {t:'Listening Practice',d:'Academic English audio',dur:'40 دق',done:false},
+  {t:'Academic Writing',d:'Paragraphs and essays',dur:'55 دق',lock:true}
 ];
-
-function renderSocial(){
-  renderFriends(ALL_FRIENDS);
-  renderMyFriends();
-  document.getElementById('myFCount').textContent=S.myFriends.length;
+const CR={A1:'ابدا من الاساس — مفردات يومية وجمل بسيطة. 6-12 شهراً للوصول لـ B1.',A2:'مستوى جيد — ركز على Grammar والجمل المركبة. 4-8 اشهر.',B1:'مناسب لـ STEP — ركز على Vocabulary وReading. 3-5 اشهر لـ 65+.',B2:'مستوى قوي — 1-2 شهر مراجعة كافية.',C1:'ممتاز — STEP درجة عالية في متناول يدك.',C2:'احترافي كامل.'};
+function renderEngL(){
+  const c=document.getElementById('engL');if(!c)return;
+  c.innerHTML=EL.map((l,i)=>`
+    <div class="lc ${l.done?'done':''} ${l.lock?'lock':''}" onclick="${l.lock?`toast('يتطلب باقة اعلى')`:`oEngL(${i})`}">
+      <div class="${l.done?'lplay':'lth'}">${l.done?'&#9654;':l.lock?'&#8212;':'&#9654;'}</div>
+      <div class="lb">
+        <div class="lt2">${l.t}</div>
+        <div class="lm"><span class="mono" style="font-size:9px">${l.dur}</span><span class="bdg ${l.done?'bg-gr':l.lock?'bg-mt':'bg-g'}">${l.done?'مكتمل':l.lock?'مقفل':'جديد'}</span></div>
+      </div>
+    </div>`).join('');
+}
+function oEngL(i){
+  const l=EL[i];
+  document.getElementById('MLtitle').textContent=l.t;
+  document.getElementById('Vcon').innerHTML=`<div class="vph"><div class="vpb" onclick="toast('يتم تحميل الفيديو...')">&#9654;</div><div style="font-size:11px;color:var(--text);margin-top:5px">${l.t}</div></div>`;
+  document.getElementById('MLbody').innerHTML=`<div class="txs fw7 mb8" style="color:var(--g2)">${l.d}</div><div class="txs tm" style="line-height:1.8">محتوى هذا الدرس يركز على مهارات STEP الاساسية. راجع المفردات وحل التمارين.</div>`;
+  document.getElementById('Mlesson').classList.add('show');
+}
+function sCEFR(lv,el){
+  S.cefrLevel=lv;sv('cefrLevel');
+  document.querySelectorAll('.cfb').forEach(b=>b.classList.remove('on'));el.classList.add('on');
+  const r=document.getElementById('cRecT');const rt=document.querySelector('#cRec .txs.fw7');
+  if(r)r.textContent=CR[lv];if(rt)rt.textContent='توصية '+lv;
 }
 
-function renderFriends(list){
-  const c=document.getElementById('friendsList'); if(!c) return;
-  c.innerHTML=list.length?list.map(f=>fCard(f)).join(''):'<div style="text-align:center;padding:24px;color:var(--t2)">لا نتائج</div>';
+// SCHEDULE
+const SCHED=[
+  {day:'السبت',ss:[{t:'6:00-7:30',s:'القدرات اللفظي',type:'s'},{t:'8:00-9:00',s:'مراجعة',type:'r'}]},
+  {day:'الاحد',ss:[{t:'5:30-7:00',s:'الكمي',type:'s'},{t:'7:30-8:30',s:'قراءة سريعة',type:'s'}]},
+  {day:'الاثنين',ss:[{t:'6:00-7:30',s:'تحصيلي رياضيات',type:'s'}]},
+  {day:'الثلاثاء',ss:[{t:'6:00-7:30',s:'فيزياء وكيمياء',type:'s'},{t:'20:00-21:00',s:'مراجعة اليوم',type:'r'}]},
+  {day:'الاربعاء',ss:[{t:'6:00-7:30',s:'الاحياء',type:'s'}]},
+  {day:'الخميس',ss:[{t:'6:00-8:00',s:'اختبار تجريبي',type:'t'},{t:'9:00-10:00',s:'تحليل الاخطاء',type:'r'}]},
+  {day:'الجمعة',ss:[{t:'10:00-11:00',s:'مراجعة اسبوعية',type:'r'}]}
+];
+function renderSched(){
+  const c=document.getElementById('schedG');if(!c)return;
+  c.innerHTML=SCHED.map((d,i)=>`
+    <div class="dslot">
+      <div class="dh" onclick="togDay(${i})">
+        <div class="dn">${d.day}</div>
+        <div class="dhr">${d.ss.length} جلسة</div>
+      </div>
+      <div class="dsess" id="ds${i}">
+        ${d.ss.map(s=>`
+          <div class="sblk">
+            <div class="stm">${s.t}</div>
+            <div class="ssub">${s.s}</div>
+            <div class="stype ${s.type==='s'?'st-s':s.type==='r'?'st-r':'st-t'}">${s.type==='s'?'مذاكرة':s.type==='r'?'مراجعة':'اختبار'}</div>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
 }
+function togDay(i){document.getElementById('ds'+i)?.classList.toggle('op');}
 
+// SOCIAL
+const FR=[
+  {name:'احمد الشهري',user:'@ahmed_sh',av:'ا',col:'#304060',streak:18,prog:82,pub:true,grade:'ثالث ثانوي'},
+  {name:'سلطان العتيبي',user:'@sultan_e',av:'س',col:'#403060',streak:7,prog:55,pub:true,grade:'ثاني ثانوي'},
+  {name:'فاطمة الزهراني',user:'@fatima_z',av:'ف',col:'#603040',streak:25,prog:91,pub:false,grade:'ثالث ثانوي'},
+  {name:'عبدالله الدوسري',user:'@abdullahd',av:'ع',col:'#305040',streak:3,prog:40,pub:true,grade:'اول جامعي'},
+  {name:'نورة السعد',user:'@noura_s',av:'ن',col:'#504030',streak:14,prog:68,pub:true,grade:'ثالث ثانوي'}
+];
 function fCard(f){
-  const isMy=S.myFriends.includes(f.user);
-  const show=f.pub||isMy;
-  return `
-    <div class="f-card">
-      <div class="f-av" style="background:${f.col}">${f.av}</div>
-      <div style="flex:1;min-width:0">
-        <div class="f-name">${f.name}</div>
-        <div class="f-meta">
-          <span class="mono" style="color:var(--t3);font-size:10px">${f.user}</span>
-          ${show?`<span class="f-sk">🔥${f.streak}</span>`:'<span class="pvt-b">🔒 خاص</span>'}
-          ${show?`<div class="f-pm"><div class="f-pf" style="width:${f.progress}%"></div></div><span style="font-size:10px;color:var(--t2)">${f.progress}%</span>`:''}
-        </div>
-        <div class="ttiny tm">${f.grade}</div>
+  const isMy=S.myFriends.includes(f.user);const show=f.pub||isMy;
+  return `<div class="sc"><div class="uav" style="background:${f.col}">${f.av}</div>
+    <div style="flex:1;min-width:0">
+      <div class="un">${f.name}</div>
+      <div class="um">
+        <span style="font-family:'IBM Plex Mono';font-size:9px;color:var(--t3)">${f.user}</span>
+        ${show?`<span style="font-size:10px;color:var(--g2);font-family:'IBM Plex Mono'">${f.streak}د</span>`:''}
+        ${show?`<div class="pmi"><div class="pmf" style="width:${f.prog}%"></div></div><span style="font-size:9px;color:var(--t2)">${f.prog}%</span>`:'<span class="bdg bg-mt">خاص</span>'}
       </div>
-      ${isMy?'<span class="bdg b-gr" style="flex-shrink:0">✓ صديق</span>':
-        `<button class="add-btn" onclick="addFriend('${f.user}',event)">+ إضافة</button>`}
-    </div>`;
-}
-
-function renderMyFriends(){
-  const c=document.getElementById('myFriendsList'); if(!c) return;
-  const list=ALL_FRIENDS.filter(f=>S.myFriends.includes(f.user));
-  c.innerHTML=list.length?list.map(f=>`
-    <div class="fbb mb8" style="padding:9px;background:var(--card2);border-radius:9px;border:1px solid var(--border2)">
-      <div style="display:flex;align-items:center;gap:8px">
-        <div class="f-av" style="background:${f.col};width:30px;height:30px;font-size:11px">${f.av}</div>
-        <div><div class="ts fw">${f.name}</div><div class="ttiny tm">${f.user}</div></div>
-      </div>
-      <span class="bdg b-am">🔥${f.streak}</span>
+      <div style="font-size:9px;color:var(--t2)">${f.grade}</div>
     </div>
-  `).join(''):'<div class="txs tm" style="text-align:center;padding:16px">أضف أصدقاء من القائمة</div>';
+    ${isMy?'<span class="bdg bg-gr" style="flex-shrink:0">صديق</span>':`<button style="padding:4px 9px;border-radius:6px;background:rgba(var(--g-rgb),.08);color:var(--g2);border:1px solid rgba(var(--g-rgb),.2);font-family:'Tajawal';font-size:10px;font-weight:700;cursor:pointer;flex-shrink:0" onclick="addFr('${f.user}')">اضافة</button>`}
+  </div>`;
 }
-
-function filterFriends(q){
-  const fl=ALL_FRIENDS.filter(f=>f.name.includes(q)||f.user.includes(q.toLowerCase()));
-  renderFriends(fl);
+function filtF(q){
+  const list=FR.filter(f=>!q||f.name.includes(q)||f.user.includes(q.toLowerCase()));
+  const c=document.getElementById('allFL');
+  if(c)c.innerHTML=list.map(f=>fCard(f)).join('')||'<div class="txs tm tc" style="padding:12px">لا نتائج</div>';
 }
-
-function addFriend(user,e){
-  if(e) e.stopPropagation();
-  if(!S.myFriends.includes(user)){
-    S.myFriends.push(user); sv('myFriends');
-    toast('تمت إضافة الصديق 👥','ok','');
-    renderSocial();
-  }
+function renderMyF(){
+  const list=FR.filter(f=>S.myFriends.includes(f.user));
+  const c=document.getElementById('myFL');const cnt=document.getElementById('myFC');
+  if(cnt)cnt.textContent=list.length;
+  if(c)c.innerHTML=list.length?list.map(f=>fCard(f)).join(''):'<div class="txs tm tc" style="padding:8px">اضف اصدقاء</div>';
 }
-
-function togglePv(key,el){
-  S.privacy[key]=!S.privacy[key]; sv('privacy');
-  el.className='tog '+(S.privacy[key]?'on':'off');
-  toast(`${key==='progress'?'إظهار التقدم':'إظهار السلسلة'}: ${S.privacy[key]?'مفعّل':'مخفي'}`,'','🔐');
+function addFr(user){
+  if(!S.myFriends.includes(user)){S.myFriends.push(user);sv('myFriends');}
+  renderMyF();filtF('');toast('تمت الاضافة','ok');
 }
-
-// ══════════ ARENA ══════════
+const REGS=[
+  {name:'الرياض',score:9840,col:'#304060'},
+  {name:'جدة',score:8720,col:'#303060'},
+  {name:'الدمام',score:7950,col:'#304050'},
+  {name:'مكة',score:7100,col:'#503030'},
+  {name:'بقيق',score:6200,col:'#405030'},
+  {name:'ابها',score:5800,col:'#304050'}
+];
+function renderReg(){
+  const c=document.getElementById('regL');if(!c)return;
+  const m=['&#129351;','&#129352;','&#129353;'];
+  c.innerHTML=REGS.map((r,i)=>`
+    <div class="li mb4" style="cursor:default;${r.name==='بقيق'?'border-color:rgba(var(--g-rgb),.22);background:rgba(var(--g-rgb),.03)':''}">
+      <div style="width:22px;text-align:center;font-size:14px;font-weight:900;font-family:'IBM Plex Mono';flex-shrink:0;color:${i<3?'var(--g2)':'var(--t2)'}">${m[i]||i+1}</div>
+      <div class="uav" style="background:${r.col};width:28px;height:28px;font-size:10px;flex-shrink:0">${r.name[0]}</div>
+      <div class="li-b"><div class="li-t">${r.name}${r.name==='بقيق'?' &#9733;':''}</div></div>
+      <div style="font-size:14px;font-weight:900;font-family:'IBM Plex Mono';color:var(--g2)">${r.score.toLocaleString()}</div>
+    </div>`).join('');
+}
 function renderArena(){
-  const el=document.getElementById('arenaList'); if(!el) return;
-  const aw=document.getElementById('arenaW'); if(aw) aw.textContent=S.arenaW;
-  const al=document.getElementById('arenaL'); if(al) al.textContent=S.arenaL;
-  const opponents=ALL_FRIENDS.slice(0,4);
-  el.innerHTML=opponents.map(f=>`
-    <div class="arena-card" onclick="startArena('${f.user}','${f.name}')">
-      <div class="f-av" style="background:${f.col};width:36px;height:36px;font-size:13px">${f.av}</div>
-      <div style="flex:1"><div class="ts fw">${f.name}</div><div class="txs tm">🔥 ${f.streak} — ${f.grade}</div></div>
-      <button class="btn btn-re" style="padding:6px 12px;font-size:12px">تحدَّ ⚔</button>
-    </div>
-  `).join('');
+  const c=document.getElementById('arenaL');if(!c)return;
+  const aw=document.getElementById('arW');const al=document.getElementById('arL');
+  if(aw)aw.textContent=S.arenaW;if(al)al.textContent=S.arenaL;
+  c.innerHTML=FR.slice(0,3).map(f=>`
+    <div class="li mb4" onclick="startArena('${f.name}')">
+      <div class="uav" style="background:${f.col};width:32px;height:32px;font-size:11px;flex-shrink:0">${f.av}</div>
+      <div class="li-b"><div class="li-t">${f.name}</div><div class="li-s">${f.streak} يوم — ${f.grade}</div></div>
+      <button style="padding:5px 9px;border-radius:6px;background:rgba(239,68,68,.07);color:#F87171;border:1px solid rgba(239,68,68,.18);font-family:'Tajawal';font-size:10px;font-weight:700;cursor:pointer">تحدِّ</button>
+    </div>`).join('');
 }
-
-function startArena(user,name){
-  const win=Math.random()>0.4;
-  if(win){S.arenaW++;sv('arenaW');addCoin(20,'⚔ انتصار الميدان');toast(`انتصرت على ${name}! +20🪙 🏆`,'ok','⚔');}
-  else{S.arenaL++;sv('arenaL');toast(`خسرت أمام ${name}. تدرّب أكثر!`,'','😤');}
+function startArena(name){
+  const win=Math.random()>.4;
+  if(win){S.arenaW++;sv('arenaW');addCoin(20);toast('انتصرت على '+name+'! +20 فضة','ok');}
+  else{S.arenaL++;sv('arenaL');toast('خسرت — تدرب اكثر');}
   renderArena();
 }
-
-// ══════════ REGIONS ══════════
-function renderRegions(){
-  const c=document.getElementById('regionsList'); if(!c) return;
-  const regions=[
-    {name:'الرياض',city:'الرياض',score:9840,av:'ر',col:'#1D4ED8'},
-    {name:'جدة',city:'مكة المكرمة',score:8720,av:'ج',col:'#0F766E'},
-    {name:'الدمام',city:'المنطقة الشرقية',score:7950,av:'د',col:'#7C3AED'},
-    {name:'مكة',city:'مكة المكرمة',score:7100,av:'م',col:'#9F1239'},
-    {name:'بقيق',city:'المنطقة الشرقية',score:6200,av:'ب',col:'#B45309'},
-    {name:'أبها',city:'عسير',score:5800,av:'أ',col:'#065F46'},
-  ];
-  const medals=['🥇','🥈','🥉'];
-  c.innerHTML=regions.map((r,i)=>`
-    <div class="lb-row" style="${r.name==='بقيق'?'border-color:#1D4ED855;background:#1D4ED808':''}">
-      <div class="lb-rank">${medals[i]||i+1}</div>
-      <div class="lb-av" style="background:${r.col}">${r.av}</div>
-      <div class="lb-info">
-        <div class="lb-name">${r.name} ${r.name==='بقيق'?'🏠':''}</div>
-        <div class="lb-city">${r.city}</div>
-      </div>
-      <div class="lb-score">${r.score.toLocaleString()}</div>
-    </div>
-  `).join('');
-}
-
-// ══════════ PARENT HUB ══════════
-function renderParent(){
-  const badge=document.getElementById('parentBadge');
-  const c=document.getElementById('parentContent');
-  if(!c) return;
-  if(S.tier==='shaheen'){
-    if(badge) badge.innerHTML='<span class="bdg b-bl">مقفل — يحتاج السند</span>';
-    c.innerHTML=`
-      <div class="parent-locked">
-        <div style="font-size:56px;opacity:.3;margin-bottom:18px">👨‍👩‍👦</div>
-        <div style="font-size:20px;font-weight:800;margin-bottom:8px">بوابة الأهل — حصرية للسند والعنقاء</div>
-        <p class="ts tm" style="max-width:340px;line-height:1.8;margin-bottom:22px">لوحة تحكم حية تُظهر لولي الأمر تقدم ابنه لحظةً بلحظة. رسوم بيانية، تنبيهات فورية، ودليل الانتقال الجامعي.</p>
-        <button class="btn btn-bl" onclick="go('pricing')">ارتقِ للسند ★ — 59 ر.س/شهر</button>
-      </div>`;
-    return;
-  }
-  if(badge) badge.innerHTML='<span class="bdg b-am">السند ★ مفعّل</span>';
+function renderPricing(){
+  const c=document.getElementById('prcW');if(!c)return;
+  const L={a:'الشاهين',b:'السند',c:'العنقاء'};
   c.innerHTML=`
-    <div class="sg">
-      <div class="sc" style="--ac:var(--green)"><div class="sc-ico" style="background:#10B98120">📈</div><div class="sc-val">+18%</div><div class="sc-lbl">تحسن هذا الأسبوع</div><div class="sc-ch cup">↑ رائع!</div></div>
-      <div class="sc" style="--ac:var(--blue)"><div class="sc-ico" style="background:#1D4ED820">⏱</div><div class="sc-val">${(S.weekSess*.83).toFixed(1)}h</div><div class="sc-lbl">دراسة هذا الأسبوع</div><div class="sc-ch cup">↑ فوق الهدف</div></div>
-      <div class="sc" style="--ac:var(--amber)"><div class="sc-ico" style="background:#F59E0B20">🔥</div><div class="sc-val">${S.streak}</div><div class="sc-lbl">السلسلة الحالية</div><div class="sc-ch cup">↑ أفضل شخصي</div></div>
-      <div class="sc" style="--ac:var(--purple)"><div class="sc-ico" style="background:#8B5CF620">🎯</div><div class="sc-val">73%</div><div class="sc-lbl">إكمال الخطة</div><div class="sc-ch cup">↑ على المسار</div></div>
+    <div class="prc">
+      <div class="ptr" style="color:var(--g2)">SHAHEEN — الشاهين</div>
+      <div class="pam">29 <span style="font-size:15px;color:var(--t2)">ر.س</span></div>
+      <div class="pper">/ شهرياً</div>
+      <ul class="pfl">
+        <li><span class="pfy">&#10003;</span> مؤقت المدار 50/10</li>
+        <li><span class="pfy">&#10003;</span> خارطة الدرب الكاملة</li>
+        <li><span class="pfy">&#10003;</span> الخزنة والتكرار المتباعد</li>
+        <li><span class="pfy">&#10003;</span> طائر الصقر — للجميع</li>
+        <li><span class="pfn">&#10007;</span> الهدهد / اليمامة</li>
+      </ul>
+      <button class="btn ${S.tier==='a'?'bg':'bp'} w100" onclick="setTier('a')">${S.tier==='a'?'الحالية':'اختر'}</button>
     </div>
-    <div class="g2 mt">
-      <div class="card">
-        <div class="ct"><div class="dot" style="background:var(--amber)"></div>تنبيهات الإنجاز</div>
-        <div class="al mb8"><div class="al-dot" style="background:var(--amber)"></div><div class="al-body"><div class="al-t">🏆 أنجز 7 أيام متتالية!</div><div class="al-s">أفضل سلسلة هذا الشهر</div></div><div class="al-time">منذ ساعة</div></div>
-        <div class="al mb8"><div class="al-dot" style="background:var(--green)"></div><div class="al-body"><div class="al-t">📊 أتم قسم القدرات اللفظي</div><div class="al-s">درجة المحاكاة: 88%</div></div><div class="al-time">أمس</div></div>
-        <div class="al"><div class="al-dot" style="background:var(--blue)"></div><div class="al-body"><div class="al-t">⏱ ${S.sessions} جلسات مكتملة هذا الأسبوع</div><div class="al-s">كل جلسة 50 دقيقة</div></div><div class="al-time">اليوم</div></div>
-      </div>
-      <div class="card">
-        <div class="ct"><div class="dot" style="background:var(--green)"></div>دليل الانتقال الجامعي للأهل</div>
-        <div class="al mb8"><div style="font-size:16px">🏛</div><div class="al-body"><div class="al-t">اختيار الجامعة المناسبة</div><div class="al-s">معايير الاختيار حسب المعدل والمنطقة</div></div></div>
-        <div class="al mb8"><div style="font-size:16px">📋</div><div class="al-body"><div class="al-t">متطلبات القبول</div><div class="al-s">القدرات والتحصيلي وكيف تُحسب الموزونة</div></div></div>
-        <div class="al"><div style="font-size:16px">💼</div><div class="al-body"><div class="al-t">التسجيل والإجراءات</div><div class="al-s">حساب المواطن والقبول الموحد</div></div></div>
-      </div>
+    <div class="prc feat">
+      <div class="ptr" style="color:#A78BFA">SANAD — السند</div>
+      <div class="pam" style="color:#A78BFA">59 <span style="font-size:15px;color:var(--t2)">ر.س</span></div>
+      <div class="pper">/ شهرياً + خصم 50% للاخ الثاني</div>
+      <ul class="pfl">
+        <li><span class="pfy">&#10003;</span> كل مزايا الشاهين</li>
+        <li><span class="pfg">&#9733;</span> الهدهد للذكور</li>
+        <li><span class="pfg">&#9733;</span> اليمامة للاناث</li>
+        <li><span class="pfg">&#9733;</span> لوحة مراقبة الاهل</li>
+        <li><span class="pfg">&#9733;</span> تقارير واتساب اسبوعية</li>
+      </ul>
+      <button class="btn bp w100" onclick="setTier('b')">${S.tier==='b'?'الحالية':'ارتقِ للسند'}</button>
+    </div>
+    <div class="prc" style="border-color:rgba(239,68,68,.2)">
+      <div class="ptr" style="color:#F87171">ANQA — العنقاء</div>
+      <div class="pam" style="color:#F87171">119 <span style="font-size:15px;color:var(--t2)">ر.س</span></div>
+      <div class="pper">دفعة واحدة — مدى الحياة</div>
+      <ul class="pfl">
+        <li><span class="pfy">&#10003;</span> كل مزايا السند</li>
+        <li><span class="pfg">&#9670;</span> عملة الذهب</li>
+        <li><span class="pfg">&#9670;</span> رواق النخبة</li>
+        <li><span class="pfg">&#9670;</span> الريشات الخمس كاملة</li>
+        <li><span class="pfg">&#9670;</span> او 50,000 فضة بديلاً</li>
+      </ul>
+      <button class="btn w100" style="background:linear-gradient(135deg,#DC2626,#991B1B);color:#fff;border:none;padding:9px;border-radius:8px;font-family:'Tajawal';font-size:13px;font-weight:700;cursor:pointer" onclick="setTier('c')">${S.tier==='c'?'الحالية':'احصل على العنقاء'}</button>
     </div>`;
+  updVP();
 }
 
-// ══════════ FEATHERS ══════════
-function toggleFeather(key,el){
-  const body=document.getElementById('fb-'+key);
-  if(!body) return;
-  const isOpen=body.classList.contains('show');
-  document.querySelectorAll('.f-body').forEach(b=>b.classList.remove('show'));
-  document.querySelectorAll('.feather').forEach(f=>f.classList.remove('open'));
-  if(!isOpen){
-    body.classList.add('show');
-    el.classList.add('open');
-    renderFeatherMsgs(key);
-  }
+// FEATHERS
+const FD=[
+  {key:'w',color:'#D0D4FF',label:'الريشة البيضاء — صدى الفخر',desc:'رسائل والدك — ارشيف للابد',itype:'text',ph:'كلمة من والدك...'},
+  {key:'g',color:'var(--g2)',label:'الريشة الذهبية — رسائل المستقبل',desc:'اكتب لنفسك في لحظة حماس',itype:'textarea',ph:'رسالة لنفسك في المستقبل...'},
+  {key:'gray',color:'#8090B0',label:'الريشة الرمادية — سجل الصمود',desc:'فرّغ احباطاتك — الارشيف يرد',itype:'textarea',ph:'ما الذي يضغط عليك الان...'},
+  {key:'blue',color:'#6090C0',label:'الريشة الزرقاء — الاستكشاف',desc:'دورات ومهارات بعد الاختبارات',itype:'links'}
+];
+function renderFeats(){
+  const c=document.getElementById('featsW');if(!c)return;
+  c.innerHTML=FD.map(f=>`
+    <div class="fi" id="fi-${f.key}">
+      <div class="fih" onclick="togFeat('${f.key}')">
+        <div class="fid" style="background:${f.color}"></div>
+        <div style="flex:1"><div class="fit">${f.label}</div><div class="txs tm">${f.desc}</div></div>
+        <div class="fia">&#8250;</div>
+      </div>
+      <div class="fib" id="fb-${f.key}">
+        <div class="fmsgs" id="fm-${f.key}"></div>
+        ${f.itype==='text'?`<input class="inp mb8" id="fi-inp-${f.key}" placeholder="${f.ph}"><button class="btn bp w100" onclick="addFMsg('${f.key}')">حفظ</button>`:''}
+        ${f.itype==='textarea'?`<textarea class="inp mb8" id="fi-inp-${f.key}" rows="3" placeholder="${f.ph}"></textarea><button class="btn ${f.key==='gray'?'bg':'bp'} w100" onclick="${f.key==='gray'?`addGrayMsg()`:`addFMsg('${f.key}')`}">حفظ</button>`:''}
+        ${f.itype==='links'?`
+          <div class="li mb4" onclick="toast('يفتح الرابط...')"><div class="li-b"><div class="li-t">Python — CS50 Harvard</div><div class="li-s">مجاني كامل</div></div><div style="font-size:11px;color:var(--g2)">&#8592;</div></div>
+          <div class="li mb4" onclick="toast('يفتح الرابط...')"><div class="li-b"><div class="li-t">ذكاء اصطناعي — SDAIA</div><div class="li-s">دورات مجانية</div></div><div style="font-size:11px;color:var(--g2)">&#8592;</div></div>
+          <div class="li" onclick="toast('يفتح الرابط...')"><div class="li-b"><div class="li-t">ارامكو CPC تدريب صيفي</div><div class="li-s">التسجيل مفتوح</div></div><div style="font-size:11px;color:var(--g2)">&#8592;</div></div>`:''}
+      </div>
+    </div>`).join('');
+  FD.forEach(f=>renderFMsgs(f.key));
 }
-
-function renderFeatherMsgs(key){
-  const c=document.getElementById('fm-'+key); if(!c) return;
-  const msgs=S.feathers[key]||[];
+function togFeat(key){
+  const item=document.getElementById('fi-'+key);const body=document.getElementById('fb-'+key);
+  if(!item||!body)return;
+  const open=item.classList.contains('op');
+  document.querySelectorAll('.fi').forEach(i=>i.classList.remove('op'));
+  document.querySelectorAll('.fib').forEach(b=>b.style.display='none');
+  if(!open){item.classList.add('op');body.style.display='block';}
+}
+function renderFMsgs(key){
+  const c=document.getElementById('fm-'+key);if(!c)return;
+  const msgs=(S.feathers[key]||[]);
   c.innerHTML=msgs.length?msgs.slice().reverse().map(m=>`
-    <div class="msg-bbl">
-      <div class="msg-meta"><span>${m.by||'أنت'}</span><span>${m.date}</span></div>
-      <div class="msg-txt">${m.text}</div>
-    </div>
-  `).join(''):'<div class="txs tm tc" style="padding:12px">لا رسائل بعد</div>';
+    <div class="fmsg">
+      <div class="fmm"><span>${m.by||'انت'}</span><span>${m.date}</span></div>
+      <div class="fmt">${m.text}</div>
+    </div>`).join(''):'';
 }
-
-function addMsg(key){
-  const inp=document.getElementById('fi-'+key); if(!inp||!inp.value.trim()) return;
-  if(!S.feathers[key]) S.feathers[key]=[];
-  S.feathers[key].push({text:inp.value.trim(),date:new Date().toLocaleDateString('ar-SA'),by:'أنت'});
-  sv('feathers'); inp.value='';
-  renderFeatherMsgs(key);
-  addCoin(2,'🪶 ريشة');
-  toast('تم حفظ الرسالة 🪶','ok','');
+function addFMsg(key){
+  const inp=document.getElementById('fi-inp-'+key);if(!inp||!inp.value.trim())return;
+  if(!S.feathers[key])S.feathers[key]=[];
+  S.feathers[key].push({text:inp.value.trim(),date:new Date().toLocaleDateString('ar-SA'),by:'انت'});
+  sv('feathers');inp.value='';renderFMsgs(key);addCoin(2);toast('تم الحفظ','ok');
 }
-
 function addGrayMsg(){
-  const inp=document.getElementById('fi-gray'); if(!inp||!inp.value.trim()) return;
-  if(!S.feathers.gray) S.feathers.gray=[];
-  S.feathers.gray.push({text:inp.value.trim(),date:new Date().toLocaleDateString('ar-SA'),by:'أنت'});
-  sv('feathers'); inp.value='';
-  renderFeatherMsgs('gray');
-  // System response
-  const responses=[
-    'الإحساس بالضغط طبيعي جداً — هذا يعني إنك تهتم. تنفس وعد.',
-    'كل طالب مرّ بما تشعر به. الفرق هو من يصمد. أنت ستصمد.',
-    'الخزنة تحفظ كل مشاعرك — وكل إنجازاتك. استمر.',
-    'الفجر قريب. ما تحس فيه الآن سيتحول لقوة بعد الاختبار.',
+  const inp=document.getElementById('fi-inp-gray');if(!inp||!inp.value.trim())return;
+  if(!S.feathers.gray)S.feathers.gray=[];
+  S.feathers.gray.push({text:inp.value.trim(),date:new Date().toLocaleDateString('ar-SA'),by:'انت'});
+  sv('feathers');inp.value='';
+  const replies=[
+    'كل طالب ناجح مر بما تشعر به. الصمود هو الفارق.',
+    'الاحساس بالضغط دليل على انك تهتم. تنفس وعد.',
+    'الفجر قريب. ما تحس به الان سيصبح قوة.'
   ];
-  const resp=responses[Math.floor(Math.random()*responses.length)];
   setTimeout(()=>{
-    S.feathers.gray.push({text:'💙 درب: '+resp,date:new Date().toLocaleDateString('ar-SA'),by:'درب 🤖'});
-    sv('feathers'); renderFeatherMsgs('gray');
-    toast(resp.slice(0,40)+'...','ok','💙');
-  },800);
+    S.feathers.gray.push({text:replies[Math.floor(Math.random()*replies.length)],date:new Date().toLocaleDateString('ar-SA'),by:'درب'});
+    sv('feathers');renderFMsgs('gray');
+  },600);
+  renderFMsgs('gray');toast('تم التسجيل','ok');
 }
 
-// ══════════ CAREER ══════════
+// CAREER
 function renderCareer(){
-  const skills=[
-    {ico:'⏱',name:'إدارة الوقت',desc:`${Math.round(S.totalMins/60)} ساعة تركيز موثّقة`},
-    {ico:'🧠',name:'الانضباط الأكاديمي',desc:`${S.sessions} جلسات مكتملة`},
-    {ico:'🔥',name:'الثبات والاستمرارية',desc:`${S.streak} يوم سلسلة`},
-    {ico:'🏛',name:'التعلم الذاتي',desc:`${(DEF_VAULT.length+S.vaultQ.length)} أسئلة تدريبية`},
+  const c=document.getElementById('cvSk');if(!c)return;
+  const sk=[
+    {l:'ادارة الوقت',v:Math.round(S.totalMins/60)+'h'},
+    {l:'الانضباط',v:S.sessions+' جلسة'},
+    {l:'الثبات',v:S.streak+' يوم'},
+    {l:'حل المشكلات',v:(DV.length+S.vaultQ.length)+' سؤال'}
   ];
-  const c=document.getElementById('cvSkills');
-  if(c) c.innerHTML=skills.map(s=>`
-    <div class="fbc g8 mb8" style="padding:9px;background:var(--s1);border-radius:7px;border:1px solid var(--border)">
-      <span style="font-size:16px">${s.ico}</span>
-      <div><div class="ts fw">${s.name}</div><div class="txs tm">${s.desc}</div></div>
-    </div>
-  `).join('');
-  const ch=document.getElementById('certHours');
-  if(ch) ch.textContent=Math.round(S.totalMins/60)+' ساعة موثّقة';
+  c.innerHTML=sk.map(s=>`
+    <div class="rbb" style="padding:8px 0;border-bottom:1px solid var(--b1)">
+      <span class="ts">${s.l}</span>
+      <span class="ts mono" style="color:var(--g2)">${s.v}</span>
+    </div>`).join('');
+  const ch=document.getElementById('certH');if(ch)ch.textContent=Math.round(S.totalMins/60)+' ساعة موثقة';
 }
-
-function genCV(){
-  const b=getCurBird();
-  toast(`تم توليد CV — ${S.sessions} جلسة، ${S.streak} يوم، المستوى ${b.lvl} 📄`,'ok','💼');
-}
-
 function genCert(){
-  if(S.tier!=='anqa'){toast('الشهادة الرسمية للعنقاء فقط 🔒','','🏅');return;}
-  toast(`شهادة انضباط موثّقة — ${Math.round(S.totalMins/60)} ساعة 🏅`,'ok','');
+  if(S.tier!=='c'){toast('الشهادة الرسمية للعنقاء فقط');return;}
+  toast('تم توليد شهادة الانضباط','ok');
 }
 
-// ══════════ SETTINGS ══════════
-function saveSettings(){
-  const n=document.getElementById('inpName')?.value;
-  const u=document.getElementById('inpUser')?.value;
-  if(n){
-    document.getElementById('sbName').textContent=n.split(' ')[0];
-    document.getElementById('settName').textContent=n;
-    document.getElementById('sbAva').textContent=n.charAt(0);
-  }
-  if(u) document.getElementById('settUser').textContent=u;
-  toast('تم حفظ الإعدادات ✓','ok','⚙');
+// SETTINGS
+function oSett(){
+  const L={a:'الشاهين',b:'السند',c:'العنقاء'};
+  document.getElementById('Sbody').innerHTML=`
+    <div class="cl mb10">الملف الشخصي</div>
+    <input class="inp mb10" id="inpNm" value="محمد الاحمدي" placeholder="الاسم">
+    <div class="rbb mb12">
+      <div><div class="ts fw7">الجنس</div><div class="txs tm">يؤثر على نوع الطائر</div></div>
+      <div class="rb g8">
+        <button onclick="setGender('m',this)" style="padding:5px 12px;border-radius:6px;border:1px solid ${S.gender==='m'?'rgba(var(--g-rgb),.4)':'var(--b2)'};background:${S.gender==='m'?'rgba(var(--g-rgb),.08)':'var(--card2)'};color:${S.gender==='m'?'var(--g2)':'var(--t2)'};font-family:'Tajawal';font-size:12px;font-weight:700;cursor:pointer">ذكر</button>
+        <button onclick="setGender('f',this)" style="padding:5px 12px;border-radius:6px;border:1px solid ${S.gender==='f'?'rgba(var(--g-rgb),.4)':'var(--b2)'};background:${S.gender==='f'?'rgba(var(--g-rgb),.08)':'var(--card2)'};color:${S.gender==='f'?'var(--g2)':'var(--t2)'};font-family:'Tajawal';font-size:12px;font-weight:700;cursor:pointer">انثى</button>
+      </div>
+    </div>
+    <div class="dv"></div>
+    <div class="cl mb10">اعدادات المؤقت</div>
+    <div class="rbb mb10">
+      <div class="ts fw7">مدة التركيز</div>
+      <select class="inp" id="focD" style="width:auto;padding:6px 9px" onchange="localStorage.setItem('focD',this.value)">
+        <option value="25" ${ls('focD')==='25'?'selected':''}>25 دقيقة</option>
+        <option value="50" ${!ls('focD')||ls('focD')==='50'?'selected':''}>50 دقيقة</option>
+        <option value="90" ${ls('focD')==='90'?'selected':''}>90 دقيقة</option>
+      </select>
+    </div>
+    <div class="rbb mb12">
+      <div class="ts fw7">مدة الراحة</div>
+      <select class="inp" id="restD" style="width:auto;padding:6px 9px" onchange="localStorage.setItem('restD',this.value)">
+        <option value="5" ${ls('restD')==='5'?'selected':''}>5 دقائق</option>
+        <option value="10" ${!ls('restD')||ls('restD')==='10'?'selected':''}>10 دقائق</option>
+        <option value="15" ${ls('restD')==='15'?'selected':''}>15 دقيقة</option>
+      </select>
+    </div>
+    <div class="dv"></div>
+    <div class="rbb mb12">
+      <div><div class="ts fw7">الوضع</div><div class="txs tm">${S.theme==='dark'?'ليلي (أسود وأزرق)':'نهاري (أبيض وذهبي)'}</div></div>
+      <button class="tog ${S.theme==='dark'?'on':'off'}" onclick="toggleTheme();oSett()"><div class="tob"></div></button>
+    </div>
+    <div class="dv"></div>
+    <div class="cl mb10">الفضة والذهب</div>
+    <div class="g2 g8 mb12">
+      <div style="text-align:center;padding:10px;background:var(--card2);border-radius:8px">
+        <div style="font-size:19px;font-weight:900;font-family:'IBM Plex Mono';color:#C8C8C8" id="sSilv">${S.silver}</div>
+        <div class="txs tm">فضة</div>
+      </div>
+      <div style="text-align:center;padding:10px;background:var(--card2);border-radius:8px">
+        <div style="font-size:19px;font-weight:900;font-family:'IBM Plex Mono';color:var(--g2)" id="sGold">${S.gold}</div>
+        <div class="txs tm">ذهب</div>
+      </div>
+    </div>
+    <div class="dv"></div>
+    <div class="cl mb8">الباقة الحالية</div>
+    <div class="rbb mb10">
+      <span class="ts fw7">${L[S.tier]}</span>
+      <button class="btn bp" style="padding:7px 12px;font-size:11px" onclick="cM('Msett');setTimeout(()=>gp('comm',null),200)">ترقية</button>
+    </div>`;
+  document.getElementById('Msett').classList.add('show');
 }
+function setGender(g){S.gender=g;sv('gender');updEagle();oSett();toast(g==='m'?'تم تحديد: ذكر':'تم تحديد: انثى');}
 
-// ══════════ NOTIFICATIONS ══════════
-function showNotif(){
-  toast(`${S.sessions} جلسات اليوم 🔥 ${S.streak} يوم سلسلة — رائع!`,'ok','🔔');
-}
+// MODAL
+function cM(id){document.getElementById(id)?.classList.remove('show');}
+document.querySelectorAll('.mov').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show');}));
 
-// ══════════ INIT ══════════
-function init(){
-  // Set tier visuals
-  const T=S.tier;
-  const C={shaheen:'ts',sanad:'tn',anqa:'ta'};
-  const L={shaheen:'الشاهين',sanad:'السند',anqa:'العنقاء'};
-  const badge=document.getElementById('sbTier');
-  badge.className='ava-tier '+C[T]; badge.textContent=L[T];
-  document.getElementById('pLock').style.display=(T==='shaheen')?'':'none';
-  const shield=document.getElementById('sbShield');
-  shield.style.display=(T==='sanad'||T==='anqa')?'':'none';
-  const dlc=document.getElementById('dailyLimitCard');
-  if(dlc) dlc.style.display=(T==='shaheen')?'':'none';
+// PAGE INITS
+function iHome(){renderHm('hmH');updAll();}
+function iStudy(){renderRM();renderVault();}
+function iEng(){renderEngL();}
+function iSched(){renderSched();}
+function iComm(){filtF('');renderMyF();renderReg();renderArena();renderPricing();}
+function iFeat(){renderFeats();renderCareer();}
 
-  // Init all displays
-  updateCoins();
-  updateStreaks();
-  updateVaultProgress();
-  renderHm();
-  updateDash();
-
-  // Peak badge
-  const pb=document.getElementById('peakBadge');
-  if(pb){pb.textContent=checkPeak()?'🔥 نشط — فضة ×2!':'غير نشط الآن';pb.className=checkPeak()?'bdg b-am':'bdg b-gr';}
-  if(S.tier==='anqa') addCoin(1,'🥇 ذكرى يومية',true);
-}
-
-// Run
-document.addEventListener('DOMContentLoaded',init);
+// BOOT
+document.addEventListener('DOMContentLoaded',()=>{
+  document.documentElement.setAttribute('data-theme',S.theme);
+  document.getElementById('thBtn').innerHTML=S.theme==='dark'?'&#9680;':'&#9681;';
+  const L={a:'الشاهين',b:'السند',c:'العنقاء'};
+  const C={a:'tp-a',b:'tp-b',c:'tp-c'};
+  const p=document.getElementById('tpill');
+  if(p){p.textContent=L[S.tier];p.className='tp '+C[S.tier];}
+  updAll();iHome();
+});
 </script>
 </body>
 </html>
