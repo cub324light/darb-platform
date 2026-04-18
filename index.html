@@ -263,4 +263,930 @@ textarea.inp{resize:vertical;min-height:70px;line-height:1.7}
 .prc.feat{border-color:rgba(200,144,24,.3);background:linear-gradient(160deg,rgba(200,144,24,.04),var(--card))}
 .prc.feat::before{content:'الأفضل';position:absolute;top:0;right:0;background:var(--gg);color:#000;font-size:9px;font-weight:800;padding:3px 11px;border-radius:0 0 0 8px;font-family:'IBM Plex Mono'}
 .ptr{font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;font-family:'IBM Plex Mono';margin-bottom:6px}
-.pam{font-size:
+.pam{font-size:36px;font-weight:900;font-family:'IBM Plex Mono';letter-spacing:-2px;line-height:1}
+.pper{font-size:9px;color:var(--t2);margin-bottom:10px}
+.pfl{list-style:none;margin-bottom:12px;display:flex;flex-direction:column;gap:5px}
+.pfl li{display:flex;gap:6px;font-size:11px;color:var(--t2);align-items:flex-start;line-height:1.5}
+.pfy{color:#34D399}.pfn{color:var(--t3)}.pfg{color:var(--g2)}
+
+/* VIDEO */
+.vw{aspect-ratio:16/9;background:#000;border-radius:9px;overflow:hidden;margin-bottom:11px}
+.vph{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;background:linear-gradient(135deg,var(--s2),var(--card))}
+.vpb{width:48px;height:48px;background:var(--gg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;color:#000;cursor:pointer;transition:transform .2s}
+.vpb:hover{transform:scale(1.08)}
+
+/* DARK MODE: subtle blue accent hints */
+[data-theme="dark"] .card{background:var(--card);border-color:#1A1A2A}
+[data-theme="dark"] .card2,[data-theme="dark"] .card-2{background:#121220}
+[data-theme="dark"] .gc{background:linear-gradient(135deg,rgba(200,144,24,.04),#0E0E16);border-color:rgba(200,144,24,.16)}
+[data-theme="dark"] .bni.on{color:var(--g2);background:rgba(200,144,24,.06);border-radius:8px}
+[data-theme="dark"] .hdr{background:#0D0D0D;border-color:#1A1A2A}
+[data-theme="dark"] .bnav{background:#0D0D0D;border-color:#1A1A2A}
+[data-theme="dark"] .skbox{background:linear-gradient(135deg,rgba(200,144,24,.04),#0E0E16)}
+/* LIGHT MODE: clean white with gold accents */
+[data-theme="light"] .card{background:#FFFFFF;border-color:#EBEBEB;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+[data-theme="light"] .gc{background:linear-gradient(135deg,rgba(184,138,16,.04),#FFFFFF);border-color:rgba(184,138,16,.18)}
+[data-theme="light"] .hdr{background:#FFFFFF;border-color:#EBEBEB;box-shadow:0 1px 8px rgba(0,0,0,.05)}
+[data-theme="light"] .bnav{background:#FFFFFF;border-color:#EBEBEB;box-shadow:0 -1px 8px rgba(0,0,0,.04)}
+</style>
+</head>
+<body>
+<div class="toast" id="T"></div>
+
+<div class="mov" id="Mlesson">
+  <div class="msh">
+    <div class="mhd"><div class="mt2" id="MLtitle"></div><div class="mcl" onclick="cM('Mlesson')">x</div></div>
+    <div class="vw"><div class="vph" id="Vcon"><div class="vpb" id="Vpb">&#9654;</div><div style="font-size:11px;color:var(--t2)" id="Vt">اضغط للتشغيل</div></div></div>
+    <div id="MLbody"></div>
+  </div>
+</div>
+
+<div class="mov" id="Msett">
+  <div class="msh">
+    <div class="mhd"><div class="mt2">الاعدادات</div><div class="mcl" onclick="cM('Msett')">x</div></div>
+    <div id="Sbody"></div>
+  </div>
+</div>
+
+<div class="app">
+<div class="hdr">
+  <div class="hdr-logo">درب</div>
+  <div class="hdr-r">
+    <div class="hb" id="thBtn" onclick="toggleTheme()">&#9680;</div>
+    <div class="tp tp-a" id="tpill" onclick="oSett()">الشاهين</div>
+    <div class="hb" onclick="oSett()">&#9881;</div>
+  </div>
+</div>
+
+<div id="betaBanner" style="background:linear-gradient(135deg,rgba(200,144,24,.08),rgba(200,144,24,.04));border-bottom:1px solid rgba(200,144,24,.15);padding:7px 14px;display:flex;align-items:center;justify-content:space-between">
+  <div style="font-size:10px;font-weight:700;font-family:'IBM Plex Mono';color:var(--g2)">BETA — نسخة تجريبية</div>
+  <div style="font-size:10px;color:var(--t2)">رأيك يصنع الفرق</div>
+  <div style="font-size:10px;font-family:'IBM Plex Mono';color:var(--g1);cursor:pointer" onclick="document.getElementById('betaBanner').style.display='none'">x</div>
+</div>
+
+<div class="pages">
+
+<div class="pg on" id="pg-home">
+  <div class="rbb mb10">
+    <div><div class="sec-t" id="hGr">مرحباً</div><div class="sec-s">تابع مسيرتك الاكاديمية</div></div>
+    <div style="text-align:right">
+      <div style="font-size:10px;color:var(--t2)">فضة</div>
+      <div style="font-size:16px;font-weight:900;font-family:'IBM Plex Mono';color:#C8C8C8" id="hSilv">0</div>
+    </div>
+  </div>
+
+  <div class="card gc tc mb10">
+    <div class="eagle-stage">
+      <svg class="eagle-svg" viewBox="0 0 240 200" id="eSvg">
+        <defs>
+          <linearGradient id="egB" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#8B6512"/>
+            <stop offset="40%" stop-color="#D4A020"/>
+            <stop offset="100%" stop-color="#7A5508"/>
+          </linearGradient>
+          <linearGradient id="egD" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#3A2206"/>
+            <stop offset="100%" stop-color="#1A0E02"/>
+          </linearGradient>
+          <linearGradient id="egW" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#2A1804"/>
+            <stop offset="50%" stop-color="#4A3008"/>
+            <stop offset="100%" stop-color="#2A1804"/>
+          </linearGradient>
+          <linearGradient id="egH" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#C89A1A"/>
+            <stop offset="100%" stop-color="#A07808"/>
+          </linearGradient>
+          <radialGradient id="egEye" cx="35%" cy="35%">
+            <stop offset="0%" stop-color="#E8C030"/>
+            <stop offset="60%" stop-color="#C89018"/>
+            <stop offset="100%" stop-color="#7A5008"/>
+          </radialGradient>
+          <filter id="egSh" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="rgba(200,144,24,.3)" flood-opacity="1"/>
+          </filter>
+          <filter id="egGlow">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <ellipse cx="120" cy="170" rx="55" ry="8" fill="rgba(200,144,24,.08)"/>
+
+        <path d="M 95 115 Q 55 78 12 92 Q 32 68 50 60 Q 68 50 82 72 Q 88 88 92 105 Z" fill="url(#egD)"/>
+        <path d="M 93 110 Q 58 76 18 88 Q 35 65 52 58 Q 70 48 84 70 Z" fill="#2A1604" opacity=".5"/>
+        <path d="M 93 110 Q 62 80 24 85 Q 40 64 56 58" stroke="#C89018" stroke-width=".8" fill="none" opacity=".4"/>
+        <path d="M 93 110 Q 66 78 32 82 Q 46 63 60 57" stroke="#C89018" stroke-width=".6" fill="none" opacity=".3"/>
+        <path d="M 93 110 Q 70 80 40 80 Q 52 63 64 58" stroke="#D4A020" stroke-width=".5" fill="none" opacity=".25"/>
+        <path d="M 12 92 Q 8 105 15 108 Q 18 95 22 92 Z" fill="#1A0E02"/>
+        <path d="M 22 88 Q 17 101 24 105 Q 27 92 31 88 Z" fill="#1A0E02"/>
+        <path d="M 32 84 Q 27 97 34 101 Q 37 88 41 84 Z" fill="#221204"/>
+
+        <path d="M 145 115 Q 185 78 228 92 Q 208 68 190 60 Q 172 50 158 72 Q 152 88 148 105 Z" fill="url(#egD)"/>
+        <path d="M 147 110 Q 182 76 222 88 Q 205 65 188 58 Q 170 48 156 70 Z" fill="#2A1604" opacity=".5"/>
+        <path d="M 147 110 Q 182 80 222 85 Q 205 64 188 58" stroke="#C89018" stroke-width=".8" fill="none" opacity=".4"/>
+        <path d="M 147 110 Q 178 78 214 82 Q 198 63 182 57" stroke="#C89018" stroke-width=".6" fill="none" opacity=".3"/>
+        <path d="M 147 110 Q 174 80 200 80 Q 186 63 172 58" stroke="#D4A020" stroke-width=".5" fill="none" opacity=".25"/>
+        <path d="M 228 92 Q 232 105 225 108 Q 222 95 218 92 Z" fill="#1A0E02"/>
+        <path d="M 218 88 Q 223 101 216 105 Q 213 92 209 88 Z" fill="#1A0E02"/>
+        <path d="M 208 84 Q 213 97 206 101 Q 203 88 199 84 Z" fill="#221204"/>
+
+        <ellipse cx="120" cy="130" rx="22" ry="32" fill="url(#egD)" filter="url(#egSh)"/>
+        <ellipse cx="120" cy="137" rx="14" ry="22" fill="url(#egB)" opacity=".55"/>
+        <path d="M 110 118 Q 120 115 130 118" stroke="#C89018" stroke-width=".7" fill="none" opacity=".35"/>
+        <path d="M 108 124 Q 120 121 132 124" stroke="#C89018" stroke-width=".6" fill="none" opacity=".3"/>
+        <path d="M 109 130 Q 120 127 131 130" stroke="#C89018" stroke-width=".5" fill="none" opacity=".25"/>
+
+        <path d="M 108 100 Q 120 95 132 100 Q 130 115 120 118 Q 110 115 108 100 Z" fill="url(#egH)"/>
+
+        <ellipse cx="120" cy="80" rx="18" ry="20" fill="url(#egH)" filter="url(#egSh)"/>
+        <path d="M 103 74 Q 120 50 137 74 Q 128 65 120 63 Q 112 65 103 74 Z" fill="#1A0E02"/>
+        <path d="M 103 78 Q 110 73 118 75" stroke="#8B6010" stroke-width=".8" fill="none" opacity=".5"/>
+
+        <path d="M 114 90 Q 120 98 126 90 Q 130 103 122 107 Q 118 108 114 104 Q 111 99 114 90 Z" fill="#C07808"/>
+        <path d="M 114 90 Q 120 94 126 90 Q 124 98 120 100 Q 116 98 114 90 Z" fill="#8B5808"/>
+        <path d="M 114 90 Q 120 88 126 90" stroke="#D49020" stroke-width=".8" fill="none"/>
+        <ellipse cx="118" cy="91" rx="1.5" ry=".8" fill="#7A4808" opacity=".7"/>
+
+        <circle cx="127" cy="77" r="6.5" fill="#1A0E02"/>
+        <circle cx="127" cy="77" r="5" fill="url(#egEye)"/>
+        <circle cx="127" cy="77" r="2.8" fill="#080402"/>
+        <circle cx="128.5" cy="75.5" r="1.2" fill="rgba(255,255,255,.65)"/>
+        <circle cx="126" cy="79" r=".5" fill="rgba(255,255,255,.3)"/>
+        <circle cx="127" cy="77" r="6.5" fill="none" stroke="#8B6010" stroke-width="1"/>
+        <path d="M 121 71 Q 128 69 135 72" stroke="#2A1604" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+        <path d="M 104 160 Q 120 175 136 160 Q 130 185 120 190 Q 110 185 104 160 Z" fill="url(#egD)"/>
+        <path d="M 108 162 L 120 180 L 132 162" fill="#1A0E02" opacity=".4"/>
+        <path d="M 112 162 L 120 178" stroke="#C89018" stroke-width=".7" fill="none" opacity=".4"/>
+        <path d="M 120 162 L 120 180" stroke="#D4A020" stroke-width=".6" fill="none" opacity=".35"/>
+        <path d="M 128 162 L 120 178" stroke="#C89018" stroke-width=".7" fill="none" opacity=".4"/>
+
+        <path d="M 108 160 Q 104 168 100 162" stroke="url(#egB)" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M 100 162 Q 95 168 92 172" stroke="#A07010" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M 100 162 Q 96 170 94 175" stroke="#A07010" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M 100 162 Q 102 170 101 176" stroke="#A07010" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M 100 162 Q 104 169 106 174" stroke="#A07010" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <path d="M 92 172 Q 90 174 91 176" stroke="#7A5008" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <path d="M 94 175 Q 92 177 93 179" stroke="#7A5008" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+
+        <path d="M 132 160 Q 136 168 140 162" stroke="url(#egB)" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M 140 162 Q 145 168 148 172" stroke="#A07010" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M 140 162 Q 144 170 146 175" stroke="#A07010" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M 140 162 Q 138 170 139 176" stroke="#A07010" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M 140 162 Q 136 169 134 174" stroke="#A07010" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <path d="M 148 172 Q 150 174 149 176" stroke="#7A5008" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <path d="M 146 175 Q 148 177 147 179" stroke="#7A5008" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+
+        <ellipse cx="120" cy="195" rx="42" ry="5" fill="rgba(200,144,24,.07)"/>
+      </svg>
+      <div class="eagle-nm" id="eNm">الصقر</div>
+      <div class="eagle-lv" id="eLv">متاح للجميع</div>
+      <div class="xp-bar"><div class="xp-f" id="xpF" style="width:10%"></div></div>
+      <div style="font-size:9px;color:var(--t2);margin-top:3px"><span id="xpN">100</span> / 1000 XP</div>
+    </div>
+  </div>
+
+  <div class="g2 mb10">
+    <div class="sb" style="--sbc:var(--g1)"><div class="sbv" id="stSt">0</div><div class="sbl">سلسلة الايام</div><div class="sbc-t cup">استمر</div></div>
+    <div class="sb" style="--sbc:#10B981"><div class="sbv" id="stSe">0</div><div class="sbl">جلسات مكتملة</div><div class="sbc-t cnt">50 دق / جلسة</div></div>
+  </div>
+
+  <div class="card">
+    <div class="cl">التقدم الدراسي</div>
+    <div class="rbb mb8"><span class="ts">القدرات - اللفظي</span><span class="txs mono" style="color:var(--g2)">85%</span></div>
+    <div class="pw mb10" style="height:5px"><div class="pf pg" style="width:85%;height:100%"></div></div>
+    <div class="rbb mb8"><span class="ts">القدرات - الكمي</span><span class="txs mono" style="color:var(--g2)">70%</span></div>
+    <div class="pw mb10" style="height:5px"><div class="pf pg" style="width:70%;height:100%"></div></div>
+    <div class="rbb mb8"><span class="ts">التحصيلي - رياضيات</span><span class="txs mono" style="color:var(--g2)">60%</span></div>
+    <div class="pw mb10" style="height:5px"><div class="pf pg" style="width:60%;height:100%"></div></div>
+    <div class="rbb mb8"><span class="ts">التحصيلي - علوم</span><span class="txs mono" style="color:var(--g2)">90%</span></div>
+    <div class="pw" style="height:5px"><div class="pf pg" style="width:90%;height:100%"></div></div>
+    <div class="dv"></div>
+    <div class="rbb">
+      <span class="ts tm">الاجمالي</span>
+      <span style="font-size:20px;font-weight:900;color:var(--g2);font-family:'IBM Plex Mono'">73%</span>
+    </div>
+    <div class="pw mt8" style="height:7px"><div class="pf pg" style="width:73%;height:100%"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="cl">نشاط 91 يوم</div>
+    <div class="hm" id="hmH"></div>
+    <div class="rb g6" style="justify-content:flex-end;margin-top:5px">
+      <span style="font-size:9px;color:var(--t3)">اقل</span>
+      <div style="width:8px;height:8px;border-radius:2px" class="h0"></div>
+      <div style="width:8px;height:8px;border-radius:2px" class="h1"></div>
+      <div style="width:8px;height:8px;border-radius:2px" class="h2"></div>
+      <div style="width:8px;height:8px;border-radius:2px" class="h3"></div>
+      <div style="width:8px;height:8px;border-radius:2px" class="h4"></div>
+      <span style="font-size:9px;color:var(--t3)">اكثر</span>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+
+    <div onclick="gp('study', document.querySelectorAll('.bni')[1])" style="background:var(--card);border:1px solid var(--b1);border-radius:12px;padding:14px;cursor:pointer;transition:border-color .15s" onmouseenter="this.style.borderColor='rgba(200,144,24,.3)'" onmouseleave="this.style.borderColor='var(--b1)'">
+      <div style="margin-bottom:8px;color:var(--g2)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+      </div>
+      <div class="ts fw7 mb4">مؤقت التركيز</div>
+      <div class="txs tm">ابدا جلسة 50/10</div>
+    </div>
+
+    <div onclick="gp('study', document.querySelectorAll('.bni')[1])" style="background:var(--card);border:1px solid var(--b1);border-radius:12px;padding:14px;cursor:pointer;transition:border-color .15s" onmouseenter="this.style.borderColor='rgba(200,144,24,.3)'" onmouseleave="this.style.borderColor='var(--b1)'">
+      <div style="margin-bottom:8px;color:var(--g2)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div class="ts fw7 mb4">الخزنة</div>
+      <div class="txs tm" id="homeVaultInfo">0 اسئلة معلقة</div>
+    </div>
+
+    <div onclick="gp('radar', document.querySelectorAll('.bni')[2])" style="background:var(--card);border:1px solid var(--b1);border-radius:12px;padding:14px;cursor:pointer;transition:border-color .15s" onmouseenter="this.style.borderColor='rgba(200,144,24,.3)'" onmouseleave="this.style.borderColor='var(--b1)'">
+      <div style="margin-bottom:8px;color:var(--g2)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+      </div>
+      <div class="ts fw7 mb4">الرادار</div>
+      <div class="txs tm">انجليزي وارامكو</div>
+    </div>
+
+    <div onclick="gp('sched', document.querySelectorAll('.bni')[3])" style="background:var(--card);border:1px solid var(--b1);border-radius:12px;padding:14px;cursor:pointer;transition:border-color .15s" onmouseenter="this.style.borderColor='rgba(200,144,24,.3)'" onmouseleave="this.style.borderColor='var(--b1)'">
+      <div style="margin-bottom:8px;color:var(--g2)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <div class="ts fw7 mb4">الجدول</div>
+      <div class="txs tm">جدولك الاسبوعي</div>
+    </div>
+
+  </div>
+
+  <div onclick="gp('comm', document.querySelectorAll('.bni')[4])" style="background:var(--card);border:1px solid var(--b1);border-radius:12px;padding:14px;cursor:pointer;transition:border-color .15s;margin-bottom:10px;display:flex;align-items:center;gap:12px" onmouseenter="this.style.borderColor='rgba(200,144,24,.3)'" onmouseleave="this.style.borderColor='var(--b1)'">
+    <div style="color:var(--g2)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+    </div>
+    <div style="flex:1">
+      <div class="ts fw7">المجتمع والباقات</div>
+      <div class="txs tm">الاصدقاء والميدان وترقية الباقة</div>
+    </div>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--g2)" stroke-width="2"><polyline points="15,18 9,12 15,6"/></svg>
+  </div>
+</div>
+
+<div class="pg" id="pg-study">
+  <div class="rbb mb10"><div><div class="sec-t">الدراسة</div><div class="sec-s">مؤقت التركيز وخارطة المنهج</div></div></div>
+
+  <div class="card gc">
+    <div class="cl">مؤقت المدار 50/10</div>
+    <div style="display:flex;flex-direction:column;align-items:center;padding:4px 0 10px">
+      <div class="ring-w">
+        <svg class="rsvg" viewBox="0 0 220 220">
+          <defs>
+            <linearGradient id="gg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#C89018"/><stop offset="100%" style="stop-color:#E0A820"/></linearGradient>
+            <linearGradient id="gr" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#10B981"/><stop offset="100%" style="stop-color:#34D399"/></linearGradient>
+          </defs>
+          <circle class="rt" cx="110" cy="110" r="85"/>
+          <circle class="rp" id="rProg" cx="110" cy="110" r="85"/>
+        </svg>
+        <div class="rc">
+          <div class="rt2" id="tD">50:00</div>
+          <div class="rl" id="tL">تركيز</div>
+        </div>
+      </div>
+      <div class="tph tpf" id="tPh">وضع التركيز</div>
+      <div class="rb g8">
+        <button class="btn bp" id="tBtn" onclick="toggleTimer()">تشغيل</button>
+        <button class="btn bg" onclick="resetTimer()">اعادة</button>
+      </div>
+    </div>
+    <div class="skbox">
+      <div style="font-size:20px;color:var(--g2)">&#9670;</div>
+      <div style="flex:1">
+        <div class="txs tm">سلسلة الايام</div>
+        <div><span class="skn" id="tSt">0</span> <span class="ts tm">يوم</span></div>
+      </div>
+      <div class="tc">
+        <div style="font-size:20px;font-weight:900;font-family:'IBM Plex Mono';color:var(--g2)" id="tSe">0</div>
+        <div class="txs tm">جلسات</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sdv"></div>
+
+  <div class="rbb mb10">
+    <div><div class="sec-t">خارطة الدرب</div><div class="sec-s">مسارك نحو 95+</div></div>
+    <span class="bdg bg-g"><span id="rmD">5</span>/12</span>
+  </div>
+  <div class="rbb mb8">
+    <span class="txs tm">التقدم الكلي</span>
+    <span style="font-size:18px;font-weight:900;font-family:'IBM Plex Mono';color:var(--g2)">42%</span>
+  </div>
+  <div class="pw mb12" style="height:6px"><div class="pf pg" style="width:42%;height:100%"></div></div>
+  <div id="rmList"></div>
+
+  <div class="sdv"></div>
+
+  <div class="rbb mb10">
+    <div><div class="sec-t">الخزنة</div><div class="sec-s">اسئلتك الخاطئة — +15 فضة للحل الصحيح</div></div>
+    <span class="bdg bg-re" id="vBdg">0</span>
+  </div>
+  <div id="vList"></div>
+  <button class="btn bg w100 mb10" onclick="addSV()">اضافة سؤال تدريبي</button>
+</div>
+
+<div class="pg" id="pg-radar">
+  <div class="rbb mb12">
+    <div><div class="sec-t">الرادار الاكاديمي</div><div class="sec-s">مستواك وخطتك في كل المهارات</div></div>
+  </div>
+
+  <div class="card">
+    <div class="cl">مستوى الانجليزي — CEFR</div>
+    <div class="cefr-g" id="cefrG">
+      <div class="cfb" onclick="sCEFR('A1',this)"><div class="cfc">A1</div><div class="cfn">مبتدئ</div></div>
+      <div class="cfb" onclick="sCEFR('A2',this)"><div class="cfc">A2</div><div class="cfn">اساسي</div></div>
+      <div class="cfb on" onclick="sCEFR('B1',this)"><div class="cfc">B1</div><div class="cfn">متوسط</div></div>
+      <div class="cfb" onclick="sCEFR('B2',this)"><div class="cfc">B2</div><div class="cfn">فوق المتوسط</div></div>
+      <div class="cfb" onclick="sCEFR('C1',this)"><div class="cfc">C1</div><div class="cfn">متقدم</div></div>
+      <div class="cfb" onclick="sCEFR('C2',this)"><div class="cfc">C2</div><div class="cfn">احترافي</div></div>
+    </div>
+    <div class="card gc mt8" id="cRec">
+      <div class="txs fw7 mb6" style="color:var(--g2)">توصية المستوى B1</div>
+      <div class="txs tm" style="line-height:1.8" id="cRecT">ركز على المفردات وفهم القراءة. هدفك STEP 65+. 3-5 اشهر كافية.</div>
+    </div>
+    <div id="engL" class="mt8"></div>
+  </div>
+
+  <div class="card">
+    <div class="cl">اختبار STEP</div>
+    <div class="rbb mb10">
+      <div>
+        <div class="ts fw7">اختبار اللغة الانجليزية</div>
+        <div class="txs tm mt4">مطلوب للقبول في معظم جامعات المملكة</div>
+      </div>
+      <span class="bdg bg-g">هدفك 65+</span>
+    </div>
+    <div class="pw mb10" style="height:6px"><div class="pf pg" style="width:0%;height:100%" id="stepProg"></div></div>
+    <div id="stepLessons"></div>
+  </div>
+
+  <div class="card">
+    <div class="cl">اختبارات ارامكو</div>
+    <div class="li mb6" onclick="openTest('itc')">
+      <div style="width:36px;height:36px;border-radius:8px;background:rgba(200,144,24,.08);border:1px solid rgba(200,144,24,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--g2)" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      </div>
+      <div class="li-b">
+        <div class="li-t">ITC — Industrial Training Center</div>
+        <div class="li-s">اختبار القبول في مراكز التدريب الصناعي</div>
+      </div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--g2)" stroke-width="2"><polyline points="15,18 9,12 15,6"/></svg>
+    </div>
+    <div class="li" onclick="openTest('cbc')">
+      <div style="width:36px;height:36px;border-radius:8px;background:rgba(200,144,24,.08);border:1px solid rgba(200,144,24,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--g2)" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </div>
+      <div class="li-b">
+        <div class="li-t">CBC — Computer Based Certification</div>
+        <div class="li-s">شهادة ارامكو الرقمية للمهارات التقنية</div>
+      </div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--g2)" stroke-width="2"><polyline points="15,18 9,12 15,6"/></svg>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cl">مهارات مقترحة — كورسات</div>
+    <div id="skillsList"></div>
+  </div>
+</div>
+
+<div class="pg" id="pg-sched">
+  <div class="rbb mb10">
+    <div><div class="sec-t">الجدول الدراسي</div><div class="sec-s">جدولك الاسبوعي المخصص</div></div>
+    <button class="btn bp" style="padding:7px 11px;font-size:11px" onclick="toast('تعديل الجدول — قريباً','warn')">تعديل</button>
+  </div>
+  <div class="card gc mb10">
+    <div class="rbb">
+      <span class="ts fw7">الوقت المحجوز هذا الاسبوع</span>
+      <span style="font-size:20px;font-weight:900;font-family:'IBM Plex Mono';color:var(--g2)">18 ساعة</span>
+    </div>
+  </div>
+  <div id="schedG"></div>
+  <div class="card mt10">
+    <div class="cl">نصائح الجدول</div>
+    <div class="li mb4" style="cursor:default">
+      <div style="width:28px;height:28px;border-radius:7px;background:rgba(200,144,24,.08);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono';font-size:11px;font-weight:900;color:var(--g2);flex-shrink:0">1</div>
+      <div class="li-b"><div class="li-t">ثبت اطار وقت الدراسة</div><div class="li-s">المرونة داخله — الاطار ثابت لا يتغير</div></div>
+    </div>
+    <div class="li mb4" style="cursor:default">
+      <div style="width:28px;height:28px;border-radius:7px;background:rgba(200,144,24,.08);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono';font-size:11px;font-weight:900;color:var(--g2);flex-shrink:0">2</div>
+      <div class="li-b"><div class="li-t">ابدأ بالاصعب دائما</div><div class="li-s">طاقتك في اعلى مستوياتها في البداية</div></div>
+    </div>
+    <div class="li" style="cursor:default">
+      <div style="width:28px;height:28px;border-radius:7px;background:rgba(200,144,24,.08);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono';font-size:11px;font-weight:900;color:var(--g2);flex-shrink:0">3</div>
+      <div class="li-b"><div class="li-t">راجع كل يوم احد</div><div class="li-s">المراجعة الاسبوعية تثبت المعلومة 70%</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="pg" id="pg-comm">
+  <div class="sec-t mb10">المجتمع</div>
+  <input class="inp mb10" id="fSrch" type="text" placeholder="بحث بالاسم او الكود..." oninput="filtF(this.value)">
+  <div class="card mb10"><div class="cl">اصدقائي (<span id="myFC">0</span>)</div><div id="myFL"><div class="txs tm tc" style="padding:8px">اضف اصدقاء</div></div></div>
+  <div class="txs fw7 tm mb8" style="letter-spacing:.5px;font-family:'IBM Plex Mono'">اكتشف</div>
+  <div id="allFL"></div>
+
+  <div class="sdv"></div>
+  <div class="sec-t mb10">صراع المناطق</div>
+  <div id="regL"></div>
+
+  <div class="sdv"></div>
+  <div class="rbb mb10">
+    <div><div class="sec-t">الميدان</div><div class="sec-s">تحديات 1vs1 — شرف لا رهانات</div></div>
+  </div>
+  <div class="card mb10">
+    <div class="g2 g8">
+      <div style="text-align:center;padding:9px;background:var(--card2);border-radius:7px"><div style="font-size:19px;font-weight:900;font-family:'IBM Plex Mono';color:#34D399" id="arW">0</div><div class="txs tm">انتصارات</div></div>
+      <div style="text-align:center;padding:9px;background:var(--card2);border-radius:7px"><div style="font-size:19px;font-weight:900;font-family:'IBM Plex Mono';color:#F87171" id="arL">0</div><div class="txs tm">خسائر</div></div>
+    </div>
+  </div>
+  <div id="arenaL"></div>
+
+  <div class="sdv"></div>
+  <div class="sec-t mb10">الباقات</div>
+  <div id="prcW"></div>
+  <div class="card gc mt8">
+    <div class="ts fw7 mb6" style="color:var(--g2)">العبور العظيم</div>
+    <div class="txs tm mb10">50,000 فضة = العنقاء مجاناً — الانضباط يفتح ما لا يفتحه المال</div>
+    <div class="rbb">
+      <div class="pw" style="height:5px;flex:1;margin-left:8px"><div class="pf pg" id="vPrg" style="width:0%;height:100%"></div></div>
+      <span class="ttny mono" style="color:var(--g2)" id="vPrgL">0 / 50,000</span>
+    </div>
+  </div>
+</div>
+
+<div class="pg" id="pg-sett">
+  <div class="rbb mb12">
+    <div><div class="sec-t">الاعدادات</div><div class="sec-s">تخصيص تجربتك في درب</div></div>
+  </div>
+
+  <div class="card">
+    <div class="cl">الملف الشخصي</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div id="profileAv" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#1A1A2A,#282840);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:var(--g2);border:2px solid rgba(200,144,24,.2);flex-shrink:0">م</div>
+      <div>
+        <div class="ts fw7" id="profNmDisp">محمد الاحمدي</div>
+        <div class="txs tm" id="profUserDisp">@mohammed</div>
+      </div>
+    </div>
+    <label class="txs tm" style="display:block;margin-bottom:5px">الاسم الكامل</label>
+    <input class="inp mb10" id="inpNm" value="محمد الاحمدي">
+    <div class="rbb mb12">
+      <div><div class="ts fw7">الجنس</div><div class="txs tm">يحدد نوع الطائر</div></div>
+      <div class="rb g8">
+        <button id="btnM" onclick="setGender('m')" style="padding:5px 12px;border-radius:7px;border:1px solid rgba(200,144,24,.35);background:rgba(200,144,24,.08);color:var(--g2);font-family:'Tajawal';font-size:12px;font-weight:700;cursor:pointer">ذكر</button>
+        <button id="btnF" onclick="setGender('f')" style="padding:5px 12px;border-radius:7px;border:1px solid var(--b2);background:var(--card2);color:var(--t2);font-family:'Tajawal';font-size:12px;font-weight:700;cursor:pointer">انثى</button>
+      </div>
+    </div>
+    <button class="btn bp" onclick="saveProfile()">حفظ</button>
+  </div>
+
+  <div class="card">
+    <div class="cl">المظهر</div>
+    <div class="rbb mb4">
+      <div>
+        <div class="ts fw7">الوضع الليلي</div>
+        <div class="txs tm">خلفية سوداء نقية</div>
+      </div>
+      <button class="tog on" id="thToggle" onclick="toggleTheme()"><div class="tob"></div></button>
+    </div>
+    <div class="rbb">
+      <div class="txs tm">الوضع النهاري: بيضاء نقية مع ذهبي</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cl">اعدادات المؤقت</div>
+    <div class="rbb mb10">
+      <div class="ts fw7">مدة التركيز</div>
+      <select class="inp" id="focD" style="width:auto;padding:6px 10px" onchange="localStorage.setItem('focD',this.value)">
+        <option value="25">25 دقيقة</option>
+        <option value="50" selected>50 دقيقة</option>
+        <option value="90">90 دقيقة</option>
+      </select>
+    </div>
+    <div class="rbb">
+      <div class="ts fw7">مدة الراحة</div>
+      <select class="inp" id="restD" style="width:auto;padding:6px 10px" onchange="localStorage.setItem('restD',this.value)">
+        <option value="5">5 دقائق</option>
+        <option value="10" selected>10 دقائق</option>
+        <option value="15">15 دقيقة</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cl">الباقة الحالية</div>
+    <div class="rbb mb10">
+      <div>
+        <div class="ts fw7" id="settTierName">الشاهين</div>
+        <div class="txs tm">اضغط لترقية باقتك</div>
+      </div>
+      <button class="btn bp" style="padding:7px 12px;font-size:11px" onclick="gp('comm', document.querySelectorAll('.bni')[4])">ترقية</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cl">رصيدك</div>
+    <div class="g2 g8 mb10">
+      <div style="text-align:center;padding:11px;background:var(--card2);border-radius:99px;border:1px solid var(--b1)">
+        <div style="font-size:22px;font-weight:900;font-family:'IBM Plex Mono';color:#C8C8C8" id="settSilv">0</div>
+        <div class="txs tm">فضة</div>
+      </div>
+      <div style="text-align:center;padding:11px;background:var(--card2);border-radius:99px;border:1px solid var(--b1)">
+        <div style="font-size:22px;font-weight:900;font-family:'IBM Plex Mono';color:var(--g2)" id="settGold">0</div>
+        <div class="txs tm">ذهب</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cl">شهادة الانضباط</div>
+    <div style="padding:12px;text-align:center;background:linear-gradient(135deg,rgba(200,144,24,.04),var(--card2));border:1px solid rgba(200,144,24,.14);border-radius:9px;margin-bottom:10px">
+      <div class="ts fw7 mb6" style="color:var(--g2)">شهادة الانضباط الاكاديمي</div>
+      <div class="txs tm mb10">تثبت ساعات تركيزك للجامعات وارامكو</div>
+      <div class="bdg bg-g" id="certH">0 ساعة موثقة</div>
+    </div>
+    <button class="btn bp w100" onclick="genCert()">توليد الشهادة</button>
+  </div>
+</div>
+
+</div><div class="bnav">
+  <div class="bni on" onclick="gp('home',this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+    <div class="bni-l">الرئيسية</div>
+  </div>
+  <div class="bni" onclick="gp('study',this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+    <div class="bni-l">الدراسة</div>
+  </div>
+  <div class="bni" onclick="gp('radar',this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><line x1="22" y1="12" x2="20" y2="12"/></svg>
+    <div class="bni-l">الرادار</div>
+  </div>
+  <div class="bni" onclick="gp('sched',this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <div class="bni-l">الجدول</div>
+  </div>
+  <div class="bni" onclick="gp('comm',this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+    <div class="bni-l">المجتمع</div>
+  </div>
+  <div class="bni" onclick="gp('sett',this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    <div class="bni-l">الاعدادات</div>
+  </div>
+</div>
+</div>
+
+<script>
+/* 1. إصلاح مشكلة البيانات القديمة التي تعطل الأزرار */
+function ls(k){ try{return localStorage.getItem(k);}catch(e){return null;} }
+function ln(k){ try{return parseInt(localStorage.getItem(k)||0)||0;}catch(e){return 0;} }
+function lj(k){ try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;} }
+function sv(k, v){ try{localStorage.setItem(k,typeof v==='object'?JSON.stringify(v):String(v));}catch(e){} }
+
+try {
+  if(!Array.isArray(lj('vaultQ'))) sv('vaultQ', []);
+  if(!Array.isArray(lj('myFriends'))) sv('myFriends', []);
+} catch(e){}
+
+const sysTheme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+
+/* 2. التهيئة الآمنة */
+const S = {
+  tier: ls('tier')||'a', gender: ls('gender')||'m',
+  silver: ln('silver'), gold: ln('gold'), streak: ln('streak'),
+  sessions: ln('sessions'), totalMins: ln('totalMins'), xp: ln('xp')||100,
+  lastDay: ls('lastDay')||'', theme: ls('theme')||sysTheme,
+  vaultQ: lj('vaultQ')||[], myFriends: lj('myFriends')||[],
+  arenaW: ln('arenaW'), arenaL: ln('arenaL'), cefrLevel: ls('cefrLevel')||'B1'
+};
+
+/* 3. دالة التنقل (آمنة تماماً) */
+function gp(pg, el){
+  document.querySelectorAll('.pg').forEach(function(p){ p.classList.remove('on'); });
+  document.querySelectorAll('.bni').forEach(function(n){ n.classList.remove('on'); });
+  
+  const pel = document.getElementById('pg-'+pg);
+  if(pel) pel.classList.add('on');
+  
+  if(el) el.classList.add('on');
+  
+  const pgs = document.querySelector('.pages');
+  if(pgs) pgs.scrollTo(0,0);
+  
+  const fns = {home:iHome, study:iStudy, radar:iRadar, sched:iSched, comm:iComm};
+  if(fns[pg]) fns[pg]();
+}
+
+/* 4. الإشعارات والسمات */
+let tT;
+function toast(msg, type){
+  const t = document.getElementById('T');
+  if(!t) return;
+  t.textContent = msg; 
+  t.className = 'toast show ' + (type||'');
+  clearTimeout(tT); 
+  tT = setTimeout(function(){ t.className='toast'; }, 3200);
+}
+
+function toggleTheme(){
+  S.theme = (S.theme === 'dark') ? 'light' : 'dark';
+  sv('theme', S.theme);
+  document.documentElement.setAttribute('data-theme', S.theme);
+  
+  const thBtn = document.getElementById('thBtn');
+  if(thBtn) thBtn.innerHTML = S.theme === 'dark' ? '&#9680;' : '&#9681;';
+  
+  const thToggle = document.getElementById('thToggle');
+  if(thToggle) thToggle.className = 'tog ' + (S.theme === 'dark' ? 'on' : 'off');
+  
+  toast(S.theme === 'dark' ? 'الوضع الليلي' : 'الوضع النهاري');
+}
+
+function addCoin(n, gold){
+  if(gold){ if(S.tier!=='c') return; S.gold+=n; sv('gold', S.gold); }
+  else{ S.silver+=n; sv('silver', S.silver); }
+  updCoins(); updVP();
+}
+function updCoins(){
+  const s1=document.getElementById('hSilv'), s2=document.getElementById('sSilv'), g1=document.getElementById('sGold');
+  if(s1) s1.textContent = S.silver;
+  if(s2) s2.textContent = S.silver;
+  if(g1) g1.textContent = S.gold;
+}
+function updVP(){
+  const p = Math.min(100, (S.silver/50000)*100);
+  const e = document.getElementById('vPrg'), l = document.getElementById('vPrgL');
+  if(e) e.style.width = p + '%';
+  if(l) l.textContent = S.silver.toLocaleString() + ' / 50,000';
+}
+
+function setTier(t){
+  S.tier = t; sv('tier', t);
+  const L = {a:'الشاهين', b:'السند', c:'العنقاء'};
+  const C = {a:'tp-a', b:'tp-b', c:'tp-c'};
+  const p = document.getElementById('tpill');
+  if(p){ p.textContent = L[t]; p.className = 'tp '+C[t]; }
+  updEagle();
+  toast('الترقية الى ' + L[t], 'ok');
+  cM('Msett'); 
+  setTimeout(function(){ gp('home', document.querySelector('.bni')); }, 400);
+}
+
+const BIRDS={
+  a:{m:{name:'الشاهين',desc:'متاح للجميع',max:1000},f:{name:'الشاهين',desc:'متاح للجميع',max:1000}},
+  b:{m:{name:'الهدهد',desc:'المشتركون',max:3000},f:{name:'اليمامة',desc:'المشتركات',max:3000}},
+  c:{m:{name:'العنقاء',desc:'النخبة',max:10000},f:{name:'العنقاء',desc:'النخبة',max:10000}}
+};
+function updEagle(){
+  const b = BIRDS[S.tier][S.gender];
+  const pct = Math.min(100, (S.xp / b.max)*100);
+  const nm = document.getElementById('eNm'), lv = document.getElementById('eLv');
+  const xf = document.getElementById('xpF'), xn = document.getElementById('xpN');
+  if(nm) nm.textContent = b.name; 
+  if(lv) lv.textContent = b.desc;
+  if(xf) xf.style.width = pct + '%'; 
+  if(xn) xn.textContent = S.xp;
+}
+
+let tRun=false, tPhase='focus', tEl=0, tIv=null;
+const CIRC=534;
+function getFD(){ return (parseInt(ls('focD')||'50'))*60; }
+function getRD(){ return (parseInt(ls('restD')||'10'))*60; }
+function toggleTimer(){
+  if(tRun){ clearInterval(tIv); tRun=false; document.getElementById('tBtn').textContent='استمر'; }
+  else{ tRun=true; document.getElementById('tBtn').textContent='ايقاف'; tIv=setInterval(timerTick, 1000); }
+}
+function timerTick(){
+  tEl++; const dur = tPhase==='focus'?getFD():getRD();
+  const left = dur - tEl;
+  const m = String(Math.floor(left/60)).padStart(2,'0');
+  const s = String(left%60).padStart(2,'0');
+  const d = document.getElementById('tD'); if(d) d.textContent = m+':'+s;
+  const rp = document.getElementById('rProg'); if(rp) rp.style.strokeDashoffset = CIRC*(1 - tEl/dur);
+  if(tPhase==='focus' && tEl%60===0){ addCoin(1); S.totalMins++; sv('totalMins', S.totalMins); }
+  
+  if(tEl >= dur){
+    tEl=0;
+    if(tPhase==='focus'){
+      tPhase='rest'; S.sessions++; sv('sessions', S.sessions);
+      const today = new Date().toDateString();
+      if(S.lastDay !== today){ S.streak++; S.lastDay = today; sv('streak', S.streak); sv('lastDay', today); }
+      S.xp+=50; sv('xp', S.xp); addCoin(10);
+      if(S.tier==='c') addCoin(2, true);
+      updAll();
+      if(rp){ rp.className = 'rp rest'; rp.style.strokeDashoffset = CIRC; }
+      const pb=document.getElementById('tPh'), tl=document.getElementById('tL');
+      if(pb){ pb.className='tph tpr'; pb.textContent='وقت الراحة'; }
+      if(tl) tl.textContent='راحة';
+      if(d) d.textContent = String(Math.floor(getRD()/60)).padStart(2,'0')+':00';
+      toast('جلسة مكتملة — استرح الان','ok');
+    }else{
+      tPhase='focus';
+      if(rp){ rp.className = 'rp'; rp.style.strokeDashoffset = CIRC; }
+      const pb=document.getElementById('tPh'), tl=document.getElementById('tL');
+      if(pb){ pb.className='tph tpf'; pb.textContent='وضع التركيز'; }
+      if(tl) tl.textContent='تركيز';
+      if(d) d.textContent = String(Math.floor(getFD()/60)).padStart(2,'0')+':00';
+      toast('الراحة انتهت — ابدا جلسة جديدة');
+    }
+  }
+  const tSt = document.getElementById('tSt'), stSt = document.getElementById('stSt');
+  const tSe = document.getElementById('tSe'), stSe = document.getElementById('stSe');
+  if(tSt) tSt.textContent = S.streak; if(stSt) stSt.textContent = S.streak;
+  if(tSe) tSe.textContent = S.sessions; if(stSe) stSe.textContent = S.sessions;
+}
+function resetTimer(){
+  clearInterval(tIv); tRun=false; tPhase='focus'; tEl=0;
+  const btn=document.getElementById('tBtn'); if(btn) btn.textContent='تشغيل';
+  const pb=document.getElementById('tPh'), tl=document.getElementById('tL'), d=document.getElementById('tD'), rp=document.getElementById('rProg');
+  if(pb){ pb.className='tph tpf'; pb.textContent='وضع التركيز'; }
+  if(tl) tl.textContent='تركيز'; 
+  if(d) d.textContent='50:00';
+  if(rp){ rp.className='rp'; rp.style.strokeDashoffset=CIRC; }
+}
+
+function updAll(){
+  const tSt = document.getElementById('tSt'), stSt = document.getElementById('stSt');
+  const tSe = document.getElementById('tSe'), stSe = document.getElementById('stSe');
+  if(tSt) tSt.textContent = S.streak; if(stSt) stSt.textContent = S.streak;
+  if(tSe) tSe.textContent = S.sessions; if(stSe) stSe.textContent = S.sessions;
+  updCoins(); updEagle(); updVP();
+}
+
+function renderHm(id){
+  const c = document.getElementById(id); if(!c) return; c.innerHTML = '';
+  for(let i=0; i<91; i++){
+    const d=document.createElement('div'); d.className='hmc h'+Math.floor(Math.random()*5); c.appendChild(d);
+  }
+}
+
+const RM=[
+  {t:'القدرات - اللفظي 1-3',d:'المفردات والتناظر',s:'done',h:'8h'},
+  {t:'القدرات - اللفظي 4-6',d:'الفهم القرائي',s:'done',h:'6h'},
+  {t:'القدرات - الكمي 1-3',d:'الاعداد والجبر',s:'done',h:'7h'},
+  {t:'القدرات - الكمي 4-5',d:'المعادلات والدوال',s:'done',h:'5h'},
+  {t:'القدرات - الكمي 6-8',d:'الهندسة والاحتمالات',s:'done',h:'6h'},
+  {t:'القدرات - الكمي 9-12',d:'مسائل متقدمة',s:'act',h:'8h'},
+  {t:'اختبار تجريبي - القدرات',d:'محاكاة كاملة',s:'lock',h:'2h'},
+  {t:'التحصيلي - الرياضيات',d:'منهج الثانوية',s:'lock',h:'12h'}
+];
+function renderRM(){
+  const c=document.getElementById('rmList'); if(!c) return;
+  c.innerHTML = RM.map(function(r, i){ return `
+    <div class="rms ${r.s}" onclick="openLesson(${i})">
+      <div class="rmi" style="background:${r.s==='done'?'rgba(16,185,129,.08)':r.s==='act'?'rgba(200,144,24,.08)':'var(--card)'};border:1px solid ${r.s==='done'?'rgba(16,185,129,.18)':r.s==='act'?'rgba(200,144,24,.2)':'var(--b1)'}">
+        ${r.s==='done'?'&#10003;':r.s==='act'?'&#9654;':'&#8212;'}
+      </div>
+      <div class="rmb">
+        <div class="rmt">${r.t}</div>
+        <div class="rmd">${r.d}</div>
+        <div class="rmf">
+          <span class="bdg ${r.s==='done'?'bg-gr':r.s==='act'?'bg-g':'bg-mt'}">${r.h}</span>
+          <span class="txs tm" style="margin-right:auto">${r.s==='done'?'مكتملة':r.s==='act'?'جارية':'مقفلة'}</span>
+        </div>
+      </div>
+    </div>`}).join('');
+}
+function openLesson(i){
+  const r=RM[i];
+  if(r.s==='lock'){ toast('اكمل المراحل السابقة اولاً'); return; }
+  document.getElementById('MLtitle').textContent=r.t;
+  document.getElementById('Vcon').innerHTML=`<div class="vph"><div class="vpb" onclick="toast('ابحث: ${r.t}')">&#9654;</div><div style="font-size:11px;color:var(--t2);margin-top:5px">${r.t}قياس</div></div>`;
+  document.getElementById('MLbody').innerHTML=`
+    <div class="txs fw7 mb8" style="color:var(--g2)">الشرح والتلخيص</div>
+    <div class="txs tm mb12" style="line-height:1.8">هذا الجزء يغطي ${r.d}. راجع المفردات وتدرب على التجميعات.</div>
+    ${r.s==='act'?`<button class="btn bp w100 mt10" onclick="markDone(${i})">تحديد كمكتملة</button>`:''}`;
+  document.getElementById('Mlesson').classList.add('show');
+}
+function markDone(i){
+  if(RM[i]) RM[i].s='done'; addCoin(50); S.xp+=30; sv('xp', S.xp);
+  toast('مكتملة! +50 فضة','ok'); cM('Mlesson'); renderRM(); updEagle();
+}
+
+const DV=[
+  {q:'اذا x+y=10 وx-y=4, فإن xy=?',opts:['21','24','16','12'],ans:0,done:false,tip:'استخدم: (x+y)²=x²+2xy+y²'},
+  {q:'مساحة مربع محيطه 24سم',opts:['36 سم²','48 سم²','24 سم²','16 سم²'],ans:0,done:false,tip:'الضلع=6, المساحة=36'}
+];
+function renderVault(){
+  const all=[...DV, ...S.vaultQ];
+  const p=all.filter(function(q){return !q.done;}).length;
+  const b=document.getElementById('vBdg'); if(b) b.textContent=p;
+  const c=document.getElementById('vList'); if(!c) return;
+  if(!all.length){ c.innerHTML='<div class="txs tm tc" style="padding:14px">الخزنة فارغة</div>'; return; }
+  c.innerHTML = all.map(function(q, i){ return `
+    <div class="vq" id="vq${i}">
+      <div class="rbb mb8">
+        <span class="bdg ${q.done?'bg-gr':'bg-re'}">${q.done?'محلول':'معلق'}</span>
+        <span class="txs tm">+15 فضة</span>
+      </div>
+      <div style="font-size:13px;line-height:1.7;margin-bottom:9px">${q.q}</div>
+      <div>${q.opts.map(function(o, j){ return `<div class="vo" id="vo${i}-${j}" onclick="ansV(${i},${j})">${o}</div>`}).join('')}</div>
+      <div class="vtip" id="vt${i}">التلميح: ${q.tip}</div>
+    </div>`}).join('');
+}
+function ansV(qi,oi){
+  const all=[...DV, ...S.vaultQ]; const q=all[qi]; if(q.done) return;
+  const ok = oi===q.ans;
+  const op = document.getElementById(`vo${qi}-${oi}`);
+  const cr = document.getElementById(`vo${qi}-${q.ans}`);
+  const tp = document.getElementById(`vt${qi}`);
+  if(ok){ if(op) op.classList.add('cr'); q.done=true; addCoin(15); S.xp+=15; sv('xp', S.xp); toast('+15 فضة','ok'); }
+  else{ if(op) op.classList.add('wr'); setTimeout(function(){ if(cr) cr.classList.add('cr'); },400); toast('خطا'); }
+  if(tp) tp.classList.add('sh'); setTimeout(function(){ renderVault(); }, 1500);
+}
+function addSV(){
+  S.vaultQ.push({q:'ناتج (3+4i)(3-4i)؟',opts:['25','7','0','12'],ans:0,done:false,tip:'(a+bi)(a-bi)=a²+b²'});
+  sv('vaultQ', S.vaultQ); renderVault(); toast('تمت الاضافة','ok');
+}
+
+const CR={A1:'مبتدئ. 6 اشهر.',B1:'مناسب لـ STEP. هدفك 65+.',C1:'ممتاز.'};
+function renderEngL(){
+  const c=document.getElementById('engL'); if(!c) return;
+  c.innerHTML=`<div class="lc" onclick="toast('درس تجريبي')"><div class="lth">&#9654;</div><div class="lb"><div class="lt2">Academic Vocab 101</div></div></div>`;
+}
+function sCEFR(lv, el){
+  S.cefrLevel=lv; sv('cefrLevel', lv);
+  document.querySelectorAll('.cfb').forEach(function(b){ b.classList.remove('on'); }); el.classList.add('on');
+  const r=document.getElementById('cRecT'); if(r) r.textContent=CR[lv]||'استمر في التعلم';
+}
+
+function renderSched(){
+  const c=document.getElementById('schedG'); if(!c) return;
+  c.innerHTML=`<div class="dslot"><div class="dh" onclick="this.nextElementSibling.classList.toggle('op')"><div class="dn">السبت</div><div class="dhr">2 جلسة</div></div><div class="dsess"><div class="sblk"><div class="stm">6:00</div><div class="ssub">قدرات لفظي</div><div class="stype st-s">مذاكرة</div></div></div></div>`;
+}
+
+const FR=[
+  {name:'احمد الشهري',user:'@ahmed',av:'ا',col:'#304060',streak:18,prog:82,pub:true,grade:'ثالث ثانوي'},
+  {name:'سلطان العتيبي',user:'@sultan',av:'س',col:'#403060',streak:7,prog:55,pub:true,grade:'ثاني ثانوي'}
+];
+function fCard(f){
+  const isMy=S.myFriends.includes(f.user);
+  return `<div class="sc"><div class="uav" style="background:${f.col}">${f.av}</div><div style="flex:1"><div class="un">${f.name}</div><div class="um"><span>${f.user}</span></div></div>${isMy?'<span class="bdg bg-gr">صديق</span>':`<button style="padding:4px 9px;border-radius:6px;background:var(--card2);color:var(--g2);border:1px solid var(--b2);font-size:10px;font-family:'Tajawal'" onclick="addFr('${f.user}')">اضافة</button>`}</div>`;
+}
+function filtF(q){
+  const list = FR.filter(function(f){ return !q || f.name.includes(q) || f.user.includes(q.toLowerCase()); });
+  const c=document.getElementById('allFL');
+  if(c) c.innerHTML = list.map(function(f){ return fCard(f); }).join('');
+}
+function renderMyF(){
+  const list = FR.filter(function(f){ return S.myFriends.includes(f.user); });
+  const c=document.getElementById('myFL'), cnt=document.getElementById('myFC');
+  if(cnt) cnt.textContent = list.length;
+  if(c) c.innerHTML = list.length ? list.map(function(f){ return fCard(f); }).join('') : '<div class="txs tm tc" style="padding:8px">اضف اصدقاء</div>';
+}
+function addFr(user){
+  if(!S.myFriends.includes(user)){ S.myFriends.push(user); sv('myFriends', S.myFriends); }
+  renderMyF(); filtF(''); toast('تمت الاضافة','ok');
+}
+function renderReg(){
+  const c=document.getElementById('regL'); if(!c) return;
+  c.innerHTML=`<div class="li mb4"><div class="uav" style="background:#304060;width:28px;height:28px;font-size:10px">ر</div><div class="li-b"><div class="li-t">الرياض</div></div><div style="font-size:14px;font-weight:900;color:var(--g2)">9,840</div></div>`;
+}
+function renderArena(){
+  const c=document.getElementById('arenaL'); if(!c) return;
+  const aw=document.getElementById('arW'), al=document.getElementById('arL');
+  if(aw) aw.textContent=S.arenaW; if(al) al.textContent=S.arenaL;
+  c.innerHTML = FR.map(function(f){ return `<div class="li mb4"><div class="uav" style="background:${f.col};width:32px;height:32px;font-size:11px">${f.av}</div><div class="li-b"><div class="li-t">${f.name}</div></div><button style="padding:5px 9px;border-radius:6px;background:var(--card2);color:#F87171;border:1px solid var(--b2);font-size:10px;font-family:'Tajawal'" onclick="startArena('${f.name}')">تحدِّ</button></div>` }).join('');
+}
+function startArena(name){
+  if(Math.random()>.5){ S.arenaW++; sv('arenaW', S.arenaW); addCoin(20); toast('انتصرت على '+name,'ok'); }
+  else{ S.arenaL++; sv('arenaL', S.arenaL); toast('خسرت — تدرب اكثر'); }
+  renderArena();
+}
+function renderPricing(){
+  const c=document.getElementById('prcW'); if(!c) return;
+  c.innerHTML=`<div class="prc"><div class="ptr" style="color:var(--g2)">SHAHEEN</div><div class="pam">29 <span style="font-size:15px;color:var(--t2)">ر.س</span></div><button class="btn ${S.tier==='a'?'bg':'bp'} w100" onclick="setTier('a')">${S.tier==='a'?'الحالية':'اختر'}</button></div><div class="prc feat"><div class="ptr" style="color:#A78BFA">SANAD</div><div class="pam" style="color:#A78BFA">59 <span style="font-size:15px;color:var(--t2)">ر.س</span></div><button class="btn bp w100" onclick="setTier('b')">${S.tier==='b'?'الحالية':'ارتقِ'}</button></div><div class="prc" style="border-color:#F87171"><div class="ptr" style="color:#F87171">ANQA</div><div class="pam" style="color:#F87171">119 <span style="font-size:15px;color:var(--t2)">ر.س</span></div><button class="btn w100" style="background:linear-gradient(135deg,#DC2626,#991B1B);color:#fff" onclick="setTier('c')">${S.tier==='c'?'الحالية':'احصل عليها'}</button></div>`;
+  updVP();
+}
+
+function oSett(){ document.getElementById('Msett').classList.add('show'); }
+function setGender(g){ S.gender=g; sv('gender', g); updEagle(); cM('Msett'); toast(g==='m'?'تم تحديد: ذكر':'تم تحديد: انثى'); }
+function cM(id){ const m = document.getElementById(id); if(m) m.classList.remove('show'); }
+document.querySelectorAll('.mov').forEach(function(m){ m.addEventListener('click', function(e){ if(e.target===m) m.classList.remove('show'); }); });
+
+function iHome(){ renderHm('hmH'); updAll(); }
+function iStudy(){ renderRM(); renderVault(); }
+function iRadar(){ renderEngL(); }
+function iSched(){ renderSched(); }
+function iComm(){ filtF(''); renderMyF(); renderReg(); renderArena(); renderPricing(); }
+
+document.documentElement.setAttribute('data-theme', S.theme);
+const thBtn = document.getElementById('thBtn'); if(thBtn) thBtn.innerHTML = S.theme==='dark' ? '&#9680;' : '&#9681;';
+const L={a:'الشاهين',b:'السند',c:'العنقاء'}, C={a:'tp-a',b:'tp-b',c:'tp-c'}, pt = document.getElementById('tpill'); if(pt){ pt.textContent=L[S.tier]; pt.className='tp '+C[S.tier]; }
+
+updAll(); iHome();
+</script>
+</body>
+</html>
