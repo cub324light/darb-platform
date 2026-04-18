@@ -2,466 +2,422 @@
 <html lang="ar" dir="rtl" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>درب</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-/* --- الوضع الليلي: أسود نقي مع أزرق فخم --- */
+/* --- الألوان الثابتة (الوضع الليلي: أسود وأزرق) --- */
 [data-theme="dark"] {
   --bg: #000000;
   --card: #09090B;
   --card2: #18181B;
   --b1: #27272A;
   --b2: #3F3F46;
-  --b3: #52525B;
   --text: #F8FAFC;
   --t2: #94A3B8;
   --t3: #64748B;
-  /* الألوان الزرقاء الأساسية */
-  --g1: #2563EB; /* أزرق داكن */
-  --g2: #60A5FA; /* أزرق فاتح مضيء */
+  
+  --g1: #2563EB; /* أزرق داكن/أساسي */
+  --g2: #60A5FA; /* أزرق مضيء */
   --gg: linear-gradient(135deg, #2563EB, #60A5FA);
   
-  /* ألوان البادجات (صلبة لمنع التشويه) */
   --badge-bg: #1E3A8A;
   --badge-txt: #93C5FD;
   --badge-gr-bg: #064E3B;
   --badge-gr-txt: #34D399;
   --badge-re-bg: #7F1D1D;
   --badge-re-txt: #F87171;
-  --badge-pu-bg: #4C1D95;
-  --badge-pu-txt: #C4B5FD;
-  
-  --sh: 0 8px 32px rgba(0,0,0,0.9);
+  --sh: 0 10px 40px rgba(0,0,0,0.8);
 }
 
-/* --- الوضع النهاري: أبيض نقي مع ذهبي فاخر --- */
+/* --- الألوان الثابتة (الوضع النهاري: أبيض وذهبي) --- */
 [data-theme="light"] {
   --bg: #FFFFFF;
   --card: #F8FAFC;
   --card2: #F1F5F9;
   --b1: #E2E8F0;
   --b2: #CBD5E1;
-  --b3: #94A3B8;
   --text: #0F172A;
   --t2: #475569;
   --t3: #64748B;
-  /* الألوان الذهبية الأساسية */
-  --g1: #D97706; /* ذهبي داكن */
-  --g2: #F59E0B; /* ذهبي فاتح */
+  
+  --g1: #D97706; /* ذهبي داكن/أساسي */
+  --g2: #F59E0B; /* ذهبي مضيء */
   --gg: linear-gradient(135deg, #D97706, #FBBF24);
   
-  /* ألوان البادجات (صلبة لمنع التشويه) */
   --badge-bg: #FEF3C7;
   --badge-txt: #D97706;
   --badge-gr-bg: #D1FAE5;
   --badge-gr-txt: #059669;
   --badge-re-bg: #FEE2E2;
   --badge-re-txt: #DC2626;
-  --badge-pu-bg: #F3E8FF;
-  --badge-pu-txt: #7C3AED;
-  
-  --sh: 0 4px 18px rgba(0,0,0,0.05);
+  --sh: 0 4px 20px rgba(0,0,0,0.06);
 }
 
-/* الإعدادات العامة للجوال */
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{font-size:16px; background:var(--bg);}
-body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;direction:rtl;transition:background .3s,color .3s}
-::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--b2);border-radius:99px}
-::selection{background:var(--g1);color:#fff}
+/* --- التهيئة لشاشات الجوال الحقيقية --- */
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+html { font-size: 16px; background: var(--bg); }
+body { 
+  font-family: 'Tajawal', sans-serif; 
+  background: var(--bg); color: var(--text); 
+  min-height: 100vh; min-height: 100dvh; 
+  overflow-x: hidden; direction: rtl; 
+  transition: background 0.3s, color 0.3s; 
+}
 
-@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-@keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
-@keyframes fIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: none; } }
+@keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: none; } }
+@keyframes soar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
 /* APP SHELL */
-.app{display:flex;flex-direction:column;min-height:100vh;max-width:480px;margin:0 auto;background:var(--bg)}
+.app { display: flex; flex-direction: column; min-height: 100dvh; max-width: 480px; margin: 0 auto; position: relative; }
 
-/* HEADER */
-.hdr{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--b1);padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
-.hdr-logo{font-size:19px;font-weight:900;letter-spacing:-.5px;background:var(--gg);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.hdr-r{display:flex;gap:6px;align-items:center}
-.hb{width:33px;height:33px;border-radius:8px;background:var(--card);border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--t2);transition:all .15s;font-family:'IBM Plex Mono';font-weight:600}
-.hb:hover{border-color:var(--g1);color:var(--g2)}
-.tp{font-size:9px;padding:4px 10px;border-radius:99px;font-weight:700;font-family:'IBM Plex Mono';border:1px solid;cursor:pointer}
-.tp-a{background:var(--badge-bg);color:var(--badge-txt);border-color:var(--g1)}
-.tp-b{background:var(--badge-pu-bg);color:var(--badge-pu-txt);border-color:var(--badge-pu-txt)}
-.tp-c{background:var(--badge-re-bg);color:var(--badge-re-txt);border-color:var(--badge-re-txt)}
+/* HEADER (مع حساب المسافة الآمنة العلوية للآيفون) */
+.hdr {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--bg); border-bottom: 1px solid var(--b1);
+  padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.hdr-logo { font-size: 20px; font-weight: 900; background: var(--gg); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.hdr-r { display: flex; gap: 8px; align-items: center; }
 
-/* BOTTOM NAV */
-.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:100;background:var(--bg);border-top:1px solid var(--b1);display:flex;padding:5px 2px calc(5px + env(safe-area-inset-bottom))}
-.bni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 1px;cursor:pointer;border-radius:7px;color:var(--t3);min-height:48px;gap:3px;transition:color .15s}
-.bni.on{color:var(--g2); background:var(--card2)}
-.bni-i{font-size:18px;line-height:1;transition:transform .2s}
-.bni.on .bni-i{transform:scale(1.1)}
-.bni-l{font-size:9px;font-weight:700;white-space:nowrap}
+/* NAVBAR (مع حساب المسافة الآمنة السفلية) */
+.bnav {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 480px; z-index: 100;
+  background: var(--bg); border-top: 1px solid var(--b1);
+  display: flex; padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+}
+.bni {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 6px 0; cursor: pointer; border-radius: 10px; color: var(--t3); gap: 4px; transition: all 0.2s;
+}
+.bni.on { color: var(--g1); background: var(--card2); }
+.bni-i { font-size: 20px; line-height: 1; transition: transform 0.2s; }
+.bni.on .bni-i { transform: scale(1.15); }
+.bni-l { font-size: 10px; font-weight: 800; }
 
 /* PAGES */
-.pages{flex:1;overflow-y:auto;padding-bottom:calc(80px + env(safe-area-inset-bottom))}
-.pg{display:none;padding:14px;animation:fadeUp .3s ease both}
-.pg.on{display:block}
+.pages { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: calc(90px + env(safe-area-inset-bottom)); }
+.pg { display: none; animation: fadeUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) both; }
+.pg.on { display: block; }
 
-/* TYPOGRAPHY & UTILS */
-.sec-t{font-size:16px;font-weight:800;letter-spacing:-.3px}
-.sec-s{font-size:11px;color:var(--t2);margin-top:2px}
-.ts{font-size:13px}.txs{font-size:11px}.ttny{font-size:10px}
-.tm{color:var(--t2)}.t3{color:var(--t3)}
-.fw7{font-weight:700}.fw8{font-weight:800}.fw9{font-weight:900}
-.mono{font-family:'IBM Plex Mono'}
+/* TYPOGRAPHY */
+.sec-t { font-size: 18px; font-weight: 900; letter-spacing: -0.3px; }
+.sec-s { font-size: 12px; color: var(--t2); margin-top: 2px; font-weight: 500; }
+.ts { font-size: 14px; } .txs { font-size: 12px; }
+.fw7 { font-weight: 700; } .fw8 { font-weight: 800; } .fw9 { font-weight: 900; }
+.tm { color: var(--t2); } .mono { font-family: 'IBM Plex Mono'; }
 
-/* CARDS */
-.card{background:var(--card);border:1px solid var(--b1);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:var(--sh)}
-.cl{font-size:9px;font-weight:800;color:var(--t2);letter-spacing:.5px;margin-bottom:12px;font-family:'IBM Plex Mono';display:flex;align-items:center;gap:6px}
-.cl::before{content:'';width:4px;height:12px;background:var(--g1);border-radius:99px;flex-shrink:0}
+/* CARDS & CONTAINERS */
+.card { background: var(--card); border: 1px solid var(--b1); border-radius: 16px; padding: 16px; margin-bottom: 14px; box-shadow: var(--sh); }
+.cl { font-size: 11px; font-weight: 900; color: var(--t2); text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.cl::before { content: ''; width: 4px; height: 14px; background: var(--g1); border-radius: 99px; }
 
-/* LAYOUT */
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.rb{display:flex;align-items:center}
-.rbb{display:flex;align-items:center;justify-content:space-between}
-.g8{gap:8px}.mb8{margin-bottom:8px}.mb10{margin-bottom:10px}.mb12{margin-bottom:12px}.mt8{margin-top:8px}.mt10{margin-top:10px}
-.dv{height:1px;background:var(--b1);margin:14px 0}
-.sdv{height:8px;background:var(--card2);margin:0 -14px 14px}
-.w100{width:100%}.tc{text-align:center}
+/* LAYOUT UTILS */
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.rbb { display: flex; align-items: center; justify-content: space-between; }
+.rb { display: flex; align-items: center; gap: 8px; }
+.mb8 { margin-bottom: 8px; } .mb12 { margin-bottom: 12px; } .mt8 { margin-top: 8px; }
+.w100 { width: 100%; } .tc { text-align: center; }
 
-/* PROGRESS */
-.pw{background:var(--b1);border-radius:99px;overflow:hidden}
-.pf{height:100%;border-radius:99px;transition:width .8s ease;position:relative;overflow:hidden;background:var(--gg)}
-
-/* STATS */
-.sb{background:var(--card2);border:1px solid var(--b1);border-radius:12px;padding:14px;position:relative;overflow:hidden}
-.sb::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--sbc,var(--g1))}
-.sbv{font-size:24px;font-weight:900;font-family:'IBM Plex Mono';letter-spacing:-1px;color:var(--text)}
-.sbl{font-size:10px;color:var(--t2);margin-top:4px;font-weight:600}
-.sbc-t{font-size:10px;margin-top:4px;font-weight:700;font-family:'IBM Plex Mono'}
-
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border-radius:10px;border:none;cursor:pointer;font-family:'Tajawal';font-size:13px;font-weight:800;transition:all .2s;white-space:nowrap}
-.bp{background:var(--gg);color:#fff}.bp:hover{transform:translateY(-1px);filter:brightness(1.1)}
-.bg{background:var(--b1);color:var(--text);border:1px solid var(--b2)}.bg:hover{background:var(--b2)}
+/* BUTTONS (متوافقة مع لمس الجوال) */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 20px; border-radius: 12px; border: none; cursor: pointer;
+  font-family: 'Tajawal'; font-size: 14px; font-weight: 800; transition: all 0.2s;
+  min-height: 44px; /* لسهولة النقر */
+}
+.bp { background: var(--gg); color: #fff; }
+.bp:active { transform: scale(0.96); }
+.bg { background: var(--card2); color: var(--text); border: 1px solid var(--b2); }
+.bg:active { background: var(--b1); }
 
 /* BADGES */
-.bdg{display:inline-block;padding:3px 8px;border-radius:99px;font-size:10px;font-weight:800;font-family:'IBM Plex Mono'}
-.bg-g{background:var(--badge-bg);color:var(--badge-txt)}
-.bg-gr{background:var(--badge-gr-bg);color:var(--badge-gr-txt)}
-.bg-re{background:var(--badge-re-bg);color:var(--badge-re-txt)}
-.bg-mt{background:var(--b1);color:var(--t2)}
+.bdg { padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 800; font-family: 'IBM Plex Mono'; }
+.bg-g { background: var(--badge-bg); color: var(--badge-txt); }
+.bg-gr { background: var(--badge-gr-bg); color: var(--badge-gr-txt); }
+.bg-re { background: var(--badge-re-bg); color: var(--badge-re-txt); }
+
+/* PROGRESS */
+.pw { background: var(--card2); border-radius: 99px; overflow: hidden; height: 8px; }
+.pf { height: 100%; border-radius: 99px; background: var(--gg); transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
 
 /* INPUT & TOGGLE */
-.inp{width:100%;padding:12px 14px;background:var(--card2);border:1px solid var(--b2);border-radius:10px;color:var(--text);font-family:'Tajawal';font-size:14px;outline:none;transition:border-color .2s;direction:rtl}
-.inp:focus{border-color:var(--g1)}
-.inp::placeholder{color:var(--t3)}
+.inp {
+  width: 100%; padding: 14px 16px; background: var(--card2); border: 1px solid var(--b1);
+  border-radius: 12px; color: var(--text); font-family: 'Tajawal'; font-size: 14px;
+  outline: none; transition: border-color 0.2s; min-height: 48px;
+}
+.inp:focus { border-color: var(--g1); }
 
-.tog{width:42px;height:24px;border-radius:99px;cursor:pointer;position:relative;transition:background .2s;border:none;padding:0;flex-shrink:0}
-.tog.on{background:var(--g1)}.tog.off{background:var(--b2)}
-.tob{position:absolute;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:all .2s;box-shadow:0 2px 4px rgba(0,0,0,.2)}
-.tog.on .tob{right:3px;left:auto}.tog.off .tob{left:3px;right:auto}
-
-/* LIST ITEMS */
-.li{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--card2);border:1px solid var(--b1);border-radius:12px;margin-bottom:8px;cursor:pointer;transition:all .15s}
-.li:hover{border-color:var(--b2)}
-.li-b{flex:1;min-width:0}.li-t{font-size:13px;font-weight:800}.li-s{font-size:11px;color:var(--t2);margin-top:2px}
+.tog { width: 46px; height: 26px; border-radius: 99px; position: relative; border: none; transition: 0.3s; }
+.tog.on { background: var(--g1); } .tog.off { background: var(--b2); }
+.tob { position: absolute; top: 3px; width: 20px; height: 20px; background: #fff; border-radius: 50%; transition: 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+.tog.on .tob { right: 3px; left: auto; } .tog.off .tob { left: 3px; right: auto; }
 
 /* TOAST */
-.toast{position:fixed;bottom:calc(76px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(70px);z-index:9999;padding:12px 20px;border-radius:12px;background:var(--card);border:1px solid var(--b2);box-shadow:var(--sh);font-size:13px;font-weight:700;opacity:0;white-space:nowrap;transition:all .3s cubic-bezier(.4,0,.2,1);text-align:center;color:var(--text)}
-.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
-.toast.ok{border-color:var(--badge-gr-txt);color:var(--badge-gr-txt)}
+.toast {
+  position: fixed; bottom: calc(90px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%) translateY(50px);
+  z-index: 9999; padding: 12px 24px; border-radius: 14px; background: var(--card); border: 1px solid var(--b2);
+  box-shadow: var(--sh); font-size: 13px; font-weight: 800; opacity: 0; pointer-events: none; transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
 /* MODAL */
-.mov{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;display:none;align-items:flex-end;justify-content:center}
-.mov.show{display:flex;animation:fIn .2s ease}
-.msh{background:var(--card);border-radius:24px 24px 0 0;width:100%;max-width:480px;padding:20px;max-height:88vh;overflow-y:auto;animation:slideUp .3s ease;border-top:1px solid var(--b2)}
-.mhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-.mcl{width:32px;height:32px;background:var(--card2);border:1px solid var(--b2);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text)}
+.mov { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 500; display: none; align-items: flex-end; }
+.mov.show { display: flex; animation: fIn 0.2s ease; }
+.msh { background: var(--card); border-radius: 24px 24px 0 0; width: 100%; max-width: 480px; padding: 24px 20px calc(24px + env(safe-area-inset-bottom)); max-height: 90dvh; overflow-y: auto; animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-top: 1px solid var(--b2); }
+.mcl { width: 36px; height: 36px; background: var(--card2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; }
 
-/* HEATMAP */
-.hm{display:grid;grid-template-columns:repeat(13,1fr);gap:3px;margin:10px 0}
-.hmc{aspect-ratio:1;border-radius:3px}
-.h0{background:var(--b1)}.h1{background:var(--badge-bg)}.h2{background:var(--g2)}.h3{background:var(--g1)}.h4{background:#FFFFFF}
-
-/* EAGLE SVG - NEW GEOMETRIC DESIGN */
-.eagle-stage{display:flex;flex-direction:column;align-items:center;padding:20px 0 10px}
-.eagle-svg{width:160px;height:160px;animation:soar 4s ease-in-out infinite; filter:drop-shadow(0 10px 15px rgba(0,0,0,0.2))}
-.eagle-nm{font-size:18px;font-weight:900;color:var(--g2);margin-top:12px}
-.eagle-lv{font-size:11px;color:var(--t2);margin-top:4px}
-.xp-bar{width:150px;height:4px;background:var(--b1);border-radius:99px;margin-top:12px;overflow:hidden}
+/* THE NEW GEOMETRIC FALCON SVG */
+.eagle-stage { display: flex; flex-direction: column; align-items: center; padding: 20px 0; }
+.eagle-svg { width: 150px; height: 150px; animation: soar 4s ease-in-out infinite; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4)); }
 
 /* TIMER RING */
-.ring-w{position:relative;width:210px;height:210px;margin:0 auto 16px}
-.rsvg{width:100%;height:100%;transform:rotate(-90deg)}
-.rt{fill:none;stroke:var(--card2);stroke-width:8}
-.rp{fill:none;stroke:url(#gg);stroke-width:8;stroke-linecap:round;stroke-dasharray:615;stroke-dashoffset:615;transition:stroke-dashoffset .5s ease}
-.rc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
-.rt2{font-size:46px;font-weight:900;font-family:'IBM Plex Mono';letter-spacing:-2px;color:var(--text)}
-.rl{font-size:11px;color:var(--t2);letter-spacing:1px;font-weight:700}
-.tph{font-size:10px;padding:6px 14px;border-radius:99px;font-weight:800;margin-bottom:14px;font-family:'IBM Plex Mono'}
+.ring-w { position: relative; width: 220px; height: 220px; margin: 0 auto 20px; }
+.rsvg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.rt { fill: none; stroke: var(--card2); stroke-width: 8; }
+.rp { fill: none; stroke: var(--g1); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 660; stroke-dashoffset: 660; transition: stroke-dashoffset 0.5s ease; }
+.rc { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.rt2 { font-size: 48px; font-weight: 900; font-family: 'IBM Plex Mono'; letter-spacing: -2px; }
 
-/* SKBOX */
-.skbox{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--card2);border:1px solid var(--b2);border-radius:14px}
-.skn{font-size:32px;font-weight:900;font-family:'IBM Plex Mono';color:var(--text)}
+/* LIST ITEMS / VAULT */
+.li { display: flex; align-items: center; gap: 12px; padding: 14px; background: var(--card2); border: 1px solid var(--b1); border-radius: 14px; margin-bottom: 10px; transition: border-color 0.2s; }
+.vo { padding: 12px 16px; border: 1px solid var(--b1); border-radius: 10px; margin-bottom: 8px; font-size: 14px; font-weight: 700; background: var(--card2); transition: 0.2s; cursor: pointer; }
+.vo.cr { border-color: var(--badge-gr-txt); background: var(--badge-gr-bg); color: var(--badge-gr-txt); }
+.vo.wr { border-color: var(--badge-re-txt); background: var(--badge-re-bg); color: var(--badge-re-txt); }
 
-/* ROADMAP STEP */
-.rms{display:flex;gap:12px;padding:14px;background:var(--card2);border:1px solid var(--b1);border-radius:12px;margin-bottom:8px;cursor:pointer}
-.rms.done{border-color:var(--badge-gr-txt);background:var(--badge-gr-bg)}
-.rms.act{border-color:var(--g1);background:var(--badge-bg)}
-.rms.lock{opacity:.5;cursor:not-allowed}
-.rmi{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;font-weight:900}
-.rmt{font-size:13px;font-weight:800;margin-bottom:4px;color:var(--text)}
-.rmf{display:flex;gap:6px;margin-top:8px;align-items:center}
+/* STATS BOX */
+.sb { background: var(--card2); border: 1px solid var(--b1); border-radius: 14px; padding: 16px; border-top: 3px solid var(--sbc, var(--g1)); }
 
-/* VAULT */
-.vq{padding:14px;background:var(--card2);border:1px solid var(--b1);border-radius:12px;margin-bottom:8px}
-.vo{padding:10px 14px;border:1px solid var(--b2);border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;transition:all .15s;margin-bottom:6px;color:var(--text)}
-.vo.cr{border-color:var(--badge-gr-txt)!important;background:var(--badge-gr-bg)!important;color:var(--badge-gr-txt)!important}
-.vo.wr{border-color:var(--badge-re-txt)!important;background:var(--badge-re-bg)!important;color:var(--badge-re-txt)!important}
-.vtip{display:none;padding:10px;background:var(--badge-gr-bg);border-right:3px solid var(--badge-gr-txt);border-radius:8px;font-size:11px;color:var(--badge-gr-txt);margin-top:8px;font-weight:700}
-.vtip.sh{display:block;animation:fIn .3s ease}
+/* CALENDAR / RADAR GRID */
+.cfb { padding: 14px; border-radius: 12px; background: var(--card2); border: 1px solid var(--b1); text-align: center; cursor: pointer; transition: 0.2s; }
+.cfb.on { background: var(--badge-bg); border-color: var(--g1); }
 
-/* CEFR */
-.cefr-g{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
-.cfb{padding:12px;border-radius:10px;background:var(--card2);border:1px solid var(--b1);text-align:center;cursor:pointer;transition:all .2s}
-.cfb.on{background:var(--badge-bg);border-color:var(--g1)}
-.cfc{font-size:18px;font-weight:900;font-family:'IBM Plex Mono';color:var(--text)}
-
-/* SOCIAL */
-.uav{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;flex-shrink:0}
-
-/* PRICING */
-.prc{background:var(--card2);border:1px solid var(--b2);border-radius:16px;padding:20px;margin-bottom:12px;position:relative}
-.prc.feat{border-color:var(--g1);background:var(--card)}
-.ptr{font-size:11px;font-weight:900;letter-spacing:1px;font-family:'IBM Plex Mono';margin-bottom:8px}
-.pam{font-size:42px;font-weight:900;font-family:'IBM Plex Mono';letter-spacing:-2px;color:var(--text);margin-bottom:16px}
 </style>
 </head>
 <body>
+
 <div class="toast" id="T"></div>
 
-<div class="mov" id="Mlesson">
+<div class="mov" id="Mapp" onclick="if(event.target===this) cM('Mapp')">
   <div class="msh">
-    <div class="mhd"><div class="mt2" id="MLtitle"></div><div class="mcl" onclick="cM('Mlesson')">x</div></div>
-    <div style="aspect-ratio:16/9;background:#000;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-direction:column;margin-bottom:16px">
-      <div style="width:56px;height:56px;background:var(--gg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;cursor:pointer">&#9654;</div>
+    <div class="rbb mb12">
+      <div class="sec-t" id="Mtitle">عنوان</div>
+      <div class="mcl" onclick="cM('Mapp')">✕</div>
     </div>
-    <div id="MLbody"></div>
-  </div>
-</div>
-
-<div class="mov" id="Msett">
-  <div class="msh">
-    <div class="mhd"><div class="mt2">الاعدادات</div><div class="mcl" onclick="cM('Msett')">x</div></div>
-    <div id="Sbody"></div>
+    <div id="Mbody"></div>
   </div>
 </div>
 
 <div class="app">
+
 <div class="hdr">
   <div class="hdr-logo">درب</div>
   <div class="hdr-r">
-    <div class="hb" id="thBtn" onclick="toggleTheme()">&#9680;</div>
-    <div class="tp tp-a" id="tpill" onclick="oSett()">الشاهين</div>
-    <div class="hb" onclick="oSett()">&#9881;</div>
+    <div class="tp tp-a" id="tpill" onclick="gp('sett', 4)">الشاهين</div>
+    <div class="hb" onclick="toggleTheme()">🌓</div>
   </div>
-</div>
-
-<div id="betaBanner" style="background:var(--badge-bg);border-bottom:1px solid var(--b2);padding:8px 14px;display:flex;align-items:center;justify-content:space-between">
-  <div style="font-size:11px;font-weight:800;font-family:'IBM Plex Mono';color:var(--g1)">BETA — نسخة تجريبية</div>
-  <div style="font-size:11px;font-family:'IBM Plex Mono';color:var(--text);cursor:pointer;padding:4px" onclick="document.getElementById('betaBanner').style.display='none'">x</div>
 </div>
 
 <div class="pages">
 
-<div class="pg on" id="pg-home">
-  <div class="rbb mb12">
-    <div><div class="sec-t" id="hGr">مرحباً بك</div><div class="sec-s">طريقك نحو 95+ يبدأ هنا</div></div>
-    <div style="text-align:left">
-      <div style="font-size:10px;color:var(--t2);font-weight:700">الرصيد</div>
-      <div style="font-size:18px;font-weight:900;font-family:'IBM Plex Mono';color:var(--text)" id="hSilv">0</div>
-    </div>
-  </div>
-
-  <div class="card tc mb12" style="background:var(--card2); border:1px solid var(--b2);">
-    <div class="eagle-stage">
-      <svg class="eagle-svg" viewBox="0 0 200 200">
-        <polygon points="100,10 180,40 180,120 100,190 20,120 20,40" fill="var(--card)" stroke="var(--b2)" stroke-width="3"/>
-        <path d="M 100 90 L 170 50 L 140 140 Z" fill="var(--g2)"/>
-        <path d="M 100 90 L 30 50 L 60 140 Z" fill="var(--g1)"/>
-        <polygon points="100,40 125,100 100,170 75,100" fill="var(--text)"/>
-        <polygon points="100,40 125,100 100,170" fill="var(--bg)" opacity="0.3"/>
-        <polygon points="100,40 115,65 100,75 85,65" fill="var(--card)"/>
-        <polygon points="92,85 108,85 100,105" fill="var(--g1)"/>
-        <circle cx="93" cy="65" r="3.5" fill="var(--text)"/>
-        <circle cx="107" cy="65" r="3.5" fill="var(--text)"/>
-      </svg>
-      <div class="eagle-nm" id="eNm">الصقر</div>
-      <div class="eagle-lv" id="eLv">متاح للجميع</div>
-      <div class="xp-bar"><div class="xp-f" id="xpF" style="width:10%"></div></div>
-      <div style="font-size:10px;color:var(--t2);margin-top:6px;font-weight:700"><span id="xpN">100</span> / 1000 XP</div>
-    </div>
-  </div>
-
-  <div class="g2 mb12">
-    <div class="sb" style="--sbc:var(--g1)"><div class="sbv" id="stSt">0</div><div class="sbl">سلسلة الايام</div><div class="sbc-t" style="color:var(--badge-gr-txt)">استمر بطل</div></div>
-    <div class="sb" style="--sbc:var(--badge-gr-txt)"><div class="sbv" id="stSe">0</div><div class="sbl">جلسات مكتملة</div><div class="sbc-t" style="color:var(--t2)">50 دق / جلسة</div></div>
-  </div>
-
-  <div class="card">
-    <div class="cl">التقدم الدراسي</div>
-    <div class="rbb mb8"><span class="ts fw7">القدرات - اللفظي</span><span class="txs mono fw8" style="color:var(--g1)">85%</span></div>
-    <div class="pw mb12" style="height:6px"><div class="pf" style="width:85%"></div></div>
-    <div class="rbb mb8"><span class="ts fw7">القدرات - الكمي</span><span class="txs mono fw8" style="color:var(--g1)">70%</span></div>
-    <div class="pw mb12" style="height:6px"><div class="pf" style="width:70%"></div></div>
-    <div class="rbb mb8"><span class="ts fw7">التحصيلي - رياضيات</span><span class="txs mono fw8" style="color:var(--g1)">60%</span></div>
-    <div class="pw mb12" style="height:6px"><div class="pf" style="width:60%"></div></div>
-    <div class="dv"></div>
-    <div class="rbb">
-      <span class="ts fw8">الاجمالي</span>
-      <span style="font-size:22px;font-weight:900;color:var(--g1);font-family:'IBM Plex Mono'">73%</span>
-    </div>
-    <div class="pw mt8" style="height:8px"><div class="pf" style="width:73%"></div></div>
-  </div>
-
-  <div class="card">
-    <div class="cl">نشاط 91 يوم</div>
-    <div class="hm" id="hmH"></div>
-  </div>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-    <div onclick="gp('study', 1)" style="background:var(--card);border:1px solid var(--b2);border-radius:14px;padding:16px;cursor:pointer">
-      <div style="margin-bottom:10px;color:var(--g1)">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+  <div class="pg on" id="pg-home">
+    <div class="rbb mb12">
+      <div><div class="sec-t">مرحباً بك</div><div class="sec-s">طريقك نحو 95+ يبدأ من هنا</div></div>
+      <div style="text-align:left">
+        <div style="font-size:11px;color:var(--t2);font-weight:800">الرصيد</div>
+        <div style="font-size:18px;font-weight:900;font-family:'IBM Plex Mono';color:var(--text)" id="hSilv">0</div>
       </div>
-      <div class="ts fw8 mb4">مؤقت التركيز</div><div class="txs tm fw7">ابدا جلسة 50/10</div>
     </div>
-    <div onclick="gp('study', 1)" style="background:var(--card);border:1px solid var(--b2);border-radius:14px;padding:16px;cursor:pointer">
-      <div style="margin-bottom:10px;color:var(--g1)">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      </div>
-      <div class="ts fw8 mb4">الخزنة</div><div class="txs tm fw7" id="homeVaultInfo">0 اسئلة معلقة</div>
-    </div>
-  </div>
-</div>
 
-<div class="pg" id="pg-study">
-  <div class="rbb mb12"><div><div class="sec-t">الدراسة</div><div class="sec-s">مؤقت التركيز وخارطة المنهج</div></div></div>
-
-  <div class="card tc">
-    <div class="cl" style="justify-content:center">مؤقت المدار 50/10</div>
-    <div style="display:flex;flex-direction:column;align-items:center;padding:10px 0 16px">
-      <div class="ring-w">
-        <svg class="rsvg" viewBox="0 0 220 220">
-          <defs>
-            <linearGradient id="gg" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="var(--g1)"/><stop offset="100%" stop-color="var(--g2)"/>
-            </linearGradient>
-          </defs>
-          <circle class="rt" cx="110" cy="110" r="95"/>
-          <circle class="rp" id="rProg" cx="110" cy="110" r="95" stroke="var(--g1)"/>
+    <div class="card tc mb12" style="background:var(--card2); border:1px solid var(--b2);">
+      <div class="eagle-stage">
+        <svg class="eagle-svg" viewBox="0 0 100 100">
+          <path d="M50 20 L15 45 L30 85 L50 65 L70 85 L85 45 Z" fill="var(--bg)" opacity="0.4"/>
+          <path d="M50 25 L5 50 L25 90 L50 60 L75 90 L95 50 Z" fill="var(--g1)"/>
+          <path d="M50 30 L20 55 L35 85 L50 65 L65 85 L80 55 Z" fill="var(--g2)"/>
+          <path d="M50 10 L40 45 L50 95 L60 45 Z" fill="var(--text)"/>
+          <path d="M44 38 L47 41 L42 43 Z" fill="var(--bg)"/>
+          <path d="M56 38 L53 41 L58 43 Z" fill="var(--bg)"/>
         </svg>
-        <div class="rc"><div class="rt2" id="tD">50:00</div><div class="rl" id="tL">تركيز</div></div>
+        <div class="eagle-nm" id="eNm">الصقر</div>
+        <div class="eagle-lv" id="eLv">متاح للجميع</div>
+        <div style="width:160px;height:6px;background:var(--b1);border-radius:99px;margin:14px auto 8px;overflow:hidden">
+          <div id="xpF" style="height:100%;background:var(--gg);width:10%;transition:width 1s"></div>
+        </div>
+        <div style="font-size:11px;color:var(--t2);font-weight:800"><span id="xpN" class="mono">100</span> / 1000 XP</div>
       </div>
-      <div class="tph" id="tPh" style="background:var(--badge-bg);color:var(--g1)">وضع التركيز</div>
-      <div class="rb g10">
-        <button class="btn bp" style="padding:12px 24px;font-size:15px" id="tBtn" onclick="toggleTimer()">تشغيل</button>
-        <button class="btn bg" style="padding:12px 20px" onclick="resetTimer()">إعادة</button>
+    </div>
+
+    <div class="g2 mb12">
+      <div class="sb" style="--sbc:var(--g1)">
+        <div class="sbv" id="stSt">0</div>
+        <div class="sbl">سلسلة الأيام</div>
+        <div class="sbc-t" style="color:var(--badge-gr-txt)">استمر يا بطل</div>
+      </div>
+      <div class="sb" style="--sbc:var(--badge-gr-txt)">
+        <div class="sbv" id="stSe">0</div>
+        <div class="sbl">جلسات التركيز</div>
+        <div class="sbc-t" style="color:var(--t2)">50 دقيقة للجلسة</div>
       </div>
     </div>
-    <div class="skbox">
-      <div style="font-size:24px;color:var(--g1)">&#9670;</div>
-      <div style="flex:1;text-align:right"><div class="txs tm fw7">سلسلة الأيام</div><div><span class="skn" id="tSt">0</span> <span class="ts tm fw7">يوم</span></div></div>
-      <div class="tc" style="text-align:left"><div style="font-size:24px;font-weight:900;font-family:'IBM Plex Mono';color:var(--g1)" id="tSe">0</div><div class="txs tm fw7">جلسات مكتملة</div></div>
+
+    <div class="card">
+      <div class="cl">التقدم الأكاديمي العام</div>
+      <div class="rbb mb8"><span class="ts fw7">القدرات - اللفظي</span><span class="txs mono fw8" style="color:var(--g1)">85%</span></div>
+      <div class="pw mb12"><div class="pf" style="width:85%"></div></div>
+      <div class="rbb mb8"><span class="ts fw7">القدرات - الكمي</span><span class="txs mono fw8" style="color:var(--g1)">70%</span></div>
+      <div class="pw mb12"><div class="pf" style="width:70%"></div></div>
+      <div class="rbb mb8"><span class="ts fw7">التحصيلي - الشامل</span><span class="txs mono fw8" style="color:var(--g1)">60%</span></div>
+      <div class="pw mb12"><div class="pf" style="width:60%"></div></div>
+      <div class="dv"></div>
+      <div class="rbb">
+        <span class="ts fw9">الإجمالي</span>
+        <span style="font-size:24px;font-weight:900;color:var(--g1);font-family:'IBM Plex Mono'">71%</span>
+      </div>
     </div>
   </div>
 
-  <div class="sdv"></div>
-  <div class="rbb mb12">
-    <div><div class="sec-t">خارطة الدرب</div><div class="sec-s">مسارك المخصص نحو 95+</div></div>
-    <span class="bdg bg-g"><span id="rmD">5</span>/12</span>
-  </div>
-  <div id="rmList"></div>
+  <div class="pg" id="pg-study">
+    <div class="rbb mb12"><div><div class="sec-t">الميدان الدراسي</div><div class="sec-s">مؤقت المدار 50/10 والمهام</div></div></div>
+    
+    <div class="card tc mb12">
+      <div style="display:flex;flex-direction:column;align-items:center;padding:10px 0">
+        <div class="ring-w">
+          <svg class="rsvg" viewBox="0 0 220 220">
+            <circle class="rt" cx="110" cy="110" r="105"/>
+            <circle class="rp" id="rProg" cx="110" cy="110" r="105"/>
+          </svg>
+          <div class="rc">
+            <div class="rt2" id="tD">50:00</div>
+            <div class="rl" id="tL">جلسة تركيز</div>
+          </div>
+        </div>
+        <div class="bdg bg-g mb12" id="tPh" style="font-size:12px;padding:6px 16px">المدار النشط</div>
+        <div class="rb g10">
+          <button class="btn bp" style="padding:14px 28px;font-size:16px" id="tBtn" onclick="toggleTimer()">بدء التركيز</button>
+          <button class="btn bg" style="padding:14px 20px" onclick="resetTimer()">إعادة</button>
+        </div>
+      </div>
+    </div>
 
-  <div class="sdv"></div>
-  <div class="rbb mb12">
-    <div><div class="sec-t">الخزنة (المراجعة المتباعدة)</div><div class="sec-s">الأسئلة الخاطئة تتحول لنقاط قوة</div></div>
-    <span class="bdg bg-re" id="vBdg">0</span>
+    <div class="rbb mb12 mt8">
+      <div><div class="sec-t">خارطة الدرب</div><div class="sec-s">مسارك المخصص لاختبار القدرات</div></div>
+      <span class="bdg bg-g">5/12</span>
+    </div>
+    <div id="rmList"></div>
   </div>
-  <div id="vList"></div>
-  <button class="btn bg w100 mb10" onclick="addSV()">+ أضف سؤال تدريبي</button>
-</div>
 
-<div class="pg" id="pg-radar">
-  <div class="rbb mb12"><div><div class="sec-t">الرادار الأكاديمي</div><div class="sec-s">قياس مستواك والتخطيط لاختباراتك</div></div></div>
-  
-  <div class="card">
-    <div class="cl">مستوى اللغة الإنجليزية — CEFR</div>
-    <div class="cefr-g" id="cefrG">
-      <div class="cfb" onclick="sCEFR('A1',this)"><div class="cfc">A1</div><div class="cfn fw7">مبتدئ</div></div>
-      <div class="cfb" onclick="sCEFR('A2',this)"><div class="cfc">A2</div><div class="cfn fw7">أساسي</div></div>
-      <div class="cfb on" onclick="sCEFR('B1',this)"><div class="cfc">B1</div><div class="cfn fw7">متوسط</div></div>
-      <div class="cfb" onclick="sCEFR('B2',this)"><div class="cfc">B2</div><div class="cfn fw7">فوق المتوسط</div></div>
-      <div class="cfb" onclick="sCEFR('C1',this)"><div class="cfc">C1</div><div class="cfn fw7">متقدم</div></div>
-      <div class="cfb" onclick="sCEFR('C2',this)"><div class="cfc">C2</div><div class="cfn fw7">احترافي</div></div>
+  <div class="pg" id="pg-radar">
+    <div class="rbb mb12"><div><div class="sec-t">الرادار الأكاديمي</div><div class="sec-s">تتبع أهدافك ومواعيد قبولك</div></div></div>
+    
+    <div class="card" style="border-color:var(--g1); background:var(--badge-bg)">
+      <div class="rbb mb8">
+        <span class="bdg bg-re" style="background:#DC2626;color:#fff;border:none">هدف استراتيجي</span>
+        <span class="txs fw8 mono" style="color:var(--g1)">مايو/يونيو 2026</span>
+      </div>
+      <div class="ts fw9 mb4" style="color:var(--text)">نافذة القبول الجامعي</div>
+      <div class="txs fw7 mb12" style="color:var(--t2)">جامعات المنطقة الشرقية (البترول، فيصل، الإمام عبدالرحمن)</div>
+      <div class="pw mb8"><div class="pf" style="width:88%;background:#DC2626"></div></div>
+      <div class="txs fw8 tc" style="color:var(--g1)">اقترب الموعد! استعد لاختبار التحصيلي</div>
+    </div>
+
+    <div class="rbb mb12 mt8">
+      <div><div class="sec-t">الخزنة (المراجعة المتباعدة)</div><div class="sec-s">أسئلتك الخاطئة تتحول لنقاط قوة</div></div>
+      <span class="bdg bg-re" id="vBdg">0</span>
+    </div>
+    <div id="vList"></div>
+    <button class="btn bg w100" onclick="addSV()">+ استيراد أسئلة جديدة للتحدي</button>
+  </div>
+
+  <div class="pg" id="pg-comm">
+    <div class="sec-t mb12">المجتمع والمنافسة</div>
+    <input class="inp mb12" id="fSrch" type="text" placeholder="ابحث عن أصدقاء للتحدي..." oninput="filtF(this.value)">
+    
+    <div class="card mb12">
+      <div class="cl">قائمة التحدي الخاصة بك (<span id="myFC">0</span>)</div>
+      <div id="myFL"></div>
+    </div>
+    
+    <div class="ts fw9 mb10">اكتشف منافسين جدد</div>
+    <div id="allFL"></div>
+  </div>
+
+  <div class="pg" id="pg-sett">
+    <div class="rbb mb12"><div><div class="sec-t">الإعدادات والتخصيص</div></div></div>
+    
+    <div class="card">
+      <div class="cl">بياناتك الأكاديمية</div>
+      <div class="rbb mb12">
+        <div><div class="ts fw8">المسار</div><div class="txs tm fw7">علمي - هندسة/تقنية</div></div>
+        <div class="bdg bg-g">جاهز</div>
+      </div>
+      <div class="dv"></div>
+      <div class="rbb">
+        <div><div class="ts fw8">الجنس</div><div class="txs tm fw7">يؤثر على نوع الطائر</div></div>
+        <div class="rb">
+          <button class="btn" id="gM" onclick="setGender('m')" style="padding:8px 16px;min-height:0;font-size:12px">ذكر</button>
+          <button class="btn" id="gF" onclick="setGender('f')" style="padding:8px 16px;min-height:0;font-size:12px">أنثى</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cl">تخصيص الواجهة</div>
+      <div class="rbb mb4">
+        <div><div class="ts fw8">الوضع الليلي</div><div class="txs tm fw7">أسود نقي موفر للطاقة</div></div>
+        <button class="tog on" id="thToggle" onclick="toggleTheme()"><div class="tob"></div></button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cl">إعدادات المؤقت (بالدقائق)</div>
+      <div class="g2">
+        <div>
+          <label class="txs fw8 tm mb4" style="display:block">جلسة التركيز</label>
+          <select class="inp" id="focD" onchange="sv('focD',this.value); resetTimer();">
+            <option value="25">25 دقيقة</option><option value="50" selected>50 دقيقة</option><option value="90">90 دقيقة</option>
+          </select>
+        </div>
+        <div>
+          <label class="txs fw8 tm mb4" style="display:block">وقت الراحة</label>
+          <select class="inp" id="restD" onchange="sv('restD',this.value)">
+            <option value="5">5 دقائق</option><option value="10" selected>10 دقائق</option><option value="15">15 دقيقة</option>
+          </select>
+        </div>
+      </div>
     </div>
   </div>
-</div>
-
-<div class="pg" id="pg-sched">
-  <div class="rbb mb12"><div><div class="sec-t">الجدول الدراسي</div><div class="sec-s">تنظيم وقتك بذكاء</div></div></div>
-  <div id="schedG"></div>
-</div>
-
-<div class="pg" id="pg-comm">
-  <div class="sec-t mb12">المجتمع والميدان</div>
-  <input class="inp mb12" id="fSrch" type="text" placeholder="ابحث عن أصدقاء..." oninput="filtF(this.value)">
-  <div class="card mb12"><div class="cl">أصدقائي (<span id="myFC">0</span>)</div><div id="myFL"></div></div>
-  <div class="txs fw8 tm mb10">اكتشف متحدين</div>
-  <div id="allFL"></div>
-
-  <div class="sdv"></div>
-  <div class="sec-t mb12">الباقات والترقية</div>
-  <div id="prcW"></div>
-</div>
-
-<div class="pg" id="pg-sett">
-  <div class="rbb mb12"><div><div class="sec-t">الإعدادات</div><div class="sec-s">تخصيص تجربتك</div></div></div>
-  <div class="card">
-    <div class="cl">المظهر والسمات</div>
-    <div class="rbb mb4">
-      <div><div class="ts fw8">الوضع الليلي</div><div class="txs tm fw7">أسود نقي مع أزرق فخم</div></div>
-      <button class="tog on" id="thToggle" onclick="toggleTheme()"><div class="tob"></div></button>
-    </div>
-  </div>
-</div>
 
 </div><div class="bnav">
   <div class="bni on" onclick="gp('home', 0)">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
     <div class="bni-l">الرئيسية</div>
   </div>
   <div class="bni" onclick="gp('study', 1)">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
-    <div class="bni-l">الدراسة</div>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+    <div class="bni-l">الميدان</div>
   </div>
   <div class="bni" onclick="gp('radar', 2)">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
     <div class="bni-l">الرادار</div>
   </div>
-  <div class="bni" onclick="gp('sched', 3)">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-    <div class="bni-l">الجدول</div>
-  </div>
-  <div class="bni" onclick="gp('comm', 4)">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></svg>
+  <div class="bni" onclick="gp('comm', 3)">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></svg>
     <div class="bni-l">المجتمع</div>
   </div>
-  <div class="bni" onclick="gp('sett', 5)">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+  <div class="bni" onclick="gp('sett', 4)">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
     <div class="bni-l">الإعدادات</div>
   </div>
 </div>
 </div>
 
 <script>
-// --- 1. حماية الذاكرة والتهيئة التلقائية ---
+/* 1. حماية وتجهيز الذاكرة المحلية */
 function ls(k){ try{return localStorage.getItem(k);}catch(e){return null;} }
 function ln(k){ try{return parseInt(localStorage.getItem(k)||0)||0;}catch(e){return 0;} }
 function lj(k){ try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;} }
@@ -472,22 +428,19 @@ try {
   if(!Array.isArray(lj('myFriends'))) sv('myFriends', []);
 } catch(e){}
 
-const sysTheme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+const sysTheme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
 
-// STATE
 const S = {
   tier: ls('tier')||'a', gender: ls('gender')||'m',
-  silver: ln('silver'), gold: ln('gold'), streak: ln('streak'),
-  sessions: ln('sessions'), totalMins: ln('totalMins'), xp: ln('xp')||100,
+  silver: ln('silver'), streak: ln('streak'), sessions: ln('sessions'), totalMins: ln('totalMins'), xp: ln('xp')||100,
   lastDay: ls('lastDay')||'', theme: ls('theme')||sysTheme,
-  vaultQ: lj('vaultQ')||[], myFriends: lj('myFriends')||[],
-  arenaW: ln('arenaW'), arenaL: ln('arenaL'), cefrLevel: ls('cefrLevel')||'B1'
+  vaultQ: lj('vaultQ')||[], myFriends: lj('myFriends')||[]
 };
 
-// --- 2. التحكم بالواجهة والتنقل ---
+/* 2. التنقل والواجهة */
 function gp(pg, index){
-  document.querySelectorAll('.pg').forEach(function(p){ p.classList.remove('on'); });
-  document.querySelectorAll('.bni').forEach(function(n){ n.classList.remove('on'); });
+  document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.bni').forEach(n => n.classList.remove('on'));
   
   const pel = document.getElementById('pg-'+pg);
   if(pel) pel.classList.add('on');
@@ -495,92 +448,83 @@ function gp(pg, index){
   const bnis = document.querySelectorAll('.bni');
   if(bnis[index]) bnis[index].classList.add('on');
   
-  const pgs = document.querySelector('.pages');
-  if(pgs) pgs.scrollTo(0,0);
+  window.scrollTo(0,0);
   
-  const fns = {home:iHome, study:iStudy, radar:iRadar, sched:iSched, comm:iComm};
-  if(fns[pg]) fns[pg]();
+  if(pg==='study') renderRM();
+  if(pg==='radar') renderVault();
+  if(pg==='comm') { filtF(''); renderMyF(); }
+  if(pg==='sett') initSett();
 }
 
 let tT;
 function toast(msg, type){
-  const t = document.getElementById('T');
-  if(!t) return;
-  t.textContent = msg; 
-  t.className = 'toast show ' + (type||'');
-  clearTimeout(tT); 
-  tT = setTimeout(function(){ t.className='toast'; }, 3200);
+  const t = document.getElementById('T'); if(!t) return;
+  t.textContent = msg; t.className = 'toast show ' + (type||'');
+  clearTimeout(tT); tT = setTimeout(() => t.className='toast', 3000);
 }
 
-// تطبيق الثيم بألوان صلبة ومتطورة
+function cM(id){ const m = document.getElementById(id); if(m) m.classList.remove('show'); }
+
+/* 3. الثيم والمظهر */
 function toggleTheme(){
   S.theme = (S.theme === 'dark') ? 'light' : 'dark';
   sv('theme', S.theme);
   document.documentElement.setAttribute('data-theme', S.theme);
-  
-  const thBtn = document.getElementById('thBtn');
-  if(thBtn) thBtn.innerHTML = S.theme === 'dark' ? '&#9680;' : '&#9681;';
-  
   const thToggle = document.getElementById('thToggle');
   if(thToggle) thToggle.className = 'tog ' + (S.theme === 'dark' ? 'on' : 'off');
-  
-  toast(S.theme === 'dark' ? 'الوضع الليلي (أزرق/أسود)' : 'الوضع النهاري (ذهبي/أبيض)', 'ok');
 }
 
-function addCoin(n, gold){
-  if(gold){ if(S.tier!=='c') return; S.gold+=n; sv('gold', S.gold); }
-  else{ S.silver+=n; sv('silver', S.silver); }
-  updCoins();
-}
-function updCoins(){
-  const s1=document.getElementById('hSilv'), s2=document.getElementById('sSilv'), g1=document.getElementById('sGold');
-  if(s1) s1.textContent = S.silver.toLocaleString();
-}
-
-function setTier(t){
-  S.tier = t; sv('tier', t);
-  const L = {a:'الشاهين', b:'السند', c:'العنقاء'};
-  const C = {a:'tp-a', b:'tp-b', c:'tp-c'};
-  const p = document.getElementById('tpill');
-  if(p){ p.textContent = L[t]; p.className = 'tp '+C[t]; }
-  updEagle();
-  toast('الترقية الى ' + L[t], 'ok');
-  cM('Msett'); 
-  setTimeout(function(){ gp('home', 0); }, 400);
+/* 4. العملات والطائر */
+function addCoin(n){
+  S.silver += n; sv('silver', S.silver);
+  const el = document.getElementById('hSilv'); if(el) el.textContent = S.silver.toLocaleString();
 }
 
 const BIRDS={
-  a:{m:{name:'الشاهين',desc:'متاح للجميع',max:1000},f:{name:'الشاهين',desc:'متاح للجميع',max:1000}},
-  b:{m:{name:'الهدهد',desc:'المشتركون',max:3000},f:{name:'اليمامة',desc:'المشتركات',max:3000}},
-  c:{m:{name:'العنقاء',desc:'النخبة',max:10000},f:{name:'العنقاء',desc:'النخبة',max:10000}}
+  a:{m:{name:'الشاهين',desc:'الباقة الأساسية'},f:{name:'الشاهين',desc:'الباقة الأساسية'}},
+  b:{m:{name:'الهدهد',desc:'باقة السند'},f:{name:'اليمامة',desc:'باقة السند'}},
+  c:{m:{name:'العنقاء',desc:'النخبة'},f:{name:'العنقاء',desc:'النخبة'}}
 };
 function updEagle(){
   const b = BIRDS[S.tier][S.gender];
-  const pct = Math.min(100, (S.xp / b.max)*100);
+  const pct = Math.min(100, (S.xp / 1000)*100);
   const nm = document.getElementById('eNm'), lv = document.getElementById('eLv');
   const xf = document.getElementById('xpF'), xn = document.getElementById('xpN');
-  if(nm) nm.textContent = b.name; 
-  if(lv) lv.textContent = b.desc;
-  if(xf) xf.style.width = pct + '%'; 
-  if(xn) xn.textContent = S.xp;
+  if(nm) nm.textContent = b.name; if(lv) lv.textContent = b.desc;
+  if(xf) xf.style.width = pct + '%'; if(xn) xn.textContent = S.xp;
 }
 
-// --- 3. المؤقت (Timer) ---
+function setGender(g){
+  S.gender=g; sv('gender', g); updEagle(); initSett(); toast('تم تحديث البيانات', 'ok');
+}
+
+function initSett(){
+  document.getElementById('gM').className = S.gender==='m'?'btn bp':'btn bg';
+  document.getElementById('gF').className = S.gender==='f'?'btn bp':'btn bg';
+  const fd = document.getElementById('focD'), rd = document.getElementById('restD');
+  if(fd) fd.value = ls('focD')||'50'; if(rd) rd.value = ls('restD')||'10';
+}
+
+/* 5. المؤقت عالي الدقة */
 let tRun=false, tPhase='focus', tEl=0, tIv=null;
-const CIRC=615; // محيط الدائرة الجديدة
+const CIRC=660; 
 function getFD(){ return (parseInt(ls('focD')||'50'))*60; }
 function getRD(){ return (parseInt(ls('restD')||'10'))*60; }
+
 function toggleTimer(){
   if(tRun){ clearInterval(tIv); tRun=false; document.getElementById('tBtn').textContent='استمر'; }
   else{ tRun=true; document.getElementById('tBtn').textContent='إيقاف مؤقت'; tIv=setInterval(timerTick, 1000); }
 }
+
 function timerTick(){
   tEl++; const dur = tPhase==='focus'?getFD():getRD();
   const left = dur - tEl;
   const m = String(Math.floor(left/60)).padStart(2,'0');
   const s = String(left%60).padStart(2,'0');
-  const d = document.getElementById('tD'); if(d) d.textContent = m+':'+s;
-  const rp = document.getElementById('rProg'); if(rp) rp.style.strokeDashoffset = CIRC*(1 - tEl/dur);
+  const d = document.getElementById('tD'), rp = document.getElementById('rProg');
+  if(d) d.textContent = m+':'+s;
+  if(rp) rp.style.strokeDashoffset = CIRC*(1 - tEl/dur);
+  
   if(tPhase==='focus' && tEl%60===0){ addCoin(1); S.totalMins++; sv('totalMins', S.totalMins); }
   
   if(tEl >= dur){
@@ -590,13 +534,13 @@ function timerTick(){
       const today = new Date().toDateString();
       if(S.lastDay !== today){ S.streak++; S.lastDay = today; sv('streak', S.streak); sv('lastDay', today); }
       S.xp+=50; sv('xp', S.xp); addCoin(10);
-      updAll();
+      updStats();
       if(rp){ rp.style.stroke = 'var(--badge-gr-txt)'; rp.style.strokeDashoffset = CIRC; }
       const pb=document.getElementById('tPh'), tl=document.getElementById('tL');
       if(pb){ pb.style.background='var(--badge-gr-bg)'; pb.style.color='var(--badge-gr-txt)'; pb.textContent='وقت الراحة'; }
       if(tl) tl.textContent='راحة';
       if(d) d.textContent = String(Math.floor(getRD()/60)).padStart(2,'0')+':00';
-      toast('جلسة مكتملة — استرح الان','ok');
+      toast('بطل! اكتملت الجلسة (+10 فضة)','ok');
     }else{
       tPhase='focus';
       if(rp){ rp.style.stroke = 'var(--g1)'; rp.style.strokeDashoffset = CIRC; }
@@ -604,166 +548,158 @@ function timerTick(){
       if(pb){ pb.style.background='var(--badge-bg)'; pb.style.color='var(--g1)'; pb.textContent='وضع التركيز'; }
       if(tl) tl.textContent='تركيز';
       if(d) d.textContent = String(Math.floor(getFD()/60)).padStart(2,'0')+':00';
-      toast('الراحة انتهت — ابدأ جلسة جديدة');
+      toast('انتهت الراحة — استعد!');
     }
   }
 }
+
 function resetTimer(){
   clearInterval(tIv); tRun=false; tPhase='focus'; tEl=0;
-  const btn=document.getElementById('tBtn'); if(btn) btn.textContent='تشغيل';
-  const pb=document.getElementById('tPh'), tl=document.getElementById('tL'), d=document.getElementById('tD'), rp=document.getElementById('rProg');
-  if(pb){ pb.style.background='var(--badge-bg)'; pb.style.color='var(--g1)'; pb.textContent='وضع التركيز'; }
+  const btn=document.getElementById('tBtn'), pb=document.getElementById('tPh'), tl=document.getElementById('tL'), d=document.getElementById('tD'), rp=document.getElementById('rProg');
+  if(btn) btn.textContent='بدء التركيز';
+  if(pb){ pb.style.background='var(--badge-bg)'; pb.style.color='var(--g1)'; pb.textContent='المدار النشط'; }
   if(tl) tl.textContent='تركيز'; 
-  if(d) d.textContent='50:00';
+  if(d) d.textContent = String(Math.floor(getFD()/60)).padStart(2,'0')+':00';
   if(rp){ rp.style.stroke='var(--g1)'; rp.style.strokeDashoffset=CIRC; }
 }
 
-function updAll(){
+function updStats(){
   const tSt = document.getElementById('tSt'), stSt = document.getElementById('stSt');
   const tSe = document.getElementById('tSe'), stSe = document.getElementById('stSe');
   if(tSt) tSt.textContent = S.streak; if(stSt) stSt.textContent = S.streak;
   if(tSe) tSe.textContent = S.sessions; if(stSe) stSe.textContent = S.sessions;
-  updCoins(); updEagle();
+  const hSilv = document.getElementById('hSilv'); if(hSilv) hSilv.textContent = S.silver.toLocaleString();
+  updEagle();
 }
 
-function renderHm(id){
-  const c = document.getElementById(id); if(!c) return; c.innerHTML = '';
-  for(let i=0; i<91; i++){
-    const d=document.createElement('div'); d.className='hmc h'+Math.floor(Math.random()*5); c.appendChild(d);
-  }
-}
-
+/* 6. الخارطة (Roadmap) */
 const RM=[
-  {t:'القدرات - اللفظي 1-3',d:'المفردات والتناظر',s:'done',h:'8h'},
-  {t:'القدرات - اللفظي 4-6',d:'الفهم القرائي',s:'done',h:'6h'},
-  {t:'القدرات - الكمي 1-3',d:'الاعداد والجبر',s:'done',h:'7h'},
-  {t:'القدرات - الكمي 4-5',d:'المعادلات والدوال',s:'done',h:'5h'},
-  {t:'القدرات - الكمي 6-8',d:'الهندسة والاحتمالات',s:'act',h:'6h'},
-  {t:'القدرات - الكمي 9-12',d:'مسائل متقدمة',s:'lock',h:'8h'}
+  {t:'تأسيس اللفظي - 1',d:'التناظر اللفظي (أساسيات واستراتيجيات الحل السريع)',s:'done',h:'6h'},
+  {t:'تأسيس الكمي - 1',d:'الكسور والنسبة المئوية (بدون آلة حاسبة)',s:'done',h:'8h'},
+  {t:'تأسيس اللفظي - 2',d:'استيعاب المقروء (قراءة التمشيط والبحث عن المفاتيح)',s:'act',h:'6h'},
+  {t:'تأسيس الكمي - 2',d:'المعادلات والهندسة الأساسية',s:'lock',h:'10h'},
+  {t:'اختبار تجريبي شامل',d:'محاكاة قياس (120 سؤال - 120 دقيقة)',s:'lock',h:'2h'}
 ];
 function renderRM(){
-  const c=document.getElementById('rmList'); if(!c) return;
-  c.innerHTML = RM.map(function(r, i){ return `
-    <div class="rms ${r.s}" onclick="openLesson(${i})">
-      <div class="rmi" style="background:${r.s==='done'?'var(--badge-gr-bg)':r.s==='act'?'var(--badge-bg)':'var(--card)'};color:${r.s==='done'?'var(--badge-gr-txt)':r.s==='act'?'var(--g1)':'var(--t2)'}">
-        ${r.s==='done'?'&#10003;':r.s==='act'?'&#9654;':'&#8212;'}
+  const c = document.getElementById('rmList'); if(!c) return;
+  c.innerHTML = RM.map((r, i) => `
+    <div class="li" style="border-color:${r.s==='done'?'var(--badge-gr-txt)':r.s==='act'?'var(--g1)':'var(--b1)'}; cursor:${r.s==='lock'?'not-allowed':'pointer'}" onclick="openLesson(${i})">
+      <div style="width:44px;height:44px;border-radius:12px;background:${r.s==='done'?'var(--badge-gr-bg)':r.s==='act'?'var(--badge-bg)':'var(--bg)'};color:${r.s==='done'?'var(--badge-gr-txt)':r.s==='act'?'var(--g1)':'var(--t2)'};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;flex-shrink:0">
+        ${r.s==='done'?'✓':r.s==='act'?'▶':'—'}
       </div>
       <div style="flex:1">
-        <div class="rmt">${r.t}</div>
-        <div class="txs tm">${r.d}</div>
-        <div class="rmf">
-          <span class="bdg ${r.s==='done'?'bg-gr':r.s==='act'?'bg-g':'bg-mt'}">${r.h}</span>
-          <span class="txs fw8" style="color:var(--t3);margin-right:auto">${r.s==='done'?'مكتملة':r.s==='act'?'جارية':'مقفلة'}</span>
-        </div>
+        <div class="ts fw8 mb4" style="color:var(--text)">${r.t}</div>
+        <div class="txs fw7 tm mb8">${r.d}</div>
+        <div class="rb"><span class="bdg ${r.s==='done'?'bg-gr':r.s==='act'?'bg-g':'bg-mt'}">${r.h}</span><span class="txs fw8 tm">${r.s==='done'?'مكتمل':r.s==='act'?'مفتوح الآن':'مغلق'}</span></div>
       </div>
-    </div>`}).join('');
-}
-function openLesson(i){
-  const r=RM[i];
-  if(r.s==='lock'){ toast('أكمل المراحل السابقة أولاً', 'warn'); return; }
-  document.getElementById('MLtitle').textContent=r.t;
-  document.getElementById('MLbody').innerHTML=`
-    <div class="txs fw8 mb8" style="color:var(--g1)">الشرح والتلخيص</div>
-    <div class="ts tm fw7 mb12" style="line-height:1.8">هذا الجزء يغطي ${r.d}. ركز وتدرب على التجميعات الحديثة.</div>
-    ${r.s==='act'?`<button class="btn bp w100 mt10" onclick="markDone(${i})">تأكيد الإكتمال (+50 فضة)</button>`:''}`;
-  document.getElementById('Mlesson').classList.add('show');
-}
-function markDone(i){
-  if(RM[i]) RM[i].s='done'; addCoin(50); S.xp+=30; sv('xp', S.xp);
-  toast('بطل! مكتملة +50 فضة','ok'); cM('Mlesson'); renderRM(); updEagle();
+    </div>`).join('');
 }
 
+function openLesson(i){
+  const r = RM[i];
+  if(r.s==='lock'){ toast('أكمل المراحل السابقة لتفتح هذا التحدي', 'warn'); return; }
+  document.getElementById('Mtitle').textContent = r.t;
+  document.getElementById('Mbody').innerHTML = `
+    <div class="ts fw8 mb8" style="color:var(--g1)">المهمة المطلوبة:</div>
+    <div class="ts fw7 tm mb12" style="line-height:1.8">هذا الجزء يعتمد على ${r.d}. تأكد من مراجعة القوانين الأساسية قبل البدء.</div>
+    ${r.s==='act' ? `<button class="btn bp w100" onclick="markDone(${i})">إكمال التحدي (+50 فضة)</button>` : '<div class="bdg bg-gr">تم الإنجاز بنجاح</div>'}
+  `;
+  document.getElementById('Mapp').classList.add('show');
+}
+
+function markDone(i){
+  if(RM[i]) RM[i].s='done'; addCoin(50); S.xp+=30; sv('xp', S.xp);
+  if(RM[i+1]) RM[i+1].s='act';
+  toast('عمل ممتاز! تمت الإضافة لرصيدك','ok'); cM('Mapp'); renderRM(); updEagle();
+}
+
+/* 7. الخزنة (المراجعة المتباعدة) */
 const DV=[
-  {q:'اذا x+y=10 وx-y=4, فإن xy=?',opts:['21','24','16','12'],ans:0,done:false,tip:'(x+y)² = x²+2xy+y²'},
-  {q:'مساحة مربع محيطه 24سم',opts:['36 سم²','48 سم²','24 سم²','16 سم²'],ans:0,done:false,tip:'الضلع=6, المساحة=36'}
+  {q:'إذا كان سعر سلعة 120 ريال، وزاد بنسبة 25%، فكم السعر الجديد؟',opts:['145','150','135','160'],ans:1,done:false,tip:'احسب 25% من 120 (وهي الربع = 30)، ثم اجمعها.'},
+  {q:'العلاقة في (طبيب : مستشفى) تشابه:',opts:['معلم : مدرسة','كتاب : حقيبة','قلم : ورقة','عامل : مصنع'],ans:0,done:false,tip:'العلاقة هي (مكان العمل).'}
 ];
 function renderVault(){
-  const all=[...DV, ...S.vaultQ];
-  const p=all.filter(function(q){return !q.done;}).length;
-  const b=document.getElementById('vBdg'); if(b) b.textContent=p;
-  const c=document.getElementById('vList'); if(!c) return;
-  if(!all.length){ c.innerHTML='<div class="txs tm tc" style="padding:14px">الخزنة فارغة</div>'; return; }
-  c.innerHTML = all.map(function(q, i){ return `
-    <div class="vq">
-      <div class="rbb mb10">
-        <span class="bdg ${q.done?'bg-gr':'bg-re'}">${q.done?'محلول':'معلق'}</span>
-        <span class="txs fw8" style="color:var(--g1)">+15 فضة</span>
-      </div>
-      <div style="font-size:14px;line-height:1.7;margin-bottom:12px;font-weight:700">${q.q}</div>
-      <div>${q.opts.map(function(o, j){ return `<div class="vo" id="vo${i}-${j}" onclick="ansV(${i},${j})">${o}</div>`}).join('')}</div>
-      <div class="vtip" id="vt${i}">التلميح: ${q.tip}</div>
-    </div>`}).join('');
+  const all = [...DV, ...S.vaultQ];
+  const p = all.filter(q => !q.done).length;
+  const b = document.getElementById('vBdg'); if(b) b.textContent = p;
+  const vhi = document.getElementById('homeVaultInfo'); if(vhi) vhi.textContent = p + ' أسئلة معلقة';
+  const c = document.getElementById('vList'); if(!c) return;
+  if(p === 0){ c.innerHTML='<div class="txs fw8 tm tc" style="padding:20px">الخزنة فارغة! أنت مسيطر تماماً.</div>'; return; }
+  
+  c.innerHTML = all.map((q, i) => {
+    if(q.done) return '';
+    return `
+    <div class="card" style="border-color:var(--b2)">
+      <div class="rbb mb12"><span class="bdg bg-re">سؤال تحدي</span><span class="txs fw9" style="color:var(--g1)">+15 فضة</span></div>
+      <div class="ts fw8 mb12" style="line-height:1.6;color:var(--text)">${q.q}</div>
+      <div>${q.opts.map((o, j) => `<div class="vo" id="vo${i}-${j}" onclick="ansV(${i},${j})">${o}</div>`).join('')}</div>
+      <div class="vtip" id="vt${i}">تلميح: ${q.tip}</div>
+    </div>`;
+  }).join('');
 }
-function ansV(qi,oi){
+
+function ansV(qi, oi){
   const all=[...DV, ...S.vaultQ]; const q=all[qi]; if(q.done) return;
-  const ok = oi===q.ans;
   const op = document.getElementById(`vo${qi}-${oi}`);
   const cr = document.getElementById(`vo${qi}-${q.ans}`);
   const tp = document.getElementById(`vt${qi}`);
-  if(ok){ if(op) op.classList.add('cr'); q.done=true; addCoin(15); S.xp+=15; sv('xp', S.xp); toast('إجابة صحيحة! +15 فضة','ok'); }
-  else{ if(op) op.classList.add('wr'); setTimeout(function(){ if(cr) cr.classList.add('cr'); },400); toast('خطأ — راجع التلميح', 'warn'); }
-  if(tp) tp.classList.add('sh'); setTimeout(function(){ renderVault(); }, 1500);
+  
+  if(oi === q.ans){ 
+    if(op) op.classList.add('cr'); q.done=true; addCoin(15); S.xp+=10; sv('xp', S.xp); 
+    toast('إجابة دقيقة! +15 فضة','ok'); 
+  } else { 
+    if(op) op.classList.add('wr'); 
+    setTimeout(() => { if(cr) cr.classList.add('cr'); }, 400); 
+    toast('خطأ — راجع التلميح لتعرف السبب', 'warn'); 
+  }
+  if(tp) tp.classList.add('sh'); 
+  setTimeout(() => { renderVault(); updEagle(); }, 2000);
 }
+
 function addSV(){
-  S.vaultQ.push({q:'ناتج (3+4i)(3-4i)؟',opts:['25','7','0','12'],ans:0,done:false,tip:'(a+bi)(a-bi)=a²+b²'});
-  sv('vaultQ', S.vaultQ); renderVault(); toast('تمت إضافة سؤال تدريبي','ok');
+  S.vaultQ.push({q:'قطار يسير بسرعة 120 كم/س، كم المسافة التي يقطعها في 45 دقيقة؟',opts:['90 كم','80 كم','100 كم','60 كم'],ans:0,done:false,tip:'45 دقيقة = 3/4 ساعة. اضرب 120 في 3/4.'});
+  sv('vaultQ', S.vaultQ); renderVault(); toast('تمت إضافة سؤال تحليلي جديد','ok');
 }
 
-function renderSched(){
-  const c=document.getElementById('schedG'); if(!c) return;
-  c.innerHTML=`
-  <div class="dslot"><div class="dh" onclick="this.nextElementSibling.classList.toggle('op')"><div class="dn">السبت</div><div class="dhr">2 جلسة</div></div><div class="dsess"><div class="sblk"><div class="stm">6:00</div><div class="ssub">قدرات لفظي</div><div class="stype st-s">مذاكرة</div></div></div></div>
-  <div class="dslot"><div class="dh" onclick="this.nextElementSibling.classList.toggle('op')"><div class="dn">الأحد</div><div class="dhr">1 جلسة</div></div><div class="dsess"><div class="sblk"><div class="stm">19:00</div><div class="ssub">تحصيلي رياضيات</div><div class="stype st-s">مذاكرة</div></div></div></div>`;
-}
-
+/* 8. المجتمع والأصدقاء */
 const FR=[
-  {name:'أحمد الشهري',user:'@ahmed',av:'أ',col:'#2563EB',streak:18},
-  {name:'سلطان العتيبي',user:'@sultan',av:'س',col:'#7C3AED',streak:7}
+  {name:'أحمد الشهري',user:'@ahmed_sh',av:'أ',col:'#2563EB'},
+  {name:'سلطان العتيبي',user:'@sultan_e',av:'س',col:'#7C3AED'},
+  {name:'فيصل الدوسري',user:'@faisal_d',av:'ف',col:'#059669'},
+  {name:'نورة السعد',user:'@noura_s',av:'ن',col:'#D97706'}
 ];
 function fCard(f){
-  const isMy=S.myFriends.includes(f.user);
-  return `<div class="li"><div class="uav" style="background:${f.col}">${f.av}</div><div style="flex:1"><div class="li-t">${f.name}</div><div class="li-s mono">${f.user}</div></div>${isMy?'<span class="bdg bg-gr">صديق</span>':`<button class="btn bg" style="padding:6px 12px;font-size:11px" onclick="addFr('${f.user}')">إضافة</button>`}</div>`;
+  const isMy = S.myFriends.includes(f.user);
+  return `
+    <div class="li">
+      <div class="uav" style="background:${f.col}">${f.av}</div>
+      <div style="flex:1">
+        <div class="ts fw8" style="color:var(--text)">${f.name}</div>
+        <div class="txs fw7 tm mono">${f.user}</div>
+      </div>
+      ${isMy ? '<span class="bdg bg-gr">صديق</span>' : `<button class="btn bg" style="padding:8px 14px;font-size:12px;min-height:0" onclick="addFr('${f.user}')">تحدَّ</button>`}
+    </div>`;
 }
 function filtF(q){
-  const list = FR.filter(function(f){ return !q || f.name.includes(q) || f.user.includes(q.toLowerCase()); });
-  const c=document.getElementById('allFL');
-  if(c) c.innerHTML = list.map(function(f){ return fCard(f); }).join('');
+  const list = FR.filter(f => !q || f.name.includes(q) || f.user.includes(q.toLowerCase()));
+  const c = document.getElementById('allFL');
+  if(c) c.innerHTML = list.map(f => fCard(f)).join('');
 }
 function renderMyF(){
-  const list = FR.filter(function(f){ return S.myFriends.includes(f.user); });
-  const c=document.getElementById('myFL'), cnt=document.getElementById('myFC');
+  const list = FR.filter(f => S.myFriends.includes(f.user));
+  const c = document.getElementById('myFL'), cnt = document.getElementById('myFC');
   if(cnt) cnt.textContent = list.length;
-  if(c) c.innerHTML = list.length ? list.map(function(f){ return fCard(f); }).join('') : '<div class="txs tm tc fw7">ابدأ بإضافة أصدقاء للمنافسة</div>';
+  if(c) c.innerHTML = list.length ? list.map(f => fCard(f)).join('') : '<div class="txs fw8 tm tc" style="padding:16px">القائمة فارغة. أضف منافسين لتشعل الحماس!</div>';
 }
 function addFr(user){
   if(!S.myFriends.includes(user)){ S.myFriends.push(user); sv('myFriends', S.myFriends); }
-  renderMyF(); filtF(''); toast('تمت الإضافة بنجاح','ok');
+  renderMyF(); filtF(document.getElementById('fSrch').value); toast('تمت الإضافة بنجاح','ok');
 }
 
-function renderPricing(){
-  const c=document.getElementById('prcW'); if(!c) return;
-  c.innerHTML=`
-    <div class="prc"><div class="ptr" style="color:var(--g1)">SHAHEEN — الشاهين</div><div class="pam">29 <span class="ts tm">ر.س</span></div><button class="btn ${S.tier==='a'?'bg':'bp'} w100" onclick="setTier('a')">${S.tier==='a'?'باقتك الحالية':'اشترك'}</button></div>
-    <div class="prc feat"><div class="ptr" style="color:#A78BFA">SANAD — السند</div><div class="pam" style="color:#A78BFA">59 <span class="ts tm">ر.س</span></div><button class="btn bp w100" onclick="setTier('b')">${S.tier==='b'?'باقتك الحالية':'ارتقِ للسند'}</button></div>
-    <div class="prc" style="border-color:#F87171"><div class="ptr" style="color:#F87171">ANQA — العنقاء</div><div class="pam" style="color:#F87171">119 <span class="ts tm">ر.س</span></div><button class="btn w100" style="background:linear-gradient(135deg,#DC2626,#991B1B);color:#fff" onclick="setTier('c')">${S.tier==='c'?'باقتك الحالية':'احصل عليها للأبد'}</button></div>`;
-}
-
-function oSett(){ document.getElementById('Msett').classList.add('show'); }
-function cM(id){ const m = document.getElementById(id); if(m) m.classList.remove('show'); }
-document.querySelectorAll('.mov').forEach(function(m){ m.addEventListener('click', function(e){ if(e.target===m) m.classList.remove('show'); }); });
-
-function iHome(){ renderHm('hmH'); updAll(); }
-function iStudy(){ renderRM(); renderVault(); }
-function iRadar(){ }
-function iSched(){ renderSched(); }
-function iComm(){ filtF(''); renderMyF(); renderPricing(); }
-
+/* 9. التهيئة عند التشغيل */
 document.documentElement.setAttribute('data-theme', S.theme);
-const thBtn = document.getElementById('thBtn'); if(thBtn) thBtn.innerHTML = S.theme==='dark' ? '&#9680;' : '&#9681;';
-const thToggle = document.getElementById('thToggle'); if(thToggle) thToggle.className = 'tog ' + (S.theme==='dark'?'on':'off');
-const L={a:'الشاهين',b:'السند',c:'العنقاء'}, C={a:'tp-a',b:'tp-b',c:'tp-c'}, pt = document.getElementById('tpill'); if(pt){ pt.textContent=L[S.tier]; pt.className='tp '+C[S.tier]; }
-
-updAll(); iHome();
+const tTgl = document.getElementById('thToggle'); if(tTgl) tTgl.className = 'tog ' + (S.theme==='dark'?'on':'off');
+updStats(); resetTimer(); renderHm('hmH'); gp('home', 0);
 </script>
 </body>
 </html>
