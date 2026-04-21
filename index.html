@@ -1,705 +1,264 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl" data-theme="dark">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>درب</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-/* --- الألوان الثابتة (الوضع الليلي: أسود وأزرق) --- */
-[data-theme="dark"] {
-  --bg: #000000;
-  --card: #09090B;
-  --card2: #18181B;
-  --b1: #27272A;
-  --b2: #3F3F46;
-  --text: #F8FAFC;
-  --t2: #94A3B8;
-  --t3: #64748B;
-  
-  --g1: #2563EB; /* أزرق داكن/أساسي */
-  --g2: #60A5FA; /* أزرق مضيء */
-  --gg: linear-gradient(135deg, #2563EB, #60A5FA);
-  
-  --badge-bg: #1E3A8A;
-  --badge-txt: #93C5FD;
-  --badge-gr-bg: #064E3B;
-  --badge-gr-txt: #34D399;
-  --badge-re-bg: #7F1D1D;
-  --badge-re-txt: #F87171;
-  --sh: 0 10px 40px rgba(0,0,0,0.8);
-}
+import { useState, useEffect } from "react";
 
-/* --- الألوان الثابتة (الوضع النهاري: أبيض وذهبي) --- */
-[data-theme="light"] {
-  --bg: #FFFFFF;
-  --card: #F8FAFC;
-  --card2: #F1F5F9;
-  --b1: #E2E8F0;
-  --b2: #CBD5E1;
-  --text: #0F172A;
-  --t2: #475569;
-  --t3: #64748B;
-  
-  --g1: #D97706; /* ذهبي داكن/أساسي */
-  --g2: #F59E0B; /* ذهبي مضيء */
-  --gg: linear-gradient(135deg, #D97706, #FBBF24);
-  
-  --badge-bg: #FEF3C7;
-  --badge-txt: #D97706;
-  --badge-gr-bg: #D1FAE5;
-  --badge-gr-txt: #059669;
-  --badge-re-bg: #FEE2E2;
-  --badge-re-txt: #DC2626;
-  --sh: 0 4px 20px rgba(0,0,0,0.06);
-}
+const PhoenixEgg = () => (
+  <svg viewBox="0 0 80 100" className="w-full h-full" fill="none">
+    <defs>
+      <radialGradient id="eggGlow" cx="40%" cy="35%" r="55%">
+        <stop offset="0%" stopColor="#1E40AF" stopOpacity="0.9" />
+        <stop offset="60%" stopColor="#1E3A8A" stopOpacity="0.7" />
+        <stop offset="100%" stopColor="#0f172a" stopOpacity="1" />
+      </radialGradient>
+      <radialGradient id="crackGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stopColor="#FBBF24" stopOpacity="1" />
+        <stop offset="100%" stopColor="#F59E0B" stopOpacity="0" />
+      </radialGradient>
+    </defs>
+    <ellipse cx="40" cy="52" rx="30" ry="38" fill="url(#eggGlow)" />
+    <ellipse cx="40" cy="52" rx="30" ry="38" fill="none" stroke="#1d4ed8" strokeWidth="1" opacity="0.5" />
+    <ellipse cx="30" cy="35" rx="6" ry="10" fill="#3B82F6" opacity="0.15" transform="rotate(-15 30 35)" />
+    <polyline points="35,30 38,38 33,44 40,52" stroke="#FBBF24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.8" />
+    <circle cx="38" cy="52" r="4" fill="url(#crackGlow)" opacity="0.9">
+      <animate attributeName="opacity" values="0.6;1;0.6" dur="2s" repeatCount="indefinite" />
+    </circle>
+  </svg>
+);
 
-/* --- التهيئة لشاشات الجوال الحقيقية --- */
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-html { font-size: 16px; background: var(--bg); }
-body { 
-  font-family: 'Tajawal', sans-serif; 
-  background: var(--bg); color: var(--text); 
-  min-height: 100vh; min-height: 100dvh; 
-  overflow-x: hidden; direction: rtl; 
-  transition: background 0.3s, color 0.3s; 
-}
-
-@keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: none; } }
-@keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: none; } }
-@keyframes soar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-
-/* APP SHELL */
-.app { display: flex; flex-direction: column; min-height: 100dvh; max-width: 480px; margin: 0 auto; position: relative; }
-
-/* HEADER (مع حساب المسافة الآمنة العلوية للآيفون) */
-.hdr {
-  position: sticky; top: 0; z-index: 100;
-  background: var(--bg); border-bottom: 1px solid var(--b1);
-  padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.hdr-logo { font-size: 20px; font-weight: 900; background: var(--gg); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.hdr-r { display: flex; gap: 8px; align-items: center; }
-
-/* NAVBAR (مع حساب المسافة الآمنة السفلية) */
-.bnav {
-  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
-  width: 100%; max-width: 480px; z-index: 100;
-  background: var(--bg); border-top: 1px solid var(--b1);
-  display: flex; padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
-}
-.bni {
-  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 6px 0; cursor: pointer; border-radius: 10px; color: var(--t3); gap: 4px; transition: all 0.2s;
-}
-.bni.on { color: var(--g1); background: var(--card2); }
-.bni-i { font-size: 20px; line-height: 1; transition: transform 0.2s; }
-.bni.on .bni-i { transform: scale(1.15); }
-.bni-l { font-size: 10px; font-weight: 800; }
-
-/* PAGES */
-.pages { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: calc(90px + env(safe-area-inset-bottom)); }
-.pg { display: none; animation: fadeUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) both; }
-.pg.on { display: block; }
-
-/* TYPOGRAPHY */
-.sec-t { font-size: 18px; font-weight: 900; letter-spacing: -0.3px; }
-.sec-s { font-size: 12px; color: var(--t2); margin-top: 2px; font-weight: 500; }
-.ts { font-size: 14px; } .txs { font-size: 12px; }
-.fw7 { font-weight: 700; } .fw8 { font-weight: 800; } .fw9 { font-weight: 900; }
-.tm { color: var(--t2); } .mono { font-family: 'IBM Plex Mono'; }
-
-/* CARDS & CONTAINERS */
-.card { background: var(--card); border: 1px solid var(--b1); border-radius: 16px; padding: 16px; margin-bottom: 14px; box-shadow: var(--sh); }
-.cl { font-size: 11px; font-weight: 900; color: var(--t2); text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
-.cl::before { content: ''; width: 4px; height: 14px; background: var(--g1); border-radius: 99px; }
-
-/* LAYOUT UTILS */
-.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.rbb { display: flex; align-items: center; justify-content: space-between; }
-.rb { display: flex; align-items: center; gap: 8px; }
-.mb8 { margin-bottom: 8px; } .mb12 { margin-bottom: 12px; } .mt8 { margin-top: 8px; }
-.w100 { width: 100%; } .tc { text-align: center; }
-
-/* BUTTONS (متوافقة مع لمس الجوال) */
-.btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 12px 20px; border-radius: 12px; border: none; cursor: pointer;
-  font-family: 'Tajawal'; font-size: 14px; font-weight: 800; transition: all 0.2s;
-  min-height: 44px; /* لسهولة النقر */
-}
-.bp { background: var(--gg); color: #fff; }
-.bp:active { transform: scale(0.96); }
-.bg { background: var(--card2); color: var(--text); border: 1px solid var(--b2); }
-.bg:active { background: var(--b1); }
-
-/* BADGES */
-.bdg { padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 800; font-family: 'IBM Plex Mono'; }
-.bg-g { background: var(--badge-bg); color: var(--badge-txt); }
-.bg-gr { background: var(--badge-gr-bg); color: var(--badge-gr-txt); }
-.bg-re { background: var(--badge-re-bg); color: var(--badge-re-txt); }
-
-/* PROGRESS */
-.pw { background: var(--card2); border-radius: 99px; overflow: hidden; height: 8px; }
-.pf { height: 100%; border-radius: 99px; background: var(--gg); transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
-
-/* INPUT & TOGGLE */
-.inp {
-  width: 100%; padding: 14px 16px; background: var(--card2); border: 1px solid var(--b1);
-  border-radius: 12px; color: var(--text); font-family: 'Tajawal'; font-size: 14px;
-  outline: none; transition: border-color 0.2s; min-height: 48px;
-}
-.inp:focus { border-color: var(--g1); }
-
-.tog { width: 46px; height: 26px; border-radius: 99px; position: relative; border: none; transition: 0.3s; }
-.tog.on { background: var(--g1); } .tog.off { background: var(--b2); }
-.tob { position: absolute; top: 3px; width: 20px; height: 20px; background: #fff; border-radius: 50%; transition: 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-.tog.on .tob { right: 3px; left: auto; } .tog.off .tob { left: 3px; right: auto; }
-
-/* TOAST */
-.toast {
-  position: fixed; bottom: calc(90px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%) translateY(50px);
-  z-index: 9999; padding: 12px 24px; border-radius: 14px; background: var(--card); border: 1px solid var(--b2);
-  box-shadow: var(--sh); font-size: 13px; font-weight: 800; opacity: 0; pointer-events: none; transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-}
-.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-
-/* MODAL */
-.mov { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 500; display: none; align-items: flex-end; }
-.mov.show { display: flex; animation: fIn 0.2s ease; }
-.msh { background: var(--card); border-radius: 24px 24px 0 0; width: 100%; max-width: 480px; padding: 24px 20px calc(24px + env(safe-area-inset-bottom)); max-height: 90dvh; overflow-y: auto; animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-top: 1px solid var(--b2); }
-.mcl { width: 36px; height: 36px; background: var(--card2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; }
-
-/* THE NEW GEOMETRIC FALCON SVG */
-.eagle-stage { display: flex; flex-direction: column; align-items: center; padding: 20px 0; }
-.eagle-svg { width: 150px; height: 150px; animation: soar 4s ease-in-out infinite; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4)); }
-
-/* TIMER RING */
-.ring-w { position: relative; width: 220px; height: 220px; margin: 0 auto 20px; }
-.rsvg { width: 100%; height: 100%; transform: rotate(-90deg); }
-.rt { fill: none; stroke: var(--card2); stroke-width: 8; }
-.rp { fill: none; stroke: var(--g1); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 660; stroke-dashoffset: 660; transition: stroke-dashoffset 0.5s ease; }
-.rc { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.rt2 { font-size: 48px; font-weight: 900; font-family: 'IBM Plex Mono'; letter-spacing: -2px; }
-
-/* LIST ITEMS / VAULT */
-.li { display: flex; align-items: center; gap: 12px; padding: 14px; background: var(--card2); border: 1px solid var(--b1); border-radius: 14px; margin-bottom: 10px; transition: border-color 0.2s; }
-.vo { padding: 12px 16px; border: 1px solid var(--b1); border-radius: 10px; margin-bottom: 8px; font-size: 14px; font-weight: 700; background: var(--card2); transition: 0.2s; cursor: pointer; }
-.vo.cr { border-color: var(--badge-gr-txt); background: var(--badge-gr-bg); color: var(--badge-gr-txt); }
-.vo.wr { border-color: var(--badge-re-txt); background: var(--badge-re-bg); color: var(--badge-re-txt); }
-
-/* STATS BOX */
-.sb { background: var(--card2); border: 1px solid var(--b1); border-radius: 14px; padding: 16px; border-top: 3px solid var(--sbc, var(--g1)); }
-
-/* CALENDAR / RADAR GRID */
-.cfb { padding: 14px; border-radius: 12px; background: var(--card2); border: 1px solid var(--b1); text-align: center; cursor: pointer; transition: 0.2s; }
-.cfb.on { background: var(--badge-bg); border-color: var(--g1); }
-
-</style>
-</head>
-<body>
-
-<div class="toast" id="T"></div>
-
-<div class="mov" id="Mapp" onclick="if(event.target===this) cM('Mapp')">
-  <div class="msh">
-    <div class="rbb mb12">
-      <div class="sec-t" id="Mtitle">عنوان</div>
-      <div class="mcl" onclick="cM('Mapp')">✕</div>
+const StatBar = ({ value, color = "#1d4ed8", delay = 0 }) => {
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setWidth(value), 400 + delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return (
+    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "#ffffff08" }}>
+      <div className="h-full rounded-full transition-all duration-1000 ease-out"
+        style={{ width: `${width}%`, background: `linear-gradient(90deg, ${color}88, ${color})` }} />
     </div>
-    <div id="Mbody"></div>
-  </div>
-</div>
+  );
+};
 
-<div class="app">
+const CountdownTimer = ({ targetDate }) => {
+  const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0 });
+  useEffect(() => {
+    const calc = () => {
+      const diff = new Date(targetDate) - new Date();
+      if (diff <= 0) return;
+      setT({ d: Math.floor(diff / 86400000), h: Math.floor((diff % 86400000) / 3600000), m: Math.floor((diff % 3600000) / 60000), s: Math.floor((diff % 60000) / 1000) });
+    };
+    calc();
+    const id = setInterval(calc, 1000);
+    return () => clearInterval(id);
+  }, [targetDate]);
 
-<div class="hdr">
-  <div class="hdr-logo">درب</div>
-  <div class="hdr-r">
-    <div class="tp tp-a" id="tpill" onclick="gp('sett', 4)">الشاهين</div>
-    <div class="hb" onclick="toggleTheme()">🌓</div>
-  </div>
-</div>
-
-<div class="pages">
-
-  <div class="pg on" id="pg-home">
-    <div class="rbb mb12">
-      <div><div class="sec-t">مرحباً بك</div><div class="sec-s">طريقك نحو 95+ يبدأ من هنا</div></div>
-      <div style="text-align:left">
-        <div style="font-size:11px;color:var(--t2);font-weight:800">الرصيد</div>
-        <div style="font-size:18px;font-weight:900;font-family:'IBM Plex Mono';color:var(--text)" id="hSilv">0</div>
+  const Unit = ({ val, label }) => (
+    <div className="flex flex-col items-center">
+      <div className="w-12 h-12 rounded-xl flex items-center justify-center"
+        style={{ background: "linear-gradient(145deg, #1e3a8a33, #1d4ed815)", border: "1px solid #1d4ed840" }}>
+        <span className="text-xl font-black text-white" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{String(val).padStart(2, "0")}</span>
       </div>
+      <span className="text-[9px] tracking-widest text-blue-400/60 mt-1" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{label}</span>
     </div>
-
-    <div class="card tc mb12" style="background:var(--card2); border:1px solid var(--b2);">
-      <div class="eagle-stage">
-        <svg class="eagle-svg" viewBox="0 0 100 100">
-          <path d="M50 20 L15 45 L30 85 L50 65 L70 85 L85 45 Z" fill="var(--bg)" opacity="0.4"/>
-          <path d="M50 25 L5 50 L25 90 L50 60 L75 90 L95 50 Z" fill="var(--g1)"/>
-          <path d="M50 30 L20 55 L35 85 L50 65 L65 85 L80 55 Z" fill="var(--g2)"/>
-          <path d="M50 10 L40 45 L50 95 L60 45 Z" fill="var(--text)"/>
-          <path d="M44 38 L47 41 L42 43 Z" fill="var(--bg)"/>
-          <path d="M56 38 L53 41 L58 43 Z" fill="var(--bg)"/>
-        </svg>
-        <div class="eagle-nm" id="eNm">الصقر</div>
-        <div class="eagle-lv" id="eLv">متاح للجميع</div>
-        <div style="width:160px;height:6px;background:var(--b1);border-radius:99px;margin:14px auto 8px;overflow:hidden">
-          <div id="xpF" style="height:100%;background:var(--gg);width:10%;transition:width 1s"></div>
-        </div>
-        <div style="font-size:11px;color:var(--t2);font-weight:800"><span id="xpN" class="mono">100</span> / 1000 XP</div>
-      </div>
+  );
+  return (
+    <div className="flex items-end gap-1.5 justify-center">
+      <Unit val={t.d} label="يوم" />
+      <span className="text-blue-400/30 text-lg mb-7">:</span>
+      <Unit val={t.h} label="ساعة" />
+      <span className="text-blue-400/30 text-lg mb-7">:</span>
+      <Unit val={t.m} label="دقيقة" />
+      <span className="text-blue-400/30 text-lg mb-7">:</span>
+      <Unit val={t.s} label="ثانية" />
     </div>
+  );
+};
 
-    <div class="g2 mb12">
-      <div class="sb" style="--sbc:var(--g1)">
-        <div class="sbv" id="stSt">0</div>
-        <div class="sbl">سلسلة الأيام</div>
-        <div class="sbc-t" style="color:var(--badge-gr-txt)">استمر يا بطل</div>
-      </div>
-      <div class="sb" style="--sbc:var(--badge-gr-txt)">
-        <div class="sbv" id="stSe">0</div>
-        <div class="sbl">جلسات التركيز</div>
-        <div class="sbc-t" style="color:var(--t2)">50 دقيقة للجلسة</div>
-      </div>
-    </div>
+const NavItem = ({ icon, label, active, onClick }) => (
+  <button onClick={onClick} className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all duration-300">
+    <span className={`text-lg transition-all duration-300 ${active ? "scale-110" : "opacity-30"}`}>{icon}</span>
+    <span className="text-[8px]" style={{ fontFamily: "'IBM Plex Mono', monospace", color: active ? "#60a5fa" : "#ffffff50" }}>{label}</span>
+    {active && <div className="w-1 h-1 rounded-full bg-blue-400" style={{ boxShadow: "0 0 6px #60a5fa" }} />}
+  </button>
+);
 
-    <div class="card">
-      <div class="cl">التقدم الأكاديمي العام</div>
-      <div class="rbb mb8"><span class="ts fw7">القدرات - اللفظي</span><span class="txs mono fw8" style="color:var(--g1)">85%</span></div>
-      <div class="pw mb12"><div class="pf" style="width:85%"></div></div>
-      <div class="rbb mb8"><span class="ts fw7">القدرات - الكمي</span><span class="txs mono fw8" style="color:var(--g1)">70%</span></div>
-      <div class="pw mb12"><div class="pf" style="width:70%"></div></div>
-      <div class="rbb mb8"><span class="ts fw7">التحصيلي - الشامل</span><span class="txs mono fw8" style="color:var(--g1)">60%</span></div>
-      <div class="pw mb12"><div class="pf" style="width:60%"></div></div>
-      <div class="dv"></div>
-      <div class="rbb">
-        <span class="ts fw9">الإجمالي</span>
-        <span style="font-size:24px;font-weight:900;color:var(--g1);font-family:'IBM Plex Mono'">71%</span>
-      </div>
-    </div>
-  </div>
+export default function DarbDashboard() {
+  const [activeNav, setActiveNav] = useState("home");
+  const aramcoDate = new Date(Date.now() + 23 * 86400000);
+  const activity = Array.from({ length: 35 }, (_, i) => [0, 1, 2, 3, 4, 2, 1, 3, 4, 2, 0, 1, 3, 2, 4, 1, 0, 2, 3, 4, 1, 2, 0, 3, 4, 2, 1, 3, 0, 2, 4, 3, 2, 1, 4][i]);
+  const mono = { fontFamily: "'IBM Plex Mono', monospace" };
 
-  <div class="pg" id="pg-study">
-    <div class="rbb mb12"><div><div class="sec-t">الميدان الدراسي</div><div class="sec-s">مؤقت المدار 50/10 والمهام</div></div></div>
-    
-    <div class="card tc mb12">
-      <div style="display:flex;flex-direction:column;align-items:center;padding:10px 0">
-        <div class="ring-w">
-          <svg class="rsvg" viewBox="0 0 220 220">
-            <circle class="rt" cx="110" cy="110" r="105"/>
-            <circle class="rp" id="rProg" cx="110" cy="110" r="105"/>
-          </svg>
-          <div class="rc">
-            <div class="rt2" id="tD">50:00</div>
-            <div class="rl" id="tL">جلسة تركيز</div>
+  return (
+    <div dir="rtl" style={{ background: "radial-gradient(ellipse at 20% 0%, #1e3a8a18 0%, transparent 60%), radial-gradient(ellipse at 80% 100%, #1d4ed812 0%, transparent 60%), #030712", minHeight: "100vh", fontFamily: "'Tajawal', sans-serif", maxWidth: 420, margin: "0 auto", position: "relative" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap');
+        .card { background: linear-gradient(145deg, #ffffff08, #ffffff03); border: 1px solid #ffffff08; border-radius: 16px; }
+        .gold { background: linear-gradient(135deg, #FBBF24, #F59E0B); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .pulse-anim { animation: p 2.5s ease-out infinite; }
+        .pulse-anim2 { animation: p 2.5s ease-out infinite 0.8s; }
+        @keyframes p { 0% { transform: scale(1); opacity: 0.4; } 70% { transform: scale(1.15); opacity: 0; } 100% { transform: scale(1); opacity: 0; } }
+        .shimmer { background: linear-gradient(90deg, transparent, #ffffff25, transparent); animation: sh 2.5s infinite; }
+        @keyframes sh { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }
+      `}</style>
+
+      <div style={{ padding: "20px 16px 10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 10, background: "linear-gradient(135deg, #1d4ed8, #1e40af)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 20px #1d4ed840" }}>
+            <span style={{ color: "white", fontSize: 13, fontWeight: 900, ...mono }}>D</span>
+          </div>
+          <div>
+            <div style={{ color: "white", fontSize: 15, fontWeight: 800, lineHeight: 1.1 }}>درب</div>
+            <div style={{ color: "#60a5fa60", fontSize: 9, letterSpacing: "0.2em", ...mono }}>DARB · PLATFORM</div>
           </div>
         </div>
-        <div class="bdg bg-g mb12" id="tPh" style="font-size:12px;padding:6px 16px">المدار النشط</div>
-        <div class="rb g10">
-          <button class="btn bp" style="padding:14px 28px;font-size:16px" id="tBtn" onclick="toggleTimer()">بدء التركيز</button>
-          <button class="btn bg" style="padding:14px 20px" onclick="resetTimer()">إعادة</button>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 999, background: "#FBBF2412", border: "1px solid #FBBF2430" }}>
+            <span style={{ fontSize: 13 }}>🔥</span>
+            <span className="gold" style={{ fontSize: 12, fontWeight: 900, ...mono }}>14</span>
+          </div>
+          <div style={{ position: "relative" }}>
+            <div style={{ width: 34, height: 34, borderRadius: 999, background: "linear-gradient(135deg, #1d4ed8, #7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🦅</div>
+            <div style={{ position: "absolute", bottom: 0, right: 0, width: 10, height: 10, background: "#34d399", borderRadius: 999, border: "2px solid #030712" }} />
+          </div>
+        </div>
+      </div>
+
+      <div style={{ padding: "0 16px 16px" }}>
+        <div style={{ color: "#ffffff40", fontSize: 10, letterSpacing: "0.2em", ...mono }}>مرحباً، فهد</div>
+        <div style={{ color: "white", fontSize: 20, fontWeight: 900, lineHeight: 1.2 }}>
+          إلى أين <span className="gold">درب</span>ك اليوم؟
+        </div>
+      </div>
+
+      <div style={{ padding: "0 16px", paddingBottom: 100, display: "flex", flexDirection: "column", gap: 12 }}>
+
+        {/* ARAMCO RADAR */}
+        <div style={{ borderRadius: 20, overflow: "hidden", position: "relative", background: "linear-gradient(145deg, #1e3a8a, #1d4ed8dd, #1e40af)", boxShadow: "0 0 40px #1d4ed825" }}>
+          <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)", backgroundSize: "24px 24px", opacity: 0.03 }} />
+          <div style={{ position: "absolute", top: "50%", left: "50%", width: 180, height: 180, borderRadius: 999, border: "1px solid #ffffff10", transform: "translate(-50%,-50%)" }} className="pulse-anim" />
+          <div style={{ position: "absolute", top: "50%", left: "50%", width: 240, height: 240, borderRadius: 999, border: "1px solid #ffffff06", transform: "translate(-50%,-50%)" }} className="pulse-anim2" />
+          <div style={{ position: "relative", padding: 20 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: 999, background: "#34d399", boxShadow: "0 0 8px #34d399" }} />
+                  <span style={{ color: "#34d39980", fontSize: 9, letterSpacing: "0.2em", ...mono }}>ACTIVE</span>
+                </div>
+                <div style={{ color: "white", fontSize: 18, fontWeight: 900 }}>رادار أرامكو</div>
+                <div style={{ color: "#bfdbfe80", fontSize: 11 }}>اختبار CPC · المنطقة الشرقية</div>
+              </div>
+              <span style={{ fontSize: 28 }}>🛢️</span>
+            </div>
+            <CountdownTimer targetDate={aramcoDate} />
+            <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid #ffffff12", display: "flex", justifyContent: "space-between" }}>
+              <span style={{ color: "#bfdbfe60", fontSize: 11 }}>التاريخ المتوقع</span>
+              <span style={{ color: "white", fontSize: 11, fontWeight: 700, ...mono }}>{aramcoDate.toLocaleDateString("ar-SA", { day: "numeric", month: "long" })}</span>
+            </div>
+            <button style={{ marginTop: 12, width: "100%", padding: "11px 0", borderRadius: 12, fontSize: 13, fontWeight: 700, color: "white", background: "linear-gradient(135deg, #ffffff18, #ffffff0a)", border: "1px solid #ffffff18", cursor: "pointer", backdropFilter: "blur(8px)" }}>
+              ابدأ الاختبار التجريبي ←
+            </button>
+          </div>
+        </div>
+
+        {/* STATS */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          {[
+            { icon: "🎯", label: "الدقة", val: 87, unit: "%", color: "#3b82f6", change: "▲ 4.2%", sub: "هذا الأسبوع" },
+            { icon: "⚡", label: "السرعة", val: 72, display: "1.4", unit: "د/سؤال", color: "#FBBF24", change: "▲ 0.3", sub: "أسرع من الأمس" },
+          ].map(({ icon, label, val, display, unit, color, change, sub }, i) => (
+            <div key={i} className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ color: "#ffffff40", fontSize: 9, letterSpacing: "0.2em", ...mono }}>{label}</span>
+                <span style={{ fontSize: 18 }}>{icon}</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "flex-end", gap: 3 }}>
+                <span style={{ fontSize: 32, fontWeight: 900, color, lineHeight: 1, ...mono }}>{display || val}</span>
+                <span style={{ fontSize: 11, color: `${color}80`, marginBottom: 4 }}>{unit}</span>
+              </div>
+              <StatBar value={val} color={color} delay={i * 200} />
+              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <span style={{ color: "#34d399", fontSize: 10, ...mono }}>{change}</span>
+                <span style={{ color: "#ffffff30", fontSize: 10 }}>{sub}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* PHOENIX EGG */}
+        <div className="card" style={{ padding: 16, display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{ width: 72, height: 88, flexShrink: 0, position: "relative" }}>
+            <div style={{ position: "absolute", inset: 0, borderRadius: 999, background: "radial-gradient(circle, #1d4ed825 0%, transparent 70%)", filter: "blur(10px)" }} />
+            <PhoenixEgg />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ color: "white", fontSize: 14, fontWeight: 800, marginBottom: 2 }}>بيضة الفينكس</div>
+            <div style={{ color: "#60a5fa50", fontSize: 9, marginBottom: 10, ...mono }}>يتطور عند 500 نقطة</div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+              <span style={{ color: "#ffffff30", fontSize: 10, ...mono }}>320 / 500</span>
+              <span style={{ color: "#3b82f6", fontSize: 10, ...mono }}>64%</span>
+            </div>
+            <div style={{ height: 6, borderRadius: 999, background: "#ffffff08", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: "64%", borderRadius: 999, background: "linear-gradient(90deg, #1e40af, #3b82f6)", position: "relative", overflow: "hidden" }}>
+                <div className="shimmer" style={{ position: "absolute", inset: 0 }} />
+              </div>
+            </div>
+            <div style={{ marginTop: 8, display: "inline-flex", padding: "2px 8px", borderRadius: 999, background: "#FBBF2412", border: "1px solid #FBBF2430" }}>
+              <span style={{ color: "#FBBF24", fontSize: 9, ...mono }}>+15 فضة اليوم</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ACTIVITY */}
+        <div className="card" style={{ padding: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <span style={{ color: "white", fontSize: 13, fontWeight: 700 }}>خريطة النشاط</span>
+            <span style={{ color: "#ffffff30", fontSize: 9, ...mono }}>5 أسابيع</span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 5 }}>
+            {activity.map((l, i) => {
+              const bg = ["#ffffff08", "#1e3a8a55", "#1e3a8a", "#1d4ed870", "#3b82f6"][l];
+              return <div key={i} style={{ height: 10, borderRadius: 3, background: bg }} />;
+            })}
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
+            <span style={{ color: "#ffffff25", fontSize: 9, ...mono }}>أقل</span>
+            <div style={{ display: "flex", gap: 4 }}>
+              {["#ffffff08", "#1e3a8a55", "#1e3a8a", "#1d4ed870", "#3b82f6"].map((bg, i) => (
+                <div key={i} style={{ width: 10, height: 10, borderRadius: 3, background: bg }} />
+              ))}
+            </div>
+            <span style={{ color: "#ffffff25", fontSize: 9, ...mono }}>أكثر</span>
+          </div>
+        </div>
+
+        {/* QUICK ACTIONS */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+          {[
+            { icon: "🗄️", label: "خزنة الأخطاء", color: "#ef4444" },
+            { icon: "🏟️", label: "الحلبة", color: "#8b5cf6" },
+            { icon: "📊", label: "التحليل", color: "#10b981" },
+          ].map(({ icon, label, color }) => (
+            <button key={label} className="card" style={{ padding: "12px 8px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer" }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, background: `${color}15`, border: `1px solid ${color}30` }}>
+                {icon}
+              </div>
+              <span style={{ color: "#ffffff50", fontSize: 10, textAlign: "center" }}>{label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* BOTTOM NAV */}
+      <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 420, padding: "8px 16px 16px", background: "linear-gradient(to top, #030712 60%, transparent)", zIndex: 50 }}>
+        <div style={{ background: "linear-gradient(145deg, #ffffff08, #ffffff03)", border: "1px solid #1d4ed820", borderRadius: 20, padding: "6px 8px", display: "flex", alignItems: "center", justifyContent: "space-around", boxShadow: "0 -10px 40px #00000060" }}>
+          {[
+            { id: "home", icon: "⌂", label: "الرئيسية" },
+            { id: "radar", icon: "📡", label: "الرادار" },
+            { id: "vault", icon: "🗄️", label: "الخزنة" },
+            { id: "majlis", icon: "⊞", label: "المجلس" },
+            { id: "profile", icon: "◯", label: "حسابي" },
+          ].map(n => <NavItem key={n.id} {...n} active={activeNav === n.id} onClick={() => setActiveNav(n.id)} />)}
         </div>
       </div>
     </div>
-
-    <div class="rbb mb12 mt8">
-      <div><div class="sec-t">خارطة الدرب</div><div class="sec-s">مسارك المخصص لاختبار القدرات</div></div>
-      <span class="bdg bg-g">5/12</span>
-    </div>
-    <div id="rmList"></div>
-  </div>
-
-  <div class="pg" id="pg-radar">
-    <div class="rbb mb12"><div><div class="sec-t">الرادار الأكاديمي</div><div class="sec-s">تتبع أهدافك ومواعيد قبولك</div></div></div>
-    
-    <div class="card" style="border-color:var(--g1); background:var(--badge-bg)">
-      <div class="rbb mb8">
-        <span class="bdg bg-re" style="background:#DC2626;color:#fff;border:none">هدف استراتيجي</span>
-        <span class="txs fw8 mono" style="color:var(--g1)">مايو/يونيو 2026</span>
-      </div>
-      <div class="ts fw9 mb4" style="color:var(--text)">نافذة القبول الجامعي</div>
-      <div class="txs fw7 mb12" style="color:var(--t2)">جامعات المنطقة الشرقية (البترول، فيصل، الإمام عبدالرحمن)</div>
-      <div class="pw mb8"><div class="pf" style="width:88%;background:#DC2626"></div></div>
-      <div class="txs fw8 tc" style="color:var(--g1)">اقترب الموعد! استعد لاختبار التحصيلي</div>
-    </div>
-
-    <div class="rbb mb12 mt8">
-      <div><div class="sec-t">الخزنة (المراجعة المتباعدة)</div><div class="sec-s">أسئلتك الخاطئة تتحول لنقاط قوة</div></div>
-      <span class="bdg bg-re" id="vBdg">0</span>
-    </div>
-    <div id="vList"></div>
-    <button class="btn bg w100" onclick="addSV()">+ استيراد أسئلة جديدة للتحدي</button>
-  </div>
-
-  <div class="pg" id="pg-comm">
-    <div class="sec-t mb12">المجتمع والمنافسة</div>
-    <input class="inp mb12" id="fSrch" type="text" placeholder="ابحث عن أصدقاء للتحدي..." oninput="filtF(this.value)">
-    
-    <div class="card mb12">
-      <div class="cl">قائمة التحدي الخاصة بك (<span id="myFC">0</span>)</div>
-      <div id="myFL"></div>
-    </div>
-    
-    <div class="ts fw9 mb10">اكتشف منافسين جدد</div>
-    <div id="allFL"></div>
-  </div>
-
-  <div class="pg" id="pg-sett">
-    <div class="rbb mb12"><div><div class="sec-t">الإعدادات والتخصيص</div></div></div>
-    
-    <div class="card">
-      <div class="cl">بياناتك الأكاديمية</div>
-      <div class="rbb mb12">
-        <div><div class="ts fw8">المسار</div><div class="txs tm fw7">علمي - هندسة/تقنية</div></div>
-        <div class="bdg bg-g">جاهز</div>
-      </div>
-      <div class="dv"></div>
-      <div class="rbb">
-        <div><div class="ts fw8">الجنس</div><div class="txs tm fw7">يؤثر على نوع الطائر</div></div>
-        <div class="rb">
-          <button class="btn" id="gM" onclick="setGender('m')" style="padding:8px 16px;min-height:0;font-size:12px">ذكر</button>
-          <button class="btn" id="gF" onclick="setGender('f')" style="padding:8px 16px;min-height:0;font-size:12px">أنثى</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="cl">تخصيص الواجهة</div>
-      <div class="rbb mb4">
-        <div><div class="ts fw8">الوضع الليلي</div><div class="txs tm fw7">أسود نقي موفر للطاقة</div></div>
-        <button class="tog on" id="thToggle" onclick="toggleTheme()"><div class="tob"></div></button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="cl">إعدادات المؤقت (بالدقائق)</div>
-      <div class="g2">
-        <div>
-          <label class="txs fw8 tm mb4" style="display:block">جلسة التركيز</label>
-          <select class="inp" id="focD" onchange="sv('focD',this.value); resetTimer();">
-            <option value="25">25 دقيقة</option><option value="50" selected>50 دقيقة</option><option value="90">90 دقيقة</option>
-          </select>
-        </div>
-        <div>
-          <label class="txs fw8 tm mb4" style="display:block">وقت الراحة</label>
-          <select class="inp" id="restD" onchange="sv('restD',this.value)">
-            <option value="5">5 دقائق</option><option value="10" selected>10 دقائق</option><option value="15">15 دقيقة</option>
-          </select>
-        </div>
-      </div>
-    </div>
-  </div>
-
-</div><div class="bnav">
-  <div class="bni on" onclick="gp('home', 0)">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
-    <div class="bni-l">الرئيسية</div>
-  </div>
-  <div class="bni" onclick="gp('study', 1)">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
-    <div class="bni-l">الميدان</div>
-  </div>
-  <div class="bni" onclick="gp('radar', 2)">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-    <div class="bni-l">الرادار</div>
-  </div>
-  <div class="bni" onclick="gp('comm', 3)">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></svg>
-    <div class="bni-l">المجتمع</div>
-  </div>
-  <div class="bni" onclick="gp('sett', 4)">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-    <div class="bni-l">الإعدادات</div>
-  </div>
-</div>
-</div>
-
-<script>
-/* 1. حماية وتجهيز الذاكرة المحلية */
-function ls(k){ try{return localStorage.getItem(k);}catch(e){return null;} }
-function ln(k){ try{return parseInt(localStorage.getItem(k)||0)||0;}catch(e){return 0;} }
-function lj(k){ try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;} }
-function sv(k, v){ try{localStorage.setItem(k,typeof v==='object'?JSON.stringify(v):String(v));}catch(e){} }
-
-try {
-  if(!Array.isArray(lj('vaultQ'))) sv('vaultQ', []);
-  if(!Array.isArray(lj('myFriends'))) sv('myFriends', []);
-} catch(e){}
-
-const sysTheme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
-
-const S = {
-  tier: ls('tier')||'a', gender: ls('gender')||'m',
-  silver: ln('silver'), streak: ln('streak'), sessions: ln('sessions'), totalMins: ln('totalMins'), xp: ln('xp')||100,
-  lastDay: ls('lastDay')||'', theme: ls('theme')||sysTheme,
-  vaultQ: lj('vaultQ')||[], myFriends: lj('myFriends')||[]
-};
-
-/* 2. التنقل والواجهة */
-function gp(pg, index){
-  document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
-  document.querySelectorAll('.bni').forEach(n => n.classList.remove('on'));
-  
-  const pel = document.getElementById('pg-'+pg);
-  if(pel) pel.classList.add('on');
-  
-  const bnis = document.querySelectorAll('.bni');
-  if(bnis[index]) bnis[index].classList.add('on');
-  
-  window.scrollTo(0,0);
-  
-  if(pg==='study') renderRM();
-  if(pg==='radar') renderVault();
-  if(pg==='comm') { filtF(''); renderMyF(); }
-  if(pg==='sett') initSett();
+  );
 }
-
-let tT;
-function toast(msg, type){
-  const t = document.getElementById('T'); if(!t) return;
-  t.textContent = msg; t.className = 'toast show ' + (type||'');
-  clearTimeout(tT); tT = setTimeout(() => t.className='toast', 3000);
-}
-
-function cM(id){ const m = document.getElementById(id); if(m) m.classList.remove('show'); }
-
-/* 3. الثيم والمظهر */
-function toggleTheme(){
-  S.theme = (S.theme === 'dark') ? 'light' : 'dark';
-  sv('theme', S.theme);
-  document.documentElement.setAttribute('data-theme', S.theme);
-  const thToggle = document.getElementById('thToggle');
-  if(thToggle) thToggle.className = 'tog ' + (S.theme === 'dark' ? 'on' : 'off');
-}
-
-/* 4. العملات والطائر */
-function addCoin(n){
-  S.silver += n; sv('silver', S.silver);
-  const el = document.getElementById('hSilv'); if(el) el.textContent = S.silver.toLocaleString();
-}
-
-const BIRDS={
-  a:{m:{name:'الشاهين',desc:'الباقة الأساسية'},f:{name:'الشاهين',desc:'الباقة الأساسية'}},
-  b:{m:{name:'الهدهد',desc:'باقة السند'},f:{name:'اليمامة',desc:'باقة السند'}},
-  c:{m:{name:'العنقاء',desc:'النخبة'},f:{name:'العنقاء',desc:'النخبة'}}
-};
-function updEagle(){
-  const b = BIRDS[S.tier][S.gender];
-  const pct = Math.min(100, (S.xp / 1000)*100);
-  const nm = document.getElementById('eNm'), lv = document.getElementById('eLv');
-  const xf = document.getElementById('xpF'), xn = document.getElementById('xpN');
-  if(nm) nm.textContent = b.name; if(lv) lv.textContent = b.desc;
-  if(xf) xf.style.width = pct + '%'; if(xn) xn.textContent = S.xp;
-}
-
-function setGender(g){
-  S.gender=g; sv('gender', g); updEagle(); initSett(); toast('تم تحديث البيانات', 'ok');
-}
-
-function initSett(){
-  document.getElementById('gM').className = S.gender==='m'?'btn bp':'btn bg';
-  document.getElementById('gF').className = S.gender==='f'?'btn bp':'btn bg';
-  const fd = document.getElementById('focD'), rd = document.getElementById('restD');
-  if(fd) fd.value = ls('focD')||'50'; if(rd) rd.value = ls('restD')||'10';
-}
-
-/* 5. المؤقت عالي الدقة */
-let tRun=false, tPhase='focus', tEl=0, tIv=null;
-const CIRC=660; 
-function getFD(){ return (parseInt(ls('focD')||'50'))*60; }
-function getRD(){ return (parseInt(ls('restD')||'10'))*60; }
-
-function toggleTimer(){
-  if(tRun){ clearInterval(tIv); tRun=false; document.getElementById('tBtn').textContent='استمر'; }
-  else{ tRun=true; document.getElementById('tBtn').textContent='إيقاف مؤقت'; tIv=setInterval(timerTick, 1000); }
-}
-
-function timerTick(){
-  tEl++; const dur = tPhase==='focus'?getFD():getRD();
-  const left = dur - tEl;
-  const m = String(Math.floor(left/60)).padStart(2,'0');
-  const s = String(left%60).padStart(2,'0');
-  const d = document.getElementById('tD'), rp = document.getElementById('rProg');
-  if(d) d.textContent = m+':'+s;
-  if(rp) rp.style.strokeDashoffset = CIRC*(1 - tEl/dur);
-  
-  if(tPhase==='focus' && tEl%60===0){ addCoin(1); S.totalMins++; sv('totalMins', S.totalMins); }
-  
-  if(tEl >= dur){
-    tEl=0;
-    if(tPhase==='focus'){
-      tPhase='rest'; S.sessions++; sv('sessions', S.sessions);
-      const today = new Date().toDateString();
-      if(S.lastDay !== today){ S.streak++; S.lastDay = today; sv('streak', S.streak); sv('lastDay', today); }
-      S.xp+=50; sv('xp', S.xp); addCoin(10);
-      updStats();
-      if(rp){ rp.style.stroke = 'var(--badge-gr-txt)'; rp.style.strokeDashoffset = CIRC; }
-      const pb=document.getElementById('tPh'), tl=document.getElementById('tL');
-      if(pb){ pb.style.background='var(--badge-gr-bg)'; pb.style.color='var(--badge-gr-txt)'; pb.textContent='وقت الراحة'; }
-      if(tl) tl.textContent='راحة';
-      if(d) d.textContent = String(Math.floor(getRD()/60)).padStart(2,'0')+':00';
-      toast('بطل! اكتملت الجلسة (+10 فضة)','ok');
-    }else{
-      tPhase='focus';
-      if(rp){ rp.style.stroke = 'var(--g1)'; rp.style.strokeDashoffset = CIRC; }
-      const pb=document.getElementById('tPh'), tl=document.getElementById('tL');
-      if(pb){ pb.style.background='var(--badge-bg)'; pb.style.color='var(--g1)'; pb.textContent='وضع التركيز'; }
-      if(tl) tl.textContent='تركيز';
-      if(d) d.textContent = String(Math.floor(getFD()/60)).padStart(2,'0')+':00';
-      toast('انتهت الراحة — استعد!');
-    }
-  }
-}
-
-function resetTimer(){
-  clearInterval(tIv); tRun=false; tPhase='focus'; tEl=0;
-  const btn=document.getElementById('tBtn'), pb=document.getElementById('tPh'), tl=document.getElementById('tL'), d=document.getElementById('tD'), rp=document.getElementById('rProg');
-  if(btn) btn.textContent='بدء التركيز';
-  if(pb){ pb.style.background='var(--badge-bg)'; pb.style.color='var(--g1)'; pb.textContent='المدار النشط'; }
-  if(tl) tl.textContent='تركيز'; 
-  if(d) d.textContent = String(Math.floor(getFD()/60)).padStart(2,'0')+':00';
-  if(rp){ rp.style.stroke='var(--g1)'; rp.style.strokeDashoffset=CIRC; }
-}
-
-function updStats(){
-  const tSt = document.getElementById('tSt'), stSt = document.getElementById('stSt');
-  const tSe = document.getElementById('tSe'), stSe = document.getElementById('stSe');
-  if(tSt) tSt.textContent = S.streak; if(stSt) stSt.textContent = S.streak;
-  if(tSe) tSe.textContent = S.sessions; if(stSe) stSe.textContent = S.sessions;
-  const hSilv = document.getElementById('hSilv'); if(hSilv) hSilv.textContent = S.silver.toLocaleString();
-  updEagle();
-}
-
-/* 6. الخارطة (Roadmap) */
-const RM=[
-  {t:'تأسيس اللفظي - 1',d:'التناظر اللفظي (أساسيات واستراتيجيات الحل السريع)',s:'done',h:'6h'},
-  {t:'تأسيس الكمي - 1',d:'الكسور والنسبة المئوية (بدون آلة حاسبة)',s:'done',h:'8h'},
-  {t:'تأسيس اللفظي - 2',d:'استيعاب المقروء (قراءة التمشيط والبحث عن المفاتيح)',s:'act',h:'6h'},
-  {t:'تأسيس الكمي - 2',d:'المعادلات والهندسة الأساسية',s:'lock',h:'10h'},
-  {t:'اختبار تجريبي شامل',d:'محاكاة قياس (120 سؤال - 120 دقيقة)',s:'lock',h:'2h'}
-];
-function renderRM(){
-  const c = document.getElementById('rmList'); if(!c) return;
-  c.innerHTML = RM.map((r, i) => `
-    <div class="li" style="border-color:${r.s==='done'?'var(--badge-gr-txt)':r.s==='act'?'var(--g1)':'var(--b1)'}; cursor:${r.s==='lock'?'not-allowed':'pointer'}" onclick="openLesson(${i})">
-      <div style="width:44px;height:44px;border-radius:12px;background:${r.s==='done'?'var(--badge-gr-bg)':r.s==='act'?'var(--badge-bg)':'var(--bg)'};color:${r.s==='done'?'var(--badge-gr-txt)':r.s==='act'?'var(--g1)':'var(--t2)'};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;flex-shrink:0">
-        ${r.s==='done'?'✓':r.s==='act'?'▶':'—'}
-      </div>
-      <div style="flex:1">
-        <div class="ts fw8 mb4" style="color:var(--text)">${r.t}</div>
-        <div class="txs fw7 tm mb8">${r.d}</div>
-        <div class="rb"><span class="bdg ${r.s==='done'?'bg-gr':r.s==='act'?'bg-g':'bg-mt'}">${r.h}</span><span class="txs fw8 tm">${r.s==='done'?'مكتمل':r.s==='act'?'مفتوح الآن':'مغلق'}</span></div>
-      </div>
-    </div>`).join('');
-}
-
-function openLesson(i){
-  const r = RM[i];
-  if(r.s==='lock'){ toast('أكمل المراحل السابقة لتفتح هذا التحدي', 'warn'); return; }
-  document.getElementById('Mtitle').textContent = r.t;
-  document.getElementById('Mbody').innerHTML = `
-    <div class="ts fw8 mb8" style="color:var(--g1)">المهمة المطلوبة:</div>
-    <div class="ts fw7 tm mb12" style="line-height:1.8">هذا الجزء يعتمد على ${r.d}. تأكد من مراجعة القوانين الأساسية قبل البدء.</div>
-    ${r.s==='act' ? `<button class="btn bp w100" onclick="markDone(${i})">إكمال التحدي (+50 فضة)</button>` : '<div class="bdg bg-gr">تم الإنجاز بنجاح</div>'}
-  `;
-  document.getElementById('Mapp').classList.add('show');
-}
-
-function markDone(i){
-  if(RM[i]) RM[i].s='done'; addCoin(50); S.xp+=30; sv('xp', S.xp);
-  if(RM[i+1]) RM[i+1].s='act';
-  toast('عمل ممتاز! تمت الإضافة لرصيدك','ok'); cM('Mapp'); renderRM(); updEagle();
-}
-
-/* 7. الخزنة (المراجعة المتباعدة) */
-const DV=[
-  {q:'إذا كان سعر سلعة 120 ريال، وزاد بنسبة 25%، فكم السعر الجديد؟',opts:['145','150','135','160'],ans:1,done:false,tip:'احسب 25% من 120 (وهي الربع = 30)، ثم اجمعها.'},
-  {q:'العلاقة في (طبيب : مستشفى) تشابه:',opts:['معلم : مدرسة','كتاب : حقيبة','قلم : ورقة','عامل : مصنع'],ans:0,done:false,tip:'العلاقة هي (مكان العمل).'}
-];
-function renderVault(){
-  const all = [...DV, ...S.vaultQ];
-  const p = all.filter(q => !q.done).length;
-  const b = document.getElementById('vBdg'); if(b) b.textContent = p;
-  const vhi = document.getElementById('homeVaultInfo'); if(vhi) vhi.textContent = p + ' أسئلة معلقة';
-  const c = document.getElementById('vList'); if(!c) return;
-  if(p === 0){ c.innerHTML='<div class="txs fw8 tm tc" style="padding:20px">الخزنة فارغة! أنت مسيطر تماماً.</div>'; return; }
-  
-  c.innerHTML = all.map((q, i) => {
-    if(q.done) return '';
-    return `
-    <div class="card" style="border-color:var(--b2)">
-      <div class="rbb mb12"><span class="bdg bg-re">سؤال تحدي</span><span class="txs fw9" style="color:var(--g1)">+15 فضة</span></div>
-      <div class="ts fw8 mb12" style="line-height:1.6;color:var(--text)">${q.q}</div>
-      <div>${q.opts.map((o, j) => `<div class="vo" id="vo${i}-${j}" onclick="ansV(${i},${j})">${o}</div>`).join('')}</div>
-      <div class="vtip" id="vt${i}">تلميح: ${q.tip}</div>
-    </div>`;
-  }).join('');
-}
-
-function ansV(qi, oi){
-  const all=[...DV, ...S.vaultQ]; const q=all[qi]; if(q.done) return;
-  const op = document.getElementById(`vo${qi}-${oi}`);
-  const cr = document.getElementById(`vo${qi}-${q.ans}`);
-  const tp = document.getElementById(`vt${qi}`);
-  
-  if(oi === q.ans){ 
-    if(op) op.classList.add('cr'); q.done=true; addCoin(15); S.xp+=10; sv('xp', S.xp); 
-    toast('إجابة دقيقة! +15 فضة','ok'); 
-  } else { 
-    if(op) op.classList.add('wr'); 
-    setTimeout(() => { if(cr) cr.classList.add('cr'); }, 400); 
-    toast('خطأ — راجع التلميح لتعرف السبب', 'warn'); 
-  }
-  if(tp) tp.classList.add('sh'); 
-  setTimeout(() => { renderVault(); updEagle(); }, 2000);
-}
-
-function addSV(){
-  S.vaultQ.push({q:'قطار يسير بسرعة 120 كم/س، كم المسافة التي يقطعها في 45 دقيقة؟',opts:['90 كم','80 كم','100 كم','60 كم'],ans:0,done:false,tip:'45 دقيقة = 3/4 ساعة. اضرب 120 في 3/4.'});
-  sv('vaultQ', S.vaultQ); renderVault(); toast('تمت إضافة سؤال تحليلي جديد','ok');
-}
-
-/* 8. المجتمع والأصدقاء */
-const FR=[
-  {name:'أحمد الشهري',user:'@ahmed_sh',av:'أ',col:'#2563EB'},
-  {name:'سلطان العتيبي',user:'@sultan_e',av:'س',col:'#7C3AED'},
-  {name:'فيصل الدوسري',user:'@faisal_d',av:'ف',col:'#059669'},
-  {name:'نورة السعد',user:'@noura_s',av:'ن',col:'#D97706'}
-];
-function fCard(f){
-  const isMy = S.myFriends.includes(f.user);
-  return `
-    <div class="li">
-      <div class="uav" style="background:${f.col}">${f.av}</div>
-      <div style="flex:1">
-        <div class="ts fw8" style="color:var(--text)">${f.name}</div>
-        <div class="txs fw7 tm mono">${f.user}</div>
-      </div>
-      ${isMy ? '<span class="bdg bg-gr">صديق</span>' : `<button class="btn bg" style="padding:8px 14px;font-size:12px;min-height:0" onclick="addFr('${f.user}')">تحدَّ</button>`}
-    </div>`;
-}
-function filtF(q){
-  const list = FR.filter(f => !q || f.name.includes(q) || f.user.includes(q.toLowerCase()));
-  const c = document.getElementById('allFL');
-  if(c) c.innerHTML = list.map(f => fCard(f)).join('');
-}
-function renderMyF(){
-  const list = FR.filter(f => S.myFriends.includes(f.user));
-  const c = document.getElementById('myFL'), cnt = document.getElementById('myFC');
-  if(cnt) cnt.textContent = list.length;
-  if(c) c.innerHTML = list.length ? list.map(f => fCard(f)).join('') : '<div class="txs fw8 tm tc" style="padding:16px">القائمة فارغة. أضف منافسين لتشعل الحماس!</div>';
-}
-function addFr(user){
-  if(!S.myFriends.includes(user)){ S.myFriends.push(user); sv('myFriends', S.myFriends); }
-  renderMyF(); filtF(document.getElementById('fSrch').value); toast('تمت الإضافة بنجاح','ok');
-}
-
-/* 9. التهيئة عند التشغيل */
-document.documentElement.setAttribute('data-theme', S.theme);
-const tTgl = document.getElementById('thToggle'); if(tTgl) tTgl.className = 'tog ' + (S.theme==='dark'?'on':'off');
-updStats(); resetTimer(); renderHm('hmH'); gp('home', 0);
-</script>
-</body>
-</html>
