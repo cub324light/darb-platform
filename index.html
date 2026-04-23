@@ -1,264 +1,62 @@
-import { useState, useEffect } from "react";
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>درب | المنصة التي تعاملك كأخ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+        .hero-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .gold-text { color: #fbbf24; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
 
-const PhoenixEgg = () => (
-  <svg viewBox="0 0 80 100" className="w-full h-full" fill="none">
-    <defs>
-      <radialGradient id="eggGlow" cx="40%" cy="35%" r="55%">
-        <stop offset="0%" stopColor="#1E40AF" stopOpacity="0.9" />
-        <stop offset="60%" stopColor="#1E3A8A" stopOpacity="0.7" />
-        <stop offset="100%" stopColor="#0f172a" stopOpacity="1" />
-      </radialGradient>
-      <radialGradient id="crackGlow" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stopColor="#FBBF24" stopOpacity="1" />
-        <stop offset="100%" stopColor="#F59E0B" stopOpacity="0" />
-      </radialGradient>
-    </defs>
-    <ellipse cx="40" cy="52" rx="30" ry="38" fill="url(#eggGlow)" />
-    <ellipse cx="40" cy="52" rx="30" ry="38" fill="none" stroke="#1d4ed8" strokeWidth="1" opacity="0.5" />
-    <ellipse cx="30" cy="35" rx="6" ry="10" fill="#3B82F6" opacity="0.15" transform="rotate(-15 30 35)" />
-    <polyline points="35,30 38,38 33,44 40,52" stroke="#FBBF24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.8" />
-    <circle cx="38" cy="52" r="4" fill="url(#crackGlow)" opacity="0.9">
-      <animate attributeName="opacity" values="0.6;1;0.6" dur="2s" repeatCount="indefinite" />
-    </circle>
-  </svg>
-);
+    <nav class="p-5 bg-slate-900 text-white flex justify-between items-center">
+        <div class="text-2xl font-bold gold-text">درب 🛡️</div>
+        <button class="bg-blue-600 px-4 py-2 rounded-lg text-sm">دخول الطلاب</button>
+    </nav>
 
-const StatBar = ({ value, color = "#1d4ed8", delay = 0 }) => {
-  const [width, setWidth] = useState(0);
-  useEffect(() => {
-    const t = setTimeout(() => setWidth(value), 400 + delay);
-    return () => clearTimeout(t);
-  }, [value, delay]);
-  return (
-    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "#ffffff08" }}>
-      <div className="h-full rounded-full transition-all duration-1000 ease-out"
-        style={{ width: `${width}%`, background: `linear-gradient(90deg, ${color}88, ${color})` }} />
-    </div>
-  );
-};
-
-const CountdownTimer = ({ targetDate }) => {
-  const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0 });
-  useEffect(() => {
-    const calc = () => {
-      const diff = new Date(targetDate) - new Date();
-      if (diff <= 0) return;
-      setT({ d: Math.floor(diff / 86400000), h: Math.floor((diff % 86400000) / 3600000), m: Math.floor((diff % 3600000) / 60000), s: Math.floor((diff % 60000) / 1000) });
-    };
-    calc();
-    const id = setInterval(calc, 1000);
-    return () => clearInterval(id);
-  }, [targetDate]);
-
-  const Unit = ({ val, label }) => (
-    <div className="flex flex-col items-center">
-      <div className="w-12 h-12 rounded-xl flex items-center justify-center"
-        style={{ background: "linear-gradient(145deg, #1e3a8a33, #1d4ed815)", border: "1px solid #1d4ed840" }}>
-        <span className="text-xl font-black text-white" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{String(val).padStart(2, "0")}</span>
-      </div>
-      <span className="text-[9px] tracking-widest text-blue-400/60 mt-1" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{label}</span>
-    </div>
-  );
-  return (
-    <div className="flex items-end gap-1.5 justify-center">
-      <Unit val={t.d} label="يوم" />
-      <span className="text-blue-400/30 text-lg mb-7">:</span>
-      <Unit val={t.h} label="ساعة" />
-      <span className="text-blue-400/30 text-lg mb-7">:</span>
-      <Unit val={t.m} label="دقيقة" />
-      <span className="text-blue-400/30 text-lg mb-7">:</span>
-      <Unit val={t.s} label="ثانية" />
-    </div>
-  );
-};
-
-const NavItem = ({ icon, label, active, onClick }) => (
-  <button onClick={onClick} className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all duration-300">
-    <span className={`text-lg transition-all duration-300 ${active ? "scale-110" : "opacity-30"}`}>{icon}</span>
-    <span className="text-[8px]" style={{ fontFamily: "'IBM Plex Mono', monospace", color: active ? "#60a5fa" : "#ffffff50" }}>{label}</span>
-    {active && <div className="w-1 h-1 rounded-full bg-blue-400" style={{ boxShadow: "0 0 6px #60a5fa" }} />}
-  </button>
-);
-
-export default function DarbDashboard() {
-  const [activeNav, setActiveNav] = useState("home");
-  const aramcoDate = new Date(Date.now() + 23 * 86400000);
-  const activity = Array.from({ length: 35 }, (_, i) => [0, 1, 2, 3, 4, 2, 1, 3, 4, 2, 0, 1, 3, 2, 4, 1, 0, 2, 3, 4, 1, 2, 0, 3, 4, 2, 1, 3, 0, 2, 4, 3, 2, 1, 4][i]);
-  const mono = { fontFamily: "'IBM Plex Mono', monospace" };
-
-  return (
-    <div dir="rtl" style={{ background: "radial-gradient(ellipse at 20% 0%, #1e3a8a18 0%, transparent 60%), radial-gradient(ellipse at 80% 100%, #1d4ed812 0%, transparent 60%), #030712", minHeight: "100vh", fontFamily: "'Tajawal', sans-serif", maxWidth: 420, margin: "0 auto", position: "relative" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap');
-        .card { background: linear-gradient(145deg, #ffffff08, #ffffff03); border: 1px solid #ffffff08; border-radius: 16px; }
-        .gold { background: linear-gradient(135deg, #FBBF24, #F59E0B); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .pulse-anim { animation: p 2.5s ease-out infinite; }
-        .pulse-anim2 { animation: p 2.5s ease-out infinite 0.8s; }
-        @keyframes p { 0% { transform: scale(1); opacity: 0.4; } 70% { transform: scale(1.15); opacity: 0; } 100% { transform: scale(1); opacity: 0; } }
-        .shimmer { background: linear-gradient(90deg, transparent, #ffffff25, transparent); animation: sh 2.5s infinite; }
-        @keyframes sh { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }
-      `}</style>
-
-      <div style={{ padding: "20px 16px 10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 10, background: "linear-gradient(135deg, #1d4ed8, #1e40af)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 20px #1d4ed840" }}>
-            <span style={{ color: "white", fontSize: 13, fontWeight: 900, ...mono }}>D</span>
-          </div>
-          <div>
-            <div style={{ color: "white", fontSize: 15, fontWeight: 800, lineHeight: 1.1 }}>درب</div>
-            <div style={{ color: "#60a5fa60", fontSize: 9, letterSpacing: "0.2em", ...mono }}>DARB · PLATFORM</div>
-          </div>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 999, background: "#FBBF2412", border: "1px solid #FBBF2430" }}>
-            <span style={{ fontSize: 13 }}>🔥</span>
-            <span className="gold" style={{ fontSize: 12, fontWeight: 900, ...mono }}>14</span>
-          </div>
-          <div style={{ position: "relative" }}>
-            <div style={{ width: 34, height: 34, borderRadius: 999, background: "linear-gradient(135deg, #1d4ed8, #7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🦅</div>
-            <div style={{ position: "absolute", bottom: 0, right: 0, width: 10, height: 10, background: "#34d399", borderRadius: 999, border: "2px solid #030712" }} />
-          </div>
-        </div>
-      </div>
-
-      <div style={{ padding: "0 16px 16px" }}>
-        <div style={{ color: "#ffffff40", fontSize: 10, letterSpacing: "0.2em", ...mono }}>مرحباً، فهد</div>
-        <div style={{ color: "white", fontSize: 20, fontWeight: 900, lineHeight: 1.2 }}>
-          إلى أين <span className="gold">درب</span>ك اليوم؟
-        </div>
-      </div>
-
-      <div style={{ padding: "0 16px", paddingBottom: 100, display: "flex", flexDirection: "column", gap: 12 }}>
-
-        {/* ARAMCO RADAR */}
-        <div style={{ borderRadius: 20, overflow: "hidden", position: "relative", background: "linear-gradient(145deg, #1e3a8a, #1d4ed8dd, #1e40af)", boxShadow: "0 0 40px #1d4ed825" }}>
-          <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)", backgroundSize: "24px 24px", opacity: 0.03 }} />
-          <div style={{ position: "absolute", top: "50%", left: "50%", width: 180, height: 180, borderRadius: 999, border: "1px solid #ffffff10", transform: "translate(-50%,-50%)" }} className="pulse-anim" />
-          <div style={{ position: "absolute", top: "50%", left: "50%", width: 240, height: 240, borderRadius: 999, border: "1px solid #ffffff06", transform: "translate(-50%,-50%)" }} className="pulse-anim2" />
-          <div style={{ position: "relative", padding: 20 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: 999, background: "#34d399", boxShadow: "0 0 8px #34d399" }} />
-                  <span style={{ color: "#34d39980", fontSize: 9, letterSpacing: "0.2em", ...mono }}>ACTIVE</span>
-                </div>
-                <div style={{ color: "white", fontSize: 18, fontWeight: 900 }}>رادار أرامكو</div>
-                <div style={{ color: "#bfdbfe80", fontSize: 11 }}>اختبار CPC · المنطقة الشرقية</div>
-              </div>
-              <span style={{ fontSize: 28 }}>🛢️</span>
-            </div>
-            <CountdownTimer targetDate={aramcoDate} />
-            <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid #ffffff12", display: "flex", justifyContent: "space-between" }}>
-              <span style={{ color: "#bfdbfe60", fontSize: 11 }}>التاريخ المتوقع</span>
-              <span style={{ color: "white", fontSize: 11, fontWeight: 700, ...mono }}>{aramcoDate.toLocaleDateString("ar-SA", { day: "numeric", month: "long" })}</span>
-            </div>
-            <button style={{ marginTop: 12, width: "100%", padding: "11px 0", borderRadius: 12, fontSize: 13, fontWeight: 700, color: "white", background: "linear-gradient(135deg, #ffffff18, #ffffff0a)", border: "1px solid #ffffff18", cursor: "pointer", backdropFilter: "blur(8px)" }}>
-              ابدأ الاختبار التجريبي ←
+    <section class="hero-gradient text-white py-20 px-6 text-center">
+        <div class="mb-6 inline-block p-4 rounded-full bg-slate-800 border-2 border-amber-400">
+            <span class="text-4xl">🥚</span> </div>
+        <h1 class="text-3xl md:text-5xl font-bold mb-4">المنصة اللي تعاملك <span class="gold-text">كأخ</span></h1>
+        <p class="text-slate-300 mb-8 max-w-md mx-auto text-lg">
+            تأسيس حقيقي لأرامكو (CPC)، القدرات، والتحصيلي. لا تدليل.. فقط نتائج وانضباط.
+        </p>
+        <div class="flex flex-col gap-4 max-w-xs mx-auto">
+            <button class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-3 rounded-xl transition">
+                ابدأ رحلة التحدي (مجاناً)
             </button>
-          </div>
-        </div>
-
-        {/* STATS */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          {[
-            { icon: "🎯", label: "الدقة", val: 87, unit: "%", color: "#3b82f6", change: "▲ 4.2%", sub: "هذا الأسبوع" },
-            { icon: "⚡", label: "السرعة", val: 72, display: "1.4", unit: "د/سؤال", color: "#FBBF24", change: "▲ 0.3", sub: "أسرع من الأمس" },
-          ].map(({ icon, label, val, display, unit, color, change, sub }, i) => (
-            <div key={i} className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ color: "#ffffff40", fontSize: 9, letterSpacing: "0.2em", ...mono }}>{label}</span>
-                <span style={{ fontSize: 18 }}>{icon}</span>
-              </div>
-              <div style={{ display: "flex", alignItems: "flex-end", gap: 3 }}>
-                <span style={{ fontSize: 32, fontWeight: 900, color, lineHeight: 1, ...mono }}>{display || val}</span>
-                <span style={{ fontSize: 11, color: `${color}80`, marginBottom: 4 }}>{unit}</span>
-              </div>
-              <StatBar value={val} color={color} delay={i * 200} />
-              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                <span style={{ color: "#34d399", fontSize: 10, ...mono }}>{change}</span>
-                <span style={{ color: "#ffffff30", fontSize: 10 }}>{sub}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* PHOENIX EGG */}
-        <div className="card" style={{ padding: 16, display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ width: 72, height: 88, flexShrink: 0, position: "relative" }}>
-            <div style={{ position: "absolute", inset: 0, borderRadius: 999, background: "radial-gradient(circle, #1d4ed825 0%, transparent 70%)", filter: "blur(10px)" }} />
-            <PhoenixEgg />
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ color: "white", fontSize: 14, fontWeight: 800, marginBottom: 2 }}>بيضة الفينكس</div>
-            <div style={{ color: "#60a5fa50", fontSize: 9, marginBottom: 10, ...mono }}>يتطور عند 500 نقطة</div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-              <span style={{ color: "#ffffff30", fontSize: 10, ...mono }}>320 / 500</span>
-              <span style={{ color: "#3b82f6", fontSize: 10, ...mono }}>64%</span>
-            </div>
-            <div style={{ height: 6, borderRadius: 999, background: "#ffffff08", overflow: "hidden" }}>
-              <div style={{ height: "100%", width: "64%", borderRadius: 999, background: "linear-gradient(90deg, #1e40af, #3b82f6)", position: "relative", overflow: "hidden" }}>
-                <div className="shimmer" style={{ position: "absolute", inset: 0 }} />
-              </div>
-            </div>
-            <div style={{ marginTop: 8, display: "inline-flex", padding: "2px 8px", borderRadius: 999, background: "#FBBF2412", border: "1px solid #FBBF2430" }}>
-              <span style={{ color: "#FBBF24", fontSize: 9, ...mono }}>+15 فضة اليوم</span>
-            </div>
-          </div>
-        </div>
-
-        {/* ACTIVITY */}
-        <div className="card" style={{ padding: 16 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <span style={{ color: "white", fontSize: 13, fontWeight: 700 }}>خريطة النشاط</span>
-            <span style={{ color: "#ffffff30", fontSize: 9, ...mono }}>5 أسابيع</span>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 5 }}>
-            {activity.map((l, i) => {
-              const bg = ["#ffffff08", "#1e3a8a55", "#1e3a8a", "#1d4ed870", "#3b82f6"][l];
-              return <div key={i} style={{ height: 10, borderRadius: 3, background: bg }} />;
-            })}
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
-            <span style={{ color: "#ffffff25", fontSize: 9, ...mono }}>أقل</span>
-            <div style={{ display: "flex", gap: 4 }}>
-              {["#ffffff08", "#1e3a8a55", "#1e3a8a", "#1d4ed870", "#3b82f6"].map((bg, i) => (
-                <div key={i} style={{ width: 10, height: 10, borderRadius: 3, background: bg }} />
-              ))}
-            </div>
-            <span style={{ color: "#ffffff25", fontSize: 9, ...mono }}>أكثر</span>
-          </div>
-        </div>
-
-        {/* QUICK ACTIONS */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-          {[
-            { icon: "🗄️", label: "خزنة الأخطاء", color: "#ef4444" },
-            { icon: "🏟️", label: "الحلبة", color: "#8b5cf6" },
-            { icon: "📊", label: "التحليل", color: "#10b981" },
-          ].map(({ icon, label, color }) => (
-            <button key={label} className="card" style={{ padding: "12px 8px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer" }}>
-              <div style={{ width: 40, height: 40, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, background: `${color}15`, border: `1px solid ${color}30` }}>
-                {icon}
-              </div>
-              <span style={{ color: "#ffffff50", fontSize: 10, textAlign: "center" }}>{label}</span>
+            <button class="border border-slate-500 py-3 rounded-xl hover:bg-slate-800 transition">
+                استكشف باقة أرامكو (29 ريال)
             </button>
-          ))}
         </div>
-      </div>
+    </section>
 
-      {/* BOTTOM NAV */}
-      <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 420, padding: "8px 16px 16px", background: "linear-gradient(to top, #030712 60%, transparent)", zIndex: 50 }}>
-        <div style={{ background: "linear-gradient(145deg, #ffffff08, #ffffff03)", border: "1px solid #1d4ed820", borderRadius: 20, padding: "6px 8px", display: "flex", alignItems: "center", justifyContent: "space-around", boxShadow: "0 -10px 40px #00000060" }}>
-          {[
-            { id: "home", icon: "⌂", label: "الرئيسية" },
-            { id: "radar", icon: "📡", label: "الرادار" },
-            { id: "vault", icon: "🗄️", label: "الخزنة" },
-            { id: "majlis", icon: "⊞", label: "المجلس" },
-            { id: "profile", icon: "◯", label: "حسابي" },
-          ].map(n => <NavItem key={n.id} {...n} active={activeNav === n.id} onClick={() => setActiveNav(n.id)} />)}
+    <section class="py-16 px-6">
+        <h2 class="text-2xl font-bold text-center mb-12">ليش "درب" تختلف؟</h2>
+        <div class="grid gap-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border-r-4 border-blue-600">
+                <h3 class="font-bold mb-2">🛡️ التحليل الدقيق</h3>
+                <p class="text-slate-600 text-sm">نظام ذكاء اصطناعي يحلل نقاط قوتك وضعفك بدقة تتجاوز اختبارات الـ IQ.</p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border-r-4 border-amber-500">
+                <h3 class="font-bold mb-2">🔒 خزنة الأخطاء</h3>
+                <p class="text-slate-600 text-sm">كل سؤال تغلط فيه ينحفظ هنا.. ماراح تطلع من الخزنة إلا وأنت متقنه.</p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border-r-4 border-slate-900">
+                <h3 class="font-bold mb-2">📡 رادار أرامكو</h3>
+                <p class="text-slate-600 text-sm">تنبيهات فورية ومباشرة لمواعيد التسجيل والاختبارات لبرامج الابتعاث.</p>
+            </div>
         </div>
-      </div>
-    </div>
-  );
-}
+    </section>
+
+    <footer class="bg-slate-900 text-slate-500 py-10 text-center text-sm">
+        <p>© 2024 منصة درب التعليمية - صُنعت لجيل التحدي</p>
+    </footer>
+
+</body>
+</html>
