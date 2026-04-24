@@ -25,7 +25,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'السؤال طويل جداً' });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY || process.env.Gemini_API_Key || process.env.gemini_api_key;
 
     if (!apiKey) {
         return res.status(500).json({ error: 'مفتاح API غير مضبوط في بيئة الخادم' });
