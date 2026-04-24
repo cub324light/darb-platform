@@ -42,7 +42,7 @@ function isInjectionAttempt(text) {
     return INJECTION_PATTERNS.some(p => p.test(text));
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
@@ -68,7 +68,7 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { default: Groq } = await import('groq-sdk');
+        const Groq = require('groq-sdk');
         const client = new Groq({ apiKey });
 
         const completion = await client.chat.completions.create({
@@ -94,4 +94,4 @@ export default async function handler(req, res) {
         }
         return res.status(500).json({ error: 'خطأ في الاتصال بالخادم' });
     }
-}
+};
