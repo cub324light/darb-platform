@@ -1,9 +1,11 @@
 export default async function handler(req, res) {
-    // هذا الكود يستقبل السؤال من موقعك
+    // تأكد أن الطلب POST
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+    }
+
     const { prompt } = req.body;
-    
-    // هنا نقول للسيرفر: خذ المفتاح من "الإعدادات السرية" وليس من الكود
-    const API_KEY = process.env.GEMINI_API_KEY; 
+    const API_KEY = process.env.GEMINI_API_KEY;
 
     try {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
@@ -15,8 +17,14 @@ export default async function handler(req, res) {
         });
 
         const data = await response.json();
+        
+        // إذا جوجل ردت بخطأ في المفتاح
+        if (data.error) {
+            return res.status(500).json({ error: data.error.message });
+        }
+
         res.status(200).json(data);
     } catch (error) {
-        res.status(500).json({ error: "حدث خطأ في الاتصال بجيميناي" });
+        res.status(500).json({ error: "خطأ في السيرفر" });
     }
 }
