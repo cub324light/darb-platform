@@ -88,6 +88,18 @@
     </footer>
 
     <script>
+        function addBubble(text, type) {
+            const chatWindow = document.getElementById('chat-window');
+            const div = document.createElement('div');
+            div.className = type === 'user'
+                ? 'bg-blue-900/30 p-3 rounded-2xl rounded-tl-none mr-8 text-white border border-blue-500/20'
+                : 'bg-slate-800 p-3 rounded-2xl rounded-tr-none ml-8 border border-amber-500/10 text-slate-300';
+            div.textContent = text;
+            chatWindow.appendChild(div);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+            return div;
+        }
+
         async function askDarb() {
             const inputField = document.getElementById('user-input');
             const chatWindow = document.getElementById('chat-window');
@@ -96,21 +108,17 @@
 
             if (!userText) return;
 
-            // 1. إضافة سؤال المستخدم للواجهة
-            chatWindow.innerHTML += `
-                <div class="bg-blue-900/30 p-3 rounded-2xl rounded-tl-none mr-8 text-white border border-blue-500/20 self-end">
-                    ${userText}
-                </div>
-            `;
-            
+            addBubble(userText, 'user');
             inputField.value = '';
             sendBtn.disabled = true;
-            const loadingId = 'loading-' + Date.now();
-            chatWindow.innerHTML += `<div id="${loadingId}" class="text-amber-400 text-xs typing-dots">جاري تحليل سؤالك</div>`;
+
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'text-amber-400 text-xs typing-dots';
+            loadingDiv.textContent = 'جاري تحليل سؤالك';
+            chatWindow.appendChild(loadingDiv);
             chatWindow.scrollTop = chatWindow.scrollHeight;
 
             try {
-                // 2. إرسال الطلب لـ Vercel API اللي سويناه (api/chat.js)
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -118,24 +126,22 @@
                 });
 
                 const data = await response.json();
-                const aiText = data.candidates[0].content.parts[0].text;
+                loadingDiv.remove();
 
-                // 3. مسح كلمة "جاري التحميل" وإضافة رد جيميناي
-                document.getElementById(loadingId).remove();
-                chatWindow.innerHTML += `
-                    <div class="bg-slate-800 p-3 rounded-2xl rounded-tr-none ml-8 border border-amber-500/10">
-                        ${aiText}
-                    </div>
-                `;
+                if (!response.ok || data.error) {
+                    addBubble(data.error || 'حدث خطأ غير متوقع، حاول مرة ثانية.', 'ai');
+                } else {
+                    addBubble(data.text, 'ai');
+                }
             } catch (error) {
-                document.getElementById(loadingId).innerText = "معليش يا بطل، حدث خطأ بالاتصال. تأكد من إعدادات المفتاح السري.";
+                loadingDiv.remove();
+                addBubble('معليش يا بطل، تعذّر الاتصال. تحقق من الإنترنت وحاول مرة ثانية.', 'ai');
             } finally {
                 sendBtn.disabled = false;
                 chatWindow.scrollTop = chatWindow.scrollHeight;
             }
         }
 
-        // إرسال بالضغط على Enter
         document.getElementById('user-input').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') askDarb();
         });
