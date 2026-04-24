@@ -135,7 +135,7 @@
                 }
             } catch (error) {
                 loadingDiv.remove();
-                addBubble('معليش يا بطل، تعذّر الاتصال. تحقق من الإنترنت وحاول مرة ثانية.', 'ai');
+                addBubble('خطأ: ' + (error.message || 'تعذّر الاتصال بالسيرفر'), 'ai');
             } finally {
                 sendBtn.disabled = false;
                 chatWindow.scrollTop = chatWindow.scrollHeight;
