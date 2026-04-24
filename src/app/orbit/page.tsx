@@ -112,31 +112,32 @@ export default function OrbitPage() {
   return (
     <div className="min-h-dvh bg-[var(--bg)] flex flex-col pb-nav">
       {/* Header */}
-      <div className="px-5 py-4 flex items-center justify-between">
-        <Link href="/dashboard" className="text-[var(--text-muted)] hover:text-[var(--text)] transition">
-          ← الرئيسية
+      <div className="page-header">
+        <Link href="/dashboard" className="text-[var(--text-muted)] text-sm font-medium">
+          ← رجوع
         </Link>
-        <h1 className="font-black text-[var(--text)]">Orbit 50/10</h1>
-        <div className="flex items-center gap-1.5">
-          <span className="text-sm">🪙</span>
-          <span className="font-mono-nums text-sm font-bold text-[var(--blue-light)]">{silverEarned}</span>
+        <h1 className="font-black text-lg text-[var(--text)]">Orbit 50/10</h1>
+        <div className="stat-chip">
+          <span className="text-base">🪙</span>
+          <span className="font-mono-nums font-bold text-base text-[var(--blue-light)]">{silverEarned}</span>
         </div>
       </div>
 
       {/* Subject selector */}
       {phase === "idle" && (
-        <div className="px-5 mb-4">
-          <p className="text-xs text-[var(--text-muted)] mb-2">المادة:</p>
+        <div className="px-5 mb-5">
+          <p className="label mb-3">المادة التي تذاكرها:</p>
           <div className="flex gap-2 flex-wrap">
             {SUBJECTS.map((s) => (
               <button
                 key={s}
                 onClick={() => setSubject(s)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-medium transition ${
+                className={`px-4 py-2 rounded-2xl text-sm font-semibold transition ${
                   subject === s
-                    ? "bg-[var(--blue)] text-white"
-                    : "glass text-[var(--text-dim)] hover:text-[var(--text)]"
+                    ? "text-white"
+                    : "text-[var(--text-dim)]"
                 }`}
+                style={subject === s ? { background: "#2563EB" } : { background: "var(--surface)", border: "1px solid var(--border)" }}
               >
                 {s}
               </button>
@@ -274,18 +275,18 @@ export default function OrbitPage() {
 
       {/* Stats bar */}
       <div className="px-5 pb-4">
-        <div className="glass rounded-2xl p-4 grid grid-cols-3 text-center gap-2">
+        <div className="card grid grid-cols-3 text-center gap-3">
           <div>
-            <p className="font-mono-nums font-black text-lg text-[var(--blue-light)]">{sessionsToday}</p>
-            <p className="text-[10px] text-[var(--text-muted)]">جلسات اليوم</p>
+            <p className="font-mono-nums font-black text-2xl text-[var(--blue-light)]">{sessionsToday}</p>
+            <p className="label mt-1">جلسات اليوم</p>
           </div>
           <div>
-            <p className="font-mono-nums font-black text-lg text-[var(--gold)]">{totalFocusMins}</p>
-            <p className="text-[10px] text-[var(--text-muted)]">دقيقة تركيز</p>
+            <p className="font-mono-nums font-black text-2xl text-[var(--gold)]">{totalFocusMins}</p>
+            <p className="label mt-1">دقيقة</p>
           </div>
           <div>
-            <p className="font-mono-nums font-black text-lg text-[var(--success)]">{silverEarned}</p>
-            <p className="text-[10px] text-[var(--text-muted)]">Silver 🪙</p>
+            <p className="font-mono-nums font-black text-2xl text-[var(--success)]">{silverEarned}</p>
+            <p className="label mt-1">Silver 🪙</p>
           </div>
         </div>
       </div>
