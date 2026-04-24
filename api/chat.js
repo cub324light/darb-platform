@@ -25,38 +25,34 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'السؤال طويل جداً' });
     }
 
-    const apiKey = process.env.GROQ_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY || process.env.Gemini_API_Key;
 
     if (!apiKey) {
         return res.status(500).json({ error: 'مفتاح API غير مضبوط في بيئة الخادم' });
     }
 
     try {
-        const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                model: 'llama-3.3-70b-versatile',
-                messages: [
-                    { role: 'system', content: SYSTEM_PROMPT },
-                    { role: 'user', content: prompt.trim() }
-                ],
-                max_tokens: 400
-            })
-        });
+        const geminiRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+                    contents: [{ parts: [{ text: prompt.trim() }] }]
+                })
+            }
+        );
 
-        const data = await groqRes.json();
+        const data = await geminiRes.json();
 
-        if (!groqRes.ok) {
+        if (!geminiRes.ok) {
             return res.status(502).json({
-                error: `خطأ من Groq: ${data?.error?.message || groqRes.status}`
+                error: `خطأ من Gemini: ${data?.error?.message || geminiRes.status}`
             });
         }
 
-        const text = data?.choices?.[0]?.message?.content;
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (!text) {
             return res.status(502).json({ error: 'لم يرجع رد من الذكاء الاصطناعي' });
