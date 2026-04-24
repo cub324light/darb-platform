@@ -1,16 +1,13 @@
-const fetch = require('node-fetch'); // تأكد من استخدام require
-
-module.exports = async (req, res) => {
-    // التأكد من أن الطلب POST
+export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
     const { prompt } = req.body;
-    const API_KEY = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
 
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -19,8 +16,8 @@ module.exports = async (req, res) => {
         });
 
         const data = await response.json();
-        res.status(200).json(data);
+        return res.status(200).json(data);
     } catch (error) {
-        res.status(500).json({ error: "Server Error" });
+        return res.status(500).json({ error: "خطأ في السيرفر" });
     }
-};
+}
