@@ -1,5 +1,7 @@
-export default async function handler(req, res) {
-    // تأكد أن الطلب POST
+const fetch = require('node-fetch'); // تأكد من استخدام require
+
+module.exports = async (req, res) => {
+    // التأكد من أن الطلب POST
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
@@ -17,14 +19,8 @@ export default async function handler(req, res) {
         });
 
         const data = await response.json();
-        
-        // إذا جوجل ردت بخطأ في المفتاح
-        if (data.error) {
-            return res.status(500).json({ error: data.error.message });
-        }
-
         res.status(200).json(data);
     } catch (error) {
-        res.status(500).json({ error: "خطأ في السيرفر" });
+        res.status(500).json({ error: "Server Error" });
     }
-}
+};
