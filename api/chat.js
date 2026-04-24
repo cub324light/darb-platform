@@ -68,20 +68,33 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-        const Groq = require('groq-sdk');
-        const client = new Groq({ apiKey });
-
-        const completion = await client.chat.completions.create({
-            model: 'llama-3.3-70b-versatile',
-            max_tokens: 800,
-            temperature: 0.6,
-            messages: [
-                { role: 'system', content: SYSTEM_PROMPT },
-                { role: 'user', content: prompt.trim() }
-            ]
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: 'llama-3.3-70b-versatile',
+                max_tokens: 800,
+                temperature: 0.6,
+                messages: [
+                    { role: 'system', content: SYSTEM_PROMPT },
+                    { role: 'user', content: prompt.trim() }
+                ]
+            })
         });
 
-        const text = completion.choices?.[0]?.message?.content;
+        if (response.status === 429) {
+            return res.status(429).json({ error: 'الخادم مشغول حالياً، حاول بعد ثوانٍ' });
+        }
+
+        if (!response.ok) {
+            return res.status(502).json({ error: 'خطأ في الاتصال بالخادم' });
+        }
+
+        const data = await response.json();
+        const text = data.choices?.[0]?.message?.content;
 
         if (!text) {
             return res.status(502).json({ error: 'لم يرجع رد، حاول مرة ثانية' });
@@ -89,9 +102,6 @@ module.exports = async function handler(req, res) {
 
         return res.status(200).json({ text });
     } catch (error) {
-        if (error?.status === 429) {
-            return res.status(429).json({ error: 'الخادم مشغول حالياً، حاول بعد ثوانٍ' });
-        }
         return res.status(500).json({ error: 'خطأ في الاتصال بالخادم' });
     }
 };
