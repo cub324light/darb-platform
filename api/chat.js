@@ -61,40 +61,27 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'أنا دربي، محلل الجداول. أدخل جدولك وسأبني لك خطة دراسة.' });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.Gemini_API_Key;
+    const apiKey = process.env.GROQ_API_KEY;
 
     if (!apiKey) {
         return res.status(500).json({ error: 'خطأ في إعدادات الخادم' });
     }
 
     try {
-        const geminiRes = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-                    contents: [{ parts: [{ text: prompt.trim() }] }],
-                    generationConfig: {
-                        temperature: 0.6,
-                        maxOutputTokens: 800
-                    }
-                })
-            }
-        );
+        const { default: Groq } = await import('groq-sdk');
+        const client = new Groq({ apiKey });
 
-        const data = await geminiRes.json();
+        const completion = await client.chat.completions.create({
+            model: 'llama-3.3-70b-versatile',
+            max_tokens: 800,
+            temperature: 0.6,
+            messages: [
+                { role: 'system', content: SYSTEM_PROMPT },
+                { role: 'user', content: prompt.trim() }
+            ]
+        });
 
-        if (!geminiRes.ok) {
-            const msg = data?.error?.message || '';
-            if (msg.includes('quota') || msg.includes('limit')) {
-                return res.status(429).json({ error: 'الخادم مشغول حالياً، حاول بعد ثوانٍ' });
-            }
-            return res.status(502).json({ error: 'خطأ مؤقت، حاول مرة ثانية' });
-        }
-
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        const text = completion.choices?.[0]?.message?.content;
 
         if (!text) {
             return res.status(502).json({ error: 'لم يرجع رد، حاول مرة ثانية' });
@@ -102,6 +89,9 @@ export default async function handler(req, res) {
 
         return res.status(200).json({ text });
     } catch (error) {
+        if (error?.status === 429) {
+            return res.status(429).json({ error: 'الخادم مشغول حالياً، حاول بعد ثوانٍ' });
+        }
         return res.status(500).json({ error: 'خطأ في الاتصال بالخادم' });
     }
 }
