@@ -25,38 +25,41 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'السؤال طويل جداً' });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.Gemini_API_Key || process.env.gemini_api_key;
+    const apiKey = process.env.GROQ_API_KEY;
 
     if (!apiKey) {
         return res.status(500).json({ error: 'مفتاح API غير مضبوط في بيئة الخادم' });
     }
 
-    const fullPrompt = `${SYSTEM_PROMPT}\n\nسؤال المستخدم: ${prompt.trim()}`;
-
     try {
-        const geminiRes = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: fullPrompt }] }]
-                })
-            }
-        );
+        const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: 'llama-3.3-70b-versatile',
+                messages: [
+                    { role: 'system', content: SYSTEM_PROMPT },
+                    { role: 'user', content: prompt.trim() }
+                ],
+                max_tokens: 400
+            })
+        });
 
-        const data = await geminiRes.json();
+        const data = await groqRes.json();
 
-        if (!geminiRes.ok) {
+        if (!groqRes.ok) {
             return res.status(502).json({
-                error: `خطأ من Gemini: ${data?.error?.message || geminiRes.status}`
+                error: `خطأ من Groq: ${data?.error?.message || groqRes.status}`
             });
         }
 
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        const text = data?.choices?.[0]?.message?.content;
 
         if (!text) {
-            return res.status(502).json({ error: 'لم يرجع نص من Gemini' });
+            return res.status(502).json({ error: 'لم يرجع رد من الذكاء الاصطناعي' });
         }
 
         return res.status(200).json({ text });
