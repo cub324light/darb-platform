@@ -1,5 +1,4 @@
 {
-  "dependencies": {
-    "node-fetch": "^2.6.1"
-  }
+  "name": "darb-platform",
+  "version": "1.0.0"
 }
