@@ -28,38 +28,39 @@ export default async function handler(req, res) {
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-        return res.status(500).json({ error: 'مفتاح API غير مضبوط' });
+        return res.status(500).json({ error: 'مفتاح API غير مضبوط في بيئة الخادم' });
     }
 
+    const fullPrompt = `${SYSTEM_PROMPT}\n\nسؤال المستخدم: ${prompt.trim()}`;
+
     try {
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        const geminiRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-                    contents: [{ parts: [{ text: prompt.trim() }] }]
+                    contents: [{ parts: [{ text: fullPrompt }] }]
                 })
             }
         );
 
-        if (!response.ok) {
-            const errData = await response.json();
-            console.error('Gemini error:', errData);
-            return res.status(502).json({ error: 'خطأ من خدمة الذكاء الاصطناعي' });
+        const data = await geminiRes.json();
+
+        if (!geminiRes.ok) {
+            return res.status(502).json({
+                error: `خطأ من Gemini: ${data?.error?.message || geminiRes.status}`
+            });
         }
 
-        const data = await response.json();
         const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (!text) {
-            return res.status(502).json({ error: 'لم يرجع رد من الذكاء الاصطناعي' });
+            return res.status(502).json({ error: 'لم يرجع نص من Gemini' });
         }
 
         return res.status(200).json({ text });
     } catch (error) {
-        console.error('Server error:', error);
-        return res.status(500).json({ error: 'خطأ في السيرفر' });
+        return res.status(500).json({ error: `خطأ في السيرفر: ${error.message}` });
     }
 }
