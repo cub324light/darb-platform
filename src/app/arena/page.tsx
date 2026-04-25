@@ -49,10 +49,9 @@ export default function ArenaPage() {
   if (gameState === "lobby") {
     return (
       <div className="min-h-dvh bg-[var(--bg)] flex flex-col pb-nav">
-        <div className="px-5 py-4 flex items-center justify-between">
-          <Link href="/dashboard" className="text-sm text-[var(--text-muted)]">← الرئيسية</Link>
-          <h1 className="font-black text-[var(--text)]">الأرينا ⚔️</h1>
-          <span className="text-xs text-[var(--gold)]">1v1</span>
+        <div className="page-header">
+          <h1 className="font-black text-lg text-[var(--text)]">الأرينا ⚔️</h1>
+          <span className="text-xs text-[var(--gold)] bg-[var(--surface)] border border-[var(--border)] px-3 py-1.5 rounded-xl font-bold">1v1</span>
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center px-5">

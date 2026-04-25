@@ -73,12 +73,11 @@ export default function CouncilPage() {
 
   return (
     <div className="min-h-dvh bg-[var(--bg)] pb-nav">
-      <div className="px-5 py-4 flex items-center justify-between">
-        <Link href="/dashboard" className="text-sm text-[var(--text-muted)]">← الرئيسية</Link>
-        <h1 className="font-black text-[var(--text)]">المجلس 💬</h1>
-        <div className="flex items-center gap-1">
+      <div className="page-header">
+        <h1 className="font-black text-lg text-[var(--text)]">المجلس 💬</h1>
+        <div className="flex items-center gap-1.5 bg-[var(--surface)] border border-[var(--border)] px-3 py-1.5 rounded-xl">
           <span className="w-1.5 h-1.5 rounded-full bg-[var(--success)] animate-pulse" />
-          <span className="text-xs text-[var(--success)]">183</span>
+          <span className="text-xs text-[var(--success)] font-bold">183</span>
         </div>
       </div>
 

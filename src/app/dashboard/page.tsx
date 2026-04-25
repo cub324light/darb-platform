@@ -138,14 +138,16 @@ export default function DashboardPage() {
         {/* Quick actions */}
         <div>
           <p className="label mb-3">الأدوات</p>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             {QUICK_ACTIONS.map((a) => (
               <Link key={a.href} href={a.href}
-                className="rounded-2xl p-3 flex flex-col items-center gap-1.5 transition-all active:scale-95"
+                className="rounded-2xl p-5 flex items-center gap-4 transition-all active:scale-95"
                 style={{ background: a.color + "15", border: `1px solid ${a.color}30` }}>
-                <span className="text-2xl">{a.icon}</span>
-                <span className="text-xs font-bold text-[var(--text)] text-center leading-tight">{a.label}</span>
-                <span className="text-[10px] text-[var(--text-muted)]">{a.desc}</span>
+                <span className="text-3xl flex-shrink-0">{a.icon}</span>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-[var(--text)] leading-tight">{a.label}</p>
+                  <p className="text-xs text-[var(--text-muted)] mt-0.5">{a.desc}</p>
+                </div>
               </Link>
             ))}
           </div>

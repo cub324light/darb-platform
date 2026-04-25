@@ -83,7 +83,6 @@ export default function VaultPage() {
 
       {/* ── Header ── */}
       <div className="page-header">
-        <Link href="/dashboard" className="text-[var(--text-muted)] text-sm font-medium">← رجوع</Link>
         <h1 className="title-md text-[var(--text)]">خزنة الأخطاء 🔒</h1>
         <div className="stat-chip">
           <span className="font-mono-nums font-bold text-base text-[var(--gold)]">{errors.length}</span>
@@ -136,13 +135,13 @@ export default function VaultPage() {
 
       {/* ── Subject tabs ── */}
       <div className="px-5 mb-7">
-        <div className="grid grid-cols-5 gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-1">
           {(["الكل", ...SUBJECTS] as (SubjectId | "الكل")[]).map((s) => {
             const active = filterSubject === s;
             const color = s === "الكل" ? "#64748B" : SUBJECT_COLORS[s as SubjectId];
             return (
               <button key={s} onClick={() => setFilterSubject(s)}
-                className="py-2.5 rounded-2xl text-sm font-semibold transition"
+                className="flex-shrink-0 px-5 py-3 rounded-2xl text-sm font-bold transition"
                 style={active
                   ? { background: color, color: "#fff" }
                   : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
@@ -175,10 +174,10 @@ export default function VaultPage() {
               style={{ background: "var(--surface)", border: `1.5px solid ${isExpanded ? color + "50" : "var(--border)"}` }}>
 
               {/* Card header */}
-              <div className="p-5 cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : error.id)}>
+              <div className="p-6 cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : error.id)}>
                 <div className="flex items-start gap-4">
                   {/* Color dot */}
-                  <div className="w-3 h-3 rounded-full mt-1.5 flex-shrink-0" style={{ background: color }} />
+                  <div className="w-3 h-3 rounded-full mt-2 flex-shrink-0" style={{ background: color }} />
 
                   <div className="flex-1 min-w-0">
                     <p className="text-base text-[var(--text)] leading-relaxed mb-3">{error.question}</p>

@@ -113,9 +113,6 @@ export default function OrbitPage() {
     <div className="min-h-dvh bg-[var(--bg)] flex flex-col pb-nav">
       {/* Header */}
       <div className="page-header">
-        <Link href="/dashboard" className="text-[var(--text-muted)] text-sm font-medium">
-          ← رجوع
-        </Link>
         <h1 className="font-black text-lg text-[var(--text)]">Orbit 50/10</h1>
         <div className="stat-chip">
           <span className="text-base">🪙</span>

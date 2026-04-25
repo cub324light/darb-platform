@@ -216,10 +216,9 @@ export default function ReviewPage() {
 
   return (
     <div className="min-h-dvh bg-[var(--bg)] pb-nav">
-      <div className="px-5 py-4 flex items-center justify-between">
-        <Link href="/dashboard" className="text-sm text-[var(--text-muted)]">← الرئيسية</Link>
-        <h1 className="font-black text-[var(--text)]">بنك المراجعة 🧠</h1>
-        <span className="text-xs text-[var(--text-muted)]">SM-2</span>
+      <div className="page-header">
+        <h1 className="font-black text-lg text-[var(--text)]">بنك المراجعة 🧠</h1>
+        <span className="text-xs text-[var(--text-muted)] bg-[var(--surface)] border border-[var(--border)] px-3 py-1.5 rounded-xl">SM-2</span>
       </div>
 
       {/* Science card */}

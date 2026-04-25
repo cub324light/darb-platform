@@ -58,12 +58,9 @@ export default function RoadmapPage() {
   return (
     <div className="min-h-dvh bg-[var(--bg)] pb-nav">
       {/* Header */}
-      <div className="px-5 py-4 flex items-center justify-between">
-        <Link href="/dashboard" className="text-[var(--text-muted)] hover:text-[var(--text)] transition text-sm">
-          ← الرئيسية
-        </Link>
-        <h1 className="font-black text-[var(--text)]">خريطة الطريق</h1>
-        <span className="text-xs text-[var(--text-muted)]">جدول راكان 2026</span>
+      <div className="page-header">
+        <h1 className="font-black text-lg text-[var(--text)]">خريطة الطريق</h1>
+        <span className="text-xs text-[var(--text-muted)] bg-[var(--surface)] border border-[var(--border)] px-3 py-1.5 rounded-xl">جدول راكان 2026</span>
       </div>
 
       {/* Overall stage */}
