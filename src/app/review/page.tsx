@@ -199,27 +199,17 @@ export default function ReviewPage() {
         <span className="text-sm text-[var(--text-muted)] bg-[var(--surface)] border border-[var(--border)] px-4 py-2 rounded-xl font-bold">SM-2</span>
       </div>
 
-      {/* Info */}
-      <div className="px-5 mb-6">
-        <div className="rounded-2xl p-5" style={{ background: "linear-gradient(135deg, rgba(37,99,235,0.1), rgba(37,99,235,0.03))", border: "1px solid rgba(37,99,235,0.2)" }}>
-          <p className="text-sm text-[var(--text-dim)] leading-relaxed">
-            📊 <strong className="text-[var(--text)]">Ebbinghaus 1885:</strong> نسيان 80% خلال 24 ساعة بدون مراجعة.
-            المراجعة الموزعة = تفوق 200% على المذاكرة التقليدية.
-          </p>
-        </div>
-      </div>
-
       {/* Stats */}
       <div className="px-5 mb-6">
         <div className="grid grid-cols-3 gap-3">
           {[
-            { val: dueCards.length,    label: "مستحق الآن", color: "var(--danger)"  },
-            { val: upcomingCards.length, label: "قادم",       color: "var(--gold)"   },
-            { val: cards.length,       label: "الإجمالي",   color: "var(--success)" },
+            { val: dueCards.length,      label: "مستحق الآن", color: "var(--danger)"  },
+            { val: upcomingCards.length, label: "قادم",        color: "var(--gold)"   },
+            { val: cards.length,         label: "الإجمالي",    color: "var(--success)" },
           ].map((s) => (
             <div key={s.label} className="rounded-2xl p-5 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-              <p className="font-mono-nums font-black text-3xl" style={{ color: s.color }}>{s.val}</p>
-              <p className="text-sm text-[var(--text-muted)] mt-2">{s.label}</p>
+              <p className="font-mono-nums font-black text-4xl" style={{ color: s.color }}>{s.val}</p>
+              <p className="text-sm text-[var(--text-muted)] mt-2 font-semibold">{s.label}</p>
             </div>
           ))}
         </div>
@@ -230,7 +220,7 @@ export default function ReviewPage() {
         <div className="px-5 mb-6">
           <button
             onClick={startSession}
-            className="w-full py-5 rounded-2xl font-black text-white text-lg transition glow-blue"
+            className="w-full py-5 rounded-2xl font-black text-white text-xl transition glow-blue"
             style={{ background: "linear-gradient(135deg, #1D4ED8, #2563EB)" }}
           >
             ابدأ المراجعة ({dueCards.length} بطاقة)
@@ -241,19 +231,19 @@ export default function ReviewPage() {
       {/* Due cards */}
       {dueCards.length > 0 && (
         <div className="px-5 mb-6">
-          <h3 className="font-black text-base text-[var(--text)] mb-4">مستحقة الآن</h3>
-          <div className="flex flex-col gap-3">
+          <h3 className="font-black text-lg text-[var(--text)] mb-4">مستحقة الآن</h3>
+          <div className="flex flex-col gap-4">
             {dueCards.map((card) => {
               const color = SUBJECT_COLORS[card.subject];
               return (
-                <div key={card.id} className="rounded-2xl p-5 flex items-center gap-4"
+                <div key={card.id} className="rounded-2xl p-5"
                   style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-                  <div className="w-3 h-3 rounded-full flex-shrink-0 animate-pulse" style={{ background: "#EF4444" }} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[var(--text)] leading-snug">{card.question}</p>
-                    <span className="text-xs font-bold mt-1 block" style={{ color }}>{card.subject}</span>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-3 h-3 rounded-full flex-shrink-0 animate-pulse" style={{ background: "#EF4444" }} />
+                    <span className="text-sm font-black" style={{ color }}>{card.subject}</span>
+                    <span className="text-sm font-bold text-[var(--danger)] mr-auto">الآن</span>
                   </div>
-                  <span className="text-sm font-bold text-[var(--danger)] flex-shrink-0">الآن</span>
+                  <p className="text-base font-semibold text-[var(--text)] leading-relaxed">{card.question}</p>
                 </div>
               );
             })}
@@ -264,19 +254,19 @@ export default function ReviewPage() {
       {/* Upcoming */}
       {upcomingCards.length > 0 && (
         <div className="px-5 mb-6">
-          <h3 className="font-black text-base text-[var(--text-dim)] mb-4">قادم</h3>
-          <div className="flex flex-col gap-3">
+          <h3 className="font-black text-lg text-[var(--text-dim)] mb-4">قادم</h3>
+          <div className="flex flex-col gap-4">
             {upcomingCards.map((card) => {
               const color = SUBJECT_COLORS[card.subject];
               return (
-                <div key={card.id} className="rounded-2xl p-5 flex items-center gap-4 opacity-60"
+                <div key={card.id} className="rounded-2xl p-5 opacity-60"
                   style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-                  <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: color }} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[var(--text)] leading-snug">{card.question}</p>
-                    <span className="text-xs font-bold mt-1 block" style={{ color }}>{card.subject}</span>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: color }} />
+                    <span className="text-sm font-black" style={{ color }}>{card.subject}</span>
+                    <span className="text-sm text-[var(--text-muted)] mr-auto">{nextReviewText(card.dueDate)}</span>
                   </div>
-                  <span className="text-sm text-[var(--text-muted)] flex-shrink-0">{nextReviewText(card.dueDate)}</span>
+                  <p className="text-base font-semibold text-[var(--text)] leading-relaxed">{card.question}</p>
                 </div>
               );
             })}
@@ -287,10 +277,20 @@ export default function ReviewPage() {
       {dueCards.length === 0 && (
         <div className="text-center py-16 px-6">
           <p className="text-5xl mb-5">✅</p>
-          <p className="text-lg font-black text-[var(--success)] mb-2">أحسنت! لا مراجعات مستحقة</p>
-          <p className="text-sm text-[var(--text-muted)]">{upcomingCards.length} بطاقة قادمة لاحقاً</p>
+          <p className="text-xl font-black text-[var(--success)] mb-2">أحسنت! لا مراجعات مستحقة</p>
+          <p className="text-base text-[var(--text-muted)]">{upcomingCards.length} بطاقة قادمة لاحقاً</p>
         </div>
       )}
+
+      {/* Info — في الأسفل */}
+      <div className="px-5 pb-6">
+        <div className="rounded-2xl p-5" style={{ background: "linear-gradient(135deg, rgba(37,99,235,0.1), rgba(37,99,235,0.03))", border: "1px solid rgba(37,99,235,0.2)" }}>
+          <p className="text-sm text-[var(--text-dim)] leading-relaxed">
+            📊 <strong className="text-[var(--text)]">Ebbinghaus 1885:</strong> نسيان 80% خلال 24 ساعة بدون مراجعة.
+            المراجعة الموزعة = تفوق 200% على المذاكرة التقليدية.
+          </p>
+        </div>
+      </div>
 
       <BottomNav />
     </div>

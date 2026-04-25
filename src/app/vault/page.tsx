@@ -114,19 +114,19 @@ export default function VaultPage() {
       )}
 
       {/* ── Category pills ── */}
-      <div className="px-5 mb-6">
-        <p className="text-sm font-bold text-[var(--text-muted)] mb-3">تصنيف الخطأ</p>
-        <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="px-5 mb-8">
+        <p className="text-base font-black text-[var(--text)] mb-4">تصنيف الخطأ</p>
+        <div className="flex gap-3 overflow-x-auto pb-2">
           {["الكل", ...ERROR_CATEGORIES].map((cat) => {
             const count = cat === "الكل" ? errors.length : categoryCount(cat);
             const active = filterCat === cat;
             return (
               <button key={cat} onClick={() => setFilterCat(cat)}
-                className="flex-shrink-0 px-5 py-3 rounded-2xl text-sm font-bold transition"
+                className="flex-shrink-0 px-6 py-3.5 rounded-2xl text-base font-bold transition"
                 style={active
                   ? { background: "#F59E0B", color: "#0A0A0F" }
-                  : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-dim)" }}>
-                {cat}{count > 0 && ` (${count})`}
+                  : { background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text-dim)" }}>
+                {cat}{count > 0 && <span className="mr-1 text-sm opacity-80">({count})</span>}
               </button>
             );
           })}
@@ -134,17 +134,18 @@ export default function VaultPage() {
       </div>
 
       {/* ── Subject tabs ── */}
-      <div className="px-5 mb-7">
-        <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="px-5 mb-8">
+        <p className="text-base font-black text-[var(--text)] mb-4">المادة</p>
+        <div className="flex gap-3 overflow-x-auto pb-2">
           {(["الكل", ...SUBJECTS] as (SubjectId | "الكل")[]).map((s) => {
             const active = filterSubject === s;
             const color = s === "الكل" ? "#64748B" : SUBJECT_COLORS[s as SubjectId];
             return (
               <button key={s} onClick={() => setFilterSubject(s)}
-                className="flex-shrink-0 px-5 py-3 rounded-2xl text-sm font-bold transition"
+                className="flex-shrink-0 px-6 py-3.5 rounded-2xl text-base font-bold transition"
                 style={active
                   ? { background: color, color: "#fff" }
-                  : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                  : { background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}>
                 {s}
               </button>
             );
