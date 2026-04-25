@@ -1,9 +1,7 @@
 "use client";
 import { useState } from "react";
-import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import { RAKAN_SCHEDULE, ROADMAP_STAGES } from "@/lib/constants";
-import type { SubjectId } from "@/lib/types";
 
 type SubjectKey = keyof typeof RAKAN_SCHEDULE;
 
@@ -59,49 +57,49 @@ export default function RoadmapPage() {
     <div className="min-h-dvh bg-[var(--bg)] pb-nav">
       {/* Header */}
       <div className="page-header">
-        <h1 className="font-black text-lg text-[var(--text)]">خريطة الطريق</h1>
-        <span className="text-xs text-[var(--text-muted)] bg-[var(--surface)] border border-[var(--border)] px-3 py-1.5 rounded-xl">جدول راكان 2026</span>
+        <h1 className="font-black text-xl text-[var(--text)]">خريطة الطريق</h1>
+        <span className="text-sm text-[var(--text-muted)] bg-[var(--surface)] border border-[var(--border)] px-4 py-2 rounded-xl font-semibold">الجدول</span>
       </div>
 
-      {/* Overall stage */}
-      <div className="px-5 mb-4">
+      {/* Stage card */}
+      <div className="px-5 mb-6">
         <div
-          className="rounded-2xl p-4"
+          className="rounded-3xl p-6"
           style={{
             background: `linear-gradient(135deg, ${color}18, ${color}05)`,
-            border: `1px solid ${color}33`,
+            border: `1.5px solid ${color}33`,
           }}
         >
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">{currentStage.icon}</span>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">{currentStage.icon}</span>
               <div>
-                <p className="font-black text-sm text-[var(--text)]">مرحلة {currentStage.name}</p>
-                <p className="text-[10px] text-[var(--text-muted)]">{activeSubject} · {SUBJECT_ICONS[activeSubject]}</p>
+                <p className="font-black text-base text-[var(--text)]">مرحلة {currentStage.name}</p>
+                <p className="text-sm text-[var(--text-muted)] mt-0.5">{activeSubject} {SUBJECT_ICONS[activeSubject]}</p>
               </div>
             </div>
-            <span className="font-mono-nums text-2xl font-black" style={{ color }}>{overallProgress}%</span>
+            <span className="font-mono-nums text-4xl font-black" style={{ color }}>{overallProgress}%</span>
           </div>
-          <div className="h-2 bg-[var(--border)] rounded-full overflow-hidden">
+          <div className="h-3 bg-[var(--border)] rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{ width: overallProgress + "%", background: color }}
             />
           </div>
-          <div className="flex justify-between mt-1">
+          <div className="flex justify-between mt-3">
             {ROADMAP_STAGES.map((s) => (
-              <div key={s.id} className="flex items-center gap-0.5">
-                <span className="text-[10px]">{s.icon}</span>
-                <span className="text-[9px] text-[var(--text-muted)]">{s.name}</span>
+              <div key={s.id} className="flex items-center gap-1">
+                <span className="text-sm">{s.icon}</span>
+                <span className="text-xs text-[var(--text-muted)] font-medium">{s.name}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Subject tabs */}
-      <div className="px-5 mb-4">
-        <div className="grid grid-cols-4 gap-2">
+      {/* Subject tabs — 2×2 grid */}
+      <div className="px-5 mb-6">
+        <div className="grid grid-cols-2 gap-3">
           {(Object.keys(RAKAN_SCHEDULE) as SubjectKey[]).map((s) => {
             const subLessons = RAKAN_SCHEDULE[s];
             const done = subLessons.filter((l) => completedLessons.has(`${s}-${l.lesson}`)).length;
@@ -111,48 +109,49 @@ export default function RoadmapPage() {
               <button
                 key={s}
                 onClick={() => setActiveSubject(s)}
-                className={`rounded-2xl p-2 flex flex-col items-center gap-1 transition ${
-                  activeSubject === s ? "glow-blue" : "glass"
-                }`}
+                className="rounded-2xl p-4 flex items-center gap-3 transition active:scale-[0.97]"
                 style={
                   activeSubject === s
-                    ? { background: c + "22", border: `1px solid ${c}66` }
-                    : {}
+                    ? { background: c + "22", border: `2px solid ${c}66` }
+                    : { background: "var(--surface)", border: "1.5px solid var(--border)" }
                 }
               >
-                <span className="text-base">{SUBJECT_ICONS[s]}</span>
-                <span className="text-[9px] font-bold text-[var(--text)]">{s}</span>
-                <span className="font-mono-nums text-[10px]" style={{ color: c }}>{pct}%</span>
+                <span className="text-2xl">{SUBJECT_ICONS[s]}</span>
+                <div className="text-right flex-1">
+                  <p className="font-black text-base text-[var(--text)]">{s}</p>
+                  <p className="font-mono-nums text-sm font-bold mt-0.5" style={{ color: c }}>{pct}%</p>
+                </div>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Subject info */}
-      <div className="px-5 mb-3">
-        <div className="glass rounded-2xl p-3 flex justify-between text-center">
+      {/* Subject stats */}
+      <div className="px-5 mb-6">
+        <div className="rounded-2xl p-5 grid grid-cols-4 text-center gap-2"
+          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <div>
-            <p className="font-mono-nums font-bold text-sm" style={{ color }}>{totals.lessons}</p>
-            <p className="text-[9px] text-[var(--text-muted)]">درس</p>
+            <p className="font-mono-nums font-black text-xl" style={{ color }}>{totals.lessons}</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">درس</p>
           </div>
           <div>
-            <p className="font-mono-nums font-bold text-sm text-[var(--gold)]">{totals.hours}</p>
-            <p className="text-[9px] text-[var(--text-muted)]">ساعة</p>
+            <p className="font-mono-nums font-black text-xl text-[var(--gold)]">{totals.hours}</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">ساعة</p>
           </div>
           <div>
-            <p className="font-mono-nums font-bold text-sm text-[var(--text-dim)]">ص {totals.pages}</p>
-            <p className="text-[9px] text-[var(--text-muted)]">كتاب ناصر</p>
+            <p className="font-mono-nums font-black text-xl text-[var(--text-dim)]">{totals.pages}</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">صفحة</p>
           </div>
           <div>
-            <p className="font-mono-nums font-bold text-sm text-[var(--success)]">{completedCount}/{lessons.length}</p>
-            <p className="text-[9px] text-[var(--text-muted)]">منجز</p>
+            <p className="font-mono-nums font-black text-xl text-[var(--success)]">{completedCount}/{lessons.length}</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">منجز</p>
           </div>
         </div>
       </div>
 
       {/* Lessons list */}
-      <div className="px-5 space-y-2">
+      <div className="px-5 flex flex-col gap-3">
         {lessons.map((lesson, idx) => {
           const key = `${activeSubject}-${lesson.lesson}`;
           const done = completedLessons.has(key);
@@ -162,51 +161,41 @@ export default function RoadmapPage() {
           return (
             <div
               key={idx}
-              className={`glass rounded-2xl p-4 transition cursor-pointer active:scale-[0.98] ${
-                done ? "opacity-60" : ""
-              }`}
-              style={done ? { borderColor: color + "22" } : {}}
+              className={`rounded-2xl p-5 transition cursor-pointer active:scale-[0.98] ${done ? "opacity-50" : ""}`}
+              style={{
+                background: "var(--surface)",
+                border: done ? `1.5px solid ${color}22` : "1.5px solid var(--border)",
+              }}
               onClick={() => toggleLesson(lesson.lesson)}
             >
-              <div className="flex items-center gap-3">
-                {/* Checkbox */}
+              <div className="flex items-center gap-4">
                 <div
-                  className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition"
+                  className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition"
                   style={
                     done
                       ? { background: color, border: `1px solid ${color}` }
-                      : { border: `1.5px solid var(--border)` }
+                      : { border: `2px solid var(--border)` }
                   }
                 >
-                  {done && <span className="text-white text-xs">✓</span>}
+                  {done && <span className="text-white text-base font-bold">✓</span>}
                 </div>
 
-                {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <p className={`font-bold text-sm truncate ${done ? "line-through text-[var(--text-muted)]" : "text-[var(--text)]"}`}>
-                      {lesson.lesson}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 text-[10px] text-[var(--text-muted)]">
-                    <span>اليوم {lesson.day}</span>
-                    <span>{lesson.hours} ساعة</span>
-                    <span>ص {lesson.pages}</span>
+                  <p className={`font-bold text-base leading-snug ${done ? "line-through text-[var(--text-muted)]" : "text-[var(--text)]"}`}>
+                    {lesson.lesson}
+                  </p>
+                  <div className="flex items-center gap-3 mt-1.5">
+                    <span className="text-sm text-[var(--text-muted)]">اليوم {lesson.day}</span>
+                    <span className="text-sm text-[var(--text-muted)]">{lesson.hours} ساعة</span>
+                    <span className="text-sm text-[var(--text-muted)]">ص {lesson.pages}</span>
                   </div>
                 </div>
 
-                {/* Right info */}
-                <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                  <span className="text-[10px] font-bold" style={{ color: diffColor }}>
-                    {lesson.difficulty}
-                  </span>
-                  <div className="w-16 h-1 bg-[var(--border)] rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full"
-                      style={{ width: lesson.progress + "%", background: color }}
-                    />
+                <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                  <span className="text-sm font-bold" style={{ color: diffColor }}>{lesson.difficulty}</span>
+                  <div className="w-16 h-1.5 bg-[var(--border)] rounded-full overflow-hidden">
+                    <div className="h-full rounded-full" style={{ width: lesson.progress + "%", background: color }} />
                   </div>
-                  <span className="text-[9px] text-[var(--text-muted)]">{lesson.progress}%</span>
                 </div>
               </div>
             </div>
@@ -215,15 +204,9 @@ export default function RoadmapPage() {
       </div>
 
       {/* Tip */}
-      <div className="px-5 py-5">
-        <div
-          className="rounded-2xl p-4 text-center"
-          style={{
-            background: "rgba(37,99,235,0.08)",
-            border: "1px solid rgba(37,99,235,0.15)",
-          }}
-        >
-          <p className="text-xs text-[var(--text-dim)] leading-relaxed">
+      <div className="px-5 py-6">
+        <div className="rounded-2xl p-5" style={{ background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.15)" }}>
+          <p className="text-sm text-[var(--text-dim)] leading-relaxed">
             💡 <strong className="text-[var(--text)]">نصيحة أصحاب الـ 100:</strong> كتاب ناصر عبدالكريم = الأساس.
             اختمه مرتين أو ثلاث. التجميعات بعد الختم، مش بدله.
           </p>

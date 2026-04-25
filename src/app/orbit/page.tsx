@@ -123,16 +123,14 @@ export default function OrbitPage() {
       {/* Subject selector */}
       {phase === "idle" && (
         <div className="px-5 mb-5">
-          <p className="label mb-3">المادة التي تذاكرها:</p>
+          <p className="text-sm font-bold text-[var(--text-muted)] mb-3">المادة التي تذاكرها:</p>
           <div className="flex gap-2 flex-wrap">
             {SUBJECTS.map((s) => (
               <button
                 key={s}
                 onClick={() => setSubject(s)}
-                className={`px-4 py-2 rounded-2xl text-sm font-semibold transition ${
-                  subject === s
-                    ? "text-white"
-                    : "text-[var(--text-dim)]"
+                className={`px-5 py-3 rounded-2xl text-sm font-bold transition ${
+                  subject === s ? "text-white" : "text-[var(--text-dim)]"
                 }`}
                 style={subject === s ? { background: "#2563EB" } : { background: "var(--surface)", border: "1px solid var(--border)" }}
               >
@@ -272,18 +270,19 @@ export default function OrbitPage() {
 
       {/* Stats bar */}
       <div className="px-5 pb-4">
-        <div className="card grid grid-cols-3 text-center gap-3">
+        <div className="rounded-2xl p-5 grid grid-cols-3 text-center gap-3"
+          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <div>
-            <p className="font-mono-nums font-black text-2xl text-[var(--blue-light)]">{sessionsToday}</p>
-            <p className="label mt-1">جلسات اليوم</p>
+            <p className="font-mono-nums font-black text-3xl text-[var(--blue-light)]">{sessionsToday}</p>
+            <p className="text-sm text-[var(--text-muted)] mt-1">جلسات</p>
           </div>
           <div>
-            <p className="font-mono-nums font-black text-2xl text-[var(--gold)]">{totalFocusMins}</p>
-            <p className="label mt-1">دقيقة</p>
+            <p className="font-mono-nums font-black text-3xl text-[var(--gold)]">{totalFocusMins}</p>
+            <p className="text-sm text-[var(--text-muted)] mt-1">دقيقة</p>
           </div>
           <div>
-            <p className="font-mono-nums font-black text-2xl text-[var(--success)]">{silverEarned}</p>
-            <p className="label mt-1">Silver 🪙</p>
+            <p className="font-mono-nums font-black text-3xl text-[var(--success)]">{silverEarned}</p>
+            <p className="text-sm text-[var(--text-muted)] mt-1">Silver 🪙</p>
           </div>
         </div>
       </div>

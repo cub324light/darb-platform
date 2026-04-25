@@ -115,14 +115,14 @@ export default function VaultPage() {
 
       {/* ── Category pills ── */}
       <div className="px-5 mb-6">
-        <p className="label mb-3">تصنيف الخطأ</p>
+        <p className="text-sm font-bold text-[var(--text-muted)] mb-3">تصنيف الخطأ</p>
         <div className="flex gap-2 overflow-x-auto pb-1">
           {["الكل", ...ERROR_CATEGORIES].map((cat) => {
             const count = cat === "الكل" ? errors.length : categoryCount(cat);
             const active = filterCat === cat;
             return (
               <button key={cat} onClick={() => setFilterCat(cat)}
-                className="flex-shrink-0 px-4 py-2 rounded-2xl text-sm font-semibold transition"
+                className="flex-shrink-0 px-5 py-3 rounded-2xl text-sm font-bold transition"
                 style={active
                   ? { background: "#F59E0B", color: "#0A0A0F" }
                   : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-dim)" }}>
@@ -180,23 +180,23 @@ export default function VaultPage() {
                   <div className="w-3 h-3 rounded-full mt-2 flex-shrink-0" style={{ background: color }} />
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-base text-[var(--text)] leading-relaxed mb-3">{error.question}</p>
+                    <p className="text-base text-[var(--text)] leading-relaxed mb-4">{error.question}</p>
 
                     <div className="flex flex-col gap-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs font-bold px-3 py-1 rounded-full"
+                        <span className="text-sm font-bold px-4 py-1.5 rounded-full"
                           style={{ background: color + "20", color }}>
                           {error.subject}
                         </span>
-                        <span className="text-xs px-3 py-1 rounded-full"
+                        <span className="text-sm px-4 py-1.5 rounded-full"
                           style={{ background: "var(--surface2)", color: "var(--text-dim)", border: "1px solid var(--border)" }}>
                           {error.category}
                         </span>
                         {error.reviewCount > 0 && (
-                          <span className="text-xs text-[var(--success)] font-semibold">✓ راجعته {error.reviewCount}×</span>
+                          <span className="text-sm text-[var(--success)] font-bold">✓ راجعته {error.reviewCount}×</span>
                         )}
                       </div>
-                      <span className="text-xs text-[var(--text-muted)]">
+                      <span className="text-sm text-[var(--text-muted)]">
                         {daysAgo === 0 ? "اليوم" : `قبل ${daysAgo} يوم`}
                       </span>
                     </div>
@@ -208,22 +208,22 @@ export default function VaultPage() {
 
               {/* Expanded */}
               {isExpanded && (
-                <div className="px-5 pb-5 border-t border-[var(--border)]">
-                  <div className="pt-4 flex flex-col gap-3">
+                <div className="px-6 pb-6 border-t border-[var(--border)]">
+                  <div className="pt-5 flex flex-col gap-4">
                     {error.note && (
-                      <div className="rounded-2xl p-4" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-                        <p className="label mb-2">ملاحظتي</p>
-                        <p className="text-sm text-[var(--text-dim)] leading-relaxed">{error.note}</p>
+                      <div className="rounded-2xl p-5" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                        <p className="text-sm font-bold text-[var(--text-muted)] mb-2">ملاحظتي</p>
+                        <p className="text-base text-[var(--text-dim)] leading-relaxed">{error.note}</p>
                       </div>
                     )}
                     <div className="grid grid-cols-2 gap-3">
                       <button onClick={() => setErrors((p) => p.map((e) => e.id === error.id ? { ...e, reviewCount: e.reviewCount + 1 } : e))}
-                        className="py-3 rounded-2xl text-sm font-bold text-white transition"
+                        className="py-4 rounded-2xl text-base font-black text-white transition"
                         style={{ background: color }}>
                         راجعته ✓
                       </button>
                       <button onClick={() => setErrors((p) => p.filter((e) => e.id !== error.id))}
-                        className="py-3 rounded-2xl text-sm font-bold transition"
+                        className="py-4 rounded-2xl text-base font-black transition"
                         style={{ background: "var(--surface2)", border: "1px solid rgba(239,68,68,0.3)", color: "#EF4444" }}>
                         حذف
                       </button>
