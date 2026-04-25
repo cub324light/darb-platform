@@ -196,9 +196,9 @@ export default function DashboardPage() {
             <div className="h-full rounded-full transition-all duration-700"
               style={{ width: "35%", background: "linear-gradient(90deg, #1D4ED8, #3B82F6)" }} />
           </div>
-          <div className="flex justify-between mt-3">
+          <div className="flex justify-between mt-4 px-1">
             {["التأسيس", "البناء", "التعزيز", "الختام"].map((s, i) => (
-              <span key={s} className={`text-[11px] font-medium ${i === 0 ? "text-[var(--blue-light)]" : "text-[var(--text-muted)]"}`}>{s}</span>
+              <span key={s} className={`text-[12px] font-semibold ${i === 0 ? "text-[var(--blue-light)]" : "text-[var(--text-muted)]"}`}>{s}</span>
             ))}
           </div>
         </div>

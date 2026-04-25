@@ -93,7 +93,7 @@ export default function VaultPage() {
 
       {/* ── Limit bar ── */}
       {isPlanFree && (
-        <div className="px-5 mb-5">
+        <div className="px-5 mb-7">
           <div className="flex justify-between mb-2">
             <span className="body-sm">الاستخدام</span>
             <span className="body-sm">{errors.length} / {FREE_LIMIT}</span>
@@ -115,7 +115,7 @@ export default function VaultPage() {
       )}
 
       {/* ── Category pills ── */}
-      <div className="px-5 mb-4">
+      <div className="px-5 mb-6">
         <p className="label mb-3">تصنيف الخطأ</p>
         <div className="flex gap-2 overflow-x-auto pb-1">
           {["الكل", ...ERROR_CATEGORIES].map((cat) => {
@@ -135,7 +135,7 @@ export default function VaultPage() {
       </div>
 
       {/* ── Subject tabs ── */}
-      <div className="px-5 mb-5">
+      <div className="px-5 mb-7">
         <div className="grid grid-cols-5 gap-2">
           {(["الكل", ...SUBJECTS] as (SubjectId | "الكل")[]).map((s) => {
             const active = filterSubject === s;
@@ -154,7 +154,7 @@ export default function VaultPage() {
       </div>
 
       {/* ── Cards list ── */}
-      <div className="px-5 flex flex-col gap-4">
+      <div className="px-5 flex flex-col gap-5">
 
         {filtered.length === 0 && (
           <div className="text-center py-16">
@@ -183,19 +183,21 @@ export default function VaultPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-base text-[var(--text)] leading-relaxed mb-3">{error.question}</p>
 
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs font-bold px-3 py-1 rounded-full"
-                        style={{ background: color + "20", color }}>
-                        {error.subject}
-                      </span>
-                      <span className="text-xs px-3 py-1 rounded-full"
-                        style={{ background: "var(--surface2)", color: "var(--text-dim)", border: "1px solid var(--border)" }}>
-                        {error.category}
-                      </span>
-                      {error.reviewCount > 0 && (
-                        <span className="text-xs text-[var(--success)] font-semibold">✓ راجعته {error.reviewCount}×</span>
-                      )}
-                      <span className="text-xs text-[var(--text-muted)] mr-auto">
+                    <div className="flex flex-col gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs font-bold px-3 py-1 rounded-full"
+                          style={{ background: color + "20", color }}>
+                          {error.subject}
+                        </span>
+                        <span className="text-xs px-3 py-1 rounded-full"
+                          style={{ background: "var(--surface2)", color: "var(--text-dim)", border: "1px solid var(--border)" }}>
+                          {error.category}
+                        </span>
+                        {error.reviewCount > 0 && (
+                          <span className="text-xs text-[var(--success)] font-semibold">✓ راجعته {error.reviewCount}×</span>
+                        )}
+                      </div>
+                      <span className="text-xs text-[var(--text-muted)]">
                         {daysAgo === 0 ? "اليوم" : `قبل ${daysAgo} يوم`}
                       </span>
                     </div>
