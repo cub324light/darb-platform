@@ -8,10 +8,10 @@ import type { VaultError, SubjectId } from "@/lib/types";
 const SUBJECTS: SubjectId[] = ["فيزياء", "رياضيات", "كيمياء", "أحياء"];
 
 const SUBJECT_COLORS: Record<SubjectId, string> = {
-  فيزياء: "#2563EB",
+  فيزياء:  "#2563EB",
   رياضيات: "#8B5CF6",
-  كيمياء: "#10B981",
-  أحياء: "#F59E0B",
+  كيمياء:  "#10B981",
+  أحياء:   "#F59E0B",
 };
 
 const FREE_LIMIT = 20;
@@ -47,213 +47,186 @@ const DEMO_ERRORS: VaultError[] = [
 ];
 
 export default function VaultPage() {
-  const [errors, setErrors] = useState<VaultError[]>(DEMO_ERRORS);
-  const [showAdd, setShowAdd] = useState(false);
+  const [errors, setErrors]         = useState<VaultError[]>(DEMO_ERRORS);
+  const [showAdd, setShowAdd]       = useState(false);
   const [filterSubject, setFilterSubject] = useState<SubjectId | "الكل">("الكل");
-  const [filterCat, setFilterCat] = useState<string>("الكل");
+  const [filterCat, setFilterCat]   = useState<string>("الكل");
   const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  const [newQ, setNewQ] = useState("");
+  const [newQ, setNewQ]             = useState("");
   const [newSubject, setNewSubject] = useState<SubjectId>("فيزياء");
-  const [newCat, setNewCat] = useState<string>(ERROR_CATEGORIES[0]);
-  const [newNote, setNewNote] = useState("");
+  const [newCat, setNewCat]         = useState<string>(ERROR_CATEGORIES[0]);
+  const [newNote, setNewNote]       = useState("");
 
   const isPlanFree = true;
-  const atLimit = isPlanFree && errors.length >= FREE_LIMIT;
+  const atLimit    = isPlanFree && errors.length >= FREE_LIMIT;
 
   const filtered = errors.filter((e) => {
     if (filterSubject !== "الكل" && e.subject !== filterSubject) return false;
-    if (filterCat !== "الكل" && e.category !== filterCat) return false;
+    if (filterCat     !== "الكل" && e.category !== filterCat)   return false;
     return true;
   });
 
   const addError = () => {
-    if (!newQ.trim()) return;
-    if (atLimit) return;
-
-    const e: VaultError = {
-      id: Date.now().toString(),
-      question: newQ.trim(),
-      subject: newSubject,
-      category: newCat,
-      note: newNote.trim(),
-      createdAt: Date.now(),
-      reviewCount: 0,
-    };
-    setErrors((p) => [e, ...p]);
-    setNewQ("");
-    setNewNote("");
-    setShowAdd(false);
-  };
-
-  const deleteError = (id: string) => {
-    setErrors((p) => p.filter((e) => e.id !== id));
-  };
-
-  const markReviewed = (id: string) => {
-    setErrors((p) =>
-      p.map((e) => (e.id === id ? { ...e, reviewCount: e.reviewCount + 1 } : e))
-    );
+    if (!newQ.trim() || atLimit) return;
+    setErrors((p) => [{
+      id: Date.now().toString(), question: newQ.trim(),
+      subject: newSubject, category: newCat,
+      note: newNote.trim(), createdAt: Date.now(), reviewCount: 0,
+    }, ...p]);
+    setNewQ(""); setNewNote(""); setShowAdd(false);
   };
 
   const categoryCount = (cat: string) => errors.filter((e) => e.category === cat).length;
 
   return (
-    <div className="min-h-dvh bg-[var(--bg)] pb-nav">
-      {/* Header */}
-      <div className="px-5 py-4 flex items-center justify-between">
-        <Link href="/dashboard" className="text-[var(--text-muted)] hover:text-[var(--text)] transition text-sm">
-          ← الرئيسية
-        </Link>
-        <h1 className="font-black text-[var(--text)]">خزنة الأخطاء 🔒</h1>
-        <div className="flex items-center gap-1.5">
-          <span className="font-mono-nums text-sm text-[var(--gold)]">{errors.length}</span>
-          {isPlanFree && <span className="text-[10px] text-[var(--text-muted)]">/{FREE_LIMIT}</span>}
+    <div className="page">
+
+      {/* ── Header ── */}
+      <div className="page-header">
+        <Link href="/dashboard" className="text-[var(--text-muted)] text-sm font-medium">← رجوع</Link>
+        <h1 className="title-md text-[var(--text)]">خزنة الأخطاء 🔒</h1>
+        <div className="stat-chip">
+          <span className="font-mono-nums font-bold text-base text-[var(--gold)]">{errors.length}</span>
+          {isPlanFree && <span className="body-sm">/{FREE_LIMIT}</span>}
         </div>
       </div>
 
-      {/* Limit warning */}
+      {/* ── Limit bar ── */}
       {isPlanFree && (
-        <div className="px-5 mb-3">
-          <div className="h-1.5 bg-[var(--border)] rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all"
+        <div className="px-5 mb-5">
+          <div className="flex justify-between mb-2">
+            <span className="body-sm">الاستخدام</span>
+            <span className="body-sm">{errors.length} / {FREE_LIMIT}</span>
+          </div>
+          <div className="h-2 bg-[var(--border)] rounded-full overflow-hidden">
+            <div className="h-full rounded-full transition-all duration-500"
               style={{
                 width: (errors.length / FREE_LIMIT) * 100 + "%",
                 background: errors.length >= FREE_LIMIT - 5 ? "#EF4444" : "#F59E0B",
-              }}
-            />
+              }} />
           </div>
           {atLimit && (
-            <div className="mt-2 text-center">
-              <span className="text-xs text-[var(--danger)]">وصلت الحد المجاني (20 سؤال). </span>
-              <Link href="/pricing" className="text-xs text-[var(--blue-light)] underline">
-                رقّي لشاهين
-              </Link>
-            </div>
+            <p className="text-sm text-[var(--danger)] mt-2 text-center">
+              وصلت الحد المجاني.{" "}
+              <Link href="/pricing" className="text-[var(--blue-light)] underline font-semibold">رقّي لشاهين</Link>
+            </p>
           )}
         </div>
       )}
 
-      {/* Category stats */}
+      {/* ── Category pills ── */}
       <div className="px-5 mb-4">
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+        <p className="label mb-3">تصنيف الخطأ</p>
+        <div className="flex gap-2 overflow-x-auto pb-1">
           {["الكل", ...ERROR_CATEGORIES].map((cat) => {
             const count = cat === "الكل" ? errors.length : categoryCount(cat);
+            const active = filterCat === cat;
             return (
-              <button
-                key={cat}
-                onClick={() => setFilterCat(cat)}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-medium transition ${
-                  filterCat === cat
-                    ? "bg-[var(--gold)] text-[var(--bg)]"
-                    : "glass text-[var(--text-dim)]"
-                }`}
-              >
-                {cat} {count > 0 && <span className="opacity-70">({count})</span>}
+              <button key={cat} onClick={() => setFilterCat(cat)}
+                className="flex-shrink-0 px-4 py-2 rounded-2xl text-sm font-semibold transition"
+                style={active
+                  ? { background: "#F59E0B", color: "#0A0A0F" }
+                  : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-dim)" }}>
+                {cat}{count > 0 && ` (${count})`}
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Subject filter */}
-      <div className="px-5 mb-4">
-        <div className="flex gap-2">
-          {(["الكل", ...SUBJECTS] as (SubjectId | "الكل")[]).map((s) => (
-            <button
-              key={s}
-              onClick={() => setFilterSubject(s)}
-              className={`flex-1 py-1.5 rounded-xl text-xs font-medium transition ${
-                filterSubject === s ? "text-white" : "glass text-[var(--text-muted)]"
-              }`}
-              style={
-                filterSubject === s
-                  ? { background: s === "الكل" ? "#64748B" : SUBJECT_COLORS[s as SubjectId] }
-                  : {}
-              }
-            >
-              {s}
-            </button>
-          ))}
+      {/* ── Subject tabs ── */}
+      <div className="px-5 mb-5">
+        <div className="grid grid-cols-5 gap-2">
+          {(["الكل", ...SUBJECTS] as (SubjectId | "الكل")[]).map((s) => {
+            const active = filterSubject === s;
+            const color = s === "الكل" ? "#64748B" : SUBJECT_COLORS[s as SubjectId];
+            return (
+              <button key={s} onClick={() => setFilterSubject(s)}
+                className="py-2.5 rounded-2xl text-sm font-semibold transition"
+                style={active
+                  ? { background: color, color: "#fff" }
+                  : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                {s}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Errors list */}
-      <div className="px-5 space-y-3">
+      {/* ── Cards list ── */}
+      <div className="px-5 flex flex-col gap-4">
+
         {filtered.length === 0 && (
-          <div className="text-center py-12 text-[var(--text-muted)]">
-            <p className="text-4xl mb-3">🔒</p>
-            <p className="text-sm">الخزنة فارغة — هذا جيد!</p>
+          <div className="text-center py-16">
+            <p className="text-5xl mb-4">🔒</p>
+            <p className="title-md text-[var(--text)] mb-2">الخزنة فارغة</p>
+            <p className="body-sm">هذا جيد! استمر.</p>
           </div>
         )}
 
         {filtered.map((error) => {
-          const color = SUBJECT_COLORS[error.subject];
+          const color     = SUBJECT_COLORS[error.subject];
           const isExpanded = expandedId === error.id;
-          const daysAgo = Math.round((Date.now() - error.createdAt) / 86400000);
+          const daysAgo   = Math.round((Date.now() - error.createdAt) / 86400000);
 
           return (
-            <div
-              key={error.id}
-              className="glass rounded-2xl overflow-hidden transition"
-              style={{ borderColor: color + "22" }}
-            >
-              <div
-                className="p-4 cursor-pointer"
-                onClick={() => setExpandedId(isExpanded ? null : error.id)}
-              >
-                <div className="flex items-start gap-3">
-                  <div
-                    className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
-                    style={{ background: color }}
-                  />
+            <div key={error.id}
+              className="rounded-2xl overflow-hidden transition-all"
+              style={{ background: "var(--surface)", border: `1.5px solid ${isExpanded ? color + "50" : "var(--border)"}` }}>
+
+              {/* Card header */}
+              <div className="p-5 cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : error.id)}>
+                <div className="flex items-start gap-4">
+                  {/* Color dot */}
+                  <div className="w-3 h-3 rounded-full mt-1.5 flex-shrink-0" style={{ background: color }} />
+
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-[var(--text)] leading-relaxed">{error.question}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span
-                        className="text-[10px] px-2 py-0.5 rounded-full font-medium"
-                        style={{ background: color + "22", color }}
-                      >
+                    <p className="text-base text-[var(--text)] leading-relaxed mb-3">{error.question}</p>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-bold px-3 py-1 rounded-full"
+                        style={{ background: color + "20", color }}>
                         {error.subject}
                       </span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full glass text-[var(--text-muted)]">
+                      <span className="text-xs px-3 py-1 rounded-full"
+                        style={{ background: "var(--surface2)", color: "var(--text-dim)", border: "1px solid var(--border)" }}>
                         {error.category}
                       </span>
                       {error.reviewCount > 0 && (
-                        <span className="text-[10px] text-[var(--success)]">✓ {error.reviewCount}×</span>
+                        <span className="text-xs text-[var(--success)] font-semibold">✓ راجعته {error.reviewCount}×</span>
                       )}
-                      <span className="text-[10px] text-[var(--text-muted)] mr-auto">
+                      <span className="text-xs text-[var(--text-muted)] mr-auto">
                         {daysAgo === 0 ? "اليوم" : `قبل ${daysAgo} يوم`}
                       </span>
                     </div>
                   </div>
-                  <span className="text-[var(--text-muted)] text-xs">{isExpanded ? "▲" : "▼"}</span>
+
+                  <span className="text-[var(--text-muted)] text-sm mt-1">{isExpanded ? "▲" : "▼"}</span>
                 </div>
               </div>
 
+              {/* Expanded */}
               {isExpanded && (
-                <div className="px-4 pb-4 border-t border-[var(--border)] pt-3 space-y-3">
-                  {error.note && (
-                    <div className="glass rounded-xl p-3">
-                      <p className="text-[10px] text-[var(--text-muted)] mb-1">ملاحظتي:</p>
-                      <p className="text-xs text-[var(--text-dim)]">{error.note}</p>
+                <div className="px-5 pb-5 border-t border-[var(--border)]">
+                  <div className="pt-4 flex flex-col gap-3">
+                    {error.note && (
+                      <div className="rounded-2xl p-4" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                        <p className="label mb-2">ملاحظتي</p>
+                        <p className="text-sm text-[var(--text-dim)] leading-relaxed">{error.note}</p>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-3">
+                      <button onClick={() => setErrors((p) => p.map((e) => e.id === error.id ? { ...e, reviewCount: e.reviewCount + 1 } : e))}
+                        className="py-3 rounded-2xl text-sm font-bold text-white transition"
+                        style={{ background: color }}>
+                        راجعته ✓
+                      </button>
+                      <button onClick={() => setErrors((p) => p.filter((e) => e.id !== error.id))}
+                        className="py-3 rounded-2xl text-sm font-bold transition"
+                        style={{ background: "var(--surface2)", border: "1px solid rgba(239,68,68,0.3)", color: "#EF4444" }}>
+                        حذف
+                      </button>
                     </div>
-                  )}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => markReviewed(error.id)}
-                      className="flex-1 py-2 rounded-xl text-xs font-bold text-white transition"
-                      style={{ background: color }}
-                    >
-                      راجعته ✓
-                    </button>
-                    <button
-                      onClick={() => deleteError(error.id)}
-                      className="px-4 py-2 rounded-xl text-xs font-bold text-[var(--danger)] glass border border-[var(--danger)]/20"
-                    >
-                      حذف
-                    </button>
                   </div>
                 </div>
               )}
@@ -262,64 +235,52 @@ export default function VaultPage() {
         })}
       </div>
 
-      {/* Add button */}
+      {/* ── Add button / form ── */}
       {!atLimit && (
-        <div className="px-5 pt-4 pb-2">
+        <div className="px-5 py-5">
           {!showAdd ? (
-            <button
-              onClick={() => setShowAdd(true)}
-              className="w-full py-3 rounded-2xl font-bold text-sm text-[var(--text)] glass border border-dashed border-[var(--border)] hover:border-[var(--gold)]/50 transition"
-            >
-              + إضافة خطأ يدوي
+            <button onClick={() => setShowAdd(true)}
+              className="w-full py-4 rounded-2xl text-base font-bold text-[var(--text-dim)] transition"
+              style={{ background: "var(--surface)", border: "1.5px dashed var(--border)" }}>
+              + أضف خطأً جديداً
             </button>
           ) : (
-            <div className="glass rounded-2xl p-4 space-y-3">
-              <p className="font-bold text-sm text-[var(--gold)]">خطأ جديد في الخزنة</p>
+            <div className="rounded-2xl p-5 flex flex-col gap-4"
+              style={{ background: "var(--surface)", border: "1.5px solid rgba(245,158,11,0.35)" }}>
+              <p className="font-bold text-base text-[var(--gold)]">خطأ جديد في الخزنة</p>
 
-              <textarea
-                value={newQ}
-                onChange={(e) => setNewQ(e.target.value)}
+              <textarea value={newQ} onChange={(e) => setNewQ(e.target.value)} rows={3}
                 placeholder="السؤال أو المفهوم الذي أخطأت فيه..."
-                className="w-full bg-transparent border border-[var(--border)] rounded-xl px-3 py-2 text-sm text-[var(--text)] placeholder-[var(--text-muted)] resize-none focus:outline-none focus:border-[var(--gold)]/50"
-                rows={3}
-              />
+                className="w-full rounded-2xl px-4 py-3 text-sm text-[var(--text)] placeholder-[var(--text-muted)] resize-none outline-none transition-colors"
+                style={{ background: "var(--surface2)", border: "1px solid var(--border)" }} />
 
-              <div className="grid grid-cols-2 gap-2">
-                <select
-                  value={newSubject}
-                  onChange={(e) => setNewSubject(e.target.value as SubjectId)}
-                  className="bg-[var(--surface)] border border-[var(--border)] rounded-xl px-3 py-2 text-xs text-[var(--text)] focus:outline-none"
-                >
+              <div className="grid grid-cols-2 gap-3">
+                <select value={newSubject} onChange={(e) => setNewSubject(e.target.value as SubjectId)}
+                  className="rounded-2xl px-4 py-3 text-sm text-[var(--text)] outline-none"
+                  style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
                   {SUBJECTS.map((s) => <option key={s}>{s}</option>)}
                 </select>
-                <select
-                  value={newCat}
-                  onChange={(e) => setNewCat(e.target.value)}
-                  className="bg-[var(--surface)] border border-[var(--border)] rounded-xl px-3 py-2 text-xs text-[var(--text)] focus:outline-none"
-                >
+                <select value={newCat} onChange={(e) => setNewCat(e.target.value)}
+                  className="rounded-2xl px-4 py-3 text-sm text-[var(--text)] outline-none"
+                  style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
                   {ERROR_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
                 </select>
               </div>
 
-              <input
-                value={newNote}
-                onChange={(e) => setNewNote(e.target.value)}
-                placeholder="ملاحظة (اختياري): ليش غلطت؟"
-                className="w-full bg-transparent border border-[var(--border)] rounded-xl px-3 py-2 text-xs text-[var(--text)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--gold)]/50"
-              />
+              <input value={newNote} onChange={(e) => setNewNote(e.target.value)}
+                placeholder="ملاحظة: ليش غلطت؟ (اختياري)"
+                className="rounded-2xl px-4 py-3 text-sm text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+                style={{ background: "var(--surface2)", border: "1px solid var(--border)" }} />
 
-              <div className="flex gap-2">
-                <button
-                  onClick={addError}
-                  className="flex-1 py-2.5 rounded-xl font-bold text-sm text-[var(--bg)]"
-                  style={{ background: "#F59E0B" }}
-                >
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={addError}
+                  className="py-3 rounded-2xl font-bold text-base transition"
+                  style={{ background: "#F59E0B", color: "#0A0A0F" }}>
                   أضف للخزنة
                 </button>
-                <button
-                  onClick={() => setShowAdd(false)}
-                  className="px-4 py-2.5 rounded-xl text-sm text-[var(--text-muted)] glass"
-                >
+                <button onClick={() => setShowAdd(false)}
+                  className="py-3 rounded-2xl text-base font-medium text-[var(--text-muted)] transition"
+                  style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
                   إلغاء
                 </button>
               </div>

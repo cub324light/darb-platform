@@ -11,94 +11,236 @@ interface CompanionProps {
   showMessage?: boolean;
 }
 
+/* ─── Geometric low-poly birds ─── */
+function FalconSVG({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Body */}
+      <polygon points="50,20 68,38 62,62 50,68 38,62 32,38" fill={color} opacity="0.95"/>
+      {/* Head */}
+      <polygon points="50,14 62,24 50,32 38,24" fill={color}/>
+      {/* Wing L */}
+      <polygon points="32,38 14,52 20,65 38,56 38,62" fill={color} opacity="0.85"/>
+      {/* Wing R */}
+      <polygon points="68,38 86,52 80,65 62,56 62,62" fill={color} opacity="0.85"/>
+      {/* Tail */}
+      <polygon points="44,68 50,85 56,68" fill={color} opacity="0.7"/>
+      <polygon points="40,70 44,88 50,75" fill={color} opacity="0.5"/>
+      <polygon points="60,70 56,88 50,75" fill={color} opacity="0.5"/>
+      {/* Eye white */}
+      <circle cx="45" cy="26" r="5.5" fill="white"/>
+      {/* Eye pupil */}
+      <circle cx="44" cy="26" r="3" fill="#0A0A12"/>
+      {/* Eye shine */}
+      <circle cx="43" cy="24.5" r="1.2" fill="white"/>
+      {/* Beak */}
+      <polygon points="50,30 44,34 50,38 53,33" fill="#D97706"/>
+      {/* Chest highlight */}
+      <polygon points="50,32 58,44 50,54 42,44" fill="white" opacity="0.08"/>
+      {/* Claw hints */}
+      <line x1="44" y1="84" x2="40" y2="90" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.6"/>
+      <line x1="50" y1="85" x2="50" y2="92" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.6"/>
+      <line x1="56" y1="84" x2="60" y2="90" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.6"/>
+    </svg>
+  );
+}
+
+function HoopoeSVG({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Crest feathers */}
+      <polygon points="42,16 44,6 48,14" fill={color} opacity="0.9"/>
+      <polygon points="48,14 50,4 52,14" fill={color}/>
+      <polygon points="52,14 56,7 58,16" fill={color} opacity="0.9"/>
+      {/* Orange crest tips */}
+      <circle cx="44" cy="6" r="2" fill="#F59E0B"/>
+      <circle cx="50" cy="4" r="2.5" fill="#F59E0B"/>
+      <circle cx="56" cy="7" r="2" fill="#F59E0B"/>
+      {/* Head */}
+      <polygon points="50,14 63,22 58,34 50,36 42,34 37,22" fill={color}/>
+      {/* Body */}
+      <polygon points="50,36 65,46 62,65 50,70 38,65 35,46" fill={color} opacity="0.9"/>
+      {/* Wing L */}
+      <polygon points="35,46 16,55 22,68 38,60 38,65" fill={color} opacity="0.8"/>
+      {/* Wing R */}
+      <polygon points="65,46 84,55 78,68 62,60 62,65" fill={color} opacity="0.8"/>
+      {/* Tail */}
+      <polygon points="44,70 48,86 52,70" fill={color} opacity="0.7"/>
+      {/* Eye white */}
+      <circle cx="44" cy="25" r="5" fill="white"/>
+      <circle cx="43.5" cy="25" r="2.8" fill="#0A0A12"/>
+      <circle cx="42.5" cy="23.5" r="1.1" fill="white"/>
+      {/* Beak — long & curved */}
+      <path d="M50,32 Q54,36 56,42" stroke="#D97706" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+      {/* Chest pattern */}
+      <polygon points="50,38 58,50 50,58 42,50" fill="white" opacity="0.1"/>
+      <polygon points="50,46 55,52 50,58 45,52" fill="#F59E0B" opacity="0.2"/>
+    </svg>
+  );
+}
+
+function SwanSVG({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Long neck */}
+      <path d="M50,55 Q44,42 46,28 Q48,18 52,16" stroke={color} strokeWidth="10" strokeLinecap="round" fill="none"/>
+      {/* Head */}
+      <ellipse cx="54" cy="14" rx="10" ry="8" fill={color}/>
+      {/* Body large */}
+      <ellipse cx="52" cy="70" rx="26" ry="20" fill={color} opacity="0.9"/>
+      {/* Wing layer */}
+      <ellipse cx="52" cy="68" rx="22" ry="15" fill="white" opacity="0.12"/>
+      {/* Wing feathers */}
+      <polygon points="28,62 12,58 18,75 32,72" fill={color} opacity="0.75"/>
+      <polygon points="76,62 88,58 82,75 68,72" fill={color} opacity="0.75"/>
+      {/* Tail */}
+      <polygon points="46,88 52,96 58,88 52,84" fill={color} opacity="0.7"/>
+      {/* Eye */}
+      <circle cx="58" cy="13" r="4.5" fill="white"/>
+      <circle cx="57.5" cy="13" r="2.5" fill="#0A0A12"/>
+      <circle cx="56.5" cy="11.8" r="1" fill="white"/>
+      {/* Beak — orange flat */}
+      <polygon points="64,12 72,14 64,17" fill="#F97316"/>
+      <line x1="64" y1="14.5" x2="71" y2="14.5" stroke="#C2410C" strokeWidth="0.8"/>
+    </svg>
+  );
+}
+
+function RavenSVG({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Body */}
+      <polygon points="50,22 70,40 66,65 50,72 34,65 30,40" fill={color}/>
+      {/* Head */}
+      <polygon points="50,16 64,24 58,36 50,38 42,36 36,24" fill={color}/>
+      {/* Large wings spread */}
+      <polygon points="30,40 8,30 6,55 24,62 34,58" fill={color} opacity="0.88"/>
+      <polygon points="70,40 92,30 94,55 76,62 66,58" fill={color} opacity="0.88"/>
+      {/* Wing fold */}
+      <polygon points="8,30 6,55 24,62 20,45" fill="white" opacity="0.05"/>
+      {/* Tail forked */}
+      <polygon points="44,72 46,90 52,78" fill={color} opacity="0.8"/>
+      <polygon points="56,72 54,90 48,78" fill={color} opacity="0.8"/>
+      {/* Eye — larger mysterious */}
+      <circle cx="44" cy="27" r="6" fill="#1E1030"/>
+      <circle cx="44" cy="27" r="3.5" fill="white" opacity="0.15"/>
+      <circle cx="44" cy="27" r="5" fill={color} opacity="0.3"/>
+      <circle cx="44.5" cy="27" r="2" fill="white" opacity="0.8"/>
+      {/* Beak — sharp hooked */}
+      <polygon points="50,34 43,39 50,43 54,38" fill="#94A3B8"/>
+      {/* Shine on body */}
+      <polygon points="50,38 60,50 54,64 50,66" fill="white" opacity="0.06"/>
+    </svg>
+  );
+}
+
+function PeacockSVG({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Tail fan decorative circles */}
+      <circle cx="50" cy="80" r="22" fill={color} opacity="0.08"/>
+      <circle cx="50" cy="80" r="16" fill={color} opacity="0.1"/>
+      {/* Tail feather lines */}
+      {[0,30,60,90,120,150,180,210,240,270,300,330].map((deg, i) => (
+        <line key={i}
+          x1="50" y1="65"
+          x2={50 + 22 * Math.cos((deg * Math.PI) / 180)}
+          y2={65 + 22 * Math.sin((deg * Math.PI) / 180)}
+          stroke={color} strokeWidth="1.2" opacity="0.4"
+        />
+      ))}
+      {/* Tail eye spots */}
+      {[0, 72, 144, 216, 288].map((deg, i) => (
+        <circle key={i}
+          cx={50 + 18 * Math.cos(((deg - 90) * Math.PI) / 180)}
+          cy={65 + 18 * Math.sin(((deg - 90) * Math.PI) / 180)}
+          r="3" fill="#F59E0B" opacity="0.6"
+        />
+      ))}
+      {/* Body */}
+      <polygon points="50,22 65,38 60,60 50,65 40,60 35,38" fill={color} opacity="0.95"/>
+      {/* Head */}
+      <polygon points="50,14 62,22 56,32 50,34 44,32 38,22" fill={color}/>
+      {/* Crown */}
+      <polygon points="46,14 48,6 50,12" fill="#F59E0B" opacity="0.9"/>
+      <polygon points="50,12 52,4 54,14" fill="#F59E0B"/>
+      <circle cx="48" cy="6" r="1.5" fill="#FCD34D"/>
+      <circle cx="52" cy="4" r="1.5" fill="#FCD34D"/>
+      {/* Eye */}
+      <circle cx="44" cy="23" r="5.5" fill="white"/>
+      <circle cx="43.5" cy="23" r="3" fill="#0A0A12"/>
+      <circle cx="42.5" cy="21.5" r="1.2" fill="white"/>
+      {/* Beak */}
+      <polygon points="50,30 43,34 50,37 53,33" fill="#D97706"/>
+      {/* Chest gem */}
+      <polygon points="50,36 56,44 50,50 44,44" fill="#F59E0B" opacity="0.3"/>
+    </svg>
+  );
+}
+
+function PhoenixSVG({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Flame aura */}
+      <ellipse cx="50" cy="75" rx="30" ry="18" fill="#F59E0B" opacity="0.12"/>
+      <ellipse cx="50" cy="78" rx="22" ry="12" fill="#EF4444" opacity="0.1"/>
+      {/* Flame tail feathers */}
+      <path d="M42,65 Q35,78 30,90" stroke="#EF4444" strokeWidth="3" strokeLinecap="round" opacity="0.7"/>
+      <path d="M47,67 Q44,82 42,94" stroke="#F59E0B" strokeWidth="3" strokeLinecap="round" opacity="0.8"/>
+      <path d="M53,67 Q56,82 58,94" stroke="#F59E0B" strokeWidth="3" strokeLinecap="round" opacity="0.8"/>
+      <path d="M58,65 Q65,78 70,90" stroke="#EF4444" strokeWidth="3" strokeLinecap="round" opacity="0.7"/>
+      {/* Wings spread large */}
+      <polygon points="30,38 6,20 10,50 28,56 38,48" fill={color} opacity="0.9"/>
+      <polygon points="70,38 94,20 90,50 72,56 62,48" fill={color} opacity="0.9"/>
+      {/* Wing flame tips */}
+      <polygon points="6,20 4,10 12,20" fill="#F59E0B" opacity="0.7"/>
+      <polygon points="94,20 96,10 88,20" fill="#F59E0B" opacity="0.7"/>
+      {/* Body */}
+      <polygon points="50,18 66,34 62,58 50,65 38,58 34,34" fill={color}/>
+      {/* Chest glow */}
+      <polygon points="50,36 60,48 50,58 40,48" fill="#F59E0B" opacity="0.25"/>
+      {/* Head */}
+      <polygon points="50,10 64,18 58,30 50,32 42,30 36,18" fill={color}/>
+      {/* Crown flames */}
+      <polygon points="44,10 42,2 47,8" fill="#F59E0B"/>
+      <polygon points="50,8 50,0 54,8" fill="#FCD34D"/>
+      <polygon points="56,10 58,2 53,8" fill="#F59E0B"/>
+      {/* Eye — golden */}
+      <circle cx="44" cy="20" r="6" fill="#FCD34D"/>
+      <circle cx="44" cy="20" r="3.5" fill="#92400E"/>
+      <circle cx="42.5" cy="18.5" r="1.4" fill="white"/>
+      {/* Beak sharp */}
+      <polygon points="50,28 42,33 50,38 55,32" fill="#D97706"/>
+    </svg>
+  );
+}
+
 const BIRD_SVG: Record<BirdId, (color: string) => React.ReactNode> = {
-  falcon: (color) => (
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <polygon points="60,10 85,45 75,50 60,30 45,50 35,45" fill={color} opacity="0.9" />
-      <polygon points="60,30 75,50 80,75 60,65 40,75 45,50" fill={color} />
-      <polygon points="60,65 80,75 70,100 60,90 50,100 40,75" fill={color} opacity="0.8" />
-      <circle cx="52" cy="38" r="5" fill="#F1F5F9" />
-      <circle cx="53" cy="38" r="2.5" fill="#0A0A0F" />
-      <polygon points="60,42 65,45 60,50 55,45" fill={color} opacity="0.7" />
-      <polygon points="30,55 15,70 35,65 40,75" fill={color} opacity="0.6" />
-      <polygon points="90,55 105,70 85,65 80,75" fill={color} opacity="0.6" />
-    </svg>
-  ),
-  hoopoe: (color) => (
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <polygon points="60,15 70,25 65,20 75,35 60,28 45,35 55,20 50,25" fill={color} />
-      <polygon points="60,28 80,50 70,55 60,42 50,55 40,50" fill={color} opacity="0.9" />
-      <polygon points="60,42 70,55 75,80 60,70 45,80 50,55" fill={color} />
-      <polygon points="60,70 75,80 65,105 60,92 55,105 45,80" fill={color} opacity="0.8" />
-      <circle cx="52" cy="40" r="5" fill="#F1F5F9" />
-      <circle cx="53" cy="40" r="2.5" fill="#0A0A0F" />
-      <polygon points="35,55 20,65 38,63 42,72" fill={color} opacity="0.6" />
-      <polygon points="85,55 100,65 82,63 78,72" fill={color} opacity="0.6" />
-    </svg>
-  ),
-  swan: (color) => (
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="60" cy="50" rx="25" ry="35" fill={color} opacity="0.85" />
-      <polygon points="60,15 75,35 60,30 45,35" fill={color} />
-      <ellipse cx="60" cy="75" rx="30" ry="30" fill={color} opacity="0.7" />
-      <circle cx="52" cy="42" r="5" fill="#F1F5F9" />
-      <circle cx="53" cy="42" r="2.5" fill="#0A0A0F" />
-      <polygon points="25,55 5,60 28,65 30,75" fill={color} opacity="0.5" />
-      <polygon points="95,55 115,60 92,65 90,75" fill={color} opacity="0.5" />
-      <polygon points="55,45 65,45 60,52" fill={color} opacity="0.6" />
-    </svg>
-  ),
-  raven: (color) => (
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <polygon points="60,12 80,40 70,45 60,28 50,45 40,40" fill={color} />
-      <polygon points="60,28 70,45 78,72 60,60 42,72 50,45" fill={color} opacity="0.95" />
-      <polygon points="60,60 78,72 68,102 60,88 52,102 42,72" fill={color} opacity="0.85" />
-      <circle cx="51" cy="36" r="5.5" fill="#F1F5F9" />
-      <circle cx="52" cy="36" r="3" fill="#0A0A0F" />
-      <circle cx="52.5" cy="35" r="1" fill="#F1F5F9" />
-      <polygon points="28,52 10,68 32,62 36,74" fill={color} opacity="0.7" />
-      <polygon points="92,52 110,68 88,62 84,74" fill={color} opacity="0.7" />
-      <polygon points="56,44 64,44 60,50" fill="#1A1A2E" />
-    </svg>
-  ),
-  peacock: (color) => (
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <polygon points="60,12 72,35 65,32 78,50 60,42 42,50 55,32 48,35" fill={color} />
-      <polygon points="60,42 78,50 80,75 60,65 40,75 42,50" fill={color} opacity="0.9" />
-      <polygon points="60,65 80,75 72,100 60,88 48,100 40,75" fill={color} opacity="0.8" />
-      <circle cx="51" cy="38" r="5" fill="#F1F5F9" />
-      <circle cx="52" cy="38" r="2.5" fill="#0A0A0F" />
-      <polygon points="25,55 8,68 30,63 34,74" fill={color} opacity="0.6" />
-      <polygon points="95,55 112,68 90,63 86,74" fill={color} opacity="0.6" />
-      <circle cx="25" cy="48" r="6" fill={color} opacity="0.4" />
-      <circle cx="95" cy="48" r="6" fill={color} opacity="0.4" />
-      <circle cx="25" cy="48" r="3" fill={color} opacity="0.7" />
-      <circle cx="95" cy="48" r="3" fill={color} opacity="0.7" />
-    </svg>
-  ),
-  phoenix: (color) => (
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <polygon points="60,8 78,30 72,25 85,42 72,38 80,58 60,48 40,58 48,38 35,42 48,25 42,30" fill={color} />
-      <polygon points="60,48 80,58 78,82 60,72 42,82 40,58" fill={color} opacity="0.9" />
-      <polygon points="60,72 78,82 70,105 60,95 50,105 42,82" fill={color} opacity="0.8" />
-      <circle cx="51" cy="35" r="5" fill="#FCD34D" />
-      <circle cx="52" cy="35" r="2.5" fill="#0A0A0F" />
-      <polygon points="22,50 5,58 25,60 28,70" fill={color} opacity="0.7" />
-      <polygon points="98,50 115,58 95,60 92,70" fill={color} opacity="0.7" />
-      <line x1="60" y1="8" x2="60" y2="2" stroke="#FCD34D" strokeWidth="2" />
-      <line x1="60" y1="8" x2="56" y2="3" stroke="#FCD34D" strokeWidth="1.5" />
-      <line x1="60" y1="8" x2="64" y2="3" stroke="#FCD34D" strokeWidth="1.5" />
-    </svg>
-  ),
+  falcon:  (c) => <FalconSVG  color={c} />,
+  hoopoe:  (c) => <HoopoeSVG  color={c} />,
+  swan:    (c) => <SwanSVG    color={c} />,
+  raven:   (c) => <RavenSVG   color={c} />,
+  peacock: (c) => <PeacockSVG color={c} />,
+  phoenix: (c) => <PhoenixSVG color={c} />,
 };
 
-const STATE_ANIMATION: Record<string, string> = {
-  idle: "",
-  orbit: "orbit-active",
-  break: "animate-bounce",
-  streak: "streak-fire",
-  miss: "opacity-50 grayscale",
-  levelup: "animate-spin",
+const STATE_WRAPPER: Record<string, React.CSSProperties> = {
+  idle:    {},
+  orbit:   { filter: "drop-shadow(0 0 12px var(--blue))" },
+  break:   {},
+  streak:  { filter: "drop-shadow(0 0 16px #F59E0B)" },
+  miss:    { opacity: 0.45, filter: "grayscale(0.8)" },
+  levelup: {},
+  victory: { filter: "drop-shadow(0 0 20px #F59E0B)" },
+};
+
+const STATE_ANIM: Record<string, string> = {
+  idle:    "",
+  orbit:   "orbit-active",
+  break:   "animate-bounce",
+  streak:  "streak-fire",
+  miss:    "",
+  levelup: "scale-in",
   victory: "animate-pulse",
 };
 
@@ -110,38 +252,43 @@ export default function Companion({
   showMessage = true,
 }: CompanionProps) {
   const bird = BIRDS.find((b) => b.id === birdId) ?? BIRDS[0];
-  const [visible, setVisible] = useState(false);
+  const [msgVisible, setMsgVisible] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setVisible(true), 100);
+    setMsgVisible(false);
+    const t = setTimeout(() => setMsgVisible(true), 120);
     return () => clearTimeout(t);
   }, [message]);
 
-  const sizeMap = { sm: "w-16 h-16", md: "w-24 h-24", lg: "w-36 h-36" };
-
+  const sizePx = { sm: 64, md: 96, lg: 140 }[size];
   const svgEl = BIRD_SVG[birdId]?.(bird.color) ?? BIRD_SVG.falcon(BIRDS[0].color);
 
   return (
     <div className="flex flex-col items-center gap-3">
+      {/* Bird container */}
       <div
-        className={`${sizeMap[size]} ${STATE_ANIMATION[state]} transition-all duration-300`}
-        style={{ filter: state === "streak" ? `drop-shadow(0 0 12px ${bird.color})` : undefined }}
+        className={`transition-all duration-300 ${STATE_ANIM[state]}`}
+        style={{ width: sizePx, height: sizePx, ...STATE_WRAPPER[state] }}
       >
         {svgEl}
       </div>
 
+      {/* Message bubble */}
       {showMessage && message && (
         <div
-          className={`glass rounded-2xl px-4 py-3 max-w-xs text-center text-sm leading-relaxed transition-opacity duration-300 ${
-            visible ? "opacity-100" : "opacity-0"
-          }`}
-          style={{ borderColor: bird.color + "44" }}
+          className="rounded-2xl px-5 py-3 max-w-[260px] text-center transition-all duration-300"
+          style={{
+            background: "var(--surface)",
+            border: `1px solid ${bird.color}40`,
+            opacity: msgVisible ? 1 : 0,
+            transform: msgVisible ? "translateY(0)" : "translateY(6px)",
+          }}
         >
-          <span className="text-[var(--text-dim)]">{message}</span>
+          <p className="text-sm text-[var(--text-dim)] leading-relaxed">{message}</p>
         </div>
       )}
 
-      <span className="text-xs text-[var(--text-muted)]">{bird.name}</span>
+      <p className="text-xs font-semibold text-[var(--text-muted)]">{bird.name}</p>
     </div>
   );
 }
