@@ -28,14 +28,12 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 console.log("Uploading", PDF_PATH, "...");
 
-const uploaded = await client.beta.files.upload(
-  {
-    file: await toFile(createReadStream(PDF_PATH), "tahsili.pdf", {
-      type: "application/pdf",
-    }),
-  },
-  { headers: { "anthropic-beta": "files-api-2025-04-14" } },
-);
+const uploaded = await client.beta.files.upload({
+  file: await toFile(createReadStream(PDF_PATH), "tahsili.pdf", {
+    type: "application/pdf",
+  }),
+  betas: ["files-api-2025-04-14"],
+});
 
 console.log("\n✅ Upload successful!\n");
 console.log("ANTHROPIC_FILE_ID=" + uploaded.id);

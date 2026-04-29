@@ -3,8 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import { ERROR_CATEGORIES } from "@/lib/constants";
-import type { VaultError, SubjectId } from "@/lib/types";
-import type { SearchResult } from "@/app/api/question-search/route";
+import type { VaultError, SubjectId, SearchResult } from "@/lib/types";
 
 const SUBJECTS: SubjectId[] = ["فيزياء", "رياضيات", "كيمياء", "أحياء"];
 

@@ -1,15 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import type { SubjectId } from "@/lib/types";
-
-export interface SearchResult {
-  found: boolean;
-  question: string;
-  answer: string;
-  subject: SubjectId;
-  category: string;
-  explanation: string;
-}
+import type { SearchResult } from "@/lib/types";
 
 const SYSTEM_PROMPT = `أنت مساعد متخصص في البحث في كتاب أسئلة التحصيلي السعودي. عندما يصف الطالب سؤالاً أو جزءاً منه، ابحث عنه في الكتاب المرفق وأرجع البيانات بصيغة JSON فقط.
 
@@ -50,32 +41,24 @@ export async function POST(req: NextRequest) {
   try {
     const client = new Anthropic({ apiKey });
 
-    const response = await client.beta.messages.create(
-      {
-        model: "claude-sonnet-4-6",
-        max_tokens: 1024,
-        system: SYSTEM_PROMPT,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "document",
-                source: { type: "file", file_id: fileId },
-              } as never,
-              {
-                type: "text",
-                text: `ابحث عن هذا السؤال في الكتاب: ${query.trim()}`,
-              },
-            ],
-          },
-        ],
-      },
-      { headers: { "anthropic-beta": "files-api-2025-04-14" } },
-    );
+    const response = await client.beta.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1024,
+      system: SYSTEM_PROMPT,
+      betas: ["files-api-2025-04-14"],
+      messages: [
+        {
+          role: "user",
+          content: [
+            // @ts-expect-error — files-api-2025-04-14 beta: file source not yet in TS types
+            { type: "document", source: { type: "file", file_id: fileId } },
+            { type: "text", text: `ابحث عن هذا السؤال في الكتاب: ${query.trim()}` },
+          ],
+        },
+      ],
+    });
 
-    const text =
-      response.content.find((b) => b.type === "text")?.text ?? "";
+    const text = response.content.find((b) => b.type === "text")?.text ?? "";
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
