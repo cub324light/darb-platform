@@ -1,9 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import { ERROR_CATEGORIES } from "@/lib/constants";
 import type { VaultError, SubjectId } from "@/lib/types";
+import type { SearchResult } from "@/app/api/question-search/route";
 
 const SUBJECTS: SubjectId[] = ["فيزياء", "رياضيات", "كيمياء", "أحياء"];
 
@@ -15,39 +16,11 @@ const SUBJECT_COLORS: Record<SubjectId, string> = {
 };
 
 const FREE_LIMIT = 20;
-
-const DEMO_ERRORS: VaultError[] = [
-  {
-    id: "1",
-    question: "جسم كتلته 5 كجم يتحرك بتسارع 3 م/ث² — ما القوة المحركة؟",
-    subject: "فيزياء",
-    category: "خطأ حسابي",
-    note: "نسيت ضرب الكتلة في التسارع وجمعتهم",
-    createdAt: Date.now() - 86400000,
-    reviewCount: 2,
-  },
-  {
-    id: "2",
-    question: "ما الجذر التربيعي لـ (-16)؟",
-    subject: "رياضيات",
-    category: "ما فهمت المفهوم",
-    note: "ما أعرف أن الجذر لسالب = عدد تخيلي",
-    createdAt: Date.now() - 172800000,
-    reviewCount: 0,
-  },
-  {
-    id: "3",
-    question: "ما الصيغة التجريبية لمركب يحتوي 40% كربون، 6.7% هيدروجين، 53.3% أكسجين؟",
-    subject: "كيمياء",
-    category: "نسيت القانون",
-    note: "نسيت خطوات حساب النسبة المئوية للتركيب",
-    createdAt: Date.now() - 259200000,
-    reviewCount: 1,
-  },
-];
+const STORAGE_KEY = "darb_vault";
 
 export default function VaultPage() {
-  const [errors, setErrors]         = useState<VaultError[]>(DEMO_ERRORS);
+  const [errors, setErrors]         = useState<VaultError[]>([]);
+  const [hydrated, setHydrated]     = useState(false);
   const [showAdd, setShowAdd]       = useState(false);
   const [filterSubject, setFilterSubject] = useState<SubjectId | "الكل">("الكل");
   const [filterCat, setFilterCat]   = useState<string>("الكل");
@@ -56,6 +29,36 @@ export default function VaultPage() {
   const [newSubject, setNewSubject] = useState<SubjectId>("فيزياء");
   const [newCat, setNewCat]         = useState<string>(ERROR_CATEGORIES[0]);
   const [newNote, setNewNote]       = useState("");
+
+  // Search modal state
+  const [showSearch, setShowSearch]     = useState(false);
+  const [searchQuery, setSearchQuery]   = useState("");
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
+  const [searchError, setSearchError]   = useState<string | null>(null);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        setErrors(JSON.parse(stored) as VaultError[]);
+      }
+    } catch {
+      // ignore parse errors
+    }
+    setHydrated(true);
+  }, []);
+
+  // Persist to localStorage whenever errors change (after hydration)
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(errors));
+    } catch {
+      // ignore storage errors
+    }
+  }, [errors, hydrated]);
 
   const isPlanFree = true;
   const atLimit    = isPlanFree && errors.length >= FREE_LIMIT;
@@ -66,14 +69,70 @@ export default function VaultPage() {
     return true;
   });
 
-  const addError = () => {
-    if (!newQ.trim() || atLimit) return;
+  const addError = (overrides?: Partial<VaultError>) => {
+    const q = overrides?.question ?? newQ;
+    if (!q.trim() || atLimit) return;
     setErrors((p) => [{
-      id: Date.now().toString(), question: newQ.trim(),
-      subject: newSubject, category: newCat,
-      note: newNote.trim(), createdAt: Date.now(), reviewCount: 0,
+      id: Date.now().toString(),
+      question: q.trim(),
+      subject: overrides?.subject ?? newSubject,
+      category: overrides?.category ?? newCat,
+      note: overrides?.note ?? newNote.trim(),
+      createdAt: Date.now(),
+      reviewCount: 0,
     }, ...p]);
     setNewQ(""); setNewNote(""); setShowAdd(false);
+  };
+
+  const addFromSearch = () => {
+    if (!searchResult?.found) return;
+    const validCategories = ERROR_CATEGORIES as readonly string[];
+    setErrors((p) => [{
+      id: Date.now().toString(),
+      question: searchResult.question,
+      subject: searchResult.subject,
+      category: validCategories.includes(searchResult.category)
+        ? searchResult.category
+        : "غير مصنف",
+      note: searchResult.explanation,
+      createdAt: Date.now(),
+      reviewCount: 0,
+    }, ...p]);
+    setShowSearch(false);
+    setSearchQuery("");
+    setSearchResult(null);
+    setSearchError(null);
+  };
+
+  const runSearch = async () => {
+    if (!searchQuery.trim()) return;
+    setSearchLoading(true);
+    setSearchResult(null);
+    setSearchError(null);
+    try {
+      const res = await fetch("/api/question-search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: searchQuery.trim() }),
+      });
+      const data = await res.json() as SearchResult & { error?: string };
+      if (!res.ok || data.error) {
+        setSearchError(data.error ?? "حدث خطأ");
+      } else {
+        setSearchResult(data);
+      }
+    } catch {
+      setSearchError("خطأ في الاتصال، حاول مرة أخرى");
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const closeSearch = () => {
+    setShowSearch(false);
+    setSearchQuery("");
+    setSearchResult(null);
+    setSearchError(null);
   };
 
   const categoryCount = (cat: string) => errors.filter((e) => e.category === cat).length;
@@ -177,7 +236,6 @@ export default function VaultPage() {
               {/* Card header */}
               <div className="p-6 cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : error.id)}>
                 <div className="flex items-start gap-4">
-                  {/* Color dot */}
                   <div className="w-3 h-3 rounded-full mt-2 flex-shrink-0" style={{ background: color }} />
 
                   <div className="flex-1 min-w-0">
@@ -237,14 +295,22 @@ export default function VaultPage() {
         })}
       </div>
 
-      {/* ── Add button / form ── */}
+      {/* ── Add / Search buttons ── */}
       {!atLimit && (
-        <div className="px-5 py-5">
+        <div className="px-5 py-5 flex flex-col gap-3">
+          {/* Book search button */}
+          <button onClick={() => setShowSearch(true)}
+            className="w-full py-4 rounded-2xl text-base font-bold transition"
+            style={{ background: "var(--surface)", border: "1.5px solid rgba(37,99,235,0.4)", color: "#3B82F6" }}>
+            🔍 ابحث عن سؤال في الكتاب
+          </button>
+
+          {/* Manual add */}
           {!showAdd ? (
             <button onClick={() => setShowAdd(true)}
               className="w-full py-4 rounded-2xl text-base font-bold text-[var(--text-dim)] transition"
               style={{ background: "var(--surface)", border: "1.5px dashed var(--border)" }}>
-              + أضف خطأً جديداً
+              + أضف خطأً يدوياً
             </button>
           ) : (
             <div className="rounded-2xl p-5 flex flex-col gap-4"
@@ -275,7 +341,7 @@ export default function VaultPage() {
                 style={{ background: "var(--surface2)", border: "1px solid var(--border)" }} />
 
               <div className="grid grid-cols-2 gap-3">
-                <button onClick={addError}
+                <button onClick={() => addError()}
                   className="py-3 rounded-2xl font-bold text-base transition"
                   style={{ background: "#F59E0B", color: "#0A0A0F" }}>
                   أضف للخزنة
@@ -288,6 +354,126 @@ export default function VaultPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Book search modal ── */}
+      {showSearch && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          style={{ background: "rgba(0,0,0,0.7)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) closeSearch(); }}>
+
+          <div className="w-full max-w-lg rounded-t-3xl p-6 flex flex-col gap-5 max-h-[85vh] overflow-y-auto"
+            style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+
+            {/* Modal header */}
+            <div className="flex items-center justify-between">
+              <p className="font-black text-lg text-[var(--text)]">🔍 ابحث في الكتاب</p>
+              <button onClick={closeSearch} className="text-[var(--text-muted)] text-2xl leading-none">×</button>
+            </div>
+
+            {/* Search input */}
+            <div className="flex flex-col gap-3">
+              <textarea
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                rows={3}
+                placeholder="صف السؤال أو اكتب جزءاً منه... مثال: سؤال عن قانون نيوتن الثاني والقوة"
+                className="w-full rounded-2xl px-4 py-3 text-sm text-[var(--text)] placeholder-[var(--text-muted)] resize-none outline-none"
+                style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}
+                onKeyDown={(e) => { if (e.key === "Enter" && e.ctrlKey) runSearch(); }}
+              />
+              <button
+                onClick={runSearch}
+                disabled={searchLoading || !searchQuery.trim()}
+                className="w-full py-4 rounded-2xl text-base font-black transition"
+                style={{
+                  background: searchLoading || !searchQuery.trim() ? "var(--surface2)" : "#2563EB",
+                  color: searchLoading || !searchQuery.trim() ? "var(--text-muted)" : "#fff",
+                }}>
+                {searchLoading ? "جاري البحث..." : "ابحث"}
+              </button>
+            </div>
+
+            {/* Error */}
+            {searchError && (
+              <div className="rounded-2xl p-4 text-sm text-center"
+                style={{ background: "rgba(239,68,68,0.1)", color: "#EF4444", border: "1px solid rgba(239,68,68,0.3)" }}>
+                {searchError}
+              </div>
+            )}
+
+            {/* Result */}
+            {searchResult && (
+              <div className="flex flex-col gap-4">
+                {searchResult.found ? (
+                  <>
+                    <div className="rounded-2xl p-5 flex flex-col gap-3"
+                      style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                      {/* Subject badge */}
+                      <div className="flex gap-2 flex-wrap">
+                        <span className="text-sm font-bold px-3 py-1 rounded-full"
+                          style={{
+                            background: SUBJECT_COLORS[searchResult.subject as SubjectId] + "20",
+                            color: SUBJECT_COLORS[searchResult.subject as SubjectId],
+                          }}>
+                          {searchResult.subject}
+                        </span>
+                        <span className="text-sm px-3 py-1 rounded-full"
+                          style={{ background: "var(--surface)", color: "var(--text-dim)", border: "1px solid var(--border)" }}>
+                          {searchResult.category}
+                        </span>
+                      </div>
+
+                      {/* Question */}
+                      <p className="text-base text-[var(--text)] leading-relaxed font-semibold">
+                        {searchResult.question}
+                      </p>
+
+                      {/* Answer */}
+                      <div className="rounded-xl p-3"
+                        style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)" }}>
+                        <p className="text-xs text-[var(--text-muted)] mb-1">الإجابة الصحيحة</p>
+                        <p className="text-sm text-[var(--success)]">{searchResult.answer}</p>
+                      </div>
+
+                      {/* Explanation */}
+                      {searchResult.explanation && (
+                        <p className="text-sm text-[var(--text-dim)] leading-relaxed">
+                          {searchResult.explanation}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <button onClick={addFromSearch}
+                        className="py-4 rounded-2xl text-base font-black transition"
+                        style={{ background: "#F59E0B", color: "#0A0A0F" }}>
+                        أضف للخزنة ✓
+                      </button>
+                      <button onClick={() => { setSearchResult(null); setSearchQuery(""); }}
+                        className="py-4 rounded-2xl text-base font-medium transition"
+                        style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                        ابحث مجدداً
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-6 flex flex-col gap-3">
+                    <p className="text-4xl">🔍</p>
+                    <p className="text-base text-[var(--text)]">لم أجد هذا السؤال في الكتاب</p>
+                    <p className="text-sm text-[var(--text-muted)]">{searchResult.explanation}</p>
+                    <button onClick={() => { setSearchResult(null); setSearchQuery(""); }}
+                      className="mx-auto px-6 py-3 rounded-2xl text-sm font-bold"
+                      style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-dim)" }}>
+                      حاول مرة أخرى
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
