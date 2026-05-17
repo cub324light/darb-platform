@@ -85,22 +85,9 @@ export default function VaultPage() {
 
   const addFromSearch = () => {
     if (!searchResult?.found) return;
-    const validCategories = ERROR_CATEGORIES as readonly string[];
-    setErrors((p) => [{
-      id: Date.now().toString(),
-      question: searchResult.question,
-      subject: searchResult.subject,
-      category: validCategories.includes(searchResult.category)
-        ? searchResult.category
-        : "غير مصنف",
-      note: searchResult.explanation,
-      createdAt: Date.now(),
-      reviewCount: 0,
-    }, ...p]);
-    setShowSearch(false);
-    setSearchQuery("");
-    setSearchResult(null);
-    setSearchError(null);
+    setNewQ(searchResult.question);
+    closeSearch();
+    setShowAdd(true);
   };
 
   const runSearch = async () => {
@@ -430,17 +417,16 @@ export default function VaultPage() {
                         {searchResult.question}
                       </p>
 
-                      {/* Answer */}
-                      <div className="rounded-xl p-3"
-                        style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)" }}>
-                        <p className="text-xs text-[var(--text-muted)] mb-1">الإجابة الصحيحة</p>
-                        <p className="text-sm text-[var(--success)]">{searchResult.answer}</p>
-                      </div>
-
-                      {/* Explanation */}
-                      {searchResult.explanation && (
-                        <p className="text-sm text-[var(--text-dim)] leading-relaxed">
-                          {searchResult.explanation}
+                      {/* Answer — only shown when available */}
+                      {searchResult.answer ? (
+                        <div className="rounded-xl p-3"
+                          style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)" }}>
+                          <p className="text-xs text-[var(--text-muted)] mb-1">الإجابة الصحيحة</p>
+                          <p className="text-sm text-[var(--success)]">{searchResult.answer}</p>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-[var(--text-muted)]">
+                          حدد المادة والتصنيف يدوياً عند الإضافة
                         </p>
                       )}
                     </div>
