@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, startTransition } from "react";
 import Link from "next/link";
+import { RAKAN_SCHEDULE } from "@/lib/constants";
 import type { BirdId, VaultError } from "@/lib/types";
 
 interface DarbUser {
@@ -51,7 +52,8 @@ export default function ParentPage() {
 
       try {
         const completed: string[] = JSON.parse(localStorage.getItem("darb_roadmap") ?? "[]");
-        setRoadmapPct(Math.min(100, Math.round((completed.length / 100) * 100)));
+        const totalLessons = Object.values(RAKAN_SCHEDULE).reduce((a, s) => a + s.length, 0);
+        setRoadmapPct(Math.min(100, Math.round((completed.length / totalLessons) * 100)));
       } catch {}
     });
   }, []);
