@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, startTransition } from "react";
 import BottomNav from "@/components/BottomNav";
 import { RAKAN_SCHEDULE, ROADMAP_STAGES } from "@/lib/constants";
 
@@ -28,42 +28,15 @@ const SUBJECT_TOTALS: Record<SubjectKey, { hours: number; pages: string }> = {
   أحياء: { hours: 37, pages: "266-353" },
 };
 
-export default function RoadmapPage() {
-  const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
-  const [selected, setSelected] = useState<SubjectKey | null>(null);
+interface OverallBarProps {
+  overallPct: number;
+  currentStage: (typeof ROADMAP_STAGES)[number];
+  totalDone: number;
+  totalLessons: number;
+}
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(ROADMAP_KEY);
-      if (raw) setCompletedLessons(new Set(JSON.parse(raw) as string[]));
-    } catch {}
-  }, []);
-
-  const subjects = Object.keys(RAKAN_SCHEDULE) as SubjectKey[];
-
-  /* ── حساب التقدم الكلي ── */
-  const totalLessons = subjects.reduce((a, s) => a + RAKAN_SCHEDULE[s].length, 0);
-  const totalDone    = subjects.reduce((a, s) =>
-    a + RAKAN_SCHEDULE[s].filter(l => completedLessons.has(`${s}-${l.lesson}`)).length, 0);
-  const overallPct   = Math.round((totalDone / totalLessons) * 100);
-  const currentStage = ROADMAP_STAGES.find(
-    s => overallPct >= s.range[0] && overallPct < s.range[1]
-  ) ?? ROADMAP_STAGES[ROADMAP_STAGES.length - 1];
-
-  const toggleLesson = (subj: SubjectKey, lesson: string) => {
-    const key = `${subj}-${lesson}`;
-    setCompletedLessons(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key); else next.add(key);
-      try { localStorage.setItem(ROADMAP_KEY, JSON.stringify([...next])); } catch {}
-      return next;
-    });
-  };
-
-  /* ══════════════════════════════════════
-     الشريط الكلي — مشترك بين الواجهتين
-  ══════════════════════════════════════ */
-  const OverallBar = () => (
+function OverallBar({ overallPct, currentStage, totalDone, totalLessons }: OverallBarProps) {
+  return (
     <div className="px-5 mb-6">
       <div className="rounded-3xl p-6"
         style={{ background: "linear-gradient(135deg,rgba(37,99,235,0.15),rgba(37,99,235,0.05))", border: "1.5px solid rgba(37,99,235,0.3)" }}>
@@ -96,6 +69,39 @@ export default function RoadmapPage() {
       </div>
     </div>
   );
+}
+
+export default function RoadmapPage() {
+  const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<SubjectKey | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(ROADMAP_KEY);
+      if (raw) startTransition(() => setCompletedLessons(new Set(JSON.parse(raw) as string[])));
+    } catch {}
+  }, []);
+
+  const subjects = Object.keys(RAKAN_SCHEDULE) as SubjectKey[];
+
+  /* ── حساب التقدم الكلي ── */
+  const totalLessons = subjects.reduce((a, s) => a + RAKAN_SCHEDULE[s].length, 0);
+  const totalDone    = subjects.reduce((a, s) =>
+    a + RAKAN_SCHEDULE[s].filter(l => completedLessons.has(`${s}-${l.lesson}`)).length, 0);
+  const overallPct   = Math.round((totalDone / totalLessons) * 100);
+  const currentStage = ROADMAP_STAGES.find(
+    s => overallPct >= s.range[0] && overallPct < s.range[1]
+  ) ?? ROADMAP_STAGES[ROADMAP_STAGES.length - 1];
+
+  const toggleLesson = (subj: SubjectKey, lesson: string) => {
+    const key = `${subj}-${lesson}`;
+    setCompletedLessons(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      try { localStorage.setItem(ROADMAP_KEY, JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  };
 
   /* ══════════════════════════════════════
      واجهة الدروس عند اختيار مادة
@@ -122,7 +128,7 @@ export default function RoadmapPage() {
         </div>
 
         {/* الشريط الكلي */}
-        <OverallBar />
+        <OverallBar overallPct={overallPct} currentStage={currentStage} totalDone={totalDone} totalLessons={totalLessons} />
 
         {/* تقدم هذه المادة */}
         <div className="px-5 mb-6">
@@ -207,7 +213,7 @@ export default function RoadmapPage() {
       </div>
 
       {/* الشريط الكلي */}
-      <OverallBar />
+      <OverallBar overallPct={overallPct} currentStage={currentStage} totalDone={totalDone} totalLessons={totalLessons} />
 
       {/* ٤ مواد */}
       <div className="px-5 grid grid-cols-2 gap-4">

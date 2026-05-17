@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, startTransition } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Companion from "@/components/Companion";
@@ -23,6 +23,14 @@ interface OrbitData {
   lastActiveDate: string;
 }
 
+const DASHBOARD_STARS = Array.from({ length: 18 }, () => ({
+  left: Math.random() * 100,
+  top:  Math.random() * 60,
+  opacity: 0.3 + Math.random() * 0.4,
+  duration: 2 + Math.random() * 3,
+  delay: Math.random() * 3,
+}));
+
 const EXAM_ICONS: Record<string, string> = {
   "تحصيلي":       "📚",
   "قدرات":         "🧠",
@@ -43,51 +51,48 @@ export default function DashboardPage() {
   const [greeting, setGreeting]     = useState("");
 
   useEffect(() => {
-    // User profile
-    try {
-      const raw = localStorage.getItem("darb_user");
-      if (raw) setUser(JSON.parse(raw));
-    } catch {}
+    startTransition(() => {
+      try {
+        const raw = localStorage.getItem("darb_user");
+        if (raw) setUser(JSON.parse(raw));
+      } catch {}
 
-    // Orbit stats
-    try {
-      const orbit: OrbitData = { totalSessions: 0, totalSilver: 0, totalFocusMins: 0, streak: 0, sessionsToday: 0, lastActiveDate: "",
-        ...JSON.parse(localStorage.getItem("darb_orbit") ?? "{}") };
-      setStreak(orbit.streak);
-      setSilver(orbit.totalSilver);
-      setFocusHours(Math.round(orbit.totalFocusMins / 60));
-      setSessions(orbit.totalSessions);
-    } catch {}
+      try {
+        const orbit: OrbitData = { totalSessions: 0, totalSilver: 0, totalFocusMins: 0, streak: 0, sessionsToday: 0, lastActiveDate: "",
+          ...JSON.parse(localStorage.getItem("darb_orbit") ?? "{}") };
+        setStreak(orbit.streak);
+        setSilver(orbit.totalSilver);
+        setFocusHours(Math.round(orbit.totalFocusMins / 60));
+        setSessions(orbit.totalSessions);
+      } catch {}
 
-    // Vault count
-    try {
-      const vault: VaultError[] = JSON.parse(localStorage.getItem("darb_vault") ?? "[]");
-      setVaultCount(vault.length);
-    } catch {}
+      try {
+        const vault: VaultError[] = JSON.parse(localStorage.getItem("darb_vault") ?? "[]");
+        setVaultCount(vault.length);
+      } catch {}
 
-    // Roadmap progress
-    try {
-      const completed: string[] = JSON.parse(localStorage.getItem("darb_roadmap") ?? "[]");
-      const subjects = Object.keys(RAKAN_SCHEDULE) as (keyof typeof RAKAN_SCHEDULE)[];
-      const total = subjects.reduce((a, s) => a + RAKAN_SCHEDULE[s].length, 0);
-      const done  = completed.length;
-      setRoadmapPct(total > 0 ? Math.round((done / total) * 100) : 0);
-    } catch {}
+      try {
+        const completed: string[] = JSON.parse(localStorage.getItem("darb_roadmap") ?? "[]");
+        const subjects = Object.keys(RAKAN_SCHEDULE) as (keyof typeof RAKAN_SCHEDULE)[];
+        const total = subjects.reduce((a, s) => a + RAKAN_SCHEDULE[s].length, 0);
+        const done  = completed.length;
+        setRoadmapPct(total > 0 ? Math.round((done / total) * 100) : 0);
+      } catch {}
 
-    // Greeting
-    const h = new Date().getHours();
-    if (h < 5)       setGreeting("وقت الذئاب 🌙");
-    else if (h < 12) setGreeting("صباح التفوق ☀️");
-    else if (h < 17) setGreeting("وقت التركيز ⚡");
-    else if (h < 21) setGreeting("مساء الإنجاز 🌆");
-    else             setGreeting("الليل للنخبة 🌟");
+      const h = new Date().getHours();
+      if (h < 5)       setGreeting("وقت الذئاب 🌙");
+      else if (h < 12) setGreeting("صباح التفوق ☀️");
+      else if (h < 17) setGreeting("وقت التركيز ⚡");
+      else if (h < 21) setGreeting("مساء الإنجاز 🌆");
+      else             setGreeting("الليل للنخبة 🌟");
+    });
 
     const t = setInterval(() => setTime(new Date()), 60000);
     return () => clearInterval(t);
   }, []);
 
   const daysLeft = user?.examDate
-    ? Math.max(0, Math.ceil((new Date(user.examDate).getTime() - Date.now()) / 86400000))
+    ? Math.max(0, Math.ceil((new Date(user.examDate).getTime() - time.getTime()) / 86400000))
     : null;
 
   const birdId: BirdId = user?.bird ?? "falcon";
@@ -104,13 +109,13 @@ export default function DashboardPage() {
       {/* ── Sky header ── */}
       <div className="relative overflow-hidden"
         style={{ background: "linear-gradient(180deg, #0B1730 0%, #0F1F3D 50%, var(--bg) 100%)", paddingBottom: "24px" }}>
-        {Array.from({ length: 18 }).map((_, i) => (
+        {DASHBOARD_STARS.map((s, i) => (
           <div key={i} className="absolute rounded-full bg-white" style={{
             width: "2px", height: "2px",
-            left: Math.random() * 100 + "%", top: Math.random() * 60 + "%",
-            opacity: 0.3 + Math.random() * 0.4,
-            animation: `twinkle ${2 + Math.random() * 3}s ease-in-out infinite`,
-            animationDelay: Math.random() * 3 + "s",
+            left: s.left + "%", top: s.top + "%",
+            opacity: s.opacity,
+            animation: `twinkle ${s.duration}s ease-in-out infinite`,
+            animationDelay: s.delay + "s",
           }} />
         ))}
         <div className="absolute bottom-0 left-0 right-0 h-20"

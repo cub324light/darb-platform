@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, startTransition } from "react";
 import BottomNav from "@/components/BottomNav";
 import Link from "next/link";
 import { sm2, nextReviewText } from "@/lib/sm2";
@@ -7,6 +7,7 @@ import type { VaultError, SubjectId, SM2Grade, SM2Result } from "@/lib/types";
 
 const VAULT_KEY  = "darb_vault";
 const REVIEW_KEY = "darb_review";
+const _NOW = Date.now();
 
 type SM2Store = Record<string, SM2Result>;
 
@@ -66,10 +67,12 @@ export default function ReviewPage() {
     try {
       const errors: VaultError[] = JSON.parse(localStorage.getItem(VAULT_KEY) ?? "[]");
       const store: SM2Store      = JSON.parse(localStorage.getItem(REVIEW_KEY) ?? "{}");
-      setSm2Store(store);
-      setCards(buildCards(errors, store));
+      startTransition(() => {
+        setSm2Store(store);
+        setCards(buildCards(errors, store));
+        setHydrated(true);
+      });
     } catch { /* ignore */ }
-    setHydrated(true);
   }, []);
 
   const persistSm2 = (store: SM2Store) => {
@@ -77,8 +80,8 @@ export default function ReviewPage() {
     try { localStorage.setItem(REVIEW_KEY, JSON.stringify(store)); } catch { /* ignore */ }
   };
 
-  const dueCards      = cards.filter((c) => c.dueDate <= Date.now());
-  const upcomingCards = cards.filter((c) => c.dueDate >  Date.now());
+  const dueCards      = useMemo(() => cards.filter((c) => c.dueDate <= _NOW), [cards]);
+  const upcomingCards = useMemo(() => cards.filter((c) => c.dueDate >  _NOW), [cards]);
 
   const startSession = () => {
     const due = cards.filter((c) => c.dueDate <= Date.now());

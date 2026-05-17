@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, startTransition } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import { ERROR_CATEGORIES } from "@/lib/constants";
@@ -16,6 +16,7 @@ const SUBJECT_COLORS: Record<SubjectId, string> = {
 
 const FREE_LIMIT = 20;
 const STORAGE_KEY = "darb_vault";
+const _NOW = Date.now();
 
 export default function VaultPage() {
   const [errors, setErrors]         = useState<VaultError[]>([]);
@@ -39,15 +40,17 @@ export default function VaultPage() {
 
   // Load from localStorage on mount
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setErrors(JSON.parse(stored) as VaultError[]);
+    startTransition(() => {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          setErrors(JSON.parse(stored) as VaultError[]);
+        }
+      } catch {
+        // ignore parse errors
       }
-    } catch {
-      // ignore parse errors
-    }
-    setHydrated(true);
+      setHydrated(true);
+    });
   }, []);
 
   // Persist to localStorage whenever errors change (after hydration)
@@ -218,7 +221,7 @@ export default function VaultPage() {
         {filtered.map((error) => {
           const color     = SUBJECT_COLORS[error.subject];
           const isExpanded = expandedId === error.id;
-          const daysAgo   = Math.round((Date.now() - error.createdAt) / 86400000);
+          const daysAgo   = Math.round((_NOW - error.createdAt) / 86400000);
 
           return (
             <div key={error.id}

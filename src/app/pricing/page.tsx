@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { PLANS, PARENT_PLAN } from "@/lib/constants";
 
 const COMPARE_FEATURES = [
   { label: "خزنة الأخطاء", free: "20 سؤال", shaheen: "غير محدودة", anqa: "غير محدودة" },

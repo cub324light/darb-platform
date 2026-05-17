@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, startTransition } from "react";
 import Link from "next/link";
 import type { BirdId, VaultError } from "@/lib/types";
 
@@ -33,26 +33,27 @@ export default function ParentPage() {
   const [showAlertWarning, setShowAlertWarning] = useState(false);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("darb_user");
-      if (raw) setUser(JSON.parse(raw));
-    } catch {}
+    startTransition(() => {
+      try {
+        const raw = localStorage.getItem("darb_user");
+        if (raw) setUser(JSON.parse(raw));
+      } catch {}
 
-    try {
-      const raw = localStorage.getItem("darb_orbit");
-      if (raw) setOrbit(JSON.parse(raw));
-    } catch {}
+      try {
+        const raw = localStorage.getItem("darb_orbit");
+        if (raw) setOrbit(JSON.parse(raw));
+      } catch {}
 
-    try {
-      const vault: VaultError[] = JSON.parse(localStorage.getItem("darb_vault") ?? "[]");
-      setVaultCount(vault.length);
-    } catch {}
+      try {
+        const vault: VaultError[] = JSON.parse(localStorage.getItem("darb_vault") ?? "[]");
+        setVaultCount(vault.length);
+      } catch {}
 
-    try {
-      const completed: string[] = JSON.parse(localStorage.getItem("darb_roadmap") ?? "[]");
-      // rough estimate: assume total ~100 lessons
-      setRoadmapPct(Math.min(100, Math.round((completed.length / 100) * 100)));
-    } catch {}
+      try {
+        const completed: string[] = JSON.parse(localStorage.getItem("darb_roadmap") ?? "[]");
+        setRoadmapPct(Math.min(100, Math.round((completed.length / 100) * 100)));
+      } catch {}
+    });
   }, []);
 
   const focusHours   = orbit ? Math.round(orbit.totalFocusMins / 60) : 0;

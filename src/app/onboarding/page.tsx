@@ -22,6 +22,17 @@ const BIRDS = [
 ];
 
 const STEPS = ["مرحباً", "اسمك", "هدفك", "رفيقك", "جاهز"] as const;
+const _NOW = Date.now();
+
+const ONBOARDING_STARS = Array.from({ length: 30 }, () => ({
+  width:    Math.random() * 2 + 1,
+  height:   Math.random() * 2 + 1,
+  left:     Math.random() * 100,
+  top:      Math.random() * 80,
+  opacity:  Math.random() * 0.4 + 0.1,
+  duration: 2 + Math.random() * 4,
+  delay:    Math.random() * 4,
+}));
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -53,13 +64,13 @@ export default function OnboardingPage() {
     <div className="min-h-dvh bg-[var(--bg)] flex flex-col overflow-hidden">
       {/* Stars */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {Array.from({ length: 30 }).map((_, i) => (
+        {ONBOARDING_STARS.map((s, i) => (
           <div key={i} className="absolute rounded-full bg-white" style={{
-            width: Math.random() * 2 + 1 + "px", height: Math.random() * 2 + 1 + "px",
-            left: Math.random() * 100 + "%", top: Math.random() * 80 + "%",
-            opacity: Math.random() * 0.4 + 0.1,
-            animation: `twinkle ${2 + Math.random() * 4}s ease-in-out infinite`,
-            animationDelay: Math.random() * 4 + "s",
+            width: s.width + "px", height: s.height + "px",
+            left: s.left + "%", top: s.top + "%",
+            opacity: s.opacity,
+            animation: `twinkle ${s.duration}s ease-in-out infinite`,
+            animationDelay: s.delay + "s",
           }} />
         ))}
       </div>
@@ -258,7 +269,7 @@ export default function OnboardingPage() {
                     <div className="flex items-center justify-between">
                       <span className="body-sm">الاختبار</span>
                       <span className="font-bold text-[var(--text)]">
-                        {Math.ceil((new Date(examDate).getTime() - Date.now()) / 86400000)} يوم متبقي
+                        {Math.ceil((new Date(examDate).getTime() - _NOW) / 86400000)} يوم متبقي
                       </span>
                     </div>
                   </>

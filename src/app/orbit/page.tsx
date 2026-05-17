@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, startTransition } from "react";
 import BottomNav from "@/components/BottomNav";
 import Companion from "@/components/Companion";
 
@@ -52,9 +52,11 @@ export default function OrbitPage() {
   useEffect(() => {
     const data = loadOrbit();
     if (data.lastActiveDate === todayStr()) {
-      setSessionsToday(data.sessionsToday);
-      setSilverEarned(data.sessionsToday * 10);
-      setTotalFocusMins(data.sessionsToday * FOCUS_MINS);
+      startTransition(() => {
+        setSessionsToday(data.sessionsToday);
+        setSilverEarned(data.sessionsToday * 10);
+        setTotalFocusMins(data.sessionsToday * FOCUS_MINS);
+      });
     }
   }, []);
 
