@@ -1,43 +1,26 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import BottomNav from "@/components/BottomNav";
+import Link from "next/link";
 import { sm2, nextReviewText } from "@/lib/sm2";
-import type { ReviewCard, SubjectId, SM2Grade } from "@/lib/types";
+import type { VaultError, SubjectId, SM2Grade, SM2Result } from "@/lib/types";
 
-const DEMO_CARDS: ReviewCard[] = [
-  {
-    id: "1",
-    question: "ما قانون نيوتن الثاني للحركة؟",
-    answer: "F = ma  (القوة = الكتلة × التسارع)",
-    subject: "فيزياء",
-    interval: 1, repetitions: 0, easeFactor: 2.5,
-    dueDate: Date.now() - 100, createdAt: Date.now() - 86400000,
-  },
-  {
-    id: "2",
-    question: "ما تعريف التفاعل الكيميائي الطارد للحرارة؟",
-    answer: "تفاعل يُطلق طاقة حرارية للبيئة المحيطة (ΔH سالب)",
-    subject: "كيمياء",
-    interval: 3, repetitions: 2, easeFactor: 2.3,
-    dueDate: Date.now() - 500, createdAt: Date.now() - 172800000,
-  },
-  {
-    id: "3",
-    question: "ما الفرق بين الانقسام المتساوي والاختزالي؟",
-    answer: "المتساوي: خليتان بنفس العدد الكروموسومي. الاختزالي: 4 خلايا بنصف العدد (التكاثر الجنسي).",
-    subject: "أحياء",
-    interval: 6, repetitions: 3, easeFactor: 2.7,
-    dueDate: Date.now() + 86400000, createdAt: Date.now() - 259200000,
-  },
-  {
-    id: "4",
-    question: "ما قاعدة الجمع في حساب الاحتمالات؟",
-    answer: "P(A ∪ B) = P(A) + P(B) - P(A ∩ B)",
-    subject: "رياضيات",
-    interval: 1, repetitions: 1, easeFactor: 2.1,
-    dueDate: Date.now() - 200, createdAt: Date.now() - 345600000,
-  },
-];
+const VAULT_KEY  = "darb_vault";
+const REVIEW_KEY = "darb_review";
+
+type SM2Store = Record<string, SM2Result>;
+
+interface Card {
+  id: string;
+  question: string;
+  note: string;
+  subject: SubjectId;
+  interval: number;
+  repetitions: number;
+  easeFactor: number;
+  dueDate: number;
+  createdAt: number;
+}
 
 const SUBJECT_COLORS: Record<SubjectId, string> = {
   فيزياء: "#2563EB",
@@ -51,21 +34,55 @@ const GRADE_LABELS = ["ما أعرف", "غلط", "صعب", "متوسط", "سهل
 
 type Mode = "list" | "session";
 
+function buildCards(errors: VaultError[], sm2Store: SM2Store): Card[] {
+  return errors.map((e) => {
+    const saved = sm2Store[e.id];
+    return {
+      id: e.id,
+      question: e.question,
+      note: e.note,
+      subject: e.subject,
+      interval:     saved?.interval     ?? 1,
+      repetitions:  saved?.repetitions  ?? 0,
+      easeFactor:   saved?.easeFactor   ?? 2.5,
+      dueDate:      saved?.dueDate      ?? e.createdAt,
+      createdAt:    e.createdAt,
+    };
+  });
+}
+
 export default function ReviewPage() {
-  const [cards, setCards] = useState<ReviewCard[]>(DEMO_CARDS);
-  const [mode, setMode] = useState<Mode>("list");
-  const [sessionCards, setSessionCards] = useState<ReviewCard[]>([]);
+  const [cards, setCards]           = useState<Card[]>([]);
+  const [sm2Store, setSm2Store]     = useState<SM2Store>({});
+  const [hydrated, setHydrated]     = useState(false);
+  const [mode, setMode]             = useState<Mode>("list");
+  const [sessionCards, setSessionCards] = useState<Card[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [sessionDone, setSessionDone] = useState(false);
-  const [reviewed, setReviewed] = useState(0);
+  const [reviewed, setReviewed]     = useState(0);
 
-  const dueCards = cards.filter((c) => c.dueDate <= Date.now());
-  const upcomingCards = cards.filter((c) => c.dueDate > Date.now());
+  useEffect(() => {
+    try {
+      const errors: VaultError[] = JSON.parse(localStorage.getItem(VAULT_KEY) ?? "[]");
+      const store: SM2Store      = JSON.parse(localStorage.getItem(REVIEW_KEY) ?? "{}");
+      setSm2Store(store);
+      setCards(buildCards(errors, store));
+    } catch { /* ignore */ }
+    setHydrated(true);
+  }, []);
+
+  const persistSm2 = (store: SM2Store) => {
+    setSm2Store(store);
+    try { localStorage.setItem(REVIEW_KEY, JSON.stringify(store)); } catch { /* ignore */ }
+  };
+
+  const dueCards      = cards.filter((c) => c.dueDate <= Date.now());
+  const upcomingCards = cards.filter((c) => c.dueDate >  Date.now());
 
   const startSession = () => {
     const due = cards.filter((c) => c.dueDate <= Date.now());
-    if (due.length === 0) return;
+    if (!due.length) return;
     setSessionCards(due);
     setCurrentIdx(0);
     setShowAnswer(false);
@@ -75,9 +92,17 @@ export default function ReviewPage() {
   };
 
   const gradeCard = (grade: SM2Grade) => {
-    const card = sessionCards[currentIdx];
+    const card   = sessionCards[currentIdx];
     const result = sm2(card, grade);
-    setCards((prev) => prev.map((c) => c.id === card.id ? { ...c, ...result } : c));
+    const newStore = { ...sm2Store, [card.id]: result };
+    persistSm2(newStore);
+
+    // Refresh vault errors and rebuild cards
+    try {
+      const errors: VaultError[] = JSON.parse(localStorage.getItem(VAULT_KEY) ?? "[]");
+      setCards(buildCards(errors, newStore));
+    } catch { /* ignore */ }
+
     setReviewed((p) => p + 1);
     if (currentIdx + 1 >= sessionCards.length) {
       setSessionDone(true);
@@ -110,7 +135,7 @@ export default function ReviewPage() {
       );
     }
 
-    const card = sessionCards[currentIdx];
+    const card  = sessionCards[currentIdx];
     const color = SUBJECT_COLORS[card.subject];
 
     return (
@@ -149,8 +174,12 @@ export default function ReviewPage() {
 
             {showAnswer ? (
               <div className="border-t border-[var(--border)] pt-5">
-                <p className="text-sm text-[var(--text-muted)] mb-3">الإجابة:</p>
-                <p className="text-base text-[var(--text-dim)] leading-relaxed">{card.answer}</p>
+                <p className="text-sm text-[var(--text-muted)] mb-3">ملاحظتي:</p>
+                {card.note ? (
+                  <p className="text-base text-[var(--text-dim)] leading-relaxed">{card.note}</p>
+                ) : (
+                  <p className="text-base text-[var(--text-muted)] italic">لا توجد ملاحظة — قيّم نفسك</p>
+                )}
               </div>
             ) : (
               <button
@@ -158,7 +187,7 @@ export default function ReviewPage() {
                 className="w-full py-4 rounded-2xl font-black text-base text-white"
                 style={{ background: color }}
               >
-                اظهر الإجابة
+                اظهر ملاحظتي
               </button>
             )}
           </div>
@@ -192,6 +221,28 @@ export default function ReviewPage() {
   }
 
   /* ── List view ── */
+  if (!hydrated) return null;
+
+  if (cards.length === 0) {
+    return (
+      <div className="min-h-dvh bg-[var(--bg)] flex flex-col items-center justify-center px-6 pb-nav text-center">
+        <p className="text-5xl mb-5">🧠</p>
+        <h2 className="font-black text-2xl text-[var(--text)] mb-3">بنك المراجعة فارغ</h2>
+        <p className="text-base text-[var(--text-muted)] mb-8">
+          أضف أسئلة في الخزنة وستظهر هنا للمراجعة بنظام SM-2
+        </p>
+        <Link
+          href="/vault"
+          className="px-8 py-4 rounded-2xl font-black text-base text-[var(--bg)]"
+          style={{ background: "#F59E0B" }}
+        >
+          اذهب للخزنة
+        </Link>
+        <BottomNav />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-dvh bg-[var(--bg)] pb-nav">
       <div className="page-header">
@@ -203,8 +254,8 @@ export default function ReviewPage() {
       <div className="px-5 mb-6">
         <div className="grid grid-cols-3 gap-3">
           {[
-            { val: dueCards.length,      label: "مستحق الآن", color: "var(--danger)"  },
-            { val: upcomingCards.length, label: "قادم",        color: "var(--gold)"   },
+            { val: dueCards.length,      label: "مستحق الآن", color: "var(--danger)"   },
+            { val: upcomingCards.length, label: "قادم",        color: "var(--gold)"    },
             { val: cards.length,         label: "الإجمالي",    color: "var(--success)" },
           ].map((s) => (
             <div key={s.label} className="rounded-2xl p-5 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
@@ -220,7 +271,7 @@ export default function ReviewPage() {
         <div className="px-5 mb-6">
           <button
             onClick={startSession}
-            className="w-full py-5 rounded-2xl font-black text-white text-xl transition glow-blue"
+            className="w-full py-5 rounded-2xl font-black text-white text-xl transition"
             style={{ background: "linear-gradient(135deg, #1D4ED8, #2563EB)" }}
           >
             ابدأ المراجعة ({dueCards.length} بطاقة)
@@ -282,7 +333,6 @@ export default function ReviewPage() {
         </div>
       )}
 
-      {/* Info — في الأسفل */}
       <div className="px-5 pb-6">
         <div className="rounded-2xl p-5" style={{ background: "linear-gradient(135deg, rgba(37,99,235,0.1), rgba(37,99,235,0.03))", border: "1px solid rgba(37,99,235,0.2)" }}>
           <p className="text-sm text-[var(--text-dim)] leading-relaxed">
