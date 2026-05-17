@@ -1,7 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import BottomNav from "@/components/BottomNav";
 import { RAKAN_SCHEDULE, ROADMAP_STAGES } from "@/lib/constants";
+
+const ROADMAP_KEY = "darb_roadmap";
 
 type SubjectKey = keyof typeof RAKAN_SCHEDULE;
 
@@ -30,6 +32,13 @@ export default function RoadmapPage() {
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<SubjectKey | null>(null);
 
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(ROADMAP_KEY);
+      if (raw) setCompletedLessons(new Set(JSON.parse(raw) as string[]));
+    } catch {}
+  }, []);
+
   const subjects = Object.keys(RAKAN_SCHEDULE) as SubjectKey[];
 
   /* ── حساب التقدم الكلي ── */
@@ -46,6 +55,7 @@ export default function RoadmapPage() {
     setCompletedLessons(prev => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key); else next.add(key);
+      try { localStorage.setItem(ROADMAP_KEY, JSON.stringify([...next])); } catch {}
       return next;
     });
   };

@@ -30,11 +30,12 @@ export default function VaultPage() {
   const [newNote, setNewNote]       = useState("");
 
   // Search modal state
-  const [showSearch, setShowSearch]     = useState(false);
-  const [searchQuery, setSearchQuery]   = useState("");
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
-  const [searchError, setSearchError]   = useState<string | null>(null);
+  const [showSearch, setShowSearch]         = useState(false);
+  const [searchQuery, setSearchQuery]       = useState("");
+  const [searchLoading, setSearchLoading]   = useState(false);
+  const [searchResult, setSearchResult]     = useState<SearchResult | null>(null);
+  const [searchError, setSearchError]       = useState<string | null>(null);
+  const [duplicateWarning, setDuplicateWarning] = useState(false);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -71,6 +72,11 @@ export default function VaultPage() {
   const addError = (overrides?: Partial<VaultError>) => {
     const q = overrides?.question ?? newQ;
     if (!q.trim() || atLimit) return;
+    if (errors.some((e) => e.question.trim() === q.trim())) {
+      setDuplicateWarning(true);
+      setTimeout(() => setDuplicateWarning(false), 2500);
+      return;
+    }
     setErrors((p) => [{
       id: Date.now().toString(),
       question: q.trim(),
@@ -280,6 +286,14 @@ export default function VaultPage() {
           );
         })}
       </div>
+
+      {/* ── Duplicate warning ── */}
+      {duplicateWarning && (
+        <div className="mx-5 mb-3 rounded-2xl px-4 py-3 text-sm text-center"
+          style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.3)" }}>
+          هذا السؤال موجود في الخزنة مسبقاً
+        </div>
+      )}
 
       {/* ── Add / Search buttons ── */}
       {!atLimit && (
