@@ -124,7 +124,7 @@ export default function ReviewPage() {
           <h2 className="font-black text-3xl text-[var(--text)] mb-2">الجلسة منتهية</h2>
           <p className="text-base text-[var(--text-muted)] mb-1">راجعت <span className="font-bold text-[var(--success)]">{reviewed}</span> بطاقة</p>
           <p className="text-sm text-[var(--text-muted)] mb-10">المراجعة القادمة محسوبة تلقائياً</p>
-          <button onClick={() => setMode("list")} className="btn-teal" style={{ maxWidth: "280px", margin: "0 auto" }}>
+          <button onClick={() => setMode("list")} className="btn-primary" style={{ maxWidth: "280px", margin: "0 auto" }}>
             العودة للقائمة
           </button>
         </div>
@@ -271,7 +271,7 @@ export default function ReviewPage() {
       {/* Start CTA */}
       {dueCards.length > 0 && (
         <div className="anim-3 px-5 mb-6">
-          <button onClick={startSession} className="btn-teal">
+          <button onClick={startSession} className="btn-primary">
             ابدأ المراجعة · {dueCards.length} بطاقة
           </button>
         </div>

@@ -60,10 +60,10 @@ export default function BottomNav() {
     <nav
       className="fixed bottom-0 left-0 right-0 z-50"
       style={{
-        background: "rgba(13,13,13,0.92)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        borderTop: "1px solid var(--border)",
+        background: "rgba(11,11,11,0.94)",
+        backdropFilter: "blur(24px)",
+        WebkitBackdropFilter: "blur(24px)",
+        borderTop: "1px solid rgba(255,255,255,0.06)",
         paddingBottom: "env(safe-area-inset-bottom)",
         height: "var(--nav-h)",
       }}
@@ -76,11 +76,15 @@ export default function BottomNav() {
               key={item.href}
               href={item.href}
               className="flex flex-col items-center gap-1 flex-1 py-2 transition-all duration-200 relative"
-              style={{ color: active ? "var(--teal)" : "var(--text-muted)" }}
+              style={{ color: active ? "var(--blue-light)" : "var(--text-muted)" }}
             >
               {active && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full"
-                  style={{ background: "var(--teal)" }} />
+                <>
+                  <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full"
+                    style={{ background: "linear-gradient(90deg, var(--blue), var(--blue-light))" }} />
+                  <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-3 rounded-full opacity-30"
+                    style={{ background: "var(--blue)", filter: "blur(6px)" }} />
+                </>
               )}
               <div className={`transition-transform duration-200 ${active ? "scale-110" : ""}`}>
                 {item.icon(active)}

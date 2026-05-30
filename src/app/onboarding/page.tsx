@@ -69,14 +69,14 @@ export default function OnboardingPage() {
               <p className="font-mono-nums text-xs text-[var(--text-muted)] tracking-widest mb-6">DARB · درب</p>
               <h1 className="font-black text-4xl text-[var(--text)] mb-3 leading-tight">
                 طريقك للتفوق<br />
-                <span className="text-[var(--teal)]">يبدأ هنا</span>
+                <span className="text-[var(--blue-light)]">يبدأ هنا</span>
               </h1>
               <p className="text-[var(--text-muted)] text-base max-w-xs mx-auto leading-relaxed">
                 انضباط حقيقي. نتائج حقيقية.<br />بدون تدليل.
               </p>
             </div>
             <div className="w-full max-w-xs flex flex-col gap-3">
-              <button className="btn-teal" onClick={next}>ابدأ رحلتي</button>
+              <button className="btn-primary" onClick={next}>ابدأ رحلتي</button>
               <p className="text-[var(--text-muted)] text-xs">مجاناً بالكامل · بدون بطاقة بنكية</p>
             </div>
           </div>
@@ -105,7 +105,7 @@ export default function OnboardingPage() {
                 }}
                 maxLength={20}
               />
-              <button className="btn-teal" onClick={next} disabled={!name.trim()}
+              <button className="btn-primary" onClick={next} disabled={!name.trim()}
                 style={{ opacity: name.trim() ? 1 : 0.4 }}>
                 التالي
               </button>
@@ -157,7 +157,7 @@ export default function OnboardingPage() {
             )}
 
             <div className="flex flex-col gap-2 pb-6">
-              <button className="btn-teal" onClick={next} disabled={!exam}
+              <button className="btn-primary" onClick={next} disabled={!exam}
                 style={{ opacity: exam ? 1 : 0.4 }}>
                 التالي
               </button>
@@ -205,7 +205,7 @@ export default function OnboardingPage() {
               })}
             </div>
             <div className="flex flex-col gap-2 pb-6">
-              <button className="btn-teal" onClick={next}>التالي</button>
+              <button className="btn-primary" onClick={next}>التالي</button>
               <button className="btn-ghost" onClick={back}>← رجوع</button>
             </div>
           </div>
@@ -218,7 +218,7 @@ export default function OnboardingPage() {
               {BIRDS.find((b) => b.id === bird)?.emoji ?? "🦅"}
             </div>
             <div className="w-full">
-              <h2 className="title-lg text-[var(--teal)] mb-4">
+              <h2 className="title-lg text-[var(--gold)] mb-4">
                 جاهز{name.trim() ? `، ${name.trim()}` : ""}!
               </h2>
               <div className="card text-right flex flex-col gap-3 mb-4">
@@ -247,7 +247,7 @@ export default function OnboardingPage() {
               </div>
             </div>
             <div className="w-full flex flex-col gap-3">
-              <button className="btn-teal" onClick={finish}>يلا نبدأ ←</button>
+              <button className="btn-primary" onClick={finish}>يلا نبدأ ←</button>
             </div>
           </div>
         )}
