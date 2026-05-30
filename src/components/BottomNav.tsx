@@ -17,7 +17,7 @@ const NAV_ITEMS = [
     label: "أوربت",
     icon: (active: boolean) => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-6 h-6">
-        <circle cx="12" cy="12" r="9" strokeOpacity={active ? 1 : 0.7} />
+        <circle cx="12" cy="12" r="9" strokeOpacity={active ? 1 : 0.6} />
         <path strokeLinecap="round" d="M12 7v5l3 3" />
       </svg>
     ),
@@ -58,8 +58,15 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 glass border-t border-[var(--border)]"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)", height: "var(--nav-h)" }}
+      className="fixed bottom-0 left-0 right-0 z-50"
+      style={{
+        background: "rgba(13,13,13,0.92)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderTop: "1px solid var(--border)",
+        paddingBottom: "env(safe-area-inset-bottom)",
+        height: "var(--nav-h)",
+      }}
     >
       <div className="flex items-center justify-around h-full max-w-lg mx-auto px-2">
         {NAV_ITEMS.map((item) => {
@@ -68,17 +75,17 @@ export default function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center gap-1 flex-1 py-2 transition-all duration-200 relative ${
-                active ? "text-[var(--blue-light)]" : "text-[var(--text-muted)]"
-              }`}
+              className="flex flex-col items-center gap-1 flex-1 py-2 transition-all duration-200 relative"
+              style={{ color: active ? "var(--teal)" : "var(--text-muted)" }}
             >
               {active && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-[var(--blue-light)]" />
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full"
+                  style={{ background: "var(--teal)" }} />
               )}
               <div className={`transition-transform duration-200 ${active ? "scale-110" : ""}`}>
                 {item.icon(active)}
               </div>
-              <span className={`text-[11px] font-medium ${active ? "font-bold" : ""}`}>{item.label}</span>
+              <span className={`text-[10px] font-semibold ${active ? "font-bold" : ""}`}>{item.label}</span>
             </Link>
           );
         })}

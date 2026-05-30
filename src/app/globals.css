@@ -216,5 +216,9 @@ body {
 .anim-4 { animation: slideUp 0.45s cubic-bezier(.22,.68,0,1.2) both; animation-delay: 240ms; }
 .anim-5 { animation: slideUp 0.45s cubic-bezier(.22,.68,0,1.2) both; animation-delay: 320ms; }
 
+/* ───── Hide scrollbar ───── */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
 /* ───── Bottom nav clearance ───── */
 .pb-nav { padding-bottom: calc(var(--nav-h) + 24px); }
