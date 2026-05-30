@@ -81,7 +81,7 @@ export default function VaultPage() {
       return;
     }
     setErrors((p) => [{
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       question: q.trim(),
       subject: overrides?.subject ?? newSubject,
       category: overrides?.category ?? newCat,

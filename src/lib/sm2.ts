@@ -14,7 +14,9 @@ export function sm2(card: { interval: number; repetitions: number; easeFactor: n
     else interval = Math.round(interval * easeFactor);
 
     repetitions += 1;
-    easeFactor = Math.max(MIN_EASE, easeFactor + 0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02));
+    easeFactor = Math.round(
+      Math.max(MIN_EASE, easeFactor + 0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02))
+      * 100) / 100;
   }
 
   const dueDate = Date.now() + interval * 24 * 60 * 60 * 1000;
