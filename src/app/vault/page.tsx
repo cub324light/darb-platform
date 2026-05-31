@@ -69,12 +69,12 @@ export default function VaultPage() {
       return;
     }
     setErrors((p) => [{
-      id: crypto.randomUUID(),
-      question: q.trim(),
-      subject: overrides?.subject ?? newSubject,
-      category: overrides?.category ?? newCat,
-      note: overrides?.note ?? newNote.trim(),
-      createdAt: Date.now(),
+      id:          crypto.randomUUID(),
+      question:    q.trim(),
+      subject:     overrides?.subject  ?? newSubject,
+      category:    overrides?.category ?? newCat,
+      note:        overrides?.note     ?? newNote.trim(),
+      createdAt:   Date.now(),
       reviewCount: 0,
     }, ...p]);
     setNewQ(""); setNewNote(""); setShowAdd(false);
@@ -106,25 +106,31 @@ export default function VaultPage() {
   };
 
   return (
-    <div className="min-h-dvh bg-[var(--bg)]" style={{ paddingBottom: "calc(var(--nav-h) + 80px)" }}>
+    <div className="min-h-dvh bg-[var(--bg)]"
+      style={{ paddingBottom: "calc(var(--nav-h) + 80px)" }}>
 
       {/* Header */}
-      <div className="anim-1 px-6 pt-12 pb-5">
+      <div className="anim-1 px-5 pt-12 pb-5">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-black text-xl text-white">الخزنة</h1>
-            <p className="text-xs text-[var(--text-muted)] mt-0.5">أخطاؤك · لا تكررها</p>
+            <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+              سجّل أخطاءك · لا تكررها
+            </p>
           </div>
           <div className="text-left">
-            <p className="font-mono-nums font-black text-2xl" style={{ color: errors.length >= FREE_LIMIT - 3 ? "var(--danger)" : "var(--gold)" }}>
-              {errors.length}<span className="text-[var(--text-muted)] text-base font-normal">/{FREE_LIMIT}</span>
+            <p className="font-mono-nums font-black text-2xl"
+              style={{ color: errors.length >= FREE_LIMIT - 3 ? "var(--danger)" : "var(--gold)" }}>
+              {errors.length}
+              <span className="text-base font-normal" style={{ color: "var(--text-muted)" }}>
+                /{FREE_LIMIT}
+              </span>
             </p>
-            <p className="text-[10px] text-[var(--text-muted)] text-right">الخطة المجانية</p>
           </div>
         </div>
 
-        {/* Slim usage bar */}
-        <div className="mt-4 h-1 bg-[var(--border)] rounded-full overflow-hidden">
+        {/* Usage bar */}
+        <div className="mt-4 h-[3px] rounded-full overflow-hidden" style={{ background: "var(--surface2)" }}>
           <div className="h-full rounded-full transition-all"
             style={{
               width: (errors.length / FREE_LIMIT) * 100 + "%",
@@ -132,15 +138,17 @@ export default function VaultPage() {
             }} />
         </div>
         {atLimit && (
-          <p className="text-xs text-[var(--danger)] mt-2">
+          <p className="text-xs mt-2" style={{ color: "var(--danger)" }}>
             وصلت الحد.{" "}
-            <Link href="/pricing" className="text-[var(--blue-light)] underline">ترقية لشاهين</Link>
+            <Link href="/pricing" style={{ color: "var(--blue-light)", textDecoration: "underline" }}>
+              ترقية لشاهين
+            </Link>
           </p>
         )}
       </div>
 
       {/* Filters */}
-      <div className="anim-2 px-6 mb-4 flex flex-col gap-2">
+      <div className="anim-2 px-5 mb-4 flex flex-col gap-2">
         <div className="flex gap-2 overflow-x-auto no-scrollbar">
           {(["الكل", ...SUBJECTS] as (SubjectId | "الكل")[]).map((s) => {
             const active = filterSubject === s;
@@ -149,7 +157,7 @@ export default function VaultPage() {
               <button key={s} onClick={() => setFilterSubject(s)}
                 className="flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition"
                 style={active
-                  ? { background: color, color: "#fff" }
+                  ? { background: color, color: s === "الكل" ? "var(--bg)" : "#fff" }
                   : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
                 {s}
               </button>
@@ -161,7 +169,7 @@ export default function VaultPage() {
             <button key={cat} onClick={() => setFilterCat(cat)}
               className="flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition"
               style={filterCat === cat
-                ? { background: "var(--gold)", color: "#0D0D0D" }
+                ? { background: "var(--gold)", color: "#000" }
                 : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
               {cat}
             </button>
@@ -169,13 +177,13 @@ export default function VaultPage() {
         </div>
       </div>
 
-      {/* Cards */}
-      <div className="anim-3 px-6 flex flex-col gap-3">
+      {/* Error cards */}
+      <div className="anim-3 px-5 flex flex-col gap-3">
         {filtered.length === 0 && (
           <div className="text-center py-20">
             <p className="text-4xl mb-4">🔒</p>
             <p className="font-black text-lg text-white mb-1">الخزنة فارغة</p>
-            <p className="text-sm text-[var(--text-muted)]">أضف أول خطأ لك</p>
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>أضف أول خطأ لك</p>
           </div>
         )}
 
@@ -186,30 +194,35 @@ export default function VaultPage() {
 
           return (
             <div key={error.id}
-              className="rounded-2xl overflow-hidden transition-all"
+              className="rounded-2xl overflow-hidden"
               style={{
                 background: "var(--surface)",
-                border: `1px solid ${isExpanded ? color + "35" : "var(--border)"}`,
+                border: `1px solid ${isExpanded ? color + "30" : "var(--border)"}`,
                 borderRight: `3px solid ${color}`,
               }}>
-              <div className="p-5 cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : error.id)}>
+              <div className="p-5 cursor-pointer"
+                onClick={() => setExpandedId(isExpanded ? null : error.id)}>
                 <p className="text-sm text-white leading-relaxed mb-3">{error.question}</p>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
-                    style={{ background: color + "15", color }}>
+                    style={{ background: color + "14", color }}>
                     {error.subject}
                   </span>
                   <span className="text-[11px] px-2 py-0.5 rounded-full"
-                    style={{ background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                    style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
                     {error.category}
                   </span>
                   {error.reviewCount > 0 && (
-                    <span className="text-[11px] text-[var(--success)] font-bold">✓ ×{error.reviewCount}</span>
+                    <span className="text-[11px] font-bold" style={{ color: "var(--success)" }}>
+                      ✓ ×{error.reviewCount}
+                    </span>
                   )}
-                  <span className="text-[11px] text-[var(--text-muted)] mr-auto">
+                  <span className="text-[11px] mr-auto" style={{ color: "var(--text-muted)" }}>
                     {daysAgo === 0 ? "اليوم" : `${daysAgo} يوم`}
                   </span>
-                  <span className="text-[var(--border)] text-xs">{isExpanded ? "▲" : "▼"}</span>
+                  <span className="text-xs" style={{ color: "var(--border)" }}>
+                    {isExpanded ? "▲" : "▼"}
+                  </span>
                 </div>
               </div>
 
@@ -219,13 +232,16 @@ export default function VaultPage() {
                     {error.note && (
                       <div className="rounded-xl p-3"
                         style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-                        <p className="text-[11px] label mb-1">ملاحظتي</p>
-                        <p className="text-sm text-[var(--text-dim)] leading-relaxed">{error.note}</p>
+                        <p className="label mb-1">ملاحظتي</p>
+                        <p className="text-sm leading-relaxed" style={{ color: "var(--text-dim)" }}>
+                          {error.note}
+                        </p>
                       </div>
                     )}
                     <div className="grid grid-cols-2 gap-2">
                       <button
-                        onClick={() => setErrors((p) => p.map((e) => e.id === error.id ? { ...e, reviewCount: e.reviewCount + 1 } : e))}
+                        onClick={() => setErrors((p) => p.map((e) =>
+                          e.id === error.id ? { ...e, reviewCount: e.reviewCount + 1 } : e))}
                         className="py-3 rounded-xl text-sm font-black text-white"
                         style={{ background: color }}>
                         راجعته ✓
@@ -233,7 +249,7 @@ export default function VaultPage() {
                       <button
                         onClick={() => { setErrors((p) => p.filter((e) => e.id !== error.id)); setExpandedId(null); }}
                         className="py-3 rounded-xl text-sm font-bold"
-                        style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)", color: "var(--danger)" }}>
+                        style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.18)", color: "var(--danger)" }}>
                         حذف
                       </button>
                     </div>
@@ -245,26 +261,28 @@ export default function VaultPage() {
         })}
       </div>
 
-      {/* Duplicate warning */}
+      {/* Duplicate warning toast */}
       {duplicateWarning && (
-        <div className="fixed bottom-24 left-4 right-4 z-40 rounded-2xl px-4 py-3 text-xs text-center"
-          style={{ background: "rgba(245,158,11,0.9)", color: "#0D0D0D", fontWeight: "bold", backdropFilter: "blur(8px)" }}>
+        <div className="fixed bottom-24 left-4 right-4 z-40 rounded-2xl px-4 py-3 text-xs text-center font-bold"
+          style={{ background: "var(--gold)", color: "#000", backdropFilter: "blur(8px)" }}>
           هذا السؤال موجود في الخزنة مسبقاً
         </div>
       )}
 
-      {/* Fixed add/search buttons */}
+      {/* Bottom action area */}
       {!atLimit && (
         <div className="fixed left-4 right-4 z-30"
           style={{ bottom: "calc(var(--nav-h) + 12px)" }}>
           {showAdd ? (
             <div className="rounded-2xl p-5 flex flex-col gap-4 shadow-2xl"
-              style={{ background: "var(--surface)", border: "1px solid rgba(245,158,11,0.3)" }}>
+              style={{ background: "var(--surface)", border: "1px solid rgba(245,158,11,0.25)" }}>
               <div className="flex items-center justify-between">
-                <p className="font-bold text-sm text-[var(--gold)]">خطأ جديد</p>
+                <p className="font-bold text-sm" style={{ color: "var(--gold)" }}>خطأ جديد</p>
                 <button onClick={() => setShowAdd(false)}
-                  className="text-[var(--text-muted)] text-sm px-2 py-1 rounded-lg"
-                  style={{ background: "var(--surface2)" }}>✕</button>
+                  className="text-sm px-2 py-1 rounded-lg"
+                  style={{ background: "var(--surface2)", color: "var(--text-muted)" }}>
+                  ✕
+                </button>
               </div>
               <textarea value={newQ} onChange={(e) => setNewQ(e.target.value)} rows={3}
                 placeholder="السؤال الذي أخطأت فيه..."
@@ -291,8 +309,8 @@ export default function VaultPage() {
           ) : (
             <div className="flex flex-col gap-2">
               <button onClick={() => setShowSearch(true)}
-                className="w-full py-3.5 rounded-2xl text-sm font-bold shadow-lg transition"
-                style={{ background: "var(--surface)", border: "1px solid rgba(37,99,235,0.3)", color: "var(--blue-light)" }}>
+                className="w-full py-3.5 rounded-2xl text-sm font-bold shadow-lg"
+                style={{ background: "var(--surface)", border: "1px solid rgba(37,99,235,0.25)", color: "var(--blue-light)" }}>
                 ابحث عن سؤال في الكتاب
               </button>
               <button onClick={() => setShowAdd(true)}
@@ -308,15 +326,17 @@ export default function VaultPage() {
       {/* Search modal */}
       {showSearch && (
         <div className="fixed inset-0 z-50 flex items-end justify-center"
-          style={{ background: "rgba(0,0,0,0.8)" }}
+          style={{ background: "rgba(0,0,0,0.85)" }}
           onClick={(e) => { if (e.target === e.currentTarget) closeSearch(); }}>
           <div className="w-full max-w-lg rounded-t-3xl p-6 flex flex-col gap-4 max-h-[85vh] overflow-y-auto"
             style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
             <div className="flex items-center justify-between">
               <p className="font-black text-base text-white">ابحث في الكتاب</p>
               <button onClick={closeSearch}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-sm text-[var(--text-muted)]"
-                style={{ background: "var(--surface2)" }}>✕</button>
+                className="w-8 h-8 rounded-full flex items-center justify-center text-sm"
+                style={{ background: "var(--surface2)", color: "var(--text-muted)" }}>
+                ✕
+              </button>
             </div>
             <textarea value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} rows={3}
               placeholder="صف السؤال أو اكتب جزءاً منه..."
@@ -324,20 +344,25 @@ export default function VaultPage() {
               style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}
               onKeyDown={(e) => { if (e.key === "Enter" && e.ctrlKey) runSearch(); }}
             />
-            <button onClick={runSearch} disabled={searchLoading || !searchQuery.trim()} className="btn-primary"
-              style={{ opacity: searchLoading || !searchQuery.trim() ? 0.5 : 1 }}>
+            <button onClick={runSearch}
+              disabled={searchLoading || !searchQuery.trim()}
+              className="btn-primary">
               {searchLoading ? "جاري البحث..." : "ابحث"}
             </button>
             {searchError && (
-              <p className="text-xs text-[var(--danger)] text-center py-2">{searchError}</p>
+              <p className="text-xs text-center py-2" style={{ color: "var(--danger)" }}>{searchError}</p>
             )}
             {searchResult && (
               searchResult.found ? (
                 <div className="flex flex-col gap-3">
-                  <div className="rounded-xl p-4" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                  <div className="rounded-xl p-4"
+                    style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
                     <div className="flex gap-2 mb-3">
                       <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
-                        style={{ background: SUBJECT_COLORS[searchResult.subject as SubjectId] + "18", color: SUBJECT_COLORS[searchResult.subject as SubjectId] }}>
+                        style={{
+                          background: SUBJECT_COLORS[searchResult.subject as SubjectId] + "18",
+                          color: SUBJECT_COLORS[searchResult.subject as SubjectId],
+                        }}>
                         {searchResult.subject}
                       </span>
                     </div>
@@ -354,7 +379,7 @@ export default function VaultPage() {
                 </div>
               ) : (
                 <div className="text-center py-4">
-                  <p className="text-sm text-[var(--text-muted)]">لم أجد هذا السؤال</p>
+                  <p className="text-sm" style={{ color: "var(--text-muted)" }}>لم أجد هذا السؤال</p>
                   <button onClick={() => { setSearchResult(null); setSearchQuery(""); }}
                     className="mt-3 px-4 py-2 rounded-xl text-xs font-bold"
                     style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-dim)" }}>

@@ -13,12 +13,8 @@ const ORBIT_KEY  = "darb_orbit";
 const SUBJECTS = ["فيزياء", "رياضيات", "كيمياء", "أحياء", "إنجليزي"] as const;
 
 interface OrbitData {
-  totalSessions: number;
-  totalSilver: number;
-  totalFocusMins: number;
-  streak: number;
-  sessionsToday: number;
-  lastActiveDate: string;
+  totalSessions: number; totalSilver: number; totalFocusMins: number;
+  streak: number; sessionsToday: number; lastActiveDate: string;
 }
 
 const DEFAULTS: OrbitData = {
@@ -40,12 +36,12 @@ function saveOrbit(d: OrbitData) {
 }
 
 export default function OrbitPage() {
-  const [phase, setPhase]                   = useState<Phase>("idle");
-  const [secondsLeft, setSecondsLeft]       = useState(FOCUS_SECS);
-  const [sessionsToday, setSessionsToday]   = useState(0);
-  const [silverEarned, setSilverEarned]     = useState(0);
+  const [phase, setPhase]               = useState<Phase>("idle");
+  const [secondsLeft, setSecondsLeft]   = useState(FOCUS_SECS);
+  const [sessionsToday, setSessionsToday] = useState(0);
+  const [silverEarned, setSilverEarned] = useState(0);
   const [totalFocusMins, setTotalFocusMins] = useState(0);
-  const [subject, setSubject]               = useState<string>("فيزياء");
+  const [subject, setSubject]           = useState<string>("فيزياء");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -67,7 +63,7 @@ export default function OrbitPage() {
   const playBeep = useCallback(() => {
     try {
       const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-      const osc = ctx.createOscillator();
+      const osc  = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
       osc.frequency.value = 440;
@@ -82,18 +78,26 @@ export default function OrbitPage() {
   }, []);
 
   const startBreak = useCallback(() => {
-    const data = loadOrbit(); const today = todayStr(); const isToday = data.lastActiveDate === today;
-    const newSessionsToday = isToday ? data.sessionsToday + 1 : 1;
-    const newStreak = data.lastActiveDate === yesterdayStr() ? data.streak + 1 : isToday ? data.streak : 1;
+    const data    = loadOrbit();
+    const today   = todayStr();
+    const isToday = data.lastActiveDate === today;
+    const newSessions = isToday ? data.sessionsToday + 1 : 1;
+    const newStreak   = data.lastActiveDate === yesterdayStr()
+      ? data.streak + 1 : isToday ? data.streak : 1;
     const updated: OrbitData = {
-      totalSessions: data.totalSessions + 1, totalSilver: data.totalSilver + 10,
+      totalSessions:  data.totalSessions + 1,
+      totalSilver:    data.totalSilver + 10,
       totalFocusMins: data.totalFocusMins + FOCUS_MINS,
-      streak: newStreak, sessionsToday: newSessionsToday, lastActiveDate: today,
+      streak:         newStreak,
+      sessionsToday:  newSessions,
+      lastActiveDate: today,
     };
     saveOrbit(updated);
     setPhase("break"); setSecondsLeft(BREAK_SECS);
-    setSessionsToday(newSessionsToday); setSilverEarned(newSessionsToday * 10);
-    setTotalFocusMins(newSessionsToday * FOCUS_MINS); playBeep();
+    setSessionsToday(newSessions);
+    setSilverEarned(newSessions * 10);
+    setTotalFocusMins(newSessions * FOCUS_MINS);
+    playBeep();
   }, [playBeep]);
 
   const finishBreak = useCallback(() => { setPhase("done"); playBeep(); }, [playBeep]);
@@ -119,30 +123,34 @@ export default function OrbitPage() {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [phase, startBreak, finishBreak]);
 
-  const R             = 100;
+  const R             = 110;
   const circumference = 2 * Math.PI * R;
   const dashOffset    = circumference * (1 - progress);
   const isBreak       = phase === "break";
-  const accentColor   = isBreak ? "var(--gold)" : "var(--blue-light)";
+  const ringColor     = isBreak ? "var(--gold)" : "var(--blue)";
+
+  const timeDisplay = phase === "idle"
+    ? "50:00"
+    : `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
 
   return (
-    <div className="min-h-dvh bg-[var(--bg)] flex flex-col" style={{ paddingBottom: "calc(var(--nav-h) + 8px)" }}>
+    <div className="min-h-dvh bg-[var(--bg)] flex flex-col"
+      style={{ paddingBottom: "calc(var(--nav-h) + 8px)" }}>
 
       {/* Header */}
-      <div className="anim-1 flex items-center justify-between px-6 pt-12 pb-2">
-        <div>
-          <h1 className="font-black text-xl text-white">أوربت</h1>
-          <p className="text-xs text-[var(--text-muted)] mt-0.5">50 تركيز · 10 راحة</p>
-        </div>
-        <div className="text-left">
-          <p className="font-mono-nums font-black text-xl text-[var(--gold)]">{silverEarned}</p>
-          <p className="text-[10px] text-[var(--text-muted)] text-right">Silver</p>
+      <div className="anim-1 flex items-center justify-between px-5 pt-12 pb-2">
+        <h1 className="font-black text-lg text-white">أوربت</h1>
+        <div className="flex items-center gap-1.5">
+          <span className="font-mono-nums font-black text-lg" style={{ color: "var(--gold)" }}>
+            {silverEarned}
+          </span>
+          <span className="text-sm" style={{ color: "var(--text-muted)" }}>🪙</span>
         </div>
       </div>
 
       {/* Subject pills — idle only */}
       {phase === "idle" && (
-        <div className="anim-2 px-6 py-4">
+        <div className="anim-2 px-5 py-3">
           <div className="flex gap-2 overflow-x-auto no-scrollbar">
             {SUBJECTS.map((s) => (
               <button key={s} onClick={() => setSubject(s)}
@@ -157,51 +165,47 @@ export default function OrbitPage() {
         </div>
       )}
 
-      {/* HERO: Timer — fills remaining space */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 anim-2">
-        <div className="relative" style={{ width: "256px", height: "256px" }}>
+      {/* HERO: Timer ring */}
+      <div className="flex-1 flex flex-col items-center justify-center px-5 anim-2">
+        <div className="relative" style={{ width: "276px", height: "276px" }}>
 
-          {/* Outer glow when active */}
+          {/* Ambient glow when active */}
           {phase !== "idle" && phase !== "done" && (
             <div className="absolute inset-0 rounded-full pointer-events-none"
-              style={{ boxShadow: `0 0 60px ${isBreak ? "rgba(245,158,11,0.2)" : "rgba(37,99,235,0.2)"}` }} />
+              style={{
+                boxShadow: `0 0 80px ${isBreak ? "rgba(245,158,11,0.12)" : "rgba(37,99,235,0.15)"}`,
+              }} />
           )}
 
-          <svg width="256" height="256" className="absolute inset-0 -rotate-90">
-            <defs>
-              <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#1D4ED8" />
-                <stop offset="100%" stopColor="#60A5FA" />
-              </linearGradient>
-            </defs>
+          <svg width="276" height="276" className="absolute inset-0 -rotate-90">
             {/* Track */}
-            <circle cx="128" cy="128" r={R} fill="none" stroke="var(--border)" strokeWidth="8" />
+            <circle cx="138" cy="138" r={R} fill="none"
+              stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
             {/* Progress */}
-            <circle cx="128" cy="128" r={R} fill="none"
-              stroke={isBreak ? "var(--gold)" : "url(#ringGrad)"}
-              strokeWidth="8" strokeLinecap="round"
-              strokeDasharray={circumference} strokeDashoffset={dashOffset}
-              style={{ transition: "stroke-dashoffset 1s linear, stroke 0.6s ease" }}
+            <circle cx="138" cy="138" r={R} fill="none"
+              stroke={phase === "idle" ? "rgba(255,255,255,0.04)" : ringColor}
+              strokeWidth="5" strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={phase === "idle" ? 0 : dashOffset}
+              style={{ transition: "stroke-dashoffset 1s linear, stroke 0.5s ease" }}
             />
           </svg>
 
-          {/* Center */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
+          {/* Center content */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
             {phase === "done" ? (
-              <div className="text-center">
+              <div className="text-center scale-in">
                 <p className="text-5xl mb-2">✅</p>
-                <p className="text-sm font-black text-[var(--success)]">أحسنت!</p>
+                <p className="text-sm font-black" style={{ color: "var(--success)" }}>أحسنت!</p>
               </div>
             ) : (
               <>
                 <p className="font-mono-nums font-black leading-none"
-                  style={{ fontSize: "54px", color: phase === "idle" ? "white" : accentColor }}>
-                  {phase === "idle"
-                    ? "50:00"
-                    : `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`}
+                  style={{ fontSize: "52px", color: phase === "idle" ? "white" : ringColor }}>
+                  {timeDisplay}
                 </p>
-                <p className="text-xs font-bold mt-2.5"
-                  style={{ color: phase === "idle" ? "var(--text-muted)" : accentColor }}>
+                <p className="text-xs font-bold"
+                  style={{ color: phase === "idle" ? "var(--text-muted)" : ringColor }}>
                   {phase === "idle" ? subject : isBreak ? "استرح" : "تركيز"}
                 </p>
               </>
@@ -210,37 +214,45 @@ export default function OrbitPage() {
         </div>
 
         {/* Controls */}
-        <div className="w-full max-w-sm mt-10 flex flex-col gap-3 anim-3">
+        <div className="w-full max-w-xs mt-10 flex flex-col gap-3 anim-3">
           {phase === "idle" && (
-            <button onClick={startFocus} className="btn-primary">
-              ابدأ الجلسة
-            </button>
+            <button onClick={startFocus} className="btn-primary">ابدأ الجلسة</button>
           )}
           {phase === "focus" && (
             <button onClick={reset}
-              className="w-full py-4 rounded-2xl text-sm font-bold transition"
-              style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", color: "var(--danger)" }}>
+              className="w-full py-4 rounded-2xl text-sm font-bold"
+              style={{
+                background: "rgba(239,68,68,0.06)",
+                border: "1px solid rgba(239,68,68,0.18)",
+                color: "var(--danger)",
+              }}>
               إيقاف — تخسر الجلسة
             </button>
           )}
           {phase === "break" && (
             <div className="rounded-2xl px-5 py-4 text-center"
-              style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.18)" }}>
-              <p className="font-bold text-sm text-[var(--gold)]">راحة مستحقة ☕</p>
-              <p className="text-xs text-[var(--text-muted)] mt-1">
-                تبدأ تلقائياً {String(mins).padStart(2,"0")}:{String(secs).padStart(2,"0")}
+              style={{
+                background: "rgba(245,158,11,0.05)",
+                border: "1px solid rgba(245,158,11,0.14)",
+              }}>
+              <p className="font-bold text-sm" style={{ color: "var(--gold)" }}>راحة مستحقة ☕</p>
+              <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                تبدأ تلقائياً {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
               </p>
             </div>
           )}
           {phase === "done" && (
             <div className="flex flex-col gap-2">
               <div className="rounded-2xl px-5 py-4 text-center"
-                style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)" }}>
-                <p className="font-mono-nums font-black text-2xl text-[var(--gold)]">+10 🪙</p>
-                <p className="text-xs text-[var(--text-muted)] mt-1">جلسة رقم {sessionsToday} اليوم</p>
+                style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.14)" }}>
+                <p className="font-mono-nums font-black text-2xl" style={{ color: "var(--gold)" }}>+10 🪙</p>
+                <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                  جلسة رقم {sessionsToday} اليوم
+                </p>
               </div>
               <button onClick={startFocus} className="btn-primary">جلسة أخرى</button>
-              <button onClick={reset} className="w-full pt-1 pb-3 text-sm text-[var(--text-muted)]">
+              <button onClick={reset} className="w-full pt-1 pb-3 text-sm"
+                style={{ color: "var(--text-muted)", background: "transparent", border: "none", cursor: "pointer" }}>
                 توقف اليوم
               </button>
             </div>
@@ -248,8 +260,8 @@ export default function OrbitPage() {
         </div>
       </div>
 
-      {/* Footer stats — plain numbers, no cards */}
-      <div className="anim-4 px-6 pb-3">
+      {/* Footer stats */}
+      <div className="anim-4 px-5 pb-3">
         <div className="flex items-center justify-around py-4"
           style={{ borderTop: "1px solid var(--border)" }}>
           {[
@@ -259,8 +271,10 @@ export default function OrbitPage() {
           ].map((s, i) => (
             <div key={s.label} className="flex flex-col items-center"
               style={{ borderRight: i < 2 ? "1px solid var(--border)" : "none", flex: 1 }}>
-              <p className="font-mono-nums font-black text-2xl leading-none" style={{ color: s.color }}>{s.val}</p>
-              <p className="text-[11px] text-[var(--text-muted)] mt-1">{s.label}</p>
+              <p className="font-mono-nums font-black text-2xl leading-none" style={{ color: s.color }}>
+                {s.val}
+              </p>
+              <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>{s.label}</p>
             </div>
           ))}
         </div>

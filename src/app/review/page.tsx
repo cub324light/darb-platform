@@ -12,19 +12,19 @@ const _NOW       = Date.now();
 type SM2Store = Record<string, SM2Result>;
 
 interface Card {
-  id: string;
-  question: string;
-  note: string;
-  subject: SubjectId;
-  interval: number;
+  id:          string;
+  question:    string;
+  note:        string;
+  subject:     SubjectId;
+  interval:    number;
   repetitions: number;
-  easeFactor: number;
-  dueDate: number;
-  createdAt: number;
+  easeFactor:  number;
+  dueDate:     number;
+  createdAt:   number;
 }
 
 const SUBJECT_COLORS: Record<SubjectId, string> = {
-  فيزياء:  "#2563EB",
+  فيزياء:  "#3B82F6",
   رياضيات: "#8B5CF6",
   كيمياء:  "#10B981",
   أحياء:   "#F59E0B",
@@ -39,10 +39,10 @@ function buildCards(errors: VaultError[], sm2Store: SM2Store): Card[] {
   return errors.map((e) => {
     const saved = sm2Store[e.id];
     return {
-      id: e.id,
-      question: e.question,
-      note: e.note,
-      subject: e.subject,
+      id:          e.id,
+      question:    e.question,
+      note:        e.note,
+      subject:     e.subject,
       interval:    saved?.interval    ?? 1,
       repetitions: saved?.repetitions ?? 0,
       easeFactor:  saved?.easeFactor  ?? 2.5,
@@ -99,12 +99,10 @@ export default function ReviewPage() {
     const result = sm2(card, grade);
     const newStore = { ...sm2Store, [card.id]: result };
     persistSm2(newStore);
-
     try {
       const errors: VaultError[] = JSON.parse(localStorage.getItem(VAULT_KEY) ?? "[]");
       setCards(buildCards(errors, newStore));
     } catch {}
-
     setReviewed((p) => p + 1);
     if (currentIdx + 1 >= sessionCards.length) {
       setSessionDone(true);
@@ -121,10 +119,17 @@ export default function ReviewPage() {
         style={{ paddingBottom: "calc(var(--nav-h) + 24px)" }}>
         <div className="text-center anim-1">
           <p className="text-6xl mb-5">🎉</p>
-          <h2 className="font-black text-3xl text-[var(--text)] mb-2">الجلسة منتهية</h2>
-          <p className="text-base text-[var(--text-muted)] mb-1">راجعت <span className="font-bold text-[var(--success)]">{reviewed}</span> بطاقة</p>
-          <p className="text-sm text-[var(--text-muted)] mb-10">المراجعة القادمة محسوبة تلقائياً</p>
-          <button onClick={() => setMode("list")} className="btn-primary" style={{ maxWidth: "280px", margin: "0 auto" }}>
+          <h2 className="font-black text-3xl text-white mb-2">الجلسة منتهية</h2>
+          <p className="text-base mb-1" style={{ color: "var(--text-muted)" }}>
+            راجعت{" "}
+            <span className="font-bold" style={{ color: "var(--success)" }}>{reviewed}</span>
+            {" "}بطاقة
+          </p>
+          <p className="text-sm mb-10" style={{ color: "var(--text-muted)" }}>
+            المراجعة القادمة محسوبة تلقائياً
+          </p>
+          <button onClick={() => setMode("list")} className="btn-primary"
+            style={{ maxWidth: "280px", margin: "0 auto" }}>
             العودة للقائمة
           </button>
         </div>
@@ -144,19 +149,19 @@ export default function ReviewPage() {
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-12 pb-3">
           <button onClick={() => setMode("list")}
-            className="text-sm text-[var(--text-muted)] font-semibold px-3 py-1.5 rounded-xl"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+            className="text-sm font-bold px-3 py-1.5 rounded-xl"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
             ← خروج
           </button>
-          <span className="font-mono-nums font-bold text-base text-[var(--text)]">
+          <span className="font-mono-nums font-bold text-base text-white">
             {currentIdx + 1} / {sessionCards.length}
           </span>
-          <span className="text-sm text-[var(--success)] font-bold">{reviewed} ✓</span>
+          <span className="text-sm font-bold" style={{ color: "var(--success)" }}>{reviewed} ✓</span>
         </div>
 
-        {/* Progress */}
+        {/* Progress bar */}
         <div className="px-5 mb-4">
-          <div className="h-1.5 bg-[var(--border)] rounded-full overflow-hidden">
+          <div className="h-[3px] rounded-full overflow-hidden" style={{ background: "var(--surface2)" }}>
             <div className="h-full rounded-full transition-all"
               style={{ width: (currentIdx / sessionCards.length) * 100 + "%", background: color }} />
           </div>
@@ -165,20 +170,22 @@ export default function ReviewPage() {
         {/* Card */}
         <div className="flex-1 px-5 flex flex-col">
           <div className="rounded-2xl p-6 mb-4 flex-1 flex flex-col justify-center"
-            style={{ background: "var(--surface)", border: `1.5px solid ${color}28` }}>
+            style={{ background: "var(--surface)", border: `1px solid ${color}22` }}>
             <span className="text-xs font-bold px-2.5 py-1 rounded-full self-start mb-4"
-              style={{ background: color + "18", color }}>
+              style={{ background: color + "16", color }}>
               {card.subject}
             </span>
-            <p className="text-base font-bold text-[var(--text)] leading-relaxed mb-6">{card.question}</p>
+            <p className="text-base font-bold text-white leading-relaxed mb-6">{card.question}</p>
 
             {showAnswer ? (
-              <div className="border-t border-[var(--border)] pt-4">
-                <p className="text-xs text-[var(--text-muted)] mb-2">ملاحظتي:</p>
+              <div className="pt-4" style={{ borderTop: "1px solid var(--border)" }}>
+                <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>ملاحظتي:</p>
                 {card.note ? (
-                  <p className="text-sm text-[var(--text-dim)] leading-relaxed">{card.note}</p>
+                  <p className="text-sm leading-relaxed" style={{ color: "var(--text-dim)" }}>{card.note}</p>
                 ) : (
-                  <p className="text-sm text-[var(--text-muted)] italic">لا توجد ملاحظة — قيّم حسب ذاكرتك</p>
+                  <p className="text-sm italic" style={{ color: "var(--text-muted)" }}>
+                    لا توجد ملاحظة — قيّم حسب ذاكرتك
+                  </p>
                 )}
               </div>
             ) : (
@@ -192,15 +199,15 @@ export default function ReviewPage() {
 
           {showAnswer && (
             <div className="mb-4">
-              <p className="text-xs text-center text-[var(--text-muted)] mb-3">كيف كانت؟</p>
+              <p className="text-xs text-center mb-3" style={{ color: "var(--text-muted)" }}>كيف كانت؟</p>
               <div className="grid grid-cols-2 gap-2">
                 {[0, 2, 3, 4].map((g) => (
                   <button key={g}
                     onClick={() => gradeCard(g as SM2Grade)}
                     className="py-3.5 rounded-xl font-black text-sm transition active:scale-95"
                     style={{
-                      background: GRADE_COLORS[g] + "18",
-                      border: `1px solid ${GRADE_COLORS[g]}35`,
+                      background: GRADE_COLORS[g] + "14",
+                      border: `1px solid ${GRADE_COLORS[g]}30`,
                       color: GRADE_COLORS[g],
                     }}>
                     {GRADE_LABELS[g]}
@@ -224,8 +231,8 @@ export default function ReviewPage() {
       <div className="min-h-dvh bg-[var(--bg)] flex flex-col items-center justify-center px-6 text-center"
         style={{ paddingBottom: "calc(var(--nav-h) + 24px)" }}>
         <p className="text-5xl mb-4">🧠</p>
-        <h2 className="font-black text-2xl text-[var(--text)] mb-2">بنك المراجعة فارغ</h2>
-        <p className="text-sm text-[var(--text-muted)] mb-8 max-w-xs">
+        <h2 className="font-black text-2xl text-white mb-2">بنك المراجعة فارغ</h2>
+        <p className="text-sm mb-8 max-w-xs" style={{ color: "var(--text-muted)" }}>
           أضف أسئلة في الخزنة وستظهر هنا للمراجعة بنظام SM-2
         </p>
         <Link href="/vault" className="btn-gold" style={{ maxWidth: "240px" }}>
@@ -242,8 +249,8 @@ export default function ReviewPage() {
       {/* Header */}
       <div className="anim-1 flex items-center justify-between px-5 pt-12 pb-5">
         <div>
-          <h1 className="font-black text-xl text-[var(--text)]">مراجعة</h1>
-          <p className="text-xs text-[var(--text-muted)] mt-0.5">Spaced Repetition · SM-2</p>
+          <h1 className="font-black text-xl text-white">مراجعة</h1>
+          <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>Spaced Repetition · SM-2</p>
         </div>
         <span className="text-xs font-bold px-3 py-1.5 rounded-full"
           style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
@@ -253,16 +260,17 @@ export default function ReviewPage() {
 
       {/* Stats bar */}
       <div className="anim-2 px-5 mb-5">
-        <div className="grid grid-cols-3 divide-x divide-x-reverse divide-[var(--border)] overflow-hidden"
-          style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "18px" }}>
+        <div className="grid grid-cols-3 overflow-hidden rounded-2xl"
+          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           {[
-            { val: dueCards.length,      label: "مستحق",   color: "var(--danger)"   },
-            { val: upcomingCards.length, label: "قادم",     color: "var(--gold)"     },
-            { val: cards.length,         label: "الإجمالي", color: "var(--success)"  },
-          ].map((s) => (
-            <div key={s.label} className="flex flex-col items-center py-4">
+            { val: dueCards.length,      label: "مستحق",    color: "var(--danger)"  },
+            { val: upcomingCards.length, label: "قادم",      color: "var(--gold)"    },
+            { val: cards.length,         label: "الإجمالي",  color: "var(--success)" },
+          ].map((s, i) => (
+            <div key={s.label} className="flex flex-col items-center py-4"
+              style={{ borderRight: i < 2 ? "1px solid var(--border)" : "none" }}>
               <p className="font-mono-nums font-black text-2xl leading-none" style={{ color: s.color }}>{s.val}</p>
-              <p className="text-xs text-[var(--text-muted)] mt-1.5">{s.label}</p>
+              <p className="text-xs mt-1.5" style={{ color: "var(--text-muted)" }}>{s.label}</p>
             </div>
           ))}
         </div>
@@ -277,22 +285,27 @@ export default function ReviewPage() {
         </div>
       )}
 
-      {/* Due cards */}
+      {/* Due cards list */}
       {dueCards.length > 0 && (
         <div className="px-5 mb-5 anim-3">
-          <p className="font-bold text-sm text-[var(--text)] mb-3">مستحقة الآن</p>
+          <p className="font-bold text-sm text-white mb-3">مستحقة الآن</p>
           <div className="flex flex-col gap-3">
             {dueCards.map((card) => {
               const color = SUBJECT_COLORS[card.subject];
               return (
                 <div key={card.id} className="rounded-xl p-4"
-                  style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRight: `3px solid ${color}` }}>
+                  style={{
+                    background: "var(--surface)",
+                    border: "1px solid var(--border)",
+                    borderRight: `3px solid ${color}`,
+                  }}>
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: "var(--danger)" }} />
+                    <div className="w-1.5 h-1.5 rounded-full animate-pulse"
+                      style={{ background: "var(--danger)" }} />
                     <span className="text-xs font-bold" style={{ color }}>{card.subject}</span>
-                    <span className="text-xs font-bold text-[var(--danger)] mr-auto">الآن</span>
+                    <span className="text-xs font-bold mr-auto" style={{ color: "var(--danger)" }}>الآن</span>
                   </div>
-                  <p className="text-sm text-[var(--text)] leading-relaxed">{card.question}</p>
+                  <p className="text-sm text-white leading-relaxed">{card.question}</p>
                 </div>
               );
             })}
@@ -300,10 +313,10 @@ export default function ReviewPage() {
         </div>
       )}
 
-      {/* Upcoming cards */}
+      {/* Upcoming cards list */}
       {upcomingCards.length > 0 && (
         <div className="px-5 mb-5 anim-4">
-          <p className="font-bold text-sm text-[var(--text-muted)] mb-3">قادم</p>
+          <p className="font-bold text-sm mb-3" style={{ color: "var(--text-muted)" }}>قادم</p>
           <div className="flex flex-col gap-3">
             {upcomingCards.map((card) => {
               const color = SUBJECT_COLORS[card.subject];
@@ -311,11 +324,13 @@ export default function ReviewPage() {
                 <div key={card.id} className="rounded-xl p-4 opacity-50"
                   style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 rounded-full" style={{ background: color }} />
+                    <div className="w-1.5 h-1.5 rounded-full" style={{ background: color }} />
                     <span className="text-xs font-bold" style={{ color }}>{card.subject}</span>
-                    <span className="text-xs text-[var(--text-muted)] mr-auto">{nextReviewText(card.dueDate)}</span>
+                    <span className="text-xs mr-auto" style={{ color: "var(--text-muted)" }}>
+                      {nextReviewText(card.dueDate)}
+                    </span>
                   </div>
-                  <p className="text-sm text-[var(--text)] leading-relaxed">{card.question}</p>
+                  <p className="text-sm text-white leading-relaxed">{card.question}</p>
                 </div>
               );
             })}
@@ -326,8 +341,12 @@ export default function ReviewPage() {
       {dueCards.length === 0 && (
         <div className="text-center py-12 px-6 anim-3">
           <p className="text-4xl mb-4">✅</p>
-          <p className="font-black text-lg text-[var(--success)] mb-1">أحسنت! لا مراجعات مستحقة</p>
-          <p className="text-sm text-[var(--text-muted)]">{upcomingCards.length} بطاقة قادمة لاحقاً</p>
+          <p className="font-black text-lg mb-1" style={{ color: "var(--success)" }}>
+            أحسنت! لا مراجعات مستحقة
+          </p>
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+            {upcomingCards.length} بطاقة قادمة لاحقاً
+          </p>
         </div>
       )}
 
