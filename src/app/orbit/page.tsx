@@ -153,23 +153,6 @@ export default function OrbitPage() {
         </div>
       </div>
 
-      {/* Subject pills — idle only */}
-      {phase === "idle" && (
-        <div className="anim-2 px-5 py-3 relative z-10">
-          <div className="flex gap-2 overflow-x-auto no-scrollbar">
-            {SUBJECTS.map((s) => (
-              <button key={s} onClick={() => setSubject(s)}
-                className="flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-bold transition-all"
-                style={subject === s
-                  ? { background: "var(--blue)", color: "white", boxShadow: "0 0 16px var(--blue-glow)" }
-                  : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* HERO: Timer */}
       <div className="flex-1 flex flex-col items-center justify-center px-5 anim-2 relative z-10">
         <div className="relative" style={{ width: "296px", height: "296px" }}>
@@ -216,9 +199,23 @@ export default function OrbitPage() {
         </div>
 
         {/* Controls */}
-        <div className="w-full max-w-xs mt-10 flex flex-col gap-3 anim-3">
+        <div className="w-full max-w-xs mt-8 flex flex-col gap-3 anim-3">
           {phase === "idle" && (
-            <button onClick={startFocus} className="btn-primary">ابدأ الجلسة</button>
+            <>
+              {/* Subject pills — wrap naturally, no horizontal scroll */}
+              <div className="flex flex-wrap gap-2 justify-center pb-1">
+                {SUBJECTS.map((s) => (
+                  <button key={s} onClick={() => setSubject(s)}
+                    className="px-4 py-1.5 rounded-full text-sm font-bold transition-all"
+                    style={subject === s
+                      ? { background: "var(--blue)", color: "white", boxShadow: "0 0 14px var(--blue-glow)" }
+                      : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+              <button onClick={startFocus} className="btn-primary">ابدأ الجلسة</button>
+            </>
           )}
           {phase === "focus" && (
             <button onClick={reset}
