@@ -42,10 +42,8 @@ export default function DashboardPage() {
           streak: 0, sessionsToday: 0, lastActiveDate: "",
           ...JSON.parse(localStorage.getItem("darb_orbit") ?? "{}"),
         };
-        setStreak(o.streak);
-        setSilver(o.totalSilver);
-        setHours(Math.round(o.totalFocusMins / 60));
-        setSessions(o.totalSessions);
+        setStreak(o.streak); setSilver(o.totalSilver);
+        setHours(Math.round(o.totalFocusMins / 60)); setSessions(o.totalSessions);
       } catch {}
       try {
         const v: VaultError[] = JSON.parse(localStorage.getItem("darb_vault") ?? "[]");
@@ -56,8 +54,7 @@ export default function DashboardPage() {
         const subjects = Object.keys(RAKAN_SCHEDULE) as (keyof typeof RAKAN_SCHEDULE)[];
         const total = subjects.reduce((a, s) => a + RAKAN_SCHEDULE[s].length, 0);
         const done  = completed.length;
-        setRoadmapDone(done);
-        setRoadmapTotal(total);
+        setRoadmapDone(done); setRoadmapTotal(total);
         setRoadmapPct(total > 0 ? Math.round((done / total) * 100) : 0);
       } catch {}
       const h = new Date().getHours();
@@ -74,25 +71,34 @@ export default function DashboardPage() {
     ? Math.max(0, Math.ceil((new Date(user.examDate).getTime() - _NOW) / 86400000))
     : null;
 
-  return (
-    <div className="page">
+  /* SVG ring constants */
+  const R  = 92;
+  const C  = 2 * Math.PI * R;
 
-      {/* ── Identity ── */}
-      <div className="anim-1 flex items-start justify-between px-5 pt-14 pb-7">
+  return (
+    <div className="page" style={{ background: "#000" }}>
+
+      {/* Ambient glow top */}
+      <div className="fixed top-0 left-0 right-0 pointer-events-none" style={{ height: "280px",
+        background: "radial-gradient(ellipse 80% 200px at 50% -40px, rgba(37,99,235,0.07) 0%, transparent 100%)" }} />
+
+      {/* ── Top bar ── */}
+      <div className="anim-1 flex items-start justify-between px-5 pt-14 pb-4">
         <div>
           <p className="label mb-2">{greeting}</p>
-          <h1 className="font-black text-[28px] leading-tight text-white">
+          <h1 className="font-black leading-tight text-white"
+            style={{ fontSize: "30px" }}>
             {user?.name ? `أهلاً، ${user.name}` : "أهلاً بك"}
           </h1>
           {user?.exam && (
-            <div className="flex items-center gap-2 mt-3">
+            <div className="flex items-center gap-2 mt-2.5 flex-wrap">
               <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-dim)" }}>
+                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", color: "var(--text-dim)" }}>
                 {EXAM_LABEL[user.exam] ?? user.exam}
               </span>
               {daysLeft !== null && (
                 <span className="text-xs font-black px-2.5 py-1 rounded-full"
-                  style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.18)", color: "var(--gold)" }}>
+                  style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", color: "var(--gold)" }}>
                   {daysLeft} يوم
                 </span>
               )}
@@ -102,47 +108,66 @@ export default function DashboardPage() {
         <div className="flex flex-col items-end gap-2 pt-1 flex-shrink-0">
           <span className="flex items-center gap-1.5 font-black text-sm" style={{ color: "var(--gold)" }}>
             <span className="streak-fire">🔥</span>
-            <span className="font-mono-nums text-lg">{streak}</span>
+            <span className="font-mono-nums text-xl">{streak}</span>
           </span>
           <span className="flex items-center gap-1.5 font-black text-sm" style={{ color: "var(--text-dim)" }}>
-            🪙 <span className="font-mono-nums text-lg">{silver}</span>
+            🪙 <span className="font-mono-nums text-xl">{silver}</span>
           </span>
         </div>
       </div>
 
       <div className="page-content">
 
-        {/* ── HERO: Orbit CTA ── */}
-        <Link href="/orbit" className="anim-2 block rounded-2xl overflow-hidden"
-          style={{ background: "var(--blue)", boxShadow: "0 4px 28px rgba(37,99,235,0.2)" }}>
-          <div className="px-6 pt-6 pb-5">
-            <p className="label mb-4" style={{ color: "rgba(255,255,255,0.45)" }}>ORBIT · أوربت</p>
-            <p className="font-mono-nums font-black text-[58px] leading-none text-white">50:00</p>
-            <p className="text-sm font-semibold mt-1.5" style={{ color: "rgba(255,255,255,0.5)" }}>
-              50 دقيقة تركيز · 10 دقائق راحة
-            </p>
-          </div>
-          <div className="flex items-center justify-between px-6 py-3.5"
-            style={{ background: "rgba(0,0,0,0.2)", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-            <span className="font-black text-sm text-white">ابدأ الدراسة الآن</span>
-            <span className="text-white text-lg" style={{ opacity: 0.65 }}>←</span>
-          </div>
-        </Link>
+        {/* ── HERO: Orbit ring ── */}
+        <div className="anim-2 flex flex-col items-center pt-2 pb-4">
+          <Link href="/orbit" className="relative mb-6 flex items-center justify-center"
+            style={{ width: "224px", height: "224px" }}>
+            {/* Outer glow */}
+            <div className="absolute inset-0 rounded-full pointer-events-none"
+              style={{ boxShadow: "0 0 60px rgba(37,99,235,0.1)" }} />
+            <svg width="224" height="224" className="absolute inset-0 -rotate-90">
+              {/* Track */}
+              <circle cx="112" cy="112" r={R} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="4" />
+              {/* Decorative arc */}
+              <circle cx="112" cy="112" r={R} fill="none"
+                stroke="var(--blue)" strokeWidth="4" strokeLinecap="round"
+                strokeDasharray={C} strokeDashoffset={C * 0.72}
+                style={{ opacity: 0.45 }} />
+            </svg>
+            {/* Center */}
+            <div className="flex flex-col items-center justify-center z-10">
+              <p className="font-mono-nums font-black leading-none text-white" style={{ fontSize: "46px" }}>
+                50:00
+              </p>
+              <p className="text-xs font-bold mt-2" style={{ color: "var(--blue-light)" }}>ORBIT · أوربت</p>
+            </div>
+          </Link>
+
+          <Link href="/orbit" className="btn-primary" style={{ maxWidth: "280px" }}>
+            ابدأ الدراسة الآن
+          </Link>
+        </div>
 
         {/* ── Stats ── */}
-        <div className="anim-3 flex items-stretch rounded-2xl overflow-hidden"
-          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-          {[
-            { val: hours,      unit: "ساعة",  color: "var(--text)"   },
-            { val: sessions,   unit: "جلسة",  color: "var(--text)"   },
-            { val: vaultCount, unit: "خطأ",   color: "var(--danger)" },
-          ].map((s, i) => (
-            <div key={s.unit} className="flex-1 flex flex-col items-center py-5"
-              style={{ borderRight: i < 2 ? "1px solid var(--border)" : "none" }}>
-              <p className="font-mono-nums font-black text-[32px] leading-none" style={{ color: s.color }}>{s.val}</p>
-              <p className="text-[11px] font-semibold mt-1.5" style={{ color: "var(--text-muted)" }}>{s.unit}</p>
-            </div>
-          ))}
+        <div className="anim-3">
+          <div className="flex items-stretch rounded-2xl overflow-hidden"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+            {[
+              { val: hours,      unit: "ساعة",  label: "تركيز",   color: "var(--text)"    },
+              { val: sessions,   unit: "جلسة",  label: "أوربت",   color: "var(--text)"    },
+              { val: vaultCount, unit: "خطأ",   label: "الخزنة",  color: "var(--danger)"  },
+            ].map((s, i) => (
+              <div key={s.label} className="flex-1 flex flex-col items-center py-5"
+                style={{ borderRight: i < 2 ? "1px solid var(--border)" : "none" }}>
+                <p className="font-mono-nums font-black leading-none" style={{ fontSize: "40px", color: s.color }}>
+                  {s.val}
+                </p>
+                <p className="text-[11px] font-bold mt-2" style={{ color: "var(--text-muted)" }}>
+                  {s.unit}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* ── Tools ── */}
@@ -151,21 +176,21 @@ export default function DashboardPage() {
           <div className="rounded-2xl overflow-hidden"
             style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
             {[
-              { href: "/orbit",   label: "أوربت",   desc: "50 دقيقة تركيز",    dot: "var(--blue)"    },
-              { href: "/vault",   label: "الخزنة",  desc: "سجّل أخطاءك",       dot: "var(--gold)"    },
-              { href: "/review",  label: "مراجعة",  desc: "بطاقات ذكية · SM-2", dot: "var(--success)" },
-              { href: "/roadmap", label: "الخريطة", desc: "خطتك الدراسية",      dot: "#8B5CF6"        },
+              { href: "/orbit",   label: "أوربت",   desc: "جلسات تركيز 50 دقيقة",   dot: "var(--blue)"    },
+              { href: "/vault",   label: "الخزنة",  desc: "سجّل أخطاءك ولا تكررها", dot: "var(--gold)"    },
+              { href: "/review",  label: "مراجعة",  desc: "بطاقات ذكية · SM-2",      dot: "var(--success)" },
+              { href: "/roadmap", label: "الخريطة", desc: "خطتك الدراسية المفصّلة",  dot: "#A78BFA"        },
             ].map((t, i) => (
               <Link key={t.href} href={t.href}
-                className="flex items-center gap-4 px-5 py-[17px] active:bg-[var(--surface2)] transition-colors"
+                className="flex items-center gap-4 px-5 py-[18px] active:bg-[var(--surface2)] transition-colors"
                 style={{ borderBottom: i < 3 ? "1px solid var(--border)" : "none" }}>
-                <div className="w-2 h-7 rounded-full flex-shrink-0" style={{ background: t.dot }} />
+                <div className="w-1.5 h-8 rounded-full flex-shrink-0" style={{ background: t.dot }} />
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-[15px] text-white">{t.label}</p>
+                  <p className="font-black text-[15px] text-white">{t.label}</p>
                   <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{t.desc}</p>
                 </div>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
-                  className="w-4 h-4 flex-shrink-0 rotate-180" style={{ color: "rgba(255,255,255,0.15)" }}>
+                  className="w-4 h-4 flex-shrink-0 rotate-180" style={{ color: "rgba(255,255,255,0.12)" }}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </Link>
@@ -173,7 +198,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* ── Roadmap progress ── */}
+        {/* ── Roadmap ── */}
         <div className="anim-5">
           <div className="flex items-center justify-between mb-3">
             <p className="label">الخريطة</p>
@@ -181,13 +206,13 @@ export default function DashboardPage() {
               عرض الكل ←
             </Link>
           </div>
-          <div className="h-[3px] rounded-full overflow-hidden mb-2" style={{ background: "var(--surface2)" }}>
-            <div className="h-full rounded-full transition-all duration-700"
-              style={{ width: roadmapPct + "%", background: "var(--blue)" }} />
-          </div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-2">
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>{roadmapDone} من {roadmapTotal} درس</p>
             <p className="font-mono-nums font-black text-sm" style={{ color: "var(--blue-light)" }}>{roadmapPct}%</p>
+          </div>
+          <div className="h-[3px] rounded-full overflow-hidden" style={{ background: "var(--surface2)" }}>
+            <div className="h-full rounded-full transition-all duration-700"
+              style={{ width: roadmapPct + "%", background: "var(--blue)" }} />
           </div>
         </div>
 

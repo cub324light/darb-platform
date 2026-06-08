@@ -123,40 +123,45 @@ export default function OrbitPage() {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [phase, startBreak, finishBreak]);
 
-  const R             = 110;
+  const R             = 118;
   const circumference = 2 * Math.PI * R;
   const dashOffset    = circumference * (1 - progress);
   const isBreak       = phase === "break";
   const ringColor     = isBreak ? "var(--gold)" : "var(--blue)";
+  const glowColor     = isBreak ? "rgba(245,158,11,0.12)" : "rgba(37,99,235,0.14)";
 
   const timeDisplay = phase === "idle"
     ? "50:00"
     : `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
 
   return (
-    <div className="min-h-dvh bg-[var(--bg)] flex flex-col"
-      style={{ paddingBottom: "calc(var(--nav-h) + 8px)" }}>
+    <div className="min-h-dvh flex flex-col" style={{ background: "#000", paddingBottom: "calc(var(--nav-h) + 8px)" }}>
+
+      {/* Ambient glow */}
+      {phase !== "idle" && phase !== "done" && (
+        <div className="fixed inset-0 pointer-events-none transition-all duration-1000"
+          style={{ background: `radial-gradient(ellipse 60% 40% at 50% 45%, ${glowColor} 0%, transparent 70%)` }} />
+      )}
 
       {/* Header */}
-      <div className="anim-1 flex items-center justify-between px-5 pt-12 pb-2">
+      <div className="anim-1 flex items-center justify-between px-5 pt-12 pb-2 relative z-10">
         <h1 className="font-black text-lg text-white">أوربت</h1>
-        <div className="flex items-center gap-1.5">
-          <span className="font-mono-nums font-black text-lg" style={{ color: "var(--gold)" }}>
-            {silverEarned}
-          </span>
-          <span className="text-sm" style={{ color: "var(--text-muted)" }}>🪙</span>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full"
+          style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.18)" }}>
+          <span className="font-mono-nums font-black text-base" style={{ color: "var(--gold)" }}>{silverEarned}</span>
+          <span className="text-sm">🪙</span>
         </div>
       </div>
 
       {/* Subject pills — idle only */}
       {phase === "idle" && (
-        <div className="anim-2 px-5 py-3">
+        <div className="anim-2 px-5 py-3 relative z-10">
           <div className="flex gap-2 overflow-x-auto no-scrollbar">
             {SUBJECTS.map((s) => (
               <button key={s} onClick={() => setSubject(s)}
                 className="flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-bold transition-all"
                 style={subject === s
-                  ? { background: "var(--blue)", color: "white" }
+                  ? { background: "var(--blue)", color: "white", boxShadow: "0 0 16px var(--blue-glow)" }
                   : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
                 {s}
               </button>
@@ -165,24 +170,21 @@ export default function OrbitPage() {
         </div>
       )}
 
-      {/* HERO: Timer ring */}
-      <div className="flex-1 flex flex-col items-center justify-center px-5 anim-2">
-        <div className="relative" style={{ width: "276px", height: "276px" }}>
+      {/* HERO: Timer */}
+      <div className="flex-1 flex flex-col items-center justify-center px-5 anim-2 relative z-10">
+        <div className="relative" style={{ width: "296px", height: "296px" }}>
 
-          {/* Ambient glow when active */}
+          {/* Glow ring */}
           {phase !== "idle" && phase !== "done" && (
-            <div className="absolute inset-0 rounded-full pointer-events-none"
-              style={{
-                boxShadow: `0 0 80px ${isBreak ? "rgba(245,158,11,0.12)" : "rgba(37,99,235,0.15)"}`,
-              }} />
+            <div className="absolute inset-0 rounded-full pointer-events-none ring-pulse"
+              style={{ boxShadow: `0 0 100px ${isBreak ? "rgba(245,158,11,0.1)" : "rgba(37,99,235,0.12)"}` }} />
           )}
 
-          <svg width="276" height="276" className="absolute inset-0 -rotate-90">
+          <svg width="296" height="296" className="absolute inset-0 -rotate-90">
             {/* Track */}
-            <circle cx="138" cy="138" r={R} fill="none"
-              stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
+            <circle cx="148" cy="148" r={R} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="5" />
             {/* Progress */}
-            <circle cx="138" cy="138" r={R} fill="none"
+            <circle cx="148" cy="148" r={R} fill="none"
               stroke={phase === "idle" ? "rgba(255,255,255,0.04)" : ringColor}
               strokeWidth="5" strokeLinecap="round"
               strokeDasharray={circumference}
@@ -191,22 +193,22 @@ export default function OrbitPage() {
             />
           </svg>
 
-          {/* Center content */}
+          {/* Center */}
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
             {phase === "done" ? (
               <div className="text-center scale-in">
-                <p className="text-5xl mb-2">✅</p>
+                <p className="text-6xl mb-2">✅</p>
                 <p className="text-sm font-black" style={{ color: "var(--success)" }}>أحسنت!</p>
               </div>
             ) : (
               <>
                 <p className="font-mono-nums font-black leading-none"
-                  style={{ fontSize: "52px", color: phase === "idle" ? "white" : ringColor }}>
+                  style={{ fontSize: "54px", color: phase === "idle" ? "white" : ringColor }}>
                   {timeDisplay}
                 </p>
-                <p className="text-xs font-bold"
+                <p className="text-sm font-bold"
                   style={{ color: phase === "idle" ? "var(--text-muted)" : ringColor }}>
-                  {phase === "idle" ? subject : isBreak ? "استرح" : "تركيز"}
+                  {phase === "idle" ? subject : isBreak ? "استرح ☕" : "تركيز 🎯"}
                 </p>
               </>
             )}
@@ -221,20 +223,13 @@ export default function OrbitPage() {
           {phase === "focus" && (
             <button onClick={reset}
               className="w-full py-4 rounded-2xl text-sm font-bold"
-              style={{
-                background: "rgba(239,68,68,0.06)",
-                border: "1px solid rgba(239,68,68,0.18)",
-                color: "var(--danger)",
-              }}>
+              style={{ background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.18)", color: "var(--danger)" }}>
               إيقاف — تخسر الجلسة
             </button>
           )}
           {phase === "break" && (
             <div className="rounded-2xl px-5 py-4 text-center"
-              style={{
-                background: "rgba(245,158,11,0.05)",
-                border: "1px solid rgba(245,158,11,0.14)",
-              }}>
+              style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.14)" }}>
               <p className="font-bold text-sm" style={{ color: "var(--gold)" }}>راحة مستحقة ☕</p>
               <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
                 تبدأ تلقائياً {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
@@ -246,12 +241,11 @@ export default function OrbitPage() {
               <div className="rounded-2xl px-5 py-4 text-center"
                 style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.14)" }}>
                 <p className="font-mono-nums font-black text-2xl" style={{ color: "var(--gold)" }}>+10 🪙</p>
-                <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-                  جلسة رقم {sessionsToday} اليوم
-                </p>
+                <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>جلسة رقم {sessionsToday} اليوم</p>
               </div>
               <button onClick={startFocus} className="btn-primary">جلسة أخرى</button>
-              <button onClick={reset} className="w-full pt-1 pb-3 text-sm"
+              <button onClick={reset}
+                className="w-full pt-1 pb-3 text-sm"
                 style={{ color: "var(--text-muted)", background: "transparent", border: "none", cursor: "pointer" }}>
                 توقف اليوم
               </button>
@@ -261,7 +255,7 @@ export default function OrbitPage() {
       </div>
 
       {/* Footer stats */}
-      <div className="anim-4 px-5 pb-3">
+      <div className="anim-4 px-5 pb-3 relative z-10">
         <div className="flex items-center justify-around py-4"
           style={{ borderTop: "1px solid var(--border)" }}>
           {[
@@ -271,9 +265,7 @@ export default function OrbitPage() {
           ].map((s, i) => (
             <div key={s.label} className="flex flex-col items-center"
               style={{ borderRight: i < 2 ? "1px solid var(--border)" : "none", flex: 1 }}>
-              <p className="font-mono-nums font-black text-2xl leading-none" style={{ color: s.color }}>
-                {s.val}
-              </p>
+              <p className="font-mono-nums font-black text-2xl leading-none" style={{ color: s.color }}>{s.val}</p>
               <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>{s.label}</p>
             </div>
           ))}
