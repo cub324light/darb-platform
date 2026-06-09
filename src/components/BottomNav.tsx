@@ -61,10 +61,11 @@ export default function BottomNav() {
       className="fixed bottom-0 left-0 right-0 z-50"
       style={{
         height: "var(--nav-h)",
-        background: "rgba(0,0,0,0.9)",
-        backdropFilter: "blur(24px)",
-        WebkitBackdropFilter: "blur(24px)",
-        borderTop: "1px solid rgba(255,255,255,0.07)",
+        background: "rgba(10,10,16,0.78)",
+        backdropFilter: "blur(32px) saturate(180%)",
+        WebkitBackdropFilter: "blur(32px) saturate(180%)",
+        borderTop: "1px solid rgba(255,255,255,0.09)",
+        boxShadow: "0 -1px 0 rgba(255,255,255,0.04), 0 -8px 32px rgba(0,0,0,0.4)",
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >

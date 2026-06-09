@@ -19,6 +19,13 @@ const SUBJECT_COLORS: Record<string, string> = {
   "أحياء":   "#22C55E",
   "إنجليزي": "#94A3B8",
 };
+const SUBJECT_GLOWS: Record<string, string> = {
+  "فيزياء":  "rgba(59,130,246,0.1)",
+  "رياضيات": "rgba(139,92,246,0.1)",
+  "كيمياء":  "rgba(6,182,212,0.09)",
+  "أحياء":   "rgba(34,197,94,0.09)",
+  "إنجليزي": "rgba(148,163,184,0.07)",
+};
 
 interface OrbitData {
   totalSessions: number; totalSilver: number; totalFocusMins: number;
@@ -143,13 +150,14 @@ export default function OrbitPage() {
     : `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
 
   return (
-    <div className="min-h-dvh flex flex-col" style={{ background: "#000", paddingBottom: "calc(var(--nav-h) + 8px)" }}>
+    <div className="min-h-dvh flex flex-col"
+      style={{ background: "linear-gradient(175deg, #0E0E16 0%, #08080B 100%)", paddingBottom: "calc(var(--nav-h) + 8px)" }}>
 
-      {/* Ambient glow */}
-      {phase !== "idle" && phase !== "done" && (
-        <div className="fixed inset-0 pointer-events-none transition-all duration-1000"
-          style={{ background: `radial-gradient(ellipse 60% 40% at 50% 45%, ${glowColor} 0%, transparent 70%)` }} />
-      )}
+      {/* Ambient glow — always present; idle uses subject colour, active uses phase colour */}
+      <div className="fixed inset-0 pointer-events-none transition-all duration-1000"
+        style={{ background: (phase === "idle" || phase === "done")
+          ? `radial-gradient(ellipse 85% 55% at 50% 10%, ${SUBJECT_GLOWS[subject] ?? "rgba(37,99,235,0.08)"} 0%, transparent 65%)`
+          : `radial-gradient(ellipse 65% 45% at 50% 45%, ${glowColor} 0%, transparent 70%)` }} />
 
       {/* Header */}
       <div className="anim-1 flex items-center justify-between px-5 pt-12 pb-2 relative z-10">
@@ -271,8 +279,14 @@ export default function OrbitPage() {
 
       {/* Footer stats */}
       <div className="anim-4 px-5 pb-3 relative z-10">
-        <div className="flex items-center justify-around py-4"
-          style={{ borderTop: "1px solid var(--border)" }}>
+        <div className="flex items-center justify-around py-4 rounded-2xl"
+          style={{
+            background: "rgba(22,22,30,0.6)",
+            border: "1px solid rgba(255,255,255,0.07)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
+          }}>
           {[
             { val: sessionsToday,  label: "جلسات",  color: "var(--blue-light)" },
             { val: totalFocusMins, label: "دقيقة",  color: "var(--text)"       },

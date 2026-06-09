@@ -76,11 +76,11 @@ export default function DashboardPage() {
   const C  = 2 * Math.PI * R;
 
   return (
-    <div className="page" style={{ background: "#000" }}>
+    <div className="page">
 
       {/* Ambient glow top */}
-      <div className="fixed top-0 left-0 right-0 pointer-events-none" style={{ height: "280px",
-        background: "radial-gradient(ellipse 80% 200px at 50% -40px, rgba(37,99,235,0.07) 0%, transparent 100%)" }} />
+      <div className="fixed top-0 left-0 right-0 pointer-events-none" style={{ height: "320px",
+        background: "radial-gradient(ellipse 90% 220px at 50% -20px, rgba(37,99,235,0.13) 0%, transparent 100%)" }} />
 
       {/* ── Top bar ── */}
       <div className="anim-1 flex items-start justify-between px-5 pt-14 pb-4">
@@ -125,9 +125,15 @@ export default function DashboardPage() {
         <div className="anim-2 flex flex-col items-center pt-2 pb-4">
           <Link href="/orbit" className="relative mb-6 flex items-center justify-center active:scale-[0.96] transition-all duration-200"
             style={{ width: "224px", height: "224px" }}>
-            {/* Outer glow */}
-            <div className="absolute inset-0 rounded-full pointer-events-none"
-              style={{ boxShadow: "0 0 60px rgba(37,99,235,0.1)" }} />
+            {/* Glass circle + glow */}
+            <div className="absolute inset-0 rounded-full"
+              style={{
+                background: "rgba(22,22,30,0.45)",
+                border: "1px solid rgba(255,255,255,0.07)",
+                backdropFilter: "blur(10px)",
+                WebkitBackdropFilter: "blur(10px)",
+                boxShadow: "0 0 80px rgba(37,99,235,0.18), 0 0 28px rgba(37,99,235,0.1)",
+              }} />
             <svg width="224" height="224" className="absolute inset-0 -rotate-90">
               {/* Track */}
               <circle cx="112" cy="112" r={R} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="4" />
@@ -154,7 +160,7 @@ export default function DashboardPage() {
         {/* ── Stats ── */}
         <div className="anim-3">
           <div className="flex items-stretch rounded-2xl overflow-hidden"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+            style={{ background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "var(--card-shadow)" }}>
             {[
               { val: hours,      unit: "ساعة",  label: "تركيز",   color: "var(--text)"    },
               { val: sessions,   unit: "جلسة",  label: "أوربت",   color: "var(--text)"    },
@@ -175,9 +181,12 @@ export default function DashboardPage() {
 
         {/* ── Tools ── */}
         <div className="anim-4">
-          <p className="label mb-3">أدواتك</p>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-1.5 h-4 rounded-full" style={{ background: "var(--blue)" }} />
+            <p className="label">أدواتك</p>
+          </div>
           <div className="rounded-2xl overflow-hidden"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+            style={{ background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "var(--card-shadow)" }}>
             {[
               { href: "/orbit",   label: "أوربت",   desc: "جلسات تركيز 50 دقيقة",   dot: "var(--blue)"    },
               { href: "/vault",   label: "الخزنة",  desc: "سجّل أخطاءك ولا تكررها", dot: "var(--gold)"    },
@@ -204,7 +213,10 @@ export default function DashboardPage() {
         {/* ── Roadmap ── */}
         <div className="anim-5">
           <div className="flex items-center justify-between mb-3">
-            <p className="label">الخريطة</p>
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-4 rounded-full" style={{ background: "#A78BFA" }} />
+              <p className="label">الخريطة</p>
+            </div>
             <Link href="/roadmap" className="text-xs font-bold" style={{ color: "var(--blue-light)" }}>
               عرض الكل ←
             </Link>
