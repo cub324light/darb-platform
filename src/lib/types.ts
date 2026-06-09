@@ -57,3 +57,12 @@ export interface SM2Result {
 }
 
 export type SM2Grade = 0 | 1 | 2 | 3 | 4 | 5;
+
+export interface SearchResult {
+  found: boolean;
+  question: string;
+  answer: string;
+  subject: SubjectId;
+  category: string;
+  explanation: string;
+}

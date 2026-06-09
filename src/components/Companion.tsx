@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, startTransition } from "react";
 import type { BirdId } from "@/lib/types";
 import { BIRDS } from "@/lib/constants";
 
@@ -255,8 +255,8 @@ export default function Companion({
   const [msgVisible, setMsgVisible] = useState(false);
 
   useEffect(() => {
-    setMsgVisible(false);
-    const t = setTimeout(() => setMsgVisible(true), 120);
+    startTransition(() => setMsgVisible(false));
+    const t = setTimeout(() => startTransition(() => setMsgVisible(true)), 120);
     return () => clearTimeout(t);
   }, [message]);
 

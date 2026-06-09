@@ -1,61 +1,55 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, startTransition } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import { ERROR_CATEGORIES } from "@/lib/constants";
-import type { VaultError, SubjectId } from "@/lib/types";
+import type { VaultError, SubjectId, SearchResult } from "@/lib/types";
 
 const SUBJECTS: SubjectId[] = ["فيزياء", "رياضيات", "كيمياء", "أحياء"];
 
 const SUBJECT_COLORS: Record<SubjectId, string> = {
-  فيزياء:  "#2563EB",
+  فيزياء:  "#3B82F6",
   رياضيات: "#8B5CF6",
   كيمياء:  "#10B981",
   أحياء:   "#F59E0B",
 };
 
-const FREE_LIMIT = 20;
-
-const DEMO_ERRORS: VaultError[] = [
-  {
-    id: "1",
-    question: "جسم كتلته 5 كجم يتحرك بتسارع 3 م/ث² — ما القوة المحركة؟",
-    subject: "فيزياء",
-    category: "خطأ حسابي",
-    note: "نسيت ضرب الكتلة في التسارع وجمعتهم",
-    createdAt: Date.now() - 86400000,
-    reviewCount: 2,
-  },
-  {
-    id: "2",
-    question: "ما الجذر التربيعي لـ (-16)؟",
-    subject: "رياضيات",
-    category: "ما فهمت المفهوم",
-    note: "ما أعرف أن الجذر لسالب = عدد تخيلي",
-    createdAt: Date.now() - 172800000,
-    reviewCount: 0,
-  },
-  {
-    id: "3",
-    question: "ما الصيغة التجريبية لمركب يحتوي 40% كربون، 6.7% هيدروجين، 53.3% أكسجين؟",
-    subject: "كيمياء",
-    category: "نسيت القانون",
-    note: "نسيت خطوات حساب النسبة المئوية للتركيب",
-    createdAt: Date.now() - 259200000,
-    reviewCount: 1,
-  },
-];
+const FREE_LIMIT  = 20;
+const STORAGE_KEY = "darb_vault";
+const _NOW        = Date.now();
 
 export default function VaultPage() {
-  const [errors, setErrors]         = useState<VaultError[]>(DEMO_ERRORS);
-  const [showAdd, setShowAdd]       = useState(false);
+  const [errors, setErrors]               = useState<VaultError[]>([]);
+  const [hydrated, setHydrated]           = useState(false);
+  const [showAdd, setShowAdd]             = useState(false);
   const [filterSubject, setFilterSubject] = useState<SubjectId | "الكل">("الكل");
-  const [filterCat, setFilterCat]   = useState<string>("الكل");
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [newQ, setNewQ]             = useState("");
-  const [newSubject, setNewSubject] = useState<SubjectId>("فيزياء");
-  const [newCat, setNewCat]         = useState<string>(ERROR_CATEGORIES[0]);
-  const [newNote, setNewNote]       = useState("");
+  const [filterCat, setFilterCat]         = useState<string>("الكل");
+  const [expandedId, setExpandedId]       = useState<string | null>(null);
+  const [newQ, setNewQ]                   = useState("");
+  const [newSubject, setNewSubject]       = useState<SubjectId>("فيزياء");
+  const [newCat, setNewCat]               = useState<string>(ERROR_CATEGORIES[0]);
+  const [newNote, setNewNote]             = useState("");
+  const [showSearch, setShowSearch]       = useState(false);
+  const [searchQuery, setSearchQuery]     = useState("");
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchResult, setSearchResult]   = useState<SearchResult | null>(null);
+  const [searchError, setSearchError]     = useState<string | null>(null);
+  const [duplicateWarning, setDuplicateWarning] = useState(false);
+
+  useEffect(() => {
+    startTransition(() => {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) setErrors(JSON.parse(stored) as VaultError[]);
+      } catch {}
+      setHydrated(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(errors)); } catch {}
+  }, [errors, hydrated]);
 
   const isPlanFree = true;
   const atLimit    = isPlanFree && errors.length >= FREE_LIMIT;
@@ -66,166 +60,196 @@ export default function VaultPage() {
     return true;
   });
 
-  const addError = () => {
-    if (!newQ.trim() || atLimit) return;
+  const addError = (overrides?: Partial<VaultError>) => {
+    const q = overrides?.question ?? newQ;
+    if (!q.trim() || atLimit) return;
+    if (errors.some((e) => e.question.trim() === q.trim())) {
+      setDuplicateWarning(true);
+      setTimeout(() => setDuplicateWarning(false), 2500);
+      return;
+    }
     setErrors((p) => [{
-      id: Date.now().toString(), question: newQ.trim(),
-      subject: newSubject, category: newCat,
-      note: newNote.trim(), createdAt: Date.now(), reviewCount: 0,
+      id:          crypto.randomUUID(),
+      question:    q.trim(),
+      subject:     overrides?.subject  ?? newSubject,
+      category:    overrides?.category ?? newCat,
+      note:        overrides?.note     ?? newNote.trim(),
+      createdAt:   Date.now(),
+      reviewCount: 0,
     }, ...p]);
     setNewQ(""); setNewNote(""); setShowAdd(false);
   };
 
-  const categoryCount = (cat: string) => errors.filter((e) => e.category === cat).length;
+  const addFromSearch = () => {
+    if (!searchResult?.found) return;
+    setNewQ(searchResult.question);
+    closeSearch(); setShowAdd(true);
+  };
+
+  const runSearch = async () => {
+    if (!searchQuery.trim()) return;
+    setSearchLoading(true); setSearchResult(null); setSearchError(null);
+    try {
+      const res  = await fetch("/api/question-search", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: searchQuery.trim() }),
+      });
+      const data = await res.json() as SearchResult & { error?: string };
+      if (!res.ok || data.error) setSearchError(data.error ?? "حدث خطأ");
+      else setSearchResult(data);
+    } catch { setSearchError("خطأ في الاتصال"); }
+    finally  { setSearchLoading(false); }
+  };
+
+  const closeSearch = () => {
+    setShowSearch(false); setSearchQuery(""); setSearchResult(null); setSearchError(null);
+  };
 
   return (
-    <div className="page">
+    <div className="min-h-dvh bg-[var(--bg)]"
+      style={{ paddingBottom: "calc(var(--nav-h) + 80px)" }}>
 
-      {/* ── Header ── */}
-      <div className="page-header">
-        <h1 className="title-md text-[var(--text)]">خزنة الأخطاء 🔒</h1>
-        <div className="stat-chip">
-          <span className="font-mono-nums font-bold text-base text-[var(--gold)]">{errors.length}</span>
-          {isPlanFree && <span className="body-sm">/{FREE_LIMIT}</span>}
-        </div>
-      </div>
-
-      {/* ── Limit bar ── */}
-      {isPlanFree && (
-        <div className="px-5 mb-7">
-          <div className="flex justify-between mb-2">
-            <span className="body-sm">الاستخدام</span>
-            <span className="body-sm">{errors.length} / {FREE_LIMIT}</span>
-          </div>
-          <div className="h-2 bg-[var(--border)] rounded-full overflow-hidden">
-            <div className="h-full rounded-full transition-all duration-500"
-              style={{
-                width: (errors.length / FREE_LIMIT) * 100 + "%",
-                background: errors.length >= FREE_LIMIT - 5 ? "#EF4444" : "#F59E0B",
-              }} />
-          </div>
-          {atLimit && (
-            <p className="text-sm text-[var(--danger)] mt-2 text-center">
-              وصلت الحد المجاني.{" "}
-              <Link href="/pricing" className="text-[var(--blue-light)] underline font-semibold">رقّي لشاهين</Link>
+      {/* Header */}
+      <div className="anim-1 px-5 pt-12 pb-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-black text-xl text-white">الخزنة</h1>
+            <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+              سجّل أخطاءك · لا تكررها
             </p>
-          )}
+          </div>
+          <div className="text-left">
+            <p className="font-mono-nums font-black text-2xl"
+              style={{ color: errors.length >= FREE_LIMIT - 3 ? "var(--danger)" : "var(--gold)" }}>
+              {errors.length}
+              <span className="text-base font-normal" style={{ color: "var(--text-muted)" }}>
+                /{FREE_LIMIT}
+              </span>
+            </p>
+          </div>
         </div>
-      )}
 
-      {/* ── Category pills ── */}
-      <div className="px-5 mb-8">
-        <p className="text-base font-black text-[var(--text)] mb-4">تصنيف الخطأ</p>
-        <div className="flex gap-3 overflow-x-auto pb-2">
-          {["الكل", ...ERROR_CATEGORIES].map((cat) => {
-            const count = cat === "الكل" ? errors.length : categoryCount(cat);
-            const active = filterCat === cat;
-            return (
-              <button key={cat} onClick={() => setFilterCat(cat)}
-                className="flex-shrink-0 px-6 py-3.5 rounded-2xl text-base font-bold transition"
-                style={active
-                  ? { background: "#F59E0B", color: "#0A0A0F" }
-                  : { background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text-dim)" }}>
-                {cat}{count > 0 && <span className="mr-1 text-sm opacity-80">({count})</span>}
-              </button>
-            );
-          })}
+        {/* Usage bar */}
+        <div className="mt-4 h-[3px] rounded-full overflow-hidden" style={{ background: "var(--surface2)" }}>
+          <div className="h-full rounded-full transition-all"
+            style={{
+              width: (errors.length / FREE_LIMIT) * 100 + "%",
+              background: errors.length >= FREE_LIMIT - 3 ? "var(--danger)" : "var(--blue)",
+            }} />
         </div>
+        {atLimit && (
+          <p className="text-xs mt-2" style={{ color: "var(--danger)" }}>
+            وصلت الحد.{" "}
+            <Link href="/pricing" style={{ color: "var(--blue-light)", textDecoration: "underline" }}>
+              ترقية لشاهين
+            </Link>
+          </p>
+        )}
       </div>
 
-      {/* ── Subject tabs ── */}
-      <div className="px-5 mb-8">
-        <p className="text-base font-black text-[var(--text)] mb-4">المادة</p>
-        <div className="flex gap-3 overflow-x-auto pb-2">
+      {/* Filters */}
+      <div className="anim-2 px-5 mb-4 flex flex-col gap-2">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar">
           {(["الكل", ...SUBJECTS] as (SubjectId | "الكل")[]).map((s) => {
             const active = filterSubject === s;
-            const color = s === "الكل" ? "#64748B" : SUBJECT_COLORS[s as SubjectId];
+            const color  = s === "الكل" ? "var(--text-dim)" : SUBJECT_COLORS[s as SubjectId];
             return (
               <button key={s} onClick={() => setFilterSubject(s)}
-                className="flex-shrink-0 px-6 py-3.5 rounded-2xl text-base font-bold transition"
+                className="flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition"
                 style={active
-                  ? { background: color, color: "#fff" }
-                  : { background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}>
+                  ? { background: color, color: s === "الكل" ? "var(--bg)" : "#fff" }
+                  : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
                 {s}
               </button>
             );
           })}
         </div>
+        <div className="flex gap-2 overflow-x-auto no-scrollbar">
+          {["الكل", ...ERROR_CATEGORIES].map((cat) => (
+            <button key={cat} onClick={() => setFilterCat(cat)}
+              className="flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition"
+              style={filterCat === cat
+                ? { background: "var(--gold)", color: "#000" }
+                : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+              {cat}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* ── Cards list ── */}
-      <div className="px-5 flex flex-col gap-5">
-
+      {/* Error cards */}
+      <div className="anim-3 px-5 flex flex-col gap-3">
         {filtered.length === 0 && (
-          <div className="text-center py-16">
-            <p className="text-5xl mb-4">🔒</p>
-            <p className="title-md text-[var(--text)] mb-2">الخزنة فارغة</p>
-            <p className="body-sm">هذا جيد! استمر.</p>
+          <div className="text-center py-20">
+            <p className="text-4xl mb-4">🔒</p>
+            <p className="font-black text-lg text-white mb-1">الخزنة فارغة</p>
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>أضف أول خطأ لك</p>
           </div>
         )}
 
         {filtered.map((error) => {
-          const color     = SUBJECT_COLORS[error.subject];
+          const color      = SUBJECT_COLORS[error.subject];
           const isExpanded = expandedId === error.id;
-          const daysAgo   = Math.round((Date.now() - error.createdAt) / 86400000);
+          const daysAgo    = Math.round((_NOW - error.createdAt) / 86400000);
 
           return (
             <div key={error.id}
-              className="rounded-2xl overflow-hidden transition-all"
-              style={{ background: "var(--surface)", border: `1.5px solid ${isExpanded ? color + "50" : "var(--border)"}` }}>
-
-              {/* Card header */}
-              <div className="p-6 cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : error.id)}>
-                <div className="flex items-start gap-4">
-                  {/* Color dot */}
-                  <div className="w-3 h-3 rounded-full mt-2 flex-shrink-0" style={{ background: color }} />
-
-                  <div className="flex-1 min-w-0">
-                    <p className="text-base text-[var(--text)] leading-relaxed mb-4">{error.question}</p>
-
-                    <div className="flex flex-col gap-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-bold px-4 py-1.5 rounded-full"
-                          style={{ background: color + "20", color }}>
-                          {error.subject}
-                        </span>
-                        <span className="text-sm px-4 py-1.5 rounded-full"
-                          style={{ background: "var(--surface2)", color: "var(--text-dim)", border: "1px solid var(--border)" }}>
-                          {error.category}
-                        </span>
-                        {error.reviewCount > 0 && (
-                          <span className="text-sm text-[var(--success)] font-bold">✓ راجعته {error.reviewCount}×</span>
-                        )}
-                      </div>
-                      <span className="text-sm text-[var(--text-muted)]">
-                        {daysAgo === 0 ? "اليوم" : `قبل ${daysAgo} يوم`}
-                      </span>
-                    </div>
-                  </div>
-
-                  <span className="text-[var(--text-muted)] text-sm mt-1">{isExpanded ? "▲" : "▼"}</span>
+              className="rounded-2xl overflow-hidden"
+              style={{
+                background: "var(--surface)",
+                border: `1px solid ${isExpanded ? color + "30" : "var(--border)"}`,
+                borderRight: `3px solid ${color}`,
+              }}>
+              <div className="p-5 cursor-pointer"
+                onClick={() => setExpandedId(isExpanded ? null : error.id)}>
+                <p className="text-sm text-white leading-relaxed mb-3">{error.question}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                    style={{ background: color + "14", color }}>
+                    {error.subject}
+                  </span>
+                  <span className="text-[11px] px-2 py-0.5 rounded-full"
+                    style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                    {error.category}
+                  </span>
+                  {error.reviewCount > 0 && (
+                    <span className="text-[11px] font-bold" style={{ color: "var(--success)" }}>
+                      ✓ ×{error.reviewCount}
+                    </span>
+                  )}
+                  <span className="text-[11px] mr-auto" style={{ color: "var(--text-muted)" }}>
+                    {daysAgo === 0 ? "اليوم" : `${daysAgo} يوم`}
+                  </span>
+                  <span className="text-xs" style={{ color: "var(--border)" }}>
+                    {isExpanded ? "▲" : "▼"}
+                  </span>
                 </div>
               </div>
 
-              {/* Expanded */}
               {isExpanded && (
-                <div className="px-6 pb-6 border-t border-[var(--border)]">
-                  <div className="pt-5 flex flex-col gap-4">
+                <div className="px-5 pb-4" style={{ borderTop: "1px solid var(--border)" }}>
+                  <div className="pt-4 flex flex-col gap-3">
                     {error.note && (
-                      <div className="rounded-2xl p-5" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-                        <p className="text-sm font-bold text-[var(--text-muted)] mb-2">ملاحظتي</p>
-                        <p className="text-base text-[var(--text-dim)] leading-relaxed">{error.note}</p>
+                      <div className="rounded-xl p-3"
+                        style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                        <p className="label mb-1">ملاحظتي</p>
+                        <p className="text-sm leading-relaxed" style={{ color: "var(--text-dim)" }}>
+                          {error.note}
+                        </p>
                       </div>
                     )}
-                    <div className="grid grid-cols-2 gap-3">
-                      <button onClick={() => setErrors((p) => p.map((e) => e.id === error.id ? { ...e, reviewCount: e.reviewCount + 1 } : e))}
-                        className="py-4 rounded-2xl text-base font-black text-white transition"
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => setErrors((p) => p.map((e) =>
+                          e.id === error.id ? { ...e, reviewCount: e.reviewCount + 1 } : e))}
+                        className="py-3 rounded-xl text-sm font-black text-white"
                         style={{ background: color }}>
                         راجعته ✓
                       </button>
-                      <button onClick={() => setErrors((p) => p.filter((e) => e.id !== error.id))}
-                        className="py-4 rounded-2xl text-base font-black transition"
-                        style={{ background: "var(--surface2)", border: "1px solid rgba(239,68,68,0.3)", color: "#EF4444" }}>
+                      <button
+                        onClick={() => { setErrors((p) => p.filter((e) => e.id !== error.id)); setExpandedId(null); }}
+                        className="py-3 rounded-xl text-sm font-bold"
+                        style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.18)", color: "var(--danger)" }}>
                         حذف
                       </button>
                     </div>
@@ -237,57 +261,134 @@ export default function VaultPage() {
         })}
       </div>
 
-      {/* ── Add button / form ── */}
+      {/* Duplicate warning toast */}
+      {duplicateWarning && (
+        <div className="fixed bottom-24 left-4 right-4 z-40 rounded-2xl px-4 py-3 text-xs text-center font-bold"
+          style={{ background: "var(--gold)", color: "#000", backdropFilter: "blur(8px)" }}>
+          هذا السؤال موجود في الخزنة مسبقاً
+        </div>
+      )}
+
+      {/* Bottom action area */}
       {!atLimit && (
-        <div className="px-5 py-5">
-          {!showAdd ? (
-            <button onClick={() => setShowAdd(true)}
-              className="w-full py-4 rounded-2xl text-base font-bold text-[var(--text-dim)] transition"
-              style={{ background: "var(--surface)", border: "1.5px dashed var(--border)" }}>
-              + أضف خطأً جديداً
-            </button>
-          ) : (
-            <div className="rounded-2xl p-5 flex flex-col gap-4"
-              style={{ background: "var(--surface)", border: "1.5px solid rgba(245,158,11,0.35)" }}>
-              <p className="font-bold text-base text-[var(--gold)]">خطأ جديد في الخزنة</p>
-
+        <div className="fixed left-4 right-4 z-30"
+          style={{ bottom: "calc(var(--nav-h) + 12px)" }}>
+          {showAdd ? (
+            <div className="rounded-2xl p-5 flex flex-col gap-4 shadow-2xl"
+              style={{ background: "var(--surface)", border: "1px solid rgba(245,158,11,0.25)" }}>
+              <div className="flex items-center justify-between">
+                <p className="font-bold text-sm" style={{ color: "var(--gold)" }}>خطأ جديد</p>
+                <button onClick={() => setShowAdd(false)}
+                  className="text-sm px-2 py-1 rounded-lg"
+                  style={{ background: "var(--surface2)", color: "var(--text-muted)" }}>
+                  ✕
+                </button>
+              </div>
               <textarea value={newQ} onChange={(e) => setNewQ(e.target.value)} rows={3}
-                placeholder="السؤال أو المفهوم الذي أخطأت فيه..."
-                className="w-full rounded-2xl px-4 py-3 text-sm text-[var(--text)] placeholder-[var(--text-muted)] resize-none outline-none transition-colors"
+                placeholder="السؤال الذي أخطأت فيه..."
+                className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-[var(--text-muted)] resize-none outline-none"
                 style={{ background: "var(--surface2)", border: "1px solid var(--border)" }} />
-
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <select value={newSubject} onChange={(e) => setNewSubject(e.target.value as SubjectId)}
-                  className="rounded-2xl px-4 py-3 text-sm text-[var(--text)] outline-none"
+                  className="rounded-xl px-3 py-2.5 text-sm text-white outline-none"
                   style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
                   {SUBJECTS.map((s) => <option key={s}>{s}</option>)}
                 </select>
                 <select value={newCat} onChange={(e) => setNewCat(e.target.value)}
-                  className="rounded-2xl px-4 py-3 text-sm text-[var(--text)] outline-none"
+                  className="rounded-xl px-3 py-2.5 text-sm text-white outline-none"
                   style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
                   {ERROR_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
                 </select>
               </div>
-
               <input value={newNote} onChange={(e) => setNewNote(e.target.value)}
-                placeholder="ملاحظة: ليش غلطت؟ (اختياري)"
-                className="rounded-2xl px-4 py-3 text-sm text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+                placeholder="ملاحظة (اختياري)"
+                className="rounded-xl px-4 py-2.5 text-sm text-white placeholder-[var(--text-muted)] outline-none"
                 style={{ background: "var(--surface2)", border: "1px solid var(--border)" }} />
-
-              <div className="grid grid-cols-2 gap-3">
-                <button onClick={addError}
-                  className="py-3 rounded-2xl font-bold text-base transition"
-                  style={{ background: "#F59E0B", color: "#0A0A0F" }}>
-                  أضف للخزنة
-                </button>
-                <button onClick={() => setShowAdd(false)}
-                  className="py-3 rounded-2xl text-base font-medium text-[var(--text-muted)] transition"
-                  style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-                  إلغاء
-                </button>
-              </div>
+              <button onClick={() => addError()} className="btn-gold">أضف للخزنة</button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <button onClick={() => setShowSearch(true)}
+                className="w-full py-3.5 rounded-2xl text-sm font-bold shadow-lg"
+                style={{ background: "var(--surface)", border: "1px solid rgba(37,99,235,0.25)", color: "var(--blue-light)" }}>
+                ابحث عن سؤال في الكتاب
+              </button>
+              <button onClick={() => setShowAdd(true)}
+                className="w-full py-3.5 rounded-2xl text-sm font-bold shadow-lg"
+                style={{ background: "var(--blue)", color: "white" }}>
+                + أضف خطأً
+              </button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Search modal */}
+      {showSearch && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center"
+          style={{ background: "rgba(0,0,0,0.85)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) closeSearch(); }}>
+          <div className="w-full max-w-lg rounded-t-3xl p-6 flex flex-col gap-4 max-h-[85vh] overflow-y-auto"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+            <div className="flex items-center justify-between">
+              <p className="font-black text-base text-white">ابحث في الكتاب</p>
+              <button onClick={closeSearch}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-sm"
+                style={{ background: "var(--surface2)", color: "var(--text-muted)" }}>
+                ✕
+              </button>
+            </div>
+            <textarea value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} rows={3}
+              placeholder="صف السؤال أو اكتب جزءاً منه..."
+              className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-[var(--text-muted)] resize-none outline-none"
+              style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}
+              onKeyDown={(e) => { if (e.key === "Enter" && e.ctrlKey) runSearch(); }}
+            />
+            <button onClick={runSearch}
+              disabled={searchLoading || !searchQuery.trim()}
+              className="btn-primary">
+              {searchLoading ? "جاري البحث..." : "ابحث"}
+            </button>
+            {searchError && (
+              <p className="text-xs text-center py-2" style={{ color: "var(--danger)" }}>{searchError}</p>
+            )}
+            {searchResult && (
+              searchResult.found ? (
+                <div className="flex flex-col gap-3">
+                  <div className="rounded-xl p-4"
+                    style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                    <div className="flex gap-2 mb-3">
+                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                        style={{
+                          background: SUBJECT_COLORS[searchResult.subject as SubjectId] + "18",
+                          color: SUBJECT_COLORS[searchResult.subject as SubjectId],
+                        }}>
+                        {searchResult.subject}
+                      </span>
+                    </div>
+                    <p className="text-sm text-white leading-relaxed">{searchResult.question}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button onClick={addFromSearch} className="btn-gold">أضف ✓</button>
+                    <button onClick={() => { setSearchResult(null); setSearchQuery(""); }}
+                      className="py-4 rounded-2xl text-sm font-bold"
+                      style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                      ابحث مجدداً
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-sm" style={{ color: "var(--text-muted)" }}>لم أجد هذا السؤال</p>
+                  <button onClick={() => { setSearchResult(null); setSearchQuery(""); }}
+                    className="mt-3 px-4 py-2 rounded-xl text-xs font-bold"
+                    style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-dim)" }}>
+                    حاول مرة أخرى
+                  </button>
+                </div>
+              )
+            )}
+          </div>
         </div>
       )}
 
