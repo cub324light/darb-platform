@@ -106,13 +106,16 @@ export default function DashboardPage() {
           )}
         </div>
         <div className="flex flex-col items-end gap-2 pt-1 flex-shrink-0">
-          <span className="flex items-center gap-1.5 font-black text-sm" style={{ color: "var(--gold)" }}>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl"
+            style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.24)" }}>
             <span className="streak-fire">🔥</span>
-            <span className="font-mono-nums text-xl">{streak}</span>
-          </span>
-          <span className="flex items-center gap-1.5 font-black text-sm" style={{ color: "var(--text-dim)" }}>
-            🪙 <span className="font-mono-nums text-xl">{silver}</span>
-          </span>
+            <span className="font-mono-nums font-black text-2xl" style={{ color: "var(--gold)" }}>{streak}</span>
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+            <span className="text-sm">🪙</span>
+            <span className="font-mono-nums font-black text-2xl" style={{ color: "var(--gold-light)" }}>{silver}</span>
+          </div>
         </div>
       </div>
 
@@ -120,7 +123,7 @@ export default function DashboardPage() {
 
         {/* ── HERO: Orbit ring ── */}
         <div className="anim-2 flex flex-col items-center pt-2 pb-4">
-          <Link href="/orbit" className="relative mb-6 flex items-center justify-center"
+          <Link href="/orbit" className="relative mb-6 flex items-center justify-center active:scale-[0.96] transition-all duration-200"
             style={{ width: "224px", height: "224px" }}>
             {/* Outer glow */}
             <div className="absolute inset-0 rounded-full pointer-events-none"
@@ -144,7 +147,7 @@ export default function DashboardPage() {
           </Link>
 
           <Link href="/orbit" className="btn-primary" style={{ maxWidth: "280px" }}>
-            ابدأ الدراسة الآن
+            ابدأ الجلسة
           </Link>
         </div>
 
@@ -206,14 +209,22 @@ export default function DashboardPage() {
               عرض الكل ←
             </Link>
           </div>
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>{roadmapDone} من {roadmapTotal} درس</p>
-            <p className="font-mono-nums font-black text-sm" style={{ color: "var(--blue-light)" }}>{roadmapPct}%</p>
-          </div>
-          <div className="h-[3px] rounded-full overflow-hidden" style={{ background: "var(--surface2)" }}>
-            <div className="h-full rounded-full transition-all duration-700"
-              style={{ width: roadmapPct + "%", background: "var(--blue)" }} />
-          </div>
+          {roadmapPct === 0 ? (
+            <p className="text-sm font-bold py-1" style={{ color: "var(--text-muted)" }}>
+              ابدأ رحلتك ← {roadmapTotal} درس تنتظرك 🗺️
+            </p>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>{roadmapDone} من {roadmapTotal} درس</p>
+                <p className="font-mono-nums font-black text-sm" style={{ color: "var(--blue-light)" }}>{roadmapPct}%</p>
+              </div>
+              <div className="h-[3px] rounded-full overflow-hidden" style={{ background: "var(--surface2)" }}>
+                <div className="h-full rounded-full transition-all duration-700"
+                  style={{ width: roadmapPct + "%", background: "var(--blue)" }} />
+              </div>
+            </>
+          )}
         </div>
 
       </div>

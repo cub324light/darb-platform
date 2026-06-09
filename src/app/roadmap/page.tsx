@@ -10,8 +10,8 @@ type SubjectKey = keyof typeof RAKAN_SCHEDULE;
 const SUBJECT_COLORS: Record<SubjectKey, string> = {
   فيزياء:  "#3B82F6",
   رياضيات: "#8B5CF6",
-  كيمياء:  "#10B981",
-  أحياء:   "#F59E0B",
+  كيمياء:  "#06B6D4",
+  أحياء:   "#22C55E",
 };
 
 const SUBJECT_ICONS: Record<SubjectKey, string> = {
@@ -53,20 +53,30 @@ function OverallBar({ overallPct, currentStage, totalDone, totalLessons }: Overa
           <div className="h-full rounded-full transition-all duration-700"
             style={{ width: overallPct + "%", background: "var(--blue)" }} />
         </div>
-        <div className="flex justify-between">
-          {ROADMAP_STAGES.map((s) => (
-            <div key={s.id} className="flex flex-col items-center gap-1">
-              <span className="text-sm">{s.icon}</span>
-              <span className="text-[10px] font-bold"
-                style={{ color: s.id === currentStage.id ? "var(--blue-light)" : "var(--text-muted)" }}>
-                {s.name}
-              </span>
-            </div>
-          ))}
+        <div className="flex justify-between mt-1">
+          {ROADMAP_STAGES.map((s) => {
+            const isActive = s.id === currentStage.id;
+            return (
+              <div key={s.id} className="flex flex-col items-center gap-1">
+                <span className="text-sm" style={{ opacity: isActive ? 1 : 0.28 }}>{s.icon}</span>
+                <span className="text-[10px] font-bold"
+                  style={{ color: isActive ? "var(--blue-light)" : "var(--text-muted)" }}>
+                  {s.name}
+                </span>
+                {isActive && <div className="w-1 h-1 rounded-full" style={{ background: "var(--blue-light)" }} />}
+              </div>
+            );
+          })}
         </div>
-        <p className="text-xs text-center mt-3" style={{ color: "var(--text-muted)" }}>
-          {totalDone} من {totalLessons} درس
-        </p>
+        {totalDone === 0 ? (
+          <p className="text-sm text-center mt-3 font-bold" style={{ color: "var(--blue-light)" }}>
+            الرحلة تبدأ بخطوة واحدة 🚀
+          </p>
+        ) : (
+          <p className="text-xs text-center mt-3" style={{ color: "var(--text-muted)" }}>
+            {totalDone} من {totalLessons} درس
+          </p>
+        )}
       </div>
     </div>
   );

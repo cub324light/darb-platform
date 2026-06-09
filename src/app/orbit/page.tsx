@@ -12,6 +12,14 @@ const ORBIT_KEY  = "darb_orbit";
 
 const SUBJECTS = ["فيزياء", "رياضيات", "كيمياء", "أحياء", "إنجليزي"] as const;
 
+const SUBJECT_COLORS: Record<string, string> = {
+  "فيزياء":  "#3B82F6",
+  "رياضيات": "#8B5CF6",
+  "كيمياء":  "#06B6D4",
+  "أحياء":   "#22C55E",
+  "إنجليزي": "#94A3B8",
+};
+
 interface OrbitData {
   totalSessions: number; totalSilver: number; totalFocusMins: number;
   streak: number; sessionsToday: number; lastActiveDate: string;
@@ -153,8 +161,8 @@ export default function OrbitPage() {
         </div>
       </div>
 
-      {/* HERO: Timer */}
-      <div className="flex-1 flex flex-col items-center justify-center px-5 anim-2 relative z-10">
+      {/* HERO: Ring — takes all flex-1 space, ring centered within it */}
+      <div className="flex-1 flex items-center justify-center px-5 anim-2 relative z-10">
         <div className="relative" style={{ width: "296px", height: "296px" }}>
 
           {/* Glow ring */}
@@ -164,16 +172,25 @@ export default function OrbitPage() {
           )}
 
           <svg width="296" height="296" className="absolute inset-0 -rotate-90">
-            {/* Track */}
             <circle cx="148" cy="148" r={R} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="5" />
-            {/* Progress */}
-            <circle cx="148" cy="148" r={R} fill="none"
-              stroke={phase === "idle" ? "rgba(255,255,255,0.04)" : ringColor}
-              strokeWidth="5" strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={phase === "idle" ? 0 : dashOffset}
-              style={{ transition: "stroke-dashoffset 1s linear, stroke 0.5s ease" }}
-            />
+            {phase === "idle" && (
+              <circle cx="148" cy="148" r={R} fill="none"
+                stroke="var(--blue)" strokeWidth="5" strokeLinecap="round"
+                strokeDasharray={circumference} strokeDashoffset={circumference * 0.72}
+                style={{ opacity: 0.42 }} />
+            )}
+            {(phase === "focus" || phase === "break") && (
+              <circle cx="148" cy="148" r={R} fill="none"
+                stroke={ringColor} strokeWidth="5" strokeLinecap="round"
+                strokeDasharray={circumference} strokeDashoffset={dashOffset}
+                style={{ transition: "stroke-dashoffset 1s linear, stroke 0.5s ease" }} />
+            )}
+            {phase === "done" && (
+              <circle cx="148" cy="148" r={R} fill="none"
+                stroke="var(--success)" strokeWidth="5" strokeLinecap="round"
+                strokeDasharray={circumference} strokeDashoffset={0}
+                style={{ opacity: 0.35 }} />
+            )}
           </svg>
 
           {/* Center */}
@@ -197,18 +214,19 @@ export default function OrbitPage() {
             )}
           </div>
         </div>
+      </div>
 
-        {/* Controls */}
-        <div className="w-full max-w-xs mt-8 flex flex-col gap-3 anim-3">
+      {/* Controls — anchored below ring, above footer stats */}
+      <div className="px-5 pb-5 relative z-10 anim-3">
+        <div className="w-full max-w-xs mx-auto flex flex-col gap-3">
           {phase === "idle" && (
             <>
-              {/* Subject pills — wrap naturally, no horizontal scroll */}
               <div className="flex flex-wrap gap-2 justify-center pb-1">
                 {SUBJECTS.map((s) => (
                   <button key={s} onClick={() => setSubject(s)}
-                    className="px-4 py-1.5 rounded-full text-sm font-bold transition-all"
+                    className="px-5 py-2 rounded-full text-sm font-bold transition-all active:scale-95"
                     style={subject === s
-                      ? { background: "var(--blue)", color: "white", boxShadow: "0 0 14px var(--blue-glow)" }
+                      ? { background: SUBJECT_COLORS[s] ?? "var(--blue)", color: "white", boxShadow: `0 0 18px ${SUBJECT_COLORS[s] ?? "var(--blue)"}55` }
                       : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
                     {s}
                   </button>
@@ -219,7 +237,7 @@ export default function OrbitPage() {
           )}
           {phase === "focus" && (
             <button onClick={reset}
-              className="w-full py-4 rounded-2xl text-sm font-bold"
+              className="w-full py-4 rounded-2xl text-sm font-bold active:scale-95 transition-all"
               style={{ background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.18)", color: "var(--danger)" }}>
               إيقاف — تخسر الجلسة
             </button>
@@ -258,7 +276,7 @@ export default function OrbitPage() {
           {[
             { val: sessionsToday,  label: "جلسات",  color: "var(--blue-light)" },
             { val: totalFocusMins, label: "دقيقة",  color: "var(--text)"       },
-            { val: silverEarned,   label: "Silver",  color: "var(--gold)"       },
+            { val: silverEarned,   label: "نقاط",   color: "var(--gold)"       },
           ].map((s, i) => (
             <div key={s.label} className="flex flex-col items-center"
               style={{ borderRight: i < 2 ? "1px solid var(--border)" : "none", flex: 1 }}>
