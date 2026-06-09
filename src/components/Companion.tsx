@@ -12,39 +12,6 @@ interface CompanionProps {
 }
 
 /* ─── Geometric low-poly birds ─── */
-function FalconSVG({ color }: { color: string }) {
-  return (
-    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Body */}
-      <polygon points="50,20 68,38 62,62 50,68 38,62 32,38" fill={color} opacity="0.95"/>
-      {/* Head */}
-      <polygon points="50,14 62,24 50,32 38,24" fill={color}/>
-      {/* Wing L */}
-      <polygon points="32,38 14,52 20,65 38,56 38,62" fill={color} opacity="0.85"/>
-      {/* Wing R */}
-      <polygon points="68,38 86,52 80,65 62,56 62,62" fill={color} opacity="0.85"/>
-      {/* Tail */}
-      <polygon points="44,68 50,85 56,68" fill={color} opacity="0.7"/>
-      <polygon points="40,70 44,88 50,75" fill={color} opacity="0.5"/>
-      <polygon points="60,70 56,88 50,75" fill={color} opacity="0.5"/>
-      {/* Eye white */}
-      <circle cx="45" cy="26" r="5.5" fill="white"/>
-      {/* Eye pupil */}
-      <circle cx="44" cy="26" r="3" fill="#0A0A12"/>
-      {/* Eye shine */}
-      <circle cx="43" cy="24.5" r="1.2" fill="white"/>
-      {/* Beak */}
-      <polygon points="50,30 44,34 50,38 53,33" fill="#D97706"/>
-      {/* Chest highlight */}
-      <polygon points="50,32 58,44 50,54 42,44" fill="white" opacity="0.08"/>
-      {/* Claw hints */}
-      <line x1="44" y1="84" x2="40" y2="90" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.6"/>
-      <line x1="50" y1="85" x2="50" y2="92" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.6"/>
-      <line x1="56" y1="84" x2="60" y2="90" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.6"/>
-    </svg>
-  );
-}
-
 function HoopoeSVG({ color }: { color: string }) {
   return (
     <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -216,7 +183,6 @@ function PhoenixSVG({ color }: { color: string }) {
 }
 
 const BIRD_SVG: Record<BirdId, (color: string) => React.ReactNode> = {
-  falcon:  (c) => <FalconSVG  color={c} />,
   hoopoe:  (c) => <HoopoeSVG  color={c} />,
   swan:    (c) => <SwanSVG    color={c} />,
   raven:   (c) => <RavenSVG   color={c} />,
@@ -245,7 +211,7 @@ const STATE_ANIM: Record<string, string> = {
 };
 
 export default function Companion({
-  birdId = "falcon",
+  birdId = "hoopoe",
   state = "idle",
   message,
   size = "md",
@@ -261,7 +227,7 @@ export default function Companion({
   }, [message]);
 
   const sizePx = { sm: 64, md: 96, lg: 140 }[size];
-  const svgEl = BIRD_SVG[birdId]?.(bird.color) ?? BIRD_SVG.falcon(BIRDS[0].color);
+  const svgEl = BIRD_SVG[birdId]?.(bird.color) ?? BIRD_SVG.hoopoe(BIRDS[0].color);
 
   return (
     <div className="flex flex-col items-center gap-3">

@@ -211,7 +211,7 @@ export default function OrbitPage() {
         {/* Companion */}
         <div className="mb-6">
           <Companion
-            birdId="falcon"
+            birdId="hoopoe"
             state={companionState}
             message={companionMsg}
             size="md"

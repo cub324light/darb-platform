@@ -13,7 +13,7 @@ const EXAM_OPTIONS: { id: ExamTarget; icon: string; title: string; sub: string; 
 ];
 
 const BIRDS = [
-  { id: "falcon",  emoji: "🦅", name: "الصقر",  desc: "مختصر وحاد — لا مجاملات",     color: "#2563EB", plan: "free" },
+  { id: "hoopoe",  emoji: "🦜", name: "الهدهد",  desc: "حكيم — يسألك قبل ما يجاوب",   color: "#8B5CF6", plan: "free" },
   { id: "raven",   emoji: "🐦‍⬛", name: "الغراب", desc: "ساخر لطيف — يحفزك بطريقته",  color: "#6366F1", plan: "shaheen" },
   { id: "peacock", emoji: "🦚", name: "الطاووس", desc: "تنافسي — يقارنك بالأفضل",     color: "#10B981", plan: "shaheen" },
   { id: "hoopoe",  emoji: "🦜", name: "الهدهد",  desc: "حكيم — يسألك قبل ما يجاوب",  color: "#8B5CF6", plan: "shaheen" },
@@ -28,7 +28,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [exam, setExam] = useState<ExamTarget | null>(null);
-  const [bird, setBird] = useState("falcon");
+  const [bird, setBird] = useState("hoopoe");
   const [examDate, setExamDate] = useState("");
   const [leaving, setLeaving] = useState(false);
 
@@ -83,7 +83,7 @@ export default function OnboardingPage() {
         {step === 0 && (
           <div className="flex-1 flex flex-col items-center justify-center text-center gap-6">
             <div className="relative">
-              <div className="text-8xl mb-2" style={{ filter: "drop-shadow(0 0 24px rgba(37,99,235,0.5))" }}>🦅</div>
+              <div className="text-8xl mb-2" style={{ filter: "drop-shadow(0 0 24px rgba(139,92,246,0.5))" }}>🦜</div>
               <div className="absolute -inset-4 rounded-full border-2 border-[var(--blue)]/20 animate-ping" style={{ animationDuration: "3s" }} />
             </div>
             <div>
@@ -234,7 +234,7 @@ export default function OnboardingPage() {
         {step === 4 && (
           <div className="flex-1 flex flex-col items-center justify-center text-center gap-6 max-w-xs mx-auto">
             <div className="text-7xl scale-in">
-              {BIRDS.find((b) => b.id === bird)?.emoji ?? "🦅"}
+              {BIRDS.find((b) => b.id === bird)?.emoji ?? "🦜"}
             </div>
             <div>
               <h2 className="title-lg text-[var(--gold)] mb-3">

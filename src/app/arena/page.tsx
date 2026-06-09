@@ -71,7 +71,7 @@ export default function ArenaPage() {
           <div className="glass rounded-2xl p-4 w-full max-w-xs mb-6">
             <p className="text-xs text-[var(--text-muted)] mb-3 text-center">المتصدرون اليوم</p>
             {[
-              { name: "الصقر ع.", region: "بقيق", score: 850 },
+              { name: "الهدهد ع.", region: "بقيق", score: 850 },
               { name: "الهدهد ر.", region: "الدمام", score: 720 },
               { name: "أنت", region: "—", score: 340, me: true },
             ].map((p, i) => (
@@ -136,7 +136,7 @@ export default function ArenaPage() {
     <div className="min-h-dvh bg-[var(--bg)] flex flex-col pb-nav">
       <div className="px-5 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-lg">🦅</span>
+          <span className="text-lg">🦜</span>
           <span className="font-mono-nums text-xl font-black text-[var(--blue-light)]">{myScore}</span>
         </div>
         <span className="font-mono-nums font-black text-[var(--text)]">

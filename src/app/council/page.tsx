@@ -6,8 +6,8 @@ import BottomNav from "@/components/BottomNav";
 const POSTS = [
   {
     id: 1,
-    user: "الصقر ع.",
-    bird: "🦅",
+    user: "الهدهد ع.",
+    bird: "🦜",
     time: "منذ 5 دقائق",
     content: "تجميع فيزياء 2025 كامل — الباب الأول والثاني حللتهم الليلة. شاركوني أي سؤال غلطتوا فيه",
     likes: 23,

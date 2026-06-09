@@ -50,7 +50,7 @@ export default function DashboardPage() {
     ? Math.max(0, Math.ceil((new Date(user.examDate).getTime() - Date.now()) / 86400000))
     : null;
 
-  const birdId: BirdId = user?.bird ?? "falcon";
+  const birdId: BirdId = user?.bird ?? "hoopoe";
 
   const QUICK_ACTIONS = [
     { href: "/orbit",   icon: "⏱️", label: "Orbit",    desc: "50/10",  color: "#2563EB" },
@@ -251,7 +251,7 @@ export default function DashboardPage() {
         <div className="card flex items-center gap-4"
           style={{ borderColor: "rgba(37,99,235,0.25)", background: "rgba(37,99,235,0.06)" }}>
           <div className="flex-1">
-            <p className="font-bold text-sm text-[var(--text)]">باقة شاهين 🦅</p>
+            <p className="font-bold text-sm text-[var(--text)]">باقة شاهين</p>
             <p className="body-sm">خزنة غير محدودة + SM-2 كاملة + الأرينا</p>
           </div>
           <Link href="/pricing" className="btn-primary flex-shrink-0"

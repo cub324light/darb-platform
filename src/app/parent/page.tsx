@@ -62,10 +62,10 @@ export default function ParentPage() {
               className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
               style={{ background: "rgba(16,185,129,0.2)" }}
             >
-              🦅
+              🦜
             </div>
             <div>
-              <p className="font-black text-[var(--text)]">فهد — الصقر</p>
+              <p className="font-black text-[var(--text)]">فهد — الهدهد</p>
               <p className="text-xs text-[var(--text-muted)]">طالب التحصيلي · شاهين</p>
             </div>
             <div className="mr-auto flex items-center gap-1.5 glass px-3 py-1.5 rounded-full">

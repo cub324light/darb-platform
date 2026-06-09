@@ -1,4 +1,4 @@
-export type BirdId = "falcon" | "hoopoe" | "swan" | "raven" | "peacock" | "phoenix";
+export type BirdId = "hoopoe" | "swan" | "raven" | "peacock" | "phoenix";
 export type PlanId = "free" | "shaheen" | "anqa";
 export type SubjectId = "فيزياء" | "رياضيات" | "كيمياء" | "أحياء";
 

@@ -11,7 +11,7 @@ const COMPARE_FEATURES = [
   { label: "بنك المراجعة SM-2", free: "—", shaheen: "✓", anqa: "✓" },
   { label: "المجلس (مشاركة)", free: "قراءة فقط", shaheen: "✓", anqa: "✓" },
   { label: "الأرينا 1v1", free: "—", shaheen: "✓", anqa: "✓" },
-  { label: "6 طيور للاختيار", free: "الصقر فقط", shaheen: "5 طيور", anqa: "كل الطيور" },
+  { label: "5 طيور للاختيار", free: "الهدهد فقط", shaheen: "4 طيور", anqa: "كل الطيور" },
   { label: "الفينكس 🔥", free: "—", shaheen: "—", anqa: "✓" },
   { label: "شهادة الانضباط", free: "—", shaheen: "—", anqa: "✓" },
   { label: "دور المؤسس", free: "—", shaheen: "—", anqa: "✓" },
@@ -28,7 +28,7 @@ export default function PricingPage() {
         <Link href="/" className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition">
           ← الرئيسية
         </Link>
-        <span className="font-black text-[var(--gold)]">🦅 درب</span>
+        <span className="font-black text-[var(--gold)]">درب</span>
         <Link href="/dashboard" className="text-sm text-[var(--blue-light)] font-bold">
           ابدأ مجاناً
         </Link>
@@ -100,7 +100,7 @@ export default function PricingPage() {
             <div className="p-5 pt-10">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <p className="font-black text-lg text-[var(--text)]">شاهين 🦅</p>
+                  <p className="font-black text-lg text-[var(--text)]">شاهين</p>
                   <p className="text-xs text-[var(--text-muted)]">للطالب الجاد</p>
                 </div>
                 <div className="text-left">
@@ -115,7 +115,7 @@ export default function PricingPage() {
                   "بنك المراجعة الذكية SM-2",
                   "المجلس (مشاركة كاملة)",
                   "الأرينا 1v1",
-                  "5 طيور للاختيار",
+                  "4 طيور للاختيار",
                 ].map((f) => (
                   <div key={f} className="flex items-center gap-2">
                     <span className="text-[var(--blue-light)] text-xs">✓</span>
