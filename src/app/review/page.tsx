@@ -1,43 +1,10 @@
 "use client";
 import { useState } from "react";
 import BottomNav from "@/components/BottomNav";
+import Stars from "@/components/Stars";
 import { sm2, nextReviewText } from "@/lib/sm2";
 import type { ReviewCard, SubjectId, SM2Grade } from "@/lib/types";
 
-const DEMO_CARDS: ReviewCard[] = [
-  {
-    id: "1",
-    question: "ما قانون نيوتن الثاني للحركة؟",
-    answer: "F = ma  (القوة = الكتلة × التسارع)",
-    subject: "فيزياء",
-    interval: 1, repetitions: 0, easeFactor: 2.5,
-    dueDate: Date.now() - 100, createdAt: Date.now() - 86400000,
-  },
-  {
-    id: "2",
-    question: "ما تعريف التفاعل الكيميائي الطارد للحرارة؟",
-    answer: "تفاعل يُطلق طاقة حرارية للبيئة المحيطة (ΔH سالب)",
-    subject: "كيمياء",
-    interval: 3, repetitions: 2, easeFactor: 2.3,
-    dueDate: Date.now() - 500, createdAt: Date.now() - 172800000,
-  },
-  {
-    id: "3",
-    question: "ما الفرق بين الانقسام المتساوي والاختزالي؟",
-    answer: "المتساوي: خليتان بنفس العدد الكروموسومي. الاختزالي: 4 خلايا بنصف العدد (التكاثر الجنسي).",
-    subject: "أحياء",
-    interval: 6, repetitions: 3, easeFactor: 2.7,
-    dueDate: Date.now() + 86400000, createdAt: Date.now() - 259200000,
-  },
-  {
-    id: "4",
-    question: "ما قاعدة الجمع في حساب الاحتمالات؟",
-    answer: "P(A ∪ B) = P(A) + P(B) - P(A ∩ B)",
-    subject: "رياضيات",
-    interval: 1, repetitions: 1, easeFactor: 2.1,
-    dueDate: Date.now() - 200, createdAt: Date.now() - 345600000,
-  },
-];
 
 const SUBJECT_COLORS: Record<SubjectId, string> = {
   فيزياء: "#2563EB",
@@ -52,7 +19,7 @@ const GRADE_LABELS = ["ما أعرف", "غلط", "صعب", "متوسط", "سهل
 type Mode = "list" | "session";
 
 export default function ReviewPage() {
-  const [cards, setCards] = useState<ReviewCard[]>(DEMO_CARDS);
+  const [cards, setCards] = useState<ReviewCard[]>([]);
   const [mode, setMode] = useState<Mode>("list");
   const [sessionCards, setSessionCards] = useState<ReviewCard[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -91,8 +58,9 @@ export default function ReviewPage() {
   if (mode === "session") {
     if (sessionDone) {
       return (
-        <div className="min-h-dvh bg-[var(--bg)] flex flex-col items-center justify-center px-6 pb-nav">
-          <div className="text-center">
+        <div className="min-h-dvh flex flex-col items-center justify-center px-6 pb-nav" style={{ background: "var(--bg)" }}>
+          <Stars />
+          <div className="relative z-10 text-center">
             <p className="text-6xl mb-6">🎉</p>
             <h2 className="font-black text-3xl text-[var(--text)] mb-3">الجلسة منتهية!</h2>
             <p className="text-lg text-[var(--text-muted)] mb-2">راجعت {reviewed} بطاقة</p>
@@ -114,9 +82,10 @@ export default function ReviewPage() {
     const color = SUBJECT_COLORS[card.subject];
 
     return (
-      <div className="min-h-dvh bg-[var(--bg)] flex flex-col pb-nav">
-        <div className="page-header">
-          <button onClick={() => setMode("list")} className="text-base text-[var(--text-muted)] font-semibold">
+      <div className="min-h-dvh flex flex-col pb-nav" style={{ background: "var(--bg)" }}>
+        <Stars />
+        <div className="relative z-10 page-header">
+          <button onClick={() => setMode("list")} className="text-base font-semibold" style={{ color: "var(--text-muted)" }}>
             ← خروج
           </button>
           <span className="text-base font-bold text-[var(--text)]">
@@ -193,9 +162,11 @@ export default function ReviewPage() {
 
   /* ── List view ── */
   return (
-    <div className="min-h-dvh bg-[var(--bg)] pb-nav">
+    <div className="min-h-dvh pb-nav" style={{ background: "var(--bg)" }}>
+      <Stars />
+      <div className="page-wrap">
       <div className="page-header">
-        <h1 className="font-black text-xl text-[var(--text)]">بنك المراجعة 🧠</h1>
+        <h1 className="font-black text-xl" style={{ color: "var(--text)" }}>بنك المراجعة 🧠</h1>
         <span className="text-sm text-[var(--text-muted)] bg-[var(--surface)] border border-[var(--border)] px-4 py-2 rounded-xl font-bold">SM-2</span>
       </div>
 
@@ -293,6 +264,7 @@ export default function ReviewPage() {
       </div>
 
       <BottomNav />
+      </div>
     </div>
   );
 }

@@ -1,33 +1,71 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
-import Companion from "@/components/Companion";
-import type { BirdId } from "@/lib/types";
+import Stars from "@/components/Stars";
+import { useTheme } from "@/components/ThemeProvider";
+import type { ExamId } from "@/lib/types";
 
 interface DarbUser {
   name: string;
-  exam: string;
-  bird: BirdId;
-  examDate?: string;
+  exam: ExamId;
   onboarded: boolean;
+  streak: number;
+  silver: number;
+  focusHours: number;
+  sessions: number;
 }
 
-const EXAM_ICONS: Record<string, string> = {
-  "تحصيلي":        "📚",
-  "قدرات":          "🧠",
-  "قدرات+تحصيلي":  "⚡",
-  "أرامكو":         "🏭",
-  "ابتعاث":         "✈️",
+const EXAM_ICONS: Record<ExamId, string> = {
+  "تحصيلي": "📚",
+  "قدرات":  "🧠",
+  "CPC":    "🏭",
 };
 
+const EXAM_SUBTITLE: Record<ExamId, string> = {
+  "تحصيلي": "علوم · رياضيات · كيمياء · أحياء",
+  "قدرات":  "اختبار القدرات — كمي ولفظي",
+  "CPC":    "مسار أرامكو CPC",
+};
+
+type ExamSection = { icon: string; label: string; color: string; href: string };
+
+const EXAM_SECTIONS: Record<ExamId, ExamSection[]> = {
+  "تحصيلي": [
+    { icon: "⚡", label: "فيزياء",    color: "#2563EB", href: "/orbit" },
+    { icon: "➗", label: "رياضيات",   color: "#8B5CF6", href: "/orbit" },
+    { icon: "🧪", label: "كيمياء",    color: "#10B981", href: "/orbit" },
+    { icon: "🔬", label: "أحياء",     color: "#F59E0B", href: "/orbit" },
+  ],
+  "قدرات": [
+    { icon: "📖", label: "لفظي",      color: "#8B5CF6", href: "/orbit" },
+    { icon: "🔢", label: "كمي",       color: "#2563EB", href: "/orbit" },
+    { icon: "🧠", label: "مراجعة",    color: "#10B981", href: "/review" },
+    { icon: "🔒", label: "الخزنة",    color: "#F59E0B", href: "/vault"  },
+  ],
+  "CPC": [
+    { icon: "📐", label: "رياضيات",   color: "#2563EB", href: "/orbit" },
+    { icon: "📝", label: "English",   color: "#10B981", href: "/orbit" },
+    { icon: "⚗️", label: "كيمياء",    color: "#8B5CF6", href: "/orbit" },
+    { icon: "⚡", label: "فيزياء",    color: "#F59E0B", href: "/orbit" },
+  ],
+};
+
+const QUICK_ACTIONS = [
+  { href: "/orbit",   icon: "⏱️", label: "Orbit",   desc: "50/10"    },
+  { href: "/vault",   icon: "🔒", label: "الخزنة",  desc: "أخطاؤك"   },
+  { href: "/review",  icon: "🧠", label: "مراجعة",  desc: "SM-2"     },
+  { href: "/roadmap", icon: "🗺️", label: "الخريطة", desc: "تقدمك"    },
+];
+
 export default function DashboardPage() {
-  const [user, setUser] = useState<DarbUser | null>(null);
-  const [streak] = useState(7);
-  const [silver] = useState(340);
-  const [focusHours] = useState(24);
-  const [time, setTime] = useState(new Date());
+  const router = useRouter();
+  const { theme, toggle } = useTheme();
+  const [user, setUser]     = useState<DarbUser | null>(null);
+  const [time, setTime]     = useState(new Date());
   const [greeting, setGreeting] = useState("");
+  const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
     try {
@@ -46,94 +84,128 @@ export default function DashboardPage() {
     return () => clearInterval(t);
   }, []);
 
-  const daysLeft = user?.examDate
-    ? Math.max(0, Math.ceil((new Date(user.examDate).getTime() - Date.now()) / 86400000))
-    : null;
+  const logout = () => {
+    localStorage.removeItem("darb_user");
+    router.push("/onboarding");
+  };
 
-  const birdId: BirdId = user?.bird ?? "hoopoe";
-
-  const QUICK_ACTIONS = [
-    { href: "/orbit",   icon: "⏱️", label: "Orbit",    desc: "50/10",  color: "#2563EB" },
-    { href: "/vault",   icon: "🔒", label: "الخزنة",   desc: "أخطاؤك", color: "#F59E0B" },
-    { href: "/review",  icon: "🧠", label: "مراجعة",   desc: "SM-2",   color: "#10B981" },
-    { href: "/roadmap", icon: "🗺️", label: "الخريطة",  desc: "تقدمك",  color: "#8B5CF6" },
-  ];
+  const exam   = (user?.exam ?? "تحصيلي") as ExamId;
+  const streak = user?.streak    ?? 0;
+  const silver = user?.silver    ?? 0;
+  const focusH = user?.focusHours ?? 0;
+  const sess   = user?.sessions   ?? 0;
+  const sections = EXAM_SECTIONS[exam];
 
   return (
-    <div className="page">
-      {/* ── Sky header ── */}
-      <div
-        className="relative overflow-hidden"
+    <div className="page" style={{ background: "var(--bg)" }}>
+      <Stars />
+
+      {/* ── Header ── */}
+      <div className="relative z-10"
         style={{
-          background: "linear-gradient(180deg, #0B1730 0%, #0F1F3D 50%, var(--bg) 100%)",
-          paddingBottom: "24px",
+          background: theme === "dark"
+            ? "linear-gradient(180deg, #0B1730 0%, #0F1F3D 60%, var(--bg) 100%)"
+            : "linear-gradient(180deg, #EFF6FF 0%, #DBEAFE 60%, var(--bg) 100%)",
+          paddingBottom: 28,
         }}
       >
-        {/* Stars */}
-        {Array.from({ length: 18 }).map((_, i) => (
-          <div key={i} className="absolute rounded-full bg-white" style={{
-            width: "2px", height: "2px",
-            left: Math.random() * 100 + "%", top: Math.random() * 60 + "%",
-            opacity: 0.3 + Math.random() * 0.4,
-            animation: `twinkle ${2 + Math.random() * 3}s ease-in-out infinite`,
-            animationDelay: Math.random() * 3 + "s",
-          }} />
-        ))}
-        {/* City glow */}
-        <div className="absolute bottom-0 left-0 right-0 h-20" style={{
-          background: "radial-gradient(ellipse at 50% 100%, rgba(37,99,235,0.12) 0%, transparent 70%)",
-        }} />
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-5 pt-12 pb-6">
+          {/* Profile btn — يسار */}
+          <button
+            onClick={() => setShowProfile(true)}
+            className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-black transition-all active:scale-95"
+            style={{
+              background: "rgba(37,99,235,0.15)",
+              border: "1.5px solid rgba(37,99,235,0.35)",
+              color: "var(--blue-light)",
+            }}
+          >
+            {user?.name?.[0]?.toUpperCase() ?? "👤"}
+          </button>
 
-        <div className="relative z-10 px-5 pt-12 pb-2">
-          {/* Top bar */}
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <p className="text-[var(--text-muted)] text-sm">{greeting}</p>
-              <p className="font-black text-xl text-[var(--text)] mt-0.5">
-                أهلاً، {user?.name ?? "درب"}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="stat-chip">
-                <span className="text-lg streak-fire">🔥</span>
-                <span className="font-mono-nums font-bold text-base text-[var(--gold)]">{streak}</span>
-              </div>
-              <div className="stat-chip">
-                <span className="text-base">🪙</span>
-                <span className="font-mono-nums font-bold text-base text-[var(--blue-light)]">{silver}</span>
-              </div>
-            </div>
+          {/* Greeting */}
+          <div className="text-center">
+            <p className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>{greeting}</p>
+            <p className="font-black text-lg" style={{ color: "var(--text)" }}>
+              أهلاً، {user?.name ?? "درب"}
+            </p>
           </div>
 
-          {/* Companion */}
-          <div className="flex justify-center">
-            <Companion birdId={birdId} state="idle" size="lg" showMessage={false} />
+          {/* Theme toggle — يمين */}
+          <button
+            onClick={toggle}
+            className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl transition-all active:scale-95"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+          >
+            {theme === "dark" ? "☀️" : "🌙"}
+          </button>
+        </div>
+
+        {/* Stats chips */}
+        <div className="flex justify-center gap-3 px-5">
+          <div className="stat-chip">
+            <span className="text-lg streak-fire">🔥</span>
+            <span className="font-mono-nums font-bold text-base" style={{ color: "var(--gold)" }}>{streak}</span>
+            <span className="text-xs" style={{ color: "var(--text-muted)" }}>يوم</span>
+          </div>
+          <div className="stat-chip">
+            <span className="text-base">🪙</span>
+            <span className="font-mono-nums font-bold text-base" style={{ color: "var(--blue-light)" }}>{silver}</span>
+            <span className="text-xs" style={{ color: "var(--text-muted)" }}>Silver</span>
+          </div>
+          {/* Exam badge */}
+          <div className="stat-chip">
+            <span>{EXAM_ICONS[exam]}</span>
+            <span className="text-sm font-bold" style={{ color: "var(--text)" }}>{exam}</span>
           </div>
         </div>
       </div>
 
       {/* ── Main content ── */}
-      <div className="page-content mt-4">
+      <div className="relative z-10 page-content mt-2">
 
-        {/* Exam target + days left */}
-        {user?.exam && (
-          <div className="card flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0"
-              style={{ background: "rgba(37,99,235,0.12)", border: "1px solid rgba(37,99,235,0.2)" }}>
-              {EXAM_ICONS[user.exam] ?? "🎯"}
-            </div>
-            <div className="flex-1">
-              <p className="label mb-1">هدفك</p>
-              <p className="font-black text-lg text-[var(--text)]">{user.exam}</p>
-            </div>
-            {daysLeft !== null && (
-              <div className="text-center">
-                <p className="font-mono-nums font-black text-2xl text-[var(--gold)]">{daysLeft}</p>
-                <p className="label">يوم</p>
-              </div>
-            )}
+        {/* Exam-specific sections */}
+        <div>
+          <p className="label mb-3">{EXAM_SUBTITLE[exam]}</p>
+          <div className="grid grid-cols-2 gap-3">
+            {sections.map((s) => (
+              <Link
+                key={s.label} href={s.href}
+                className="rounded-2xl flex items-center gap-3 transition-all active:scale-95"
+                style={{
+                  background: s.color + "15",
+                  border: `1.5px solid ${s.color}35`,
+                  padding: "20px 16px",
+                }}
+              >
+                <span className="text-3xl flex-shrink-0">{s.icon}</span>
+                <p className="font-bold text-base" style={{ color: "var(--text)" }}>{s.label}</p>
+              </Link>
+            ))}
           </div>
-        )}
+        </div>
+
+        {/* Start orbit CTA */}
+        <Link
+          href="/orbit"
+          className="flex items-center gap-4 rounded-2xl transition-all active:scale-[0.98]"
+          style={{
+            background: "linear-gradient(135deg, rgba(37,99,235,0.2), rgba(37,99,235,0.08))",
+            border: "1.5px solid rgba(37,99,235,0.4)",
+            padding: "20px",
+          }}
+        >
+          <div className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: "var(--blue)" }}>
+            <span className="text-2xl">⏱️</span>
+          </div>
+          <div className="flex-1">
+            <p className="font-black text-lg" style={{ color: "var(--text)" }}>ابدأ جلسة Orbit</p>
+            <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>50 دقيقة تركيز + 10 راحة · تكسب Silver</p>
+          </div>
+          <span className="text-xl font-black" style={{ color: "var(--blue-light)" }}>←</span>
+        </Link>
 
         {/* Quick actions */}
         <div>
@@ -141,121 +213,85 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 gap-3">
             {QUICK_ACTIONS.map((a) => (
               <Link key={a.href} href={a.href}
-                className="rounded-2xl p-5 flex items-center gap-4 transition-all active:scale-95"
-                style={{ background: a.color + "15", border: `1px solid ${a.color}30` }}>
-                <span className="text-3xl flex-shrink-0">{a.icon}</span>
+                className="rounded-2xl flex items-center gap-3 transition-all active:scale-95"
+                style={{
+                  background: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  padding: "18px 16px",
+                }}
+              >
+                <span className="text-2xl flex-shrink-0">{a.icon}</span>
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-[var(--text)] leading-tight">{a.label}</p>
-                  <p className="text-xs text-[var(--text-muted)] mt-0.5">{a.desc}</p>
+                  <p className="text-sm font-bold" style={{ color: "var(--text)" }}>{a.label}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{a.desc}</p>
                 </div>
               </Link>
             ))}
           </div>
         </div>
 
-        {/* Start orbit CTA */}
-        <Link href="/orbit"
-          className="flex items-center gap-4 rounded-2xl p-5 transition-all active:scale-[0.98]"
-          style={{
-            background: "linear-gradient(135deg, rgba(37,99,235,0.2), rgba(37,99,235,0.08))",
-            border: "1.5px solid rgba(37,99,235,0.35)",
-          }}>
-          <div className="w-12 h-12 rounded-xl bg-[var(--blue)] flex items-center justify-center flex-shrink-0">
-            <span className="text-2xl">⏱️</span>
-          </div>
-          <div className="flex-1">
-            <p className="font-black text-base text-[var(--text)]">ابدأ جلسة Orbit</p>
-            <p className="body-sm text-sm">50 دقيقة تركيز + 10 راحة · تكسب Silver</p>
-          </div>
-          <span className="text-[var(--blue-light)] text-lg">←</span>
-        </Link>
-
         {/* Stats */}
         <div>
           <p className="label mb-3">إحصاءاتك</p>
           <div className="grid grid-cols-3 gap-3">
             {[
-              { val: focusHours, unit: "ساعة", label: "تركيز", color: "var(--blue-light)" },
-              { val: 12,         unit: "جلسة", label: "Orbit",  color: "var(--success)"    },
-              { val: 8,          unit: "خطأ",  label: "الخزنة", color: "var(--danger)"     },
+              { val: focusH, unit: "ساعة", label: "تركيز",  color: "var(--blue-light)" },
+              { val: sess,   unit: "جلسة", label: "Orbit",   color: "var(--success)"   },
+              { val: 0,      unit: "خطأ",  label: "الخزنة",  color: "var(--danger)"    },
             ].map((s) => (
-              <div key={s.label} className="card text-center">
+              <div key={s.label} className="card text-center" style={{ padding: "16px 8px" }}>
                 <p className="font-mono-nums font-black text-2xl" style={{ color: s.color }}>{s.val}</p>
-                <p className="text-xs font-medium text-[var(--text)] mt-0.5">{s.unit}</p>
+                <p className="text-xs font-medium mt-0.5" style={{ color: "var(--text)" }}>{s.unit}</p>
                 <p className="label mt-0.5">{s.label}</p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Today progress */}
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <p className="font-bold text-base text-[var(--text)]">تقدم اليوم</p>
-            <span className="font-mono-nums font-bold text-base text-[var(--blue-light)]">35%</span>
-          </div>
-          <div className="h-3 bg-[var(--border)] rounded-full overflow-hidden">
-            <div className="h-full rounded-full transition-all duration-700"
-              style={{ width: "35%", background: "linear-gradient(90deg, #1D4ED8, #3B82F6)" }} />
-          </div>
-          <div className="flex justify-between mt-4 px-1">
-            {["التأسيس", "البناء", "التعزيز", "الختام"].map((s, i) => (
-              <span key={s} className={`text-[12px] font-semibold ${i === 0 ? "text-[var(--blue-light)]" : "text-[var(--text-muted)]"}`}>{s}</span>
-            ))}
-          </div>
-        </div>
-
-        {/* Clock + time */}
-        <div className="card flex items-center justify-between">
+        {/* Clock + start */}
+        <div className="card flex items-center justify-between" style={{ padding: "20px" }}>
           <div>
             <p className="label mb-1">الوقت الحالي</p>
-            <p className="font-mono-nums font-black text-3xl text-[var(--text)]">
+            <p className="font-mono-nums font-black text-3xl" style={{ color: "var(--text)" }}>
               {time.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", hour12: true })}
             </p>
           </div>
-          <Link href="/orbit" className="btn-primary" style={{ width: "auto", padding: "12px 24px" }}>
+          <Link href="/orbit" className="btn-primary" style={{ width: "auto", padding: "14px 28px", fontSize: 15 }}>
             ابدأ الآن
           </Link>
         </div>
 
         {/* Community */}
         <div className="grid grid-cols-2 gap-3">
-          <Link href="/council" className="card flex items-center gap-3 active:scale-[0.97] transition-all">
+          <Link href="/council"
+            className="card flex items-center gap-3 active:scale-[0.97] transition-all"
+            style={{ padding: "18px 16px" }}>
             <span className="text-2xl">💬</span>
             <div>
-              <p className="font-bold text-sm text-[var(--text)]">المجلس</p>
+              <p className="font-bold text-sm" style={{ color: "var(--text)" }}>المجلس</p>
               <p className="label">نقاشات</p>
             </div>
           </Link>
-          <Link href="/arena" className="card flex items-center gap-3 active:scale-[0.97] transition-all"
-            style={{ borderColor: "rgba(245,158,11,0.25)" }}>
+          <Link href="/arena"
+            className="card flex items-center gap-3 active:scale-[0.97] transition-all"
+            style={{ borderColor: "rgba(245,158,11,0.25)", padding: "18px 16px" }}>
             <span className="text-2xl">⚔️</span>
             <div>
-              <p className="font-bold text-sm text-[var(--gold)]">الأرينا</p>
+              <p className="font-bold text-sm" style={{ color: "var(--gold)" }}>الأرينا</p>
               <p className="label">1v1</p>
             </div>
           </Link>
         </div>
 
-        {/* Certificate */}
-        <div className="card flex items-center gap-4"
-          style={{ borderColor: "rgba(245,158,11,0.2)", background: "rgba(245,158,11,0.05)" }}>
-          <span className="text-3xl">📜</span>
-          <div className="flex-1">
-            <p className="font-bold text-sm text-[var(--gold)]">شهادة الانضباط الرقمية</p>
-            <p className="body-sm">{focusHours} ساعة تركيز مسجلة · سارية لأرامكو</p>
-          </div>
-        </div>
-
-        {/* Upgrade CTA */}
+        {/* Upgrade */}
         <div className="card flex items-center gap-4"
           style={{ borderColor: "rgba(37,99,235,0.25)", background: "rgba(37,99,235,0.06)" }}>
           <div className="flex-1">
-            <p className="font-bold text-sm text-[var(--text)]">باقة شاهين</p>
-            <p className="body-sm">خزنة غير محدودة + SM-2 كاملة + الأرينا</p>
+            <p className="font-bold text-sm" style={{ color: "var(--text)" }}>باقة شاهين</p>
+            <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>خزنة غير محدودة + SM-2 + الأرينا</p>
           </div>
           <Link href="/pricing" className="btn-primary flex-shrink-0"
-            style={{ width: "auto", padding: "10px 18px", fontSize: "14px" }}>
+            style={{ width: "auto", padding: "12px 20px", fontSize: 14 }}>
             35 ريال
           </Link>
         </div>
@@ -263,6 +299,67 @@ export default function DashboardPage() {
       </div>
 
       <BottomNav />
+
+      {/* ── Profile Modal ── */}
+      {showProfile && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+          onClick={() => setShowProfile(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-t-3xl p-6 pb-10 slide-up"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Handle */}
+            <div className="w-10 h-1 rounded-full mx-auto mb-6" style={{ background: "var(--border)" }} />
+
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black"
+                style={{ background: "rgba(37,99,235,0.15)", color: "var(--blue-light)" }}>
+                {user?.name?.[0]?.toUpperCase() ?? "?"}
+              </div>
+              <div>
+                <p className="font-black text-xl" style={{ color: "var(--text)" }}>{user?.name}</p>
+                <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
+                  {EXAM_ICONS[exam]} {exam}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between rounded-2xl p-4"
+                style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                <span className="font-semibold" style={{ color: "var(--text)" }}>الوضع</span>
+                <button
+                  onClick={toggle}
+                  className="flex items-center gap-2 rounded-xl px-4 py-2 font-bold text-sm transition-all"
+                  style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}
+                >
+                  {theme === "dark" ? "🌙 ليلي" : "☀️ نهاري"}
+                </button>
+              </div>
+
+              <Link href="/pricing"
+                className="rounded-2xl p-4 text-center font-bold"
+                style={{ background: "rgba(37,99,235,0.1)", border: "1px solid rgba(37,99,235,0.25)", color: "var(--blue-light)" }}
+                onClick={() => setShowProfile(false)}
+              >
+                ترقية الباقة
+              </Link>
+
+              <button
+                onClick={logout}
+                className="rounded-2xl p-4 text-center font-bold"
+                style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "var(--danger)" }}
+              >
+                تسجيل الخروج
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

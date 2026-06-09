@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
+import Stars from "@/components/Stars";
 
 const ARENA_QUESTIONS = [
   { q: "ما قانون نيوتن الأول؟", a: "القصور الذاتي: جسم ساكن يبقى ساكناً ومتحرك يبقى متحركاً ما لم تؤثر عليه قوة", subject: "فيزياء" },
@@ -48,7 +49,9 @@ export default function ArenaPage() {
 
   if (gameState === "lobby") {
     return (
-      <div className="min-h-dvh bg-[var(--bg)] flex flex-col pb-nav">
+      <div className="min-h-dvh flex flex-col pb-nav" style={{ background: "var(--bg)" }}>
+        <Stars />
+        <div className="page-wrap flex flex-col flex-1">
         <div className="page-header">
           <h1 className="font-black text-lg text-[var(--text)]">الأرينا ⚔️</h1>
           <span className="text-xs text-[var(--gold)] bg-[var(--surface)] border border-[var(--border)] px-3 py-1.5 rounded-xl font-bold">1v1</span>
@@ -101,8 +104,9 @@ export default function ArenaPage() {
   if (gameState === "result") {
     const won = myScore > opScore;
     return (
-      <div className="min-h-dvh bg-[var(--bg)] flex flex-col items-center justify-center px-5 pb-nav">
-        <div className="text-center">
+      <div className="min-h-dvh flex flex-col items-center justify-center px-5 pb-nav" style={{ background: "var(--bg)" }}>
+        <Stars />
+        <div className="page-wrap text-center">
           <p className="text-6xl mb-4">{won ? "🏆" : "💪"}</p>
           <h2 className="font-black text-2xl text-[var(--text)] mb-2">
             {won ? "فزت!" : "المرة القادمة!"}
@@ -133,8 +137,10 @@ export default function ArenaPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-[var(--bg)] flex flex-col pb-nav">
-      <div className="px-5 py-4 flex items-center justify-between">
+    <div className="min-h-dvh flex flex-col pb-nav" style={{ background: "var(--bg)" }}>
+      <Stars />
+      <div className="page-wrap flex flex-col flex-1">
+      <div className="relative z-10 px-5 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-lg">🦜</span>
           <span className="font-mono-nums text-xl font-black text-[var(--blue-light)]">{myScore}</span>
@@ -183,6 +189,7 @@ export default function ArenaPage() {
       </div>
 
       <BottomNav />
+      </div>
     </div>
   );
 }

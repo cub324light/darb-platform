@@ -1,4 +1,4 @@
-export type BirdId = "hoopoe" | "swan" | "raven" | "peacock" | "phoenix";
+export type ExamId = "تحصيلي" | "قدرات" | "CPC";
 export type PlanId = "free" | "shaheen" | "anqa";
 export type SubjectId = "فيزياء" | "رياضيات" | "كيمياء" | "أحياء";
 
@@ -37,7 +37,7 @@ export interface UserState {
   id: string;
   name: string;
   plan: PlanId;
-  bird: BirdId;
+  exam: ExamId;
   streak: number;
   silver: number;
   gold: number;

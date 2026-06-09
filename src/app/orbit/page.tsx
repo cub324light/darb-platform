@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
-import Companion from "@/components/Companion";
+import Stars from "@/components/Stars";
 
 type Phase = "idle" | "focus" | "break" | "done";
 
@@ -99,7 +99,6 @@ export default function OrbitPage() {
   const dashOffset = circumference * (1 - progress);
   const strokeColor = phase === "break" ? "#F59E0B" : "#2563EB";
 
-  const companionState = phase === "focus" ? "orbit" : phase === "break" ? "break" : "idle";
   const companionMsg =
     phase === "idle"
       ? "خل الجوال يستنى. أنا أستنى نتائجك."
@@ -110,7 +109,9 @@ export default function OrbitPage() {
       : "جلسة منجزة! +10 Silver 🪙";
 
   return (
-    <div className="min-h-dvh bg-[var(--bg)] flex flex-col pb-nav">
+    <div className="min-h-dvh flex flex-col pb-nav" style={{ background: "var(--bg)" }}>
+      <Stars />
+      <div className="page-wrap flex flex-col flex-1">
       {/* Header */}
       <div className="page-header">
         <h1 className="font-black text-lg text-[var(--text)]">Orbit 50/10</h1>
@@ -208,16 +209,13 @@ export default function OrbitPage() {
           )}
         </div>
 
-        {/* Companion */}
-        <div className="mb-6">
-          <Companion
-            birdId="hoopoe"
-            state={companionState}
-            message={companionMsg}
-            size="md"
-            showMessage={true}
-          />
-        </div>
+        {/* Message */}
+        {companionMsg && (
+          <div className="mb-6 rounded-2xl px-5 py-3 max-w-[260px] text-center"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+            <p className="text-sm" style={{ color: "var(--text-dim)" }}>{companionMsg}</p>
+          </div>
+        )}
 
         {/* Control button */}
         <div className="w-full max-w-xs space-y-3">
@@ -269,7 +267,7 @@ export default function OrbitPage() {
       </div>
 
       {/* Stats bar */}
-      <div className="px-5 pb-4">
+      <div className="relative z-10 px-5 pb-4">
         <div className="rounded-2xl p-5 grid grid-cols-3 text-center gap-3"
           style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <div>
@@ -288,6 +286,7 @@ export default function OrbitPage() {
       </div>
 
       <BottomNav />
+      </div>
     </div>
   );
 }

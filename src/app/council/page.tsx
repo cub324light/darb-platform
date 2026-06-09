@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
+import Stars from "@/components/Stars";
 
 const POSTS = [
   {
@@ -72,7 +73,9 @@ export default function CouncilPage() {
   };
 
   return (
-    <div className="min-h-dvh bg-[var(--bg)] pb-nav">
+    <div className="min-h-dvh pb-nav" style={{ background: "var(--bg)" }}>
+      <Stars />
+      <div className="page-wrap">
       <div className="page-header">
         <h1 className="font-black text-lg text-[var(--text)]">المجلس 💬</h1>
         <div className="flex items-center gap-1.5 bg-[var(--surface)] border border-[var(--border)] px-3 py-1.5 rounded-xl">
@@ -185,6 +188,7 @@ export default function CouncilPage() {
       )}
 
       <BottomNav />
+      </div>
     </div>
   );
 }

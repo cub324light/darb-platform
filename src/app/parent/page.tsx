@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import Stars from "@/components/Stars";
 
 const WEEKLY_STATS = [
   { day: "الأحد", mins: 180, sessions: 3 },
@@ -32,7 +33,9 @@ export default function ParentPage() {
   };
 
   return (
-    <div className="min-h-dvh bg-[var(--bg)]">
+    <div className="min-h-dvh" style={{ background: "var(--bg)" }}>
+      <Stars />
+      <div className="page-wrap">
       {/* Header */}
       <div className="px-5 py-4 flex items-center justify-between glass border-b border-[var(--border)] sticky top-0 z-10">
         <Link href="/" className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition">
@@ -276,6 +279,7 @@ export default function ParentPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

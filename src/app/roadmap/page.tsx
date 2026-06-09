@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import BottomNav from "@/components/BottomNav";
+import Stars from "@/components/Stars";
 import { RAKAN_SCHEDULE, ROADMAP_STAGES } from "@/lib/constants";
 
 type SubjectKey = keyof typeof RAKAN_SCHEDULE;
@@ -189,7 +190,9 @@ export default function RoadmapPage() {
      الواجهة الرئيسية — ٤ مواد
   ══════════════════════════════════════ */
   return (
-    <div className="min-h-dvh bg-[var(--bg)] pb-nav">
+    <div className="min-h-dvh pb-nav" style={{ background: "var(--bg)" }}>
+      <Stars />
+      <div className="page-wrap">
       {/* Header */}
       <div className="page-header">
         <h1 className="font-black text-xl text-[var(--text)]">خريطة الطريق</h1>
@@ -233,6 +236,7 @@ export default function RoadmapPage() {
 
       <div className="h-6" />
       <BottomNav />
+      </div>
     </div>
   );
 }

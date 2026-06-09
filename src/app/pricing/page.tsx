@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import Stars from "@/components/Stars";
 import { PLANS, PARENT_PLAN } from "@/lib/constants";
 
 const COMPARE_FEATURES = [
@@ -22,7 +23,9 @@ export default function PricingPage() {
   const [lifeTime, setLifeTime] = useState(false);
 
   return (
-    <div className="min-h-dvh bg-[var(--bg)]">
+    <div className="min-h-dvh" style={{ background: "var(--bg)" }}>
+      <Stars />
+      <div className="page-wrap">
       {/* Nav */}
       <div className="px-5 py-4 flex items-center justify-between glass border-b border-[var(--border)]">
         <Link href="/" className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition">
@@ -297,6 +300,7 @@ export default function PricingPage() {
           <br />
           سبب 35: يعكس قيمة أعلى ولا يزال أرخص من أي منافس.
         </p>
+      </div>
       </div>
     </div>
   );

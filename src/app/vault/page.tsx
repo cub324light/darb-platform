@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
+import Stars from "@/components/Stars";
 import { ERROR_CATEGORIES } from "@/lib/constants";
 import type { VaultError, SubjectId } from "@/lib/types";
 
@@ -16,38 +17,8 @@ const SUBJECT_COLORS: Record<SubjectId, string> = {
 
 const FREE_LIMIT = 20;
 
-const DEMO_ERRORS: VaultError[] = [
-  {
-    id: "1",
-    question: "جسم كتلته 5 كجم يتحرك بتسارع 3 م/ث² — ما القوة المحركة؟",
-    subject: "فيزياء",
-    category: "خطأ حسابي",
-    note: "نسيت ضرب الكتلة في التسارع وجمعتهم",
-    createdAt: Date.now() - 86400000,
-    reviewCount: 2,
-  },
-  {
-    id: "2",
-    question: "ما الجذر التربيعي لـ (-16)؟",
-    subject: "رياضيات",
-    category: "ما فهمت المفهوم",
-    note: "ما أعرف أن الجذر لسالب = عدد تخيلي",
-    createdAt: Date.now() - 172800000,
-    reviewCount: 0,
-  },
-  {
-    id: "3",
-    question: "ما الصيغة التجريبية لمركب يحتوي 40% كربون، 6.7% هيدروجين، 53.3% أكسجين؟",
-    subject: "كيمياء",
-    category: "نسيت القانون",
-    note: "نسيت خطوات حساب النسبة المئوية للتركيب",
-    createdAt: Date.now() - 259200000,
-    reviewCount: 1,
-  },
-];
-
 export default function VaultPage() {
-  const [errors, setErrors]         = useState<VaultError[]>(DEMO_ERRORS);
+  const [errors, setErrors]         = useState<VaultError[]>([]);
   const [showAdd, setShowAdd]       = useState(false);
   const [filterSubject, setFilterSubject] = useState<SubjectId | "الكل">("الكل");
   const [filterCat, setFilterCat]   = useState<string>("الكل");
@@ -79,10 +50,11 @@ export default function VaultPage() {
   const categoryCount = (cat: string) => errors.filter((e) => e.category === cat).length;
 
   return (
-    <div className="page">
+    <div className="page" style={{ background: "var(--bg)" }}>
+      <Stars />
 
       {/* ── Header ── */}
-      <div className="page-header">
+      <div className="relative z-10 page-header">
         <h1 className="title-md text-[var(--text)]">خزنة الأخطاء 🔒</h1>
         <div className="stat-chip">
           <span className="font-mono-nums font-bold text-base text-[var(--gold)]">{errors.length}</span>
