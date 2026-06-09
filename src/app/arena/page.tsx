@@ -98,6 +98,7 @@ export default function ArenaPage() {
 
         <BottomNav />
       </div>
+    </div>
     );
   }
 
