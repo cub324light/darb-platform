@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import BottomNav from "@/components/BottomNav";
+import Dome from "@/components/Dome";
 import { sm2, nextReviewText } from "@/lib/sm2";
 import { getTrack, subjectColor, type Track } from "@/lib/tracks";
 import { loadUser, loadList, saveList } from "@/lib/storage";
@@ -190,10 +191,13 @@ export default function ReviewPage() {
   /* ── عرض القائمة ── */
   return (
     <div className="min-h-dvh pb-nav relative z-[1]">
-      <div className="page-header">
-        <h1 className="font-black text-xl text-[var(--text)]">بنك المراجعة 🧠</h1>
-        <span className="text-sm text-[var(--text-muted)] bg-[var(--surface)] border border-[var(--border)] px-4 py-2 rounded-xl font-bold">SM-2</span>
-      </div>
+      <Dome compact>
+        <div className="flex items-center justify-between">
+          <h1 className="title-lg" style={{ color: "var(--text)" }}>بنك المراجعة 🧠</h1>
+          <span className="dome-chip text-[13px] font-bold" style={{ color: "var(--text-dim)" }}>SM-2</span>
+        </div>
+      </Dome>
+      <div className="h-5" />
 
       {/* الإحصاءات */}
       <div className="px-5 mb-6">

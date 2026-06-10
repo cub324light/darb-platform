@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { TRACKS, type TrackId } from "@/lib/tracks";
 import { saveUser } from "@/lib/storage";
+import Dome from "@/components/Dome";
 
 /* ─── دخول مختصر: اسمك + مسارك. بدون إيميل، بدون باسورد ─── */
 
@@ -20,19 +21,17 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-dvh flex flex-col relative z-[1]">
-      <div className="flex-1 flex flex-col justify-center px-6 py-10 max-w-sm mx-auto w-full gap-8">
-
-        {/* الشعار */}
-        <div className="text-center">
-          <p
-            className="font-black text-5xl text-[var(--accent-light)] mb-1"
-            style={{ filter: "drop-shadow(0 0 22px color-mix(in srgb, var(--accent) 40%, transparent))" }}
-          >
+    <div className="min-h-dvh flex flex-col">
+      <Dome>
+        <div className="text-center py-6">
+          <p className="font-black text-5xl mb-1"
+            style={{ color: "var(--text)", filter: "drop-shadow(0 0 22px color-mix(in srgb, var(--accent) 45%, transparent))" }}>
             درب
           </p>
-          <p className="text-[var(--text-muted)] text-xs font-medium tracking-[0.2em]">YOUR PATH TO EXCELLENCE</p>
+          <p className="eyebrow" style={{ color: "var(--text-dim)" }}>YOUR PATH TO EXCELLENCE</p>
         </div>
+      </Dome>
+      <div className="flex-1 flex flex-col justify-center px-6 py-8 max-w-sm mx-auto w-full gap-7">
 
         {/* الاسم */}
         <div>

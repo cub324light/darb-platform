@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import BottomNav from "@/components/BottomNav";
+import Dome from "@/components/Dome";
 import { loadUser } from "@/lib/storage";
 import { getTrack, type TrackId } from "@/lib/tracks";
 
@@ -73,10 +74,12 @@ export default function ArenaPage() {
   if (gameState === "lobby") {
     return (
       <div className="min-h-dvh flex flex-col pb-nav relative z-[1]">
-        <div className="page-header">
-          <h1 className="font-black text-lg text-[var(--text)]">الأرينا ⚔️</h1>
-          <span className="text-xs text-[var(--gold)] bg-[var(--surface)] border border-[var(--border)] px-3 py-1.5 rounded-xl font-bold">1v1</span>
-        </div>
+        <Dome compact>
+          <div className="flex items-center justify-between">
+            <h1 className="title-lg" style={{ color: "var(--text)" }}>الأرينا ⚔️</h1>
+            <span className="dome-chip text-[13px] font-bold" style={{ color: "var(--gold-light)" }}>1v1</span>
+          </div>
+        </Dome>
 
         <div className="flex-1 flex flex-col items-center justify-center px-5">
           <div

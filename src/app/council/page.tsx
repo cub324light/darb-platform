@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import BottomNav from "@/components/BottomNav";
+import Dome from "@/components/Dome";
 import { loadUser, loadList, saveList } from "@/lib/storage";
 import { getTrack, type Track } from "@/lib/tracks";
 
@@ -72,12 +73,13 @@ export default function CouncilPage() {
 
   return (
     <div className="min-h-dvh pb-nav relative z-[1]">
-      <div className="page-header">
-        <h1 className="font-black text-lg text-[var(--text)]">المجلس 💬</h1>
-        <span className="text-xs text-[var(--text-muted)] bg-[var(--surface)] border border-[var(--border)] px-3 py-1.5 rounded-xl font-bold">
-          {posts.length} منشور
-        </span>
-      </div>
+      <Dome compact>
+        <div className="flex items-center justify-between">
+          <h1 className="title-lg" style={{ color: "var(--text)" }}>المجلس 💬</h1>
+          <span className="dome-chip text-[13px] font-bold" style={{ color: "var(--text-dim)" }}>{posts.length} منشور</span>
+        </div>
+      </Dome>
+      <div className="h-5" />
 
       {/* Tabs */}
       <div className="px-5 mb-4">

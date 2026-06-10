@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import BottomNav from "@/components/BottomNav";
+import Dome from "@/components/Dome";
 import { getTrack } from "@/lib/tracks";
 import { loadUser, loadStats, recordSession } from "@/lib/storage";
 
@@ -124,14 +125,16 @@ export default function OrbitPage() {
 
   return (
     <div className="min-h-dvh flex flex-col pb-nav relative z-[1]">
-      {/* Header */}
-      <div className="page-header">
-        <h1 className="font-black text-lg text-[var(--text)]">Orbit 50/10</h1>
-        <div className="stat-chip">
-          <span className="text-base">🪙</span>
-          <span className="font-mono-nums font-bold text-base text-[var(--accent-light)]">{silverTotal}</span>
+      <Dome compact>
+        <div className="flex items-center justify-between">
+          <h1 className="title-lg" style={{ color: "var(--text)" }}>Orbit 50/10</h1>
+          <div className="dome-chip">
+            <span className="text-base">🪙</span>
+            <span className="num-hero text-base" style={{ color: "var(--text)" }}>{silverTotal}</span>
+          </div>
         </div>
-      </div>
+      </Dome>
+      <div className="h-4" />
 
       {/* اختيار المادة — حسب مسارك */}
       {phase === "idle" && subjects.length > 0 && (

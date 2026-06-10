@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import BottomNav from "@/components/BottomNav";
+import Dome from "@/components/Dome";
 import { RAKAN_SCHEDULE, ROADMAP_STAGES } from "@/lib/constants";
 import { getTrack, subjectColor, subjectIcon, type Track } from "@/lib/tracks";
 import { loadUser, loadList, saveList } from "@/lib/storage";
@@ -125,16 +126,17 @@ export default function RoadmapPage() {
 
     return (
       <div className="min-h-dvh pb-nav relative z-[1]">
-        <div className="page-header">
-          <button onClick={() => setSelected(null)}
-            className="text-base font-bold text-[var(--text-muted)] min-h-[44px]">← رجوع</button>
-          <h1 className="font-black text-xl text-[var(--text)]">
-            {subjectIcon(track, selected)} {selected}
-          </h1>
-          <div className="stat-chip">
-            <span className="font-mono-nums font-bold text-base" style={{ color }}>{doneCount}/{lessons.length}</span>
+        <Dome compact>
+          <div className="flex items-center justify-between">
+            <button onClick={() => setSelected(null)}
+              className="dome-chip text-[14px] font-bold" style={{ color: "var(--text)" }}>← رجوع</button>
+            <h1 className="title-lg" style={{ color: "var(--text)" }}>
+              {subjectIcon(track, selected)} {selected}
+            </h1>
+            <span className="dome-chip num-hero text-[14px]" style={{ color: "var(--text)" }}>{doneCount}/{lessons.length}</span>
           </div>
-        </div>
+        </Dome>
+        <div className="h-5" />
 
         <OverallBar />
 
@@ -249,12 +251,13 @@ export default function RoadmapPage() {
   /* ══════ الواجهة الرئيسية — مواد المسار ══════ */
   return (
     <div className="min-h-dvh pb-nav relative z-[1]">
-      <div className="page-header">
-        <h1 className="font-black text-xl text-[var(--text)]">خريطة الطريق</h1>
-        <span className="text-sm font-bold text-[var(--text-muted)] bg-[var(--surface)] border border-[var(--border)] px-4 py-2 rounded-xl">
-          {track.icon} {track.title}
-        </span>
-      </div>
+      <Dome compact>
+        <div className="flex items-center justify-between">
+          <h1 className="title-lg" style={{ color: "var(--text)" }}>خريطة الطريق</h1>
+          <span className="dome-chip text-[13px] font-bold" style={{ color: "var(--text-dim)" }}>{track.icon} {track.title}</span>
+        </div>
+      </Dome>
+      <div className="h-5" />
 
       <OverallBar />
 

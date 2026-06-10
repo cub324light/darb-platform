@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
+import Dome from "@/components/Dome";
 import { ERROR_CATEGORIES } from "@/lib/constants";
 import { getTrack, subjectColor, type Track } from "@/lib/tracks";
 import { loadUser, loadList, saveList } from "@/lib/storage";
@@ -63,14 +64,16 @@ export default function VaultPage() {
   return (
     <div className="page">
 
-      {/* ── Header ── */}
-      <div className="page-header">
-        <h1 className="title-md text-[var(--text)]">خزنة الأخطاء 🔒</h1>
-        <div className="stat-chip">
-          <span className="font-mono-nums font-bold text-base text-[var(--gold)]">{errors.length}</span>
-          {isPlanFree && <span className="body-sm">/{FREE_LIMIT}</span>}
+      <Dome compact>
+        <div className="flex items-center justify-between">
+          <h1 className="title-lg" style={{ color: "var(--text)" }}>خزنة الأخطاء 🔒</h1>
+          <div className="dome-chip">
+            <span className="num-hero text-base" style={{ color: "var(--gold-light)" }}>{errors.length}</span>
+            {isPlanFree && <span className="text-[13px] font-semibold" style={{ color: "var(--text-dim)" }}>/{FREE_LIMIT}</span>}
+          </div>
         </div>
-      </div>
+      </Dome>
+      <div className="h-5" />
 
       {/* ── شريط الحد ── */}
       {isPlanFree && (
