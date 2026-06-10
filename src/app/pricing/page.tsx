@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import Stars from "@/components/Stars";
 import { PLANS, PARENT_PLAN } from "@/lib/constants";
 
 const COMPARE_FEATURES = [
@@ -12,8 +11,6 @@ const COMPARE_FEATURES = [
   { label: "بنك المراجعة SM-2", free: "—", shaheen: "✓", anqa: "✓" },
   { label: "المجلس (مشاركة)", free: "قراءة فقط", shaheen: "✓", anqa: "✓" },
   { label: "الأرينا 1v1", free: "—", shaheen: "✓", anqa: "✓" },
-  { label: "5 طيور للاختيار", free: "الهدهد فقط", shaheen: "4 طيور", anqa: "كل الطيور" },
-  { label: "الفينكس 🔥", free: "—", shaheen: "—", anqa: "✓" },
   { label: "شهادة الانضباط", free: "—", shaheen: "—", anqa: "✓" },
   { label: "دور المؤسس", free: "—", shaheen: "—", anqa: "✓" },
   { label: "خصم 79 ريال (جامعة)", free: "—", shaheen: "—", anqa: "✓" },
@@ -23,9 +20,7 @@ export default function PricingPage() {
   const [lifeTime, setLifeTime] = useState(false);
 
   return (
-    <div className="min-h-dvh" style={{ background: "var(--bg)" }}>
-      <Stars />
-      <div className="page-wrap">
+    <div className="min-h-dvh ">
       {/* Nav */}
       <div className="px-5 py-4 flex items-center justify-between glass border-b border-[var(--border)]">
         <Link href="/" className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition">
@@ -118,7 +113,7 @@ export default function PricingPage() {
                   "بنك المراجعة الذكية SM-2",
                   "المجلس (مشاركة كاملة)",
                   "الأرينا 1v1",
-                  "4 طيور للاختيار",
+                  "5 طيور للاختيار",
                 ].map((f) => (
                   <div key={f} className="flex items-center gap-2">
                     <span className="text-[var(--blue-light)] text-xs">✓</span>
@@ -182,7 +177,6 @@ export default function PricingPage() {
               <div className="space-y-1.5 mb-4">
                 {[
                   "كل مميزات شاهين",
-                  "الفينكس (الطائر الأسطوري) 🔥",
                   "شهادة الانضباط الرقمية",
                   "خصم 79 ريال عند الجامعة",
                   "دور المؤسس الدائم",
@@ -300,7 +294,6 @@ export default function PricingPage() {
           <br />
           سبب 35: يعكس قيمة أعلى ولا يزال أرخص من أي منافس.
         </p>
-      </div>
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import Stars from "@/components/Stars";
 
 const WEEKLY_STATS = [
   { day: "الأحد", mins: 180, sessions: 3 },
@@ -33,9 +32,7 @@ export default function ParentPage() {
   };
 
   return (
-    <div className="min-h-dvh" style={{ background: "var(--bg)" }}>
-      <Stars />
-      <div className="page-wrap">
+    <div className="min-h-dvh ">
       {/* Header */}
       <div className="px-5 py-4 flex items-center justify-between glass border-b border-[var(--border)] sticky top-0 z-10">
         <Link href="/" className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition">
@@ -65,10 +62,10 @@ export default function ParentPage() {
               className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
               style={{ background: "rgba(16,185,129,0.2)" }}
             >
-              🦜
+              👨‍🎓
             </div>
             <div>
-              <p className="font-black text-[var(--text)]">فهد — الهدهد</p>
+              <p className="font-black text-[var(--text)]">ابنك (عرض توضيحي)</p>
               <p className="text-xs text-[var(--text-muted)]">طالب التحصيلي · شاهين</p>
             </div>
             <div className="mr-auto flex items-center gap-1.5 glass px-3 py-1.5 rounded-full">
@@ -279,7 +276,6 @@ export default function ParentPage() {
           </div>
         </div>
       )}
-      </div>
     </div>
   );
 }

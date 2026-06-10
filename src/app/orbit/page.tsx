@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
-import Stars from "@/components/Stars";
+import { getTrack } from "@/lib/tracks";
+import { loadUser, loadStats, recordSession } from "@/lib/storage";
 
 type Phase = "idle" | "focus" | "break" | "done";
 
@@ -10,18 +10,30 @@ const FOCUS_MINS = 50;
 const BREAK_MINS = 10;
 const FOCUS_SECS = FOCUS_MINS * 60;
 const BREAK_SECS = BREAK_MINS * 60;
-
-const SUBJECTS = ["فيزياء", "رياضيات", "كيمياء", "أحياء", "لغة إنجليزية"] as const;
+const SILVER_PER_SESSION = 10;
 
 export default function OrbitPage() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [secondsLeft, setSecondsLeft] = useState(FOCUS_SECS);
   const [sessionsToday, setSessionsToday] = useState(0);
-  const [silverEarned, setSilverEarned] = useState(0);
-  const [subject, setSubject] = useState<string>("فيزياء");
+  const [silverTotal, setSilverTotal] = useState(0);
   const [totalFocusMins, setTotalFocusMins] = useState(0);
+  const [subjects, setSubjects] = useState<string[]>([]);
+  const [subject, setSubject] = useState<string>("");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const audioRef = useRef<AudioContext | null>(null);
+
+  /* تحميل مواد المسار + الإحصاءات الحقيقية */
+  useEffect(() => {
+    const track = getTrack(loadUser()?.track);
+    const names = track.subjects.map((s) => s.name);
+    setSubjects(names);
+    setSubject(names[0] ?? "");
+
+    const s = loadStats();
+    setSilverTotal(s.silver);
+    setTotalFocusMins(s.todayFocusMins);
+    setSessionsToday(Math.floor(s.todayFocusMins / FOCUS_MINS));
+  }, []);
 
   const totalSecs = phase === "break" ? BREAK_SECS : FOCUS_SECS;
   const progress = 1 - secondsLeft / totalSecs;
@@ -48,12 +60,14 @@ export default function OrbitPage() {
     setSecondsLeft(FOCUS_SECS);
   }, []);
 
+  /* انتهاء التركيز = جلسة منجزة — نسجلها فعلياً */
   const startBreak = useCallback(() => {
     setPhase("break");
     setSecondsLeft(BREAK_SECS);
+    const s = recordSession(FOCUS_MINS, SILVER_PER_SESSION);
+    setSilverTotal(s.silver);
+    setTotalFocusMins(s.todayFocusMins);
     setSessionsToday((p) => p + 1);
-    setSilverEarned((p) => p + 10);
-    setTotalFocusMins((p) => p + FOCUS_MINS);
     playBeep();
   }, [playBeep]);
 
@@ -99,38 +113,36 @@ export default function OrbitPage() {
   const dashOffset = circumference * (1 - progress);
   const strokeColor = phase === "break" ? "#F59E0B" : "#2563EB";
 
-  const companionMsg =
+  const statusMsg =
     phase === "idle"
-      ? "خل الجوال يستنى. أنا أستنى نتائجك."
+      ? "خل الجوال يستنى. درب يستنى نتائجك."
       : phase === "focus"
       ? "50 دقيقة — لا تكسرها."
       : phase === "break"
       ? "10 دقائق راحة — حرك جسمك."
-      : "جلسة منجزة! +10 Silver 🪙";
+      : `جلسة منجزة! +${SILVER_PER_SESSION} Silver 🪙`;
 
   return (
-    <div className="min-h-dvh flex flex-col pb-nav" style={{ background: "var(--bg)" }}>
-      <Stars />
-      <div className="page-wrap flex flex-col flex-1">
+    <div className="min-h-dvh flex flex-col pb-nav relative z-[1]">
       {/* Header */}
       <div className="page-header">
         <h1 className="font-black text-lg text-[var(--text)]">Orbit 50/10</h1>
         <div className="stat-chip">
           <span className="text-base">🪙</span>
-          <span className="font-mono-nums font-bold text-base text-[var(--blue-light)]">{silverEarned}</span>
+          <span className="font-mono-nums font-bold text-base text-[var(--blue-light)]">{silverTotal}</span>
         </div>
       </div>
 
-      {/* Subject selector */}
-      {phase === "idle" && (
+      {/* اختيار المادة — حسب مسارك */}
+      {phase === "idle" && subjects.length > 0 && (
         <div className="px-5 mb-5">
           <p className="text-sm font-bold text-[var(--text-muted)] mb-3">المادة التي تذاكرها:</p>
-          <div className="flex gap-2 flex-wrap">
-            {SUBJECTS.map((s) => (
+          <div className="flex gap-2.5 flex-wrap">
+            {subjects.map((s) => (
               <button
                 key={s}
                 onClick={() => setSubject(s)}
-                className={`px-5 py-3 rounded-2xl text-sm font-bold transition ${
+                className={`px-6 py-3.5 rounded-2xl text-base font-bold transition min-h-[52px] ${
                   subject === s ? "text-white" : "text-[var(--text-dim)]"
                 }`}
                 style={subject === s ? { background: "#2563EB" } : { background: "var(--surface)", border: "1px solid var(--border)" }}
@@ -142,37 +154,20 @@ export default function OrbitPage() {
         </div>
       )}
 
-      {/* Timer circle */}
+      {/* دائرة المؤقت */}
       <div className="flex-1 flex flex-col items-center justify-center px-5">
         <div className="relative mb-8">
-          {/* SVG ring */}
           <svg width="260" height="260" className="-rotate-90">
-            {/* Background ring */}
+            <circle cx="130" cy="130" r={radius} fill="none" stroke="var(--border)" strokeWidth="6" />
             <circle
-              cx="130"
-              cy="130"
-              r={radius}
-              fill="none"
-              stroke="var(--border)"
-              strokeWidth="6"
-            />
-            {/* Progress ring */}
-            <circle
-              cx="130"
-              cy="130"
-              r={radius}
-              fill="none"
-              stroke={strokeColor}
-              strokeWidth="6"
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={dashOffset}
+              cx="130" cy="130" r={radius} fill="none"
+              stroke={strokeColor} strokeWidth="6" strokeLinecap="round"
+              strokeDasharray={circumference} strokeDashoffset={dashOffset}
               style={{ transition: "stroke-dashoffset 1s linear, stroke 0.5s ease" }}
               className={phase === "focus" ? "orbit-active" : ""}
             />
           </svg>
 
-          {/* Center content */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             {phase === "idle" ? (
               <div className="text-center">
@@ -197,32 +192,28 @@ export default function OrbitPage() {
             )}
           </div>
 
-          {/* Glow */}
           {phase === "focus" && (
             <div
               className="absolute inset-0 rounded-full pointer-events-none"
-              style={{
-                boxShadow: `0 0 40px rgba(37,99,235,0.2)`,
-                borderRadius: "50%",
-              }}
+              style={{ boxShadow: `0 0 40px rgba(37,99,235,0.2)`, borderRadius: "50%" }}
             />
           )}
         </div>
 
-        {/* Message */}
-        {companionMsg && (
-          <div className="mb-6 rounded-2xl px-5 py-3 max-w-[260px] text-center"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-            <p className="text-sm" style={{ color: "var(--text-dim)" }}>{companionMsg}</p>
-          </div>
-        )}
+        {/* رسالة الحالة */}
+        <div
+          className="rounded-2xl px-5 py-3 max-w-[280px] text-center mb-6"
+          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+        >
+          <p className="text-sm text-[var(--text-dim)] leading-relaxed">{statusMsg}</p>
+        </div>
 
-        {/* Control button */}
+        {/* أزرار التحكم */}
         <div className="w-full max-w-xs space-y-3">
           {phase === "idle" && (
             <button
               onClick={startFocus}
-              className="w-full py-4 rounded-2xl font-black text-white text-lg transition glow-blue"
+              className="w-full py-5 rounded-2xl font-black text-white text-xl transition glow-blue min-h-[60px]"
               style={{ background: "linear-gradient(135deg, #1D4ED8, #2563EB)" }}
             >
               ابدأ الجلسة
@@ -232,7 +223,7 @@ export default function OrbitPage() {
           {phase === "focus" && (
             <button
               onClick={reset}
-              className="w-full py-3 rounded-2xl font-bold text-sm text-[var(--danger)] border border-[var(--danger)]/30 glass transition hover:bg-[var(--danger)]/10"
+              className="w-full py-4 rounded-2xl font-bold text-base text-[var(--danger)] border border-[var(--danger)]/30 glass transition min-h-[54px]"
             >
               إيقاف (تخسر السيلفر)
             </button>
@@ -248,17 +239,17 @@ export default function OrbitPage() {
           {phase === "done" && (
             <div className="space-y-2">
               <div className="glass rounded-2xl p-4 text-center">
-                <p className="text-xl font-black text-[var(--gold)]">+10 Silver 🪙</p>
+                <p className="text-xl font-black text-[var(--gold)]">+{SILVER_PER_SESSION} Silver 🪙</p>
                 <p className="text-xs text-[var(--text-muted)] mt-1">جلسة {sessionsToday} اليوم</p>
               </div>
               <button
                 onClick={startFocus}
-                className="w-full py-4 rounded-2xl font-black text-white transition glow-blue"
+                className="w-full py-5 rounded-2xl font-black text-white text-lg transition glow-blue min-h-[60px]"
                 style={{ background: "#2563EB" }}
               >
                 جلسة أخرى؟
               </button>
-              <button onClick={reset} className="w-full py-2 text-sm text-[var(--text-muted)]">
+              <button onClick={reset} className="w-full py-3 text-base text-[var(--text-muted)] min-h-[48px]">
                 توقف لهذا اليوم
               </button>
             </div>
@@ -266,27 +257,26 @@ export default function OrbitPage() {
         </div>
       </div>
 
-      {/* Stats bar */}
-      <div className="relative z-10 px-5 pb-4">
+      {/* شريط الإحصاءات — حقيقي */}
+      <div className="px-5 pb-4">
         <div className="rounded-2xl p-5 grid grid-cols-3 text-center gap-3"
           style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <div>
             <p className="font-mono-nums font-black text-3xl text-[var(--blue-light)]">{sessionsToday}</p>
-            <p className="text-sm text-[var(--text-muted)] mt-1">جلسات</p>
+            <p className="text-sm text-[var(--text-muted)] mt-1">جلسات اليوم</p>
           </div>
           <div>
             <p className="font-mono-nums font-black text-3xl text-[var(--gold)]">{totalFocusMins}</p>
-            <p className="text-sm text-[var(--text-muted)] mt-1">دقيقة</p>
+            <p className="text-sm text-[var(--text-muted)] mt-1">دقيقة اليوم</p>
           </div>
           <div>
-            <p className="font-mono-nums font-black text-3xl text-[var(--success)]">{silverEarned}</p>
+            <p className="font-mono-nums font-black text-3xl text-[var(--success)]">{silverTotal}</p>
             <p className="text-sm text-[var(--text-muted)] mt-1">Silver 🪙</p>
           </div>
         </div>
       </div>
 
       <BottomNav />
-      </div>
     </div>
   );
 }

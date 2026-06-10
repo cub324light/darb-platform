@@ -1,129 +1,93 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Stars from "@/components/Stars";
-import { useTheme } from "@/components/ThemeProvider";
-import type { ExamId } from "@/lib/types";
+import { TRACKS, type TrackId } from "@/lib/tracks";
+import { saveUser } from "@/lib/storage";
 
-const EXAMS: { id: ExamId; icon: string; title: string; sub: string }[] = [
-  { id: "تحصيلي", icon: "📚", title: "التحصيلي",    sub: "علوم · رياضيات · كيمياء · أحياء" },
-  { id: "قدرات",  icon: "🧠", title: "القدرات",     sub: "كمي + لفظي (قياس)"              },
-  { id: "CPC",    icon: "🏭", title: "CPC — أرامكو", sub: "برنامج التعاون مع الجامعات"    },
-];
+/* ─── دخول مختصر: اسمك + مسارك. بدون إيميل، بدون باسورد ─── */
 
 export default function OnboardingPage() {
-  const router  = useRouter();
-  const { theme, toggle } = useTheme();
-  const [name, setName]   = useState("");
-  const [exam, setExam]   = useState<ExamId | null>(null);
+  const router = useRouter();
+  const [name, setName] = useState("");
+  const [track, setTrack] = useState<TrackId | null>(null);
 
-  const start = () => {
-    if (!name.trim() || !exam) return;
-    const user = { name: name.trim(), exam, onboarded: true, streak: 0, silver: 0, focusHours: 0, sessions: 0 };
-    localStorage.setItem("darb_user", JSON.stringify(user));
+  const ready = name.trim().length > 0 && track !== null;
+
+  const finish = () => {
+    if (!ready || !track) return;
+    saveUser({ name: name.trim(), track, onboarded: true });
     router.push("/dashboard");
   };
 
   return (
-    <div className="min-h-dvh flex flex-col" style={{ background: "var(--bg)" }}>
-      <Stars />
+    <div className="min-h-dvh flex flex-col relative z-[1]">
+      <div className="flex-1 flex flex-col justify-center px-6 py-10 max-w-sm mx-auto w-full gap-8">
 
-      <div className="page-wrap flex flex-col flex-1">
-      {/* Theme toggle */}
-      <div className="flex justify-start p-5">
-        <button
-          onClick={toggle}
-          className="w-11 h-11 rounded-2xl flex items-center justify-center text-xl transition-all active:scale-95"
-          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
-        >
-          {theme === "dark" ? "☀️" : "🌙"}
-        </button>
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 flex-1 flex flex-col justify-center px-6 pb-10 max-w-sm mx-auto w-full">
-
-        {/* Logo */}
-        <div className="text-center mb-10">
-          <p className="text-sm font-semibold mb-2" style={{ color: "var(--text-muted)", letterSpacing: "0.12em" }}>
-            YOUR PATH TO EXCELLENCE
+        {/* الشعار */}
+        <div className="text-center">
+          <p
+            className="font-black text-5xl text-[var(--blue-light)] mb-1"
+            style={{ filter: "drop-shadow(0 0 22px rgba(37,99,235,0.4))" }}
+          >
+            درب
           </p>
-          <h1 className="text-5xl font-black" style={{ color: "var(--text)" }}>
-            <span style={{ color: "var(--blue)" }}>د</span>رب
-          </h1>
-          <p className="text-sm mt-2" style={{ color: "var(--text-muted)" }}>
-            انضباط حقيقي · نتائج حقيقية
-          </p>
+          <p className="text-[var(--text-muted)] text-xs font-medium tracking-[0.2em]">YOUR PATH TO EXCELLENCE</p>
         </div>
 
-        {/* Name */}
-        <div className="mb-6">
-          <label className="block text-sm font-bold mb-2" style={{ color: "var(--text-dim)" }}>
-            ما اسمك؟
-          </label>
+        {/* الاسم */}
+        <div>
+          <p className="label mb-3">وش اسمك؟</p>
           <input
             autoFocus
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && exam && start()}
             placeholder="مثال: فهد، سارة، خالد..."
             maxLength={20}
-            className="w-full rounded-2xl px-5 text-lg font-medium outline-none transition-all"
-            style={{
-              background: "var(--surface)",
-              border: `2px solid ${name.trim() ? "var(--blue)" : "var(--border)"}`,
-              color: "var(--text)",
-              padding: "18px 20px",
-            }}
+            className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none transition-colors"
+            style={{ background: "var(--surface)", border: "2px solid var(--border)" }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--blue)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
           />
         </div>
 
-        {/* Exam */}
-        <div className="mb-8">
-          <label className="block text-sm font-bold mb-3" style={{ color: "var(--text-dim)" }}>
-            ماذا تستعد له؟
-          </label>
+        {/* المسار — كلها أزرق */}
+        <div>
+          <p className="label mb-3">وش تستعد له؟</p>
           <div className="flex flex-col gap-3">
-            {EXAMS.map((e) => (
-              <button
-                key={e.id}
-                onClick={() => setExam(e.id)}
-                className="w-full rounded-2xl text-right flex items-center gap-4 transition-all duration-200 active:scale-98"
-                style={{
-                  background: exam === e.id ? "rgba(37,99,235,0.12)" : "var(--surface)",
-                  border: `2px solid ${exam === e.id ? "var(--blue)" : "var(--border)"}`,
-                  padding: "18px 20px",
-                  transform: exam === e.id ? "scale(1.01)" : "scale(1)",
-                }}
-              >
-                <span className="text-3xl">{e.icon}</span>
-                <div className="flex-1">
-                  <p className="font-bold text-base" style={{ color: "var(--text)" }}>{e.title}</p>
-                  <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>{e.sub}</p>
-                </div>
-                {exam === e.id && (
-                  <span className="text-lg font-black" style={{ color: "var(--blue)" }}>✓</span>
-                )}
-              </button>
-            ))}
+            {TRACKS.map((t) => {
+              const active = track === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setTrack(t.id)}
+                  className="w-full rounded-2xl p-5 text-right flex items-center gap-4 transition-all duration-200 active:scale-[0.98]"
+                  style={{
+                    background: active ? "rgba(37,99,235,0.14)" : "var(--surface)",
+                    border: `2px solid ${active ? "var(--blue)" : "var(--border)"}`,
+                  }}
+                >
+                  <span className="text-3xl">{t.icon}</span>
+                  <div className="flex-1">
+                    <p className="font-black text-lg text-[var(--text)]">{t.title}</p>
+                    <p className="text-sm text-[var(--text-muted)] mt-0.5">{t.sub}</p>
+                  </div>
+                  {active && <span className="text-2xl font-black text-[var(--blue-light)]">✓</span>}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Start */}
+        {/* دخول */}
         <button
-          onClick={start}
-          disabled={!name.trim() || !exam}
-          className="btn-primary transition-all"
-          style={{
-            opacity: name.trim() && exam ? 1 : 0.4,
-            fontSize: 18,
-            padding: "20px 24px",
-          }}
+          className="btn-primary glow-blue"
+          onClick={finish}
+          disabled={!ready}
+          style={{ opacity: ready ? 1 : 0.4 }}
         >
           يلا نبدأ ←
         </button>
-      </div>
       </div>
     </div>
   );

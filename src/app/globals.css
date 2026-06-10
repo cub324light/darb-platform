@@ -1,7 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
-:root {
+/* ════════ الليلي (الافتراضي) — أسود · أزرق · ذهبي · نجوم ════════ */
+:root,
+[data-theme="dark"] {
   --bg: #0A0A0F;
   --surface: #13131C;
   --surface2: #1C1C2A;
@@ -17,25 +19,32 @@
   --text-dim: #94A3B8;
   --success: #10B981;
   --danger: #EF4444;
-  --nav-h: 72px;
+  --nav-h: 78px;
+  --sky-grad: linear-gradient(180deg, #0B1730 0%, #0F1F3D 50%, var(--bg) 100%);
+  --glass-bg: rgba(19,19,28,0.85);
+  --btn-text-on-gold: #0A0A0F;
 }
 
+/* ════════ النهاري — أبيض · أسود · أزرق · ذهبي · شمس ════════ */
 [data-theme="light"] {
-  --bg: #FFFFFF;
-  --surface: #F8FAFC;
-  --surface2: #F1F5F9;
-  --border: #E2E8F0;
+  --bg: #F4F6FB;
+  --surface: #FFFFFF;
+  --surface2: #EEF1F8;
+  --border: #D8DEEC;
   --blue: #2563EB;
-  --blue-light: #3B82F6;
-  --blue-glow: rgba(37,99,235,0.25);
+  --blue-light: #1D4ED8;
+  --blue-glow: rgba(37,99,235,0.22);
   --gold: #D97706;
   --gold-light: #F59E0B;
-  --gold-glow: rgba(217,119,6,0.25);
-  --text: #0A0A0F;
+  --gold-glow: rgba(217,119,6,0.22);
+  --text: #0F172A;
   --text-muted: #64748B;
   --text-dim: #475569;
   --success: #059669;
   --danger: #DC2626;
+  --sky-grad: linear-gradient(180deg, #DBEAFE 0%, #EFF6FF 55%, var(--bg) 100%);
+  --glass-bg: rgba(255,255,255,0.85);
+  --btn-text-on-gold: #FFFFFF;
 }
 
 * {
@@ -45,13 +54,9 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-html {
-  color-scheme: dark;
-  font-size: 16px;
-}
-[data-theme="light"] html, html:has(body[data-theme="light"]) {
-  color-scheme: light;
-}
+html { font-size: 16px; }
+html[data-theme="dark"] { color-scheme: dark; }
+html[data-theme="light"] { color-scheme: light; }
 
 body {
   background: var(--bg);
@@ -62,11 +67,10 @@ body {
   direction: rtl;
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
+  transition: background 0.35s ease, color 0.35s ease;
 }
 
-.font-mono-nums {
-  font-family: 'IBM Plex Mono', monospace;
-}
+.font-mono-nums { font-family: 'IBM Plex Mono', monospace; }
 
 /* ───── Scrollbar ───── */
 ::-webkit-scrollbar { width: 3px; }
@@ -82,26 +86,24 @@ body {
 }
 
 .glass {
-  background: rgba(19,19,28,0.85);
+  background: var(--glass-bg);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border);
-}
-[data-theme="light"] .glass {
-  background: rgba(255,255,255,0.85);
 }
 
 /* ───── Glows ───── */
 .glow-blue { box-shadow: 0 0 24px var(--blue-glow), 0 0 48px rgba(37,99,235,0.08); }
 .glow-gold { box-shadow: 0 0 24px var(--gold-glow); }
 
-/* ───── Buttons ───── */
+/* ───── Buttons — مكبّرة للإبهام (حد أدنى 56px) ───── */
 .btn-primary {
   width: 100%;
-  padding: 16px 24px;
-  border-radius: 16px;
+  min-height: 58px;
+  padding: 17px 26px;
+  border-radius: 18px;
   font-weight: 800;
-  font-size: 16px;
+  font-size: 17px;
   color: white;
   background: linear-gradient(135deg, #1D4ED8, #2563EB);
   border: none;
@@ -113,11 +115,12 @@ body {
 
 .btn-gold {
   width: 100%;
-  padding: 16px 24px;
-  border-radius: 16px;
+  min-height: 58px;
+  padding: 17px 26px;
+  border-radius: 18px;
   font-weight: 800;
-  font-size: 16px;
-  color: #0A0A0F;
+  font-size: 17px;
+  color: var(--btn-text-on-gold);
   background: linear-gradient(135deg, #D97706, #F59E0B);
   border: none;
   cursor: pointer;
@@ -127,10 +130,11 @@ body {
 
 .btn-ghost {
   width: 100%;
-  padding: 14px 24px;
-  border-radius: 16px;
+  min-height: 54px;
+  padding: 15px 26px;
+  border-radius: 18px;
   font-weight: 600;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--text-dim);
   background: transparent;
   border: 1px solid var(--border);
@@ -138,6 +142,24 @@ body {
   transition: all 0.2s;
 }
 .btn-ghost:active { background: var(--surface2); }
+
+/* زر أيقونة دائري — للبروفايل والثيم */
+.btn-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 22px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.btn-icon:active { transform: scale(0.92); background: var(--surface2); }
 
 /* ───── Typography ───── */
 .title-xl { font-size: 32px; font-weight: 900; line-height: 1.2; }
@@ -150,21 +172,8 @@ body {
 /* ───── Page layout ───── */
 .page {
   min-height: 100dvh;
-  background: var(--bg);
+  background: transparent;
   padding-bottom: calc(var(--nav-h) + 24px);
-  position: relative;
-  z-index: 1;
-}
-
-.stars-bg {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
-}
-
-.page-wrap {
   position: relative;
   z-index: 1;
 }
@@ -192,7 +201,113 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 8px 12px;
+  padding: 9px 13px;
+}
+
+/* ════════ السماء الموحدة ════════ */
+.sky {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.sky-night, .sky-day {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.5s ease;
+}
+
+[data-theme="dark"] .sky-night, :root:not([data-theme="light"]) .sky-night { opacity: 1; }
+[data-theme="dark"] .sky-day,   :root:not([data-theme="light"]) .sky-day   { opacity: 0; }
+[data-theme="light"] .sky-night { opacity: 0; }
+[data-theme="light"] .sky-day   { opacity: 1; }
+
+.sky-star {
+  position: absolute;
+  border-radius: 9999px;
+  background: white;
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+.sky-moon {
+  position: absolute;
+  top: 36px;
+  left: 22px;
+  width: 72px;
+  height: 72px;
+  animation: moonFloat 7s ease-in-out infinite;
+}
+
+/* الشهاب */
+.sky-shooting {
+  position: absolute;
+  top: 12%;
+  right: -10%;
+  width: 110px;
+  height: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(270deg, rgba(255,255,255,0), #FFFFFF 60%, #93C5FD);
+  transform: rotate(200deg);
+  opacity: 0;
+  animation: shoot 2.6s ease-out 1;
+}
+
+@keyframes shoot {
+  0%   { opacity: 0; transform: rotate(200deg) translateX(0); }
+  8%   { opacity: 0.9; }
+  60%  { opacity: 0.6; }
+  100% { opacity: 0; transform: rotate(200deg) translateX(85vw); }
+}
+
+@keyframes moonFloat {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-6px); }
+}
+
+/* النهاري */
+.sky-sun {
+  position: absolute;
+  top: 28px;
+  left: 16px;
+  width: 92px;
+  height: 92px;
+  animation: sunPulse 6s ease-in-out infinite;
+}
+
+@keyframes sunPulse {
+  0%,100% { transform: scale(1); }
+  50%     { transform: scale(1.05); }
+}
+
+.sky-cloud {
+  position: absolute;
+  height: 22px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.85);
+  box-shadow: 18px -10px 0 2px rgba(255,255,255,0.8), -16px -7px 0 0 rgba(255,255,255,0.75);
+  filter: blur(0.5px);
+}
+.sky-cloud-1 { width: 70px; top: 9%;  animation: drift 55s linear infinite; }
+.sky-cloud-2 { width: 52px; top: 19%; animation: drift 75s linear infinite; animation-delay: -30s; }
+.sky-cloud-3 { width: 88px; top: 31%; animation: drift 95s linear infinite; animation-delay: -60s; }
+
+@keyframes drift {
+  from { right: -120px; }
+  to   { right: 110vw; }
+}
+
+.sky-flock {
+  position: absolute;
+  top: 14%;
+  width: 130px;
+  animation: flockDrift 70s linear infinite;
+}
+
+@keyframes flockDrift {
+  from { right: -140px; }
+  to   { right: 105vw; }
 }
 
 /* ───── Animations ───── */
@@ -218,40 +333,6 @@ body {
   0%,100% { opacity: 0.2; }
   50%     { opacity: 0.8; }
 }
-
-@keyframes shooting-star {
-  0%   { transform: translateX(0) translateY(0) rotate(-35deg); opacity: 1; width: 3px; }
-  70%  { opacity: 0.6; }
-  100% { transform: translateX(-280px) translateY(180px) rotate(-35deg); opacity: 0; width: 80px; }
-}
-.shooting-star {
-  position: absolute;
-  height: 2px;
-  background: linear-gradient(90deg, white, transparent);
-  border-radius: 2px;
-  animation: shooting-star 1.2s ease-out forwards;
-}
-
-@keyframes moon-float {
-  0%,100% { transform: translateY(0); }
-  50%     { transform: translateY(-6px); }
-}
-.moon-float { animation: moon-float 6s ease-in-out infinite; }
-
-@keyframes sun-pulse {
-  0%,100% { box-shadow: 0 0 20px rgba(245,158,11,0.4), 0 0 40px rgba(245,158,11,0.2); }
-  50%     { box-shadow: 0 0 35px rgba(245,158,11,0.6), 0 0 70px rgba(245,158,11,0.3); }
-}
-.sun-pulse { animation: sun-pulse 3s ease-in-out infinite; }
-
-@keyframes bird-fly {
-  0%   { transform: translateX(0) translateY(0) scaleX(1); }
-  40%  { transform: translateX(-40px) translateY(-12px) scaleX(1); }
-  50%  { transform: translateX(-48px) translateY(-14px) scaleX(-1); }
-  90%  { transform: translateX(-8px) translateY(-3px) scaleX(-1); }
-  100% { transform: translateX(0) translateY(0) scaleX(1); }
-}
-.bird-fly { animation: bird-fly 8s ease-in-out infinite; }
 
 @keyframes fadeIn {
   from { opacity: 0; }

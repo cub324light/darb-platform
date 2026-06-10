@@ -1,39 +1,49 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
-import Stars from "@/components/Stars";
 import { ERROR_CATEGORIES } from "@/lib/constants";
-import type { VaultError, SubjectId } from "@/lib/types";
-
-const SUBJECTS: SubjectId[] = ["فيزياء", "رياضيات", "كيمياء", "أحياء"];
-
-const SUBJECT_COLORS: Record<SubjectId, string> = {
-  فيزياء:  "#2563EB",
-  رياضيات: "#8B5CF6",
-  كيمياء:  "#10B981",
-  أحياء:   "#F59E0B",
-};
+import { getTrack, subjectColor, type Track } from "@/lib/tracks";
+import { loadUser, loadList, saveList } from "@/lib/storage";
+import type { VaultError } from "@/lib/types";
 
 const FREE_LIMIT = 20;
+const VAULT_KEY = "darb_vault";
 
 export default function VaultPage() {
-  const [errors, setErrors]         = useState<VaultError[]>([]);
-  const [showAdd, setShowAdd]       = useState(false);
-  const [filterSubject, setFilterSubject] = useState<SubjectId | "الكل">("الكل");
-  const [filterCat, setFilterCat]   = useState<string>("الكل");
+  const [track, setTrack] = useState<Track | null>(null);
+  const [errors, setErrors] = useState<VaultError[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [showAdd, setShowAdd] = useState(false);
+  const [filterSubject, setFilterSubject] = useState<string>("الكل");
+  const [filterCat, setFilterCat] = useState<string>("الكل");
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [newQ, setNewQ]             = useState("");
-  const [newSubject, setNewSubject] = useState<SubjectId>("فيزياء");
-  const [newCat, setNewCat]         = useState<string>(ERROR_CATEGORIES[0]);
-  const [newNote, setNewNote]       = useState("");
+  const [newQ, setNewQ] = useState("");
+  const [newSubject, setNewSubject] = useState("");
+  const [newCat, setNewCat] = useState<string>(ERROR_CATEGORIES[0]);
+  const [newNote, setNewNote] = useState("");
+
+  useEffect(() => {
+    const t = getTrack(loadUser()?.track);
+    setTrack(t);
+    setNewSubject(t.subjects[0]?.name ?? "");
+    setErrors(loadList<VaultError>(VAULT_KEY));
+    setLoaded(true);
+  }, []);
+
+  /* حفظ تلقائي عند أي تغيير */
+  useEffect(() => {
+    if (loaded) saveList(VAULT_KEY, errors);
+  }, [errors, loaded]);
 
   const isPlanFree = true;
-  const atLimit    = isPlanFree && errors.length >= FREE_LIMIT;
+  const atLimit = isPlanFree && errors.length >= FREE_LIMIT;
+
+  const subjects = track?.subjects.map((s) => s.name) ?? [];
 
   const filtered = errors.filter((e) => {
     if (filterSubject !== "الكل" && e.subject !== filterSubject) return false;
-    if (filterCat     !== "الكل" && e.category !== filterCat)   return false;
+    if (filterCat !== "الكل" && e.category !== filterCat) return false;
     return true;
   });
 
@@ -48,13 +58,13 @@ export default function VaultPage() {
   };
 
   const categoryCount = (cat: string) => errors.filter((e) => e.category === cat).length;
+  const colorOf = (subj: string) => (track ? subjectColor(track, subj) : "#2563EB");
 
   return (
-    <div className="page" style={{ background: "var(--bg)" }}>
-      <Stars />
+    <div className="page">
 
       {/* ── Header ── */}
-      <div className="relative z-10 page-header">
+      <div className="page-header">
         <h1 className="title-md text-[var(--text)]">خزنة الأخطاء 🔒</h1>
         <div className="stat-chip">
           <span className="font-mono-nums font-bold text-base text-[var(--gold)]">{errors.length}</span>
@@ -62,7 +72,7 @@ export default function VaultPage() {
         </div>
       </div>
 
-      {/* ── Limit bar ── */}
+      {/* ── شريط الحد ── */}
       {isPlanFree && (
         <div className="px-5 mb-7">
           <div className="flex justify-between mb-2">
@@ -85,8 +95,8 @@ export default function VaultPage() {
         </div>
       )}
 
-      {/* ── Category pills ── */}
-      <div className="px-5 mb-8">
+      {/* ── تصنيفات الخطأ ── */}
+      <div className="px-5 mb-7">
         <p className="text-base font-black text-[var(--text)] mb-4">تصنيف الخطأ</p>
         <div className="flex gap-3 overflow-x-auto pb-2">
           {["الكل", ...ERROR_CATEGORIES].map((cat) => {
@@ -94,9 +104,9 @@ export default function VaultPage() {
             const active = filterCat === cat;
             return (
               <button key={cat} onClick={() => setFilterCat(cat)}
-                className="flex-shrink-0 px-6 py-3.5 rounded-2xl text-base font-bold transition"
+                className="flex-shrink-0 px-6 py-3.5 rounded-2xl text-base font-bold transition min-h-[52px]"
                 style={active
-                  ? { background: "#F59E0B", color: "#0A0A0F" }
+                  ? { background: "#F59E0B", color: "var(--btn-text-on-gold)" }
                   : { background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text-dim)" }}>
                 {cat}{count > 0 && <span className="mr-1 text-sm opacity-80">({count})</span>}
               </button>
@@ -105,16 +115,16 @@ export default function VaultPage() {
         </div>
       </div>
 
-      {/* ── Subject tabs ── */}
-      <div className="px-5 mb-8">
+      {/* ── مواد مسارك ── */}
+      <div className="px-5 mb-7">
         <p className="text-base font-black text-[var(--text)] mb-4">المادة</p>
         <div className="flex gap-3 overflow-x-auto pb-2">
-          {(["الكل", ...SUBJECTS] as (SubjectId | "الكل")[]).map((s) => {
+          {["الكل", ...subjects].map((s) => {
             const active = filterSubject === s;
-            const color = s === "الكل" ? "#64748B" : SUBJECT_COLORS[s as SubjectId];
+            const color = s === "الكل" ? "#64748B" : colorOf(s);
             return (
               <button key={s} onClick={() => setFilterSubject(s)}
-                className="flex-shrink-0 px-6 py-3.5 rounded-2xl text-base font-bold transition"
+                className="flex-shrink-0 px-6 py-3.5 rounded-2xl text-base font-bold transition min-h-[52px]"
                 style={active
                   ? { background: color, color: "#fff" }
                   : { background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}>
@@ -125,31 +135,83 @@ export default function VaultPage() {
         </div>
       </div>
 
-      {/* ── Cards list ── */}
+      {/* ── زر الإضافة — فوق القائمة وبمتناول الإبهام ── */}
+      {!atLimit && (
+        <div className="px-5 mb-6">
+          {!showAdd ? (
+            <button onClick={() => setShowAdd(true)}
+              className="w-full py-5 rounded-2xl text-lg font-bold text-[var(--text-dim)] transition min-h-[60px]"
+              style={{ background: "var(--surface)", border: "1.5px dashed var(--border)" }}>
+              + أضف خطأً جديداً
+            </button>
+          ) : (
+            <div className="rounded-2xl p-5 flex flex-col gap-4"
+              style={{ background: "var(--surface)", border: "1.5px solid rgba(245,158,11,0.35)" }}>
+              <p className="font-bold text-base text-[var(--gold)]">خطأ جديد في الخزنة</p>
+
+              <textarea value={newQ} onChange={(e) => setNewQ(e.target.value)} rows={3}
+                placeholder="السؤال أو المفهوم الذي أخطأت فيه..."
+                className="w-full rounded-2xl px-4 py-3 text-base text-[var(--text)] placeholder-[var(--text-muted)] resize-none outline-none transition-colors"
+                style={{ background: "var(--surface2)", border: "1px solid var(--border)" }} />
+
+              <div className="grid grid-cols-2 gap-3">
+                <select value={newSubject} onChange={(e) => setNewSubject(e.target.value)}
+                  className="rounded-2xl px-4 py-3.5 text-base text-[var(--text)] outline-none min-h-[52px]"
+                  style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                  {subjects.map((s) => <option key={s}>{s}</option>)}
+                </select>
+                <select value={newCat} onChange={(e) => setNewCat(e.target.value)}
+                  className="rounded-2xl px-4 py-3.5 text-base text-[var(--text)] outline-none min-h-[52px]"
+                  style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                  {ERROR_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                </select>
+              </div>
+
+              <input value={newNote} onChange={(e) => setNewNote(e.target.value)}
+                placeholder="ملاحظة: ليش غلطت؟ (اختياري)"
+                className="rounded-2xl px-4 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none min-h-[52px]"
+                style={{ background: "var(--surface2)", border: "1px solid var(--border)" }} />
+
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={addError}
+                  className="py-4 rounded-2xl font-bold text-base transition min-h-[54px]"
+                  style={{ background: "#F59E0B", color: "var(--btn-text-on-gold)" }}>
+                  أضف للخزنة
+                </button>
+                <button onClick={() => setShowAdd(false)}
+                  className="py-4 rounded-2xl text-base font-medium text-[var(--text-muted)] transition min-h-[54px]"
+                  style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                  إلغاء
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── القائمة ── */}
       <div className="px-5 flex flex-col gap-5">
 
-        {filtered.length === 0 && (
-          <div className="text-center py-16">
+        {loaded && filtered.length === 0 && (
+          <div className="text-center py-14">
             <p className="text-5xl mb-4">🔒</p>
             <p className="title-md text-[var(--text)] mb-2">الخزنة فارغة</p>
-            <p className="body-sm">هذا جيد! استمر.</p>
+            <p className="body-sm">أول ما تغلط في سؤال، احفظه هنا — عشان ما تغلط فيه مرتين.</p>
           </div>
         )}
 
         {filtered.map((error) => {
-          const color     = SUBJECT_COLORS[error.subject];
+          const color = colorOf(error.subject);
           const isExpanded = expandedId === error.id;
-          const daysAgo   = Math.round((Date.now() - error.createdAt) / 86400000);
+          const daysAgo = Math.round((Date.now() - error.createdAt) / 86400000);
 
           return (
             <div key={error.id}
               className="rounded-2xl overflow-hidden transition-all"
               style={{ background: "var(--surface)", border: `1.5px solid ${isExpanded ? color + "50" : "var(--border)"}` }}>
 
-              {/* Card header */}
               <div className="p-6 cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : error.id)}>
                 <div className="flex items-start gap-4">
-                  {/* Color dot */}
                   <div className="w-3 h-3 rounded-full mt-2 flex-shrink-0" style={{ background: color }} />
 
                   <div className="flex-1 min-w-0">
@@ -179,7 +241,6 @@ export default function VaultPage() {
                 </div>
               </div>
 
-              {/* Expanded */}
               {isExpanded && (
                 <div className="px-6 pb-6 border-t border-[var(--border)]">
                   <div className="pt-5 flex flex-col gap-4">
@@ -191,12 +252,12 @@ export default function VaultPage() {
                     )}
                     <div className="grid grid-cols-2 gap-3">
                       <button onClick={() => setErrors((p) => p.map((e) => e.id === error.id ? { ...e, reviewCount: e.reviewCount + 1 } : e))}
-                        className="py-4 rounded-2xl text-base font-black text-white transition"
+                        className="py-4 rounded-2xl text-base font-black text-white transition min-h-[56px]"
                         style={{ background: color }}>
                         راجعته ✓
                       </button>
                       <button onClick={() => setErrors((p) => p.filter((e) => e.id !== error.id))}
-                        className="py-4 rounded-2xl text-base font-black transition"
+                        className="py-4 rounded-2xl text-base font-black transition min-h-[56px]"
                         style={{ background: "var(--surface2)", border: "1px solid rgba(239,68,68,0.3)", color: "#EF4444" }}>
                         حذف
                       </button>
@@ -209,60 +270,7 @@ export default function VaultPage() {
         })}
       </div>
 
-      {/* ── Add button / form ── */}
-      {!atLimit && (
-        <div className="px-5 py-5">
-          {!showAdd ? (
-            <button onClick={() => setShowAdd(true)}
-              className="w-full py-4 rounded-2xl text-base font-bold text-[var(--text-dim)] transition"
-              style={{ background: "var(--surface)", border: "1.5px dashed var(--border)" }}>
-              + أضف خطأً جديداً
-            </button>
-          ) : (
-            <div className="rounded-2xl p-5 flex flex-col gap-4"
-              style={{ background: "var(--surface)", border: "1.5px solid rgba(245,158,11,0.35)" }}>
-              <p className="font-bold text-base text-[var(--gold)]">خطأ جديد في الخزنة</p>
-
-              <textarea value={newQ} onChange={(e) => setNewQ(e.target.value)} rows={3}
-                placeholder="السؤال أو المفهوم الذي أخطأت فيه..."
-                className="w-full rounded-2xl px-4 py-3 text-sm text-[var(--text)] placeholder-[var(--text-muted)] resize-none outline-none transition-colors"
-                style={{ background: "var(--surface2)", border: "1px solid var(--border)" }} />
-
-              <div className="grid grid-cols-2 gap-3">
-                <select value={newSubject} onChange={(e) => setNewSubject(e.target.value as SubjectId)}
-                  className="rounded-2xl px-4 py-3 text-sm text-[var(--text)] outline-none"
-                  style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-                  {SUBJECTS.map((s) => <option key={s}>{s}</option>)}
-                </select>
-                <select value={newCat} onChange={(e) => setNewCat(e.target.value)}
-                  className="rounded-2xl px-4 py-3 text-sm text-[var(--text)] outline-none"
-                  style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-                  {ERROR_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
-                </select>
-              </div>
-
-              <input value={newNote} onChange={(e) => setNewNote(e.target.value)}
-                placeholder="ملاحظة: ليش غلطت؟ (اختياري)"
-                className="rounded-2xl px-4 py-3 text-sm text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
-                style={{ background: "var(--surface2)", border: "1px solid var(--border)" }} />
-
-              <div className="grid grid-cols-2 gap-3">
-                <button onClick={addError}
-                  className="py-3 rounded-2xl font-bold text-base transition"
-                  style={{ background: "#F59E0B", color: "#0A0A0F" }}>
-                  أضف للخزنة
-                </button>
-                <button onClick={() => setShowAdd(false)}
-                  className="py-3 rounded-2xl text-base font-medium text-[var(--text-muted)] transition"
-                  style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-                  إلغاء
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
+      <div className="h-6" />
       <BottomNav />
     </div>
   );

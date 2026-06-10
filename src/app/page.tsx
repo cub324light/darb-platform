@@ -1,7 +1,6 @@
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Stars from "@/components/Stars";
 
 export default function RootPage() {
   const router = useRouter();
@@ -21,13 +20,15 @@ export default function RootPage() {
   }, [router]);
 
   return (
-    <div className="min-h-dvh flex items-center justify-center" style={{ background: "var(--bg)" }}>
-      <Stars />
-      <div className="page-wrap text-center">
-        <p className="font-black text-5xl" style={{ color: "var(--blue)" }}>درب</p>
-        <p className="text-sm mt-2 font-semibold" style={{ color: "var(--text-muted)", letterSpacing: "0.1em" }}>
-          YOUR PATH TO EXCELLENCE
+    <div className="min-h-dvh flex items-center justify-center">
+      <div className="text-center">
+        <p
+          className="font-black text-5xl mb-2 text-[var(--blue-light)]"
+          style={{ filter: "drop-shadow(0 0 22px rgba(37,99,235,0.4))" }}
+        >
+          درب
         </p>
+        <p className="text-[var(--text-muted)] text-sm font-medium tracking-widest">YOUR PATH TO EXCELLENCE</p>
       </div>
     </div>
   );

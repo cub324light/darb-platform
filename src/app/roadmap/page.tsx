@@ -1,26 +1,23 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import BottomNav from "@/components/BottomNav";
-import Stars from "@/components/Stars";
 import { RAKAN_SCHEDULE, ROADMAP_STAGES } from "@/lib/constants";
+import { getTrack, subjectColor, subjectIcon, type Track } from "@/lib/tracks";
+import { loadUser, loadList, saveList } from "@/lib/storage";
 
-type SubjectKey = keyof typeof RAKAN_SCHEDULE;
+/* درس مخصص يضيفه الطالب (لمسارات قدرات و CPC) */
+interface CustomLesson {
+  id: string;
+  subject: string;
+  title: string;
+}
 
-const SUBJECT_COLORS: Record<SubjectKey, string> = {
-  فيزياء: "#2563EB",
-  رياضيات: "#8B5CF6",
-  كيمياء: "#10B981",
-  أحياء: "#F59E0B",
-};
+const DONE_KEY = "darb_done_lessons";
+const CUSTOM_KEY = "darb_lessons";
 
-const SUBJECT_ICONS: Record<SubjectKey, string> = {
-  فيزياء: "⚛️",
-  رياضيات: "📐",
-  كيمياء: "🧪",
-  أحياء: "🌿",
-};
+type TahsiliSubject = keyof typeof RAKAN_SCHEDULE;
 
-const SUBJECT_TOTALS: Record<SubjectKey, { hours: number; pages: string }> = {
+const TAHSILI_TOTALS: Record<TahsiliSubject, { hours: number; pages: string }> = {
   فيزياء: { hours: 30, pages: "8-90" },
   رياضيات: { hours: 42, pages: "92-157" },
   كيمياء: { hours: 30, pages: "180-263" },
@@ -28,39 +25,61 @@ const SUBJECT_TOTALS: Record<SubjectKey, { hours: number; pages: string }> = {
 };
 
 export default function RoadmapPage() {
-  const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
-  const [selected, setSelected] = useState<SubjectKey | null>(null);
+  const [track, setTrack] = useState<Track | null>(null);
+  const [done, setDone] = useState<string[]>([]);
+  const [custom, setCustom] = useState<CustomLesson[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [newLesson, setNewLesson] = useState("");
 
-  const subjects = Object.keys(RAKAN_SCHEDULE) as SubjectKey[];
+  useEffect(() => {
+    setTrack(getTrack(loadUser()?.track));
+    setDone(loadList<string>(DONE_KEY));
+    setCustom(loadList<CustomLesson>(CUSTOM_KEY));
+    setLoaded(true);
+  }, []);
 
-  /* ── حساب التقدم الكلي ── */
-  const totalLessons = subjects.reduce((a, s) => a + RAKAN_SCHEDULE[s].length, 0);
-  const totalDone    = subjects.reduce((a, s) =>
-    a + RAKAN_SCHEDULE[s].filter(l => completedLessons.has(`${s}-${l.lesson}`)).length, 0);
-  const overallPct   = Math.round((totalDone / totalLessons) * 100);
-  const currentStage = ROADMAP_STAGES.find(
-    s => overallPct >= s.range[0] && overallPct < s.range[1]
-  ) ?? ROADMAP_STAGES[ROADMAP_STAGES.length - 1];
+  useEffect(() => { if (loaded) saveList(DONE_KEY, done); }, [done, loaded]);
+  useEffect(() => { if (loaded) saveList(CUSTOM_KEY, custom); }, [custom, loaded]);
 
-  const toggleLesson = (subj: SubjectKey, lesson: string) => {
-    const key = `${subj}-${lesson}`;
-    setCompletedLessons(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key); else next.add(key);
-      return next;
-    });
+  if (!track) return <div className="min-h-dvh" />;
+
+  const isTahsili = track.id === "تحصيلي";
+  const doneSet = new Set(done);
+
+  const toggle = (key: string) =>
+    setDone((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+
+  /* ── دروس كل مادة حسب المسار ── */
+  const lessonsOf = (subj: string): { key: string; title: string; meta?: string; diff?: string }[] => {
+    if (isTahsili && subj in RAKAN_SCHEDULE) {
+      return RAKAN_SCHEDULE[subj as TahsiliSubject].map((l) => ({
+        key: `${subj}-${l.lesson}`,
+        title: l.lesson,
+        meta: `اليوم ${l.day} · ${l.hours} ساعة · ص ${l.pages}`,
+        diff: l.difficulty,
+      }));
+    }
+    return custom
+      .filter((c) => c.subject === subj)
+      .map((c) => ({ key: `custom-${c.id}`, title: c.title }));
   };
 
-  /* ══════════════════════════════════════
-     الشريط الكلي — مشترك بين الواجهتين
-  ══════════════════════════════════════ */
+  /* التقدم الكلي */
+  const allLessons = track.subjects.flatMap((s) => lessonsOf(s.name));
+  const totalDone = allLessons.filter((l) => doneSet.has(l.key)).length;
+  const overallPct = allLessons.length === 0 ? 0 : Math.round((totalDone / allLessons.length) * 100);
+  const currentStage =
+    ROADMAP_STAGES.find((s) => overallPct >= s.range[0] && overallPct < s.range[1]) ??
+    ROADMAP_STAGES[ROADMAP_STAGES.length - 1];
+
   const OverallBar = () => (
     <div className="px-5 mb-6">
       <div className="rounded-3xl p-6"
         style={{ background: "linear-gradient(135deg,rgba(37,99,235,0.15),rgba(37,99,235,0.05))", border: "1.5px solid rgba(37,99,235,0.3)" }}>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-xs font-bold text-[var(--text-muted)] mb-1">التقدم الكلي للجدول</p>
+            <p className="text-xs font-bold text-[var(--text-muted)] mb-1">التقدم الكلي — {track.title}</p>
             <p className="text-xl font-black text-[var(--text)]">
               {currentStage.icon} مرحلة {currentStage.name}
             </p>
@@ -72,7 +91,7 @@ export default function RoadmapPage() {
             style={{ width: overallPct + "%", background: "linear-gradient(90deg,#1D4ED8,#3B82F6)" }} />
         </div>
         <div className="flex justify-between">
-          {ROADMAP_STAGES.map(s => (
+          {ROADMAP_STAGES.map((s) => (
             <div key={s.id} className="flex flex-col items-center gap-1">
               <span className="text-base">{s.icon}</span>
               <span className={`text-xs font-bold ${s.id === currentStage.id ? "text-[var(--blue-light)]" : "text-[var(--text-muted)]"}`}>
@@ -82,40 +101,44 @@ export default function RoadmapPage() {
           ))}
         </div>
         <p className="text-sm text-[var(--text-muted)] mt-3 text-center">
-          {totalDone} درس منجز من أصل {totalLessons}
+          {allLessons.length === 0
+            ? "أضف دروسك وابدأ التتبع"
+            : `${totalDone} درس منجز من أصل ${allLessons.length}`}
         </p>
       </div>
     </div>
   );
 
-  /* ══════════════════════════════════════
-     واجهة الدروس عند اختيار مادة
-  ══════════════════════════════════════ */
+  /* ══════ واجهة دروس المادة المختارة ══════ */
   if (selected) {
-    const lessons  = RAKAN_SCHEDULE[selected];
-    const color    = SUBJECT_COLORS[selected];
-    const totals   = SUBJECT_TOTALS[selected];
-    const done     = lessons.filter(l => completedLessons.has(`${selected}-${l.lesson}`)).length;
-    const pct      = Math.round((done / lessons.length) * 100);
+    const color = subjectColor(track, selected);
+    const lessons = lessonsOf(selected);
+    const doneCount = lessons.filter((l) => doneSet.has(l.key)).length;
+    const pct = lessons.length === 0 ? 0 : Math.round((doneCount / lessons.length) * 100);
+    const totals = isTahsili ? TAHSILI_TOTALS[selected as TahsiliSubject] : null;
+
+    const addCustom = () => {
+      if (!newLesson.trim()) return;
+      setCustom((p) => [...p, { id: Date.now().toString(), subject: selected, title: newLesson.trim() }]);
+      setNewLesson("");
+    };
 
     return (
-      <div className="min-h-dvh bg-[var(--bg)] pb-nav">
-        {/* Header */}
+      <div className="min-h-dvh pb-nav relative z-[1]">
         <div className="page-header">
           <button onClick={() => setSelected(null)}
-            className="text-base font-bold text-[var(--text-muted)]">← رجوع</button>
+            className="text-base font-bold text-[var(--text-muted)] min-h-[44px]">← رجوع</button>
           <h1 className="font-black text-xl text-[var(--text)]">
-            {SUBJECT_ICONS[selected]} {selected}
+            {subjectIcon(track, selected)} {selected}
           </h1>
           <div className="stat-chip">
-            <span className="font-mono-nums font-bold text-base" style={{ color }}>{done}/{lessons.length}</span>
+            <span className="font-mono-nums font-bold text-base" style={{ color }}>{doneCount}/{lessons.length}</span>
           </div>
         </div>
 
-        {/* الشريط الكلي */}
         <OverallBar />
 
-        {/* تقدم هذه المادة */}
+        {/* تقدم المادة */}
         <div className="px-5 mb-6">
           <div className="rounded-2xl p-5"
             style={{ background: color + "12", border: `1.5px solid ${color}33` }}>
@@ -127,53 +150,90 @@ export default function RoadmapPage() {
               <div className="h-full rounded-full transition-all duration-500"
                 style={{ width: pct + "%", background: color }} />
             </div>
-            <div className="flex gap-4">
+            <div className="flex gap-4 flex-wrap">
               <span className="text-sm text-[var(--text-muted)]">📚 {lessons.length} درس</span>
-              <span className="text-sm text-[var(--text-muted)]">⏱ {totals.hours} ساعة</span>
-              <span className="text-sm text-[var(--text-muted)]">📄 ص {totals.pages}</span>
+              {totals && <span className="text-sm text-[var(--text-muted)]">⏱ {totals.hours} ساعة</span>}
+              {totals && <span className="text-sm text-[var(--text-muted)]">📄 ص {totals.pages}</span>}
             </div>
           </div>
         </div>
 
+        {/* إضافة درس — للمسارات غير التحصيلي */}
+        {!isTahsili && (
+          <div className="px-5 mb-6 flex gap-2.5">
+            <input
+              value={newLesson}
+              onChange={(e) => setNewLesson(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addCustom()}
+              placeholder={`درس جديد في ${selected}...`}
+              className="flex-1 min-w-0 rounded-2xl px-4 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none min-h-[54px]"
+              style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}
+            />
+            <button onClick={addCustom}
+              className="px-6 rounded-2xl font-black text-white text-lg min-h-[54px]"
+              style={{ background: color }}>
+              +
+            </button>
+          </div>
+        )}
+
         {/* قائمة الدروس */}
         <div className="px-5 flex flex-col gap-3">
-          {lessons.map((lesson, idx) => {
-            const key  = `${selected}-${lesson.lesson}`;
-            const isDone = completedLessons.has(key);
-            const diffColor = lesson.difficulty === "سهل" ? "#10B981"
-              : lesson.difficulty === "متوسط" ? "#F59E0B" : "#EF4444";
+          {lessons.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-5xl mb-4">🗺️</p>
+              <p className="title-md text-[var(--text)] mb-2">ما فيه دروس بعد</p>
+              <p className="body-sm">أضف دروسك فوق وتابع تقدمك درساً بدرس.</p>
+            </div>
+          )}
+
+          {lessons.map((lesson) => {
+            const isDone = doneSet.has(lesson.key);
+            const diffColor = lesson.diff === "سهل" ? "#10B981"
+              : lesson.diff === "متوسط" ? "#F59E0B" : "#EF4444";
 
             return (
-              <div key={idx}
+              <div key={lesson.key}
                 className="rounded-2xl p-5 cursor-pointer transition active:scale-[0.98]"
                 style={{
                   background: isDone ? color + "10" : "var(--surface)",
                   border: `1.5px solid ${isDone ? color + "40" : "var(--border)"}`,
+                  minHeight: "76px",
                 }}
-                onClick={() => toggleLesson(selected, lesson.lesson)}>
+                onClick={() => toggle(lesson.key)}>
                 <div className="flex items-center gap-4">
-                  {/* Checkbox */}
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={isDone
-                      ? { background: color }
-                      : { border: "2px solid var(--border)" }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={isDone ? { background: color } : { border: "2px solid var(--border)" }}>
                     {isDone && <span className="text-white text-lg font-black">✓</span>}
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <p className={`font-black text-base leading-snug ${isDone ? "line-through text-[var(--text-muted)]" : "text-[var(--text)]"}`}>
-                      {lesson.lesson}
+                      {lesson.title}
                     </p>
-                    <div className="flex items-center gap-4 mt-2">
-                      <span className="text-base font-black" style={{ color }}>اليوم {lesson.day}</span>
-                      <span className="text-sm text-[var(--text-muted)]">{lesson.hours} ساعة</span>
-                      <span className="text-sm text-[var(--text-muted)]">ص {lesson.pages}</span>
-                    </div>
+                    {lesson.meta && (
+                      <p className="text-sm text-[var(--text-muted)] mt-1.5">{lesson.meta}</p>
+                    )}
                   </div>
 
-                  <span className="text-sm font-bold flex-shrink-0" style={{ color: diffColor }}>
-                    {lesson.difficulty}
-                  </span>
+                  {lesson.diff && (
+                    <span className="text-sm font-bold flex-shrink-0" style={{ color: diffColor }}>
+                      {lesson.diff}
+                    </span>
+                  )}
+                  {!isTahsili && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCustom((p) => p.filter((c) => `custom-${c.id}` !== lesson.key));
+                        setDone((p) => p.filter((k) => k !== lesson.key));
+                      }}
+                      className="text-[var(--text-muted)] text-lg px-2 min-h-[44px]"
+                      aria-label="حذف الدرس"
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -186,47 +246,41 @@ export default function RoadmapPage() {
     );
   }
 
-  /* ══════════════════════════════════════
-     الواجهة الرئيسية — ٤ مواد
-  ══════════════════════════════════════ */
+  /* ══════ الواجهة الرئيسية — مواد المسار ══════ */
   return (
-    <div className="min-h-dvh pb-nav" style={{ background: "var(--bg)" }}>
-      <Stars />
-      <div className="page-wrap">
-      {/* Header */}
+    <div className="min-h-dvh pb-nav relative z-[1]">
       <div className="page-header">
         <h1 className="font-black text-xl text-[var(--text)]">خريطة الطريق</h1>
-        <span className="text-sm font-bold text-[var(--text-muted)] bg-[var(--surface)] border border-[var(--border)] px-4 py-2 rounded-xl">الجدول</span>
+        <span className="text-sm font-bold text-[var(--text-muted)] bg-[var(--surface)] border border-[var(--border)] px-4 py-2 rounded-xl">
+          {track.icon} {track.title}
+        </span>
       </div>
 
-      {/* الشريط الكلي */}
       <OverallBar />
 
-      {/* ٤ مواد */}
       <div className="px-5 grid grid-cols-2 gap-4">
-        {subjects.map(subj => {
-          const lessons = RAKAN_SCHEDULE[subj];
-          const done    = lessons.filter(l => completedLessons.has(`${subj}-${l.lesson}`)).length;
-          const pct     = Math.round((done / lessons.length) * 100);
-          const color   = SUBJECT_COLORS[subj];
+        {track.subjects.map((s) => {
+          const lessons = lessonsOf(s.name);
+          const doneCount = lessons.filter((l) => doneSet.has(l.key)).length;
+          const pct = lessons.length === 0 ? 0 : Math.round((doneCount / lessons.length) * 100);
 
           return (
-            <button key={subj} onClick={() => setSelected(subj)}
+            <button key={s.name} onClick={() => setSelected(s.name)}
               className="rounded-3xl p-6 flex flex-col gap-4 transition active:scale-[0.96] text-right"
-              style={{ background: color + "12", border: `2px solid ${color}30` }}>
+              style={{ background: s.color + "12", border: `2px solid ${s.color}30`, minHeight: "140px" }}>
               <div className="flex items-center gap-3">
-                <span className="text-3xl">{SUBJECT_ICONS[subj]}</span>
-                <p className="font-black text-xl text-[var(--text)]">{subj}</p>
+                <span className="text-3xl">{s.icon}</span>
+                <p className="font-black text-xl text-[var(--text)]">{s.name}</p>
               </div>
 
               <div>
                 <div className="h-2.5 bg-[var(--border)] rounded-full overflow-hidden mb-2">
                   <div className="h-full rounded-full transition-all duration-500"
-                    style={{ width: pct + "%", background: color }} />
+                    style={{ width: pct + "%", background: s.color }} />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="font-mono-nums font-black text-lg" style={{ color }}>{pct}%</span>
-                  <span className="text-sm text-[var(--text-muted)] font-semibold">{done}/{lessons.length} درس</span>
+                  <span className="font-mono-nums font-black text-lg" style={{ color: s.color }}>{pct}%</span>
+                  <span className="text-sm text-[var(--text-muted)] font-semibold">{doneCount}/{lessons.length} درس</span>
                 </div>
               </div>
             </button>
@@ -236,7 +290,6 @@ export default function RoadmapPage() {
 
       <div className="h-6" />
       <BottomNav />
-      </div>
     </div>
   );
 }
