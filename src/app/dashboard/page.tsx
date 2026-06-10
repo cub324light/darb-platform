@@ -61,16 +61,16 @@ export default function DashboardPage() {
     <div className="page">
       {/* ── هيدر السماء ── */}
       <div className="relative overflow-hidden" style={{ background: "var(--sky-grad)", paddingBottom: "8px" }}>
-        <div className="relative z-10 px-5 pt-12 pb-2">
+        <div className="relative z-10 px-5 pb-2" style={{ paddingTop: "calc(40px + env(safe-area-inset-top))" }}>
           {/* الشريط العلوي: البروفايل والثيم يسار — الترحيب يمين */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <p className="text-[var(--text-muted)] text-sm">{greeting}</p>
-              <p className="font-black text-2xl text-[var(--text)] mt-0.5">
+          <div className="flex items-center justify-between mb-6 gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-[var(--text-muted)] text-sm truncate">{greeting}</p>
+              <p className="font-black text-xl text-[var(--text)] mt-0.5 truncate">
                 أهلاً، {user?.name ?? "..."}
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <ThemeToggle />
               <ProfileButton />
             </div>
@@ -85,7 +85,7 @@ export default function DashboardPage() {
             </div>
             <div className="stat-chip">
               <span className="text-base">🪙</span>
-              <span className="font-mono-nums font-bold text-base text-[var(--blue-light)]">{silver}</span>
+              <span className="font-mono-nums font-bold text-base text-[var(--accent-light)]">{silver}</span>
               <span className="body-sm">Silver</span>
             </div>
           </div>
@@ -99,14 +99,14 @@ export default function DashboardPage() {
         <div
           className="rounded-3xl p-5"
           style={{
-            background: "linear-gradient(135deg, rgba(37,99,235,0.16), rgba(37,99,235,0.05))",
-            border: "1.5px solid rgba(37,99,235,0.32)",
+            background: "linear-gradient(135deg, color-mix(in srgb, var(--accent) 16%, transparent), color-mix(in srgb, var(--accent) 5%, transparent)), var(--surface), var(--surface)",
+            border: "1.5px solid color-mix(in srgb, var(--accent) 32%, transparent)",
           }}
         >
           <div className="flex items-center gap-4 mb-4">
             <div
               className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0"
-              style={{ background: "rgba(37,99,235,0.15)", border: "1px solid rgba(37,99,235,0.25)" }}
+              style={{ background: "color-mix(in srgb, var(--accent) 15%, transparent)", border: "1px solid color-mix(in srgb, var(--accent) 25%, transparent)" }}
             >
               {track.icon}
             </div>
@@ -137,7 +137,7 @@ export default function DashboardPage() {
           <p className="label mb-3">إحصاءاتك</p>
           <div className="grid grid-cols-3 gap-3">
             {[
-              { val: focusHours,  unit: "ساعة", label: "تركيز", color: "var(--blue-light)" },
+              { val: focusHours,  unit: "ساعة", label: "تركيز", color: "var(--accent-light)" },
               { val: sessions,    unit: "جلسة", label: "Orbit",  color: "var(--success)" },
               { val: errorsCount, unit: "خطأ",  label: "الخزنة", color: "var(--danger)" },
             ].map((s) => (
@@ -154,12 +154,12 @@ export default function DashboardPage() {
         <div className="card">
           <div className="flex items-center justify-between mb-4">
             <p className="font-bold text-base text-[var(--text)]">تقدم اليوم</p>
-            <span className="font-mono-nums font-bold text-base text-[var(--blue-light)]">{todayPct}%</span>
+            <span className="font-mono-nums font-bold text-base text-[var(--accent-light)]">{todayPct}%</span>
           </div>
           <div className="h-3 bg-[var(--border)] rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-700"
-              style={{ width: todayPct + "%", background: "linear-gradient(90deg, #1D4ED8, #3B82F6)" }}
+              style={{ width: todayPct + "%", background: "linear-gradient(90deg, var(--accent-2), var(--accent-light))" }}
             />
           </div>
           <p className="body-sm mt-3">
@@ -173,7 +173,7 @@ export default function DashboardPage() {
         <div className="card flex items-center justify-between">
           <div>
             <p className="label mb-1">الوقت الحالي</p>
-            <p className="font-mono-nums font-black text-3xl text-[var(--text)]">
+            <p className="font-mono-nums font-black text-2xl text-[var(--text)] whitespace-nowrap">
               {time ? time.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", hour12: true }) : "--:--"}
             </p>
           </div>
@@ -203,7 +203,7 @@ export default function DashboardPage() {
 
         {/* الشهادة — أرقام حقيقية */}
         <div className="card flex items-center gap-4"
-          style={{ borderColor: "rgba(245,158,11,0.2)", background: "rgba(245,158,11,0.05)" }}>
+          style={{ borderColor: "rgba(245,158,11,0.2)", background: "linear-gradient(0deg, rgba(245,158,11,0.05), rgba(245,158,11,0.05)), var(--surface), var(--surface)" }}>
           <span className="text-3xl">📜</span>
           <div className="flex-1">
             <p className="font-bold text-sm text-[var(--gold)]">شهادة الانضباط الرقمية</p>
@@ -223,8 +223,8 @@ export default function DashboardPage() {
                 href={a.href}
                 className="rounded-2xl p-5 flex items-center gap-4 transition-all active:scale-95"
                 style={{
-                  background: "rgba(37,99,235,0.1)",
-                  border: "1.5px solid rgba(37,99,235,0.28)",
+                  background: "linear-gradient(0deg, color-mix(in srgb, var(--accent) 10%, transparent), color-mix(in srgb, var(--accent) 10%, transparent)), var(--surface), var(--surface)",
+                  border: "1.5px solid color-mix(in srgb, var(--accent) 28%, transparent)",
                   minHeight: "84px",
                 }}
               >
@@ -243,24 +243,24 @@ export default function DashboardPage() {
           href="/orbit"
           className="flex items-center gap-4 rounded-2xl p-5 transition-all active:scale-[0.98] glow-blue"
           style={{
-            background: "linear-gradient(135deg, rgba(37,99,235,0.22), rgba(37,99,235,0.09))",
-            border: "1.5px solid rgba(37,99,235,0.38)",
+            background: "linear-gradient(135deg, color-mix(in srgb, var(--accent) 22%, transparent), color-mix(in srgb, var(--accent) 9%, transparent)), var(--surface), var(--surface)",
+            border: "1.5px solid color-mix(in srgb, var(--accent) 38%, transparent)",
             minHeight: "84px",
           }}
         >
-          <div className="w-14 h-14 rounded-xl bg-[var(--blue)] flex items-center justify-center flex-shrink-0">
+          <div className="w-14 h-14 rounded-xl bg-[var(--accent)] flex items-center justify-center flex-shrink-0">
             <span className="text-2xl">⏱️</span>
           </div>
           <div className="flex-1">
             <p className="font-black text-lg text-[var(--text)]">ابدأ جلسة Orbit</p>
             <p className="body-sm text-sm">50 دقيقة تركيز + 10 راحة · تكسب Silver</p>
           </div>
-          <span className="text-[var(--blue-light)] text-xl">←</span>
+          <span className="text-[var(--accent-light)] text-xl">←</span>
         </Link>
 
         {/* ترقية */}
         <div className="card flex items-center gap-4"
-          style={{ borderColor: "rgba(37,99,235,0.25)", background: "rgba(37,99,235,0.06)" }}>
+          style={{ borderColor: "color-mix(in srgb, var(--accent) 25%, transparent)", background: "linear-gradient(0deg, color-mix(in srgb, var(--accent) 6%, transparent), color-mix(in srgb, var(--accent) 6%, transparent)), var(--surface), var(--surface)" }}>
           <div className="flex-1">
             <p className="font-bold text-sm text-[var(--text)]">باقة شاهين</p>
             <p className="body-sm">خزنة غير محدودة + SM-2 كاملة + الأرينا</p>

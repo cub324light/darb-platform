@@ -81,7 +81,7 @@ export default function ArenaPage() {
         <div className="flex-1 flex flex-col items-center justify-center px-5">
           <div
             className="w-28 h-28 rounded-3xl flex items-center justify-center text-5xl mb-6"
-            style={{ background: "rgba(245,158,11,0.1)", border: "2px solid rgba(245,158,11,0.3)" }}
+            style={{ background: "linear-gradient(0deg, rgba(245,158,11,0.1), rgba(245,158,11,0.1)), var(--surface)", border: "2px solid rgba(245,158,11,0.3)" }}
           >
             ⚔️
           </div>
@@ -116,7 +116,7 @@ export default function ArenaPage() {
           </h2>
           <div className="flex justify-center gap-8 mb-6">
             <div className="text-center">
-              <p className="font-mono-nums text-3xl font-black text-[var(--blue-light)]">{myScore}</p>
+              <p className="font-mono-nums text-3xl font-black text-[var(--accent-light)]">{myScore}</p>
               <p className="text-xs text-[var(--text-muted)]">أنت</p>
             </div>
             <div className="text-center">
@@ -143,7 +143,7 @@ export default function ArenaPage() {
       <div className="px-5 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-sm font-bold text-[var(--text-muted)]">أنت</span>
-          <span className="font-mono-nums text-xl font-black text-[var(--blue-light)]">{myScore}</span>
+          <span className="font-mono-nums text-xl font-black text-[var(--accent-light)]">{myScore}</span>
         </div>
         <span className="font-mono-nums font-black text-[var(--text)]">
           {currentQ + 1} / {questions.length}
@@ -157,7 +157,7 @@ export default function ArenaPage() {
       <div className="px-5 flex-1 flex flex-col justify-center">
         <div className="glass rounded-3xl p-6 mb-4">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-xs px-2.5 py-1 rounded-full glass text-[var(--blue-light)]">{q.subject}</span>
+            <span className="text-xs px-2.5 py-1 rounded-full glass text-[var(--accent-light)]">{q.subject}</span>
             <span className="font-mono-nums font-black text-lg text-[var(--gold)]">{timeLeft}s</span>
           </div>
           <p className="text-lg font-bold text-[var(--text)] leading-relaxed">{q.q}</p>

@@ -27,7 +27,7 @@ export default function PricingPage() {
           ← الرئيسية
         </Link>
         <span className="font-black text-[var(--gold)]">درب</span>
-        <Link href="/dashboard" className="text-sm text-[var(--blue-light)] font-bold">
+        <Link href="/dashboard" className="text-sm text-[var(--accent-light)] font-bold">
           ابدأ مجاناً
         </Link>
       </div>
@@ -76,7 +76,7 @@ export default function PricingPage() {
               </div>
               <Link
                 href="/dashboard"
-                className="block w-full py-3 rounded-2xl font-bold text-center text-sm text-[var(--text)] glass border border-[var(--border)] hover:border-[var(--blue)]/40 transition"
+                className="block w-full py-3 rounded-2xl font-bold text-center text-sm text-[var(--text)] glass border border-[var(--border)] hover:border-[var(--accent)]/40 transition"
               >
                 ابدأ مجاناً
               </Link>
@@ -87,12 +87,12 @@ export default function PricingPage() {
           <div
             className="rounded-3xl overflow-hidden relative"
             style={{
-              background: "linear-gradient(135deg, rgba(37,99,235,0.12), rgba(37,99,235,0.04))",
-              border: "1.5px solid rgba(37,99,235,0.4)",
-              boxShadow: "0 0 30px rgba(37,99,235,0.1)",
+              background: "linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, transparent), color-mix(in srgb, var(--accent) 4%, transparent)), var(--surface)",
+              border: "1.5px solid color-mix(in srgb, var(--accent) 40%, transparent)",
+              boxShadow: "0 0 30px color-mix(in srgb, var(--accent) 10%, transparent)",
             }}
           >
-            <div className="absolute top-4 left-4 bg-[#2563EB] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+            <div className="absolute top-4 left-4 bg-[var(--accent)] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
               الأكثر شيوعاً
             </div>
             <div className="p-5 pt-10">
@@ -102,7 +102,7 @@ export default function PricingPage() {
                   <p className="text-xs text-[var(--text-muted)]">للطالب الجاد</p>
                 </div>
                 <div className="text-left">
-                  <span className="font-mono-nums text-3xl font-black text-[var(--blue-light)]">35</span>
+                  <span className="font-mono-nums text-3xl font-black text-[var(--accent-light)]">35</span>
                   <span className="text-xs text-[var(--text-muted)]"> ريال/شهر</span>
                 </div>
               </div>
@@ -116,14 +116,14 @@ export default function PricingPage() {
                   "5 طيور للاختيار",
                 ].map((f) => (
                   <div key={f} className="flex items-center gap-2">
-                    <span className="text-[var(--blue-light)] text-xs">✓</span>
+                    <span className="text-[var(--accent-light)] text-xs">✓</span>
                     <span className="text-xs text-[var(--text-dim)]">{f}</span>
                   </div>
                 ))}
               </div>
               <button
                 className="w-full py-3 rounded-2xl font-bold text-sm text-white transition"
-                style={{ background: "#2563EB" }}
+                style={{ background: "var(--accent)" }}
               >
                 اشترك في شاهين — 35 ريال
               </button>
@@ -134,7 +134,7 @@ export default function PricingPage() {
           <div
             className="rounded-3xl overflow-hidden relative"
             style={{
-              background: "linear-gradient(135deg, rgba(245,158,11,0.1), rgba(245,158,11,0.03))",
+              background: "linear-gradient(135deg, rgba(245,158,11,0.1), rgba(245,158,11,0.03)), var(--surface)",
               border: "1.5px solid rgba(245,158,11,0.35)",
               boxShadow: "0 0 30px rgba(245,158,11,0.08)",
             }}
@@ -213,7 +213,7 @@ export default function PricingPage() {
         <div
           className="rounded-3xl p-5 mb-8"
           style={{
-            background: "linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.03))",
+            background: "linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.03)), var(--surface)",
             border: "1.5px solid rgba(16,185,129,0.3)",
           }}
         >
@@ -272,7 +272,7 @@ export default function PricingPage() {
           <div className="grid grid-cols-4 text-center py-3 border-b border-[var(--border)]">
             <p className="text-xs text-[var(--text-muted)] text-right pr-3">الميزة</p>
             <p className="text-xs text-[var(--text-muted)]">مجاني</p>
-            <p className="text-xs text-[var(--blue-light)] font-bold">شاهين</p>
+            <p className="text-xs text-[var(--accent-light)] font-bold">شاهين</p>
             <p className="text-xs text-[var(--gold)] font-bold">عنقاء</p>
           </div>
           {COMPARE_FEATURES.map((row, i) => (
@@ -282,7 +282,7 @@ export default function PricingPage() {
             >
               <p className="text-[10px] text-[var(--text-dim)] text-right pr-3">{row.label}</p>
               <p className="text-[10px] text-[var(--text-muted)]">{row.free}</p>
-              <p className="text-[10px] text-[var(--blue-light)]">{row.shaheen}</p>
+              <p className="text-[10px] text-[var(--accent-light)]">{row.shaheen}</p>
               <p className="text-[10px] text-[var(--gold)]">{row.anqa}</p>
             </div>
           ))}

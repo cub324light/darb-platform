@@ -53,7 +53,7 @@ export default function ParentPage() {
         <div
           className="rounded-2xl p-5 mb-5"
           style={{
-            background: "linear-gradient(135deg, rgba(16,185,129,0.12), rgba(16,185,129,0.03))",
+            background: "linear-gradient(135deg, rgba(16,185,129,0.12), rgba(16,185,129,0.03)), var(--surface)",
             border: "1.5px solid rgba(16,185,129,0.3)",
           }}
         >
@@ -89,7 +89,7 @@ export default function ParentPage() {
           {/* Quick stats */}
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="glass rounded-xl p-2">
-              <p className="font-mono-nums font-black text-lg text-[var(--blue-light)]">24</p>
+              <p className="font-mono-nums font-black text-lg text-[var(--accent-light)]">24</p>
               <p className="text-[9px] text-[var(--text-muted)]">ساعة تركيز</p>
             </div>
             <div className="glass rounded-xl p-2">
@@ -117,7 +117,7 @@ export default function ParentPage() {
                     className="w-full rounded-t-lg transition-all"
                     style={{
                       height: d.mins === 0 ? "4px" : (d.mins / maxMins) * 60 + "px",
-                      background: d.mins === 0 ? "var(--border)" : "linear-gradient(180deg, #3B82F6, #1D4ED8)",
+                      background: d.mins === 0 ? "var(--border)" : "linear-gradient(180deg, var(--accent-light), var(--accent-2))",
                     }}
                   />
                 </div>
@@ -127,7 +127,7 @@ export default function ParentPage() {
           </div>
           <p className="text-xs text-[var(--text-dim)] mt-3 text-center">
             إجمالي هذا الأسبوع:{" "}
-            <strong className="text-[var(--blue-light)]">
+            <strong className="text-[var(--accent-light)]">
               {Math.round(WEEKLY_STATS.reduce((a, d) => a + d.mins, 0) / 60)} ساعة
             </strong>
           </p>

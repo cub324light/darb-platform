@@ -23,8 +23,8 @@ export default function RootPage() {
     <div className="min-h-dvh flex items-center justify-center">
       <div className="text-center">
         <p
-          className="font-black text-5xl mb-2 text-[var(--blue-light)]"
-          style={{ filter: "drop-shadow(0 0 22px rgba(37,99,235,0.4))" }}
+          className="font-black text-5xl mb-2 text-[var(--accent-light)]"
+          style={{ filter: "drop-shadow(0 0 22px color-mix(in srgb, var(--accent) 40%, transparent))" }}
         >
           درب
         </p>

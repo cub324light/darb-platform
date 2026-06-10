@@ -76,7 +76,7 @@ export default function RoadmapPage() {
   const OverallBar = () => (
     <div className="px-5 mb-6">
       <div className="rounded-3xl p-6"
-        style={{ background: "linear-gradient(135deg,rgba(37,99,235,0.15),rgba(37,99,235,0.05))", border: "1.5px solid rgba(37,99,235,0.3)" }}>
+        style={{ background: "linear-gradient(135deg,color-mix(in srgb, var(--accent) 15%, transparent),color-mix(in srgb, var(--accent) 5%, transparent)), var(--surface)", border: "1.5px solid color-mix(in srgb, var(--accent) 30%, transparent)" }}>
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-xs font-bold text-[var(--text-muted)] mb-1">التقدم الكلي — {track.title}</p>
@@ -84,17 +84,17 @@ export default function RoadmapPage() {
               {currentStage.icon} مرحلة {currentStage.name}
             </p>
           </div>
-          <p className="font-mono-nums font-black text-5xl text-[var(--blue-light)]">{overallPct}%</p>
+          <p className="font-mono-nums font-black text-5xl text-[var(--accent-light)]">{overallPct}%</p>
         </div>
         <div className="h-3 bg-[var(--border)] rounded-full overflow-hidden mb-3">
           <div className="h-full rounded-full transition-all duration-700"
-            style={{ width: overallPct + "%", background: "linear-gradient(90deg,#1D4ED8,#3B82F6)" }} />
+            style={{ width: overallPct + "%", background: "linear-gradient(90deg,var(--accent-2),var(--accent-light))" }} />
         </div>
         <div className="flex justify-between">
           {ROADMAP_STAGES.map((s) => (
             <div key={s.id} className="flex flex-col items-center gap-1">
               <span className="text-base">{s.icon}</span>
-              <span className={`text-xs font-bold ${s.id === currentStage.id ? "text-[var(--blue-light)]" : "text-[var(--text-muted)]"}`}>
+              <span className={`text-xs font-bold ${s.id === currentStage.id ? "text-[var(--accent-light)]" : "text-[var(--text-muted)]"}`}>
                 {s.name}
               </span>
             </div>
@@ -141,7 +141,7 @@ export default function RoadmapPage() {
         {/* تقدم المادة */}
         <div className="px-5 mb-6">
           <div className="rounded-2xl p-5"
-            style={{ background: color + "12", border: `1.5px solid ${color}33` }}>
+            style={{ background: `linear-gradient(0deg, ${color}1F, ${color}1F), var(--surface)`, border: `1.5px solid ${color}33` }}>
             <div className="flex items-center justify-between mb-3">
               <p className="font-bold text-base text-[var(--text)]">تقدم {selected}</p>
               <span className="font-mono-nums font-black text-2xl" style={{ color }}>{pct}%</span>
@@ -267,7 +267,7 @@ export default function RoadmapPage() {
           return (
             <button key={s.name} onClick={() => setSelected(s.name)}
               className="rounded-3xl p-6 flex flex-col gap-4 transition active:scale-[0.96] text-right"
-              style={{ background: s.color + "12", border: `2px solid ${s.color}30`, minHeight: "140px" }}>
+              style={{ background: `linear-gradient(0deg, ${s.color}1F, ${s.color}1F), var(--surface)`, border: `2px solid ${s.color}30`, minHeight: "140px" }}>
               <div className="flex items-center gap-3">
                 <span className="text-3xl">{s.icon}</span>
                 <p className="font-black text-xl text-[var(--text)]">{s.name}</p>

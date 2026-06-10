@@ -69,11 +69,11 @@ export default function BottomNav() {
               key={item.href}
               href={item.href}
               className={`flex flex-col items-center gap-1 flex-1 py-2 transition-all duration-200 relative ${
-                active ? "text-[var(--blue-light)]" : "text-[var(--text-muted)]"
+                active ? "text-[var(--accent-light)]" : "text-[var(--text-muted)]"
               }`}
             >
               {active && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-[var(--blue-light)]" />
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-[var(--accent-light)]" />
               )}
               <div className={`transition-transform duration-200 ${active ? "scale-110" : ""}`}>
                 {item.icon(active)}

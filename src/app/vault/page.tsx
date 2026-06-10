@@ -58,7 +58,7 @@ export default function VaultPage() {
   };
 
   const categoryCount = (cat: string) => errors.filter((e) => e.category === cat).length;
-  const colorOf = (subj: string) => (track ? subjectColor(track, subj) : "#2563EB");
+  const colorOf = (subj: string) => (track ? subjectColor(track, subj) : "var(--accent)");
 
   return (
     <div className="page">
@@ -89,7 +89,7 @@ export default function VaultPage() {
           {atLimit && (
             <p className="text-sm text-[var(--danger)] mt-2 text-center">
               وصلت الحد المجاني.{" "}
-              <Link href="/pricing" className="text-[var(--blue-light)] underline font-semibold">رقّي لشاهين</Link>
+              <Link href="/pricing" className="text-[var(--accent-light)] underline font-semibold">رقّي لشاهين</Link>
             </p>
           )}
         </div>

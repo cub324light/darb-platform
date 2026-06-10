@@ -111,7 +111,7 @@ export default function OrbitPage() {
   const radius = 110;
   const circumference = 2 * Math.PI * radius;
   const dashOffset = circumference * (1 - progress);
-  const strokeColor = phase === "break" ? "#F59E0B" : "#2563EB";
+  const strokeColor = phase === "break" ? "#F59E0B" : "var(--accent)";
 
   const statusMsg =
     phase === "idle"
@@ -129,7 +129,7 @@ export default function OrbitPage() {
         <h1 className="font-black text-lg text-[var(--text)]">Orbit 50/10</h1>
         <div className="stat-chip">
           <span className="text-base">🪙</span>
-          <span className="font-mono-nums font-bold text-base text-[var(--blue-light)]">{silverTotal}</span>
+          <span className="font-mono-nums font-bold text-base text-[var(--accent-light)]">{silverTotal}</span>
         </div>
       </div>
 
@@ -145,7 +145,7 @@ export default function OrbitPage() {
                 className={`px-6 py-3.5 rounded-2xl text-base font-bold transition min-h-[52px] ${
                   subject === s ? "text-white" : "text-[var(--text-dim)]"
                 }`}
-                style={subject === s ? { background: "#2563EB" } : { background: "var(--surface)", border: "1px solid var(--border)" }}
+                style={subject === s ? { background: "var(--accent)" } : { background: "var(--surface)", border: "1px solid var(--border)" }}
               >
                 {s}
               </button>
@@ -195,7 +195,7 @@ export default function OrbitPage() {
           {phase === "focus" && (
             <div
               className="absolute inset-0 rounded-full pointer-events-none"
-              style={{ boxShadow: `0 0 40px rgba(37,99,235,0.2)`, borderRadius: "50%" }}
+              style={{ boxShadow: `0 0 40px color-mix(in srgb, var(--accent) 20%, transparent)`, borderRadius: "50%" }}
             />
           )}
         </div>
@@ -214,7 +214,7 @@ export default function OrbitPage() {
             <button
               onClick={startFocus}
               className="w-full py-5 rounded-2xl font-black text-white text-xl transition glow-blue min-h-[60px]"
-              style={{ background: "linear-gradient(135deg, #1D4ED8, #2563EB)" }}
+              style={{ background: "linear-gradient(135deg, var(--accent-2), var(--accent))" }}
             >
               ابدأ الجلسة
             </button>
@@ -245,7 +245,7 @@ export default function OrbitPage() {
               <button
                 onClick={startFocus}
                 className="w-full py-5 rounded-2xl font-black text-white text-lg transition glow-blue min-h-[60px]"
-                style={{ background: "#2563EB" }}
+                style={{ background: "var(--accent)" }}
               >
                 جلسة أخرى؟
               </button>
@@ -262,7 +262,7 @@ export default function OrbitPage() {
         <div className="rounded-2xl p-5 grid grid-cols-3 text-center gap-3"
           style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <div>
-            <p className="font-mono-nums font-black text-3xl text-[var(--blue-light)]">{sessionsToday}</p>
+            <p className="font-mono-nums font-black text-3xl text-[var(--accent-light)]">{sessionsToday}</p>
             <p className="text-sm text-[var(--text-muted)] mt-1">جلسات اليوم</p>
           </div>
           <div>

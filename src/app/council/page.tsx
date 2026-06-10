@@ -84,13 +84,13 @@ export default function CouncilPage() {
         <div className="grid grid-cols-2 glass rounded-2xl p-1 gap-1">
           <button
             onClick={() => setActiveTab("feed")}
-            className={`py-3 rounded-xl text-base font-bold transition min-h-[48px] ${activeTab === "feed" ? "bg-[var(--blue)] text-white" : "text-[var(--text-muted)]"}`}
+            className={`py-3 rounded-xl text-base font-bold transition min-h-[48px] ${activeTab === "feed" ? "bg-[var(--accent)] text-white" : "text-[var(--text-muted)]"}`}
           >
             النقاشات
           </button>
           <button
             onClick={() => setActiveTab("clash")}
-            className={`py-3 rounded-xl text-base font-bold transition min-h-[48px] ${activeTab === "clash" ? "bg-[var(--blue)] text-white" : "text-[var(--text-muted)]"}`}
+            className={`py-3 rounded-xl text-base font-bold transition min-h-[48px] ${activeTab === "clash" ? "bg-[var(--accent)] text-white" : "text-[var(--text-muted)]"}`}
           >
             Regional Clash
           </button>
@@ -124,7 +124,7 @@ export default function CouncilPage() {
                 onClick={publish}
                 disabled={!newPost.trim()}
                 className="flex-1 rounded-xl font-bold text-base text-white transition min-h-[48px]"
-                style={{ background: "#2563EB", opacity: newPost.trim() ? 1 : 0.4 }}
+                style={{ background: "var(--accent)", opacity: newPost.trim() ? 1 : 0.4 }}
               >
                 انشر
               </button>
@@ -145,7 +145,7 @@ export default function CouncilPage() {
               <div className="flex items-center gap-3 mb-3">
                 <div
                   className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0"
-                  style={{ background: "linear-gradient(135deg,#1D4ED8,#3B82F6)" }}
+                  style={{ background: "linear-gradient(135deg,var(--accent-2),var(--accent-light))" }}
                 >
                   {post.user.charAt(0)}
                 </div>
@@ -155,7 +155,7 @@ export default function CouncilPage() {
                 </div>
                 <span
                   className="text-[11px] px-2.5 py-1 rounded-full font-medium"
-                  style={{ background: "rgba(37,99,235,0.13)", color: "var(--blue-light)" }}
+                  style={{ background: "color-mix(in srgb, var(--accent) 13%, transparent)", color: "var(--accent-light)" }}
                 >
                   {post.subject}
                 </span>

@@ -26,8 +26,8 @@ export default function OnboardingPage() {
         {/* الشعار */}
         <div className="text-center">
           <p
-            className="font-black text-5xl text-[var(--blue-light)] mb-1"
-            style={{ filter: "drop-shadow(0 0 22px rgba(37,99,235,0.4))" }}
+            className="font-black text-5xl text-[var(--accent-light)] mb-1"
+            style={{ filter: "drop-shadow(0 0 22px color-mix(in srgb, var(--accent) 40%, transparent))" }}
           >
             درب
           </p>
@@ -46,7 +46,7 @@ export default function OnboardingPage() {
             maxLength={20}
             className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none transition-colors"
             style={{ background: "var(--surface)", border: "2px solid var(--border)" }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--blue)")}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
             onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
           />
         </div>
@@ -63,8 +63,8 @@ export default function OnboardingPage() {
                   onClick={() => setTrack(t.id)}
                   className="w-full rounded-2xl p-5 text-right flex items-center gap-4 transition-all duration-200 active:scale-[0.98]"
                   style={{
-                    background: active ? "rgba(37,99,235,0.14)" : "var(--surface)",
-                    border: `2px solid ${active ? "var(--blue)" : "var(--border)"}`,
+                    background: active ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
+                    border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
                   }}
                 >
                   <span className="text-3xl">{t.icon}</span>
@@ -72,7 +72,7 @@ export default function OnboardingPage() {
                     <p className="font-black text-lg text-[var(--text)]">{t.title}</p>
                     <p className="text-sm text-[var(--text-muted)] mt-0.5">{t.sub}</p>
                   </div>
-                  {active && <span className="text-2xl font-black text-[var(--blue-light)]">✓</span>}
+                  {active && <span className="text-2xl font-black text-[var(--accent-light)]">✓</span>}
                 </button>
               );
             })}

@@ -97,7 +97,7 @@ export default function ProfileButton() {
             <div className="flex items-center gap-4 mb-6">
               <div
                 className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-black text-white flex-shrink-0"
-                style={{ background: "linear-gradient(135deg,#1D4ED8,#3B82F6)" }}
+                style={{ background: "linear-gradient(135deg,var(--accent-2),var(--accent-light))" }}
               >
                 {(user?.name ?? "د").charAt(0)}
               </div>
@@ -110,14 +110,14 @@ export default function ProfileButton() {
                       maxLength={20}
                       autoFocus
                       className="flex-1 min-w-0 rounded-xl px-3 py-2.5 text-base text-[var(--text)] outline-none"
-                      style={{ background: "var(--surface2)", border: "1.5px solid var(--blue)" }}
+                      style={{ background: "var(--surface2)", border: "1.5px solid var(--accent)" }}
                     />
-                    <button onClick={saveName} className="px-4 rounded-xl font-bold text-white" style={{ background: "var(--blue)" }}>✓</button>
+                    <button onClick={saveName} className="px-4 rounded-xl font-bold text-white" style={{ background: "var(--accent)" }}>✓</button>
                   </div>
                 ) : (
                   <>
                     <p className="font-black text-xl text-[var(--text)] truncate">{user?.name ?? "—"}</p>
-                    <button onClick={() => setEditing(true)} className="text-sm text-[var(--blue-light)] font-semibold mt-0.5">
+                    <button onClick={() => setEditing(true)} className="text-sm text-[var(--accent-light)] font-semibold mt-0.5">
                       تعديل الاسم
                     </button>
                   </>
@@ -153,8 +153,8 @@ export default function ProfileButton() {
                     onClick={() => switchTrack(t.id)}
                     className="w-full rounded-2xl p-4 flex items-center gap-3 text-right transition active:scale-[0.98]"
                     style={{
-                      background: active ? "rgba(37,99,235,0.12)" : "var(--surface2)",
-                      border: `2px solid ${active ? "var(--blue)" : "var(--border)"}`,
+                      background: active ? "color-mix(in srgb, var(--accent) 12%, transparent)" : "var(--surface2)",
+                      border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
                     }}
                   >
                     <span className="text-2xl">{t.icon}</span>
@@ -162,7 +162,7 @@ export default function ProfileButton() {
                       <p className="font-bold text-base text-[var(--text)]">{t.title}</p>
                       <p className="text-xs text-[var(--text-muted)]">{t.sub}</p>
                     </div>
-                    {active && <span className="text-[var(--blue-light)] text-lg font-black">✓</span>}
+                    {active && <span className="text-[var(--accent-light)] text-lg font-black">✓</span>}
                   </button>
                 );
               })}

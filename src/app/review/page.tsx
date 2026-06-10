@@ -42,7 +42,7 @@ export default function ReviewPage() {
     if (loaded) saveList(CARDS_KEY, cards);
   }, [cards, loaded]);
 
-  const colorOf = (subj: string) => (track ? subjectColor(track, subj) : "#2563EB");
+  const colorOf = (subj: string) => (track ? subjectColor(track, subj) : "var(--accent)");
   const subjects = track?.subjects.map((s) => s.name) ?? [];
 
   const dueCards = cards.filter((c) => c.dueDate <= Date.now());
@@ -96,7 +96,7 @@ export default function ReviewPage() {
             <button
               onClick={() => setMode("list")}
               className="w-full max-w-xs py-5 rounded-2xl font-black text-white text-lg min-h-[60px]"
-              style={{ background: "#2563EB" }}
+              style={{ background: "var(--accent)" }}
             >
               العودة للقائمة
             </button>
@@ -217,7 +217,7 @@ export default function ReviewPage() {
           <button
             onClick={startSession}
             className="w-full py-5 rounded-2xl font-black text-white text-xl transition glow-blue min-h-[62px]"
-            style={{ background: "linear-gradient(135deg, #1D4ED8, #2563EB)" }}
+            style={{ background: "linear-gradient(135deg, var(--accent-2), var(--accent))" }}
           >
             ابدأ المراجعة ({dueCards.length} بطاقة)
           </button>
@@ -234,8 +234,8 @@ export default function ReviewPage() {
           </button>
         ) : (
           <div className="rounded-2xl p-5 flex flex-col gap-4"
-            style={{ background: "var(--surface)", border: "1.5px solid rgba(37,99,235,0.35)" }}>
-            <p className="font-bold text-base text-[var(--blue-light)]">بطاقة مراجعة جديدة</p>
+            style={{ background: "var(--surface)", border: "1.5px solid color-mix(in srgb, var(--accent) 35%, transparent)" }}>
+            <p className="font-bold text-base text-[var(--accent-light)]">بطاقة مراجعة جديدة</p>
 
             <textarea value={newQ} onChange={(e) => setNewQ(e.target.value)} rows={2}
               placeholder="السؤال..."
@@ -256,7 +256,7 @@ export default function ReviewPage() {
             <div className="grid grid-cols-2 gap-3">
               <button onClick={addCard}
                 className="py-4 rounded-2xl font-bold text-base text-white transition min-h-[54px]"
-                style={{ background: "#2563EB" }}>
+                style={{ background: "var(--accent)" }}>
                 أضف البطاقة
               </button>
               <button onClick={() => setShowAdd(false)}
@@ -318,7 +318,7 @@ export default function ReviewPage() {
       {loaded && cards.length === 0 && (
         <div className="text-center py-12 px-6">
           <p className="text-5xl mb-5">🧠</p>
-          <p className="text-xl font-black text-[var(--text)] mb-2">بنكك فاضي</p>
+          <p className="text-xl font-black text-[var(--text)] mb-2">بنك المراجعة فاضي</p>
           <p className="text-base text-[var(--text-muted)]">أضف أول بطاقة، والنظام يحسب لك متى تراجعها تلقائياً.</p>
         </div>
       )}
@@ -333,7 +333,7 @@ export default function ReviewPage() {
 
       {/* معلومة */}
       <div className="px-5 pb-6">
-        <div className="rounded-2xl p-5" style={{ background: "linear-gradient(135deg, rgba(37,99,235,0.1), rgba(37,99,235,0.03))", border: "1px solid rgba(37,99,235,0.2)" }}>
+        <div className="rounded-2xl p-5" style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, transparent), color-mix(in srgb, var(--accent) 3%, transparent)), var(--surface)", border: "1px solid color-mix(in srgb, var(--accent) 20%, transparent)" }}>
           <p className="text-sm text-[var(--text-dim)] leading-relaxed">
             📊 <strong className="text-[var(--text)]">Ebbinghaus 1885:</strong> نسيان 80% خلال 24 ساعة بدون مراجعة.
             المراجعة الموزعة = تفوق 200% على المذاكرة التقليدية.
