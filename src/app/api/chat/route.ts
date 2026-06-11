@@ -1,5 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 
+/* rate limit بسيط في الذاكرة — يمنع الطلبات المتكررة من نفس الـ IP */
+const rateLimitMap = new Map<string, { count: number; reset: number }>();
+const RATE_LIMIT = 10;       // عدد الطلبات المسموحة
+const RATE_WINDOW = 60_000;  // في دقيقة واحدة (ms)
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.reset) {
+    rateLimitMap.set(ip, { count: 1, reset: now + RATE_WINDOW });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT) return false;
+  entry.count++;
+  return true;
+}
+
 const SYSTEM_PROMPT = `أنت "دربي"، محلل الجداول الذكي لمنصة "درب" التعليمية السعودية.
 
 مهمتك الوحيدة: تحليل جداول الطلاب وبناء خطط دراسة مخصصة لاختبارات:
@@ -40,6 +57,17 @@ function isInjection(text: string): boolean {
 }
 
 export async function POST(req: NextRequest) {
+  /* التحقق من Content-Type */
+  if (!req.headers.get("content-type")?.includes("application/json")) {
+    return NextResponse.json({ error: "طلب غير صالح" }, { status: 400 });
+  }
+
+  /* rate limiting */
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json({ error: "طلبات كثيرة، انتظر دقيقة" }, { status: 429 });
+  }
+
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "طلب غير صالح" }, { status: 400 });
 

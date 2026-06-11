@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { TRACKS, getTrack, type TrackId } from "@/lib/tracks";
 import {
   loadUser, saveUser, loadStats, computeStreak,
@@ -71,19 +72,8 @@ export default function ProfileButton() {
     window.location.href = "/onboarding";
   };
 
-  return (
-    <>
-      {/* الزر — في يسار الهيدر */}
-      <button onClick={() => setOpen(true)} className="btn-icon" aria-label="البروفايل">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9} className="w-6 h-6">
-          <circle cx="12" cy="8" r="3.6" />
-          <path strokeLinecap="round" d="M4.5 20c1.6-3.4 4.4-5 7.5-5s5.9 1.6 7.5 5" />
-        </svg>
-      </button>
-
-      {/* اللوحة */}
-      {open && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center" onClick={() => setOpen(false)}>
+  const modal = open && typeof document !== "undefined" && createPortal(
+    <div className="fixed inset-0 z-[200] flex items-end justify-center" onClick={() => setOpen(false)}>
           <div className="absolute inset-0 bg-black/55 fade-in" />
           <div
             className="relative w-full max-w-lg rounded-t-3xl p-6 pb-10 slide-up"
@@ -173,8 +163,21 @@ export default function ProfileButton() {
               إعادة الضبط من الصفر
             </button>
           </div>
-        </div>
-      )}
+    </div>,
+    document.body
+  );
+
+  return (
+    <>
+      {/* الزر — في يسار الهيدر */}
+      <button onClick={() => setOpen(true)} className="btn-icon" aria-label="البروفايل">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9} className="w-6 h-6">
+          <circle cx="12" cy="8" r="3.6" />
+          <path strokeLinecap="round" d="M4.5 20c1.6-3.4 4.4-5 7.5-5s5.9 1.6 7.5 5" />
+        </svg>
+      </button>
+
+      {modal}
     </>
   );
 }
