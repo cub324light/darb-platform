@@ -109,7 +109,7 @@ export default function VaultPage() {
               <button key={cat} onClick={() => setFilterCat(cat)}
                 className="flex-shrink-0 px-6 py-3.5 rounded-2xl text-base font-bold transition min-h-[52px]"
                 style={active
-                  ? { background: "#F59E0B", color: "var(--btn-text-on-gold)" }
+                  ? { background: "#F59E0B", color: "var(--btn-text-on-gold)", border: "1.5px solid rgba(245,158,11,0.6)", boxShadow: "0 4px 14px rgba(245,158,11,0.3)" }
                   : { background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text-dim)" }}>
                 {cat}{count > 0 && <span className="mr-1 text-sm opacity-80">({count})</span>}
               </button>
@@ -177,7 +177,7 @@ export default function VaultPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <button onClick={addError}
-                  className="py-4 rounded-2xl font-bold text-base transition min-h-[54px]"
+                  className="py-4 rounded-2xl font-bold text-base transition min-h-[54px] glow-gold"
                   style={{ background: "#F59E0B", color: "var(--btn-text-on-gold)" }}>
                   أضف للخزنة
                 </button>

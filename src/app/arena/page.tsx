@@ -125,7 +125,7 @@ export default function ArenaPage() {
             </div>
           </div>
           <div className="space-y-2 max-w-xs w-full">
-            <button onClick={startGame} className="w-full py-4 rounded-2xl font-bold min-h-[56px]" style={{ background: "#F59E0B", color: "var(--btn-text-on-gold)" }}>
+            <button onClick={startGame} className="w-full py-4 rounded-2xl font-bold min-h-[56px] glow-gold" style={{ background: "#F59E0B", color: "var(--btn-text-on-gold)" }}>
               تحدي آخر
             </button>
             <button onClick={() => setGameState("lobby")} className="w-full py-3 text-base text-[var(--text-muted)] min-h-[48px]">

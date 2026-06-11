@@ -56,7 +56,7 @@ export default function DashboardPage() {
     <div className="page">
 
       {/* ═══ القبة ═══ */}
-      <Dome hideControls>
+      <Dome>
         <div className="flex items-center gap-3 mb-5">
           <div className="flex-1 min-w-0">
             <p className="eyebrow mb-1" style={{ color: "var(--text-dim)" }}>{greeting}</p>

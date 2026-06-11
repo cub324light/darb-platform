@@ -95,7 +95,7 @@ export default function ReviewPage() {
             <p className="text-base text-[var(--success)] mb-10">المراجعة القادمة محسوبة تلقائياً</p>
             <button
               onClick={() => setMode("list")}
-              className="w-full max-w-xs py-5 rounded-2xl font-black text-white text-lg min-h-[60px]"
+              className="w-full max-w-xs py-5 rounded-2xl font-black text-white text-lg min-h-[60px] glow-blue"
               style={{ background: "var(--accent)" }}
             >
               العودة للقائمة
@@ -258,7 +258,7 @@ export default function ReviewPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <button onClick={addCard}
-                className="py-4 rounded-2xl font-bold text-base text-white transition min-h-[54px]"
+                className="py-4 rounded-2xl font-bold text-base text-white transition min-h-[54px] glow-blue"
                 style={{ background: "var(--accent)" }}>
                 أضف البطاقة
               </button>
