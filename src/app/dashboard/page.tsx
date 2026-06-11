@@ -2,263 +2,219 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
-import Companion from "@/components/Companion";
-import type { BirdId } from "@/lib/types";
+import Dome from "@/components/Dome";
+import ProfileButton, { ThemeToggle } from "@/components/Profile";
+import { getTrack } from "@/lib/tracks";
+import { loadUser, loadStats, computeStreak, type DarbUser } from "@/lib/storage";
 
-interface DarbUser {
-  name: string;
-  exam: string;
-  bird: BirdId;
-  examDate?: string;
-  onboarded: boolean;
-}
-
-const EXAM_ICONS: Record<string, string> = {
-  "تحصيلي":        "📚",
-  "قدرات":          "🧠",
-  "قدرات+تحصيلي":  "⚡",
-  "أرامكو":         "🏭",
-  "ابتعاث":         "✈️",
-};
+const DAILY_TARGET = 200;
 
 export default function DashboardPage() {
   const [user, setUser] = useState<DarbUser | null>(null);
-  const [streak] = useState(7);
-  const [silver] = useState(340);
-  const [focusHours] = useState(24);
-  const [time, setTime] = useState(new Date());
+  const [streak, setStreak] = useState(0);
+  const [silver, setSilver] = useState(0);
+  const [focusHours, setFocusHours] = useState(0);
+  const [sessions, setSessions] = useState(0);
+  const [errorsCount, setErrorsCount] = useState(0);
+  const [todayMins, setTodayMins] = useState(0);
+  const [time, setTime] = useState<Date | null>(null);
   const [greeting, setGreeting] = useState("");
 
   useEffect(() => {
+    setUser(loadUser());
+    const s = loadStats();
+    setStreak(computeStreak(s));
+    setSilver(s.silver);
+    setFocusHours(Math.floor(s.totalFocusMins / 60));
+    setSessions(s.sessionsCount);
+    setTodayMins(s.todayFocusMins);
     try {
-      const raw = localStorage.getItem("darb_user");
-      if (raw) setUser(JSON.parse(raw));
+      const vault = JSON.parse(localStorage.getItem("darb_vault") ?? "[]");
+      setErrorsCount(Array.isArray(vault) ? vault.length : 0);
     } catch {}
-
     const h = new Date().getHours();
-    if (h < 5)       setGreeting("وقت الذئاب 🌙");
-    else if (h < 12) setGreeting("صباح التفوق ☀️");
-    else if (h < 17) setGreeting("وقت التركيز ⚡");
-    else if (h < 21) setGreeting("مساء الإنجاز 🌆");
-    else             setGreeting("الليل للنخبة 🌟");
-
-    const t = setInterval(() => setTime(new Date()), 60000);
+    if (h < 5) setGreeting("وقت الذئاب");
+    else if (h < 12) setGreeting("صباح التفوق");
+    else if (h < 17) setGreeting("وقت التركيز");
+    else if (h < 21) setGreeting("مساء الإنجاز");
+    else setGreeting("الليل للنخبة");
+    setTime(new Date());
+    const t = setInterval(() => setTime(new Date()), 30000);
     return () => clearInterval(t);
   }, []);
 
-  const daysLeft = user?.examDate
-    ? Math.max(0, Math.ceil((new Date(user.examDate).getTime() - Date.now()) / 86400000))
-    : null;
+  const track = getTrack(user?.track);
+  const todayPct = Math.min(100, Math.round((todayMins / DAILY_TARGET) * 100));
 
-  const birdId: BirdId = user?.bird ?? "falcon";
-
-  const QUICK_ACTIONS = [
-    { href: "/orbit",   icon: "⏱️", label: "Orbit",    desc: "50/10",  color: "#2563EB" },
-    { href: "/vault",   icon: "🔒", label: "الخزنة",   desc: "أخطاؤك", color: "#F59E0B" },
-    { href: "/review",  icon: "🧠", label: "مراجعة",   desc: "SM-2",   color: "#10B981" },
-    { href: "/roadmap", icon: "🗺️", label: "الخريطة",  desc: "تقدمك",  color: "#8B5CF6" },
+  const TOOLS = [
+    { href: "/orbit",  icon: "⏱️", label: "Orbit",   desc: "جلسة 50/10" },
+    { href: "/vault",  icon: "🔒", label: "الخزنة",  desc: `${0 + (errorsCount || 0)} خطأ محفوظ` },
+    { href: "/review", icon: "🧠", label: "المراجعة", desc: "نظام SM-2" },
+    { href: "/roadmap",icon: "🗺️", label: "الخريطة", desc: "تقدمك بالدروس" },
   ];
 
   return (
     <div className="page">
-      {/* ── Sky header ── */}
-      <div
-        className="relative overflow-hidden"
-        style={{
-          background: "linear-gradient(180deg, #0B1730 0%, #0F1F3D 50%, var(--bg) 100%)",
-          paddingBottom: "24px",
-        }}
-      >
-        {/* Stars */}
-        {Array.from({ length: 18 }).map((_, i) => (
-          <div key={i} className="absolute rounded-full bg-white" style={{
-            width: "2px", height: "2px",
-            left: Math.random() * 100 + "%", top: Math.random() * 60 + "%",
-            opacity: 0.3 + Math.random() * 0.4,
-            animation: `twinkle ${2 + Math.random() * 3}s ease-in-out infinite`,
-            animationDelay: Math.random() * 3 + "s",
-          }} />
-        ))}
-        {/* City glow */}
-        <div className="absolute bottom-0 left-0 right-0 h-20" style={{
-          background: "radial-gradient(ellipse at 50% 100%, rgba(37,99,235,0.12) 0%, transparent 70%)",
-        }} />
 
-        <div className="relative z-10 px-5 pt-12 pb-2">
-          {/* Top bar */}
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <p className="text-[var(--text-muted)] text-sm">{greeting}</p>
-              <p className="font-black text-xl text-[var(--text)] mt-0.5">
-                أهلاً، {user?.name ?? "درب"}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="stat-chip">
-                <span className="text-lg streak-fire">🔥</span>
-                <span className="font-mono-nums font-bold text-base text-[var(--gold)]">{streak}</span>
-              </div>
-              <div className="stat-chip">
-                <span className="text-base">🪙</span>
-                <span className="font-mono-nums font-bold text-base text-[var(--blue-light)]">{silver}</span>
-              </div>
-            </div>
+      {/* ═══ القبة ═══ */}
+      <Dome>
+        <div className="flex items-center justify-between gap-3 mb-5">
+          <div className="flex-1 min-w-0">
+            <p className="eyebrow mb-1" style={{ color: "var(--text-dim)" }}>{greeting}</p>
+            <h1 className="title-xl truncate" style={{ color: "var(--text)" }}>
+              أهلاً، {user?.name ?? "..."}
+            </h1>
           </div>
-
-          {/* Companion */}
-          <div className="flex justify-center">
-            <Companion birdId={birdId} state="idle" size="lg" showMessage={false} />
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <ThemeToggle />
+            <ProfileButton />
           </div>
         </div>
-      </div>
 
-      {/* ── Main content ── */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="dome-chip">
+            <span className={`text-base ${streak > 0 ? "streak-fire" : "opacity-50"}`}>🔥</span>
+            <span className="num-hero text-base" style={{ color: "var(--gold-light)" }}>{streak}</span>
+            <span className="text-[13px] font-semibold" style={{ color: "var(--text-dim)" }}>ستريك</span>
+          </div>
+          <div className="dome-chip">
+            <span className="text-base">🪙</span>
+            <span className="num-hero text-base" style={{ color: "var(--text)" }}>{silver}</span>
+            <span className="text-[13px] font-semibold" style={{ color: "var(--text-dim)" }}>Silver</span>
+          </div>
+          <div className="dome-chip">
+            <span className="num-hero text-base" style={{ color: "var(--text)" }}>{todayPct}%</span>
+            <span className="text-[13px] font-semibold" style={{ color: "var(--text-dim)" }}>اليوم</span>
+          </div>
+        </div>
+      </Dome>
+
+      {/* ═══ المحتوى ═══ */}
       <div className="page-content mt-4">
 
-        {/* Exam target + days left */}
-        {user?.exam && (
-          <div className="card flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0"
-              style={{ background: "rgba(37,99,235,0.12)", border: "1px solid rgba(37,99,235,0.2)" }}>
-              {EXAM_ICONS[user.exam] ?? "🎯"}
-            </div>
-            <div className="flex-1">
-              <p className="label mb-1">هدفك</p>
-              <p className="font-black text-lg text-[var(--text)]">{user.exam}</p>
-            </div>
-            {daysLeft !== null && (
-              <div className="text-center">
-                <p className="font-mono-nums font-black text-2xl text-[var(--gold)]">{daysLeft}</p>
-                <p className="label">يوم</p>
+        {/* المسار */}
+        <section className="card rise rise-1">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
+                style={{ background: "color-mix(in srgb, var(--accent) 13%, transparent)", border: "1px solid color-mix(in srgb, var(--accent) 22%, transparent)" }}>
+                {track.icon}
               </div>
-            )}
+              <div>
+                <p className="eyebrow">مسارك</p>
+                <p className="title-md" style={{ color: "var(--text)" }}>{track.title}</p>
+              </div>
+            </div>
+            <Link href="/roadmap" className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>
+              الخريطة ←
+            </Link>
           </div>
-        )}
+          <div className="grid grid-cols-2 gap-2.5">
+            {track.subjects.map((s) => (
+              <Link key={s.name} href="/roadmap"
+                className="rounded-2xl px-4 py-3.5 flex items-center gap-3 transition active:scale-[0.97]"
+                style={{ background: "var(--surface2)", border: "1px solid var(--ring)", minHeight: "58px" }}>
+                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: s.color }} />
+                <span className="font-bold text-[15px]" style={{ color: "var(--text)" }}>{s.name}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
 
-        {/* Quick actions */}
-        <div>
-          <p className="label mb-3">الأدوات</p>
-          <div className="grid grid-cols-2 gap-3">
-            {QUICK_ACTIONS.map((a) => (
+        {/* اليوم: تقدم + ساعة + CTA في بطاقة واحدة */}
+        <section className="card rise rise-2">
+          <div className="flex items-center justify-between mb-3">
+            <p className="title-md" style={{ color: "var(--text)" }}>يومك</p>
+            <p className="num-hero text-[15px]" style={{ color: "var(--text-dim)" }}>
+              {time ? time.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", hour12: true }) : "--:--"}
+            </p>
+          </div>
+          <div className="h-2.5 rounded-full overflow-hidden mb-2.5" style={{ background: "var(--surface2)" }}>
+            <div className="h-full rounded-full transition-all duration-700"
+              style={{ width: `${todayPct}%`, background: "linear-gradient(90deg, var(--accent-2), var(--accent-hi))" }} />
+          </div>
+          <p className="body-sm mb-4">
+            {todayMins === 0
+              ? "ما بدأت اليوم — جلسة وحدة تكسر الصفر."
+              : `${todayMins} دقيقة من هدف ${DAILY_TARGET} دقيقة.`}
+          </p>
+          <Link href="/orbit" className="btn-primary block text-center" style={{ textDecoration: "none" }}>
+            ابدأ جلسة Orbit
+          </Link>
+        </section>
+
+        {/* الإحصاءات */}
+        <section className="rise rise-3">
+          <p className="eyebrow mb-2.5 px-1">إحصاءاتك</p>
+          <div className="grid grid-cols-3 gap-2.5">
+            {[
+              { val: focusHours,  unit: "ساعة تركيز", color: "var(--accent-light)" },
+              { val: sessions,    unit: "جلسة Orbit", color: "var(--success)" },
+              { val: errorsCount, unit: "خطأ بالخزنة", color: "var(--danger)" },
+            ].map((s) => (
+              <div key={s.unit} className="card text-center" style={{ padding: "18px 8px" }}>
+                <p className="num-hero text-[32px] leading-none" style={{ color: s.color }}>{s.val}</p>
+                <p className="text-[12.5px] font-semibold mt-2" style={{ color: "var(--text-muted)" }}>{s.unit}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* الأدوات */}
+        <section className="rise rise-4">
+          <p className="eyebrow mb-2.5 px-1">الأدوات</p>
+          <div className="grid grid-cols-2 gap-2.5">
+            {TOOLS.map((a) => (
               <Link key={a.href} href={a.href}
-                className="rounded-2xl p-5 flex items-center gap-4 transition-all active:scale-95"
-                style={{ background: a.color + "15", border: `1px solid ${a.color}30` }}>
-                <span className="text-3xl flex-shrink-0">{a.icon}</span>
+                className="card flex items-center gap-3.5 transition active:scale-[0.96]"
+                style={{ padding: "16px", minHeight: "82px", textDecoration: "none" }}>
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
+                  style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)" }}>
+                  {a.icon}
+                </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-[var(--text)] leading-tight">{a.label}</p>
-                  <p className="text-xs text-[var(--text-muted)] mt-0.5">{a.desc}</p>
+                  <p className="font-extrabold text-[15.5px] leading-tight" style={{ color: "var(--text)" }}>{a.label}</p>
+                  <p className="text-[12.5px] mt-1" style={{ color: "var(--text-muted)" }}>{a.desc}</p>
                 </div>
               </Link>
             ))}
           </div>
-        </div>
+        </section>
 
-        {/* Start orbit CTA */}
-        <Link href="/orbit"
-          className="flex items-center gap-4 rounded-2xl p-5 transition-all active:scale-[0.98]"
-          style={{
-            background: "linear-gradient(135deg, rgba(37,99,235,0.2), rgba(37,99,235,0.08))",
-            border: "1.5px solid rgba(37,99,235,0.35)",
-          }}>
-          <div className="w-12 h-12 rounded-xl bg-[var(--blue)] flex items-center justify-center flex-shrink-0">
-            <span className="text-2xl">⏱️</span>
-          </div>
-          <div className="flex-1">
-            <p className="font-black text-base text-[var(--text)]">ابدأ جلسة Orbit</p>
-            <p className="body-sm text-sm">50 دقيقة تركيز + 10 راحة · تكسب Silver</p>
-          </div>
-          <span className="text-[var(--blue-light)] text-lg">←</span>
-        </Link>
-
-        {/* Stats */}
-        <div>
-          <p className="label mb-3">إحصاءاتك</p>
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { val: focusHours, unit: "ساعة", label: "تركيز", color: "var(--blue-light)" },
-              { val: 12,         unit: "جلسة", label: "Orbit",  color: "var(--success)"    },
-              { val: 8,          unit: "خطأ",  label: "الخزنة", color: "var(--danger)"     },
-            ].map((s) => (
-              <div key={s.label} className="card text-center">
-                <p className="font-mono-nums font-black text-2xl" style={{ color: s.color }}>{s.val}</p>
-                <p className="text-xs font-medium text-[var(--text)] mt-0.5">{s.unit}</p>
-                <p className="label mt-0.5">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Today progress */}
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <p className="font-bold text-base text-[var(--text)]">تقدم اليوم</p>
-            <span className="font-mono-nums font-bold text-base text-[var(--blue-light)]">35%</span>
-          </div>
-          <div className="h-3 bg-[var(--border)] rounded-full overflow-hidden">
-            <div className="h-full rounded-full transition-all duration-700"
-              style={{ width: "35%", background: "linear-gradient(90deg, #1D4ED8, #3B82F6)" }} />
-          </div>
-          <div className="flex justify-between mt-4 px-1">
-            {["التأسيس", "البناء", "التعزيز", "الختام"].map((s, i) => (
-              <span key={s} className={`text-[12px] font-semibold ${i === 0 ? "text-[var(--blue-light)]" : "text-[var(--text-muted)]"}`}>{s}</span>
-            ))}
-          </div>
-        </div>
-
-        {/* Clock + time */}
-        <div className="card flex items-center justify-between">
-          <div>
-            <p className="label mb-1">الوقت الحالي</p>
-            <p className="font-mono-nums font-black text-3xl text-[var(--text)]">
-              {time.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", hour12: true })}
-            </p>
-          </div>
-          <Link href="/orbit" className="btn-primary" style={{ width: "auto", padding: "12px 24px" }}>
-            ابدأ الآن
-          </Link>
-        </div>
-
-        {/* Community */}
-        <div className="grid grid-cols-2 gap-3">
-          <Link href="/council" className="card flex items-center gap-3 active:scale-[0.97] transition-all">
+        {/* المجتمع */}
+        <section className="grid grid-cols-2 gap-2.5 rise rise-5">
+          <Link href="/council" className="card flex items-center gap-3 active:scale-[0.97] transition"
+            style={{ minHeight: "74px", textDecoration: "none" }}>
             <span className="text-2xl">💬</span>
             <div>
-              <p className="font-bold text-sm text-[var(--text)]">المجلس</p>
-              <p className="label">نقاشات</p>
+              <p className="font-extrabold text-[15px]" style={{ color: "var(--text)" }}>المجلس</p>
+              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>نقاشات الطلاب</p>
             </div>
           </Link>
-          <Link href="/arena" className="card flex items-center gap-3 active:scale-[0.97] transition-all"
-            style={{ borderColor: "rgba(245,158,11,0.25)" }}>
+          <Link href="/arena" className="card flex items-center gap-3 active:scale-[0.97] transition"
+            style={{ minHeight: "74px", textDecoration: "none", borderColor: "color-mix(in srgb, var(--gold) 25%, transparent)" }}>
             <span className="text-2xl">⚔️</span>
             <div>
-              <p className="font-bold text-sm text-[var(--gold)]">الأرينا</p>
-              <p className="label">1v1</p>
+              <p className="font-extrabold text-[15px]" style={{ color: "var(--gold)" }}>الأرينا</p>
+              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>تحدي 1v1</p>
             </div>
           </Link>
-        </div>
+        </section>
 
-        {/* Certificate */}
-        <div className="card flex items-center gap-4"
-          style={{ borderColor: "rgba(245,158,11,0.2)", background: "rgba(245,158,11,0.05)" }}>
+        {/* الشهادة + الترقية */}
+        <section className="card flex items-center gap-4 rise rise-6"
+          style={{ borderColor: "color-mix(in srgb, var(--gold) 22%, transparent)" }}>
           <span className="text-3xl">📜</span>
-          <div className="flex-1">
-            <p className="font-bold text-sm text-[var(--gold)]">شهادة الانضباط الرقمية</p>
-            <p className="body-sm">{focusHours} ساعة تركيز مسجلة · سارية لأرامكو</p>
+          <div className="flex-1 min-w-0">
+            <p className="font-extrabold text-[14.5px]" style={{ color: "var(--gold)" }}>شهادة الانضباط الرقمية</p>
+            <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+              {focusHours === 0 ? "تبدأ مع أول ساعة تركيز" : `${focusHours} ساعة موثقة حتى الآن`}
+            </p>
           </div>
-        </div>
-
-        {/* Upgrade CTA */}
-        <div className="card flex items-center gap-4"
-          style={{ borderColor: "rgba(37,99,235,0.25)", background: "rgba(37,99,235,0.06)" }}>
-          <div className="flex-1">
-            <p className="font-bold text-sm text-[var(--text)]">باقة شاهين 🦅</p>
-            <p className="body-sm">خزنة غير محدودة + SM-2 كاملة + الأرينا</p>
-          </div>
-          <Link href="/pricing" className="btn-primary flex-shrink-0"
-            style={{ width: "auto", padding: "10px 18px", fontSize: "14px" }}>
-            35 ريال
+          <Link href="/pricing" className="text-[13px] font-bold flex-shrink-0" style={{ color: "var(--accent-light)" }}>
+            شاهين ←
           </Link>
-        </div>
+        </section>
 
       </div>
 

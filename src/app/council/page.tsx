@@ -1,98 +1,98 @@
 "use client";
-import { useState } from "react";
-import Link from "next/link";
+import { useState, useEffect } from "react";
 import BottomNav from "@/components/BottomNav";
+import Dome from "@/components/Dome";
+import { loadUser, loadList, saveList } from "@/lib/storage";
+import { getTrack, type Track } from "@/lib/tracks";
 
-const POSTS = [
-  {
-    id: 1,
-    user: "الصقر ع.",
-    bird: "🦅",
-    time: "منذ 5 دقائق",
-    content: "تجميع فيزياء 2025 كامل — الباب الأول والثاني حللتهم الليلة. شاركوني أي سؤال غلطتوا فيه",
-    likes: 23,
-    replies: 7,
-    subject: "فيزياء",
-    subjectColor: "#2563EB",
-  },
-  {
-    id: 2,
-    user: "الهدهد ر.",
-    bird: "🦜",
-    time: "منذ 20 دقيقة",
-    content: "سؤال: كيف تفرقون بين حالات التفاعل الطارد والماص للحرارة في الأسئلة؟ دايم تخلط عليّ",
-    likes: 12,
-    replies: 15,
-    subject: "كيمياء",
-    subjectColor: "#10B981",
-  },
-  {
-    id: 3,
-    user: "البجعة س.",
-    bird: "🦢",
-    time: "منذ 1 ساعة",
-    content: "نصيحة من قلبي: ما تذكروا القوانين منفصلة. افهموا العلاقة بينها. الفيزياء قصة واحدة مترابطة",
-    likes: 45,
-    replies: 3,
-    subject: "فيزياء",
-    subjectColor: "#2563EB",
-  },
-  {
-    id: 4,
-    user: "الغراب م.",
-    bird: "🐦‍⬛",
-    time: "منذ 2 ساعة",
-    content: "7 أيام streak هذا الأسبوع والخزنة عندي 18 سؤال راجعتهم 3 مرات. الأسلوب يشتغل",
-    likes: 67,
-    replies: 11,
-    subject: "عام",
-    subjectColor: "#64748B",
-  },
-];
+interface Post {
+  id: number;
+  user: string;
+  time: number;
+  content: string;
+  subject: string;
+  likes: number;
+}
 
-const REGIONAL = [
-  { region: "بقيق", hours: 1240, students: 34 },
-  { region: "الدمام", hours: 3850, students: 92 },
-  { region: "الرياض", hours: 5120, students: 143 },
-];
+const POSTS_KEY = "darb_posts";
+
+function timeAgo(ts: number): string {
+  const mins = Math.round((Date.now() - ts) / 60000);
+  if (mins < 1) return "الآن";
+  if (mins < 60) return `منذ ${mins} دقيقة`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `منذ ${hours} ساعة`;
+  return `منذ ${Math.round(hours / 24)} يوم`;
+}
 
 export default function CouncilPage() {
   const [activeTab, setActiveTab] = useState<"feed" | "clash">("feed");
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [track, setTrack] = useState<Track | null>(null);
+  const [userName, setUserName] = useState("");
+  const [newPost, setNewPost] = useState("");
+  const [newSubject, setNewSubject] = useState("عام");
   const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
-  const isPlanFree = true;
+
+  useEffect(() => {
+    const u = loadUser();
+    setUserName(u?.name ?? "طالب");
+    const t = getTrack(u?.track);
+    setTrack(t);
+    setPosts(loadList<Post>(POSTS_KEY));
+    setLoaded(true);
+  }, []);
+
+  useEffect(() => { if (loaded) saveList(POSTS_KEY, posts); }, [posts, loaded]);
+
+  const subjects = ["عام", ...(track?.subjects.map((s) => s.name) ?? [])];
+
+  const publish = () => {
+    if (!newPost.trim()) return;
+    setPosts((p) => [{
+      id: Date.now(),
+      user: userName,
+      time: Date.now(),
+      content: newPost.trim(),
+      subject: newSubject,
+      likes: 0,
+    }, ...p]);
+    setNewPost("");
+  };
 
   const toggleLike = (id: number) => {
-    if (isPlanFree) return;
     setLikedPosts((p) => {
       const next = new Set(p);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      const delta = next.has(id) ? -1 : 1;
+      if (next.has(id)) next.delete(id); else next.add(id);
+      setPosts((ps) => ps.map((x) => (x.id === id ? { ...x, likes: Math.max(0, x.likes + delta) } : x)));
       return next;
     });
   };
 
   return (
-    <div className="min-h-dvh bg-[var(--bg)] pb-nav">
-      <div className="page-header">
-        <h1 className="font-black text-lg text-[var(--text)]">المجلس 💬</h1>
-        <div className="flex items-center gap-1.5 bg-[var(--surface)] border border-[var(--border)] px-3 py-1.5 rounded-xl">
-          <span className="w-1.5 h-1.5 rounded-full bg-[var(--success)] animate-pulse" />
-          <span className="text-xs text-[var(--success)] font-bold">183</span>
+    <div className="min-h-dvh pb-nav relative z-[1]">
+      <Dome compact>
+        <div className="flex items-center justify-between">
+          <h1 className="title-lg" style={{ color: "var(--text)" }}>المجلس 💬</h1>
+          <span className="dome-chip text-[13px] font-bold" style={{ color: "var(--text-dim)" }}>{posts.length} منشور</span>
         </div>
-      </div>
+      </Dome>
+      <div className="h-5" />
 
       {/* Tabs */}
       <div className="px-5 mb-4">
         <div className="grid grid-cols-2 glass rounded-2xl p-1 gap-1">
           <button
             onClick={() => setActiveTab("feed")}
-            className={`py-2 rounded-xl text-sm font-bold transition ${activeTab === "feed" ? "bg-[var(--blue)] text-white" : "text-[var(--text-muted)]"}`}
+            className={`py-3 rounded-xl text-base font-bold transition min-h-[48px] ${activeTab === "feed" ? "bg-[var(--accent)] text-white" : "text-[var(--text-muted)]"}`}
           >
             النقاشات
           </button>
           <button
             onClick={() => setActiveTab("clash")}
-            className={`py-2 rounded-xl text-sm font-bold transition ${activeTab === "clash" ? "bg-[var(--blue)] text-white" : "text-[var(--text-muted)]"}`}
+            className={`py-3 rounded-xl text-base font-bold transition min-h-[48px] ${activeTab === "clash" ? "bg-[var(--accent)] text-white" : "text-[var(--text-muted)]"}`}
           >
             Regional Clash
           </button>
@@ -100,87 +100,96 @@ export default function CouncilPage() {
       </div>
 
       {activeTab === "feed" ? (
-        <div className="px-5 space-y-3">
-          {/* Free user notice */}
-          {isPlanFree && (
-            <div
-              className="rounded-2xl p-3 flex items-center gap-3"
-              style={{ background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.15)" }}
-            >
-              <span className="text-lg">👁️</span>
-              <div>
-                <p className="text-xs text-[var(--text-dim)]">
-                  أنت في وضع القراءة فقط.{" "}
-                  <Link href="/pricing" className="text-[var(--blue-light)] underline">رقّي لشاهين</Link>
-                  {" "}للمشاركة في النقاشات.
-                </p>
-              </div>
+        <div className="px-5 space-y-4">
+
+          {/* صندوق الكتابة */}
+          <div className="rounded-2xl p-4 flex flex-col gap-3"
+            style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+            <textarea
+              value={newPost}
+              onChange={(e) => setNewPost(e.target.value)}
+              rows={2}
+              placeholder={`شارك سؤال أو فايدة يا ${userName}...`}
+              className="w-full rounded-xl px-3 py-2.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] resize-none outline-none"
+              style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}
+            />
+            <div className="flex gap-2.5">
+              <select
+                value={newSubject}
+                onChange={(e) => setNewSubject(e.target.value)}
+                className="rounded-xl px-3 py-2.5 text-sm text-[var(--text)] outline-none min-h-[48px]"
+                style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}
+              >
+                {subjects.map((s) => <option key={s}>{s}</option>)}
+              </select>
+              <button
+                onClick={publish}
+                disabled={!newPost.trim()}
+                className="flex-1 rounded-xl font-bold text-base text-white transition min-h-[48px]"
+                style={{ background: "var(--accent)", opacity: newPost.trim() ? 1 : 0.4 }}
+              >
+                انشر
+              </button>
+            </div>
+          </div>
+
+          {/* المنشورات */}
+          {loaded && posts.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-5xl mb-4">💬</p>
+              <p className="title-md text-[var(--text)] mb-2">المجلس هادئ</p>
+              <p className="body-sm max-w-xs mx-auto">كن أول من يفتح النقاش — سؤال غلطت فيه، فايدة، أو تجربة مذاكرة.</p>
             </div>
           )}
 
-          {POSTS.map((post) => (
+          {posts.map((post) => (
             <div key={post.id} className="glass rounded-2xl p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-lg">{post.bird}</span>
+              <div className="flex items-center gap-3 mb-3">
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0"
+                  style={{ background: "linear-gradient(135deg,var(--accent-2),var(--accent-light))" }}
+                >
+                  {post.user.charAt(0)}
+                </div>
                 <div className="flex-1">
-                  <p className="text-xs font-bold text-[var(--text)]">{post.user}</p>
-                  <p className="text-[9px] text-[var(--text-muted)]">{post.time}</p>
+                  <p className="text-sm font-bold text-[var(--text)]">{post.user}</p>
+                  <p className="text-[10px] text-[var(--text-muted)]">{timeAgo(post.time)}</p>
                 </div>
                 <span
-                  className="text-[10px] px-2 py-0.5 rounded-full font-medium"
-                  style={{ background: post.subjectColor + "22", color: post.subjectColor }}
+                  className="text-[11px] px-2.5 py-1 rounded-full font-medium"
+                  style={{ background: "color-mix(in srgb, var(--accent) 13%, transparent)", color: "var(--accent-light)" }}
                 >
                   {post.subject}
                 </span>
               </div>
-              <p className="text-sm text-[var(--text-dim)] leading-relaxed mb-3">{post.content}</p>
+              <p className="text-base text-[var(--text-dim)] leading-relaxed mb-3">{post.content}</p>
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => toggleLike(post.id)}
-                  className={`flex items-center gap-1.5 text-xs transition ${isPlanFree ? "opacity-40 cursor-not-allowed" : "hover:text-[var(--danger)]"} ${likedPosts.has(post.id) ? "text-[var(--danger)]" : "text-[var(--text-muted)]"}`}
+                  className={`flex items-center gap-1.5 text-sm transition min-h-[40px] ${likedPosts.has(post.id) ? "text-[var(--danger)]" : "text-[var(--text-muted)]"}`}
                 >
-                  ♥ {post.likes + (likedPosts.has(post.id) ? 1 : 0)}
+                  ♥ {post.likes}
                 </button>
                 <button
-                  className={`flex items-center gap-1.5 text-xs text-[var(--text-muted)] transition ${isPlanFree ? "opacity-40 cursor-not-allowed" : "hover:text-[var(--blue-light)]"}`}
+                  onClick={() => setPosts((p) => p.filter((x) => x.id !== post.id))}
+                  className="text-sm text-[var(--text-muted)] min-h-[40px] mr-auto"
                 >
-                  💬 {post.replies}
+                  حذف
                 </button>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="px-5 space-y-4">
-          <div className="glass rounded-2xl p-4 text-center mb-2">
-            <p className="font-black text-base text-[var(--text)] mb-1">Regional Clash</p>
-            <p className="text-xs text-[var(--text-muted)]">تصنيف المناطق حسب ساعات التركيز هذا الأسبوع</p>
+        <div className="px-5">
+          <div className="glass rounded-2xl p-8 text-center">
+            <p className="text-5xl mb-4">🏆</p>
+            <p className="font-black text-lg text-[var(--text)] mb-2">Regional Clash</p>
+            <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-xs mx-auto">
+              تصنيف المناطق حسب ساعات التركيز الأسبوعية — يفتح تلقائياً عند انضمام طلاب من منطقتك.
+              ساعاتك الحقيقية من Orbit هي اللي تحسب.
+            </p>
           </div>
-          {REGIONAL.map((r, i) => (
-            <div key={r.region} className="glass rounded-2xl p-4 flex items-center gap-4">
-              <span className="font-mono-nums text-2xl font-black text-[var(--text-muted)]">#{i + 1}</span>
-              <div className="flex-1">
-                <p className="font-bold text-sm text-[var(--text)]">{r.region}</p>
-                <p className="text-xs text-[var(--text-muted)]">{r.students} طالب</p>
-                <div className="h-1.5 bg-[var(--border)] rounded-full mt-1.5 overflow-hidden">
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: (r.hours / REGIONAL[REGIONAL.length - 1].hours) * 100 + "%",
-                      background: i === 0 ? "#F59E0B" : i === 1 ? "#2563EB" : "#64748B",
-                    }}
-                  />
-                </div>
-              </div>
-              <div className="text-center">
-                <p className="font-mono-nums font-black text-lg text-[var(--gold)]">{r.hours.toLocaleString()}</p>
-                <p className="text-[9px] text-[var(--text-muted)]">ساعة</p>
-              </div>
-            </div>
-          ))}
-          <p className="text-center text-xs text-[var(--text-muted)] pt-2">
-            قابل للتوسع: الرياض، جدة، المدينة...
-          </p>
         </div>
       )}
 

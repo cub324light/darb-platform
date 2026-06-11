@@ -1,50 +1,13 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import BottomNav from "@/components/BottomNav";
+import Dome from "@/components/Dome";
 import { sm2, nextReviewText } from "@/lib/sm2";
-import type { ReviewCard, SubjectId, SM2Grade } from "@/lib/types";
+import { getTrack, subjectColor, type Track } from "@/lib/tracks";
+import { loadUser, loadList, saveList } from "@/lib/storage";
+import type { ReviewCard, SM2Grade } from "@/lib/types";
 
-const DEMO_CARDS: ReviewCard[] = [
-  {
-    id: "1",
-    question: "ما قانون نيوتن الثاني للحركة؟",
-    answer: "F = ma  (القوة = الكتلة × التسارع)",
-    subject: "فيزياء",
-    interval: 1, repetitions: 0, easeFactor: 2.5,
-    dueDate: Date.now() - 100, createdAt: Date.now() - 86400000,
-  },
-  {
-    id: "2",
-    question: "ما تعريف التفاعل الكيميائي الطارد للحرارة؟",
-    answer: "تفاعل يُطلق طاقة حرارية للبيئة المحيطة (ΔH سالب)",
-    subject: "كيمياء",
-    interval: 3, repetitions: 2, easeFactor: 2.3,
-    dueDate: Date.now() - 500, createdAt: Date.now() - 172800000,
-  },
-  {
-    id: "3",
-    question: "ما الفرق بين الانقسام المتساوي والاختزالي؟",
-    answer: "المتساوي: خليتان بنفس العدد الكروموسومي. الاختزالي: 4 خلايا بنصف العدد (التكاثر الجنسي).",
-    subject: "أحياء",
-    interval: 6, repetitions: 3, easeFactor: 2.7,
-    dueDate: Date.now() + 86400000, createdAt: Date.now() - 259200000,
-  },
-  {
-    id: "4",
-    question: "ما قاعدة الجمع في حساب الاحتمالات؟",
-    answer: "P(A ∪ B) = P(A) + P(B) - P(A ∩ B)",
-    subject: "رياضيات",
-    interval: 1, repetitions: 1, easeFactor: 2.1,
-    dueDate: Date.now() - 200, createdAt: Date.now() - 345600000,
-  },
-];
-
-const SUBJECT_COLORS: Record<SubjectId, string> = {
-  فيزياء: "#2563EB",
-  رياضيات: "#8B5CF6",
-  كيمياء: "#10B981",
-  أحياء: "#F59E0B",
-};
+const CARDS_KEY = "darb_cards";
 
 const GRADE_COLORS = ["#EF4444", "#EF4444", "#F59E0B", "#F59E0B", "#10B981", "#10B981"];
 const GRADE_LABELS = ["ما أعرف", "غلط", "صعب", "متوسط", "سهل", "سهل جداً"];
@@ -52,7 +15,9 @@ const GRADE_LABELS = ["ما أعرف", "غلط", "صعب", "متوسط", "سهل
 type Mode = "list" | "session";
 
 export default function ReviewPage() {
-  const [cards, setCards] = useState<ReviewCard[]>(DEMO_CARDS);
+  const [track, setTrack] = useState<Track | null>(null);
+  const [cards, setCards] = useState<ReviewCard[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [mode, setMode] = useState<Mode>("list");
   const [sessionCards, setSessionCards] = useState<ReviewCard[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -60,8 +25,40 @@ export default function ReviewPage() {
   const [sessionDone, setSessionDone] = useState(false);
   const [reviewed, setReviewed] = useState(0);
 
+  /* إضافة بطاقة */
+  const [showAdd, setShowAdd] = useState(false);
+  const [newQ, setNewQ] = useState("");
+  const [newA, setNewA] = useState("");
+  const [newSubject, setNewSubject] = useState("");
+
+  useEffect(() => {
+    const t = getTrack(loadUser()?.track);
+    setTrack(t);
+    setNewSubject(t.subjects[0]?.name ?? "");
+    setCards(loadList<ReviewCard>(CARDS_KEY));
+    setLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (loaded) saveList(CARDS_KEY, cards);
+  }, [cards, loaded]);
+
+  const colorOf = (subj: string) => (track ? subjectColor(track, subj) : "var(--accent)");
+  const subjects = track?.subjects.map((s) => s.name) ?? [];
+
   const dueCards = cards.filter((c) => c.dueDate <= Date.now());
   const upcomingCards = cards.filter((c) => c.dueDate > Date.now());
+
+  const addCard = () => {
+    if (!newQ.trim() || !newA.trim()) return;
+    setCards((p) => [{
+      id: Date.now().toString(),
+      question: newQ.trim(), answer: newA.trim(), subject: newSubject,
+      interval: 1, repetitions: 0, easeFactor: 2.5,
+      dueDate: Date.now(), createdAt: Date.now(),
+    }, ...p]);
+    setNewQ(""); setNewA(""); setShowAdd(false);
+  };
 
   const startSession = () => {
     const due = cards.filter((c) => c.dueDate <= Date.now());
@@ -87,11 +84,11 @@ export default function ReviewPage() {
     }
   };
 
-  /* ── Session view ── */
+  /* ── عرض الجلسة ── */
   if (mode === "session") {
     if (sessionDone) {
       return (
-        <div className="min-h-dvh bg-[var(--bg)] flex flex-col items-center justify-center px-6 pb-nav">
+        <div className="min-h-dvh flex flex-col items-center justify-center px-6 pb-nav relative z-[1]">
           <div className="text-center">
             <p className="text-6xl mb-6">🎉</p>
             <h2 className="font-black text-3xl text-[var(--text)] mb-3">الجلسة منتهية!</h2>
@@ -99,8 +96,8 @@ export default function ReviewPage() {
             <p className="text-base text-[var(--success)] mb-10">المراجعة القادمة محسوبة تلقائياً</p>
             <button
               onClick={() => setMode("list")}
-              className="w-full max-w-xs py-5 rounded-2xl font-black text-white text-lg"
-              style={{ background: "#2563EB" }}
+              className="w-full max-w-xs py-5 rounded-2xl font-black text-white text-lg min-h-[60px]"
+              style={{ background: "var(--accent)" }}
             >
               العودة للقائمة
             </button>
@@ -111,12 +108,12 @@ export default function ReviewPage() {
     }
 
     const card = sessionCards[currentIdx];
-    const color = SUBJECT_COLORS[card.subject];
+    const color = colorOf(card.subject);
 
     return (
-      <div className="min-h-dvh bg-[var(--bg)] flex flex-col pb-nav">
+      <div className="min-h-dvh flex flex-col pb-nav relative z-[1]">
         <div className="page-header">
-          <button onClick={() => setMode("list")} className="text-base text-[var(--text-muted)] font-semibold">
+          <button onClick={() => setMode("list")} className="text-base text-[var(--text-muted)] font-semibold min-h-[44px]">
             ← خروج
           </button>
           <span className="text-base font-bold text-[var(--text)]">
@@ -155,7 +152,7 @@ export default function ReviewPage() {
             ) : (
               <button
                 onClick={() => setShowAnswer(true)}
-                className="w-full py-4 rounded-2xl font-black text-base text-white"
+                className="w-full py-4 rounded-2xl font-black text-base text-white min-h-[56px]"
                 style={{ background: color }}
               >
                 اظهر الإجابة
@@ -171,7 +168,7 @@ export default function ReviewPage() {
                   <button
                     key={g}
                     onClick={() => gradeCard(g as SM2Grade)}
-                    className="py-4 rounded-2xl font-black text-base transition active:scale-95"
+                    className="py-4 rounded-2xl font-black text-base transition active:scale-95 min-h-[58px]"
                     style={{
                       background: GRADE_COLORS[g] + "22",
                       border: `1.5px solid ${GRADE_COLORS[g]}44`,
@@ -191,20 +188,23 @@ export default function ReviewPage() {
     );
   }
 
-  /* ── List view ── */
+  /* ── عرض القائمة ── */
   return (
-    <div className="min-h-dvh bg-[var(--bg)] pb-nav">
-      <div className="page-header">
-        <h1 className="font-black text-xl text-[var(--text)]">بنك المراجعة 🧠</h1>
-        <span className="text-sm text-[var(--text-muted)] bg-[var(--surface)] border border-[var(--border)] px-4 py-2 rounded-xl font-bold">SM-2</span>
-      </div>
+    <div className="min-h-dvh pb-nav relative z-[1]">
+      <Dome compact>
+        <div className="flex items-center justify-between">
+          <h1 className="title-lg" style={{ color: "var(--text)" }}>بنك المراجعة 🧠</h1>
+          <span className="dome-chip text-[13px] font-bold" style={{ color: "var(--text-dim)" }}>SM-2</span>
+        </div>
+      </Dome>
+      <div className="h-5" />
 
-      {/* Stats */}
+      {/* الإحصاءات */}
       <div className="px-5 mb-6">
         <div className="grid grid-cols-3 gap-3">
           {[
-            { val: dueCards.length,      label: "مستحق الآن", color: "var(--danger)"  },
-            { val: upcomingCards.length, label: "قادم",        color: "var(--gold)"   },
+            { val: dueCards.length,      label: "مستحق الآن", color: "var(--danger)" },
+            { val: upcomingCards.length, label: "قادم",        color: "var(--gold)" },
             { val: cards.length,         label: "الإجمالي",    color: "var(--success)" },
           ].map((s) => (
             <div key={s.label} className="rounded-2xl p-5 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
@@ -215,26 +215,71 @@ export default function ReviewPage() {
         </div>
       </div>
 
-      {/* Start */}
+      {/* بدء المراجعة */}
       {dueCards.length > 0 && (
         <div className="px-5 mb-6">
           <button
             onClick={startSession}
-            className="w-full py-5 rounded-2xl font-black text-white text-xl transition glow-blue"
-            style={{ background: "linear-gradient(135deg, #1D4ED8, #2563EB)" }}
+            className="w-full py-5 rounded-2xl font-black text-white text-xl transition glow-blue min-h-[62px]"
+            style={{ background: "linear-gradient(135deg, var(--accent-2), var(--accent))" }}
           >
             ابدأ المراجعة ({dueCards.length} بطاقة)
           </button>
         </div>
       )}
 
-      {/* Due cards */}
+      {/* إضافة بطاقة */}
+      <div className="px-5 mb-6">
+        {!showAdd ? (
+          <button onClick={() => setShowAdd(true)}
+            className="w-full py-5 rounded-2xl text-lg font-bold text-[var(--text-dim)] transition min-h-[60px]"
+            style={{ background: "var(--surface)", border: "1.5px dashed var(--border)" }}>
+            + أضف بطاقة جديدة
+          </button>
+        ) : (
+          <div className="rounded-2xl p-5 flex flex-col gap-4"
+            style={{ background: "var(--surface)", border: "1.5px solid color-mix(in srgb, var(--accent) 35%, transparent)" }}>
+            <p className="font-bold text-base text-[var(--accent-light)]">بطاقة مراجعة جديدة</p>
+
+            <textarea value={newQ} onChange={(e) => setNewQ(e.target.value)} rows={2}
+              placeholder="السؤال..."
+              className="w-full rounded-2xl px-4 py-3 text-base text-[var(--text)] placeholder-[var(--text-muted)] resize-none outline-none"
+              style={{ background: "var(--surface2)", border: "1px solid var(--border)" }} />
+
+            <textarea value={newA} onChange={(e) => setNewA(e.target.value)} rows={2}
+              placeholder="الإجابة..."
+              className="w-full rounded-2xl px-4 py-3 text-base text-[var(--text)] placeholder-[var(--text-muted)] resize-none outline-none"
+              style={{ background: "var(--surface2)", border: "1px solid var(--border)" }} />
+
+            <select value={newSubject} onChange={(e) => setNewSubject(e.target.value)}
+              className="rounded-2xl px-4 py-3.5 text-base text-[var(--text)] outline-none min-h-[52px]"
+              style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+              {subjects.map((s) => <option key={s}>{s}</option>)}
+            </select>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button onClick={addCard}
+                className="py-4 rounded-2xl font-bold text-base text-white transition min-h-[54px]"
+                style={{ background: "var(--accent)" }}>
+                أضف البطاقة
+              </button>
+              <button onClick={() => setShowAdd(false)}
+                className="py-4 rounded-2xl text-base font-medium text-[var(--text-muted)] transition min-h-[54px]"
+                style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                إلغاء
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* مستحقة الآن */}
       {dueCards.length > 0 && (
         <div className="px-5 mb-6">
           <h3 className="font-black text-lg text-[var(--text)] mb-4">مستحقة الآن</h3>
           <div className="flex flex-col gap-4">
             {dueCards.map((card) => {
-              const color = SUBJECT_COLORS[card.subject];
+              const color = colorOf(card.subject);
               return (
                 <div key={card.id} className="rounded-2xl p-5"
                   style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
@@ -251,13 +296,13 @@ export default function ReviewPage() {
         </div>
       )}
 
-      {/* Upcoming */}
+      {/* قادم */}
       {upcomingCards.length > 0 && (
         <div className="px-5 mb-6">
           <h3 className="font-black text-lg text-[var(--text-dim)] mb-4">قادم</h3>
           <div className="flex flex-col gap-4">
             {upcomingCards.map((card) => {
-              const color = SUBJECT_COLORS[card.subject];
+              const color = colorOf(card.subject);
               return (
                 <div key={card.id} className="rounded-2xl p-5 opacity-60"
                   style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
@@ -274,17 +319,25 @@ export default function ReviewPage() {
         </div>
       )}
 
-      {dueCards.length === 0 && (
-        <div className="text-center py-16 px-6">
+      {loaded && cards.length === 0 && (
+        <div className="text-center py-12 px-6">
+          <p className="text-5xl mb-5">🧠</p>
+          <p className="text-xl font-black text-[var(--text)] mb-2">بنك المراجعة فاضي</p>
+          <p className="text-base text-[var(--text-muted)]">أضف أول بطاقة، والنظام يحسب لك متى تراجعها تلقائياً.</p>
+        </div>
+      )}
+
+      {loaded && cards.length > 0 && dueCards.length === 0 && (
+        <div className="text-center py-10 px-6">
           <p className="text-5xl mb-5">✅</p>
           <p className="text-xl font-black text-[var(--success)] mb-2">أحسنت! لا مراجعات مستحقة</p>
           <p className="text-base text-[var(--text-muted)]">{upcomingCards.length} بطاقة قادمة لاحقاً</p>
         </div>
       )}
 
-      {/* Info — في الأسفل */}
+      {/* معلومة */}
       <div className="px-5 pb-6">
-        <div className="rounded-2xl p-5" style={{ background: "linear-gradient(135deg, rgba(37,99,235,0.1), rgba(37,99,235,0.03))", border: "1px solid rgba(37,99,235,0.2)" }}>
+        <div className="rounded-2xl p-5" style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, transparent), color-mix(in srgb, var(--accent) 3%, transparent)), var(--surface)", border: "1px solid color-mix(in srgb, var(--accent) 20%, transparent)" }}>
           <p className="text-sm text-[var(--text-dim)] leading-relaxed">
             📊 <strong className="text-[var(--text)]">Ebbinghaus 1885:</strong> نسيان 80% خلال 24 ساعة بدون مراجعة.
             المراجعة الموزعة = تفوق 200% على المذاكرة التقليدية.

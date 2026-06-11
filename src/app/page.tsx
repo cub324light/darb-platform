@@ -20,10 +20,15 @@ export default function RootPage() {
   }, [router]);
 
   return (
-    <div className="min-h-dvh bg-[var(--bg)] flex items-center justify-center">
+    <div className="min-h-dvh flex items-center justify-center">
       <div className="text-center">
-        <div className="text-6xl mb-4" style={{ filter: "drop-shadow(0 0 20px rgba(37,99,235,0.4))" }}>🦅</div>
-        <p className="text-[var(--text-muted)] text-base font-medium">درب</p>
+        <p
+          className="font-black text-5xl mb-2 text-[var(--accent-light)]"
+          style={{ filter: "drop-shadow(0 0 22px color-mix(in srgb, var(--accent) 40%, transparent))" }}
+        >
+          درب
+        </p>
+        <p className="text-[var(--text-muted)] text-sm font-medium tracking-widest">YOUR PATH TO EXCELLENCE</p>
       </div>
     </div>
   );
