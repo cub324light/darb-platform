@@ -130,10 +130,7 @@ export default function RoadmapPage() {
           <div className="flex items-center justify-between">
             <button onClick={() => setSelected(null)}
               className="dome-chip text-[14px] font-bold" style={{ color: "var(--text)" }}>← رجوع</button>
-            <h1 className="title-lg flex items-center gap-2.5" style={{ color: "var(--text)" }}>
-              <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: subjectColor(track, selected) }} />
-              {selected}
-            </h1>
+            <h1 className="title-lg" style={{ color: "var(--text)" }}>{selected}</h1>
             <span className="dome-chip num-hero text-[14px]" style={{ color: "var(--text)" }}>{doneCount}/{lessons.length}</span>
           </div>
         </Dome>

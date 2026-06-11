@@ -8,13 +8,13 @@ import { loadUser, loadStats, recordSession } from "@/lib/storage";
 type Phase = "idle" | "focus" | "break" | "done";
 
 const SUBJECT_GLOWS: Record<string, string> = {
-  "فيزياء":  "rgba(59,130,246,0.10)",
-  "رياضيات": "rgba(139,92,246,0.10)",
-  "كيمياء":  "rgba(6,182,212,0.09)",
-  "أحياء":   "rgba(34,197,94,0.09)",
+  "فيزياء":  "rgba(139,92,246,0.10)",
+  "رياضيات": "rgba(16,185,129,0.09)",
+  "كيمياء":  "rgba(239,68,68,0.09)",
+  "أحياء":   "rgba(245,158,11,0.10)",
   "إنجليزي": "rgba(148,163,184,0.07)",
-  "لفظي":    "rgba(167,139,250,0.09)",
-  "كمي":     "rgba(59,130,246,0.10)",
+  "لفظي":    "rgba(139,92,246,0.09)",
+  "كمي":     "rgba(37,99,235,0.10)",
 };
 
 const FOCUS_MINS = 50;
@@ -29,16 +29,15 @@ export default function OrbitPage() {
   const [sessionsToday, setSessionsToday] = useState(0);
   const [silverTotal, setSilverTotal] = useState(0);
   const [totalFocusMins, setTotalFocusMins] = useState(0);
-  const [subjects, setSubjects] = useState<string[]>([]);
+  const [subjects, setSubjects] = useState<{ name: string; color: string }[]>([]);
   const [subject, setSubject] = useState<string>("");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   /* تحميل مواد المسار + الإحصاءات الحقيقية */
   useEffect(() => {
     const track = getTrack(loadUser()?.track);
-    const names = track.subjects.map((s) => s.name);
-    setSubjects(names);
-    setSubject(names[0] ?? "");
+    setSubjects(track.subjects.map((s) => ({ name: s.name, color: s.color })));
+    setSubject(track.subjects[0]?.name ?? "");
 
     const s = loadStats();
     setSilverTotal(s.silver);
@@ -157,18 +156,22 @@ export default function OrbitPage() {
         <div className="px-5 mb-5 rise rise-1">
           <p className="text-sm font-bold text-[var(--text-muted)] mb-3">المادة التي تذاكرها:</p>
           <div className="flex gap-2.5 flex-wrap">
-            {subjects.map((s) => (
-              <button
-                key={s}
-                onClick={() => setSubject(s)}
-                className={`px-6 py-3.5 rounded-2xl text-base font-bold transition min-h-[52px] ${
-                  subject === s ? "text-white" : "text-[var(--text-dim)]"
-                }`}
-                style={subject === s ? { background: "var(--accent)" } : { background: "var(--surface)", border: "1px solid var(--border)" }}
-              >
-                {s}
-              </button>
-            ))}
+            {subjects.map((s) => {
+              const active = subject === s.name;
+              return (
+                <button
+                  key={s.name}
+                  onClick={() => setSubject(s.name)}
+                  className="px-6 py-3.5 rounded-2xl text-base font-bold transition min-h-[52px]"
+                  style={active
+                    ? { background: "var(--surface)", border: `2px solid ${s.color}`, boxShadow: `0 0 12px ${s.color}40`, color: s.color }
+                    : { background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text-dim)" }
+                  }
+                >
+                  {s.name}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
