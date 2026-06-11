@@ -270,10 +270,14 @@ export default function RoadmapPage() {
 
           return (
             <button key={s.name} onClick={() => setSelected(s.name)}
-              className="rounded-3xl p-6 flex flex-col gap-4 transition active:scale-[0.96] text-right"
-              style={{ background: `linear-gradient(0deg, ${s.color}1F, ${s.color}1F), var(--surface)`, border: `2px solid ${s.color}30`, minHeight: "140px" }}>
+              className="rounded-3xl p-6 flex flex-col gap-4 text-right subject-card"
+              style={{
+                background: `linear-gradient(135deg, ${s.color}18 0%, ${s.color}08 100%)`,
+                border: `2px solid ${s.color}40`,
+                minHeight: "140px",
+              }}>
               <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: s.color }} />
+                <div className="w-3 h-3 rounded-full flex-shrink-0 subject-dot" style={{ background: s.color, boxShadow: `0 0 7px ${s.color}99` }} />
                 <p className="font-black text-xl text-[var(--text)]">{s.name}</p>
               </div>
 

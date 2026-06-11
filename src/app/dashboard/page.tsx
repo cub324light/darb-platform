@@ -110,11 +110,16 @@ export default function DashboardPage() {
             </Link>
           </div>
           <div className="grid grid-cols-2 gap-2.5">
-            {track.subjects.map((s) => (
+            {track.subjects.map((s, i) => (
               <Link key={s.name} href="/roadmap"
-                className="rounded-2xl px-4 py-3.5 flex items-center gap-3 transition active:scale-[0.97]"
-                style={{ background: "var(--surface2)", border: "1px solid var(--ring)", minHeight: "58px" }}>
-                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: s.color }} />
+                className="rounded-2xl px-4 py-3.5 flex items-center gap-3 transition active:scale-[0.97] subject-card"
+                style={{
+                  background: `linear-gradient(135deg, ${s.color}12 0%, ${s.color}06 100%)`,
+                  border: `1.5px solid ${s.color}35`,
+                  minHeight: "58px",
+                  animationDelay: `${i * 80}ms`,
+                }}>
+                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 subject-dot" style={{ background: s.color, boxShadow: `0 0 6px ${s.color}88` }} />
                 <span className="font-bold text-[15px]" style={{ color: "var(--text)" }}>{s.name}</span>
               </Link>
             ))}

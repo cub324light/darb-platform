@@ -434,6 +434,25 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 .rise { opacity: 0; animation: riseIn 0.5s cubic-bezier(.2,.7,.2,1) forwards; }
+
+/* بطاقات المواد */
+@keyframes subjectIn {
+  from { opacity: 0; transform: scale(0.92) translateY(10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.subject-card {
+  opacity: 0;
+  animation: subjectIn 0.45s cubic-bezier(.2,.8,.2,1) forwards;
+}
+.subject-card:hover  { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+.subject-card:active { transform: scale(0.96) !important; }
+
+/* نبضة النقطة */
+@keyframes dotPulse {
+  0%,100% { transform: scale(1);   opacity: 1; }
+  50%      { transform: scale(1.5); opacity: 0.7; }
+}
+.subject-dot { animation: dotPulse 2.5s ease-in-out infinite; }
 .rise-1 { animation-delay: 0.04s; }
 .rise-2 { animation-delay: 0.10s; }
 .rise-3 { animation-delay: 0.16s; }
