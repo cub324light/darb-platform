@@ -122,8 +122,8 @@ export default function PricingPage() {
                 ))}
               </div>
               <button
-                className="w-full py-3 rounded-2xl font-bold text-sm text-white transition"
-                style={{ background: "var(--accent)" }}
+                className="w-full py-3 rounded-2xl font-bold text-sm transition glow-blue"
+                style={{ background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}
               >
                 اشترك في شاهين — 35 ريال
               </button>
@@ -162,13 +162,15 @@ export default function PricingPage() {
               <div className="flex items-center gap-2 mb-4">
                 <button
                   onClick={() => setLifeTime(false)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition ${!lifeTime ? "bg-[var(--gold)] text-[var(--bg)]" : "glass text-[var(--text-muted)]"}`}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition ${!lifeTime ? "text-[var(--gold)]" : "glass text-[var(--text-muted)]"}`}
+                  style={!lifeTime ? { background: "rgba(245,158,11,0.08)", border: "1px solid #F59E0B" } : undefined}
                 >
                   سنوي — 119
                 </button>
                 <button
                   onClick={() => setLifeTime(true)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition ${lifeTime ? "bg-[var(--gold)] text-[var(--bg)]" : "glass text-[var(--text-muted)]"}`}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition ${lifeTime ? "text-[var(--gold)]" : "glass text-[var(--text-muted)]"}`}
+                  style={lifeTime ? { background: "rgba(245,158,11,0.08)", border: "1px solid #F59E0B" } : undefined}
                 >
                   مدى الحياة — 209
                 </button>
@@ -189,8 +191,8 @@ export default function PricingPage() {
                 ))}
               </div>
               <button
-                className="w-full py-3 rounded-2xl font-bold text-sm text-[var(--bg)] transition glow-gold"
-                style={{ background: "#F59E0B" }}
+                className="w-full py-3 rounded-2xl font-bold text-sm transition glow-gold"
+                style={{ background: "rgba(245,158,11,0.08)", border: "1.5px solid #F59E0B", color: "#F59E0B" }}
               >
                 اشترك في عنقاء — {lifeTime ? "209 (مدى الحياة)" : "119 ريال/سنة"}
               </button>
@@ -243,8 +245,8 @@ export default function PricingPage() {
           </div>
           <Link
             href="/parent"
-            className="block w-full py-3 rounded-2xl font-bold text-center text-sm text-[var(--bg)] transition"
-            style={{ background: "#10B981" }}
+            className="block w-full py-3 rounded-2xl font-bold text-center text-sm transition"
+            style={{ background: "rgba(16,185,129,0.08)", border: "1.5px solid #10B981", color: "#10B981" }}
           >
             اكتشف باقة سند
           </Link>

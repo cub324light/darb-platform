@@ -170,8 +170,8 @@ export default function RoadmapPage() {
               style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}
             />
             <button onClick={addCustom}
-              className="px-6 rounded-2xl font-black text-white text-lg min-h-[54px]"
-              style={{ background: color }}>
+              className="px-6 rounded-2xl font-black text-lg min-h-[54px]"
+              style={{ background: "transparent", border: `1.5px solid ${color}`, color: color }}>
               +
             </button>
           </div>

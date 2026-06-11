@@ -86,13 +86,15 @@ export default function CouncilPage() {
         <div className="grid grid-cols-2 glass rounded-2xl p-1 gap-1">
           <button
             onClick={() => setActiveTab("feed")}
-            className={`py-3 rounded-xl text-base font-bold transition min-h-[48px] ${activeTab === "feed" ? "bg-[var(--accent)] text-white" : "text-[var(--text-muted)]"}`}
+            className={`py-3 rounded-xl text-base font-bold transition min-h-[48px] ${activeTab === "feed" ? "text-[var(--accent-light)]" : "text-[var(--text-muted)]"}`}
+            style={activeTab === "feed" ? { background: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1.5px solid var(--accent)" } : undefined}
           >
             النقاشات
           </button>
           <button
             onClick={() => setActiveTab("clash")}
-            className={`py-3 rounded-xl text-base font-bold transition min-h-[48px] ${activeTab === "clash" ? "bg-[var(--accent)] text-white" : "text-[var(--text-muted)]"}`}
+            className={`py-3 rounded-xl text-base font-bold transition min-h-[48px] ${activeTab === "clash" ? "text-[var(--accent-light)]" : "text-[var(--text-muted)]"}`}
+            style={activeTab === "clash" ? { background: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1.5px solid var(--accent)" } : undefined}
           >
             Regional Clash
           </button>
@@ -125,8 +127,8 @@ export default function CouncilPage() {
               <button
                 onClick={publish}
                 disabled={!newPost.trim()}
-                className="flex-1 rounded-xl font-bold text-base text-white transition min-h-[48px]"
-                style={{ background: "var(--accent)", opacity: newPost.trim() ? 1 : 0.4 }}
+                className="flex-1 rounded-xl font-bold text-base transition min-h-[48px]"
+                style={{ background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)", opacity: newPost.trim() ? 1 : 0.4 }}
               >
                 انشر
               </button>

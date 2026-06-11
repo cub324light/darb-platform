@@ -109,7 +109,7 @@ export default function VaultPage() {
               <button key={cat} onClick={() => setFilterCat(cat)}
                 className="flex-shrink-0 px-6 py-3.5 rounded-2xl text-base font-bold transition min-h-[52px]"
                 style={active
-                  ? { background: "#F59E0B", color: "var(--btn-text-on-gold)", border: "1.5px solid rgba(245,158,11,0.6)", boxShadow: "0 4px 14px rgba(245,158,11,0.3)" }
+                  ? { background: "rgba(245,158,11,0.08)", color: "#F59E0B", border: "1.5px solid #F59E0B", boxShadow: "0 4px 14px rgba(245,158,11,0.3)" }
                   : { background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text-dim)" }}>
                 {cat}{count > 0 && <span className="mr-1 text-sm opacity-80">({count})</span>}
               </button>
@@ -178,7 +178,7 @@ export default function VaultPage() {
               <div className="grid grid-cols-2 gap-3">
                 <button onClick={addError}
                   className="py-4 rounded-2xl font-bold text-base transition min-h-[54px] glow-gold"
-                  style={{ background: "#F59E0B", color: "var(--btn-text-on-gold)" }}>
+                  style={{ background: "rgba(245,158,11,0.08)", border: "1.5px solid #F59E0B", color: "#F59E0B" }}>
                   أضف للخزنة
                 </button>
                 <button onClick={() => setShowAdd(false)}
@@ -254,8 +254,8 @@ export default function VaultPage() {
                     )}
                     <div className="grid grid-cols-2 gap-3">
                       <button onClick={() => setErrors((p) => p.map((e) => e.id === error.id ? { ...e, reviewCount: e.reviewCount + 1 } : e))}
-                        className="py-4 rounded-2xl text-base font-black text-white transition min-h-[56px]"
-                        style={{ background: color }}>
+                        className="py-4 rounded-2xl text-base font-black transition min-h-[56px]"
+                        style={{ background: "transparent", border: `1.5px solid ${color}`, color: color }}>
                         راجعته ✓
                       </button>
                       <button onClick={() => setErrors((p) => p.filter((e) => e.id !== error.id))}

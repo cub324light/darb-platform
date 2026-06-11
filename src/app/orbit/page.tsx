@@ -237,8 +237,8 @@ export default function OrbitPage() {
           {phase === "idle" && (
             <button
               onClick={startFocus}
-              className="w-full py-5 rounded-2xl font-black text-white text-xl transition glow-blue min-h-[60px]"
-              style={{ background: "linear-gradient(135deg, var(--accent-2), var(--accent))" }}
+              className="w-full py-5 rounded-2xl font-black text-xl transition glow-blue min-h-[60px]"
+              style={{ background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}
             >
               ابدأ الجلسة
             </button>
@@ -268,8 +268,8 @@ export default function OrbitPage() {
               </div>
               <button
                 onClick={startFocus}
-                className="w-full py-5 rounded-2xl font-black text-white text-lg transition glow-blue min-h-[60px]"
-                style={{ background: "var(--accent)" }}
+                className="w-full py-5 rounded-2xl font-black text-lg transition glow-blue min-h-[60px]"
+                style={{ background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}
               >
                 جلسة أخرى؟
               </button>

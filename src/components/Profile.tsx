@@ -105,7 +105,7 @@ export default function ProfileButton() {
                       className="flex-1 min-w-0 rounded-xl px-3 py-2.5 text-base text-[var(--text)] outline-none"
                       style={{ background: "var(--surface2)", border: "1.5px solid var(--accent)" }}
                     />
-                    <button onClick={saveName} className="px-4 rounded-xl font-bold text-white" style={{ background: "var(--accent)" }}>✓</button>
+                    <button onClick={saveName} className="px-4 rounded-xl font-bold" style={{ background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>✓</button>
                   </div>
                 ) : (
                   <>

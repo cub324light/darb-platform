@@ -95,8 +95,8 @@ export default function ReviewPage() {
             <p className="text-base text-[var(--success)] mb-10">المراجعة القادمة محسوبة تلقائياً</p>
             <button
               onClick={() => setMode("list")}
-              className="w-full max-w-xs py-5 rounded-2xl font-black text-white text-lg min-h-[60px] glow-blue"
-              style={{ background: "var(--accent)" }}
+              className="w-full max-w-xs py-5 rounded-2xl font-black text-lg min-h-[60px] glow-blue"
+              style={{ background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}
             >
               العودة للقائمة
             </button>
@@ -151,8 +151,8 @@ export default function ReviewPage() {
             ) : (
               <button
                 onClick={() => setShowAnswer(true)}
-                className="w-full py-4 rounded-2xl font-black text-base text-white min-h-[56px]"
-                style={{ background: color }}
+                className="w-full py-4 rounded-2xl font-black text-base min-h-[56px]"
+                style={{ background: "transparent", border: `1.5px solid ${color}`, color: color }}
               >
                 اظهر الإجابة
               </button>
@@ -219,8 +219,8 @@ export default function ReviewPage() {
         <div className="px-5 mb-6 rise rise-2">
           <button
             onClick={startSession}
-            className="w-full py-5 rounded-2xl font-black text-white text-xl transition glow-blue min-h-[62px]"
-            style={{ background: "linear-gradient(135deg, var(--accent-2), var(--accent))" }}
+            className="w-full py-5 rounded-2xl font-black text-xl transition glow-blue min-h-[62px]"
+            style={{ background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}
           >
             ابدأ المراجعة ({dueCards.length} بطاقة)
           </button>
@@ -258,8 +258,8 @@ export default function ReviewPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <button onClick={addCard}
-                className="py-4 rounded-2xl font-bold text-base text-white transition min-h-[54px] glow-blue"
-                style={{ background: "var(--accent)" }}>
+                className="py-4 rounded-2xl font-bold text-base transition min-h-[54px] glow-blue"
+                style={{ background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
                 أضف البطاقة
               </button>
               <button onClick={() => setShowAdd(false)}
