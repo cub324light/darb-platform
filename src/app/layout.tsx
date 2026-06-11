@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import Sky from "@/components/Sky";
 
 export const metadata: Metadata = {
   title: "درب | المنصة التي تعاملك كأخ",
@@ -30,10 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body>
-        <Sky />
-        <div className="relative" style={{ zIndex: 1 }}>{children}</div>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
