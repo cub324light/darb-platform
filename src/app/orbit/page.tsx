@@ -7,6 +7,16 @@ import { loadUser, loadStats, recordSession } from "@/lib/storage";
 
 type Phase = "idle" | "focus" | "break" | "done";
 
+const SUBJECT_GLOWS: Record<string, string> = {
+  "فيزياء":  "rgba(59,130,246,0.10)",
+  "رياضيات": "rgba(139,92,246,0.10)",
+  "كيمياء":  "rgba(6,182,212,0.09)",
+  "أحياء":   "rgba(34,197,94,0.09)",
+  "إنجليزي": "rgba(148,163,184,0.07)",
+  "لفظي":    "rgba(167,139,250,0.09)",
+  "كمي":     "rgba(59,130,246,0.10)",
+};
+
 const FOCUS_MINS = 50;
 const BREAK_MINS = 10;
 const FOCUS_SECS = FOCUS_MINS * 60;
@@ -125,6 +135,13 @@ export default function OrbitPage() {
 
   return (
     <div className="min-h-dvh flex flex-col pb-nav relative z-[1]">
+
+      {/* Ambient glow — subject color when idle, phase color when active */}
+      <div className="fixed inset-0 pointer-events-none transition-all duration-1000"
+        style={{ background: (phase === "idle" || phase === "done")
+          ? `radial-gradient(ellipse 90% 55% at 50% 5%, ${SUBJECT_GLOWS[subject] ?? "rgba(37,99,235,0.08)"} 0%, transparent 65%)`
+          : `radial-gradient(ellipse 65% 45% at 50% 45%, ${strokeColor === "var(--accent)" ? "rgba(37,99,235,0.14)" : "rgba(245,158,11,0.12)"} 0%, transparent 70%)` }} />
+
       <Dome compact>
         <div className="flex items-center justify-between">
           <h1 className="title-lg" style={{ color: "var(--text)" }}>Orbit 50/10</h1>
@@ -263,7 +280,13 @@ export default function OrbitPage() {
       {/* شريط الإحصاءات — حقيقي */}
       <div className="px-5 pb-4">
         <div className="rounded-2xl p-5 grid grid-cols-3 text-center gap-3"
-          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          style={{
+            background: "rgba(18,18,27,0.65)",
+            border: "1px solid rgba(255,255,255,0.07)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
+          }}>
           <div>
             <p className="font-mono-nums font-black text-3xl text-[var(--accent-light)]">{sessionsToday}</p>
             <p className="text-sm text-[var(--text-muted)] mt-1">جلسات اليوم</p>
