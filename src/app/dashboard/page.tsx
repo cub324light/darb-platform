@@ -113,12 +113,13 @@ export default function DashboardPage() {
               <Link key={s.name} href="/roadmap"
                 className="rounded-2xl px-4 py-3.5 flex items-center gap-3 transition active:scale-[0.97] subject-card"
                 style={{
-                  background: `linear-gradient(135deg, ${s.color}12 0%, ${s.color}06 100%)`,
-                  border: `1.5px solid ${s.color}35`,
+                  background: "var(--surface)",
+                  border: `1.5px solid ${s.color}55`,
+                  boxShadow: `0 0 10px ${s.color}18`,
                   minHeight: "58px",
                   animationDelay: `${i * 80}ms`,
                 }}>
-                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 subject-dot" style={{ background: s.color, boxShadow: `0 0 6px ${s.color}88` }} />
+                <div className="w-2 h-2 rounded-full flex-shrink-0 subject-dot" style={{ background: s.color, boxShadow: `0 0 5px ${s.color}88` }} />
                 <span className="font-bold text-[15px]" style={{ color: "var(--text)" }}>{s.name}</span>
               </Link>
             ))}

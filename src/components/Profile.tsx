@@ -30,10 +30,13 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
 
 export default function ProfileButton() {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<DarbUser | null>(null);
   const [editName, setEditName] = useState("");
   const [editing, setEditing] = useState(false);
   const [stats, setStats] = useState({ streak: 0, silver: 0, hours: 0, sessions: 0 });
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -72,8 +75,8 @@ export default function ProfileButton() {
     window.location.href = "/onboarding";
   };
 
-  const modal = open && typeof document !== "undefined" && createPortal(
-    <div className="fixed inset-0 z-[200] flex items-end justify-center" onClick={() => setOpen(false)}>
+  const modal = open && mounted && createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-end justify-center" onClick={() => setOpen(false)}>
           <div className="absolute inset-0 bg-black/55 fade-in" />
           <div
             className="relative w-full max-w-lg rounded-t-3xl p-6 pb-10 slide-up"

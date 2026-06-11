@@ -430,35 +430,40 @@ body {
 .scale-in { animation: scaleIn 0.3s cubic-bezier(.22,.68,0,1.2) forwards; }
 
 @keyframes riseIn {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
 }
-.rise { opacity: 0; animation: riseIn 0.5s cubic-bezier(.2,.7,.2,1) forwards; }
+.rise {
+  opacity: 0;
+  animation: riseIn 0.55s cubic-bezier(.16,.84,.44,1) forwards;
+}
 
 /* بطاقات المواد */
 @keyframes subjectIn {
-  from { opacity: 0; transform: scale(0.92) translateY(10px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
+  from { opacity: 0; transform: scale(0.94) translateY(12px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
 }
 .subject-card {
   opacity: 0;
-  animation: subjectIn 0.45s cubic-bezier(.2,.8,.2,1) forwards;
+  animation: subjectIn 0.45s cubic-bezier(.16,.84,.44,1) forwards;
+  transition: box-shadow 0.25s ease, transform 0.15s ease;
 }
-.subject-card:hover  { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+.subject-card:hover  { transform: translateY(-2px); }
 .subject-card:active { transform: scale(0.96) !important; }
 
 /* نبضة النقطة */
 @keyframes dotPulse {
   0%,100% { transform: scale(1);   opacity: 1; }
-  50%      { transform: scale(1.5); opacity: 0.7; }
+  50%      { transform: scale(1.6); opacity: 0.6; }
 }
-.subject-dot { animation: dotPulse 2.5s ease-in-out infinite; }
-.rise-1 { animation-delay: 0.04s; }
-.rise-2 { animation-delay: 0.10s; }
-.rise-3 { animation-delay: 0.16s; }
-.rise-4 { animation-delay: 0.22s; }
-.rise-5 { animation-delay: 0.28s; }
-.rise-6 { animation-delay: 0.34s; }
+.subject-dot { animation: dotPulse 3s ease-in-out infinite; }
+
+.rise-1 { animation-delay: 0.05s; }
+.rise-2 { animation-delay: 0.12s; }
+.rise-3 { animation-delay: 0.19s; }
+.rise-4 { animation-delay: 0.26s; }
+.rise-5 { animation-delay: 0.33s; }
+.rise-6 { animation-delay: 0.40s; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
