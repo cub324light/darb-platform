@@ -230,8 +230,8 @@ export default function ParentPage() {
           <p className="font-black text-lg text-[var(--success)] mb-1">سند — 49 ريال/شهر</p>
           <p className="text-xs text-[var(--text-muted)] mb-3">ابن واحد مجاناً · خصم 50% لأخ أو أخت</p>
           <button
-            className="w-full py-3 rounded-2xl font-bold text-sm text-[var(--bg)] transition"
-            style={{ background: "#10B981" }}
+            className="w-full py-3 rounded-2xl font-bold text-sm transition"
+            style={{ background: "rgba(16,185,129,0.08)", border: "1.5px solid #10B981", color: "#10B981" }}
           >
             اشترك في سند الآن
           </button>
@@ -255,8 +255,8 @@ export default function ParentPage() {
             <div className="space-y-2">
               <button
                 onClick={() => setShowAlertWarning(false)}
-                className="w-full py-3 rounded-2xl font-bold text-sm text-[var(--bg)]"
-                style={{ background: "#10B981" }}
+                className="w-full py-3 rounded-2xl font-bold text-sm"
+                style={{ background: "rgba(16,185,129,0.08)", border: "1.5px solid #10B981", color: "#10B981" }}
               >
                 اكتفِ بالتقرير الأسبوعي
               </button>
