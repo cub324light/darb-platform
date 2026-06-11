@@ -114,7 +114,7 @@ export default function DashboardPage() {
               <Link key={s.name} href="/roadmap"
                 className="rounded-2xl px-4 py-3.5 flex items-center gap-3 transition active:scale-[0.97]"
                 style={{ background: "var(--surface2)", border: "1px solid var(--ring)", minHeight: "58px" }}>
-                <span className="text-xl">{s.icon}</span>
+                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: s.color }} />
                 <span className="font-bold text-[15px]" style={{ color: "var(--text)" }}>{s.name}</span>
               </Link>
             ))}

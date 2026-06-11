@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 /* ═══════════════════════════════════════════
@@ -82,7 +82,7 @@ html[data-theme="light"] { color-scheme: light; }
 body {
   background: linear-gradient(175deg, #0E0E16 0%, #07070D 100%);
   color: var(--text);
-  font-family: 'Tajawal', sans-serif;
+  font-family: 'Cairo', sans-serif;
   min-height: 100dvh;
   overflow-x: hidden;
   direction: rtl;
