@@ -118,10 +118,12 @@ export default function OrbitPage() {
     };
   }, [phase, startBreak, finishBreak]);
 
+  const currentColor = subjects.find(s => s.name === subject)?.color ?? "var(--accent)";
+
   const radius = 110;
   const circumference = 2 * Math.PI * radius;
   const dashOffset = circumference * (1 - progress);
-  const strokeColor = phase === "break" ? "#F59E0B" : "var(--accent)";
+  const strokeColor = phase === "break" ? "#F59E0B" : currentColor;
 
   const statusMsg =
     phase === "idle"
@@ -178,7 +180,8 @@ export default function OrbitPage() {
 
       {/* دائرة المؤقت */}
       <div className="flex-1 flex flex-col items-center justify-center px-5 rise rise-2">
-        <div className="relative mb-8">
+        <div className="relative mb-8"
+          style={phase === "focus" ? { filter: `drop-shadow(0 0 16px ${currentColor}40)` } : undefined}>
           <svg width="260" height="260" className="-rotate-90">
             <circle cx="130" cy="130" r={radius} fill="none" stroke="var(--border)" strokeWidth="6" />
             <circle

@@ -22,7 +22,7 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-dvh flex flex-col">
-      <Dome>
+      <Dome hideControls>
         <div className="text-center py-6">
           <p className="font-black text-5xl mb-1"
             style={{ color: "var(--text)", filter: "drop-shadow(0 0 22px color-mix(in srgb, var(--accent) 45%, transparent))" }}>

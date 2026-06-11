@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, type ReactNode } from "react";
+import ProfileButton, { ThemeToggle } from "@/components/Profile";
 
 /* ─── القبة: سماء محتواة داخل الهيدر — توقيع درب البصري ───
    المحتوى فوقها دائماً (z-2) والزينة خلفه (z-1) داخل حدود القبة فقط،
@@ -10,9 +11,11 @@ interface Star { left: string; top: string; size: string; opacity: number; durat
 export default function Dome({
   children,
   compact = false,
+  hideControls = false,
 }: {
   children: ReactNode;
   compact?: boolean;
+  hideControls?: boolean;
 }) {
   const [stars, setStars] = useState<Star[]>([]);
   const [shootKey, setShootKey] = useState(0);
@@ -90,6 +93,12 @@ export default function Dome({
 
       {/* ── المحتوى ── */}
       <div className="dome-content" style={{ padding: compact ? "calc(18px + env(safe-area-inset-top)) 18px 16px" : "calc(26px + env(safe-area-inset-top)) 18px 22px" }}>
+        {!hideControls && (
+          <div className="flex justify-end gap-2 mb-3">
+            <ThemeToggle className="" />
+            <ProfileButton />
+          </div>
+        )}
         {children}
       </div>
     </div>

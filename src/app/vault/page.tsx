@@ -129,7 +129,7 @@ export default function VaultPage() {
               <button key={s} onClick={() => setFilterSubject(s)}
                 className="flex-shrink-0 px-6 py-3.5 rounded-2xl text-base font-bold transition min-h-[52px]"
                 style={active
-                  ? { background: color, color: "#fff" }
+                  ? { background: "var(--surface)", border: `2px solid ${color}`, boxShadow: `0 0 10px ${color}35`, color: color }
                   : { background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}>
                 {s}
               </button>

@@ -141,7 +141,7 @@ export default function RoadmapPage() {
         {/* تقدم المادة */}
         <div className="px-5 mb-6 rise rise-1">
           <div className="rounded-2xl p-5"
-            style={{ background: `linear-gradient(0deg, ${color}1F, ${color}1F), var(--surface)`, border: `1.5px solid ${color}33` }}>
+            style={{ background: "var(--surface)", border: `1.5px solid ${color}`, boxShadow: `0 0 14px ${color}25` }}>
             <div className="flex items-center justify-between mb-3">
               <p className="font-bold text-base text-[var(--text)]">تقدم {selected}</p>
               <span className="font-mono-nums font-black text-2xl" style={{ color }}>{pct}%</span>

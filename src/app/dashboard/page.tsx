@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
-import ProfileButton, { ThemeToggle } from "@/components/Profile";
 import { getTrack } from "@/lib/tracks";
 import { loadUser, loadStats, computeStreak, type DarbUser } from "@/lib/storage";
 
@@ -57,17 +56,13 @@ export default function DashboardPage() {
     <div className="page">
 
       {/* ═══ القبة ═══ */}
-      <Dome>
-        <div className="flex items-center justify-between gap-3 mb-5">
+      <Dome hideControls>
+        <div className="flex items-center gap-3 mb-5">
           <div className="flex-1 min-w-0">
             <p className="eyebrow mb-1" style={{ color: "var(--text-dim)" }}>{greeting}</p>
             <h1 className="title-xl truncate" style={{ color: "var(--text)" }}>
               أهلاً، {user?.name ?? "..."}
             </h1>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <ThemeToggle />
-            <ProfileButton />
           </div>
         </div>
 
