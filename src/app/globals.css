@@ -496,3 +496,91 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
 :root:not([data-theme="light"]) .dome-day,   [data-theme="dark"] .dome-day   { opacity: 0; }
 [data-theme="light"] .dome-night { opacity: 0; }
 [data-theme="light"] .dome-day   { opacity: 1; }
+
+/* ═══════ سماء الخلفية — تغطي كل الصفحات ═══════ */
+.sky {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.sky-night,
+.sky-day {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.5s ease;
+}
+
+:root:not([data-theme="light"]) .sky-night,
+[data-theme="dark"] .sky-night { opacity: 1; }
+:root:not([data-theme="light"]) .sky-day,
+[data-theme="dark"] .sky-day   { opacity: 0; }
+[data-theme="light"] .sky-night { opacity: 0; }
+[data-theme="light"] .sky-day   { opacity: 1; }
+
+.sky-star {
+  position: absolute;
+  border-radius: 9999px;
+  background: white;
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+.sky-moon {
+  position: absolute;
+  top: 6%;
+  right: 5%;
+  width: 52px;
+  height: 52px;
+  opacity: 0.65;
+  animation: floatY 7s ease-in-out infinite;
+}
+
+.sky-shooting {
+  position: absolute;
+  top: 10%;
+  right: -5%;
+  width: 130px;
+  height: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(270deg, rgba(255,255,255,0), #FFFFFF 60%, #93C5FD);
+  transform: rotate(196deg);
+  opacity: 0;
+  animation: shoot 2.4s ease-out 1;
+}
+
+.sky-sun {
+  position: absolute;
+  top: 5%;
+  right: 5%;
+  width: 72px;
+  height: 72px;
+  opacity: 0.75;
+  animation: floatY 6s ease-in-out infinite;
+}
+
+.sky-cloud {
+  position: absolute;
+  height: 20px;
+  border-radius: 9999px;
+  background: rgba(200,170,120,0.25);
+  box-shadow: 18px -9px 0 2px rgba(200,170,120,0.2), -14px -5px 0 0 rgba(200,170,120,0.18);
+}
+[data-theme="dark"] .sky-cloud,
+:root:not([data-theme="light"]) .sky-cloud {
+  background: rgba(255,255,255,0.12);
+  box-shadow: 18px -9px 0 2px rgba(255,255,255,0.1), -14px -5px 0 0 rgba(255,255,255,0.08);
+}
+.sky-cloud-1 { width: 68px; top:  8%; opacity: 0.9; animation: drift 55s linear infinite; }
+.sky-cloud-2 { width: 46px; top: 19%; opacity: 0.9; animation: drift 72s linear infinite; animation-delay: -28s; }
+.sky-cloud-3 { width: 56px; top: 30%; opacity: 0.9; animation: drift 80s linear infinite; animation-delay: -50s; }
+
+.sky-flock {
+  position: absolute;
+  top: 14%;
+  width: 110px;
+  opacity: 0.28;
+  animation: drift 58s linear infinite;
+  animation-delay: -20s;
+}
