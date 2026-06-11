@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { TRACKS, getTrack, type TrackId } from "@/lib/tracks";
 import {
   loadUser, saveUser, loadStats, computeStreak,
@@ -22,17 +23,20 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
 
   return (
     <button onClick={toggle} className={`btn-icon ${className}`} aria-label="تبديل الوضع">
-      {theme === "dark" ? "☀️" : "🌙"}
+      {theme === "dark" ? "نهار" : "ليل"}
     </button>
   );
 }
 
 export default function ProfileButton() {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<DarbUser | null>(null);
   const [editName, setEditName] = useState("");
   const [editing, setEditing] = useState(false);
   const [stats, setStats] = useState({ streak: 0, silver: 0, hours: 0, sessions: 0 });
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -71,19 +75,8 @@ export default function ProfileButton() {
     window.location.href = "/onboarding";
   };
 
-  return (
-    <>
-      {/* الزر — في يسار الهيدر */}
-      <button onClick={() => setOpen(true)} className="btn-icon" aria-label="البروفايل">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9} className="w-6 h-6">
-          <circle cx="12" cy="8" r="3.6" />
-          <path strokeLinecap="round" d="M4.5 20c1.6-3.4 4.4-5 7.5-5s5.9 1.6 7.5 5" />
-        </svg>
-      </button>
-
-      {/* اللوحة */}
-      {open && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center" onClick={() => setOpen(false)}>
+  const modal = open && mounted && createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-end justify-center" onClick={() => setOpen(false)}>
           <div className="absolute inset-0 bg-black/55 fade-in" />
           <div
             className="relative w-full max-w-lg rounded-t-3xl p-6 pb-10 slide-up"
@@ -130,12 +123,12 @@ export default function ProfileButton() {
             <div className="grid grid-cols-4 gap-2 mb-6">
               {[
                 { val: stats.streak,   label: "ستريك",  icon: "🔥" },
-                { val: stats.silver,   label: "Silver",  icon: "🪙" },
-                { val: stats.hours,    label: "ساعة",    icon: "⏱" },
-                { val: stats.sessions, label: "جلسة",    icon: "🎯" },
+                { val: stats.silver,   label: "Silver",  icon: "" },
+                { val: stats.hours,    label: "ساعة",    icon: "" },
+                { val: stats.sessions, label: "جلسة",    icon: "" },
               ].map((s) => (
                 <div key={s.label} className="rounded-2xl p-3 text-center" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-                  <p className="text-base">{s.icon}</p>
+                  {s.icon && <p className="text-base">{s.icon}</p>}
                   <p className="font-mono-nums font-black text-lg text-[var(--text)]">{s.val}</p>
                   <p className="text-[11px] text-[var(--text-muted)] font-semibold">{s.label}</p>
                 </div>
@@ -173,8 +166,21 @@ export default function ProfileButton() {
               إعادة الضبط من الصفر
             </button>
           </div>
-        </div>
-      )}
+    </div>,
+    document.body
+  );
+
+  return (
+    <>
+      {/* الزر — في يسار الهيدر */}
+      <button onClick={() => setOpen(true)} className="btn-icon" aria-label="البروفايل">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9} className="w-6 h-6">
+          <circle cx="12" cy="8" r="3.6" />
+          <path strokeLinecap="round" d="M4.5 20c1.6-3.4 4.4-5 7.5-5s5.9 1.6 7.5 5" />
+        </svg>
+      </button>
+
+      {modal}
     </>
   );
 }

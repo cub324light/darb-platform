@@ -130,10 +130,7 @@ export default function RoadmapPage() {
           <div className="flex items-center justify-between">
             <button onClick={() => setSelected(null)}
               className="dome-chip text-[14px] font-bold" style={{ color: "var(--text)" }}>← رجوع</button>
-            <h1 className="title-lg flex items-center gap-2.5" style={{ color: "var(--text)" }}>
-              <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: subjectColor(track, selected) }} />
-              {selected}
-            </h1>
+            <h1 className="title-lg" style={{ color: "var(--text)" }}>{selected}</h1>
             <span className="dome-chip num-hero text-[14px]" style={{ color: "var(--text)" }}>{doneCount}/{lessons.length}</span>
           </div>
         </Dome>
@@ -142,7 +139,7 @@ export default function RoadmapPage() {
         <OverallBar />
 
         {/* تقدم المادة */}
-        <div className="px-5 mb-6">
+        <div className="px-5 mb-6 rise rise-1">
           <div className="rounded-2xl p-5"
             style={{ background: `linear-gradient(0deg, ${color}1F, ${color}1F), var(--surface)`, border: `1.5px solid ${color}33` }}>
             <div className="flex items-center justify-between mb-3">
@@ -154,9 +151,9 @@ export default function RoadmapPage() {
                 style={{ width: pct + "%", background: color }} />
             </div>
             <div className="flex gap-4 flex-wrap">
-              <span className="text-sm text-[var(--text-muted)]">📚 {lessons.length} درس</span>
-              {totals && <span className="text-sm text-[var(--text-muted)]">⏱ {totals.hours} ساعة</span>}
-              {totals && <span className="text-sm text-[var(--text-muted)]">📄 ص {totals.pages}</span>}
+              <span className="text-sm text-[var(--text-muted)]">{lessons.length} درس</span>
+              {totals && <span className="text-sm text-[var(--text-muted)]">{totals.hours} ساعة</span>}
+              {totals && <span className="text-sm text-[var(--text-muted)]">ص {totals.pages}</span>}
             </div>
           </div>
         </div>
@@ -181,10 +178,9 @@ export default function RoadmapPage() {
         )}
 
         {/* قائمة الدروس */}
-        <div className="px-5 flex flex-col gap-3">
+        <div className="px-5 flex flex-col gap-3 rise rise-2">
           {lessons.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-5xl mb-4">🗺️</p>
               <p className="title-md text-[var(--text)] mb-2">ما فيه دروس بعد</p>
               <p className="body-sm">أضف دروسك فوق وتابع تقدمك درساً بدرس.</p>
             </div>
@@ -262,7 +258,7 @@ export default function RoadmapPage() {
 
       <OverallBar />
 
-      <div className="px-5 grid grid-cols-2 gap-4">
+      <div className="px-5 grid grid-cols-2 gap-4 rise rise-1">
         {track.subjects.map((s) => {
           const lessons = lessonsOf(s.name);
           const doneCount = lessons.filter((l) => doneSet.has(l.key)).length;
@@ -270,10 +266,15 @@ export default function RoadmapPage() {
 
           return (
             <button key={s.name} onClick={() => setSelected(s.name)}
-              className="rounded-3xl p-6 flex flex-col gap-4 transition active:scale-[0.96] text-right"
-              style={{ background: `linear-gradient(0deg, ${s.color}1F, ${s.color}1F), var(--surface)`, border: `2px solid ${s.color}30`, minHeight: "140px" }}>
+              className="rounded-3xl p-6 flex flex-col gap-4 text-right subject-card"
+              style={{
+                background: "var(--surface)",
+                border: `2px solid ${s.color}55`,
+                boxShadow: `0 0 14px ${s.color}18`,
+                minHeight: "140px",
+              }}>
               <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: s.color }} />
+                <div className="w-3 h-3 rounded-full flex-shrink-0 subject-dot" style={{ background: s.color, boxShadow: `0 0 7px ${s.color}99` }} />
                 <p className="font-black text-xl text-[var(--text)]">{s.name}</p>
               </div>
 

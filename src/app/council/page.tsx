@@ -75,14 +75,14 @@ export default function CouncilPage() {
     <div className="min-h-dvh pb-nav relative z-[1]">
       <Dome compact>
         <div className="flex items-center justify-between">
-          <h1 className="title-lg" style={{ color: "var(--text)" }}>المجلس 💬</h1>
+          <h1 className="title-lg" style={{ color: "var(--text)" }}>المجلس</h1>
           <span className="dome-chip text-[13px] font-bold" style={{ color: "var(--text-dim)" }}>{posts.length} منشور</span>
         </div>
       </Dome>
       <div className="h-5" />
 
       {/* Tabs */}
-      <div className="px-5 mb-4">
+      <div className="px-5 mb-4 rise rise-1">
         <div className="grid grid-cols-2 glass rounded-2xl p-1 gap-1">
           <button
             onClick={() => setActiveTab("feed")}
@@ -100,7 +100,7 @@ export default function CouncilPage() {
       </div>
 
       {activeTab === "feed" ? (
-        <div className="px-5 space-y-4">
+        <div className="px-5 space-y-4 rise rise-2">
 
           {/* صندوق الكتابة */}
           <div className="rounded-2xl p-4 flex flex-col gap-3"
@@ -136,7 +136,6 @@ export default function CouncilPage() {
           {/* المنشورات */}
           {loaded && posts.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-5xl mb-4">💬</p>
               <p className="title-md text-[var(--text)] mb-2">المجلس هادئ</p>
               <p className="body-sm max-w-xs mx-auto">كن أول من يفتح النقاش — سؤال غلطت فيه، فايدة، أو تجربة مذاكرة.</p>
             </div>
@@ -181,9 +180,8 @@ export default function CouncilPage() {
           ))}
         </div>
       ) : (
-        <div className="px-5">
+        <div className="px-5 rise rise-2">
           <div className="glass rounded-2xl p-8 text-center">
-            <p className="text-5xl mb-4">🏆</p>
             <p className="font-black text-lg text-[var(--text)] mb-2">Regional Clash</p>
             <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-xs mx-auto">
               تصنيف المناطق حسب ساعات التركيز الأسبوعية — يفتح تلقائياً عند انضمام طلاب من منطقتك.

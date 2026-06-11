@@ -10,6 +10,7 @@
 :root,
 [data-theme="dark"] {
   --bg: #07070D;
+  --body-bg: linear-gradient(175deg, #0E0E16 0%, #07070D 100%);
   --surface: #12121B;
   --surface2: #1A1A28;
   --ring: rgba(255,255,255,0.07);
@@ -42,6 +43,7 @@
 
 [data-theme="light"] {
   --bg: #F8F4EC;
+  --body-bg: linear-gradient(175deg, #FFF9F0 0%, #F8F4EC 100%);
   --surface: #FFFFFF;
   --surface2: #F2ECDF;
   --ring: rgba(28,20,8,0.06);
@@ -80,7 +82,7 @@ html[data-theme="dark"] { color-scheme: dark; }
 html[data-theme="light"] { color-scheme: light; }
 
 body {
-  background: linear-gradient(175deg, #0E0E16 0%, #07070D 100%);
+  background: var(--body-bg);
   color: var(--text);
   font-family: 'Cairo', sans-serif;
   min-height: 100dvh;
@@ -196,7 +198,9 @@ body {
   border-radius: 24px;
   padding: 20px;
   box-shadow: var(--card-shadow);
+  transition: box-shadow 0.25s ease, transform 0.2s ease;
 }
+a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.18); }
 
 .card-tint {
   border-radius: 24px;
@@ -251,11 +255,12 @@ body {
   background: linear-gradient(135deg, var(--accent-2), var(--accent) 55%, var(--accent-hi));
   border: none;
   cursor: pointer;
-  transition: transform 0.15s ease, opacity 0.15s ease;
-  box-shadow: var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.12);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.15s ease;
+  box-shadow: var(--accent-glow), 0 4px 18px color-mix(in srgb, var(--accent) 30%, transparent), inset 0 1px 0 rgba(255,255,255,0.12);
   letter-spacing: 0.01em;
 }
-.btn-primary:active { transform: scale(0.97); opacity: 0.92; }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: var(--accent-glow), 0 8px 28px color-mix(in srgb, var(--accent) 40%, transparent), inset 0 1px 0 rgba(255,255,255,0.12); }
+.btn-primary:active { transform: scale(0.97) translateY(0); opacity: 0.92; }
 .btn-primary:disabled { opacity: 0.4; box-shadow: none; }
 
 .btn-gold {
@@ -270,10 +275,11 @@ body {
   background: linear-gradient(135deg, #B45309, #F59E0B);
   border: none;
   cursor: pointer;
-  transition: transform 0.15s ease;
-  box-shadow: 0 8px 28px rgba(245,158,11,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 18px rgba(245,158,11,0.25), inset 0 1px 0 rgba(255,255,255,0.2);
 }
-.btn-gold:active { transform: scale(0.97); }
+.btn-gold:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(245,158,11,0.4), inset 0 1px 0 rgba(255,255,255,0.2); }
+.btn-gold:active { transform: scale(0.97) translateY(0); }
 
 .btn-ghost {
   width: 100%;
@@ -428,16 +434,40 @@ body {
 .scale-in { animation: scaleIn 0.3s cubic-bezier(.22,.68,0,1.2) forwards; }
 
 @keyframes riseIn {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
 }
-.rise { opacity: 0; animation: riseIn 0.5s cubic-bezier(.2,.7,.2,1) forwards; }
-.rise-1 { animation-delay: 0.04s; }
-.rise-2 { animation-delay: 0.10s; }
-.rise-3 { animation-delay: 0.16s; }
-.rise-4 { animation-delay: 0.22s; }
-.rise-5 { animation-delay: 0.28s; }
-.rise-6 { animation-delay: 0.34s; }
+.rise {
+  opacity: 0;
+  animation: riseIn 0.55s cubic-bezier(.16,.84,.44,1) forwards;
+}
+
+/* بطاقات المواد */
+@keyframes subjectIn {
+  from { opacity: 0; transform: scale(0.94) translateY(12px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+.subject-card {
+  opacity: 0;
+  animation: subjectIn 0.45s cubic-bezier(.16,.84,.44,1) forwards;
+  transition: box-shadow 0.25s ease, transform 0.15s ease;
+}
+.subject-card:hover  { transform: translateY(-2px); }
+.subject-card:active { transform: scale(0.96) !important; }
+
+/* نبضة النقطة */
+@keyframes dotPulse {
+  0%,100% { transform: scale(1);   opacity: 1; }
+  50%      { transform: scale(1.6); opacity: 0.6; }
+}
+.subject-dot { animation: dotPulse 3s ease-in-out infinite; }
+
+.rise-1 { animation-delay: 0.05s; }
+.rise-2 { animation-delay: 0.12s; }
+.rise-3 { animation-delay: 0.19s; }
+.rise-4 { animation-delay: 0.26s; }
+.rise-5 { animation-delay: 0.33s; }
+.rise-6 { animation-delay: 0.40s; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }

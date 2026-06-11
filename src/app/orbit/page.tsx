@@ -8,13 +8,13 @@ import { loadUser, loadStats, recordSession } from "@/lib/storage";
 type Phase = "idle" | "focus" | "break" | "done";
 
 const SUBJECT_GLOWS: Record<string, string> = {
-  "فيزياء":  "rgba(59,130,246,0.10)",
-  "رياضيات": "rgba(139,92,246,0.10)",
-  "كيمياء":  "rgba(6,182,212,0.09)",
-  "أحياء":   "rgba(34,197,94,0.09)",
+  "فيزياء":  "rgba(139,92,246,0.10)",
+  "رياضيات": "rgba(16,185,129,0.09)",
+  "كيمياء":  "rgba(239,68,68,0.09)",
+  "أحياء":   "rgba(245,158,11,0.10)",
   "إنجليزي": "rgba(148,163,184,0.07)",
-  "لفظي":    "rgba(167,139,250,0.09)",
-  "كمي":     "rgba(59,130,246,0.10)",
+  "لفظي":    "rgba(139,92,246,0.09)",
+  "كمي":     "rgba(37,99,235,0.10)",
 };
 
 const FOCUS_MINS = 50;
@@ -29,16 +29,15 @@ export default function OrbitPage() {
   const [sessionsToday, setSessionsToday] = useState(0);
   const [silverTotal, setSilverTotal] = useState(0);
   const [totalFocusMins, setTotalFocusMins] = useState(0);
-  const [subjects, setSubjects] = useState<string[]>([]);
+  const [subjects, setSubjects] = useState<{ name: string; color: string }[]>([]);
   const [subject, setSubject] = useState<string>("");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   /* تحميل مواد المسار + الإحصاءات الحقيقية */
   useEffect(() => {
     const track = getTrack(loadUser()?.track);
-    const names = track.subjects.map((s) => s.name);
-    setSubjects(names);
-    setSubject(names[0] ?? "");
+    setSubjects(track.subjects.map((s) => ({ name: s.name, color: s.color })));
+    setSubject(track.subjects[0]?.name ?? "");
 
     const s = loadStats();
     setSilverTotal(s.silver);
@@ -131,7 +130,7 @@ export default function OrbitPage() {
       ? "50 دقيقة — لا تكسرها."
       : phase === "break"
       ? "10 دقائق راحة — حرك جسمك."
-      : `جلسة منجزة! +${SILVER_PER_SESSION} Silver 🪙`;
+      : `جلسة منجزة! +${SILVER_PER_SESSION} Silver`;
 
   return (
     <div className="min-h-dvh flex flex-col pb-nav relative z-[1]">
@@ -146,7 +145,6 @@ export default function OrbitPage() {
         <div className="flex items-center justify-between">
           <h1 className="title-lg" style={{ color: "var(--text)" }}>Orbit 50/10</h1>
           <div className="dome-chip">
-            <span className="text-base">🪙</span>
             <span className="num-hero text-base" style={{ color: "var(--text)" }}>{silverTotal}</span>
           </div>
         </div>
@@ -155,27 +153,31 @@ export default function OrbitPage() {
 
       {/* اختيار المادة — حسب مسارك */}
       {phase === "idle" && subjects.length > 0 && (
-        <div className="px-5 mb-5">
+        <div className="px-5 mb-5 rise rise-1">
           <p className="text-sm font-bold text-[var(--text-muted)] mb-3">المادة التي تذاكرها:</p>
           <div className="flex gap-2.5 flex-wrap">
-            {subjects.map((s) => (
-              <button
-                key={s}
-                onClick={() => setSubject(s)}
-                className={`px-6 py-3.5 rounded-2xl text-base font-bold transition min-h-[52px] ${
-                  subject === s ? "text-white" : "text-[var(--text-dim)]"
-                }`}
-                style={subject === s ? { background: "var(--accent)" } : { background: "var(--surface)", border: "1px solid var(--border)" }}
-              >
-                {s}
-              </button>
-            ))}
+            {subjects.map((s) => {
+              const active = subject === s.name;
+              return (
+                <button
+                  key={s.name}
+                  onClick={() => setSubject(s.name)}
+                  className="px-6 py-3.5 rounded-2xl text-base font-bold transition min-h-[52px]"
+                  style={active
+                    ? { background: "var(--surface)", border: `2px solid ${s.color}`, boxShadow: `0 0 12px ${s.color}40`, color: s.color }
+                    : { background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text-dim)" }
+                  }
+                >
+                  {s.name}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
 
       {/* دائرة المؤقت */}
-      <div className="flex-1 flex flex-col items-center justify-center px-5">
+      <div className="flex-1 flex flex-col items-center justify-center px-5 rise rise-2">
         <div className="relative mb-8">
           <svg width="260" height="260" className="-rotate-90">
             <circle cx="130" cy="130" r={radius} fill="none" stroke="var(--border)" strokeWidth="6" />
@@ -196,7 +198,6 @@ export default function OrbitPage() {
               </div>
             ) : phase === "done" ? (
               <div className="text-center">
-                <p className="text-4xl">✅</p>
                 <p className="text-sm font-bold text-[var(--success)] mt-1">منجز!</p>
               </div>
             ) : (
@@ -205,7 +206,7 @@ export default function OrbitPage() {
                   {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
                 </p>
                 <p className="text-sm mt-1" style={{ color: strokeColor }}>
-                  {phase === "focus" ? "تركيز 🎯" : "راحة ☕"}
+                  {phase === "focus" ? "تركيز" : "راحة"}
                 </p>
                 <p className="text-xs text-[var(--text-muted)] mt-0.5">{subject}</p>
               </div>
@@ -251,7 +252,7 @@ export default function OrbitPage() {
 
           {phase === "break" && (
             <div className="text-center text-sm text-[var(--text-dim)] glass rounded-2xl px-4 py-3">
-              <p className="font-bold text-[var(--gold)]">وقت الراحة ☕</p>
+              <p className="font-bold text-[var(--gold)]">وقت الراحة</p>
               <p className="text-xs mt-1">الجلسة القادمة تبدأ تلقائياً بعد {mins}:{String(secs).padStart(2, "0")}</p>
             </div>
           )}
@@ -259,7 +260,7 @@ export default function OrbitPage() {
           {phase === "done" && (
             <div className="space-y-2">
               <div className="glass rounded-2xl p-4 text-center">
-                <p className="text-xl font-black text-[var(--gold)]">+{SILVER_PER_SESSION} Silver 🪙</p>
+                <p className="text-xl font-black text-[var(--gold)]">+{SILVER_PER_SESSION} Silver</p>
                 <p className="text-xs text-[var(--text-muted)] mt-1">جلسة {sessionsToday} اليوم</p>
               </div>
               <button
@@ -278,7 +279,7 @@ export default function OrbitPage() {
       </div>
 
       {/* شريط الإحصاءات — حقيقي */}
-      <div className="px-5 pb-4">
+      <div className="px-5 pb-4 rise rise-3">
         <div className="rounded-2xl p-5 grid grid-cols-3 text-center gap-3"
           style={{
             background: "rgba(18,18,27,0.65)",
@@ -297,7 +298,7 @@ export default function OrbitPage() {
           </div>
           <div>
             <p className="font-mono-nums font-black text-3xl text-[var(--success)]">{silverTotal}</p>
-            <p className="text-sm text-[var(--text-muted)] mt-1">Silver 🪙</p>
+            <p className="text-sm text-[var(--text-muted)] mt-1">Silver</p>
           </div>
         </div>
       </div>

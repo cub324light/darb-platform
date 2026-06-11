@@ -39,7 +39,6 @@ export default function ParentPage() {
           ← الرئيسية
         </Link>
         <div className="flex items-center gap-2">
-          <span className="text-lg">👨‍👦</span>
           <span className="font-black text-[var(--text)]">بوابة سند</span>
         </div>
         <div className="flex items-center gap-1">
@@ -62,7 +61,6 @@ export default function ParentPage() {
               className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
               style={{ background: "rgba(16,185,129,0.2)" }}
             >
-              👨‍🎓
             </div>
             <div>
               <p className="font-black text-[var(--text)]">ابنك (عرض توضيحي)</p>
@@ -79,7 +77,6 @@ export default function ParentPage() {
             className="rounded-xl p-3 flex items-center gap-3 mb-4"
             style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)" }}
           >
-            <span className="text-2xl">⏱️</span>
             <div>
               <p className="font-bold text-sm text-[var(--success)]">يذاكر الآن</p>
               <p className="text-xs text-[var(--text-muted)]">جلسة Orbit · فيزياء · 23 دقيقة مضت</p>
@@ -193,7 +190,7 @@ export default function ParentPage() {
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-sm text-[var(--text-dim)]">إشعار التغيب الفوري</span>
-                <span className="block text-[10px] text-[var(--text-muted)]">⚠️ مغلق افتراضياً (انظر تحذير درب)</span>
+                <span className="block text-[10px] text-[var(--text-muted)]">مغلق افتراضياً (انظر تحذير درب)</span>
               </div>
               <button
                 onClick={handleToggleAlert}
@@ -211,16 +208,14 @@ export default function ParentPage() {
 
         {/* Feathers */}
         <div className="glass rounded-2xl p-5 mb-5">
-          <h3 className="font-bold text-sm text-[var(--text)] mb-3">ريش الفخر 🪶</h3>
+          <h3 className="font-bold text-sm text-[var(--text)] mb-3">ريش الفخر</h3>
           <p className="text-xs text-[var(--text-dim)] mb-3">أرسل لابنك ريشة بيضاء عند الإنجاز</p>
           <div className="flex gap-3">
             <div className="flex-1 glass rounded-xl p-3 text-center cursor-pointer hover:border-white/20 transition">
-              <p className="text-xl mb-1">🪶</p>
               <p className="text-xs text-white font-bold">بيضاء</p>
               <p className="text-[9px] text-[var(--text-muted)]">من الوالد</p>
             </div>
             <div className="flex-1 glass rounded-xl p-3 text-center cursor-pointer hover:border-yellow-500/20 transition">
-              <p className="text-xl mb-1">✨</p>
               <p className="text-xs text-[var(--gold)] font-bold">ذهبية</p>
               <p className="text-[9px] text-[var(--text-muted)]">إنجاز خاص</p>
             </div>
@@ -248,7 +243,6 @@ export default function ParentPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center px-5" style={{ background: "rgba(0,0,0,0.7)" }}>
           <div className="glass rounded-3xl p-6 max-w-sm w-full">
             <div className="text-center mb-4">
-              <p className="text-2xl mb-2">💡</p>
               <p className="font-black text-base text-[var(--gold)]">نصيحة من درب</p>
             </div>
             <p className="text-sm text-[var(--text-dim)] leading-relaxed mb-5 text-center">

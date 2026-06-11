@@ -76,18 +76,16 @@ export default function ArenaPage() {
       <div className="min-h-dvh flex flex-col pb-nav relative z-[1]">
         <Dome compact>
           <div className="flex items-center justify-between">
-            <h1 className="title-lg" style={{ color: "var(--text)" }}>الأرينا ⚔️</h1>
+            <h1 className="title-lg" style={{ color: "var(--text)" }}>الأرينا</h1>
             <span className="dome-chip text-[13px] font-bold" style={{ color: "var(--gold-light)" }}>1v1</span>
           </div>
         </Dome>
 
-        <div className="flex-1 flex flex-col items-center justify-center px-5">
+        <div className="flex-1 flex flex-col items-center justify-center px-5 rise rise-1">
           <div
-            className="w-28 h-28 rounded-3xl flex items-center justify-center text-5xl mb-6"
+            className="w-28 h-28 rounded-3xl flex items-center justify-center mb-6"
             style={{ background: "linear-gradient(0deg, rgba(245,158,11,0.1), rgba(245,158,11,0.1)), var(--surface)", border: "2px solid rgba(245,158,11,0.3)" }}
-          >
-            ⚔️
-          </div>
+          />
           <h2 className="font-black text-2xl text-[var(--text)] mb-2">تحدي 1v1</h2>
           <p className="text-base text-[var(--text-muted)] text-center mb-8 max-w-xs leading-relaxed">
             أسئلة سريعة من مسارك ضد منافس تدريبي.
@@ -113,7 +111,6 @@ export default function ArenaPage() {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center px-5 pb-nav relative z-[1]">
         <div className="text-center">
-          <p className="text-6xl mb-4">{won ? "🏆" : "💪"}</p>
           <h2 className="font-black text-2xl text-[var(--text)] mb-2">
             {won ? "فزت!" : "المرة القادمة!"}
           </h2>
@@ -157,7 +154,7 @@ export default function ArenaPage() {
         </div>
       </div>
 
-      <div className="px-5 flex-1 flex flex-col justify-center">
+      <div className="px-5 flex-1 flex flex-col justify-center rise rise-1">
         <div className="glass rounded-3xl p-6 mb-4">
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs px-2.5 py-1 rounded-full glass text-[var(--accent-light)]">{q.subject}</span>

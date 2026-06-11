@@ -47,10 +47,10 @@ export default function DashboardPage() {
   const todayPct = Math.min(100, Math.round((todayMins / DAILY_TARGET) * 100));
 
   const TOOLS = [
-    { href: "/orbit",  icon: "⏱️", label: "Orbit",   desc: "جلسة 50/10" },
-    { href: "/vault",  icon: "🔒", label: "الخزنة",  desc: `${0 + (errorsCount || 0)} خطأ محفوظ` },
-    { href: "/review", icon: "🧠", label: "المراجعة", desc: "نظام SM-2" },
-    { href: "/roadmap",icon: "🗺️", label: "الخريطة", desc: "تقدمك بالدروس" },
+    { href: "/orbit",  label: "Orbit",   desc: "جلسة 50/10" },
+    { href: "/vault",  label: "الخزنة",  desc: `${0 + (errorsCount || 0)} خطأ محفوظ` },
+    { href: "/review", label: "المراجعة", desc: "نظام SM-2" },
+    { href: "/roadmap",label: "الخريطة", desc: "تقدمك بالدروس" },
   ];
 
   return (
@@ -78,7 +78,6 @@ export default function DashboardPage() {
             <span className="text-[13px] font-semibold" style={{ color: "var(--text-dim)" }}>ستريك</span>
           </div>
           <div className="dome-chip">
-            <span className="text-base">🪙</span>
             <span className="num-hero text-base" style={{ color: "var(--text)" }}>{silver}</span>
             <span className="text-[13px] font-semibold" style={{ color: "var(--text-dim)" }}>Silver</span>
           </div>
@@ -110,11 +109,17 @@ export default function DashboardPage() {
             </Link>
           </div>
           <div className="grid grid-cols-2 gap-2.5">
-            {track.subjects.map((s) => (
+            {track.subjects.map((s, i) => (
               <Link key={s.name} href="/roadmap"
-                className="rounded-2xl px-4 py-3.5 flex items-center gap-3 transition active:scale-[0.97]"
-                style={{ background: "var(--surface2)", border: "1px solid var(--ring)", minHeight: "58px" }}>
-                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: s.color }} />
+                className="rounded-2xl px-4 py-3.5 flex items-center gap-3 transition active:scale-[0.97] subject-card"
+                style={{
+                  background: "var(--surface)",
+                  border: `1.5px solid ${s.color}55`,
+                  boxShadow: `0 0 10px ${s.color}18`,
+                  minHeight: "58px",
+                  animationDelay: `${i * 80}ms`,
+                }}>
+                <div className="w-2 h-2 rounded-full flex-shrink-0 subject-dot" style={{ background: s.color, boxShadow: `0 0 5px ${s.color}88` }} />
                 <span className="font-bold text-[15px]" style={{ color: "var(--text)" }}>{s.name}</span>
               </Link>
             ))}
@@ -168,10 +173,6 @@ export default function DashboardPage() {
               <Link key={a.href} href={a.href}
                 className="card flex items-center gap-3.5 transition active:scale-[0.96]"
                 style={{ padding: "16px", minHeight: "82px", textDecoration: "none" }}>
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
-                  style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)" }}>
-                  {a.icon}
-                </div>
                 <div className="min-w-0">
                   <p className="font-extrabold text-[15.5px] leading-tight" style={{ color: "var(--text)" }}>{a.label}</p>
                   <p className="text-[12.5px] mt-1" style={{ color: "var(--text-muted)" }}>{a.desc}</p>
@@ -185,7 +186,6 @@ export default function DashboardPage() {
         <section className="grid grid-cols-2 gap-2.5 rise rise-5">
           <Link href="/council" className="card flex items-center gap-3 active:scale-[0.97] transition"
             style={{ minHeight: "74px", textDecoration: "none" }}>
-            <span className="text-2xl">💬</span>
             <div>
               <p className="font-extrabold text-[15px]" style={{ color: "var(--text)" }}>المجلس</p>
               <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>نقاشات الطلاب</p>
@@ -193,7 +193,6 @@ export default function DashboardPage() {
           </Link>
           <Link href="/arena" className="card flex items-center gap-3 active:scale-[0.97] transition"
             style={{ minHeight: "74px", textDecoration: "none", borderColor: "color-mix(in srgb, var(--gold) 25%, transparent)" }}>
-            <span className="text-2xl">⚔️</span>
             <div>
               <p className="font-extrabold text-[15px]" style={{ color: "var(--gold)" }}>الأرينا</p>
               <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>تحدي 1v1</p>
@@ -204,7 +203,6 @@ export default function DashboardPage() {
         {/* الشهادة + الترقية */}
         <section className="card flex items-center gap-4 rise rise-6"
           style={{ borderColor: "color-mix(in srgb, var(--gold) 22%, transparent)" }}>
-          <span className="text-3xl">📜</span>
           <div className="flex-1 min-w-0">
             <p className="font-extrabold text-[14.5px]" style={{ color: "var(--gold)" }}>شهادة الانضباط الرقمية</p>
             <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
