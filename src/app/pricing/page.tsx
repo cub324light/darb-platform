@@ -33,7 +33,7 @@ export default function PricingPage() {
       </div>
 
       <div className="px-5 pt-8 pb-16 max-w-lg mx-auto">
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 rise rise-1">
           <h1 className="text-3xl font-black text-[var(--text)] mb-2">الباقات</h1>
           <p className="text-sm text-[var(--text-muted)]">
             لا تدليل. فقط نتائج وانضباط.
@@ -41,12 +41,12 @@ export default function PricingPage() {
         </div>
 
         {/* Student plans */}
-        <h2 className="font-bold text-sm text-[var(--text-muted)] mb-3 flex items-center gap-2">
+        <h2 className="font-bold text-sm text-[var(--text-muted)] mb-3 flex items-center gap-2 rise rise-2">
           <span>للطلاب</span>
           <span className="flex-1 h-px bg-[var(--border)]" />
         </h2>
 
-        <div className="space-y-3 mb-8">
+        <div className="space-y-3 mb-8 rise rise-3">
           {/* Free */}
           <div className="glass rounded-3xl overflow-hidden">
             <div className="p-5">
@@ -205,13 +205,13 @@ export default function PricingPage() {
         </div>
 
         {/* Parent plan */}
-        <h2 className="font-bold text-sm text-[var(--text-muted)] mb-3 flex items-center gap-2">
+        <h2 className="font-bold text-sm text-[var(--text-muted)] mb-3 flex items-center gap-2 rise rise-4">
           <span>لولي الأمر (منتج مستقل)</span>
           <span className="flex-1 h-px bg-[var(--border)]" />
         </h2>
 
         <div
-          className="rounded-3xl p-5 mb-8"
+          className="rounded-3xl p-5 mb-8 rise rise-5"
           style={{
             background: "linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.03)), var(--surface)",
             border: "1.5px solid rgba(16,185,129,0.3)",
@@ -219,7 +219,7 @@ export default function PricingPage() {
         >
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="font-black text-lg text-[var(--text)]">سند 👨‍👦</p>
+              <p className="font-black text-lg text-[var(--text)]">سند</p>
               <p className="text-xs text-[var(--text-muted)]">متابعة الابن بدون ضغط</p>
             </div>
             <div className="text-left">
@@ -255,7 +255,7 @@ export default function PricingPage() {
           className="rounded-2xl p-4 mb-8 text-center"
           style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.15)" }}
         >
-          <p className="text-sm font-bold text-[var(--gold)] mb-1">💡 ادفع بجهدك</p>
+          <p className="text-sm font-bold text-[var(--gold)] mb-1">ادفع بجهدك</p>
           <p className="text-xs text-[var(--text-dim)]">
             تقدر تستخدم عملة Silver المكتسبة من المذاكرة لتمديد اشتراكك.
             الانضباط له قيمة حقيقية في درب.

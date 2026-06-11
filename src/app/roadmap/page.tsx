@@ -142,7 +142,7 @@ export default function RoadmapPage() {
         <OverallBar />
 
         {/* تقدم المادة */}
-        <div className="px-5 mb-6">
+        <div className="px-5 mb-6 rise rise-1">
           <div className="rounded-2xl p-5"
             style={{ background: `linear-gradient(0deg, ${color}1F, ${color}1F), var(--surface)`, border: `1.5px solid ${color}33` }}>
             <div className="flex items-center justify-between mb-3">
@@ -154,9 +154,9 @@ export default function RoadmapPage() {
                 style={{ width: pct + "%", background: color }} />
             </div>
             <div className="flex gap-4 flex-wrap">
-              <span className="text-sm text-[var(--text-muted)]">📚 {lessons.length} درس</span>
-              {totals && <span className="text-sm text-[var(--text-muted)]">⏱ {totals.hours} ساعة</span>}
-              {totals && <span className="text-sm text-[var(--text-muted)]">📄 ص {totals.pages}</span>}
+              <span className="text-sm text-[var(--text-muted)]">{lessons.length} درس</span>
+              {totals && <span className="text-sm text-[var(--text-muted)]">{totals.hours} ساعة</span>}
+              {totals && <span className="text-sm text-[var(--text-muted)]">ص {totals.pages}</span>}
             </div>
           </div>
         </div>
@@ -181,10 +181,9 @@ export default function RoadmapPage() {
         )}
 
         {/* قائمة الدروس */}
-        <div className="px-5 flex flex-col gap-3">
+        <div className="px-5 flex flex-col gap-3 rise rise-2">
           {lessons.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-5xl mb-4">🗺️</p>
               <p className="title-md text-[var(--text)] mb-2">ما فيه دروس بعد</p>
               <p className="body-sm">أضف دروسك فوق وتابع تقدمك درساً بدرس.</p>
             </div>
@@ -262,7 +261,7 @@ export default function RoadmapPage() {
 
       <OverallBar />
 
-      <div className="px-5 grid grid-cols-2 gap-4">
+      <div className="px-5 grid grid-cols-2 gap-4 rise rise-1">
         {track.subjects.map((s) => {
           const lessons = lessonsOf(s.name);
           const doneCount = lessons.filter((l) => doneSet.has(l.key)).length;

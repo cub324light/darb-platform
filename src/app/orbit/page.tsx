@@ -131,7 +131,7 @@ export default function OrbitPage() {
       ? "50 دقيقة — لا تكسرها."
       : phase === "break"
       ? "10 دقائق راحة — حرك جسمك."
-      : `جلسة منجزة! +${SILVER_PER_SESSION} Silver 🪙`;
+      : `جلسة منجزة! +${SILVER_PER_SESSION} Silver`;
 
   return (
     <div className="min-h-dvh flex flex-col pb-nav relative z-[1]">
@@ -146,7 +146,6 @@ export default function OrbitPage() {
         <div className="flex items-center justify-between">
           <h1 className="title-lg" style={{ color: "var(--text)" }}>Orbit 50/10</h1>
           <div className="dome-chip">
-            <span className="text-base">🪙</span>
             <span className="num-hero text-base" style={{ color: "var(--text)" }}>{silverTotal}</span>
           </div>
         </div>
@@ -155,7 +154,7 @@ export default function OrbitPage() {
 
       {/* اختيار المادة — حسب مسارك */}
       {phase === "idle" && subjects.length > 0 && (
-        <div className="px-5 mb-5">
+        <div className="px-5 mb-5 rise rise-1">
           <p className="text-sm font-bold text-[var(--text-muted)] mb-3">المادة التي تذاكرها:</p>
           <div className="flex gap-2.5 flex-wrap">
             {subjects.map((s) => (
@@ -175,7 +174,7 @@ export default function OrbitPage() {
       )}
 
       {/* دائرة المؤقت */}
-      <div className="flex-1 flex flex-col items-center justify-center px-5">
+      <div className="flex-1 flex flex-col items-center justify-center px-5 rise rise-2">
         <div className="relative mb-8">
           <svg width="260" height="260" className="-rotate-90">
             <circle cx="130" cy="130" r={radius} fill="none" stroke="var(--border)" strokeWidth="6" />
@@ -196,7 +195,6 @@ export default function OrbitPage() {
               </div>
             ) : phase === "done" ? (
               <div className="text-center">
-                <p className="text-4xl">✅</p>
                 <p className="text-sm font-bold text-[var(--success)] mt-1">منجز!</p>
               </div>
             ) : (
@@ -205,7 +203,7 @@ export default function OrbitPage() {
                   {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
                 </p>
                 <p className="text-sm mt-1" style={{ color: strokeColor }}>
-                  {phase === "focus" ? "تركيز 🎯" : "راحة ☕"}
+                  {phase === "focus" ? "تركيز" : "راحة"}
                 </p>
                 <p className="text-xs text-[var(--text-muted)] mt-0.5">{subject}</p>
               </div>
@@ -251,7 +249,7 @@ export default function OrbitPage() {
 
           {phase === "break" && (
             <div className="text-center text-sm text-[var(--text-dim)] glass rounded-2xl px-4 py-3">
-              <p className="font-bold text-[var(--gold)]">وقت الراحة ☕</p>
+              <p className="font-bold text-[var(--gold)]">وقت الراحة</p>
               <p className="text-xs mt-1">الجلسة القادمة تبدأ تلقائياً بعد {mins}:{String(secs).padStart(2, "0")}</p>
             </div>
           )}
@@ -259,7 +257,7 @@ export default function OrbitPage() {
           {phase === "done" && (
             <div className="space-y-2">
               <div className="glass rounded-2xl p-4 text-center">
-                <p className="text-xl font-black text-[var(--gold)]">+{SILVER_PER_SESSION} Silver 🪙</p>
+                <p className="text-xl font-black text-[var(--gold)]">+{SILVER_PER_SESSION} Silver</p>
                 <p className="text-xs text-[var(--text-muted)] mt-1">جلسة {sessionsToday} اليوم</p>
               </div>
               <button
@@ -278,7 +276,7 @@ export default function OrbitPage() {
       </div>
 
       {/* شريط الإحصاءات — حقيقي */}
-      <div className="px-5 pb-4">
+      <div className="px-5 pb-4 rise rise-3">
         <div className="rounded-2xl p-5 grid grid-cols-3 text-center gap-3"
           style={{
             background: "rgba(18,18,27,0.65)",
@@ -297,7 +295,7 @@ export default function OrbitPage() {
           </div>
           <div>
             <p className="font-mono-nums font-black text-3xl text-[var(--success)]">{silverTotal}</p>
-            <p className="text-sm text-[var(--text-muted)] mt-1">Silver 🪙</p>
+            <p className="text-sm text-[var(--text-muted)] mt-1">Silver</p>
           </div>
         </div>
       </div>

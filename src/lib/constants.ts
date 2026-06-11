@@ -144,10 +144,10 @@ export const RAKAN_SCHEDULE = {
 };
 
 export const ROADMAP_STAGES = [
-  { id: "foundation", name: "التأسيس", icon: "🏗️", range: [0, 25] },
-  { id: "building", name: "البناء", icon: "🧱", range: [25, 50] },
-  { id: "reinforcement", name: "التعزيز", icon: "⚡", range: [50, 75] },
-  { id: "finale", name: "الختام", icon: "🏆", range: [75, 100] },
+  { id: "foundation", name: "التأسيس", icon: "", range: [0, 25] },
+  { id: "building", name: "البناء", icon: "", range: [25, 50] },
+  { id: "reinforcement", name: "التعزيز", icon: "", range: [50, 75] },
+  { id: "finale", name: "الختام", icon: "", range: [75, 100] },
 ] as const;
 
 export const ERROR_CATEGORIES = [

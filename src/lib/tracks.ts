@@ -17,32 +17,32 @@ export const TRACKS: Track[] = [
     id: "قدرات",
     title: "القدرات",
     sub: "لفظي + كمي (قياس)",
-    icon: "🧠",
+    icon: "",
     subjects: [
-      { name: "لفظي", icon: "📖", color: "#2563EB" },
-      { name: "كمي", icon: "🔢", color: "#F59E0B" },
+      { name: "لفظي", icon: "", color: "#8B5CF6" },
+      { name: "كمي", icon: "", color: "#10B981" },
     ],
   },
   {
     id: "تحصيلي",
     title: "التحصيلي",
     sub: "فيزياء · كيمياء · رياضيات · أحياء",
-    icon: "📚",
+    icon: "",
     subjects: [
-      { name: "فيزياء", icon: "⚛️", color: "#2563EB" },
-      { name: "رياضيات", icon: "📐", color: "#8B5CF6" },
-      { name: "كيمياء", icon: "🧪", color: "#10B981" },
-      { name: "أحياء", icon: "🌿", color: "#F59E0B" },
+      { name: "فيزياء", icon: "", color: "#8B5CF6" },
+      { name: "رياضيات", icon: "", color: "#10B981" },
+      { name: "كيمياء", icon: "", color: "#EF4444" },
+      { name: "أحياء", icon: "", color: "#F59E0B" },
     ],
   },
   {
     id: "CPC",
     title: "أرامكو CPC",
     sub: "إنجليزي + رياضيات",
-    icon: "🏭",
+    icon: "",
     subjects: [
-      { name: "إنجليزي", icon: "🇬🇧", color: "#2563EB" },
-      { name: "رياضيات", icon: "📐", color: "#F59E0B" },
+      { name: "إنجليزي", icon: "", color: "#3B82F6" },
+      { name: "رياضيات", icon: "", color: "#10B981" },
     ],
   },
 ];
@@ -56,5 +56,5 @@ export function subjectColor(track: Track, subject: string): string {
 }
 
 export function subjectIcon(track: Track, subject: string): string {
-  return track.subjects.find((s) => s.name === subject)?.icon ?? "📘";
+  return track.subjects.find((s) => s.name === subject)?.icon ?? "";
 }

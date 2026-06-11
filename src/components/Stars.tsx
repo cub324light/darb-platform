@@ -81,23 +81,6 @@ export default function Stars() {
             }}
           />
         ))}
-        {/* Birds */}
-        {BIRD_DATA.map((b, i) => (
-          <div
-            key={i}
-            className="bird-fly absolute text-xs select-none"
-            style={{
-              left: `${b.left}%`,
-              top: `${b.top}%`,
-              animationDuration: `${b.dur}s`,
-              animationDelay: `${b.delay}s`,
-              fontSize: 14,
-              opacity: 0.35,
-            }}
-          >
-            🐦
-          </div>
-        ))}
       </div>
     );
   }

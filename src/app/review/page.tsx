@@ -90,7 +90,6 @@ export default function ReviewPage() {
       return (
         <div className="min-h-dvh flex flex-col items-center justify-center px-6 pb-nav relative z-[1]">
           <div className="text-center">
-            <p className="text-6xl mb-6">🎉</p>
             <h2 className="font-black text-3xl text-[var(--text)] mb-3">الجلسة منتهية!</h2>
             <p className="text-lg text-[var(--text-muted)] mb-2">راجعت {reviewed} بطاقة</p>
             <p className="text-base text-[var(--success)] mb-10">المراجعة القادمة محسوبة تلقائياً</p>
@@ -193,14 +192,14 @@ export default function ReviewPage() {
     <div className="min-h-dvh pb-nav relative z-[1]">
       <Dome compact>
         <div className="flex items-center justify-between">
-          <h1 className="title-lg" style={{ color: "var(--text)" }}>بنك المراجعة 🧠</h1>
+          <h1 className="title-lg" style={{ color: "var(--text)" }}>بنك المراجعة</h1>
           <span className="dome-chip text-[13px] font-bold" style={{ color: "var(--text-dim)" }}>SM-2</span>
         </div>
       </Dome>
       <div className="h-5" />
 
       {/* الإحصاءات */}
-      <div className="px-5 mb-6">
+      <div className="px-5 mb-6 rise rise-1">
         <div className="grid grid-cols-3 gap-3">
           {[
             { val: dueCards.length,      label: "مستحق الآن", color: "var(--danger)" },
@@ -217,7 +216,7 @@ export default function ReviewPage() {
 
       {/* بدء المراجعة */}
       {dueCards.length > 0 && (
-        <div className="px-5 mb-6">
+        <div className="px-5 mb-6 rise rise-2">
           <button
             onClick={startSession}
             className="w-full py-5 rounded-2xl font-black text-white text-xl transition glow-blue min-h-[62px]"
@@ -229,7 +228,7 @@ export default function ReviewPage() {
       )}
 
       {/* إضافة بطاقة */}
-      <div className="px-5 mb-6">
+      <div className="px-5 mb-6 rise rise-3">
         {!showAdd ? (
           <button onClick={() => setShowAdd(true)}
             className="w-full py-5 rounded-2xl text-lg font-bold text-[var(--text-dim)] transition min-h-[60px]"
@@ -275,7 +274,7 @@ export default function ReviewPage() {
 
       {/* مستحقة الآن */}
       {dueCards.length > 0 && (
-        <div className="px-5 mb-6">
+        <div className="px-5 mb-6 rise rise-4">
           <h3 className="font-black text-lg text-[var(--text)] mb-4">مستحقة الآن</h3>
           <div className="flex flex-col gap-4">
             {dueCards.map((card) => {
@@ -298,7 +297,7 @@ export default function ReviewPage() {
 
       {/* قادم */}
       {upcomingCards.length > 0 && (
-        <div className="px-5 mb-6">
+        <div className="px-5 mb-6 rise rise-5">
           <h3 className="font-black text-lg text-[var(--text-dim)] mb-4">قادم</h3>
           <div className="flex flex-col gap-4">
             {upcomingCards.map((card) => {
@@ -321,7 +320,6 @@ export default function ReviewPage() {
 
       {loaded && cards.length === 0 && (
         <div className="text-center py-12 px-6">
-          <p className="text-5xl mb-5">🧠</p>
           <p className="text-xl font-black text-[var(--text)] mb-2">بنك المراجعة فاضي</p>
           <p className="text-base text-[var(--text-muted)]">أضف أول بطاقة، والنظام يحسب لك متى تراجعها تلقائياً.</p>
         </div>
@@ -329,7 +327,6 @@ export default function ReviewPage() {
 
       {loaded && cards.length > 0 && dueCards.length === 0 && (
         <div className="text-center py-10 px-6">
-          <p className="text-5xl mb-5">✅</p>
           <p className="text-xl font-black text-[var(--success)] mb-2">أحسنت! لا مراجعات مستحقة</p>
           <p className="text-base text-[var(--text-muted)]">{upcomingCards.length} بطاقة قادمة لاحقاً</p>
         </div>
@@ -339,7 +336,7 @@ export default function ReviewPage() {
       <div className="px-5 pb-6">
         <div className="rounded-2xl p-5" style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, transparent), color-mix(in srgb, var(--accent) 3%, transparent)), var(--surface)", border: "1px solid color-mix(in srgb, var(--accent) 20%, transparent)" }}>
           <p className="text-sm text-[var(--text-dim)] leading-relaxed">
-            📊 <strong className="text-[var(--text)]">Ebbinghaus 1885:</strong> نسيان 80% خلال 24 ساعة بدون مراجعة.
+            <strong className="text-[var(--text)]">Ebbinghaus 1885:</strong> نسيان 80% خلال 24 ساعة بدون مراجعة.
             المراجعة الموزعة = تفوق 200% على المذاكرة التقليدية.
           </p>
         </div>

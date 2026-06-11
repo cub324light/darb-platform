@@ -66,7 +66,7 @@ export default function VaultPage() {
 
       <Dome compact>
         <div className="flex items-center justify-between">
-          <h1 className="title-lg" style={{ color: "var(--text)" }}>خزنة الأخطاء 🔒</h1>
+          <h1 className="title-lg" style={{ color: "var(--text)" }}>خزنة الأخطاء</h1>
           <div className="dome-chip">
             <span className="num-hero text-base" style={{ color: "var(--gold-light)" }}>{errors.length}</span>
             {isPlanFree && <span className="text-[13px] font-semibold" style={{ color: "var(--text-dim)" }}>/{FREE_LIMIT}</span>}
@@ -77,7 +77,7 @@ export default function VaultPage() {
 
       {/* ── شريط الحد ── */}
       {isPlanFree && (
-        <div className="px-5 mb-7">
+        <div className="px-5 mb-7 rise rise-1">
           <div className="flex justify-between mb-2">
             <span className="body-sm">الاستخدام</span>
             <span className="body-sm">{errors.length} / {FREE_LIMIT}</span>
@@ -99,7 +99,7 @@ export default function VaultPage() {
       )}
 
       {/* ── تصنيفات الخطأ ── */}
-      <div className="px-5 mb-7">
+      <div className="px-5 mb-7 rise rise-2">
         <p className="text-base font-black text-[var(--text)] mb-4">تصنيف الخطأ</p>
         <div className="flex gap-3 overflow-x-auto pb-2">
           {["الكل", ...ERROR_CATEGORIES].map((cat) => {
@@ -119,7 +119,7 @@ export default function VaultPage() {
       </div>
 
       {/* ── مواد مسارك ── */}
-      <div className="px-5 mb-7">
+      <div className="px-5 mb-7 rise rise-3">
         <p className="text-base font-black text-[var(--text)] mb-4">المادة</p>
         <div className="flex gap-3 overflow-x-auto pb-2">
           {["الكل", ...subjects].map((s) => {
@@ -140,7 +140,7 @@ export default function VaultPage() {
 
       {/* ── زر الإضافة — فوق القائمة وبمتناول الإبهام ── */}
       {!atLimit && (
-        <div className="px-5 mb-6">
+        <div className="px-5 mb-6 rise rise-4">
           {!showAdd ? (
             <button onClick={() => setShowAdd(true)}
               className="w-full py-5 rounded-2xl text-lg font-bold text-[var(--text-dim)] transition min-h-[60px]"
@@ -193,11 +193,10 @@ export default function VaultPage() {
       )}
 
       {/* ── القائمة ── */}
-      <div className="px-5 flex flex-col gap-5">
+      <div className="px-5 flex flex-col gap-5 rise rise-5">
 
         {loaded && filtered.length === 0 && (
           <div className="text-center py-14">
-            <p className="text-5xl mb-4">🔒</p>
             <p className="title-md text-[var(--text)] mb-2">الخزنة فارغة</p>
             <p className="body-sm">أول ما تغلط في سؤال، احفظه هنا — عشان ما تغلط فيه مرتين.</p>
           </div>

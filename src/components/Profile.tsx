@@ -23,7 +23,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
 
   return (
     <button onClick={toggle} className={`btn-icon ${className}`} aria-label="تبديل الوضع">
-      {theme === "dark" ? "☀️" : "🌙"}
+      {theme === "dark" ? "نهار" : "ليل"}
     </button>
   );
 }
@@ -120,12 +120,12 @@ export default function ProfileButton() {
             <div className="grid grid-cols-4 gap-2 mb-6">
               {[
                 { val: stats.streak,   label: "ستريك",  icon: "🔥" },
-                { val: stats.silver,   label: "Silver",  icon: "🪙" },
-                { val: stats.hours,    label: "ساعة",    icon: "⏱" },
-                { val: stats.sessions, label: "جلسة",    icon: "🎯" },
+                { val: stats.silver,   label: "Silver",  icon: "" },
+                { val: stats.hours,    label: "ساعة",    icon: "" },
+                { val: stats.sessions, label: "جلسة",    icon: "" },
               ].map((s) => (
                 <div key={s.label} className="rounded-2xl p-3 text-center" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-                  <p className="text-base">{s.icon}</p>
+                  {s.icon && <p className="text-base">{s.icon}</p>}
                   <p className="font-mono-nums font-black text-lg text-[var(--text)]">{s.val}</p>
                   <p className="text-[11px] text-[var(--text-muted)] font-semibold">{s.label}</p>
                 </div>
