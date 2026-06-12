@@ -159,8 +159,8 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
       const res  = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt }) });
       const data = await res.json();
       const raw = (data.text ?? data.error ?? "حدث خطأ في الاستجابة").replace(/\n{3,}/g, "\n\n").trim();
-      const hasSchedule = /من\s+\d|من\s+الساعة/.test(raw);
-      setAiResult(hasSchedule ? raw : "أنا فقط أبني جداول دراسية 📅\nأدخل مشاغيلك مثل: من 8ص إلى 2م مدرسة");
+      const parsed = parseAISchedule(raw, date, subjects);
+      setAiResult(parsed.length > 0 ? raw : "أنا فقط أبني جداول دراسية 📅\nأدخل مشاغيلك مثل: من 8ص إلى 2م مدرسة");
     } catch { setAiResult("حدث خطأ، تحقق من الاتصال وحاول مجدداً."); }
     finally  { setAiLoading(false); }
   };
