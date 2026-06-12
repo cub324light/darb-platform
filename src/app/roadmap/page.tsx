@@ -4,11 +4,14 @@ import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import { RAKAN_SCHEDULE, ROADMAP_STAGES } from "@/lib/constants";
 import { getTrack, subjectColor, subjectIcon, type Track } from "@/lib/tracks";
-import { loadUser, loadList, saveList, loadExamDate, saveExamDate, loadEvents, saveEvents, type ScheduleEvent } from "@/lib/storage";
+import {
+  loadUser, loadList, saveList, loadExamDate, saveExamDate,
+  loadEvents, saveEvents, loadExamFlow, saveExamFlow, loadStageReviews, saveStageReviews,
+  type ScheduleEvent, type ExamFlow, type StageReviews,
+} from "@/lib/storage";
 import Calendar from "@/components/Calendar";
 import DayScheduler, { getEventsForDate } from "@/components/DayScheduler";
 
-/* درس مخصص يضيفه الطالب (لمسارات قدرات و CPC) */
 interface CustomLesson {
   id: string;
   subject: string;
@@ -27,6 +30,12 @@ const TAHSILI_TOTALS: Record<TahsiliSubject, { hours: number; pages: string }> =
   أحياء: { hours: 37, pages: "266-353" },
 };
 
+const STAGE_THRESHOLDS = [
+  { key: "التأسيس" as const, pct: 25, label: "أكملت مرحلة التأسيس 🏁", sub: "وقت مراجعة سريعة قبل الانتقال" },
+  { key: "التدريب" as const, pct: 50, label: "أكملت مرحلة التدريب 📚", sub: "جهّز التسريبات والمراجعة النهائية" },
+  { key: "التعزيز" as const, pct: 75, label: "أكملت مرحلة التعزيز 🌟", sub: "المراجعة النهائية قبل الاختبار" },
+];
+
 export default function RoadmapPage() {
   const [track, setTrack] = useState<Track | null>(null);
   const [done, setDone] = useState<string[]>([]);
@@ -37,6 +46,9 @@ export default function RoadmapPage() {
   const [examDate, setExamDate] = useState<string | null>(null);
   const [events, setEvents] = useState<ScheduleEvent[]>([]);
   const [schedulerDate, setSchedulerDate] = useState<string | null>(null);
+  const [examFlow, setExamFlow] = useState<ExamFlow>({});
+  const [stageReviews, setStageReviews] = useState<StageReviews>({});
+  const [gradeInput, setGradeInput] = useState("");
 
   useEffect(() => {
     setTrack(getTrack(loadUser()?.track));
@@ -44,6 +56,8 @@ export default function RoadmapPage() {
     setCustom(loadList<CustomLesson>(CUSTOM_KEY));
     setExamDate(loadExamDate());
     setEvents(loadEvents());
+    setExamFlow(loadExamFlow());
+    setStageReviews(loadStageReviews());
     setLoaded(true);
   }, []);
 
@@ -58,7 +72,6 @@ export default function RoadmapPage() {
   const toggle = (key: string) =>
     setDone((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
 
-  /* ── دروس كل مادة حسب المسار ── */
   const lessonsOf = (subj: string): { key: string; title: string; meta?: string; diff?: string }[] => {
     if (isTahsili && subj in RAKAN_SCHEDULE) {
       return RAKAN_SCHEDULE[subj as TahsiliSubject].map((l) => ({
@@ -73,13 +86,34 @@ export default function RoadmapPage() {
       .map((c) => ({ key: `custom-${c.id}`, title: c.title }));
   };
 
-  /* التقدم الكلي */
   const allLessons = track.subjects.flatMap((s) => lessonsOf(s.name));
   const totalDone = allLessons.filter((l) => doneSet.has(l.key)).length;
   const overallPct = allLessons.length === 0 ? 0 : Math.round((totalDone / allLessons.length) * 100);
   const currentStage =
     ROADMAP_STAGES.find((s) => overallPct >= s.range[0] && overallPct < s.range[1]) ??
     ROADMAP_STAGES[ROADMAP_STAGES.length - 1];
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const examPast = examDate !== null && examDate <= todayStr;
+  const hasGrade = examFlow.grade !== undefined;
+  const skipped = examFlow.skippedGrade === true;
+
+  // displayPct: 99 if exam passed with no grade, 100 if grade entered
+  const displayPct = examPast
+    ? hasGrade ? 100 : 99
+    : overallPct;
+
+  const updateExamFlow = (patch: Partial<ExamFlow>) => {
+    const updated = { ...examFlow, ...patch };
+    setExamFlow(updated);
+    saveExamFlow(updated);
+  };
+
+  const updateStageReviews = (patch: Partial<StageReviews>) => {
+    const updated = { ...stageReviews, ...patch };
+    setStageReviews(updated);
+    saveStageReviews(updated);
+  };
 
   const OverallBar = () => (
     <div className="px-5 mb-6">
@@ -89,14 +123,23 @@ export default function RoadmapPage() {
           <div>
             <p className="text-xs font-bold text-[var(--text-muted)] mb-1">التقدم الكلي — {track.title}</p>
             <p className="text-xl font-black text-[var(--text)]">
-              {currentStage.icon} مرحلة {currentStage.name}
+              {examPast && hasGrade
+                ? "✅ اكتمل المشوار"
+                : examPast
+                ? "🎓 يوم الاختبار"
+                : `${currentStage.icon} مرحلة ${currentStage.name}`}
             </p>
           </div>
-          <p className="font-mono-nums font-black text-5xl text-[var(--accent-light)]">{overallPct}%</p>
+          <p className="font-mono-nums font-black text-5xl text-[var(--accent-light)]">{displayPct}%</p>
         </div>
         <div className="h-3 bg-[var(--border)] rounded-full overflow-hidden mb-3">
           <div className="h-full rounded-full transition-all duration-700"
-            style={{ width: overallPct + "%", background: "linear-gradient(90deg,var(--accent-2),var(--accent-light))" }} />
+            style={{
+              width: displayPct + "%",
+              background: hasGrade
+                ? "linear-gradient(90deg, var(--gold), var(--gold-light))"
+                : "linear-gradient(90deg,var(--accent-2),var(--accent-light))",
+            }} />
         </div>
         <div className="flex justify-between">
           {ROADMAP_STAGES.map((s) => (
@@ -145,7 +188,6 @@ export default function RoadmapPage() {
 
         <OverallBar />
 
-        {/* تقدم المادة */}
         <div className="px-5 mb-6 rise rise-1">
           <div className="rounded-2xl p-5"
             style={{ background: "var(--surface)", border: `1.5px solid ${color}`, boxShadow: `0 0 14px ${color}25` }}>
@@ -165,7 +207,6 @@ export default function RoadmapPage() {
           </div>
         </div>
 
-        {/* إضافة درس — للمسارات غير التحصيلي */}
         {!isTahsili && (
           <div className="px-5 mb-6 flex gap-2.5">
             <input
@@ -184,7 +225,6 @@ export default function RoadmapPage() {
           </div>
         )}
 
-        {/* قائمة الدروس */}
         <div className="px-5 flex flex-col gap-3 rise rise-2">
           {lessons.length === 0 && (
             <div className="text-center py-12">
@@ -252,7 +292,7 @@ export default function RoadmapPage() {
     );
   }
 
-  /* ══════ الواجهة الرئيسية — مواد المسار ══════ */
+  /* ══════ الواجهة الرئيسية ══════ */
   return (
     <div className="min-h-dvh pb-nav relative z-[1]">
       <Dome compact>
@@ -265,6 +305,7 @@ export default function RoadmapPage() {
 
       <OverallBar />
 
+      {/* شبكة المواد */}
       <div className="px-5 grid grid-cols-2 gap-4 rise rise-1">
         {track.subjects.map((s) => {
           const lessons = lessonsOf(s.name);
@@ -300,8 +341,193 @@ export default function RoadmapPage() {
         })}
       </div>
 
+      {/* ══ نقاط تفتيش المراحل ══ */}
+      {STAGE_THRESHOLDS.map((st) => {
+        if (overallPct < st.pct) return null;
+        if (stageReviews[st.key]) return null;
+        return (
+          <div key={st.key} className="px-5 mt-4 rise rise-2">
+            <div className="rounded-2xl p-4 flex items-center gap-3"
+              style={{
+                background: "color-mix(in srgb, var(--accent) 12%, var(--surface))",
+                border: "1.5px solid color-mix(in srgb, var(--accent) 35%, transparent)",
+              }}>
+              <div className="flex-1 min-w-0">
+                <p className="font-black text-[14px]" style={{ color: "var(--text)" }}>{st.label}</p>
+                <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>{st.sub}</p>
+              </div>
+              <button
+                onClick={() => updateStageReviews({ [st.key]: true })}
+                className="px-4 py-2.5 rounded-xl font-bold text-[13px] min-h-[44px] flex-shrink-0"
+                style={{ background: "var(--accent)", color: "white", border: "none" }}
+              >
+                تمت ✓
+              </button>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* ══ يوم الاختبار — إدخال الدرجة ══ */}
+      {examPast && !hasGrade && !skipped && (
+        <div className="px-5 mt-4 rise rise-3">
+          <div className="rounded-2xl p-5"
+            style={{
+              background: "color-mix(in srgb, var(--gold) 10%, var(--surface))",
+              border: "1.5px solid color-mix(in srgb, var(--gold) 40%, transparent)",
+            }}>
+            <p className="font-black text-[16px] mb-1" style={{ color: "var(--gold)" }}>🎓 يوم الاختبار وصل!</p>
+            <p className="text-[13px] mb-4" style={{ color: "var(--text-muted)" }}>كيف كانت نتيجتك؟</p>
+
+            <div className="flex gap-2 mb-3">
+              <input
+                type="number"
+                value={gradeInput}
+                onChange={(e) => setGradeInput(e.target.value)}
+                placeholder="الدرجة..."
+                className="flex-1 rounded-xl px-4 py-3 text-[15px] font-bold outline-none min-h-[48px]"
+                style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}
+              />
+              <button
+                onClick={() => {
+                  const g = parseFloat(gradeInput);
+                  if (!isNaN(g)) updateExamFlow({ grade: g });
+                }}
+                disabled={!gradeInput.trim() || isNaN(parseFloat(gradeInput))}
+                className="px-5 rounded-xl font-black text-[14px] min-h-[48px]"
+                style={{ background: "var(--gold)", color: "#1a1200", border: "none" }}
+              >
+                سجّل
+              </button>
+            </div>
+
+            <button
+              onClick={() => updateExamFlow({ skippedGrade: true })}
+              className="w-full py-2.5 rounded-xl text-[13px] font-bold"
+              style={{ background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}
+            >
+              ما أبي أقولها
+            </button>
+            <p className="text-[11px] mt-1.5 text-center" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
+              لا يُفضَّل هذا — اكتب درجتك الحقيقية لتستفيد من التوصيات
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ══ بعد الدرجة — "أعجبتك؟" ══ */}
+      {examPast && hasGrade && examFlow.happy === undefined && (
+        <div className="px-5 mt-4 rise rise-3">
+          <div className="rounded-2xl p-5"
+            style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+            <p className="font-black text-[16px] mb-1" style={{ color: "var(--text)" }}>
+              درجتك: <span style={{ color: "var(--gold)" }}>{examFlow.grade}</span>
+            </p>
+            <p className="text-[14px] mb-4" style={{ color: "var(--text-muted)" }}>أعجبتك الدرجة؟</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => updateExamFlow({ happy: true })}
+                className="flex-1 py-3 rounded-xl font-bold text-[14px] min-h-[48px]"
+                style={{ background: "var(--success)", color: "white", border: "none", opacity: 0.9 }}
+              >
+                نعم 🎉
+              </button>
+              <button
+                onClick={() => updateExamFlow({ happy: false })}
+                className="flex-1 py-3 rounded-xl font-bold text-[14px] min-h-[48px]"
+                style={{ background: "transparent", border: "1.5px solid var(--danger)", color: "var(--danger)" }}
+              >
+                لا 😔
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══ راضٍ عن درجته ══ */}
+      {examPast && hasGrade && examFlow.happy === true && examFlow.plan === undefined && (
+        <div className="px-5 mt-4 rise rise-3">
+          <div className="rounded-2xl p-5"
+            style={{ background: "var(--surface)", border: "1.5px solid color-mix(in srgb, var(--success) 40%, transparent)" }}>
+            <p className="font-black text-[15px] mb-3" style={{ color: "var(--success)" }}>ممتاز! ماذا تريد بعدها؟</p>
+            <div className="flex flex-col gap-2">
+              {[
+                { id: "cpc", label: "🏭 مسار CPC — أرامكو" },
+                { id: "qudrat", label: "🧠 اختبار القدرات" },
+                { id: "other", label: "📖 مادة أخرى / تخصص جديد" },
+                { id: "rest", label: "😴 أخذ استراحة مستحقة" },
+              ].map((opt) => (
+                <button
+                  key={opt.id}
+                  onClick={() => updateExamFlow({ plan: opt.id })}
+                  className="w-full py-3 rounded-xl font-bold text-[13px] min-h-[48px] text-right px-4"
+                  style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══ غير راضٍ عن درجته ══ */}
+      {examPast && hasGrade && examFlow.happy === false && examFlow.plan === undefined && (
+        <div className="px-5 mt-4 rise rise-3">
+          <div className="rounded-2xl p-5"
+            style={{ background: "var(--surface)", border: "1.5px solid color-mix(in srgb, var(--danger) 35%, transparent)" }}>
+            <p className="font-black text-[15px] mb-1" style={{ color: "var(--danger)" }}>لا بأس — كل إعادة فرصة</p>
+            <p className="text-[13px] mb-3" style={{ color: "var(--text-muted)" }}>من أين تبدأ المراجعة؟</p>
+            <div className="flex flex-col gap-2">
+              {[
+                { id: "from_tasees", label: "🔄 من التأسيس — إعادة البناء" },
+                { id: "from_tadreeb", label: "⚡ من التدريب — تعمّق في التمارين" },
+                { id: "diagnostic", label: "🔍 اختبار تشخيصي — أحدد النقص" },
+              ].map((opt) => (
+                <button
+                  key={opt.id}
+                  onClick={() => updateExamFlow({ plan: opt.id })}
+                  className="w-full py-3 rounded-xl font-bold text-[13px] min-h-[48px] text-right px-4"
+                  style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══ بعد اختيار الخطة ══ */}
+      {examPast && hasGrade && examFlow.plan !== undefined && (
+        <div className="px-5 mt-4 rise rise-3">
+          <div className="rounded-2xl p-4 flex items-center gap-3"
+            style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+            <span className="text-2xl">✅</span>
+            <div className="flex-1">
+              <p className="font-bold text-[14px]" style={{ color: "var(--text)" }}>الخطة محفوظة</p>
+              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+                {examFlow.plan === "cpc" && "CPC — أرامكو"}
+                {examFlow.plan === "qudrat" && "اختبار القدرات"}
+                {examFlow.plan === "other" && "مادة جديدة"}
+                {examFlow.plan === "rest" && "استراحة مستحقة"}
+                {examFlow.plan === "from_tasees" && "إعادة من التأسيس"}
+                {examFlow.plan === "from_tadreeb" && "من التدريب"}
+                {examFlow.plan === "diagnostic" && "اختبار تشخيصي"}
+              </p>
+            </div>
+            <button
+              onClick={() => updateExamFlow({ plan: undefined })}
+              className="text-[var(--text-muted)] text-sm px-2 min-h-[44px]"
+            >
+              تغيير
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* تقويم الشهر */}
-      <div className="px-5 mt-6 rise rise-2">
+      <div className="px-5 mt-6 rise rise-4">
         <p className="eyebrow mb-3 px-1">تقويم الشهر</p>
         <Calendar
           examDate={examDate}
@@ -313,7 +539,6 @@ export default function RoadmapPage() {
       <div className="h-6" />
       <BottomNav />
 
-      {/* DayScheduler modal */}
       {schedulerDate && (
         <DayScheduler
           date={schedulerDate}

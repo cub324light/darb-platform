@@ -65,7 +65,7 @@ export default function DayScheduler({
   const [addLabel, setAddLabel] = useState("");
   const [addFrom, setAddFrom] = useState(8);
   const [addTo, setAddTo] = useState(10);
-  const [recurrence, setRecurrence] = useState<"once" | "weekly" | "daily" | "multi">("once");
+  const [recurrence, setRecurrence] = useState<"once" | "weekly" | "multi">("once");
   const [multiDays, setMultiDays] = useState<number[]>([]);
 
   // AI tab state
@@ -91,7 +91,6 @@ export default function DayScheduler({
   const buildRecurrence = (): ScheduleEvent["recurrence"] => {
     if (recurrence === "once") return { kind: "once", date };
     if (recurrence === "weekly") return { kind: "weekly", dayOfWeek: dow };
-    if (recurrence === "daily") return { kind: "daily", fromDate: date };
     return { kind: "multiweekly", days: multiDays.length > 0 ? multiDays : [dow] };
   };
 
@@ -140,7 +139,7 @@ export default function DayScheduler({
         body: JSON.stringify({ prompt }),
       });
       const data = await res.json();
-      setAiResult(data.text ?? "حدث خطأ في الاستجابة");
+      setAiResult(data.text ?? data.error ?? "حدث خطأ في الاستجابة");
     } catch {
       setAiResult("حدث خطأ، تحقق من الاتصال وحاول مجدداً.");
     } finally {
@@ -351,7 +350,7 @@ export default function DayScheduler({
                   <div className="mb-4">
                     <label className="text-[12px] font-bold mb-2 block" style={{ color: "var(--text-muted)" }}>التكرار</label>
                     <div className="flex flex-wrap gap-2">
-                      {(["once", "weekly", "daily", "multi"] as const).map((r) => (
+                      {(["once", "weekly", "multi"] as const).map((r) => (
                         <button
                           key={r}
                           onClick={() => setRecurrence(r)}
@@ -364,7 +363,6 @@ export default function DayScheduler({
                         >
                           {r === "once" && "هذا اليوم فقط"}
                           {r === "weekly" && `كل ${dayName} أسبوعياً`}
-                          {r === "daily" && "كل يوم من اليوم المحدد"}
                           {r === "multi" && "أيام محددة"}
                         </button>
                       ))}
