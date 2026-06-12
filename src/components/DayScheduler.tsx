@@ -165,20 +165,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
     finally  { setAiLoading(false); }
   };
 
-  const REFUSAL = "أنا فقط أبني جداول دراسية 📅\nاكتب مشاغيلك أو قل «ابي جدول جاهز»";
-
-  // يقبل فقط إذا في نية جدول واضحة — رقم+ص/م، أو كلمة وقت/نشاط معروفة
-  const hasScheduleIntent = (t: string) => {
-    const s = normalizeDigits(t);
-    if (/[٠-٩\d]\s*[صم]/.test(s)) return true;
-    return /جدول|خطة|برنامج|ساعة|صباح|مساء|ظهر|عصر|فجر|دوام|مدرسة|كلية|جامعة|عمل|رياضة|نوم|حصة|فارغ|مشغول|توزيع|ترتيب|وقت/.test(s);
-  };
-
   const runAI = () => {
-    if (!hasScheduleIntent(busyText)) {
-      setAiResult(REFUSAL);
-      return;
-    }
     const subjectsList = subjects.map((s) => s.name).join("، ");
     const examCtx = examDate
       ? `\nيوم الاختبار: ${new Date(examDate + "T12:00:00").toLocaleDateString("ar-SA", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}`

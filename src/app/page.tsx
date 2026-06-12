@@ -28,7 +28,6 @@ export default function RootPage() {
         >
           درب
         </p>
-        <p className="text-[var(--text-muted)] text-sm font-medium tracking-widest">YOUR PATH TO EXCELLENCE</p>
       </div>
     </div>
   );
