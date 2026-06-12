@@ -165,15 +165,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
     finally  { setAiLoading(false); }
   };
 
-  // رقم متبوع بـ ص/م، أو كلمة تتعلق بالوقت والجدول
-  const SCHEDULE_PATTERN = /[٠-٩\d]\s*[صم]|صباح|مساء|ساعة|ظهر|عصر|فجر|دوام|مدرسة|كلية|جامعة|عمل|رياضة|نوم|حصة|فارغ/;
-  const OFF_TOPIC_REFUSAL = "أنا فقط أبني جداول دراسية 📅\nأدخل مشاغيلك مثل: من 8ص إلى 2م مدرسة";
-
   const runAI = () => {
-    if (!SCHEDULE_PATTERN.test(normalizeDigits(busyText))) {
-      setAiResult(OFF_TOPIC_REFUSAL);
-      return;
-    }
     const subjectsList = subjects.map((s) => s.name).join("، ");
     const examCtx = examDate
       ? `\nيوم الاختبار: ${new Date(examDate + "T12:00:00").toLocaleDateString("ar-SA", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}`
