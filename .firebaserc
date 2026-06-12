@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "my-education-platform-a160e"
+  },
+  "targets": {
+    "my-education-platform-a160e": {
+      "hosting": {
+        "my-education-platform-a160e-68478": [
+          "my-education-platform-a160e-68478"
+        ]
+      }
+    }
+  }
+}
