@@ -45,8 +45,8 @@ function ReviewBanner({ label, onDismiss }: { label: string; onDismiss: () => vo
   return (
     <div className="rounded-2xl p-3.5 mb-3 flex items-center gap-3"
       style={{ background: "color-mix(in srgb, var(--accent) 12%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--accent) 32%, transparent)" }}>
-      <p className="flex-1 font-bold text-[13px]" style={{ color: "var(--text)" }}>{label}</p>
-      <button onClick={onDismiss} className="px-3 py-2 rounded-xl font-bold text-[12px] min-h-[40px] flex-shrink-0"
+      <p className="flex-1 font-bold text-[17px]" style={{ color: "var(--text)" }}>{label}</p>
+      <button onClick={onDismiss} className="px-3 py-2 rounded-xl font-bold text-[17px] min-h-[40px] flex-shrink-0"
         style={{ background: "var(--accent)", color: "white", border: "none" }}>تمت ✓</button>
     </div>
   );
@@ -68,7 +68,7 @@ function PhaseSection({ title, num, pct, complete, unlocked, color, accentText, 
           {complete ? "✓" : num}
         </div>
         <p className="font-black text-base flex-1" style={{ color: unlocked ? "var(--text)" : "var(--text-muted)" }}>{title}</p>
-        <span className="font-mono-nums font-black text-[15px]" style={{ color: unlocked ? accentText : "var(--text-muted)" }}>
+        <span className="font-mono-nums font-black text-[17px]" style={{ color: unlocked ? accentText : "var(--text-muted)" }}>
           {unlocked ? `${pct}%` : "🔒"}
         </span>
       </div>
@@ -79,7 +79,7 @@ function PhaseSection({ title, num, pct, complete, unlocked, color, accentText, 
       {!unlocked ? (
         <div className="rounded-2xl py-5 flex items-center justify-center"
           style={{ background: "var(--surface)", border: "1.5px dashed var(--border)" }}>
-          <span className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>🔒 {lockedMsg}</span>
+          <span className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>🔒 {lockedMsg}</span>
         </div>
       ) : <div>{children}</div>}
     </div>
@@ -123,7 +123,7 @@ function NextStepOverlay({
       <div className="sticky top-0 z-10 px-5 pt-safe pt-4 pb-3 flex items-center gap-3"
         style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
         {canDismiss && (
-          <button onClick={onClose} className="dome-chip text-[14px] font-bold flex-shrink-0" style={{ color: "var(--text)" }}>← رجوع</button>
+          <button onClick={onClose} className="dome-chip text-[17px] font-bold flex-shrink-0" style={{ color: "var(--text)" }}>← رجوع</button>
         )}
         <p className="title-lg flex-1 text-right" style={{ color: "var(--text)" }}>وش تبي تكمل؟</p>
       </div>
@@ -134,7 +134,7 @@ function NextStepOverlay({
           <div className="rounded-2xl px-4 py-3 flex items-center gap-2"
             style={{ background: "color-mix(in srgb, var(--gold) 12%, var(--surface))", border: "1px solid color-mix(in srgb, var(--gold) 35%, transparent)" }}>
             <span className="text-lg">🎓</span>
-            <span className="font-bold text-[14px]" style={{ color: "var(--gold)" }}>{gradeDisplay}</span>
+            <span className="font-bold text-[17px]" style={{ color: "var(--gold)" }}>{gradeDisplay}</span>
           </div>
         )}
 
@@ -152,8 +152,8 @@ function NextStepOverlay({
                 }}>
                 <span className="text-2xl flex-shrink-0">{opt.icon}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="font-black text-[15px]" style={{ color: "var(--text)" }}>{opt.title}</p>
-                  <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>{opt.sub}</p>
+                  <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>{opt.title}</p>
+                  <p className="text-[17px] mt-0.5" style={{ color: "var(--text-muted)" }}>{opt.sub}</p>
                 </div>
                 {currentPlan === opt.id && <span className="text-[var(--accent)] text-xl flex-shrink-0">✓</span>}
               </button>
@@ -179,8 +179,8 @@ function NextStepOverlay({
                 }}>
                 <span className="text-2xl flex-shrink-0">{opt.icon}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="font-black text-[15px]" style={{ color: "var(--text)" }}>{opt.title}</p>
-                  <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>{opt.sub}</p>
+                  <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>{opt.title}</p>
+                  <p className="text-[17px] mt-0.5" style={{ color: "var(--text-muted)" }}>{opt.sub}</p>
                 </div>
                 {currentPlan === opt.id && <span className="text-[var(--danger)] text-xl flex-shrink-0">✓</span>}
               </button>
@@ -188,7 +188,7 @@ function NextStepOverlay({
           </div>
         </div>
 
-        <p className="text-[11px] text-center" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[17px] text-center" style={{ color: "var(--text-muted)" }}>
           القرار يُحفظ ويمكنك تغييره في أي وقت من خريطة الطريق
         </p>
       </div>
@@ -342,9 +342,9 @@ export default function RoadmapPage() {
       <div className="min-h-dvh pb-nav relative z-[1]">
         <Dome compact>
           <div className="flex items-center justify-between">
-            <button onClick={() => setSelected(null)} className="dome-chip text-[14px] font-bold" style={{ color: "var(--text)" }}>← رجوع</button>
+            <button onClick={() => setSelected(null)} className="dome-chip text-[17px] font-bold" style={{ color: "var(--text)" }}>← رجوع</button>
             <h1 className="title-lg" style={{ color: "var(--text)" }}>{selected}</h1>
-            <span className="dome-chip num-hero text-[14px]" style={{ color: "var(--text)" }}>{dc}/{lessons.length}</span>
+            <span className="dome-chip num-hero text-[17px]" style={{ color: "var(--text)" }}>{dc}/{lessons.length}</span>
           </div>
         </Dome>
         <div className="h-5" />
@@ -428,9 +428,9 @@ export default function RoadmapPage() {
       <div className="min-h-dvh pb-nav relative z-[1]">
         <Dome compact>
           <div className="flex items-center justify-between">
-            <button onClick={() => setSelected(null)} className="dome-chip text-[14px] font-bold" style={{ color: "var(--text)" }}>← رجوع</button>
+            <button onClick={() => setSelected(null)} className="dome-chip text-[17px] font-bold" style={{ color: "var(--text)" }}>← رجوع</button>
             <h1 className="title-lg" style={{ color: "var(--text)" }}>{selected}</h1>
-            <span className="dome-chip num-hero text-[14px]" style={{ color: "var(--text)" }}>{dc}/{items.length}</span>
+            <span className="dome-chip num-hero text-[17px]" style={{ color: "var(--text)" }}>{dc}/{items.length}</span>
           </div>
         </Dome>
         <div className="h-5" />
@@ -490,7 +490,7 @@ export default function RoadmapPage() {
       <Dome compact>
         <div className="flex items-center justify-between">
           <h1 className="title-lg" style={{ color: "var(--text)" }}>خريطة الطريق</h1>
-          <span className="dome-chip text-[13px] font-bold" style={{ color: "var(--text-dim)" }}>{track.icon} {track.title}</span>
+          <span className="dome-chip text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>{track.icon} {track.title}</span>
         </div>
       </Dome>
       <div className="h-5" />
@@ -507,7 +507,7 @@ export default function RoadmapPage() {
           <div className="rounded-2xl p-3.5 mb-3 flex items-center gap-2"
             style={{ background: "color-mix(in srgb, #10B981 10%, var(--surface))", border: "1px solid color-mix(in srgb, #10B981 30%, transparent)" }}>
             <span>✅</span>
-            <span className="font-bold text-[13px]" style={{ color: "#10B981" }}>التأسيس مكتمل — انتقلت للتدريب</span>
+            <span className="font-bold text-[17px]" style={{ color: "#10B981" }}>التأسيس مكتمل — انتقلت للتدريب</span>
           </div>
         )}
         <div className="grid grid-cols-2 gap-3">
@@ -551,7 +551,7 @@ export default function RoadmapPage() {
           <div className="rounded-2xl p-3.5 mb-3 flex items-center gap-2"
             style={{ background: "color-mix(in srgb, #10B981 10%, var(--surface))", border: "1px solid color-mix(in srgb, #10B981 30%, transparent)" }}>
             <span>✅</span>
-            <span className="font-bold text-[13px]" style={{ color: "#10B981" }}>التدريب مكتمل — انتقلت للتسريبات</span>
+            <span className="font-bold text-[17px]" style={{ color: "#10B981" }}>التدريب مكتمل — انتقلت للتسريبات</span>
           </div>
         )}
         <div className="grid grid-cols-2 gap-3 mb-3">
@@ -582,7 +582,7 @@ export default function RoadmapPage() {
         </div>
         {allTraining.length === 0 && !examFlow.skippedTadreeb && (
           <button onClick={() => updFlow({ skippedTadreeb: true })}
-            className="w-full py-3 rounded-2xl font-bold text-[13px] min-h-[44px]"
+            className="w-full py-3 rounded-2xl font-bold text-[17px] min-h-[44px]"
             style={{ background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}>
             تخطي التدريب والانتقال للتسريبات
           </button>
@@ -598,7 +598,7 @@ export default function RoadmapPage() {
         {/* تتبع الأوراق */}
         {!examPast && (
           <div className="mb-4">
-            <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[17px] mb-3" style={{ color: "var(--text-muted)" }}>
               سجّل تقدمك في حل الاختبارات السابقة (0–99%)
             </p>
             <div className="flex items-center gap-3">
@@ -615,7 +615,7 @@ export default function RoadmapPage() {
                 className="w-11 h-11 rounded-xl font-black text-xl flex-shrink-0 flex items-center justify-center"
                 style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}>+</button>
             </div>
-            <p className="text-[11px] text-center mt-2" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[17px] text-center mt-2" style={{ color: "var(--text-muted)" }}>
               الـ 1% الأخير يكتمل بإدخال درجتك بعد الاختبار
             </p>
           </div>
@@ -625,11 +625,11 @@ export default function RoadmapPage() {
         {examPast && !hasGrade && !skipped && (
           <div className="rounded-2xl p-5 mb-3"
             style={{ background: "color-mix(in srgb, var(--gold) 10%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--gold) 40%, transparent)" }}>
-            <p className="font-black text-[16px] mb-1" style={{ color: "var(--gold)" }}>🎓 يوم الاختبار وصل!</p>
-            <p className="text-[13px] mb-4" style={{ color: "var(--text-muted)" }}>أدخل درجتك لتكمل الـ 1% الأخير</p>
+            <p className="font-black text-[17px] mb-1" style={{ color: "var(--gold)" }}>🎓 يوم الاختبار وصل!</p>
+            <p className="text-[17px] mb-4" style={{ color: "var(--text-muted)" }}>أدخل درجتك لتكمل الـ 1% الأخير</p>
             <div className="flex gap-2 mb-3">
               <input type="number" value={gradeInput} onChange={(e) => setGradeInput(e.target.value)}
-                placeholder="الدرجة..." className="flex-1 rounded-xl px-4 py-3 text-[15px] font-bold outline-none min-h-[48px]"
+                placeholder="الدرجة..." className="flex-1 rounded-xl px-4 py-3 text-[17px] font-bold outline-none min-h-[48px]"
                 style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
               <button
                 onClick={() => {
@@ -640,15 +640,15 @@ export default function RoadmapPage() {
                   }
                 }}
                 disabled={!gradeInput.trim() || isNaN(parseFloat(gradeInput))}
-                className="px-5 rounded-xl font-black text-[14px] min-h-[48px]"
+                className="px-5 rounded-xl font-black text-[17px] min-h-[48px]"
                 style={{ background: "var(--gold)", color: "#1a1200", border: "none" }}>سجّل</button>
             </div>
             <button onClick={() => { updFlow({ skippedGrade: true }); setShowNextStep(true); }}
-              className="w-full py-2.5 rounded-xl text-[13px] font-bold"
+              className="w-full py-2.5 rounded-xl text-[17px] font-bold"
               style={{ background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}>
               ما أبي أقولها
             </button>
-            <p className="text-[11px] mt-1.5 text-center" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
+            <p className="text-[17px] mt-1.5 text-center" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
               لا يُفضَّل هذا — اكتب درجتك الحقيقية لتستفيد من التوصيات
             </p>
           </div>
@@ -660,8 +660,8 @@ export default function RoadmapPage() {
             style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--accent) 25%, transparent)" }}>
             <span className="text-xl">✅</span>
             <div className="flex-1">
-              <p className="font-bold text-[13px]" style={{ color: "var(--text)" }}>الخطة المختارة</p>
-              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+              <p className="font-bold text-[17px]" style={{ color: "var(--text)" }}>الخطة المختارة</p>
+              <p className="text-[17px]" style={{ color: "var(--text-muted)" }}>
                 {examFlow.plan === "cpc"           && "🏭 مسار CPC — أرامكو"}
                 {examFlow.plan === "qudrat"         && "🧠 اختبار القدرات"}
                 {examFlow.plan === "other"          && "📖 مادة جديدة"}
@@ -672,7 +672,7 @@ export default function RoadmapPage() {
               </p>
             </div>
             <button onClick={() => setShowNextStep(true)}
-              className="text-[var(--accent-light)] text-[12px] font-bold px-2 min-h-[44px]">
+              className="text-[var(--accent-light)] text-[17px] font-bold px-2 min-h-[44px]">
               تغيير
             </button>
           </div>

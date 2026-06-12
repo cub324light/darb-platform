@@ -77,7 +77,7 @@ export default function DashboardPage() {
         <p className="title-lg text-right mb-1" style={{ color: "var(--text)" }}>
           أهلاً، {user?.name ?? "..."}
         </p>
-        <p className="text-[13px] font-semibold text-right mb-2" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[17px] font-semibold text-right mb-2" style={{ color: "var(--text-muted)" }}>
           {greeting}
         </p>
 
@@ -93,7 +93,7 @@ export default function DashboardPage() {
               <span className="font-mono-nums font-bold text-sm" style={{ color: "var(--gold-light)" }}>{streak}</span>
             </div>
             <div className="dome-chip">
-              <span className="text-[12px] font-semibold" style={{ color: "var(--text-dim)" }}>اليوم</span>
+              <span className="text-[17px] font-semibold" style={{ color: "var(--text-dim)" }}>اليوم</span>
               <span className="font-mono-nums font-bold text-sm" style={{ color: "var(--text)" }}>{todayPct}%</span>
             </div>
           </div>
@@ -116,7 +116,7 @@ export default function DashboardPage() {
                 <p className="title-md" style={{ color: "var(--text)" }}>{track.title}</p>
               </div>
             </div>
-            <Link href="/roadmap" className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>
+            <Link href="/roadmap" className="text-[17px] font-bold" style={{ color: "var(--accent-light)" }}>
               الخريطة ←
             </Link>
           </div>
@@ -132,7 +132,7 @@ export default function DashboardPage() {
                   animationDelay: `${i * 80}ms`,
                 }}>
                 <div className="w-2 h-2 rounded-full flex-shrink-0 subject-dot" style={{ background: s.color, boxShadow: `0 0 5px ${s.color}88` }} />
-                <span className="font-bold text-[15px]" style={{ color: "var(--text)" }}>{s.name}</span>
+                <span className="font-bold text-[17px]" style={{ color: "var(--text)" }}>{s.name}</span>
               </Link>
             ))}
           </div>
@@ -142,7 +142,7 @@ export default function DashboardPage() {
         <section className="card rise rise-2">
           <div className="flex items-center justify-between mb-3">
             <p className="title-md" style={{ color: "var(--text)" }}>يومك</p>
-            <p className="num-hero text-[15px]" style={{ color: "var(--text-dim)" }}>
+            <p className="num-hero text-[17px]" style={{ color: "var(--text-dim)" }}>
               {time ? time.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", hour12: true }) : "--:--"}
             </p>
           </div>
@@ -170,8 +170,8 @@ export default function DashboardPage() {
               { val: errorsCount, unit: "خطأ بالخزنة", color: "var(--danger)" },
             ].map((s) => (
               <div key={s.unit} className="card text-center" style={{ padding: "18px 8px" }}>
-                <p className="num-hero text-[32px] leading-none" style={{ color: s.color }}>{s.val}</p>
-                <p className="text-[11px] font-semibold mt-2 whitespace-nowrap" style={{ color: "var(--text-muted)" }}>{s.unit}</p>
+                <p className="num-hero text-[34px] leading-none" style={{ color: s.color }}>{s.val}</p>
+                <p className="text-[17px] font-semibold mt-2 whitespace-nowrap" style={{ color: "var(--text-muted)" }}>{s.unit}</p>
               </div>
             ))}
           </div>
@@ -198,7 +198,7 @@ export default function DashboardPage() {
         <section className="card rise rise-5">
           <div className="flex items-center justify-between mb-3">
             <p className="title-md" style={{ color: "var(--text)" }}>جدول اليوم</p>
-            <Link href="/roadmap" className="text-[13px] font-bold" style={{ color: "var(--accent-light)", textDecoration: "none" }}>
+            <Link href="/roadmap" className="text-[17px] font-bold" style={{ color: "var(--accent-light)", textDecoration: "none" }}>
               تعديل ←
             </Link>
           </div>
@@ -214,10 +214,10 @@ export default function DashboardPage() {
                 minHeight: "64px",
               }}
             >
-              <span className="text-[13px] font-bold" style={{ color: "var(--text-muted)" }}>
+              <span className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>
                 لا يوجد جدول اليوم — اضغط لإضافة
               </span>
-              <span className="text-[18px]" style={{ color: "var(--accent)" }}>+</span>
+              <span className="text-[19px]" style={{ color: "var(--accent)" }}>+</span>
             </Link>
           ) : (
             <div className="flex flex-col gap-2">
@@ -230,10 +230,10 @@ export default function DashboardPage() {
                     className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                     style={{ background: ev.type === "study" ? "var(--accent-light)" : "var(--danger)" }}
                   />
-                  <span className="text-[13px] font-semibold flex-1" style={{ color: "var(--text)" }}>
+                  <span className="text-[17px] font-semibold flex-1" style={{ color: "var(--text)" }}>
                     {ev.type === "study" ? (ev.subject ?? "") : (ev.label ?? "")}
                   </span>
-                  <span className="text-[12px] font-bold" style={{ color: "var(--text-dim)" }}>
+                  <span className="text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>
                     {fmtHour(ev.fromHour)} → {fmtHour(ev.toHour)}
                   </span>
                 </div>
@@ -247,15 +247,15 @@ export default function DashboardPage() {
           <Link href="/council" className="card flex items-center gap-3 active:scale-[0.97] transition"
             style={{ minHeight: "74px", textDecoration: "none" }}>
             <div>
-              <p className="font-extrabold text-[15px]" style={{ color: "var(--text)" }}>المجلس</p>
-              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>نقاشات الطلاب</p>
+              <p className="font-extrabold text-[17px]" style={{ color: "var(--text)" }}>المجلس</p>
+              <p className="text-[17px]" style={{ color: "var(--text-muted)" }}>نقاشات الطلاب</p>
             </div>
           </Link>
           <Link href="/arena" className="card flex items-center gap-3 active:scale-[0.97] transition"
             style={{ minHeight: "74px", textDecoration: "none", borderColor: "color-mix(in srgb, var(--gold) 25%, transparent)" }}>
             <div>
-              <p className="font-extrabold text-[15px]" style={{ color: "var(--gold)" }}>الأرينا</p>
-              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>تحدي 1v1</p>
+              <p className="font-extrabold text-[17px]" style={{ color: "var(--gold)" }}>الأرينا</p>
+              <p className="text-[17px]" style={{ color: "var(--text-muted)" }}>تحدي 1v1</p>
             </div>
           </Link>
         </section>
@@ -265,11 +265,11 @@ export default function DashboardPage() {
           style={{ borderColor: "color-mix(in srgb, var(--gold) 22%, transparent)" }}>
           <div className="flex-1 min-w-0">
             <p className="font-extrabold text-[14.5px]" style={{ color: "var(--gold)" }}>شهادة الانضباط الرقمية</p>
-            <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[17px]" style={{ color: "var(--text-muted)" }}>
               {focusHours === 0 ? "تبدأ مع أول ساعة تركيز" : `${focusHours} ساعة موثقة حتى الآن`}
             </p>
           </div>
-          <Link href="/pricing" className="text-[13px] font-bold flex-shrink-0" style={{ color: "var(--accent-light)" }}>
+          <Link href="/pricing" className="text-[17px] font-bold flex-shrink-0" style={{ color: "var(--accent-light)" }}>
             شاهين ←
           </Link>
         </section>

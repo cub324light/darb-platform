@@ -77,7 +77,7 @@ export default function ArenaPage() {
         <Dome compact>
           <div className="flex items-center justify-between">
             <h1 className="title-lg" style={{ color: "var(--text)" }}>الأرينا</h1>
-            <span className="dome-chip text-[13px] font-bold" style={{ color: "var(--gold-light)" }}>1v1</span>
+            <span className="dome-chip text-[17px] font-bold" style={{ color: "var(--gold-light)" }}>1v1</span>
           </div>
         </Dome>
 

@@ -88,7 +88,7 @@ export default function ProfileButton() {
               <div className="w-10 h-1.5 rounded-full bg-[var(--border)]" />
               <button
                 onClick={() => setOpen(false)}
-                className="text-[13px] font-bold px-3 py-1.5 rounded-xl"
+                className="text-[17px] font-bold px-3 py-1.5 rounded-xl"
                 style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-dim)" }}
               >
                 رجوع ←
@@ -139,7 +139,7 @@ export default function ProfileButton() {
                 <div key={s.label} className="rounded-2xl p-3 text-center" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
                   {s.icon && <p className="text-base">{s.icon}</p>}
                   <p className="font-mono-nums font-black text-lg text-[var(--text)]">{s.val}</p>
-                  <p className="text-[11px] text-[var(--text-muted)] font-semibold">{s.label}</p>
+                  <p className="text-[17px] text-[var(--text-muted)] font-semibold">{s.label}</p>
                 </div>
               ))}
             </div>

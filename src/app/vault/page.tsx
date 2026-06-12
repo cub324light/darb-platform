@@ -69,7 +69,7 @@ export default function VaultPage() {
           <h1 className="title-lg" style={{ color: "var(--text)" }}>خزنة الأخطاء</h1>
           <div className="dome-chip">
             <span className="num-hero text-base" style={{ color: "var(--gold-light)" }}>{errors.length}</span>
-            {isPlanFree && <span className="text-[13px] font-semibold" style={{ color: "var(--text-dim)" }}>/{FREE_LIMIT}</span>}
+            {isPlanFree && <span className="text-[17px] font-semibold" style={{ color: "var(--text-dim)" }}>/{FREE_LIMIT}</span>}
           </div>
         </div>
       </Dome>

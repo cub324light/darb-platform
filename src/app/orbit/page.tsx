@@ -321,7 +321,7 @@ export default function OrbitPage() {
                 {/* تراجع */}
                 <button
                   onClick={() => { setDurMode(prevDur.mode); setCustomMins(prevDur.custom); setCustomInput(String(prevDur.custom)); }}
-                  className="text-[13px] font-semibold text-center w-full"
+                  className="text-[17px] font-semibold text-center w-full"
                   style={{ color: "var(--text-muted)" }}>
                   ↩ تراجع
                 </button>

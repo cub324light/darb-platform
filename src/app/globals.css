@@ -255,7 +255,7 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
   padding: 16px 26px;
   border-radius: 20px;
   font-weight: 800;
-  font-size: 17px;
+  font-size: 18px;
   font-family: inherit;
   color: var(--accent-light);
   background: color-mix(in srgb, var(--accent) 8%, transparent);
@@ -275,7 +275,7 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
   padding: 16px 26px;
   border-radius: 20px;
   font-weight: 800;
-  font-size: 17px;
+  font-size: 18px;
   font-family: inherit;
   color: #F59E0B;
   background: color-mix(in srgb, #F59E0B 8%, transparent);
@@ -293,7 +293,7 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
   padding: 14px 26px;
   border-radius: 20px;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 17px;
   font-family: inherit;
   color: var(--text-dim);
   background: transparent;
@@ -354,11 +354,11 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
 .btn-icon-solid:active { transform: scale(0.9); }
 
 /* ═══════ الخط ═══════ */
-.title-xl { font-size: 30px; font-weight: 900; line-height: 1.25; letter-spacing: -0.01em; }
-.title-lg { font-size: 23px; font-weight: 900; line-height: 1.3; }
-.title-md { font-size: 18px; font-weight: 800; }
-.body-lg  { font-size: 16px; line-height: 1.75; color: var(--text-dim); }
-.body-sm  { font-size: 14px; line-height: 1.6; color: var(--text-muted); }
+.title-xl { font-size: 32px; font-weight: 900; line-height: 1.25; letter-spacing: -0.01em; }
+.title-lg { font-size: 25px; font-weight: 900; line-height: 1.3; }
+.title-md { font-size: 19px; font-weight: 800; }
+.body-lg  { font-size: 17px; line-height: 1.75; color: var(--text-dim); }
+.body-sm  { font-size: 15px; line-height: 1.6; color: var(--text-muted); }
 
 /* عين السطر — تسمية صغيرة متباعدة */
 .eyebrow {
@@ -367,7 +367,7 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
   color: var(--text-muted);
   letter-spacing: 0.14em;
 }
-.label { font-size: 12px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.05em; }
+.label { font-size: 13px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.05em; }
 
 .num-hero { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-variant-numeric: tabular-nums; }
 

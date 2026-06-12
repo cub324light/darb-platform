@@ -87,15 +87,15 @@ export default function ParentPage() {
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="glass rounded-xl p-2">
               <p className="font-mono-nums font-black text-lg text-[var(--accent-light)]">24</p>
-              <p className="text-[9px] text-[var(--text-muted)]">ساعة تركيز</p>
+              <p className="text-[17px] text-[var(--text-muted)]">ساعة تركيز</p>
             </div>
             <div className="glass rounded-xl p-2">
               <p className="font-mono-nums font-black text-lg text-[var(--gold)]">35%</p>
-              <p className="text-[9px] text-[var(--text-muted)]">تقدم الخريطة</p>
+              <p className="text-[17px] text-[var(--text-muted)]">تقدم الخريطة</p>
             </div>
             <div className="glass rounded-xl p-2">
               <p className="font-mono-nums font-black text-lg text-[var(--danger)]">8</p>
-              <p className="text-[9px] text-[var(--text-muted)]">في الخزنة</p>
+              <p className="text-[17px] text-[var(--text-muted)]">في الخزنة</p>
             </div>
           </div>
         </div>
@@ -118,7 +118,7 @@ export default function ParentPage() {
                     }}
                   />
                 </div>
-                <span className="text-[8px] text-[var(--text-muted)]">{d.day.slice(0, 1)}</span>
+                <span className="text-[17px] text-[var(--text-muted)]">{d.day.slice(0, 1)}</span>
               </div>
             ))}
           </div>
@@ -190,7 +190,7 @@ export default function ParentPage() {
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-sm text-[var(--text-dim)]">إشعار التغيب الفوري</span>
-                <span className="block text-[10px] text-[var(--text-muted)]">مغلق افتراضياً (انظر تحذير درب)</span>
+                <span className="block text-[17px] text-[var(--text-muted)]">مغلق افتراضياً (انظر تحذير درب)</span>
               </div>
               <button
                 onClick={handleToggleAlert}
@@ -213,11 +213,11 @@ export default function ParentPage() {
           <div className="flex gap-3">
             <div className="flex-1 glass rounded-xl p-3 text-center cursor-pointer hover:border-white/20 transition">
               <p className="text-xs text-white font-bold">بيضاء</p>
-              <p className="text-[9px] text-[var(--text-muted)]">من الوالد</p>
+              <p className="text-[17px] text-[var(--text-muted)]">من الوالد</p>
             </div>
             <div className="flex-1 glass rounded-xl p-3 text-center cursor-pointer hover:border-yellow-500/20 transition">
               <p className="text-xs text-[var(--gold)] font-bold">ذهبية</p>
-              <p className="text-[9px] text-[var(--text-muted)]">إنجاز خاص</p>
+              <p className="text-[17px] text-[var(--text-muted)]">إنجاز خاص</p>
             </div>
           </div>
         </div>
