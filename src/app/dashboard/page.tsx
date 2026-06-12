@@ -4,8 +4,9 @@ import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import { getTrack } from "@/lib/tracks";
-import { loadUser, loadStats, computeStreak, type DarbUser } from "@/lib/storage";
-import { RAKAN_SCHEDULE } from "@/lib/constants";
+import { loadUser, loadStats, computeStreak, loadSchedule, saveSchedule, type DarbUser, type ScheduleEntry, type WeeklySchedule } from "@/lib/storage";
+
+const WEEK_DAYS = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 
 const DAILY_TARGET = 200;
 
@@ -19,6 +20,10 @@ export default function DashboardPage() {
   const [todayMins, setTodayMins] = useState(0);
   const [time, setTime] = useState<Date | null>(null);
   const [greeting, setGreeting] = useState("");
+  const [schedule, setSchedule] = useState<WeeklySchedule>({});
+  const [showAdd, setShowAdd] = useState(false);
+  const [addSubject, setAddSubject] = useState("");
+  const [addHours, setAddHours] = useState(1);
 
   useEffect(() => {
     setUser(loadUser());
@@ -32,6 +37,8 @@ export default function DashboardPage() {
       const vault = JSON.parse(localStorage.getItem("darb_vault") ?? "[]");
       setErrorsCount(Array.isArray(vault) ? vault.length : 0);
     } catch {}
+    const saved = loadSchedule();
+    setSchedule(saved ?? { "0":[],"1":[],"2":[],"3":[],"4":[],"5":[],"6":[] });
     const h = new Date().getHours();
     if (h < 5) setGreeting("وقت الذئاب");
     else if (h < 12) setGreeting("صباح التفوق");
@@ -45,6 +52,26 @@ export default function DashboardPage() {
 
   const track = getTrack(user?.track);
   const todayPct = Math.min(100, Math.round((todayMins / DAILY_TARGET) * 100));
+  const todayDow = new Date().getDay().toString();
+  const todayEntries: ScheduleEntry[] = schedule[todayDow] ?? [];
+
+  const addEntry = () => {
+    if (!addSubject) return;
+    const key = todayDow;
+    const updated: WeeklySchedule = { ...schedule, [key]: [...(schedule[key] ?? []), { subject: addSubject, hours: addHours }] };
+    setSchedule(updated);
+    saveSchedule(updated);
+    setShowAdd(false);
+    setAddSubject("");
+    setAddHours(1);
+  };
+
+  const removeEntry = (idx: number) => {
+    const key = todayDow;
+    const updated: WeeklySchedule = { ...schedule, [key]: (schedule[key] ?? []).filter((_, i) => i !== idx) };
+    setSchedule(updated);
+    saveSchedule(updated);
+  };
 
   const TOOLS = [
     { href: "/orbit",  label: "Orbit",   desc: "جلسة 50/10" },
@@ -57,31 +84,28 @@ export default function DashboardPage() {
     <div className="page">
 
       {/* ═══ القبة ═══ */}
-      <Dome>
-        {/* أهلاً صغيرة — يمين */}
-        <p className="text-[12px] font-bold text-right mb-1" style={{ color: "var(--text-muted)" }}>
+      <Dome compact>
+        {/* أهلاً صغيرة فوق */}
+        <p className="text-[11px] font-bold text-right mb-2" style={{ color: "var(--text-muted)" }}>
           أهلاً، {user?.name ?? "..."} · {greeting}
         </p>
 
-        {/* Silver بارز */}
-        <div className="flex items-end justify-between mb-4">
-          <div>
-            <p className="eyebrow mb-1" style={{ color: "var(--text-dim)" }}>نقاطك</p>
-            <div className="flex items-baseline gap-2">
-              <span className="font-mono-nums font-black text-5xl leading-none" style={{ color: "var(--gold-light)" }}>{silver}</span>
-              <span className="text-base font-bold" style={{ color: "var(--gold)" }}>Silver</span>
+        {/* Silver + streak في صف واحد */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-mono-nums font-black text-3xl leading-none" style={{ color: "var(--gold-light)" }}>{silver}</span>
+            <span className="text-sm font-bold" style={{ color: "var(--gold)" }}>Silver</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="dome-chip">
+              <span className={`text-sm ${streak > 0 ? "streak-fire" : "opacity-40"}`}>🔥</span>
+              <span className="font-mono-nums font-bold text-sm" style={{ color: "var(--gold-light)" }}>{streak}</span>
+            </div>
+            <div className="dome-chip">
+              <span className="text-[12px] font-semibold" style={{ color: "var(--text-dim)" }}>اليوم</span>
+              <span className="font-mono-nums font-bold text-sm" style={{ color: "var(--text)" }}>{todayPct}%</span>
             </div>
           </div>
-          <div className="dome-chip">
-            <span className={`text-base ${streak > 0 ? "streak-fire" : "opacity-40"}`}>🔥</span>
-            <span className="num-hero text-base" style={{ color: "var(--gold-light)" }}>{streak}</span>
-          </div>
-        </div>
-
-        {/* شريط اليوم */}
-        <div className="dome-chip w-full justify-between">
-          <span className="text-[13px] font-semibold" style={{ color: "var(--text-dim)" }}>إنجاز اليوم</span>
-          <span className="num-hero text-base" style={{ color: "var(--text)" }}>{todayPct}%</span>
         </div>
       </Dome>
 
@@ -179,35 +203,69 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* جدول الجلسة القادمة */}
-        {track.id === "تحصيلي" && (() => {
-          // find the next day's lessons across subjects
-          const allSchedule = Object.entries(RAKAN_SCHEDULE as Record<string, {day:number;lesson:string;hours:number;pages:string;difficulty:string}[]>)
-            .flatMap(([subj, lessons]) => lessons.map(l => ({ subj, ...l })));
-          const days = [...new Set(allSchedule.map(l => l.day))].sort((a,b)=>a-b);
-          const nextDay = days[0] ?? 1;
-          const todayLessons = allSchedule.filter(l => l.day === nextDay);
-          const totalHours = todayLessons.reduce((s, l) => s + l.hours, 0);
-          return (
-            <section className="card rise rise-5">
-              <div className="flex items-center justify-between mb-3">
-                <p className="title-md" style={{ color: "var(--text)" }}>جدول اليوم {nextDay}</p>
-                <Link href="/roadmap" className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>الكل ←</Link>
-              </div>
-              <div className="flex flex-col gap-2">
-                {todayLessons.map((l, i) => (
-                  <div key={i} className="flex items-center gap-3 py-2 border-b border-[var(--border)] last:border-0">
-                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "var(--accent-light)" }} />
-                    <span className="text-[13px] font-semibold flex-1 min-w-0 truncate" style={{ color: "var(--text)" }}>{l.lesson}</span>
-                    <span className="text-[12px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>{l.subj}</span>
-                    <span className="text-[12px] font-bold flex-shrink-0" style={{ color: "var(--text-dim)" }}>{l.hours}س</span>
-                  </div>
-                ))}
-              </div>
-              <p className="text-[12px] mt-2" style={{ color: "var(--text-muted)" }}>المجموع: {totalHours} ساعة</p>
-            </section>
-          );
-        })()}
+        {/* جدول اليوم */}
+        <section className="card rise rise-5">
+          <div className="flex items-center justify-between mb-3">
+            <p className="title-md" style={{ color: "var(--text)" }}>
+              جدول {WEEK_DAYS[Number(todayDow)]}
+            </p>
+            <Link href="/roadmap" className="text-[13px] font-bold" style={{ color: "var(--accent-light)", textDecoration: "none" }}>
+              الجدول الكامل ←
+            </Link>
+          </div>
+
+          {todayEntries.length === 0 && !showAdd && (
+            <p className="text-[13px] mb-3" style={{ color: "var(--text-muted)" }}>ما فيه شيء مجدول اليوم.</p>
+          )}
+
+          {todayEntries.length > 0 && (
+            <div className="flex flex-col gap-2 mb-3">
+              {todayEntries.map((e, i) => (
+                <div key={i} className="flex items-center gap-3 py-2 border-b border-[var(--border)] last:border-0">
+                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "var(--accent-light)" }} />
+                  <span className="text-[13px] font-semibold flex-1" style={{ color: "var(--text)" }}>{e.subject}</span>
+                  <span className="text-[12px] font-bold" style={{ color: "var(--text-dim)" }}>{e.hours}س</span>
+                  <button onClick={() => removeEntry(i)} className="text-[var(--text-muted)] text-base px-1.5 min-h-[36px]">✕</button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {showAdd ? (
+            <div className="flex gap-2 items-center">
+              <select
+                value={addSubject}
+                onChange={(e) => setAddSubject(e.target.value)}
+                className="flex-1 min-w-0 rounded-xl px-3 py-2.5 text-[13px] outline-none"
+                style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}
+              >
+                <option value="">اختر المادة</option>
+                {track.subjects.map((s) => <option key={s.name} value={s.name}>{s.name}</option>)}
+              </select>
+              <select
+                value={addHours}
+                onChange={(e) => setAddHours(Number(e.target.value))}
+                className="w-20 rounded-xl px-2 py-2.5 text-[13px] outline-none"
+                style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}
+              >
+                {[1,2,3,4,5,6].map((h) => <option key={h} value={h}>{h}س</option>)}
+              </select>
+              <button onClick={addEntry} className="px-3 py-2.5 rounded-xl font-bold text-[13px]"
+                style={{ background: "transparent", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
+                إضافة
+              </button>
+              <button onClick={() => setShowAdd(false)} className="px-2 py-2.5 text-[var(--text-muted)] text-lg">✕</button>
+            </div>
+          ) : (
+            <button
+              onClick={() => { setShowAdd(true); setAddSubject(track.subjects[0]?.name ?? ""); }}
+              className="text-[13px] font-bold"
+              style={{ color: "var(--accent-light)" }}
+            >
+              + إضافة للجدول
+            </button>
+          )}
+        </section>
 
         {/* المجتمع */}
         <section className="grid grid-cols-2 gap-2.5 rise rise-5">

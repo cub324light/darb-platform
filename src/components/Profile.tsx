@@ -80,11 +80,20 @@ export default function ProfileButton() {
           <div className="absolute inset-0 bg-black/55 fade-in" />
           <div
             className="relative w-full max-w-lg rounded-t-3xl p-6 pb-10 slide-up"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)", borderBottom: "none" }}
+            style={{ background: "var(--surface)", border: "1px solid var(--border)", borderBottom: "none", maxHeight: "82vh", overflowY: "auto" }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* مقبض */}
-            <div className="w-12 h-1.5 rounded-full bg-[var(--border)] mx-auto mb-6" />
+            {/* رأس اللوحة: زر رجوع + مقبض */}
+            <div className="flex items-center justify-between mb-5">
+              <div className="w-10 h-1.5 rounded-full bg-[var(--border)]" />
+              <button
+                onClick={() => setOpen(false)}
+                className="text-[13px] font-bold px-3 py-1.5 rounded-xl"
+                style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-dim)" }}
+              >
+                رجوع ←
+              </button>
+            </div>
 
             {/* الاسم */}
             <div className="flex items-center gap-4 mb-6">

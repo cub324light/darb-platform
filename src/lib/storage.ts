@@ -132,9 +132,27 @@ export function applyTheme(theme: Theme) {
   } catch {}
 }
 
+/* ── الجدول الأسبوعي ── */
+const SCHEDULE_KEY = "darb_schedule";
+
+export type ScheduleEntry = { subject: string; hours: number };
+export type WeeklySchedule = Record<string, ScheduleEntry[]>; // "0"-"6" = الأحد–السبت
+
+export function loadSchedule(): WeeklySchedule | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(SCHEDULE_KEY);
+    return raw ? (JSON.parse(raw) as WeeklySchedule) : null;
+  } catch { return null; }
+}
+
+export function saveSchedule(s: WeeklySchedule) {
+  try { localStorage.setItem(SCHEDULE_KEY, JSON.stringify(s)); } catch {}
+}
+
 export function resetAll() {
   try {
-    ["darb_user", "darb_stats", "darb_vault", "darb_cards", "darb_lessons", "darb_posts"].forEach((k) =>
+    ["darb_user", "darb_stats", "darb_vault", "darb_cards", "darb_lessons", "darb_posts", "darb_schedule"].forEach((k) =>
       localStorage.removeItem(k)
     );
   } catch {}
