@@ -87,24 +87,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "أنا دربي، محلل الجداول. أدخل جدولك وسأبني لك خطة دراسة." }, { status: 400 });
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: "ANTHROPIC_API_KEY غير مضبوط — أضفه في Environment Variables ثم أعد الـ Deploy" }, { status: 500 });
+    return NextResponse.json({ error: "GROQ_API_KEY غير مضبوط — أضفه في Environment Variables ثم أعد الـ Deploy" }, { status: 500 });
   }
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-fable-5",
+        model: "llama-3.3-70b-versatile",
         max_tokens: 800,
-        system: SYSTEM_PROMPT,
+        temperature: 0.6,
         messages: [
+          { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: prompt.trim() },
         ],
       }),
@@ -117,8 +117,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "خطأ في الاتصال بالخادم" }, { status: 502 });
     }
 
-    const data = (await response.json()) as { content?: { type: string; text: string }[] };
-    const text = data.content?.[0]?.text;
+    const data = (await response.json()) as { choices?: { message?: { content?: string } }[] };
+    const text = data.choices?.[0]?.message?.content;
 
     if (!text) {
       return NextResponse.json({ error: "لم يرجع رد، حاول مرة ثانية" }, { status: 502 });
