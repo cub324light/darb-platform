@@ -204,7 +204,7 @@ export default function Calendar({
         </div>
       )}
       <p className="text-[11px] mt-2 text-center" style={{ color: "var(--text-muted)" }}>
-        {onDayClick ? "اضغط أي يوم لعرض جدوله" : "اضغط أي يوم لتحديده كيوم اختبار (اختياري)"}
+        {onDayClick ? "اضغط أي يوم لعرض جدوله" : "اضغط أي يوم لتحديد يوم الاختبار"}
       </p>
     </div>
   );
