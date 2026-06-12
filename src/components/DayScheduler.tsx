@@ -165,19 +165,22 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
     finally  { setAiLoading(false); }
   };
 
-  // يكشف أسئلة المعلومات — "وش هي X" أو "ابي مكونات X"
-  // لكن يسمح بـ "ابي جدول/خطة" أو "كيف أوزع وقتي"
+  const REFUSAL = "أنا فقط أبني جداول دراسية 📅\nاكتب مشاغيلك أو قل «ابي جدول جاهز»";
+
+  // كلمة واحدة > 15 حرف = هراء (لا توجد كلمة عربية حقيقية بهذا الطول)
+  const isGibberish = (t: string) =>
+    normalizeDigits(t).trim().split(/\s+/).some((w) => w.replace(/[^؀-ۿ]/g, "").length > 15);
+
+  // أسئلة معلومات خارجية — مع استثناء طلبات الجدول الصريحة
   const isOffTopicQuestion = (t: string) => {
     const s = normalizeDigits(t).trim();
-    // استثناء: طلب جدول/خطة/وقت صريح → مسموح دائماً
     if (/جدول|خطة|برنامج|وقت|فارغ|مشغول|توزيع|ترتيب/.test(s)) return false;
-    // أنماط سؤال + موضوع خارجي
     return /^(وش|ايش|شو|ما\s*هو|ما\s*هي|كيف\s+(?!أوزع|اوزع|ارتب|انظم|أنظم)|هل|ابي|اريد|ودي|اعطني|قل\s*لي|اشرح)\s+(?!جدول|خطة|وقت|مشغول|فارغ|ساعة|صباح|مساء|برنامج|مادة|مواد)/.test(s);
   };
 
   const runAI = () => {
-    if (isOffTopicQuestion(busyText)) {
-      setAiResult("أنا فقط أبني جداول دراسية 📅\nاكتب مشاغيلك أو قل «ابي جدول جاهز»");
+    if (isGibberish(busyText) || isOffTopicQuestion(busyText)) {
+      setAiResult(REFUSAL);
       return;
     }
     const subjectsList = subjects.map((s) => s.name).join("، ");
