@@ -273,12 +273,9 @@ export default function RoadmapPage() {
                 boxShadow: `0 0 14px ${s.color}18`,
                 minHeight: "140px",
               }}>
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <div className="w-3 h-3 rounded-full flex-shrink-0 subject-dot" style={{ background: s.color, boxShadow: `0 0 7px ${s.color}99` }} />
-                  <p className="font-black text-base text-[var(--text)] truncate">{s.name}</p>
-                </div>
-                <span className="font-mono-nums font-black text-lg flex-shrink-0" style={{ color: s.color }}>{pct}%</span>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full flex-shrink-0 subject-dot" style={{ background: s.color, boxShadow: `0 0 7px ${s.color}99` }} />
+                <p className="font-black text-base text-[var(--text)]">{s.name}</p>
               </div>
 
               <div>
@@ -286,7 +283,10 @@ export default function RoadmapPage() {
                   <div className="h-full rounded-full transition-all duration-500"
                     style={{ width: pct + "%", background: s.color }} />
                 </div>
-                <span className="text-sm text-[var(--text-muted)] font-semibold">{doneCount}/{lessons.length} درس</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-[var(--text-muted)] font-semibold">{doneCount}/{lessons.length} درس</span>
+                  <span className="font-mono-nums font-black text-sm" style={{ color: s.color }}>{pct}%</span>
+                </div>
               </div>
             </button>
           );
