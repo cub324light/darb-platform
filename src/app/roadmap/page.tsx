@@ -6,7 +6,7 @@ import Dome from "@/components/Dome";
 import { RAKAN_SCHEDULE } from "@/lib/constants";
 import { getTrack, subjectColor, type Track } from "@/lib/tracks";
 import {
-  loadUser, loadList, saveList, loadExamDate, saveExamDate,
+  loadUser, saveUser, loadList, saveList, loadExamDate, saveExamDate,
   loadEvents, saveEvents, loadExamFlow, saveExamFlow,
   loadStageReviews, saveStageReviews,
   loadTadreebItems, saveTadreebItems, loadTadreebDone, saveTadreebDone,
@@ -299,6 +299,32 @@ export default function RoadmapPage() {
   const setTasreebat = (n: number) => {
     const v = Math.min(99, Math.max(0, n));
     setTasreebatPct(v); saveTasreebatPct(v);
+  };
+
+  const switchTrack = (plan: string) => {
+    const PLAN_TO_TRACK: Record<string, "تحصيلي" | "قدرات" | "CPC"> = {
+      cpc: "CPC", qudrat: "قدرات", other: "تحصيلي",
+    };
+    const newTrackId = PLAN_TO_TRACK[plan];
+    if (!newTrackId) return; // rest / from_* لا يغيّر المسار
+
+    const user = loadUser();
+    if (!user || user.track === newTrackId) return;
+
+    saveUser({ ...user, track: newTrackId });
+    setTrack(getTrack(newTrackId));
+
+    // إعادة ضبط كل تقدم الخريطة للمسار الجديد
+    const fresh: string[] = [];
+    setDone(fresh); saveList(DONE_KEY, fresh);
+    setCustom([]); saveList(CUSTOM_KEY, []);
+    const freshReviews: StageReviews = {};
+    setStageReviews(freshReviews); saveStageReviews(freshReviews);
+    const freshTD: string[] = [];
+    setTadreebDone(freshTD); saveTadreebDone(freshTD);
+    setTasreebatPct(0); saveTasreebatPct(0);
+    const freshFlow: ExamFlow = {};
+    setExamFlow(freshFlow); saveExamFlow(freshFlow);
   };
 
   const resetTasees = () => {
@@ -712,6 +738,7 @@ export default function RoadmapPage() {
           canDismiss={!!examFlow.plan}
           onPick={(plan) => {
             updFlow({ plan });
+            switchTrack(plan);
             setShowNextStep(false);
           }}
           onResetTasees={resetTasees}
