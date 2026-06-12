@@ -4,7 +4,8 @@ import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import { RAKAN_SCHEDULE, ROADMAP_STAGES } from "@/lib/constants";
 import { getTrack, subjectColor, subjectIcon, type Track } from "@/lib/tracks";
-import { loadUser, loadList, saveList, loadSchedule, saveSchedule, type ScheduleEntry, type WeeklySchedule } from "@/lib/storage";
+import { loadUser, loadList, saveList, loadSchedule, saveSchedule, loadExamDate, saveExamDate, type ScheduleEntry, type WeeklySchedule } from "@/lib/storage";
+import Calendar from "@/components/Calendar";
 
 const WEEK_DAYS = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 
@@ -38,6 +39,7 @@ export default function RoadmapPage() {
   const [addDay, setAddDay] = useState<string | null>(null);
   const [addSubject, setAddSubject] = useState("");
   const [addHours, setAddHours] = useState(1);
+  const [examDate, setExamDate] = useState<string | null>(null);
 
   useEffect(() => {
     setTrack(getTrack(loadUser()?.track));
@@ -45,6 +47,7 @@ export default function RoadmapPage() {
     setCustom(loadList<CustomLesson>(CUSTOM_KEY));
     const saved = loadSchedule();
     setSchedule(saved ?? { "0":[],"1":[],"2":[],"3":[],"4":[],"5":[],"6":[] });
+    setExamDate(loadExamDate());
     setLoaded(true);
   }, []);
 
@@ -317,8 +320,17 @@ export default function RoadmapPage() {
         })}
       </div>
 
+      {/* تقويم الشهر */}
+      <div className="px-5 mt-6 rise rise-2">
+        <p className="eyebrow mb-3 px-1">تقويم الشهر</p>
+        <Calendar
+          examDate={examDate}
+          onExamDateChange={(d) => { setExamDate(d); saveExamDate(d); }}
+        />
+      </div>
+
       {/* الجدول الأسبوعي */}
-      <div className="px-5 mt-6 mb-2 rise rise-2">
+      <div className="px-5 mt-6 mb-2 rise rise-3">
         <div className="flex items-center justify-between mb-4">
           <p className="text-base font-black" style={{ color: "var(--text)" }}>جدولي الأسبوعي</p>
           <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>اضغط + لإضافة مادة</span>

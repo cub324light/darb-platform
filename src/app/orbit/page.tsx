@@ -154,7 +154,7 @@ export default function OrbitPage() {
 
       <Dome compact>
         <div className="flex items-center justify-between">
-          <h1 className="title-lg" style={{ color: "var(--text)" }}>Orbit {focusMins}/{breakMins}</h1>
+          <h1 className="title-lg" style={{ color: "var(--text)" }}>أوربت {focusMins}/{breakMins}</h1>
           <div className="dome-chip">
             <span className="num-hero text-base" style={{ color: "var(--text)" }}>{silverTotal}</span>
           </div>

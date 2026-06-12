@@ -79,7 +79,7 @@ export default function ParentPage() {
           >
             <div>
               <p className="font-bold text-sm text-[var(--success)]">يذاكر الآن</p>
-              <p className="text-xs text-[var(--text-muted)]">جلسة Orbit · فيزياء · 23 دقيقة مضت</p>
+              <p className="text-xs text-[var(--text-muted)]">جلسة أوربت · فيزياء · 23 دقيقة مضت</p>
             </div>
           </div>
 

@@ -132,6 +132,29 @@ export function applyTheme(theme: Theme) {
   } catch {}
 }
 
+/* ── تاريخ الاختبار ── */
+const EXAM_KEY = "darb_exam_date";
+
+export function loadExamDate(): string | null {
+  if (typeof window === "undefined") return null;
+  try { return localStorage.getItem(EXAM_KEY); } catch { return null; }
+}
+
+export function saveExamDate(date: string | null) {
+  try {
+    if (date) localStorage.setItem(EXAM_KEY, date);
+    else localStorage.removeItem(EXAM_KEY);
+  } catch {}
+}
+
+export function resetAll() {
+  try {
+    ["darb_user","darb_stats","darb_vault","darb_cards","darb_lessons","darb_posts","darb_schedule","darb_exam_date"].forEach((k) =>
+      localStorage.removeItem(k)
+    );
+  } catch {}
+}
+
 /* ── الجدول الأسبوعي ── */
 const SCHEDULE_KEY = "darb_schedule";
 
@@ -148,12 +171,4 @@ export function loadSchedule(): WeeklySchedule | null {
 
 export function saveSchedule(s: WeeklySchedule) {
   try { localStorage.setItem(SCHEDULE_KEY, JSON.stringify(s)); } catch {}
-}
-
-export function resetAll() {
-  try {
-    ["darb_user", "darb_stats", "darb_vault", "darb_cards", "darb_lessons", "darb_posts", "darb_schedule"].forEach((k) =>
-      localStorage.removeItem(k)
-    );
-  } catch {}
 }

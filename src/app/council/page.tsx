@@ -187,7 +187,7 @@ export default function CouncilPage() {
             <p className="font-black text-lg text-[var(--text)] mb-2">Regional Clash</p>
             <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-xs mx-auto">
               تصنيف المناطق حسب ساعات التركيز الأسبوعية — يفتح تلقائياً عند انضمام طلاب من منطقتك.
-              ساعاتك الحقيقية من Orbit هي اللي تحسب.
+              ساعاتك الحقيقية من أوربت هي اللي تحسب.
             </p>
           </div>
         </div>

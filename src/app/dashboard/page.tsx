@@ -74,7 +74,7 @@ export default function DashboardPage() {
   };
 
   const TOOLS = [
-    { href: "/orbit",  label: "Orbit",   desc: "جلسة 50/10" },
+    { href: "/orbit",  label: "أوربت",   desc: "جلسة 50/10" },
     { href: "/vault",  label: "الخزنة",  desc: `${0 + (errorsCount || 0)} خطأ محفوظ` },
     { href: "/review", label: "المراجعة", desc: "نظام SM-2" },
     { href: "/roadmap",label: "الخريطة", desc: "تقدمك بالدروس" },
@@ -85,9 +85,12 @@ export default function DashboardPage() {
 
       {/* ═══ القبة ═══ */}
       <Dome compact>
-        {/* أهلاً صغيرة فوق */}
-        <p className="text-[11px] font-bold text-right mb-2" style={{ color: "var(--text-muted)" }}>
-          أهلاً، {user?.name ?? "..."} · {greeting}
+        {/* أهلاً بخط كبير */}
+        <p className="title-lg text-right mb-1" style={{ color: "var(--text)" }}>
+          أهلاً، {user?.name ?? "..."}
+        </p>
+        <p className="text-[13px] font-semibold text-right mb-2" style={{ color: "var(--text-muted)" }}>
+          {greeting}
         </p>
 
         {/* Silver + streak في صف واحد */}
@@ -165,7 +168,7 @@ export default function DashboardPage() {
               : `${todayMins} دقيقة من هدف ${DAILY_TARGET} دقيقة.`}
           </p>
           <Link href="/orbit" className="btn-primary block text-center" style={{ textDecoration: "none" }}>
-            ابدأ جلسة Orbit
+            ابدأ جلسة أوربت
           </Link>
         </section>
 
@@ -175,7 +178,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-3 gap-2.5">
             {[
               { val: focusHours,  unit: "ساعة تركيز", color: "var(--accent-light)" },
-              { val: sessions,    unit: "جلسة Orbit", color: "var(--success)" },
+              { val: sessions,    unit: "جلسة أوربت", color: "var(--success)" },
               { val: errorsCount, unit: "خطأ بالخزنة", color: "var(--danger)" },
             ].map((s) => (
               <div key={s.unit} className="card text-center" style={{ padding: "18px 8px" }}>
