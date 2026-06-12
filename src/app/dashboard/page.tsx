@@ -89,7 +89,7 @@ export default function DashboardPage() {
       <Dome compact>
         {/* أهلاً بخط كبير */}
         <p className="title-lg text-right mb-1" style={{ color: "var(--text)" }}>
-          أهلاً، {user?.name ?? "..."}
+          أهلاً، {user ? user.name : <span className="skeleton" style={{ width: "90px", height: "1em", verticalAlign: "middle" }} />}
         </p>
         <p className="text-[17px] font-semibold text-right mb-2" style={{ color: "var(--text-muted)" }}>
           {greeting}

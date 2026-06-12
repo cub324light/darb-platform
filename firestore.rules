@@ -1,10 +1,44 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // المستخدمون: الكتابة من التطبيق مسموحة، القراءة من المتصفح ممنوعة
-    // (لوحة الأدمن تقرأ من السيرفر عبر Admin SDK الذي يتجاوز هذه القواعد)
+    // المستخدمون: الكتابة من التطبيق مسموحة (مع تحقق من البيانات)،
+    // القراءة من المتصفح ممنوعة — لوحة الأدمن تقرأ عبر Admin SDK من السيرفر
     match /users/{uid} {
-      allow create, update: if true;
+      allow create, update: if
+        request.resource.data.keys().hasOnly([
+          'name', 'track', 'joinedAt', 'lastSeen',
+          'streak', 'focusMins', 'sessions', 'silver',
+          'taseesProgress', 'tadreebProgress'
+        ])
+        && (!('name' in request.resource.data)
+            || (request.resource.data.name is string
+                && request.resource.data.name.size() <= 30))
+        && (!('track' in request.resource.data)
+            || request.resource.data.track in ['تحصيلي', 'قدرات', 'CPC'])
+        && (!('streak' in request.resource.data)
+            || (request.resource.data.streak is number
+                && request.resource.data.streak >= 0
+                && request.resource.data.streak <= 10000))
+        && (!('focusMins' in request.resource.data)
+            || (request.resource.data.focusMins is number
+                && request.resource.data.focusMins >= 0
+                && request.resource.data.focusMins <= 10000000))
+        && (!('sessions' in request.resource.data)
+            || (request.resource.data.sessions is number
+                && request.resource.data.sessions >= 0
+                && request.resource.data.sessions <= 1000000))
+        && (!('silver' in request.resource.data)
+            || (request.resource.data.silver is number
+                && request.resource.data.silver >= 0
+                && request.resource.data.silver <= 100000000))
+        && (!('taseesProgress' in request.resource.data)
+            || (request.resource.data.taseesProgress is number
+                && request.resource.data.taseesProgress >= 0
+                && request.resource.data.taseesProgress <= 100))
+        && (!('tadreebProgress' in request.resource.data)
+            || (request.resource.data.tadreebProgress is number
+                && request.resource.data.tadreebProgress >= 0
+                && request.resource.data.tadreebProgress <= 100));
       allow read, delete: if false;
     }
     // أي مجموعة أخرى: ممنوعة بالكامل

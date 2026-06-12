@@ -1,6 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 import { initializeApp, getApps, cert, applicationDefault } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+
+/* حماية من تخمين كلمة السر: 5 محاولات بالدقيقة لكل IP */
+const attempts = new Map<string, { count: number; reset: number }>();
+function allowAttempt(ip: string): boolean {
+  const now = Date.now();
+  const e = attempts.get(ip);
+  if (!e || now > e.reset) {
+    attempts.set(ip, { count: 1, reset: now + 60_000 });
+    return true;
+  }
+  if (e.count >= 5) return false;
+  e.count++;
+  return true;
+}
+
+/* مقارنة بوقت ثابت — تمنع كشف كلمة السر من زمن الاستجابة */
+function safeEqual(a: string, b: string): boolean {
+  const ba = Buffer.from(a), bb = Buffer.from(b);
+  if (ba.length !== bb.length) return false;
+  return timingSafeEqual(ba, bb);
+}
 
 /* يعمل تلقائياً على Firebase Hosting (بيانات اعتماد المشروع نفسه).
    خارج Google Cloud: ضع محتوى Service Account JSON في FIREBASE_SERVICE_ACCOUNT */
@@ -17,11 +39,16 @@ function adminDb() {
 }
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  if (!allowAttempt(ip)) {
+    return NextResponse.json({ error: "محاولات كثيرة — انتظر دقيقة" }, { status: 429 });
+  }
+
   const body = await req.json().catch(() => null);
   const password = body?.password;
 
   const adminPass = process.env.ADMIN_PASS ?? "darb-admin-2026";
-  if (!password || password !== adminPass) {
+  if (typeof password !== "string" || !safeEqual(password, adminPass)) {
     return NextResponse.json({ error: "كلمة السر خاطئة" }, { status: 401 });
   }
 

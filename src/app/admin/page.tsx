@@ -79,8 +79,12 @@ export default function AdminPage() {
   if (!authed) {
     return (
       <div className="min-h-dvh flex items-center justify-center px-6" style={{ background: "var(--bg)" }}>
-        <div className="w-full max-w-sm flex flex-col gap-4">
-          <p className="title-lg text-center" style={{ color: "var(--text)" }}>لوحة الأدمن</p>
+        <div className="w-full max-w-sm flex flex-col gap-4 scale-in">
+          <p className="font-black text-5xl text-center mb-1 text-[var(--accent-light)]"
+            style={{ filter: "drop-shadow(0 0 22px color-mix(in srgb, var(--accent) 40%, transparent))" }}>
+            درب
+          </p>
+          <p className="title-md text-center" style={{ color: "var(--text)" }}>لوحة الإدارة</p>
           <input
             type="password"
             value={pass}

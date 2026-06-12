@@ -83,7 +83,7 @@ export default function ProfileButton() {
           <div className="absolute inset-0 bg-black/55 fade-in" />
           <div
             className="relative w-full max-w-lg rounded-t-3xl p-6 pb-10 slide-up"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)", borderBottom: "none", maxHeight: "82vh", overflowY: "auto" }}
+            style={{ background: "var(--surface)", border: "1px solid var(--border)", borderBottom: "none", maxHeight: "82vh", overflowY: "auto", overscrollBehavior: "contain" }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* رأس اللوحة: زر رجوع + مقبض */}

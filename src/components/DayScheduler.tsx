@@ -205,9 +205,9 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
 
   const modal = createPortal(
     <div className="fixed inset-0 z-[9999] flex items-end" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/55" />
-      <div className="relative w-full rounded-t-3xl max-h-[90vh] overflow-y-auto"
-        style={{ background: "var(--surface)", border: "1px solid var(--border)", borderBottom: "none" }}
+      <div className="absolute inset-0 bg-black/55 fade-in" />
+      <div className="relative w-full rounded-t-3xl max-h-[90vh] overflow-y-auto slide-up"
+        style={{ background: "var(--surface)", border: "1px solid var(--border)", borderBottom: "none", overscrollBehavior: "contain" }}
         onClick={(e) => e.stopPropagation()}>
 
         {/* Header */}

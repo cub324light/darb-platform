@@ -14,13 +14,17 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#07070D",
 };
 
+/* يضبط الثيم ولون شريط المتصفح قبل أول رسم — بدون وميض */
 const themeScript = `
 try {
   var t = localStorage.getItem("darb_theme") || "dark";
   document.documentElement.setAttribute("data-theme", t);
+  var m = document.createElement("meta");
+  m.name = "theme-color";
+  m.content = t === "light" ? "#F8F4EC" : "#07070D";
+  document.head.appendChild(m);
 } catch (e) {}
 `;
 
