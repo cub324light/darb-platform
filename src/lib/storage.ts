@@ -150,7 +150,8 @@ export function saveExamDate(date: string | null) {
 export function resetAll() {
   try {
     ["darb_user","darb_stats","darb_vault","darb_cards","darb_lessons","darb_posts",
-     "darb_schedule","darb_exam_date","darb_events","darb_exam_flow","darb_stage_reviews"].forEach((k) =>
+     "darb_schedule","darb_exam_date","darb_events","darb_exam_flow","darb_stage_reviews",
+     "darb_tadreeb_items","darb_tadreeb_done","darb_tasreebat_pct"].forEach((k) =>
       localStorage.removeItem(k)
     );
   } catch {}
@@ -160,14 +161,22 @@ export function resetAll() {
 export interface ExamFlow {
   grade?: number;
   skippedGrade?: boolean;
+  skippedTadreeb?: boolean;
   happy?: boolean;
   plan?: string;
 }
 
+/* مراجعات كل ربع لكل مرحلة */
 export interface StageReviews {
-  التأسيس?: boolean;
-  التدريب?: boolean;
-  التعزيز?: boolean;
+  tasees25?: boolean; tasees50?: boolean; tasees75?: boolean;
+  tadreeb25?: boolean; tadreeb50?: boolean; tadreeb75?: boolean;
+}
+
+/* ── عناصر مرحلة التدريب ── */
+export interface TrainingItem {
+  id: string;
+  subject: string;
+  title: string;
 }
 
 const EXAM_FLOW_KEY = "darb_exam_flow";
@@ -189,6 +198,22 @@ export function loadStageReviews(): StageReviews {
 
 export function saveStageReviews(r: StageReviews) {
   try { localStorage.setItem(STAGE_REVIEWS_KEY, JSON.stringify(r)); } catch {}
+}
+
+const TADREEB_ITEMS_KEY = "darb_tadreeb_items";
+const TADREEB_DONE_KEY  = "darb_tadreeb_done";
+const TASREEBAT_PCT_KEY = "darb_tasreebat_pct";
+
+export function loadTadreebItems(): TrainingItem[] { return loadList<TrainingItem>(TADREEB_ITEMS_KEY); }
+export function saveTadreebItems(items: TrainingItem[]) { saveList(TADREEB_ITEMS_KEY, items); }
+export function loadTadreebDone(): string[] { return loadList<string>(TADREEB_DONE_KEY); }
+export function saveTadreebDone(done: string[]) { saveList(TADREEB_DONE_KEY, done); }
+export function loadTasreebatPct(): number {
+  if (typeof window === "undefined") return 0;
+  try { return Math.min(99, Math.max(0, +(localStorage.getItem(TASREEBAT_PCT_KEY) ?? "0"))); } catch { return 0; }
+}
+export function saveTasreebatPct(n: number) {
+  try { localStorage.setItem(TASREEBAT_PCT_KEY, String(Math.min(99, Math.max(0, n)))); } catch {}
 }
 
 /* ── أحداث الجدول اليومي ── */
