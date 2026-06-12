@@ -186,15 +186,6 @@ export default function OrbitPage() {
       <div className="flex-1 flex flex-col items-center justify-center px-3 rise rise-3">
         <div className="flex items-center justify-center gap-3 w-full mb-6">
 
-          {/* يمين — تسمية المدة بالساعات (إذا > 60 د) */}
-          <div className="w-[52px] flex-shrink-0 text-right">
-            {focusMins > 60 && (
-              <p className="text-[11px] font-bold leading-snug whitespace-pre-line" style={{ color: strokeColor }}>
-                {durLabel}
-              </p>
-            )}
-          </div>
-
           {/* الدائرة */}
           <div className="relative flex-shrink-0"
             style={phase === "focus" ? { filter: `drop-shadow(0 0 14px ${currentColor}40)` } : undefined}>
@@ -238,11 +229,6 @@ export default function OrbitPage() {
             )}
           </div>
 
-          {/* يسار — وقت الراحة */}
-          <div className="w-[52px] flex-shrink-0 text-left">
-            <p className="font-mono-nums font-black text-lg text-[var(--gold)]">{breakMins}</p>
-            <p className="text-[11px] font-semibold text-[var(--text-muted)]">د راحة</p>
-          </div>
         </div>
 
         {/* رسالة الحالة — فقط أثناء التشغيل */}
