@@ -7,6 +7,7 @@ import {
   loadTheme, applyTheme, resetAll,
   type DarbUser, type Theme,
 } from "@/lib/storage";
+import { syncUser } from "@/lib/firestore";
 
 /* ─── زر البروفايل (يسار) + اللوحة المنزلقة ─── */
 
@@ -60,6 +61,7 @@ export default function ProfileButton() {
     saveUser(next);
     setUser(next);
     setEditing(false);
+    syncUser({ name: next.name });
   };
 
   const switchTrack = (id: TrackId) => {
@@ -67,6 +69,7 @@ export default function ProfileButton() {
     const next = { ...user, track: id };
     saveUser(next);
     setUser(next);
+    syncUser({ track: id });
   };
 
   const reset = () => {

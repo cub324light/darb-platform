@@ -136,7 +136,6 @@ export default function OrbitPage() {
   const circumference = 2 * Math.PI * radius;
   const dashOffset    = circumference * (1 - progress);
   const strokeColor   = phase === "break" ? "#F59E0B" : currentColor;
-  const durLabel      = durationLabel(phase === "break" ? focusMins : focusMins);
 
   const statusMsg =
     phase === "idle"  ? "خل الجوال يستنى. درب يستنى نتائجك."

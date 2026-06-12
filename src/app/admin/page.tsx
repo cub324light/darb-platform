@@ -1,8 +1,19 @@
 "use client";
-import { useState, useEffect } from "react";
-import { getAllUsers, type FirestoreUser } from "@/lib/firestore";
+import { useState } from "react";
 
-const ADMIN_PASS = "darb-admin-2026";
+interface AdminUser {
+  id: string;
+  name: string;
+  track: string;
+  streak: number;
+  focusMins: number;
+  sessions: number;
+  silver: number;
+  taseesProgress: number;
+  tadreebProgress: number;
+  joinedAt: { seconds: number } | null;
+  lastSeen: { seconds: number } | null;
+}
 
 function fmt(ts?: { seconds: number } | null): string {
   if (!ts) return "—";
@@ -18,33 +29,48 @@ function fmtHours(mins: number): string {
   return h > 0 ? `${h}س ${m > 0 ? m + "د" : ""}`.trim() : `${m}د`;
 }
 
-const TRACK_LABEL: Record<string, string> = {
-  "قدرات": "قدرات",
-  "تحصيلي": "تحصيلي",
-  "CPC": "CPC",
-};
+function ProgressCell({ pct }: { pct: number }) {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <div className="w-12 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
+        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: pct === 100 ? "#10B981" : "var(--accent)" }} />
+      </div>
+      <span className="text-[11px] font-mono-nums" style={{ color: pct > 0 ? "var(--text-dim)" : "var(--text-muted)" }}>{pct}%</span>
+    </div>
+  );
+}
 
 export default function AdminPage() {
   const [pass, setPass]       = useState("");
   const [authed, setAuthed]   = useState(false);
-  const [users, setUsers]     = useState<FirestoreUser[]>([]);
+  const [users, setUsers]     = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
   const [search, setSearch]   = useState("");
 
-  const login = () => {
-    if (pass === ADMIN_PASS) setAuthed(true);
-    else setError("كلمة السر خاطئة");
-  };
-
-  useEffect(() => {
-    if (!authed) return;
+  const login = async () => {
+    if (!pass.trim() || loading) return;
     setLoading(true);
-    getAllUsers()
-      .then((u) => setUsers(u.sort((a, b) => (b.lastSeen?.seconds ?? 0) - (a.lastSeen?.seconds ?? 0))))
-      .catch(() => setError("خطأ في جلب البيانات"))
-      .finally(() => setLoading(false));
-  }, [authed]);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pass }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "حدث خطأ");
+        return;
+      }
+      setUsers(data.users ?? []);
+      setAuthed(true);
+    } catch {
+      setError("خطأ في الاتصال");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filtered = users.filter((u) =>
     !search || u.name?.toLowerCase().includes(search.toLowerCase()) || u.track?.includes(search)
@@ -65,7 +91,9 @@ export default function AdminPage() {
             style={{ background: "var(--surface)", border: "2px solid var(--border)", color: "var(--text)" }}
           />
           {error && <p className="text-center text-[15px]" style={{ color: "var(--danger)" }}>{error}</p>}
-          <button onClick={login} className="btn-primary">دخول</button>
+          <button onClick={login} disabled={loading} className="btn-primary" style={{ opacity: loading ? 0.5 : 1 }}>
+            {loading ? "جاري التحقق..." : "دخول"}
+          </button>
         </div>
       </div>
     );
@@ -74,12 +102,10 @@ export default function AdminPage() {
   return (
     <div className="min-h-dvh px-4 py-6" style={{ background: "var(--bg)" }}>
       {/* الهيدر */}
-      <div className="max-w-4xl mx-auto mb-6 flex items-center justify-between gap-4 flex-wrap">
+      <div className="max-w-5xl mx-auto mb-6 flex items-center justify-between gap-4 flex-wrap">
         <div>
           <p className="title-md" style={{ color: "var(--text)" }}>لوحة الإدارة</p>
-          <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>
-            {loading ? "جاري التحميل..." : `${users.length} مستخدم مسجّل`}
-          </p>
+          <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>{users.length} مستخدم مسجّل</p>
         </div>
         <input
           value={search}
@@ -91,7 +117,7 @@ export default function AdminPage() {
       </div>
 
       {/* الإحصائيات */}
-      <div className="max-w-4xl mx-auto grid grid-cols-2 gap-3 mb-6 sm:grid-cols-4">
+      <div className="max-w-5xl mx-auto grid grid-cols-2 gap-3 mb-6 sm:grid-cols-4">
         {[
           { label: "إجمالي المستخدمين", val: users.length },
           { label: "مسار تحصيلي", val: users.filter((u) => u.track === "تحصيلي").length },
@@ -106,49 +132,53 @@ export default function AdminPage() {
         ))}
       </div>
 
-      {/* الجدول */}
-      <div className="max-w-4xl mx-auto rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-        {/* رأس الجدول */}
-        <div className="grid text-[13px] font-bold px-4 py-3"
-          style={{ gridTemplateColumns: "1fr 80px 60px 70px 70px 90px 90px", background: "var(--surface2)", color: "var(--text-muted)" }}>
-          <span>الاسم</span>
-          <span className="text-center">المسار</span>
-          <span className="text-center">ستريك</span>
-          <span className="text-center">التركيز</span>
-          <span className="text-center">الجلسات</span>
-          <span className="text-center">تاريخ الدخول</span>
-          <span className="text-center">آخر نشاط</span>
-        </div>
-
-        {/* الصفوف */}
-        {loading ? (
-          <div className="py-12 text-center text-[15px]" style={{ color: "var(--text-muted)" }}>جاري التحميل...</div>
-        ) : filtered.length === 0 ? (
-          <div className="py-12 text-center text-[15px]" style={{ color: "var(--text-muted)" }}>لا يوجد مستخدمون</div>
-        ) : filtered.map((u, i) => (
-          <div key={u.id}
-            className="grid items-center px-4 py-3.5 text-[14px]"
-            style={{
-              gridTemplateColumns: "1fr 80px 60px 70px 70px 90px 90px",
-              borderTop: i > 0 ? "1px solid var(--border)" : "none",
-              background: i % 2 === 0 ? "var(--surface)" : "var(--bg)",
-            }}>
-            <span className="font-bold" style={{ color: "var(--text)" }}>{u.name || "—"}</span>
-            <span className="text-center">
-              <span className="px-2 py-0.5 rounded-full text-[12px] font-bold"
-                style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>
-                {TRACK_LABEL[u.track] || u.track || "—"}
-              </span>
-            </span>
-            <span className="text-center font-bold" style={{ color: u.streak > 0 ? "var(--gold)" : "var(--text-muted)" }}>
-              {u.streak > 0 ? `${u.streak}` : "—"}
-            </span>
-            <span className="text-center" style={{ color: "var(--text-dim)" }}>{fmtHours(u.focusMins)}</span>
-            <span className="text-center" style={{ color: "var(--text-dim)" }}>{u.sessions || 0}</span>
-            <span className="text-center text-[12px]" style={{ color: "var(--text-muted)" }}>{fmt(u.joinedAt)}</span>
-            <span className="text-center text-[12px]" style={{ color: "var(--text-muted)" }}>{fmt(u.lastSeen)}</span>
+      {/* الجدول — يتمرر أفقياً على الجوال */}
+      <div className="max-w-5xl mx-auto rounded-2xl overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
+        <div style={{ minWidth: "780px" }}>
+          {/* رأس الجدول */}
+          <div className="grid text-[13px] font-bold px-4 py-3"
+            style={{ gridTemplateColumns: "1fr 80px 60px 70px 70px 80px 80px 90px 90px", background: "var(--surface2)", color: "var(--text-muted)" }}>
+            <span>الاسم</span>
+            <span className="text-center">المسار</span>
+            <span className="text-center">ستريك</span>
+            <span className="text-center">التركيز</span>
+            <span className="text-center">الجلسات</span>
+            <span className="text-center">التأسيس</span>
+            <span className="text-center">التدريب</span>
+            <span className="text-center">تاريخ الدخول</span>
+            <span className="text-center">آخر نشاط</span>
           </div>
-        ))}
+
+          {/* الصفوف */}
+          {filtered.length === 0 ? (
+            <div className="py-12 text-center text-[15px]" style={{ color: "var(--text-muted)" }}>لا يوجد مستخدمون</div>
+          ) : filtered.map((u, i) => (
+            <div key={u.id}
+              className="grid items-center px-4 py-3.5 text-[14px]"
+              style={{
+                gridTemplateColumns: "1fr 80px 60px 70px 70px 80px 80px 90px 90px",
+                borderTop: i > 0 ? "1px solid var(--border)" : "none",
+                background: i % 2 === 0 ? "var(--surface)" : "var(--bg)",
+              }}>
+              <span className="font-bold" style={{ color: "var(--text)" }}>{u.name || "—"}</span>
+              <span className="text-center">
+                <span className="px-2 py-0.5 rounded-full text-[12px] font-bold"
+                  style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>
+                  {u.track || "—"}
+                </span>
+              </span>
+              <span className="text-center font-bold" style={{ color: u.streak > 0 ? "var(--gold)" : "var(--text-muted)" }}>
+                {u.streak > 0 ? `${u.streak}` : "—"}
+              </span>
+              <span className="text-center" style={{ color: "var(--text-dim)" }}>{fmtHours(u.focusMins)}</span>
+              <span className="text-center" style={{ color: "var(--text-dim)" }}>{u.sessions || 0}</span>
+              <span className="flex justify-center"><ProgressCell pct={u.taseesProgress} /></span>
+              <span className="flex justify-center"><ProgressCell pct={u.tadreebProgress} /></span>
+              <span className="text-center text-[12px]" style={{ color: "var(--text-muted)" }}>{fmt(u.joinedAt)}</span>
+              <span className="text-center text-[12px]" style={{ color: "var(--text-muted)" }}>{fmt(u.lastSeen)}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       <p className="text-center text-[13px] mt-6" style={{ color: "var(--text-muted)" }}>

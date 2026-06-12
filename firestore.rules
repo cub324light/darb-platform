@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // المستخدمون: الكتابة من التطبيق مسموحة، القراءة من المتصفح ممنوعة
+    // (لوحة الأدمن تقرأ من السيرفر عبر Admin SDK الذي يتجاوز هذه القواعد)
+    match /users/{uid} {
+      allow create, update: if true;
+      allow read, delete: if false;
+    }
+    // أي مجموعة أخرى: ممنوعة بالكامل
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

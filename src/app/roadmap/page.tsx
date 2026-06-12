@@ -13,6 +13,7 @@ import {
   loadTasreebatPct, saveTasreebatPct,
   type ScheduleEvent, type ExamFlow, type StageReviews, type TrainingItem,
 } from "@/lib/storage";
+import { syncUser } from "@/lib/firestore";
 import Calendar from "@/components/Calendar";
 import DayScheduler from "@/components/DayScheduler";
 
@@ -28,6 +29,30 @@ const TAHSILI_TOTALS: Record<TahsiliSubject, { hours: number; pages: string }> =
   كيمياء:   { hours: 30, pages: "180-263" },
   أحياء:    { hours: 37, pages: "266-353" },
 };
+
+/* نسب التقدم — تُحسب قبل الـ render لمزامنتها مع Firestore */
+function computeProgress(
+  track: Track, done: string[], custom: CustomLesson[],
+  tadreebItems: TrainingItem[], tadreebDone: string[],
+): { taseesPct: number; tadreebPct: number } {
+  const isTahsili = track.id === "تحصيلي";
+  const doneSet = new Set(done);
+  const lessonKeys = track.subjects.flatMap((s) =>
+    isTahsili && s.name in RAKAN_SCHEDULE
+      ? RAKAN_SCHEDULE[s.name as TahsiliSubject].map((l) => `${s.name}-${l.lesson}`)
+      : custom.filter((c) => c.subject === s.name).map((c) => `custom-${c.id}`)
+  );
+  const taseesPct = lessonKeys.length === 0 ? 0
+    : Math.round((lessonKeys.filter((k) => doneSet.has(k)).length / lessonKeys.length) * 100);
+
+  const tdSet = new Set(tadreebDone);
+  const subjectNames = new Set(track.subjects.map((s) => s.name));
+  const training = tadreebItems.filter((t) => subjectNames.has(t.subject));
+  const tadreebPct = training.length === 0 ? 0
+    : Math.round((training.filter((t) => tdSet.has(t.id)).length / training.length) * 100);
+
+  return { taseesPct, tadreebPct };
+}
 
 const TASEES_CHECKPOINTS: { key: keyof StageReviews; pct: number; label: string }[] = [
   { key: "tasees25", pct: 25, label: "ربع التأسيس — خذ 10 دقائق للمراجعة" },
@@ -241,6 +266,15 @@ export default function RoadmapPage() {
   useEffect(() => { if (loaded) saveTadreebItems(tadreebItems); }, [tadreebItems, loaded]);
   useEffect(() => { if (loaded) saveTadreebDone(tadreebDone); }, [tadreebDone, loaded]);
 
+  /* مزامنة نسب التقدم مع Firestore — تظهر في لوحة الأدمن */
+  const progress = track ? computeProgress(track, done, custom, tadreebItems, tadreebDone) : null;
+  const taseesSync = progress?.taseesPct ?? -1;
+  const tadreebSync = progress?.tadreebPct ?? -1;
+  useEffect(() => {
+    if (!loaded || taseesSync < 0) return;
+    syncUser({ taseesProgress: taseesSync, tadreebProgress: tadreebSync });
+  }, [loaded, taseesSync, tadreebSync]);
+
   if (!track) return <div className="min-h-dvh" />;
 
   const isTahsili = track.id === "تحصيلي";
@@ -313,6 +347,7 @@ export default function RoadmapPage() {
 
     saveUser({ ...user, track: newTrackId });
     setTrack(getTrack(newTrackId));
+    syncUser({ track: newTrackId, taseesProgress: 0, tadreebProgress: 0 });
 
     // إعادة ضبط كل تقدم الخريطة للمسار الجديد
     const fresh: string[] = [];

@@ -1,5 +1,5 @@
 "use client";
-import { doc, setDoc, collection, getDocs, serverTimestamp, Timestamp } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebase";
 
 /* ─── UID مستمر في localStorage ─── */
@@ -27,6 +27,7 @@ export async function registerUser(name: string, track: string) {
       sessions: 0,
       silver: 0,
       taseesProgress: 0,
+      tadreebProgress: 0,
     }, { merge: true });
   } catch {}
 }
@@ -40,6 +41,7 @@ export async function syncUser(data: {
   sessions?: number;
   silver?: number;
   taseesProgress?: number;
+  tadreebProgress?: number;
 }) {
   try {
     const uid = getOrCreateUid();
@@ -48,23 +50,4 @@ export async function syncUser(data: {
       lastSeen: serverTimestamp(),
     }, { merge: true });
   } catch {}
-}
-
-/* ─── جلب كل المستخدمين (للأدمن فقط) ─── */
-export interface FirestoreUser {
-  id: string;
-  name: string;
-  track: string;
-  streak: number;
-  focusMins: number;
-  sessions: number;
-  silver: number;
-  taseesProgress: number;
-  joinedAt?: Timestamp;
-  lastSeen?: Timestamp;
-}
-
-export async function getAllUsers(): Promise<FirestoreUser[]> {
-  const snap = await getDocs(collection(db, "users"));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as FirestoreUser));
 }
