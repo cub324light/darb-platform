@@ -149,10 +149,46 @@ export function saveExamDate(date: string | null) {
 
 export function resetAll() {
   try {
-    ["darb_user","darb_stats","darb_vault","darb_cards","darb_lessons","darb_posts","darb_schedule","darb_exam_date","darb_events"].forEach((k) =>
+    ["darb_user","darb_stats","darb_vault","darb_cards","darb_lessons","darb_posts",
+     "darb_schedule","darb_exam_date","darb_events","darb_exam_flow","darb_stage_reviews"].forEach((k) =>
       localStorage.removeItem(k)
     );
   } catch {}
+}
+
+/* ── تقدم الاختبار والدرجات ── */
+export interface ExamFlow {
+  grade?: number;
+  skippedGrade?: boolean;
+  happy?: boolean;
+  plan?: string;
+}
+
+export interface StageReviews {
+  التأسيس?: boolean;
+  التدريب?: boolean;
+  التعزيز?: boolean;
+}
+
+const EXAM_FLOW_KEY = "darb_exam_flow";
+const STAGE_REVIEWS_KEY = "darb_stage_reviews";
+
+export function loadExamFlow(): ExamFlow {
+  if (typeof window === "undefined") return {};
+  try { return JSON.parse(localStorage.getItem(EXAM_FLOW_KEY) ?? "{}") as ExamFlow; } catch { return {}; }
+}
+
+export function saveExamFlow(f: ExamFlow) {
+  try { localStorage.setItem(EXAM_FLOW_KEY, JSON.stringify(f)); } catch {}
+}
+
+export function loadStageReviews(): StageReviews {
+  if (typeof window === "undefined") return {};
+  try { return JSON.parse(localStorage.getItem(STAGE_REVIEWS_KEY) ?? "{}") as StageReviews; } catch { return {}; }
+}
+
+export function saveStageReviews(r: StageReviews) {
+  try { localStorage.setItem(STAGE_REVIEWS_KEY, JSON.stringify(r)); } catch {}
 }
 
 /* ── أحداث الجدول اليومي ── */
