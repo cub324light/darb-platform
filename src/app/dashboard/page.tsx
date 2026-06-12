@@ -4,11 +4,18 @@ import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import { getTrack } from "@/lib/tracks";
-import { loadUser, loadStats, computeStreak, loadSchedule, saveSchedule, type DarbUser, type ScheduleEntry, type WeeklySchedule } from "@/lib/storage";
-
-const WEEK_DAYS = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+import { loadUser, loadStats, computeStreak, loadEvents, type DarbUser, type ScheduleEvent } from "@/lib/storage";
+import { getEventsForDate } from "@/components/DayScheduler";
 
 const DAILY_TARGET = 200;
+
+function fmtHour(h: number): string {
+  if (h === 0) return "12 ص";
+  if (h < 12) return `${h} ص`;
+  if (h === 12) return "12 م";
+  if (h === 24) return "12 ص";
+  return `${h - 12} م`;
+}
 
 export default function DashboardPage() {
   const [user, setUser] = useState<DarbUser | null>(null);
@@ -20,10 +27,7 @@ export default function DashboardPage() {
   const [todayMins, setTodayMins] = useState(0);
   const [time, setTime] = useState<Date | null>(null);
   const [greeting, setGreeting] = useState("");
-  const [schedule, setSchedule] = useState<WeeklySchedule>({});
-  const [showAdd, setShowAdd] = useState(false);
-  const [addSubject, setAddSubject] = useState("");
-  const [addHours, setAddHours] = useState(1);
+  const [todayEvents, setTodayEvents] = useState<ScheduleEvent[]>([]);
 
   useEffect(() => {
     setUser(loadUser());
@@ -37,8 +41,12 @@ export default function DashboardPage() {
       const vault = JSON.parse(localStorage.getItem("darb_vault") ?? "[]");
       setErrorsCount(Array.isArray(vault) ? vault.length : 0);
     } catch {}
-    const saved = loadSchedule();
-    setSchedule(saved ?? { "0":[],"1":[],"2":[],"3":[],"4":[],"5":[],"6":[] });
+
+    // load today's events
+    const today = new Date().toISOString().slice(0, 10);
+    const allEvents = loadEvents();
+    setTodayEvents(getEventsForDate(today, allEvents));
+
     const h = new Date().getHours();
     if (h < 5) setGreeting("وقت الذئاب");
     else if (h < 12) setGreeting("صباح التفوق");
@@ -52,26 +60,6 @@ export default function DashboardPage() {
 
   const track = getTrack(user?.track);
   const todayPct = Math.min(100, Math.round((todayMins / DAILY_TARGET) * 100));
-  const todayDow = new Date().getDay().toString();
-  const todayEntries: ScheduleEntry[] = schedule[todayDow] ?? [];
-
-  const addEntry = () => {
-    if (!addSubject) return;
-    const key = todayDow;
-    const updated: WeeklySchedule = { ...schedule, [key]: [...(schedule[key] ?? []), { subject: addSubject, hours: addHours }] };
-    setSchedule(updated);
-    saveSchedule(updated);
-    setShowAdd(false);
-    setAddSubject("");
-    setAddHours(1);
-  };
-
-  const removeEntry = (idx: number) => {
-    const key = todayDow;
-    const updated: WeeklySchedule = { ...schedule, [key]: (schedule[key] ?? []).filter((_, i) => i !== idx) };
-    setSchedule(updated);
-    saveSchedule(updated);
-  };
 
   const TOOLS = [
     { href: "/orbit",  label: "أوربت",   desc: "جلسة 50/10" },
@@ -209,64 +197,48 @@ export default function DashboardPage() {
         {/* جدول اليوم */}
         <section className="card rise rise-5">
           <div className="flex items-center justify-between mb-3">
-            <p className="title-md" style={{ color: "var(--text)" }}>
-              جدول {WEEK_DAYS[Number(todayDow)]}
-            </p>
+            <p className="title-md" style={{ color: "var(--text)" }}>جدول اليوم</p>
             <Link href="/roadmap" className="text-[13px] font-bold" style={{ color: "var(--accent-light)", textDecoration: "none" }}>
-              الجدول الكامل ←
+              تعديل ←
             </Link>
           </div>
 
-          {todayEntries.length === 0 && !showAdd && (
-            <p className="text-[13px] mb-3" style={{ color: "var(--text-muted)" }}>ما فيه شيء مجدول اليوم.</p>
-          )}
-
-          {todayEntries.length > 0 && (
-            <div className="flex flex-col gap-2 mb-3">
-              {todayEntries.map((e, i) => (
-                <div key={i} className="flex items-center gap-3 py-2 border-b border-[var(--border)] last:border-0">
-                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "var(--accent-light)" }} />
-                  <span className="text-[13px] font-semibold flex-1" style={{ color: "var(--text)" }}>{e.subject}</span>
-                  <span className="text-[12px] font-bold" style={{ color: "var(--text-dim)" }}>{e.hours}س</span>
-                  <button onClick={() => removeEntry(i)} className="text-[var(--text-muted)] text-base px-1.5 min-h-[36px]">✕</button>
+          {todayEvents.length === 0 ? (
+            <Link
+              href="/roadmap"
+              className="flex items-center justify-center gap-2 rounded-2xl py-5 transition active:scale-[0.98]"
+              style={{
+                background: "var(--surface2)",
+                border: "1.5px dashed var(--border)",
+                textDecoration: "none",
+                minHeight: "64px",
+              }}
+            >
+              <span className="text-[13px] font-bold" style={{ color: "var(--text-muted)" }}>
+                لا يوجد جدول اليوم — اضغط لإضافة
+              </span>
+              <span className="text-[18px]" style={{ color: "var(--accent)" }}>+</span>
+            </Link>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {todayEvents.map((ev) => (
+                <div
+                  key={ev.id}
+                  className="flex items-center gap-3 py-2.5 border-b border-[var(--border)] last:border-0"
+                >
+                  <div
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    style={{ background: ev.type === "study" ? "var(--accent-light)" : "var(--danger)" }}
+                  />
+                  <span className="text-[13px] font-semibold flex-1" style={{ color: "var(--text)" }}>
+                    {ev.type === "study" ? (ev.subject ?? "") : (ev.label ?? "")}
+                  </span>
+                  <span className="text-[12px] font-bold" style={{ color: "var(--text-dim)" }}>
+                    {fmtHour(ev.fromHour)} → {fmtHour(ev.toHour)}
+                  </span>
                 </div>
               ))}
             </div>
-          )}
-
-          {showAdd ? (
-            <div className="flex gap-2 items-center">
-              <select
-                value={addSubject}
-                onChange={(e) => setAddSubject(e.target.value)}
-                className="flex-1 min-w-0 rounded-xl px-3 py-2.5 text-[13px] outline-none"
-                style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}
-              >
-                <option value="">اختر المادة</option>
-                {track.subjects.map((s) => <option key={s.name} value={s.name}>{s.name}</option>)}
-              </select>
-              <select
-                value={addHours}
-                onChange={(e) => setAddHours(Number(e.target.value))}
-                className="w-20 rounded-xl px-2 py-2.5 text-[13px] outline-none"
-                style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}
-              >
-                {[1,2,3,4,5,6].map((h) => <option key={h} value={h}>{h}س</option>)}
-              </select>
-              <button onClick={addEntry} className="px-3 py-2.5 rounded-xl font-bold text-[13px]"
-                style={{ background: "transparent", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
-                إضافة
-              </button>
-              <button onClick={() => setShowAdd(false)} className="px-2 py-2.5 text-[var(--text-muted)] text-lg">✕</button>
-            </div>
-          ) : (
-            <button
-              onClick={() => { setShowAdd(true); setAddSubject(track.subjects[0]?.name ?? ""); }}
-              className="text-[13px] font-bold"
-              style={{ color: "var(--accent-light)" }}
-            >
-              + إضافة للجدول
-            </button>
           )}
         </section>
 

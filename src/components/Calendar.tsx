@@ -45,9 +45,11 @@ function hijriMonthStart(ref: Date): Date {
 export default function Calendar({
   examDate,
   onExamDateChange,
+  onDayClick,
 }: {
   examDate: string | null;
   onExamDateChange: (d: string | null) => void;
+  onDayClick?: (date: string) => void;
 }) {
   const [mode, setMode] = useState<Mode>("gregorian");
   const [viewDate, setViewDate] = useState(new Date());
@@ -156,7 +158,14 @@ export default function Calendar({
             return (
               <button
                 key={ci}
-                onClick={() => cell.inMonth && onExamDateChange(isExam ? null : cellKey)}
+                onClick={() => {
+                  if (!cell.inMonth) return;
+                  if (onDayClick) {
+                    onDayClick(cellKey);
+                  } else {
+                    onExamDateChange(isExam ? null : cellKey);
+                  }
+                }}
                 className="flex items-center justify-center"
                 style={{ height: "40px" }}
                 aria-label={cell.label.toString()}
@@ -194,7 +203,9 @@ export default function Calendar({
           <button onClick={() => onExamDateChange(null)} className="text-[var(--text-muted)] text-sm px-1 min-h-[28px]">✕</button>
         </div>
       )}
-      <p className="text-[11px] mt-2 text-center" style={{ color: "var(--text-muted)" }}>اضغط أي يوم لتحديده كيوم اختبار (اختياري)</p>
+      <p className="text-[11px] mt-2 text-center" style={{ color: "var(--text-muted)" }}>
+        {onDayClick ? "اضغط أي يوم لعرض جدوله" : "اضغط أي يوم لتحديده كيوم اختبار (اختياري)"}
+      </p>
     </div>
   );
 }

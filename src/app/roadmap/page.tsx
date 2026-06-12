@@ -4,10 +4,9 @@ import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import { RAKAN_SCHEDULE, ROADMAP_STAGES } from "@/lib/constants";
 import { getTrack, subjectColor, subjectIcon, type Track } from "@/lib/tracks";
-import { loadUser, loadList, saveList, loadSchedule, saveSchedule, loadExamDate, saveExamDate, type ScheduleEntry, type WeeklySchedule } from "@/lib/storage";
+import { loadUser, loadList, saveList, loadExamDate, saveExamDate, loadEvents, saveEvents, type ScheduleEvent } from "@/lib/storage";
 import Calendar from "@/components/Calendar";
-
-const WEEK_DAYS = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+import DayScheduler, { getEventsForDate } from "@/components/DayScheduler";
 
 /* درس مخصص يضيفه الطالب (لمسارات قدرات و CPC) */
 interface CustomLesson {
@@ -35,40 +34,21 @@ export default function RoadmapPage() {
   const [loaded, setLoaded] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [newLesson, setNewLesson] = useState("");
-  const [schedule, setSchedule] = useState<WeeklySchedule>({});
-  const [addDay, setAddDay] = useState<string | null>(null);
-  const [addSubject, setAddSubject] = useState("");
-  const [addHours, setAddHours] = useState(1);
   const [examDate, setExamDate] = useState<string | null>(null);
+  const [events, setEvents] = useState<ScheduleEvent[]>([]);
+  const [schedulerDate, setSchedulerDate] = useState<string | null>(null);
 
   useEffect(() => {
     setTrack(getTrack(loadUser()?.track));
     setDone(loadList<string>(DONE_KEY));
     setCustom(loadList<CustomLesson>(CUSTOM_KEY));
-    const saved = loadSchedule();
-    setSchedule(saved ?? { "0":[],"1":[],"2":[],"3":[],"4":[],"5":[],"6":[] });
     setExamDate(loadExamDate());
+    setEvents(loadEvents());
     setLoaded(true);
   }, []);
 
   useEffect(() => { if (loaded) saveList(DONE_KEY, done); }, [done, loaded]);
   useEffect(() => { if (loaded) saveList(CUSTOM_KEY, custom); }, [custom, loaded]);
-
-  const addEntry = (dayKey: string) => {
-    if (!addSubject || !track) return;
-    const updated: WeeklySchedule = { ...schedule, [dayKey]: [...(schedule[dayKey] ?? []), { subject: addSubject, hours: addHours }] };
-    setSchedule(updated);
-    saveSchedule(updated);
-    setAddDay(null);
-    setAddSubject(track.subjects[0]?.name ?? "");
-    setAddHours(1);
-  };
-
-  const removeEntry = (dayKey: string, idx: number) => {
-    const updated: WeeklySchedule = { ...schedule, [dayKey]: (schedule[dayKey] ?? []).filter((_, i) => i !== idx) };
-    setSchedule(updated);
-    saveSchedule(updated);
-  };
 
   if (!track) return <div className="min-h-dvh" />;
 
@@ -326,91 +306,25 @@ export default function RoadmapPage() {
         <Calendar
           examDate={examDate}
           onExamDateChange={(d) => { setExamDate(d); saveExamDate(d); }}
+          onDayClick={(date) => setSchedulerDate(date)}
         />
-      </div>
-
-      {/* الجدول الأسبوعي */}
-      <div className="px-5 mt-6 mb-2 rise rise-3">
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-base font-black" style={{ color: "var(--text)" }}>جدولي الأسبوعي</p>
-          <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>اضغط + لإضافة مادة</span>
-        </div>
-        <div className="flex flex-col gap-3">
-          {WEEK_DAYS.map((dayName, idx) => {
-            const key = idx.toString();
-            const entries: ScheduleEntry[] = schedule[key] ?? [];
-            const isToday = new Date().getDay() === idx;
-            const totalH = entries.reduce((s, e) => s + e.hours, 0);
-            return (
-              <div key={key} className="rounded-2xl overflow-hidden"
-                style={{
-                  background: "var(--surface)",
-                  border: isToday ? "1.5px solid var(--accent)" : "1px solid var(--border)",
-                }}>
-                {/* رأس اليوم */}
-                <div className="flex items-center justify-between px-4 py-3"
-                  style={{ background: isToday ? "color-mix(in srgb, var(--accent) 8%, var(--surface2))" : "var(--surface2)", borderBottom: entries.length > 0 || addDay === key ? "1px solid var(--border)" : "none" }}>
-                  <div className="flex items-center gap-2">
-                    <span className="font-black text-[14px]" style={{ color: isToday ? "var(--accent-light)" : "var(--text)" }}>{dayName}</span>
-                    {isToday && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "var(--accent)", color: "white" }}>اليوم</span>}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {totalH > 0 && <span className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>{totalH}س</span>}
-                    <button
-                      onClick={() => { setAddDay(key); setAddSubject(track.subjects[0]?.name ?? ""); setAddHours(1); }}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-base font-black"
-                      style={{ background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-dim)" }}
-                    >+</button>
-                  </div>
-                </div>
-
-                {/* المواد */}
-                {entries.map((e, i) => {
-                  const color = subjectColor(track, e.subject);
-                  return (
-                    <div key={i} className="flex items-center gap-3 px-4 py-2.5 border-b border-[var(--border)] last:border-0">
-                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
-                      <span className="text-[13px] font-bold flex-1" style={{ color }}>{e.subject}</span>
-                      <span className="text-[12px] font-bold" style={{ color: "var(--text-dim)" }}>{e.hours}س</span>
-                      <button onClick={() => removeEntry(key, i)} className="text-[var(--text-muted)] text-sm px-1.5 min-h-[36px]">✕</button>
-                    </div>
-                  );
-                })}
-
-                {/* نموذج الإضافة */}
-                {addDay === key && (
-                  <div className="flex gap-2 items-center px-4 py-3 border-t border-[var(--border)]">
-                    <select
-                      value={addSubject}
-                      onChange={(e) => setAddSubject(e.target.value)}
-                      className="flex-1 min-w-0 rounded-xl px-3 py-2 text-[13px] outline-none"
-                      style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}
-                    >
-                      {track.subjects.map((s) => <option key={s.name} value={s.name}>{s.name}</option>)}
-                    </select>
-                    <select
-                      value={addHours}
-                      onChange={(e) => setAddHours(Number(e.target.value))}
-                      className="w-16 rounded-xl px-2 py-2 text-[13px] outline-none"
-                      style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}
-                    >
-                      {[1,2,3,4,5,6].map((h) => <option key={h} value={h}>{h}س</option>)}
-                    </select>
-                    <button onClick={() => addEntry(key)} className="px-3 py-2 rounded-xl font-bold text-[13px]"
-                      style={{ background: "transparent", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
-                      إضافة
-                    </button>
-                    <button onClick={() => setAddDay(null)} className="text-[var(--text-muted)] text-base px-1">✕</button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
       </div>
 
       <div className="h-6" />
       <BottomNav />
+
+      {/* DayScheduler modal */}
+      {schedulerDate && (
+        <DayScheduler
+          date={schedulerDate}
+          events={events}
+          subjects={track.subjects}
+          examDate={examDate}
+          onExamDateChange={(d) => { setExamDate(d); saveExamDate(d); }}
+          onEventsChange={(updated) => { setEvents(updated); saveEvents(updated); }}
+          onClose={() => setSchedulerDate(null)}
+        />
+      )}
     </div>
   );
 }

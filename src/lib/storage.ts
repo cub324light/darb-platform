@@ -149,10 +149,39 @@ export function saveExamDate(date: string | null) {
 
 export function resetAll() {
   try {
-    ["darb_user","darb_stats","darb_vault","darb_cards","darb_lessons","darb_posts","darb_schedule","darb_exam_date"].forEach((k) =>
+    ["darb_user","darb_stats","darb_vault","darb_cards","darb_lessons","darb_posts","darb_schedule","darb_exam_date","darb_events"].forEach((k) =>
       localStorage.removeItem(k)
     );
   } catch {}
+}
+
+/* ── أحداث الجدول اليومي ── */
+export interface ScheduleEvent {
+  id: string;
+  type: "study" | "busy";
+  subject?: string;
+  label?: string;
+  fromHour: number;   // 5-23
+  toHour: number;     // 6-24
+  recurrence:
+    | { kind: "once"; date: string }
+    | { kind: "weekly"; dayOfWeek: number }   // 0-6
+    | { kind: "daily"; fromDate: string }
+    | { kind: "multiweekly"; days: number[] }; // multiple weekdays
+}
+
+const EVENTS_KEY = "darb_events";
+
+export function loadEvents(): ScheduleEvent[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(EVENTS_KEY);
+    return raw ? (JSON.parse(raw) as ScheduleEvent[]) : [];
+  } catch { return []; }
+}
+
+export function saveEvents(events: ScheduleEvent[]) {
+  try { localStorage.setItem(EVENTS_KEY, JSON.stringify(events)); } catch {}
 }
 
 /* ── الجدول الأسبوعي ── */
