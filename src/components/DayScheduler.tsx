@@ -28,39 +28,54 @@ function fmtHour(h: number): string {
   return `${h - 12} م`;
 }
 
+/* ─── تطبيع الأرقام العربية إلى غربية ─── */
+function normalizeDigits(s: string): string {
+  return s
+    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06F0));
+}
+
 /* ─── تحويل رقم + مؤشر الفترة ─── */
-function parseHourArabic(num: string, period: string): number {
+function parseHourArabic(num: string, mins: string, period: string): number {
   const n = parseInt(num);
   if (isNaN(n)) return -1;
+  const m = parseInt(mins || "0");
   const p = period.trim();
-  if (p === "م" || p === "مساء" || p === "مساءً") return n === 12 ? 12 : n + 12;
-  if (p === "ص" || p === "صباح" || p === "صباحاً") return n === 12 ? 0 : n;
-  return n; // بدون مؤشر — كما هو
+  let h = n;
+  if (p === "م" || p === "مساء" || p === "مساءً") h = n === 12 ? 12 : n + 12;
+  else if (p === "ص" || p === "صباح" || p === "صباحاً") h = n === 12 ? 0 : n;
+  // إذا فيه دقائق (≥30) نرفع الساعة للأعلى لتجنب from=to
+  return h + (m >= 30 ? 1 : 0);
 }
 
 /* ─── تحليل نص الخطة إلى أحداث ─── */
 function parseAISchedule(text: string, date: string, subjects: { name: string }[]): ScheduleEvent[] {
-  const events: ScheduleEvent[] = [];
+  const result: ScheduleEvent[] = [];
   const subjectNames = subjects.map((s) => s.name);
+  const normalized   = normalizeDigits(text);
 
-  for (const rawLine of text.split("\n")) {
+  for (const rawLine of normalized.split("\n")) {
     const line = rawLine.trim();
     if (!line) continue;
 
-    // صيغة: "من [الساعة] X[:[MM]] [ص/م] [N دقيقة] إلى X[:[MM]] [ص/م] [N دقيقة] [—–-:] النشاط"
+    // من [الساعة] H[:MM] [ص/م] [N دقيقة] إلى [الساعة] H[:MM] [ص/م] [N دقيقة] [—–-:] النشاط
     const m = line.match(
-      /من\s+(?:الساعة\s+)?(\d+)(?::\d+)?\s*([صم]?)\s*(?:\d+\s*(?:دقيقة|دق|د)\s*)?(?:إلى|الى)\s*(?:الساعة\s+)?(\d+)(?::\d+)?\s*([صم]?)\s*(?:\d+\s*(?:دقيقة|دق|د)\s*)?[—–\-:]\s*(.+)/
+      /من\s+(?:الساعة\s+)?(\d+)(?::(\d+))?\s*(?:\d+\s*(?:دقيقة|دق|د)\s*)?([صم]?)\s*(?:إلى|الى)\s*(?:الساعة\s+)?(\d+)(?::(\d+))?\s*([صم]?)\s*(?:\d+\s*(?:دقيقة|دق|د)\s*)?[—–\-:]\s*(.+)/
     );
     if (!m) continue;
 
-    const fromH = parseHourArabic(m[1], m[2]);
-    const toH   = parseHourArabic(m[3], m[4]);
-    const label = m[5].trim();
+    const fromH = parseHourArabic(m[1], m[2] ?? "", m[3]);
+    const toH   = parseHourArabic(m[4], m[5] ?? "", m[6]);
+    const label = m[7].trim();
 
     if (fromH < 0 || toH < 0 || fromH >= toH || fromH < 5 || toH > 24) continue;
 
+    // تجاهل الفترات المتداخلة مع أحداث موجودة في نفس الدُفعة
+    const overlaps = result.some((e) => fromH < e.toHour && e.fromHour < toH);
+    if (overlaps) continue;
+
     const matchedSubject = subjectNames.find((n) => label.includes(n));
-    events.push({
+    result.push({
       id: Date.now().toString() + Math.random().toString(36).slice(2),
       type: matchedSubject ? "study" : "busy",
       ...(matchedSubject ? { subject: matchedSubject } : { label }),
@@ -69,7 +84,7 @@ function parseAISchedule(text: string, date: string, subjects: { name: string }[
       recurrence: { kind: "once", date },
     });
   }
-  return events;
+  return result;
 }
 
 const HOURS     = Array.from({ length: 19 }, (_, i) => i + 5);
@@ -150,11 +165,12 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
     finally  { setAiLoading(false); }
   };
 
-  const SCHEDULE_PATTERN = /\d|صباح|مساء|ساعة|ظهر|عصر|فجر|غداء|دوام|مدرسة|كلية|جامعة|عمل|رياضة|نوم/;
+  // رقم متبوع بـ ص/م، أو كلمة تتعلق بالوقت والجدول
+  const SCHEDULE_PATTERN = /[٠-٩\d]\s*[صم]|صباح|مساء|ساعة|ظهر|عصر|فجر|دوام|مدرسة|كلية|جامعة|عمل|رياضة|نوم|حصة|فارغ/;
   const OFF_TOPIC_REFUSAL = "أنا فقط أبني جداول دراسية 📅\nأدخل مشاغيلك مثل: من 8ص إلى 2م مدرسة";
 
   const runAI = () => {
-    if (!SCHEDULE_PATTERN.test(busyText)) {
+    if (!SCHEDULE_PATTERN.test(normalizeDigits(busyText))) {
       setAiResult(OFF_TOPIC_REFUSAL);
       return;
     }
