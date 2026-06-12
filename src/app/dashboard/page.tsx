@@ -5,6 +5,7 @@ import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import { getTrack } from "@/lib/tracks";
 import { loadUser, loadStats, computeStreak, loadEvents, type DarbUser, type ScheduleEvent } from "@/lib/storage";
+import { syncUser } from "@/lib/firestore";
 import { getEventsForDate } from "@/components/DayScheduler";
 
 const DAILY_TARGET = 200;
@@ -46,6 +47,19 @@ export default function DashboardPage() {
     const today = new Date().toISOString().slice(0, 10);
     const allEvents = loadEvents();
     setTodayEvents(getEventsForDate(today, allEvents));
+
+    // مزامنة مع Firestore
+    const u = loadUser();
+    if (u) {
+      syncUser({
+        name: u.name,
+        track: u.track,
+        streak: computeStreak(s),
+        focusMins: s.totalFocusMins,
+        sessions: s.sessionsCount,
+        silver: s.silver,
+      });
+    }
 
     const h = new Date().getHours();
     if (h < 5) setGreeting("وقت الذئاب");

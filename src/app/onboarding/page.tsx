@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { TRACKS, type TrackId } from "@/lib/tracks";
 import { saveUser } from "@/lib/storage";
+import { registerUser } from "@/lib/firestore";
 import Dome from "@/components/Dome";
 
 /* ─── دخول مختصر: اسمك + مسارك. بدون إيميل، بدون باسورد ─── */
@@ -16,7 +17,9 @@ export default function OnboardingPage() {
 
   const finish = () => {
     if (!ready || !track) return;
-    saveUser({ name: name.trim(), track, onboarded: true });
+    const trimmedName = name.trim();
+    saveUser({ name: trimmedName, track, onboarded: true });
+    registerUser(trimmedName, track);
     router.push("/dashboard");
   };
 
