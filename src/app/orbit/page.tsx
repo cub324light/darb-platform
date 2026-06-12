@@ -39,6 +39,7 @@ export default function OrbitPage() {
   const [customMins, setCustomMins] = useState(50);
   const [customEditing, setCustomEditing] = useState(false);
   const [customInput, setCustomInput]     = useState("50");
+  const [showEdit, setShowEdit]           = useState(false);
   const [secondsLeft, setSecondsLeft]     = useState(50 * 60);
   const [sessionsToday, setSessionsToday] = useState(0);
   const [silverTotal, setSilverTotal]     = useState(0);
@@ -181,79 +182,6 @@ export default function OrbitPage() {
         </div>
       )}
 
-      {/* اختيار المدة */}
-      {phase === "idle" && (
-        <div className="px-5 mb-5 rise rise-2">
-          {/* الخيارات الثابتة + مخصص */}
-          <div className="flex gap-2 mb-3">
-            {(["25", "50", "90"] as DurMode[]).map((v) => (
-              <button key={v} onClick={() => setDurMode(v)}
-                className="flex-1 py-3 rounded-2xl text-sm font-bold transition min-h-[48px]"
-                style={durMode === v
-                  ? { background: "var(--surface)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }
-                  : { background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}>
-                {v} د
-              </button>
-            ))}
-            <button onClick={() => setDurMode("custom")}
-              className="flex-1 py-3 rounded-2xl text-sm font-bold transition min-h-[48px]"
-              style={durMode === "custom"
-                ? { background: "var(--surface)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }
-                : { background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}>
-              مخصص
-            </button>
-          </div>
-
-          {/* منتقي المدة المخصصة */}
-          {durMode === "custom" && (
-            <div className="flex items-center justify-center gap-4 py-2">
-              <button onClick={() => applyCustom(customMins - 5)}
-                className="w-12 h-12 rounded-2xl font-black text-2xl flex items-center justify-center transition active:scale-90"
-                style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
-                −
-              </button>
-
-              {customEditing ? (
-                <input
-                  type="number"
-                  value={customInput}
-                  onChange={(e) => setCustomInput(e.target.value)}
-                  onBlur={() => {
-                    const n = parseInt(customInput);
-                    if (!isNaN(n)) applyCustom(n);
-                    setCustomEditing(false);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      const n = parseInt(customInput);
-                      if (!isNaN(n)) applyCustom(n);
-                      setCustomEditing(false);
-                    }
-                  }}
-                  autoFocus
-                  className="w-28 text-center rounded-2xl px-3 py-2.5 text-xl font-black outline-none"
-                  style={{ background: "var(--surface2)", border: "1.5px solid var(--accent)", color: "var(--text)" }}
-                />
-              ) : (
-                <button
-                  onClick={() => { setCustomInput(String(customMins)); setCustomEditing(true); }}
-                  className="min-w-[110px] text-center rounded-2xl px-4 py-3 transition"
-                  style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-                  <span className="font-mono-nums font-black text-2xl" style={{ color: "var(--text)" }}>{customMins}</span>
-                  <span className="text-sm text-[var(--text-muted)] mr-1.5">دقيقة</span>
-                </button>
-              )}
-
-              <button onClick={() => applyCustom(customMins + 5)}
-                className="w-12 h-12 rounded-2xl font-black text-2xl flex items-center justify-center transition active:scale-90"
-                style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
-                +
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* دائرة المؤقت + الملصقات الجانبية */}
       <div className="flex-1 flex flex-col items-center justify-center px-3 rise rise-3">
         <div className="flex items-center justify-center gap-3 w-full mb-6">
@@ -317,16 +245,100 @@ export default function OrbitPage() {
           </div>
         </div>
 
-        {/* رسالة الحالة */}
-        <div className="rounded-2xl px-5 py-3 max-w-[280px] text-center mb-5"
-          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-          <p className="text-sm text-[var(--text-dim)] leading-relaxed">{statusMsg}</p>
-        </div>
+        {/* رسالة الحالة — فقط أثناء التشغيل */}
+        {phase !== "idle" && (
+          <div className="rounded-2xl px-5 py-3 max-w-[280px] text-center mb-5"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+            <p className="text-sm text-[var(--text-dim)] leading-relaxed">{statusMsg}</p>
+          </div>
+        )}
+
+        {/* لوحة التعديل — idle فقط */}
+        {phase === "idle" && (
+          <div className="w-full max-w-xs mb-5">
+            <button
+              onClick={() => setShowEdit((v) => !v)}
+              className="w-full py-3 rounded-2xl text-sm font-bold transition"
+              style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+              {showEdit ? "إخفاء ↑" : "تعديل المدة ↓"}
+            </button>
+
+            {showEdit && (
+              <div className="mt-2 rounded-2xl p-4 flex flex-col gap-3"
+                style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                {/* الخيارات */}
+                <div className="flex gap-2">
+                  {(["25", "50", "90"] as DurMode[]).map((v) => (
+                    <button key={v} onClick={() => setDurMode(v)}
+                      className="flex-1 py-2.5 rounded-xl text-sm font-bold transition"
+                      style={durMode === v
+                        ? { background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }
+                        : { background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                      {v} د
+                    </button>
+                  ))}
+                  <button onClick={() => setDurMode("custom")}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-bold transition"
+                    style={durMode === "custom"
+                      ? { background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }
+                      : { background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                    مخصص
+                  </button>
+                </div>
+
+                {/* منتقي المخصص */}
+                {durMode === "custom" && (
+                  <div className="flex items-center justify-center gap-3">
+                    <button onClick={() => applyCustom(customMins - 5)}
+                      className="w-11 h-11 rounded-xl font-black text-xl flex items-center justify-center transition active:scale-90"
+                      style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>
+                      −
+                    </button>
+                    {customEditing ? (
+                      <input
+                        type="number"
+                        value={customInput}
+                        onChange={(e) => setCustomInput(e.target.value)}
+                        onBlur={() => { const n = parseInt(customInput); if (!isNaN(n)) applyCustom(n); setCustomEditing(false); }}
+                        onKeyDown={(e) => { if (e.key === "Enter") { const n = parseInt(customInput); if (!isNaN(n)) applyCustom(n); setCustomEditing(false); } }}
+                        autoFocus
+                        className="w-24 text-center rounded-xl px-2 py-2 text-lg font-black outline-none"
+                        style={{ background: "var(--surface2)", border: "1.5px solid var(--accent)", color: "var(--text)" }}
+                      />
+                    ) : (
+                      <button onClick={() => { setCustomInput(String(customMins)); setCustomEditing(true); }}
+                        className="min-w-[90px] text-center rounded-xl px-3 py-2.5 transition"
+                        style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                        <span className="font-mono-nums font-black text-xl" style={{ color: "var(--text)" }}>{customMins}</span>
+                        <span className="text-sm text-[var(--text-muted)] mr-1">د</span>
+                      </button>
+                    )}
+                    <button onClick={() => applyCustom(customMins + 5)}
+                      className="w-11 h-11 rounded-xl font-black text-xl flex items-center justify-center transition active:scale-90"
+                      style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>
+                      +
+                    </button>
+                  </div>
+                )}
+
+                {/* ملخص: ساعات + راحة */}
+                <div className="flex items-center justify-between pt-1 border-t border-[var(--border)]">
+                  <span className="text-sm font-bold" style={{ color: currentColor }}>
+                    {focusMins >= 60 ? durationLabel(focusMins) : `${focusMins} دقيقة`}
+                  </span>
+                  <span className="text-sm font-bold text-[var(--gold)]">
+                    راحة {breakMins} دقيقة
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* أزرار التحكم */}
         <div className="w-full max-w-xs space-y-3">
           {phase === "idle" && (
-            <button onClick={startFocus}
+            <button onClick={() => { setShowEdit(false); startFocus(); }}
               className="w-full py-5 rounded-2xl font-black text-xl transition glow-blue min-h-[60px]"
               style={{ background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
               ابدأ الجلسة
