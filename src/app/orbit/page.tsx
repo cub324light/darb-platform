@@ -40,6 +40,7 @@ export default function OrbitPage() {
   const [customEditing, setCustomEditing] = useState(false);
   const [customInput, setCustomInput]     = useState("50");
   const [showEdit, setShowEdit]           = useState(false);
+  const [prevDur, setPrevDur]             = useState<{mode: DurMode; custom: number}>({mode: "50", custom: 50});
   const [secondsLeft, setSecondsLeft]     = useState(50 * 60);
   const [sessionsToday, setSessionsToday] = useState(0);
   const [silverTotal, setSilverTotal]     = useState(0);
@@ -243,7 +244,7 @@ export default function OrbitPage() {
         {phase === "idle" && (
           <div className="w-full max-w-xs mb-5">
             <button
-              onClick={() => setShowEdit((v) => !v)}
+              onClick={() => { if (!showEdit) setPrevDur({mode: durMode, custom: customMins}); setShowEdit((v) => !v); }}
               className="w-full py-3 rounded-2xl text-sm font-bold transition"
               style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
               {showEdit ? "إخفاء ↑" : "تعديل المدة ↓"}
@@ -316,6 +317,14 @@ export default function OrbitPage() {
                     راحة {breakMins} دقيقة
                   </span>
                 </div>
+
+                {/* تراجع */}
+                <button
+                  onClick={() => { setDurMode(prevDur.mode); setCustomMins(prevDur.custom); setCustomInput(String(prevDur.custom)); }}
+                  className="text-[13px] font-semibold text-center w-full"
+                  style={{ color: "var(--text-muted)" }}>
+                  ↩ تراجع
+                </button>
               </div>
             )}
           </div>
@@ -368,11 +377,8 @@ export default function OrbitPage() {
       <div className="px-5 pb-4 rise rise-4">
         <div className="rounded-2xl p-5 grid grid-cols-3 text-center gap-3"
           style={{
-            background: "rgba(18,18,27,0.65)",
-            border: "1px solid rgba(255,255,255,0.07)",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
-            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
           }}>
           <div>
             <p className="font-mono-nums font-black text-3xl text-[var(--accent-light)]">{sessionsToday}</p>

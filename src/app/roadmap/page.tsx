@@ -293,6 +293,53 @@ export default function RoadmapPage() {
         })}
       </div>
 
+      {/* الجدول الدراسي */}
+      {isTahsili && (
+        <div className="px-5 mt-6 rise rise-2">
+          <p className="text-base font-black text-[var(--text)] mb-4">الجدول الدراسي</p>
+          {(() => {
+            // build day-grouped schedule
+            const allEntries = Object.entries(RAKAN_SCHEDULE as Record<string, {day:number;lesson:string;hours:number;pages:string;difficulty:string}[]>)
+              .flatMap(([subj, lessons]) => lessons.map(l => ({ subj, ...l })));
+            const dayMap = new Map<number, typeof allEntries>();
+            for (const e of allEntries) {
+              if (!dayMap.has(e.day)) dayMap.set(e.day, []);
+              dayMap.get(e.day)!.push(e);
+            }
+            const days = [...dayMap.keys()].sort((a,b)=>a-b);
+            return (
+              <div className="flex flex-col gap-3">
+                {days.map(day => {
+                  const lessons = dayMap.get(day)!;
+                  const totalH = lessons.reduce((s,l)=>s+l.hours,0);
+                  return (
+                    <div key={day} className="rounded-2xl overflow-hidden"
+                      style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                      <div className="flex items-center justify-between px-4 py-3"
+                        style={{ background: "var(--surface2)", borderBottom: "1px solid var(--border)" }}>
+                        <span className="font-black text-base" style={{ color: "var(--text)" }}>اليوم {day}</span>
+                        <span className="text-sm font-bold" style={{ color: "var(--text-muted)" }}>{totalH} ساعة</span>
+                      </div>
+                      {lessons.map((l, i) => {
+                        const color = subjectColor(track, l.subj);
+                        return (
+                          <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-[var(--border)] last:border-0">
+                            <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
+                            <span className="text-sm font-bold flex-shrink-0" style={{ color }}>{l.subj}</span>
+                            <span className="text-sm flex-1 min-w-0 truncate" style={{ color: "var(--text-dim)" }}>{l.lesson}</span>
+                            <span className="text-xs flex-shrink-0 font-semibold" style={{ color: "var(--text-muted)" }}>{l.hours}س · ص{l.pages}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
       <div className="h-6" />
       <BottomNav />
     </div>

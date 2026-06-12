@@ -5,6 +5,7 @@ import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import { getTrack } from "@/lib/tracks";
 import { loadUser, loadStats, computeStreak, type DarbUser } from "@/lib/storage";
+import { RAKAN_SCHEDULE } from "@/lib/constants";
 
 const DAILY_TARGET = 200;
 
@@ -57,29 +58,30 @@ export default function DashboardPage() {
 
       {/* ═══ القبة ═══ */}
       <Dome>
-        <div className="flex items-center gap-3 mb-5">
-          <div className="flex-1 min-w-0">
-            <p className="eyebrow mb-1" style={{ color: "var(--text-dim)" }}>{greeting}</p>
-            <h1 className="title-xl truncate" style={{ color: "var(--text)" }}>
-              أهلاً، {user?.name ?? "..."}
-            </h1>
+        {/* أهلاً صغيرة — يمين */}
+        <p className="text-[12px] font-bold text-right mb-1" style={{ color: "var(--text-muted)" }}>
+          أهلاً، {user?.name ?? "..."} · {greeting}
+        </p>
+
+        {/* Silver بارز */}
+        <div className="flex items-end justify-between mb-4">
+          <div>
+            <p className="eyebrow mb-1" style={{ color: "var(--text-dim)" }}>نقاطك</p>
+            <div className="flex items-baseline gap-2">
+              <span className="font-mono-nums font-black text-5xl leading-none" style={{ color: "var(--gold-light)" }}>{silver}</span>
+              <span className="text-base font-bold" style={{ color: "var(--gold)" }}>Silver</span>
+            </div>
+          </div>
+          <div className="dome-chip">
+            <span className={`text-base ${streak > 0 ? "streak-fire" : "opacity-40"}`}>🔥</span>
+            <span className="num-hero text-base" style={{ color: "var(--gold-light)" }}>{streak}</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <div className="dome-chip">
-            <span className={`text-base ${streak > 0 ? "streak-fire" : "opacity-50"}`}>🔥</span>
-            <span className="num-hero text-base" style={{ color: "var(--gold-light)" }}>{streak}</span>
-            <span className="text-[13px] font-semibold" style={{ color: "var(--text-dim)" }}>ستريك</span>
-          </div>
-          <div className="dome-chip">
-            <span className="num-hero text-base" style={{ color: "var(--text)" }}>{silver}</span>
-            <span className="text-[13px] font-semibold" style={{ color: "var(--text-dim)" }}>Silver</span>
-          </div>
-          <div className="dome-chip">
-            <span className="num-hero text-base" style={{ color: "var(--text)" }}>{todayPct}%</span>
-            <span className="text-[13px] font-semibold" style={{ color: "var(--text-dim)" }}>اليوم</span>
-          </div>
+        {/* شريط اليوم */}
+        <div className="dome-chip w-full justify-between">
+          <span className="text-[13px] font-semibold" style={{ color: "var(--text-dim)" }}>إنجاز اليوم</span>
+          <span className="num-hero text-base" style={{ color: "var(--text)" }}>{todayPct}%</span>
         </div>
       </Dome>
 
@@ -154,7 +156,7 @@ export default function DashboardPage() {
             ].map((s) => (
               <div key={s.unit} className="card text-center" style={{ padding: "18px 8px" }}>
                 <p className="num-hero text-[32px] leading-none" style={{ color: s.color }}>{s.val}</p>
-                <p className="text-[12.5px] font-semibold mt-2" style={{ color: "var(--text-muted)" }}>{s.unit}</p>
+                <p className="text-[11px] font-semibold mt-2 whitespace-nowrap" style={{ color: "var(--text-muted)" }}>{s.unit}</p>
               </div>
             ))}
           </div>
@@ -176,6 +178,36 @@ export default function DashboardPage() {
             ))}
           </div>
         </section>
+
+        {/* جدول الجلسة القادمة */}
+        {track.id === "تحصيلي" && (() => {
+          // find the next day's lessons across subjects
+          const allSchedule = Object.entries(RAKAN_SCHEDULE as Record<string, {day:number;lesson:string;hours:number;pages:string;difficulty:string}[]>)
+            .flatMap(([subj, lessons]) => lessons.map(l => ({ subj, ...l })));
+          const days = [...new Set(allSchedule.map(l => l.day))].sort((a,b)=>a-b);
+          const nextDay = days[0] ?? 1;
+          const todayLessons = allSchedule.filter(l => l.day === nextDay);
+          const totalHours = todayLessons.reduce((s, l) => s + l.hours, 0);
+          return (
+            <section className="card rise rise-5">
+              <div className="flex items-center justify-between mb-3">
+                <p className="title-md" style={{ color: "var(--text)" }}>جدول اليوم {nextDay}</p>
+                <Link href="/roadmap" className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>الكل ←</Link>
+              </div>
+              <div className="flex flex-col gap-2">
+                {todayLessons.map((l, i) => (
+                  <div key={i} className="flex items-center gap-3 py-2 border-b border-[var(--border)] last:border-0">
+                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "var(--accent-light)" }} />
+                    <span className="text-[13px] font-semibold flex-1 min-w-0 truncate" style={{ color: "var(--text)" }}>{l.lesson}</span>
+                    <span className="text-[12px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>{l.subj}</span>
+                    <span className="text-[12px] font-bold flex-shrink-0" style={{ color: "var(--text-dim)" }}>{l.hours}س</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[12px] mt-2" style={{ color: "var(--text-muted)" }}>المجموع: {totalHours} ساعة</p>
+            </section>
+          );
+        })()}
 
         {/* المجتمع */}
         <section className="grid grid-cols-2 gap-2.5 rise rise-5">
