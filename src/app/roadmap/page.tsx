@@ -30,14 +30,14 @@ const TAHSILI_TOTALS: Record<TahsiliSubject, { hours: number; pages: string }> =
 };
 
 const TASEES_CHECKPOINTS: { key: keyof StageReviews; pct: number; label: string }[] = [
-  { key: "tasees25", pct: 25, label: "ربع التأسيس 🏁 — خذ 10 دقائق للمراجعة" },
-  { key: "tasees50", pct: 50, label: "نصف التأسيس! 💪 — راجع قبل المتابعة" },
-  { key: "tasees75", pct: 75, label: "ثلاثة أرباع التأسيس 🌟 — آخر ربع" },
+  { key: "tasees25", pct: 25, label: "ربع التأسيس — خذ 10 دقائق للمراجعة" },
+  { key: "tasees50", pct: 50, label: "نصف التأسيس — راجع قبل المتابعة" },
+  { key: "tasees75", pct: 75, label: "ثلاثة أرباع التأسيس — آخر ربع" },
 ];
 const TADREEB_CHECKPOINTS: { key: keyof StageReviews; pct: number; label: string }[] = [
-  { key: "tadreeb25", pct: 25, label: "ربع التدريب 🏁 — راجع حلولك" },
-  { key: "tadreeb50", pct: 50, label: "نصف التدريب! 💪 — مرحلة ممتازة" },
-  { key: "tadreeb75", pct: 75, label: "ثلاثة أرباع التدريب 🌟 — اقتربت" },
+  { key: "tadreeb25", pct: 25, label: "ربع التدريب — راجع حلولك" },
+  { key: "tadreeb50", pct: 50, label: "نصف التدريب — مرحلة ممتازة" },
+  { key: "tadreeb75", pct: 75, label: "ثلاثة أرباع التدريب — اقتربت" },
 ];
 
 /* ─── ReviewBanner ─── */
@@ -69,7 +69,7 @@ function PhaseSection({ title, num, pct, complete, unlocked, color, accentText, 
         </div>
         <p className="font-black text-base flex-1" style={{ color: unlocked ? "var(--text)" : "var(--text-muted)" }}>{title}</p>
         <span className="font-mono-nums font-black text-[17px]" style={{ color: unlocked ? accentText : "var(--text-muted)" }}>
-          {unlocked ? `${pct}%` : "🔒"}
+          {unlocked ? `${pct}%` : "—"}
         </span>
       </div>
       <div className="h-2.5 bg-[var(--border)] rounded-full overflow-hidden mb-3">
@@ -79,7 +79,7 @@ function PhaseSection({ title, num, pct, complete, unlocked, color, accentText, 
       {!unlocked ? (
         <div className="rounded-2xl py-5 flex items-center justify-center"
           style={{ background: "var(--surface)", border: "1.5px dashed var(--border)" }}>
-          <span className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>🔒 {lockedMsg}</span>
+          <span className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>{lockedMsg}</span>
         </div>
       ) : <div>{children}</div>}
     </div>
@@ -106,15 +106,15 @@ function NextStepOverlay({
     : skipped ? "لم تُسجَّل الدرجة" : "";
 
   const FORWARD_OPTS = [
-    { id: "cpc",    icon: "🏭", title: "مسار CPC — أرامكو",      sub: "ابتعاث أو توظيف أرامكو" },
-    { id: "qudrat", icon: "🧠", title: "اختبار القدرات",          sub: "كمي ولفظي — قياس" },
-    { id: "other",  icon: "📖", title: "مادة أخرى",               sub: "تخصص أو مسار جديد" },
-    { id: "rest",   icon: "😴", title: "استراحة مستحقة",           sub: "خذ نفسك — رجعت أقوى" },
+    { id: "cpc",    title: "مسار CPC — أرامكو",      sub: "ابتعاث أو توظيف أرامكو" },
+    { id: "qudrat", title: "اختبار القدرات",          sub: "كمي ولفظي — قياس" },
+    { id: "other",  title: "مادة أخرى",               sub: "تخصص أو مسار جديد" },
+    { id: "rest",   title: "استراحة مستحقة",           sub: "خذ نفسك — رجعت أقوى" },
   ];
   const RETRY_OPTS = [
-    { id: "from_tasees",  icon: "🔄", title: "أعد التأسيس من الصفر", sub: "إعادة بناء كاملة", action: onResetTasees },
-    { id: "from_tadreeb", icon: "⚡", title: "أعد التدريب",           sub: "التأسيس جيد — عمّق التمارين", action: onResetTadreeb },
-    { id: "diagnostic",   icon: "🔍", title: "اختبار تشخيصي",         sub: "حدد وين الضعف بالضبط", action: undefined },
+    { id: "from_tasees",  title: "أعد التأسيس من الصفر", sub: "إعادة بناء كاملة", action: onResetTasees },
+    { id: "from_tadreeb", title: "أعد التدريب",           sub: "التأسيس جيد — عمّق التمارين", action: onResetTadreeb },
+    { id: "diagnostic",   title: "اختبار تشخيصي",         sub: "حدد وين الضعف بالضبط", action: undefined },
   ];
 
   const overlay = (
@@ -133,7 +133,6 @@ function NextStepOverlay({
         {gradeDisplay && (
           <div className="rounded-2xl px-4 py-3 flex items-center gap-2"
             style={{ background: "color-mix(in srgb, var(--gold) 12%, var(--surface))", border: "1px solid color-mix(in srgb, var(--gold) 35%, transparent)" }}>
-            <span className="text-lg">🎓</span>
             <span className="font-bold text-[17px]" style={{ color: "var(--gold)" }}>{gradeDisplay}</span>
           </div>
         )}
@@ -150,7 +149,7 @@ function NextStepOverlay({
                   border: currentPlan === opt.id ? "2px solid var(--accent)" : "1.5px solid var(--border)",
                   minHeight: "72px",
                 }}>
-                <span className="text-2xl flex-shrink-0">{opt.icon}</span>
+
                 <div className="flex-1 min-w-0">
                   <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>{opt.title}</p>
                   <p className="text-[17px] mt-0.5" style={{ color: "var(--text-muted)" }}>{opt.sub}</p>
@@ -177,7 +176,7 @@ function NextStepOverlay({
                   border: currentPlan === opt.id ? "2px solid var(--danger)" : "1.5px solid var(--border)",
                   minHeight: "72px",
                 }}>
-                <span className="text-2xl flex-shrink-0">{opt.icon}</span>
+
                 <div className="flex-1 min-w-0">
                   <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>{opt.title}</p>
                   <p className="text-[17px] mt-0.5" style={{ color: "var(--text-muted)" }}>{opt.sub}</p>
@@ -506,7 +505,7 @@ export default function RoadmapPage() {
         {taseesComplete && (
           <div className="rounded-2xl p-3.5 mb-3 flex items-center gap-2"
             style={{ background: "color-mix(in srgb, #10B981 10%, var(--surface))", border: "1px solid color-mix(in srgb, #10B981 30%, transparent)" }}>
-            <span>✅</span>
+            <span>✓</span>
             <span className="font-bold text-[17px]" style={{ color: "#10B981" }}>التأسيس مكتمل — انتقلت للتدريب</span>
           </div>
         )}
@@ -550,7 +549,7 @@ export default function RoadmapPage() {
         {tadreebComplete && (
           <div className="rounded-2xl p-3.5 mb-3 flex items-center gap-2"
             style={{ background: "color-mix(in srgb, #10B981 10%, var(--surface))", border: "1px solid color-mix(in srgb, #10B981 30%, transparent)" }}>
-            <span>✅</span>
+            <span>✓</span>
             <span className="font-bold text-[17px]" style={{ color: "#10B981" }}>التدريب مكتمل — انتقلت للتسريبات</span>
           </div>
         )}
@@ -625,7 +624,7 @@ export default function RoadmapPage() {
         {examPast && !hasGrade && !skipped && (
           <div className="rounded-2xl p-5 mb-3"
             style={{ background: "color-mix(in srgb, var(--gold) 10%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--gold) 40%, transparent)" }}>
-            <p className="font-black text-[17px] mb-1" style={{ color: "var(--gold)" }}>🎓 يوم الاختبار وصل!</p>
+            <p className="font-black text-[17px] mb-1" style={{ color: "var(--gold)" }}>يوم الاختبار وصل!</p>
             <p className="text-[17px] mb-4" style={{ color: "var(--text-muted)" }}>أدخل درجتك لتكمل الـ 1% الأخير</p>
             <div className="flex gap-2 mb-3">
               <input type="number" value={gradeInput} onChange={(e) => setGradeInput(e.target.value)}
@@ -658,17 +657,16 @@ export default function RoadmapPage() {
         {gradeOrSkipped && examFlow.plan && (
           <div className="rounded-2xl p-4 flex items-center gap-3"
             style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--accent) 25%, transparent)" }}>
-            <span className="text-xl">✅</span>
             <div className="flex-1">
               <p className="font-bold text-[17px]" style={{ color: "var(--text)" }}>الخطة المختارة</p>
               <p className="text-[17px]" style={{ color: "var(--text-muted)" }}>
-                {examFlow.plan === "cpc"           && "🏭 مسار CPC — أرامكو"}
-                {examFlow.plan === "qudrat"         && "🧠 اختبار القدرات"}
-                {examFlow.plan === "other"          && "📖 مادة جديدة"}
-                {examFlow.plan === "rest"           && "😴 استراحة مستحقة"}
-                {examFlow.plan === "from_tasees"    && "🔄 إعادة التأسيس"}
-                {examFlow.plan === "from_tadreeb"   && "⚡ إعادة التدريب"}
-                {examFlow.plan === "diagnostic"     && "🔍 اختبار تشخيصي"}
+                {examFlow.plan === "cpc"           && "مسار CPC — أرامكو"}
+                {examFlow.plan === "qudrat"         && "اختبار القدرات"}
+                {examFlow.plan === "other"          && "مادة جديدة"}
+                {examFlow.plan === "rest"           && "استراحة مستحقة"}
+                {examFlow.plan === "from_tasees"    && "إعادة التأسيس"}
+                {examFlow.plan === "from_tadreeb"   && "إعادة التدريب"}
+                {examFlow.plan === "diagnostic"     && "اختبار تشخيصي"}
               </p>
             </div>
             <button onClick={() => setShowNextStep(true)}

@@ -161,7 +161,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
       const data = await res.json();
       const raw = (data.text ?? data.error ?? "حدث خطأ في الاستجابة").replace(/\n{3,}/g, "\n\n").trim();
       const parsed = parseAISchedule(raw, date, subjects);
-      setAiResult(parsed.length > 0 ? raw : "أنا فقط أبني جداول دراسية 📅\nأدخل مشاغيلك مثل: من 8ص إلى 2م مدرسة");
+      setAiResult(parsed.length > 0 ? raw : "أنا فقط أبني جداول دراسية\nأدخل مشاغيلك مثل: من 8ص إلى 2م مدرسة");
     } catch { setAiResult("حدث خطأ، تحقق من الاتصال وحاول مجدداً."); }
     finally  { setAiLoading(false); }
   };
@@ -192,9 +192,9 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
 
   const applyPlan = () => {
     const parsed = parseAISchedule(aiResult, date, subjects);
-    if (parsed.length === 0) { setApplyFeedback("⚠️ لم أتمكن من قراءة الجدول — تأكد أن الخطة بالصيغة الصحيحة"); return; }
+    if (parsed.length === 0) { setApplyFeedback("لم أتمكن من قراءة الجدول — تأكد أن الخطة بالصيغة الصحيحة"); return; }
     onEventsChange([...events, ...parsed]);
-    setApplyFeedback(`✅ أُضيف ${parsed.length} حدث للجدول`);
+    setApplyFeedback(`أُضيف ${parsed.length} حدث للجدول`);
     setTab("manual");
   };
 
@@ -438,12 +438,12 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
                     <button onClick={() => { setShowEdit((v) => !v); setApplyFeedback(""); }}
                       className="flex-1 py-3 rounded-2xl font-bold text-[17px] min-h-[48px]"
                       style={{ background: "transparent", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
-                      ✏️ تعديل
+                      تعديل
                     </button>
                     <button onClick={() => { setApplyFeedback(""); applyPlan(); }}
                       className="flex-1 py-3 rounded-2xl font-black text-[17px] min-h-[48px]"
                       style={{ background: "var(--accent)", color: "white", border: "none" }}>
-                      ✅ تطبيق
+                      تطبيق
                     </button>
                   </div>
 
@@ -464,7 +464,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
                   )}
 
                   {applyFeedback && (
-                    <p className="text-[17px] font-bold text-center py-2" style={{ color: applyFeedback.startsWith("✅") ? "var(--success)" : "var(--danger)" }}>
+                    <p className="text-[17px] font-bold text-center py-2" style={{ color: applyFeedback.startsWith("أُضيف") ? "var(--success)" : "var(--danger)" }}>
                       {applyFeedback}
                     </p>
                   )}
