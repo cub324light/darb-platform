@@ -91,6 +91,12 @@ body {
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
   transition: background 0.35s ease, color 0.35s ease;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+}
+
+h1, h2, h3, h4, .title-xl, .title-lg, .title-md {
+  text-wrap: balance;
 }
 
 .font-mono-nums { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; }
