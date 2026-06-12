@@ -143,13 +143,21 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
     try {
       const res  = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt }) });
       const data = await res.json();
-      const raw  = data.text ?? data.error ?? "حدث خطأ في الاستجابة";
-      setAiResult(raw.replace(/\n{3,}/g, "\n\n").trim());
+      const raw = (data.text ?? data.error ?? "حدث خطأ في الاستجابة").replace(/\n{3,}/g, "\n\n").trim();
+      const hasSchedule = /من\s+\d|من\s+الساعة/.test(raw);
+      setAiResult(hasSchedule ? raw : "أنا فقط أبني جداول دراسية 📅\nأدخل مشاغيلك مثل: من 8ص إلى 2م مدرسة");
     } catch { setAiResult("حدث خطأ، تحقق من الاتصال وحاول مجدداً."); }
     finally  { setAiLoading(false); }
   };
 
+  const SCHEDULE_PATTERN = /\d|صباح|مساء|ساعة|ظهر|عصر|فجر|غداء|دوام|مدرسة|كلية|جامعة|عمل|رياضة|نوم/;
+  const OFF_TOPIC_REFUSAL = "أنا فقط أبني جداول دراسية 📅\nأدخل مشاغيلك مثل: من 8ص إلى 2م مدرسة";
+
   const runAI = () => {
+    if (!SCHEDULE_PATTERN.test(busyText)) {
+      setAiResult(OFF_TOPIC_REFUSAL);
+      return;
+    }
     const subjectsList = subjects.map((s) => s.name).join("، ");
     const examCtx = examDate
       ? `\nيوم الاختبار: ${new Date(examDate + "T12:00:00").toLocaleDateString("ar-SA", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}`
