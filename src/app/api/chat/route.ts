@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
 
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: "خطأ في إعدادات الخادم" }, { status: 500 });
+    return NextResponse.json({ error: "GROQ_API_KEY غير مضبوط في Vercel — أضفه في Environment Variables ثم أعد الـ Deploy" }, { status: 500 });
   }
 
   try {
