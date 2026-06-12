@@ -165,7 +165,21 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
     finally  { setAiLoading(false); }
   };
 
+  // يكشف أسئلة المعلومات — "وش هي X" أو "ابي مكونات X"
+  // لكن يسمح بـ "ابي جدول/خطة" أو "كيف أوزع وقتي"
+  const isOffTopicQuestion = (t: string) => {
+    const s = normalizeDigits(t).trim();
+    // استثناء: طلب جدول/خطة/وقت صريح → مسموح دائماً
+    if (/جدول|خطة|برنامج|وقت|فارغ|مشغول|توزيع|ترتيب/.test(s)) return false;
+    // أنماط سؤال + موضوع خارجي
+    return /^(وش|ايش|شو|ما\s*هو|ما\s*هي|كيف\s+(?!أوزع|اوزع|ارتب|انظم|أنظم)|هل|ابي|اريد|ودي|اعطني|قل\s*لي|اشرح)\s+(?!جدول|خطة|وقت|مشغول|فارغ|ساعة|صباح|مساء|برنامج|مادة|مواد)/.test(s);
+  };
+
   const runAI = () => {
+    if (isOffTopicQuestion(busyText)) {
+      setAiResult("أنا فقط أبني جداول دراسية 📅\nاكتب مشاغيلك أو قل «ابي جدول جاهز»");
+      return;
+    }
     const subjectsList = subjects.map((s) => s.name).join("، ");
     const examCtx = examDate
       ? `\nيوم الاختبار: ${new Date(examDate + "T12:00:00").toLocaleDateString("ar-SA", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}`
