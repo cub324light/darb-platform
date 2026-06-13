@@ -158,6 +158,10 @@ export function resetAll() {
      "darb_tadreeb_items","darb_tadreeb_done","darb_tasreebat_pct"].forEach((k) =>
       localStorage.removeItem(k)
     );
+    /* تعليمات أول زيارة تظهر من جديد بعد الضبط */
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith("darb_guide_"))
+      .forEach((k) => localStorage.removeItem(k));
   } catch {}
 }
 

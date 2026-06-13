@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
+import PageGuide from "@/components/PageGuide";
 import { ERROR_CATEGORIES } from "@/lib/constants";
 import { getTrack, subjectColor, type Track } from "@/lib/tracks";
 import { loadUser, loadList, saveList } from "@/lib/storage";
@@ -69,6 +70,12 @@ export default function VaultPage() {
 
   return (
     <div className="page">
+
+      <PageGuide pageKey="vault" steps={[
+        { title: "خزنة الأخطاء", desc: "أي سؤال تغلط فيه — احفظه هنا فوراً مع سبب الغلط. الطالب اللي يراجع أخطاءه ما يكررها." },
+        { title: "صنّف وفلتر", desc: "كل خطأ له مادة وتصنيف (فهم، حفظ، سرعة...). الفلاتر فوق تساعدك تركز على نوع معين قبل الاختبار." },
+        { title: "راجعها بانتظام", desc: "افتح أي خطأ واضغط (راجعته) كل ما رجعت له. زر الترتيب فوق يعرض لك الأقل مراجعة أولاً." },
+      ]} />
 
       <Dome compact>
         <div className="flex items-center justify-between">

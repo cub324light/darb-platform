@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
+import PageGuide from "@/components/PageGuide";
 import { getTrack } from "@/lib/tracks";
 import { loadUser, loadStats, recordSession } from "@/lib/storage";
 
@@ -219,6 +220,12 @@ export default function OrbitPage() {
 
   return (
     <div className="min-h-dvh flex flex-col pb-nav relative z-[1]">
+
+      <PageGuide pageKey="orbit" steps={[
+        { title: "أوربت — تايمر التركيز", desc: "اختر المادة اللي بتذاكرها، واضغط ابدأ الجلسة. النظام الافتراضي: 50 دقيقة تركيز + 10 راحة." },
+        { title: "الراحة تجي تلقائياً", desc: "أول ما تخلص جلسة التركيز يبدأ وقت الراحة بنفسه، ويوصلك تنبيه حتى لو كنت بتطبيق ثاني." },
+        { title: "كل جلسة تحسب لك", desc: "تكسب 10 Silver لكل جلسة، وتزيد دقائق يومك وستريكك. لو وقفت الجلسة بالنص تخسر السيلفر — لا تكسرها." },
+      ]} />
 
       <div className="fixed inset-0 pointer-events-none transition-all duration-1000"
         style={{ background: (phase === "idle" || phase === "done")

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
+import PageGuide from "@/components/PageGuide";
 import { getTrack } from "@/lib/tracks";
 import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, type DarbUser, type ScheduleEvent } from "@/lib/storage";
 import { syncUser } from "@/lib/firestore";
@@ -99,6 +100,12 @@ export default function DashboardPage() {
 
   return (
     <div className="page">
+
+      <PageGuide pageKey="dashboard" steps={[
+        { title: "أهلاً بك في درب", desc: "هذي صفحتك الرئيسية — تشوف فيها تقدم يومك، الستريك، وSilver اللي جمعته من جلسات التركيز." },
+        { title: "يومك بنظرة وحدة", desc: "شريط التقدم يوضح كم ذاكرت اليوم من هدفك، وجدول اليوم يعرض المواعيد اللي بنيتها مع المساعد الذكي." },
+        { title: "أدواتك تحت", desc: "من القائمة السفلية توصل لأوربت (التايمر)، الخريطة، خزنة الأخطاء، وبنك المراجعة. كل وحدة لها دور." },
+      ]} />
 
       {/* ═══ القبة ═══ */}
       <Dome compact>

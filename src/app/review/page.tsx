@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
+import PageGuide from "@/components/PageGuide";
 import { sm2, nextReviewText } from "@/lib/sm2";
 import { getTrack, subjectColor, type Track } from "@/lib/tracks";
 import { loadUser, loadList, saveList } from "@/lib/storage";
@@ -190,6 +191,11 @@ export default function ReviewPage() {
   /* ── عرض القائمة ── */
   return (
     <div className="min-h-dvh pb-nav relative z-[1]">
+      <PageGuide pageKey="review" steps={[
+        { title: "بنك المراجعة", desc: "هنا تحفظ المعلومات اللي تبي ترسخ — قوانين، تعاريف، معادلات — على شكل بطاقات سؤال وجواب." },
+        { title: "النظام يحسب عنك", desc: "نستخدم خوارزمية SM-2 العلمية: كل ما قيّمت بطاقة (سهلة أو صعبة)، النظام يحدد متى تراجعها المرة الجاية بالضبط." },
+        { title: "راجع المستحق فقط", desc: "ما تحتاج تراجع كل شيء كل يوم — بس البطاقات اللي عليها علامة (مستحق الآن). خمس دقائق يومياً تكفي." },
+      ]} />
       <Dome compact>
         <div className="flex items-center justify-between">
           <h1 className="title-lg" style={{ color: "var(--text)" }}>بنك المراجعة</h1>

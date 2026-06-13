@@ -523,6 +523,44 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
 .rise-3 { animation-delay: 0.19s; }
 .rise-4 { animation-delay: 0.26s; }
 .rise-5 { animation-delay: 0.33s; }
+
+/* ─── صفحة الهبوط: كشف عند السكرول ─── */
+.reveal {
+  opacity: 0;
+  transform: translateY(36px);
+  transition: opacity 0.7s cubic-bezier(.16,.84,.44,1), transform 0.7s cubic-bezier(.16,.84,.44,1);
+}
+.reveal.visible { opacity: 1; transform: none; }
+.reveal-right { transform: translateX(-44px); }
+.reveal-left  { transform: translateX(44px); }
+.reveal-right.visible, .reveal-left.visible { transform: none; }
+.reveal-d1 { transition-delay: 0.1s; }
+.reveal-d2 { transition-delay: 0.2s; }
+.reveal-d3 { transition-delay: 0.3s; }
+
+@keyframes heroFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-12px); }
+}
+.hero-float { animation: heroFloat 5s ease-in-out infinite; }
+
+@keyframes heroGlow {
+  0%, 100% { filter: drop-shadow(0 0 24px color-mix(in srgb, var(--accent) 40%, transparent)); }
+  50%      { filter: drop-shadow(0 0 48px color-mix(in srgb, var(--accent) 65%, transparent)); }
+}
+.hero-glow { animation: heroGlow 4s ease-in-out infinite; }
+
+@keyframes bounceDown {
+  0%, 100% { transform: translateY(0);   opacity: 0.5; }
+  50%      { transform: translateY(8px); opacity: 1; }
+}
+.scroll-hint { animation: bounceDown 1.8s ease-in-out infinite; }
+
+@keyframes orbitSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.orbit-ring { animation: orbitSpin 14s linear infinite; transform-origin: center; }
 .rise-6 { animation-delay: 0.40s; }
 
 @media (prefers-reduced-motion: reduce) {

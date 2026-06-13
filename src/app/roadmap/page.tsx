@@ -3,6 +3,7 @@ import { useState, useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
+import PageGuide from "@/components/PageGuide";
 import { RAKAN_SCHEDULE } from "@/lib/constants";
 import { getTrack, subjectColor, type Track } from "@/lib/tracks";
 import {
@@ -547,6 +548,11 @@ export default function RoadmapPage() {
   /* ══ الصفحة الرئيسية ══ */
   return (
     <div className="min-h-dvh pb-nav relative z-[1]">
+      <PageGuide pageKey="roadmap" steps={[
+        { title: "خريطة طريقك", desc: "رحلتك ثلاث مراحل: تأسيس (تتعلم الأساسيات) ← تدريب (تحل تجميعات) ← تسريبات (محاكاة الاختبار الحقيقي)." },
+        { title: "علّم اللي خلصته", desc: "اضغط على أي درس بعد ما تخلصه وبتشوف نسبة تقدمك ترتفع. كل ربع تكمله يطلع لك تنبيه مراجعة." },
+        { title: "جدول يومك من هنا", desc: "فوق بالخريطة تلقى المساعد الذكي — قل له مشاغيلك ويبني لك جدول مذاكرة اليوم حولها." },
+      ]} />
       <Dome compact>
         <div className="flex items-center justify-between">
           <h1 className="title-lg" style={{ color: "var(--text)" }}>خريطة الطريق</h1>
