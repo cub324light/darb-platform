@@ -637,6 +637,73 @@ export default function RoadmapPage() {
         ))}
       </div>
 
+      {/* ══ يوم اختبار كل مادة — مباشرة تحت الفلتر ══ */}
+      <div className="px-5 mb-5">
+        <p className="eyebrow mb-2.5 px-1">يوم اختبار كل مادة</p>
+        <div className="flex flex-col gap-2">
+          {track.subjects.filter((s) => !subjectFilter || s.name === subjectFilter).map((s) => {
+            const d = subjectExamDates[s.name] ?? "";
+            const daysLeft = d
+              ? Math.round((new Date(d + "T00:00:00").getTime() - new Date(todayStr + "T00:00:00").getTime()) / 86400000)
+              : null;
+            const urgentColor = daysLeft === null ? "var(--text-muted)"
+              : daysLeft < 0 ? "var(--text-muted)"
+              : daysLeft <= 3 ? "#EF4444"
+              : daysLeft <= 14 ? "#F97316"
+              : "#10B981";
+            return (
+              <div key={s.name} className="flex items-center gap-3 rounded-2xl px-3.5 py-2.5"
+                style={{ background: `color-mix(in srgb, ${s.color} 7%, var(--surface))`, border: `1.5px solid ${s.color}33` }}>
+                {/* الخط الدال على لون المادة */}
+                <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: s.color, minHeight: "34px" }} />
+                <div className="flex-1 min-w-0">
+                  <p className="font-extrabold text-[15px]" style={{ color: "var(--text)" }}>{s.name}</p>
+                  <p className="text-[12px] font-semibold mt-0.5" style={{ color: urgentColor }}>
+                    {daysLeft === null ? "اضغط 📅 لتحديد يوم الاختبار"
+                      : daysLeft < 0   ? "انتهى الاختبار"
+                      : daysLeft === 0 ? "الاختبار اليوم! 🎯"
+                      : daysLeft === 1 ? "الاختبار بكرة — راجع ونم بدري"
+                      : `${daysLeft} يوم على الاختبار`}
+                  </p>
+                </div>
+                {/* زر التاريخ 📅 */}
+                <label className="relative flex flex-col items-center gap-0.5 cursor-pointer flex-shrink-0 select-none" style={{ minWidth: "46px" }}>
+                  <span className="text-[22px] leading-none">📅</span>
+                  {d && (
+                    <span className="text-[10px] font-bold" style={{ color: s.color }}>
+                      {new Date(d + "T00:00:00").toLocaleDateString("ar-SA", { month: "short", day: "numeric" })}
+                    </span>
+                  )}
+                  <input
+                    type="date"
+                    value={d}
+                    min={todayStr}
+                    onChange={(e) => {
+                      const updated = { ...subjectExamDates, [s.name]: e.target.value };
+                      setSubjectExamDates(updated);
+                      saveSubjectExamDates(updated);
+                    }}
+                    className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                    style={{ fontSize: "0" }}
+                  />
+                </label>
+                {/* مسح التاريخ */}
+                {d && (
+                  <button
+                    onClick={() => {
+                      const updated = { ...subjectExamDates };
+                      delete updated[s.name];
+                      setSubjectExamDates(updated);
+                      saveSubjectExamDates(updated);
+                    }}
+                    className="text-[var(--text-muted)] text-base px-1.5 min-h-[40px] flex-shrink-0" aria-label="مسح">✕</button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* ══ التأسيس ══ */}
       <PhaseSection title="التأسيس" num={1} pct={taseesPct} complete={taseesComplete}
         unlocked={true} color="var(--accent)" accentText="var(--accent-light)">
