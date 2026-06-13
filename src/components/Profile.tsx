@@ -9,6 +9,12 @@ import {
   type DarbUser, type Theme,
 } from "@/lib/storage";
 import { syncUser } from "@/lib/firestore";
+import {
+  onAuth, signIn, signUp, signOutUser, authErrorMsg,
+  pushBackup, pullBackup,
+} from "@/lib/cloud";
+import type { User } from "firebase/auth";
+import type { FirebaseError } from "firebase/app";
 
 /* ─── زر البروفايل (يسار) + اللوحة المنزلقة ─── */
 
@@ -39,7 +45,63 @@ export default function ProfileButton() {
   const [stats, setStats] = useState({ streak: 0, silver: 0, hours: 0, sessions: 0 });
   const [examDate, setExamDate] = useState("");
 
+  // الحساب السحابي
+  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signup");
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPass, setAuthPass] = useState("");
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authErr, setAuthErr] = useState("");
+  const [syncMsg, setSyncMsg] = useState("");
+
   useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => onAuth(setAuthUser), []);
+
+  const submitAuth = async () => {
+    setAuthErr("");
+    if (!authEmail.trim() || authPass.length < 6) {
+      setAuthErr("اكتب الإيميل وكلمة مرور ٦ أحرف على الأقل");
+      return;
+    }
+    setAuthBusy(true);
+    try {
+      if (authMode === "signup") {
+        await signUp(authEmail, authPass);
+        await pushBackup(); // ارفع بياناتك الحالية للسحابة
+        setSyncMsg("تم إنشاء الحساب وحفظ بياناتك ☁️");
+        setAuthOpen(false);
+      } else {
+        await signIn(authEmail, authPass);
+        const restored = await pullBackup();
+        if (restored) {
+          window.location.reload(); // حمّل بياناتك المسترجعة
+          return;
+        }
+        await pushBackup();
+        setSyncMsg("تم تسجيل الدخول ☁️");
+        setAuthOpen(false);
+      }
+      setAuthPass("");
+    } catch (e) {
+      setAuthErr(authErrorMsg((e as FirebaseError)?.code ?? ""));
+    } finally {
+      setAuthBusy(false);
+    }
+  };
+
+  const manualSync = async () => {
+    setSyncMsg("جارٍ الحفظ…");
+    const ok = await pushBackup();
+    setSyncMsg(ok ? "تم الحفظ في السحابة ✓" : "تعذّر الحفظ — تأكد من الاتصال");
+  };
+
+  const doSignOut = async () => {
+    await pushBackup();
+    await signOutUser();
+    setSyncMsg("");
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -148,6 +210,86 @@ export default function ProfileButton() {
                   <p className="text-[17px] text-[var(--text-muted)] font-semibold">{s.label}</p>
                 </div>
               ))}
+            </div>
+
+            {/* الحساب السحابي */}
+            <p className="label mb-3">حسابك السحابي</p>
+            <div className="mb-6">
+              {authUser ? (
+                <div className="rounded-2xl p-4" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-base">☁️</span>
+                    <p className="font-bold text-[15px] text-[var(--text)] truncate flex-1">{authUser.email}</p>
+                  </div>
+                  <p className="text-[13px] text-[var(--text-muted)] mb-3">بياناتك محفوظة وتتزامن تلقائياً</p>
+                  <div className="flex gap-2">
+                    <button onClick={manualSync} className="flex-1 py-2.5 rounded-xl text-sm font-bold"
+                      style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
+                      احفظ الآن
+                    </button>
+                    <button onClick={doSignOut} className="px-4 py-2.5 rounded-xl text-sm font-bold"
+                      style={{ background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                      خروج
+                    </button>
+                  </div>
+                  {syncMsg && <p className="text-[13px] mt-2 font-semibold" style={{ color: "var(--accent-light)" }}>{syncMsg}</p>}
+                </div>
+              ) : authOpen ? (
+                <div className="rounded-2xl p-4" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                  <div className="flex gap-2 mb-3">
+                    <button onClick={() => { setAuthMode("signup"); setAuthErr(""); }}
+                      className="flex-1 py-2 rounded-xl text-sm font-bold transition"
+                      style={authMode === "signup"
+                        ? { background: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }
+                        : { background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                      حساب جديد
+                    </button>
+                    <button onClick={() => { setAuthMode("signin"); setAuthErr(""); }}
+                      className="flex-1 py-2 rounded-xl text-sm font-bold transition"
+                      style={authMode === "signin"
+                        ? { background: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }
+                        : { background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                      تسجيل دخول
+                    </button>
+                  </div>
+                  <input
+                    type="email" inputMode="email" dir="ltr" placeholder="الإيميل"
+                    value={authEmail} onChange={(e) => setAuthEmail(e.target.value)}
+                    className="w-full rounded-xl px-4 py-3 text-base text-[var(--text)] outline-none mb-2 text-left"
+                    style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}
+                  />
+                  <input
+                    type="password" dir="ltr" placeholder="كلمة المرور (٦ أحرف+)"
+                    value={authPass} onChange={(e) => setAuthPass(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") submitAuth(); }}
+                    className="w-full rounded-xl px-4 py-3 text-base text-[var(--text)] outline-none mb-2 text-left"
+                    style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}
+                  />
+                  {authErr && <p className="text-[13px] mb-2 font-semibold" style={{ color: "var(--danger)" }}>{authErr}</p>}
+                  <div className="flex gap-2">
+                    <button onClick={submitAuth} disabled={authBusy}
+                      className="flex-1 py-3 rounded-xl font-bold text-white disabled:opacity-60"
+                      style={{ background: "linear-gradient(135deg,var(--accent-2),var(--accent-light))" }}>
+                      {authBusy ? "…" : authMode === "signup" ? "أنشئ الحساب" : "دخول"}
+                    </button>
+                    <button onClick={() => { setAuthOpen(false); setAuthErr(""); }}
+                      className="px-4 rounded-xl text-sm font-bold" style={{ background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                      إلغاء
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button onClick={() => { setAuthOpen(true); setAuthMode("signup"); }}
+                  className="w-full rounded-2xl p-4 text-right flex items-center gap-3"
+                  style={{ background: "var(--surface2)", border: "1.5px dashed var(--accent)" }}>
+                  <span className="text-2xl">☁️</span>
+                  <span className="flex-1">
+                    <span className="block font-bold text-[15px] text-[var(--text)]">سجّل دخولك واحفظ بياناتك</span>
+                    <span className="block text-[13px] text-[var(--text-muted)]">عشان ما تروح لو غيّرت الجهاز</span>
+                  </span>
+                  <span className="text-[var(--accent-light)]">←</span>
+                </button>
+              )}
             </div>
 
             {/* تاريخ الاختبار */}

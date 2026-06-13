@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
+import CloudSync from "@/components/CloudSync";
 
 export const metadata: Metadata = {
   title: "درب | المنصة التي تعاملك كأخ",
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         {children}
+        <CloudSync />
         <Analytics />
       </body>
     </html>
