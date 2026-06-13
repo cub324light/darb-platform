@@ -55,6 +55,9 @@ export function authErrorMsg(code: string): string {
     case "auth/user-not-found": return "الإيميل أو كلمة المرور غير صحيحة";
     case "auth/too-many-requests": return "محاولات كثيرة — انتظر شوي وحاول مرة ثانية";
     case "auth/network-request-failed": return "تأكد من اتصالك بالإنترنت";
+    case "auth/operation-not-allowed":
+    case "auth/configuration-not-found":
+      return "تسجيل الدخول بالإيميل غير مفعّل — فعّله من Firebase: Authentication ← Sign-in method ← Email/Password";
     default: return "صار خطأ — حاول مرة ثانية";
   }
 }
