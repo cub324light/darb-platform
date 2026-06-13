@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { TRACKS } from "@/lib/tracks";
 import Logo from "@/components/Logo";
+import { loadTheme, applyTheme, type Theme } from "@/lib/storage";
 
 function useReveal(active: boolean) {
   const ref = useRef<HTMLDivElement>(null);
@@ -82,6 +83,7 @@ export default function LandingPage() {
   const [onboarded, setOnboarded] = useState(false);
   const [checking, setChecking] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [theme, setTheme] = useState<Theme>("dark");
   const rootRef = useReveal(!checking);
 
   useEffect(() => {
@@ -90,8 +92,15 @@ export default function LandingPage() {
       const user = raw ? JSON.parse(raw) : null;
       if (user?.onboarded) setOnboarded(true);
     } catch {}
+    setTheme(loadTheme());
     setChecking(false);
   }, []);
+
+  const toggleTheme = () => {
+    const next: Theme = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    applyTheme(next);
+  };
 
   if (checking) {
     return (
@@ -110,16 +119,27 @@ export default function LandingPage() {
       <nav className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-5 py-3.5"
         style={{ background: "color-mix(in srgb, var(--bg) 90%, transparent)", backdropFilter: "blur(14px)", borderBottom: "1px solid var(--border)" }}>
         <Logo className="font-black text-2xl" style={{ letterSpacing: "-0.5px" }} />
-        <button
-          onClick={() => setMenuOpen(true)}
-          className="w-10 h-10 rounded-xl flex flex-col items-center justify-center gap-[5px]"
-          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
-          aria-label="القائمة"
-        >
-          <span className="w-4 h-[2.5px] rounded-full" style={{ background: "var(--text-dim)" }} />
-          <span className="w-4 h-[2.5px] rounded-full" style={{ background: "var(--text-dim)" }} />
-          <span className="w-4 h-[2.5px] rounded-full" style={{ background: "var(--text-dim)" }} />
-        </button>
+        <div className="flex items-center gap-2">
+          {/* تبديل المظهر: ليلي/نهاري — يغيّر الموقع ولون شعار درب */}
+          <button
+            onClick={toggleTheme}
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-lg transition active:scale-90"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+            aria-label="تبديل المظهر ليلي/نهاري"
+          >
+            {theme === "dark" ? "☀️" : "🌙"}
+          </button>
+          <button
+            onClick={() => setMenuOpen(true)}
+            className="w-10 h-10 rounded-xl flex flex-col items-center justify-center gap-[5px]"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+            aria-label="القائمة"
+          >
+            <span className="w-4 h-[2.5px] rounded-full" style={{ background: "var(--text-dim)" }} />
+            <span className="w-4 h-[2.5px] rounded-full" style={{ background: "var(--text-dim)" }} />
+            <span className="w-4 h-[2.5px] rounded-full" style={{ background: "var(--text-dim)" }} />
+          </button>
+        </div>
       </nav>
 
       {/* ── نافذة القائمة ── */}

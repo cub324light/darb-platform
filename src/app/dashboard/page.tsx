@@ -357,6 +357,77 @@ export default function DashboardPage() {
           </Link>
         </section>
 
+        {/* جدول اليوم — مع تعديل يدوي / خطة ذكية تحته مباشرة */}
+        {(dashConfig?.showSchedule ?? true) && <section className="card rise rise-2">
+          <div className="flex items-center justify-between mb-3">
+            <p className="title-md" style={{ color: "var(--text)" }}>جدول اليوم</p>
+          </div>
+
+          {todayEvents.length === 0 ? (
+            <div
+              className="flex items-center justify-center gap-2 rounded-2xl py-5"
+              style={{
+                background: "var(--surface2)",
+                border: "1.5px dashed var(--border)",
+                minHeight: "64px",
+              }}
+            >
+              <span className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>
+                لا يوجد جدول اليوم — اضغط «خطة ذكية» تحت
+              </span>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {todayEvents.map((ev) => (
+                <div
+                  key={ev.id}
+                  className="flex items-center gap-3 py-2.5 border-b border-[var(--border)] last:border-0"
+                >
+                  <div
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    style={{ background: ev.type === "study" ? "var(--accent-light)" : "var(--danger)" }}
+                  />
+                  <span className="text-[17px] font-semibold flex-1" style={{ color: "var(--text)" }}>
+                    {ev.type === "study" ? (ev.subject ?? "") : (ev.label ?? "")}
+                  </span>
+                  <span className="text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>
+                    {fmtHour(ev.fromHour)} → {fmtHour(ev.toHour)}
+                  </span>
+                  <button
+                    onClick={() => {
+                      const updated = allEvents.filter((e) => e.id !== ev.id);
+                      setAllEvents(updated);
+                      saveEvents(updated);
+                      const tod = new Date().toISOString().slice(0, 10);
+                      setTodayEvents(getEventsForDate(tod, updated));
+                    }}
+                    className="text-[var(--danger)] text-base px-2 min-h-[44px] flex-shrink-0"
+                    aria-label="حذف">✕</button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex gap-2 mt-3">
+            <button onClick={() => { setSchedOpen(true); setSchedTab("manual"); }}
+              className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
+              style={{ background: "transparent", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
+              تعديل يدوي
+            </button>
+            <button onClick={() => { setSchedOpen(true); setSchedTab("ai"); }}
+              className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
+              style={{ background: "var(--accent)", color: "white", border: "none" }}>
+              خطة ذكية
+            </button>
+          </div>
+        </section>}
+
+        {/* دربي الذكي — تحت الجدول مباشرة */}
+        {(dashConfig?.showAI ?? true) && <DashAI
+          subjects={allSubjects.map((s) => s.name)}
+          onOpenScheduler={(tab, prefill) => { setSchedTab(tab); setSchedPrefill(prefill ?? ""); setSchedOpen(true); }}
+        />}
+
         {/* أسبوعك — رسم حقيقي من جلساتك */}
         {(dashConfig?.showWeekly ?? true) && (
         <section className="card rise rise-3">
@@ -462,77 +533,6 @@ export default function DashboardPage() {
             ))}
           </div>
         </section>}
-
-        {/* جدول اليوم */}
-        {(dashConfig?.showSchedule ?? true) && <section className="card rise rise-5">
-          <div className="flex items-center justify-between mb-3">
-            <p className="title-md" style={{ color: "var(--text)" }}>جدول اليوم</p>
-          </div>
-
-          {todayEvents.length === 0 ? (
-            <div
-              className="flex items-center justify-center gap-2 rounded-2xl py-5"
-              style={{
-                background: "var(--surface2)",
-                border: "1.5px dashed var(--border)",
-                minHeight: "64px",
-              }}
-            >
-              <span className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>
-                لا يوجد جدول اليوم
-              </span>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {todayEvents.map((ev) => (
-                <div
-                  key={ev.id}
-                  className="flex items-center gap-3 py-2.5 border-b border-[var(--border)] last:border-0"
-                >
-                  <div
-                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                    style={{ background: ev.type === "study" ? "var(--accent-light)" : "var(--danger)" }}
-                  />
-                  <span className="text-[17px] font-semibold flex-1" style={{ color: "var(--text)" }}>
-                    {ev.type === "study" ? (ev.subject ?? "") : (ev.label ?? "")}
-                  </span>
-                  <span className="text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>
-                    {fmtHour(ev.fromHour)} → {fmtHour(ev.toHour)}
-                  </span>
-                  <button
-                    onClick={() => {
-                      const updated = allEvents.filter((e) => e.id !== ev.id);
-                      setAllEvents(updated);
-                      saveEvents(updated);
-                      const tod = new Date().toISOString().slice(0, 10);
-                      setTodayEvents(getEventsForDate(tod, updated));
-                    }}
-                    className="text-[var(--danger)] text-base px-2 min-h-[44px] flex-shrink-0"
-                    aria-label="حذف">✕</button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="flex gap-2 mt-3">
-            <button onClick={() => { setSchedOpen(true); setSchedTab("manual"); }}
-              className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
-              style={{ background: "transparent", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
-              تعديل يدوي
-            </button>
-            <button onClick={() => { setSchedOpen(true); setSchedTab("ai"); }}
-              className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
-              style={{ background: "var(--accent)", color: "white", border: "none" }}>
-              خطة ذكية
-            </button>
-          </div>
-        </section>}
-
-        {/* دربي الذكي — تحت الجدول */}
-        {(dashConfig?.showAI ?? true) && <DashAI
-          subjects={allSubjects.map((s) => s.name)}
-          onOpenScheduler={(tab, prefill) => { setSchedTab(tab); setSchedPrefill(prefill ?? ""); setSchedOpen(true); }}
-        />}
 
         {/* المجتمع */}
         <section className="grid grid-cols-2 gap-2.5 rise rise-5">
