@@ -5,14 +5,14 @@ import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import { RAKAN_SCHEDULE } from "@/lib/constants";
-import { getTrack, subjectColor, type Track } from "@/lib/tracks";
+import { getTrack, subjectColor, TRACKS, type Track, type TrackId } from "@/lib/tracks";
 import {
   loadUser, saveUser, loadList, saveList, loadExamDate, saveExamDate,
   loadEvents, saveEvents, loadExamFlow, saveExamFlow,
   loadStageReviews, saveStageReviews,
   loadTadreebItems, saveTadreebItems, loadTadreebDone, saveTadreebDone,
   loadTasreebatPct, saveTasreebatPct,
-  loadSubjectExamDates, saveSubjectExamDates,
+  loadTrackExamDates, saveTrackExamDates,
   type ScheduleEvent, type ExamFlow, type StageReviews, type TrainingItem,
 } from "@/lib/storage";
 import { syncUser } from "@/lib/firestore";
@@ -249,10 +249,13 @@ export default function RoadmapPage() {
   const [tadreebDone, setTadreebDone]   = useState<string[]>([]);
   const [tasreebatPct, setTasreebatPct] = useState(0);
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
-  const [subjectExamDates, setSubjectExamDates] = useState<Record<string, string>>({});
+  const [trackExamDates, setTrackExamDates] = useState<Record<string, string>>({});
+  const [activeTrackIds, setActiveTrackIds] = useState<TrackId[]>([]);
 
   useEffect(() => {
-    setTrack(getTrack(loadUser()?.track));
+    const u = loadUser();
+    setTrack(getTrack(u?.track));
+    setActiveTrackIds((u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[]);
     setDone(loadList<string>(DONE_KEY));
     setCustom(loadList<CustomLesson>(CUSTOM_KEY));
     setExamDate(loadExamDate());
@@ -262,7 +265,7 @@ export default function RoadmapPage() {
     setTadreebItems(loadTadreebItems());
     setTadreebDone(loadTadreebDone());
     setTasreebatPct(loadTasreebatPct());
-    setSubjectExamDates(loadSubjectExamDates());
+    setTrackExamDates(loadTrackExamDates());
     setLoaded(true);
   }, []);
 
@@ -426,31 +429,6 @@ export default function RoadmapPage() {
               <span className="text-sm text-[var(--text-muted)]">{lessons.length} درس</span>
               {totals && <><span className="text-sm text-[var(--text-muted)]">{totals.hours} ساعة</span><span className="text-sm text-[var(--text-muted)]">ص {totals.pages}</span></>}
             </div>
-            <div className="mt-4 pt-3 border-t border-[var(--border)] flex items-center gap-3">
-              <span className="text-sm font-bold flex-shrink-0" style={{ color: "var(--text-muted)" }}>يوم الاختبار:</span>
-              <input
-                type="date"
-                value={subjectExamDates[selected] ?? ""}
-                onChange={(e) => {
-                  const updated = { ...subjectExamDates, [selected]: e.target.value };
-                  setSubjectExamDates(updated);
-                  saveSubjectExamDates(updated);
-                }}
-                min={new Date().toISOString().slice(0, 10)}
-                className="flex-1 rounded-xl px-3 py-2 text-sm outline-none"
-                style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)", colorScheme: "dark" }}
-              />
-              {subjectExamDates[selected] && (
-                <button
-                  onClick={() => {
-                    const updated = { ...subjectExamDates };
-                    delete updated[selected];
-                    setSubjectExamDates(updated);
-                    saveSubjectExamDates(updated);
-                  }}
-                  className="text-[var(--text-muted)] text-sm px-2">✕</button>
-              )}
-            </div>
           </div>
         </div>
         {!isTahsili && (
@@ -533,31 +511,6 @@ export default function RoadmapPage() {
             <div className="h-2.5 bg-[var(--border)] rounded-full overflow-hidden">
               <div className="h-full rounded-full" style={{ width: pct + "%", background: color }} />
             </div>
-            <div className="mt-4 pt-3 border-t border-[var(--border)] flex items-center gap-3">
-              <span className="text-sm font-bold flex-shrink-0" style={{ color: "var(--text-muted)" }}>يوم الاختبار:</span>
-              <input
-                type="date"
-                value={subjectExamDates[selected] ?? ""}
-                onChange={(e) => {
-                  const updated = { ...subjectExamDates, [selected]: e.target.value };
-                  setSubjectExamDates(updated);
-                  saveSubjectExamDates(updated);
-                }}
-                min={new Date().toISOString().slice(0, 10)}
-                className="flex-1 rounded-xl px-3 py-2 text-sm outline-none"
-                style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)", colorScheme: "dark" }}
-              />
-              {subjectExamDates[selected] && (
-                <button
-                  onClick={() => {
-                    const updated = { ...subjectExamDates };
-                    delete updated[selected];
-                    setSubjectExamDates(updated);
-                    saveSubjectExamDates(updated);
-                  }}
-                  className="text-[var(--text-muted)] text-sm px-2">✕</button>
-              )}
-            </div>
           </div>
         </div>
         <div className="px-5 mb-6 flex gap-2.5">
@@ -637,72 +590,76 @@ export default function RoadmapPage() {
         ))}
       </div>
 
-      {/* ══ يوم اختبار كل مادة — مباشرة تحت الفلتر ══ */}
-      <div className="px-5 mb-5">
-        <p className="eyebrow mb-2.5 px-1">يوم اختبار كل مادة</p>
-        <div className="flex flex-col gap-2">
-          {track.subjects.filter((s) => !subjectFilter || s.name === subjectFilter).map((s) => {
-            const d = subjectExamDates[s.name] ?? "";
-            const daysLeft = d
-              ? Math.round((new Date(d + "T00:00:00").getTime() - new Date(todayStr + "T00:00:00").getTime()) / 86400000)
-              : null;
-            const urgentColor = daysLeft === null ? "var(--text-muted)"
-              : daysLeft < 0 ? "var(--text-muted)"
-              : daysLeft <= 3 ? "#EF4444"
-              : daysLeft <= 14 ? "#F97316"
-              : "#10B981";
-            return (
-              <div key={s.name} className="flex items-center gap-3 rounded-2xl px-3.5 py-2.5"
-                style={{ background: `color-mix(in srgb, ${s.color} 7%, var(--surface))`, border: `1.5px solid ${s.color}33` }}>
-                {/* الخط الدال على لون المادة */}
-                <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: s.color, minHeight: "34px" }} />
-                <div className="flex-1 min-w-0">
-                  <p className="font-extrabold text-[15px]" style={{ color: "var(--text)" }}>{s.name}</p>
-                  <p className="text-[12px] font-semibold mt-0.5" style={{ color: urgentColor }}>
-                    {daysLeft === null ? "اضغط 📅 لتحديد يوم الاختبار"
-                      : daysLeft < 0   ? "انتهى الاختبار"
-                      : daysLeft === 0 ? "الاختبار اليوم! 🎯"
-                      : daysLeft === 1 ? "الاختبار بكرة — راجع ونم بدري"
-                      : `${daysLeft} يوم على الاختبار`}
-                  </p>
-                </div>
-                {/* زر التاريخ 📅 */}
-                <label className="relative flex flex-col items-center gap-0.5 cursor-pointer flex-shrink-0 select-none" style={{ minWidth: "46px" }}>
-                  <span className="text-[22px] leading-none">📅</span>
+      {/* ══ يوم الاختبار — اختبار واحد لكل اختبار (التحصيلي/القدرات/آيلتس) ══ */}
+      {activeTrackIds.length > 0 && (
+        <div className="px-5 mb-5">
+          <p className="eyebrow mb-2.5 px-1">يوم الاختبار</p>
+          <div className="flex flex-col gap-2">
+            {activeTrackIds.map((tid) => {
+              const t = TRACKS.find((tr) => tr.id === tid);
+              if (!t) return null;
+              const d = trackExamDates[tid] ?? "";
+              const daysLeft = d
+                ? Math.round((new Date(d + "T00:00:00").getTime() - new Date(todayStr + "T00:00:00").getTime()) / 86400000)
+                : null;
+              const urgentColor = daysLeft === null ? "var(--text-muted)"
+                : daysLeft < 0 ? "var(--text-muted)"
+                : daysLeft <= 3 ? "#EF4444"
+                : daysLeft <= 14 ? "#F97316"
+                : "#10B981";
+              return (
+                <div key={tid} className="flex items-center gap-3 rounded-2xl px-3.5 py-3"
+                  style={{ background: `color-mix(in srgb, ${t.color} 7%, var(--surface))`, border: `1.5px solid ${t.color}33` }}>
+                  {/* الخط الدال على لون الاختبار */}
+                  <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: t.color, minHeight: "36px" }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-extrabold text-[16px]" style={{ color: "var(--text)" }}>{t.title}</p>
+                    <p className="text-[12px] font-semibold mt-0.5" style={{ color: urgentColor }}>
+                      {daysLeft === null ? "اضغط 📅 لتحديد يوم الاختبار"
+                        : daysLeft < 0   ? "انتهى الاختبار"
+                        : daysLeft === 0 ? "الاختبار اليوم! 🎯"
+                        : daysLeft === 1 ? "الاختبار بكرة — راجع ونم بدري"
+                        : `${daysLeft} يوم على الاختبار`}
+                    </p>
+                  </div>
+                  {/* زر التاريخ 📅 */}
+                  <label className="relative flex flex-col items-center gap-0.5 cursor-pointer flex-shrink-0 select-none" style={{ minWidth: "46px" }}>
+                    <span className="text-[22px] leading-none">📅</span>
+                    {d && (
+                      <span className="text-[10px] font-bold" style={{ color: t.color }}>
+                        {new Date(d + "T00:00:00").toLocaleDateString("ar-SA", { month: "short", day: "numeric" })}
+                      </span>
+                    )}
+                    <input
+                      type="date"
+                      value={d}
+                      min={todayStr}
+                      onChange={(e) => {
+                        const updated = { ...trackExamDates, [tid]: e.target.value };
+                        setTrackExamDates(updated);
+                        saveTrackExamDates(updated);
+                      }}
+                      className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                      style={{ fontSize: "0" }}
+                    />
+                  </label>
+                  {/* مسح التاريخ */}
                   {d && (
-                    <span className="text-[10px] font-bold" style={{ color: s.color }}>
-                      {new Date(d + "T00:00:00").toLocaleDateString("ar-SA", { month: "short", day: "numeric" })}
-                    </span>
+                    <button
+                      onClick={() => {
+                        const updated = { ...trackExamDates };
+                        delete updated[tid];
+                        setTrackExamDates(updated);
+                        saveTrackExamDates(updated);
+                      }}
+                      className="text-[var(--text-muted)] text-base px-1.5 min-h-[40px] flex-shrink-0" aria-label="مسح">✕</button>
                   )}
-                  <input
-                    type="date"
-                    value={d}
-                    min={todayStr}
-                    onChange={(e) => {
-                      const updated = { ...subjectExamDates, [s.name]: e.target.value };
-                      setSubjectExamDates(updated);
-                      saveSubjectExamDates(updated);
-                    }}
-                    className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                    style={{ fontSize: "0" }}
-                  />
-                </label>
-                {/* مسح التاريخ */}
-                {d && (
-                  <button
-                    onClick={() => {
-                      const updated = { ...subjectExamDates };
-                      delete updated[s.name];
-                      setSubjectExamDates(updated);
-                      saveSubjectExamDates(updated);
-                    }}
-                    className="text-[var(--text-muted)] text-base px-1.5 min-h-[40px] flex-shrink-0" aria-label="مسح">✕</button>
-                )}
-              </div>
-            );
-          })}
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ══ التأسيس ══ */}
       <PhaseSection title="التأسيس" num={1} pct={taseesPct} complete={taseesComplete}
@@ -741,11 +698,6 @@ export default function RoadmapPage() {
                     <span className="font-mono-nums font-black text-xs" style={{ color: s.color }}>{p}%</span>
                   </div>
                 </div>
-                {subjectExamDates[s.name] && (
-                  <p className="text-[10px] font-bold mt-1" style={{ color: "var(--gold)" }}>
-                    اختبار: {new Date(subjectExamDates[s.name] + "T12:00:00").toLocaleDateString("ar-SA", { month: "short", day: "numeric" })}
-                  </p>
-                )}
               </button>
             );
           })}
