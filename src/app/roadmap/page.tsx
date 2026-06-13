@@ -16,7 +16,7 @@ import {
 } from "@/lib/storage";
 import { syncUser } from "@/lib/firestore";
 import Calendar from "@/components/Calendar";
-import DayScheduler from "@/components/DayScheduler";
+import DayScheduler, { getEventsForDate } from "@/components/DayScheduler";
 
 interface CustomLesson { id: string; subject: string; title: string; }
 
@@ -751,6 +751,17 @@ export default function RoadmapPage() {
           examDate={examDate}
           onExamDateChange={(d) => { setExamDate(d); saveExamDate(d); }}
           onDayClick={(date) => setSchedulerDate(date)}
+          getDayInfo={(date) =>
+            getEventsForDate(date, events).map((ev) => ({
+              id: ev.id,
+              label: ev.type === "study" ? (ev.subject ?? "مذاكرة") : (ev.label ?? "مشغول"),
+              color: ev.type === "study"
+                ? (ev.subject ? subjectColor(track, ev.subject) : "var(--accent-light)")
+                : "var(--danger)",
+              from: ev.fromHour,
+              to: ev.toHour,
+            }))
+          }
         />
       </div>
 

@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 
 type Mode = "gregorian" | "hijri";
 
@@ -7,9 +8,19 @@ const GREG_MONTHS = ["يناير","فبراير","مارس","أبريل","ماي
 const HIJRI_MONTHS = ["محرم","صفر","ربيع الأول","ربيع الثاني","جمادى الأولى","جمادى الثانية","رجب","شعبان","رمضان","شوال","ذو القعدة","ذو الحجة"];
 const DOW = ["ح","ن","ث","ر","خ","ج","س"]; // الأحد – السبت
 
+/* عنصر معاينة اليوم — يصله من الأب جاهزاً (ملوّن ومرتب) */
+export interface DayPeekItem { id: string; label: string; color: string; from: number; to: number; }
+
 interface CalCell { greg: Date; label: number; inMonth: boolean; }
 
 function dk(d: Date) { return d.toISOString().slice(0, 10); }
+
+function fmtHour(h: number): string {
+  if (h === 0 || h === 24) return "12 ص";
+  if (h < 12) return `${h} ص`;
+  if (h === 12) return "12 م";
+  return `${h - 12} م`;
+}
 
 function hijriOf(d: Date): { year: number; month: number; day: number } {
   try {
@@ -42,18 +53,98 @@ function hijriMonthStart(ref: Date): Date {
   return new Date(ref);
 }
 
+interface PeekState { key: string; cx: number; top: number; bottom: number; place: "top" | "bottom"; }
+
 export default function Calendar({
   examDate,
   onExamDateChange,
   onDayClick,
+  getDayInfo,
 }: {
   examDate: string | null;
   onExamDateChange: (d: string | null) => void;
   onDayClick?: (date: string) => void;
+  getDayInfo?: (date: string) => DayPeekItem[];
 }) {
   const [mode, setMode] = useState<Mode>("gregorian");
   const [viewDate, setViewDate] = useState(new Date());
+  const [mounted, setMounted] = useState(false);
+  const [peek, setPeek] = useState<PeekState | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const todayKey = dk(new Date());
+
+  useEffect(() => { setMounted(true); }, []);
+
+  /* تموضع المعاينة من زر اليوم — يشتغل للماوس واللمس */
+  const peekFromEl = useCallback((btn: HTMLElement) => {
+    const key = btn.dataset.cellkey;
+    if (!key) return;
+    const r = btn.getBoundingClientRect();
+    const place: "top" | "bottom" = r.top < 240 ? "bottom" : "top";
+    setPeek({ key, cx: r.left + r.width / 2, top: r.top, bottom: r.bottom, place });
+  }, []);
+
+  /* لمس الجوال: اضغط مطولاً ثم مرّر إصبعك يمين/يسار/فوق/تحت لتصفح الأيام */
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    let holdTimer: ReturnType<typeof setTimeout> | null = null;
+    let peeking = false;
+    let start: { x: number; y: number } | null = null;
+
+    const cellAt = (x: number, y: number): HTMLElement | null => {
+      const el = document.elementFromPoint(x, y);
+      return (el?.closest("[data-cellkey]") as HTMLElement) ?? null;
+    };
+
+    const onStart = (e: TouchEvent) => {
+      const t = e.touches[0];
+      start = { x: t.clientX, y: t.clientY };
+      peeking = false;
+      const btn = cellAt(t.clientX, t.clientY);
+      holdTimer = setTimeout(() => {
+        if (btn) {
+          peeking = true;
+          peekFromEl(btn);
+          navigator.vibrate?.(8);
+        }
+      }, 150);
+    };
+
+    const onMove = (e: TouchEvent) => {
+      const t = e.touches[0];
+      if (!peeking) {
+        if (start && Math.hypot(t.clientX - start.x, t.clientY - start.y) > 12) {
+          if (holdTimer) clearTimeout(holdTimer);
+          peeking = true;
+        } else return;
+      }
+      e.preventDefault(); // أوقف تمرير الصفحة أثناء التصفّح
+      const btn = cellAt(t.clientX, t.clientY);
+      if (btn) peekFromEl(btn);
+    };
+
+    const onEnd = (e: TouchEvent) => {
+      if (holdTimer) clearTimeout(holdTimer);
+      if (peeking) {
+        e.preventDefault(); // امنع فتح الجدول — كانت معاينة فقط
+        peeking = false;
+        setPeek(null);
+      }
+      start = null;
+    };
+
+    root.addEventListener("touchstart", onStart, { passive: true });
+    root.addEventListener("touchmove", onMove, { passive: false });
+    root.addEventListener("touchend", onEnd, { passive: false });
+    root.addEventListener("touchcancel", onEnd, { passive: false });
+    return () => {
+      root.removeEventListener("touchstart", onStart);
+      root.removeEventListener("touchmove", onMove);
+      root.removeEventListener("touchend", onEnd);
+      root.removeEventListener("touchcancel", onEnd);
+    };
+  }, [peekFromEl]);
 
   const buildCells = (): CalCell[] => {
     if (mode === "gregorian") {
@@ -109,20 +200,98 @@ export default function Calendar({
   };
 
   const prev = () => {
+    setPeek(null);
     if (mode === "gregorian") setViewDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 15));
     else { const s = hijriMonthStart(viewDate); s.setDate(s.getDate() - 15); setViewDate(s); }
   };
   const next = () => {
+    setPeek(null);
     if (mode === "gregorian") setViewDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 15));
     else { const s = hijriMonthStart(viewDate); s.setDate(s.getDate() + 32); setViewDate(s); }
   };
 
+  /* بطاقة المعاينة العائمة */
+  const peekCard = peek && mounted ? createPortal(
+    (() => {
+      const items = getDayInfo?.(peek.key) ?? [];
+      const isExam = peek.key === examDate;
+      const dateLabel = new Date(peek.key + "T12:00:00").toLocaleDateString("ar-SA", {
+        weekday: "long", day: "numeric", month: "long",
+      });
+      const top = peek.place === "top" ? peek.top - 12 : peek.bottom + 12;
+      return (
+        <div
+          style={{
+            position: "fixed", left: peek.cx, top, zIndex: 9999, pointerEvents: "none",
+            transform: peek.place === "top" ? "translate(-50%,-100%)" : "translate(-50%,0)",
+          }}
+        >
+          <div
+            className="cal-peek rounded-2xl p-3.5 shadow-2xl"
+            style={{
+              width: 222, background: "var(--surface)",
+              border: "1.5px solid var(--border)",
+              boxShadow: "0 18px 50px rgba(0,0,0,0.45)",
+            }}
+          >
+            {/* رأس البطاقة */}
+            <div className="flex items-center justify-between mb-2.5">
+              <p className="text-[13px] font-black" style={{ color: "var(--text)" }}>{dateLabel}</p>
+              {isExam && (
+                <span className="text-[10px] font-black px-2 py-0.5 rounded-full"
+                  style={{ background: "color-mix(in srgb, var(--gold) 18%, transparent)", color: "var(--gold)" }}>
+                  اختبار
+                </span>
+              )}
+            </div>
+
+            {items.length === 0 ? (
+              <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                {isExam ? "يوم الاختبار — جهّز نفسك ونم بدري." : "ما في جدول — اضغط لإضافة مهامك."}
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {items.slice(0, 4).map((it) => (
+                  <div key={it.id} className="flex items-center gap-2.5">
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: it.color, boxShadow: `0 0 6px ${it.color}` }} />
+                    <span className="text-[12.5px] font-bold flex-1 truncate" style={{ color: "var(--text)" }}>{it.label}</span>
+                    <span className="text-[11px] font-mono-nums" style={{ color: "var(--text-muted)" }}>
+                      {fmtHour(it.from)}
+                    </span>
+                  </div>
+                ))}
+                {items.length > 4 && (
+                  <p className="text-[11px] font-bold mt-0.5" style={{ color: "var(--accent-light)" }}>
+                    +{items.length - 4} غيرها
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* السهم */}
+            <span
+              className="absolute w-3 h-3 rotate-45"
+              style={{
+                left: "50%", marginLeft: -6,
+                background: "var(--surface)",
+                ...(peek.place === "top"
+                  ? { bottom: -6, borderRight: "1.5px solid var(--border)", borderBottom: "1.5px solid var(--border)" }
+                  : { top: -6, borderLeft: "1.5px solid var(--border)", borderTop: "1.5px solid var(--border)" }),
+              }}
+            />
+          </div>
+        </div>
+      );
+    })(),
+    document.body
+  ) : null;
+
   return (
-    <div className="card">
+    <div className="card" ref={rootRef} style={{ touchAction: "manipulation" }}>
       {/* التبديل بين الميلادي والهجري */}
       <div className="flex gap-1 mb-4 p-1 rounded-2xl" style={{ background: "var(--surface2)" }}>
         {(["gregorian", "hijri"] as Mode[]).map((m) => (
-          <button key={m} onClick={() => { setMode(m); setViewDate(new Date()); }}
+          <button key={m} onClick={() => { setMode(m); setViewDate(new Date()); setPeek(null); }}
             className="flex-1 py-2 rounded-xl text-[17px] font-bold transition"
             style={mode === m ? { background: "var(--accent)", color: "white" } : { color: "var(--text-muted)" }}>
             {m === "gregorian" ? "ميلادي" : "هجري"}
@@ -155,9 +324,13 @@ export default function Calendar({
             const cellKey = dk(cell.greg);
             const isToday = cellKey === todayKey;
             const isExam = cellKey === examDate;
+            const isPeeked = peek?.key === cellKey;
+            const hasEv = cell.inMonth && (getDayInfo?.(cellKey)?.length ?? 0) > 0;
+            const dotColor = isExam ? "#1a1200" : isToday ? "rgba(255,255,255,0.85)" : "var(--accent-light)";
             return (
               <button
                 key={ci}
+                {...(cell.inMonth ? { "data-cellkey": cellKey } : {})}
                 onClick={() => {
                   if (!cell.inMonth) return;
                   if (onDayClick) {
@@ -166,24 +339,29 @@ export default function Calendar({
                     onExamDateChange(isExam ? null : cellKey);
                   }
                 }}
-                className="flex items-center justify-center"
+                onPointerEnter={(e) => { if (cell.inMonth && e.pointerType === "mouse") peekFromEl(e.currentTarget); }}
+                onPointerLeave={(e) => { if (e.pointerType === "mouse") setPeek(null); }}
+                className="relative flex items-center justify-center"
                 style={{ height: "40px" }}
                 aria-label={cell.label.toString()}
               >
                 <span
-                  className="w-8 h-8 flex items-center justify-center rounded-full text-[17px] font-bold"
+                  className="w-8 h-8 flex items-center justify-center rounded-full text-[17px] font-bold transition-transform"
                   style={
                     isExam
-                      ? { background: "var(--gold)", color: "#1a1200", outline: isToday ? "2.5px solid var(--accent)" : "none", outlineOffset: "2px" }
+                      ? { background: "var(--gold)", color: "#1a1200", outline: isToday ? "2.5px solid var(--accent)" : (isPeeked ? "2.5px solid var(--accent-light)" : "none"), outlineOffset: "2px", transform: isPeeked ? "scale(1.12)" : "none" }
                       : isToday
-                      ? { background: "var(--accent)", color: "white" }
+                      ? { background: "var(--accent)", color: "white", outline: isPeeked ? "2.5px solid var(--accent-light)" : "none", outlineOffset: "2px", transform: isPeeked ? "scale(1.12)" : "none" }
                       : !cell.inMonth
                       ? { color: "var(--text-muted)", opacity: 0.28 }
-                      : { color: "var(--text)" }
+                      : { color: "var(--text)", background: isPeeked ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "transparent", outline: isPeeked ? "2px solid var(--accent)" : "none", outlineOffset: "1px", transform: isPeeked ? "scale(1.12)" : "none" }
                   }
                 >
                   {cell.label}
                 </span>
+                {hasEv && (
+                  <span className="absolute rounded-full" style={{ bottom: 3, width: 4, height: 4, background: dotColor }} />
+                )}
               </button>
             );
           })}
@@ -203,9 +381,13 @@ export default function Calendar({
           <button onClick={() => onExamDateChange(null)} className="text-[var(--text-muted)] text-sm px-1 min-h-[28px]">✕</button>
         </div>
       )}
-      <p className="text-[17px] mt-2 text-center" style={{ color: "var(--text-muted)" }}>
-        {onDayClick ? "اضغط أي يوم لعرض جدوله" : "اضغط أي يوم لتحديد يوم الاختبار"}
+      <p className="text-[15px] mt-2 text-center leading-relaxed" style={{ color: "var(--text-muted)" }}>
+        {onDayClick
+          ? "مرّر فوق أي يوم (أو اضغط مطوّلاً ولُف بالجوال) لمعاينة جدوله · اضغط للتعديل"
+          : "اضغط أي يوم لتحديد يوم الاختبار"}
       </p>
+
+      {peekCard}
     </div>
   );
 }
