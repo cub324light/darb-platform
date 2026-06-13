@@ -80,6 +80,7 @@ const PAIN = [
 export default function LandingPage() {
   const [onboarded, setOnboarded] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
   const rootRef = useReveal(!checking);
 
   useEffect(() => {
@@ -99,22 +100,66 @@ export default function LandingPage() {
     );
   }
 
-  const ctaHref = onboarded ? "/dashboard" : "/onboarding";
-  const ctaLabel = onboarded ? "ادخل لداشبوردك" : "سجّل الآن — مجاني";
+  const ctaHref = "/onboarding";
 
   return (
     <div ref={rootRef} className="relative z-[1]">
 
-      {/* ── ناف بار ── */}
+      {/* ── ناف بار: درب يمين + ثلاث نقاط يسار ── */}
       <nav className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-5 py-3.5"
         style={{ background: "color-mix(in srgb, var(--bg) 90%, transparent)", backdropFilter: "blur(14px)", borderBottom: "1px solid var(--border)" }}>
         <span className="font-black text-2xl" style={{ color: "var(--accent-light)", letterSpacing: "-0.5px" }}>درب</span>
-        <Link href={ctaHref}
-          className="btn-primary py-2 px-5 text-sm glow-blue"
-          style={{ textDecoration: "none" }}>
-          {ctaLabel} ←
-        </Link>
+        <button
+          onClick={() => setMenuOpen(true)}
+          className="w-10 h-10 rounded-xl flex flex-col items-center justify-center gap-[5px]"
+          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+          aria-label="القائمة"
+        >
+          <span className="w-4 h-[2.5px] rounded-full" style={{ background: "var(--text-dim)" }} />
+          <span className="w-4 h-[2.5px] rounded-full" style={{ background: "var(--text-dim)" }} />
+          <span className="w-4 h-[2.5px] rounded-full" style={{ background: "var(--text-dim)" }} />
+        </button>
       </nav>
+
+      {/* ── نافذة القائمة ── */}
+      {menuOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-end justify-center" onClick={() => setMenuOpen(false)}>
+          <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.5)" }} />
+          <div
+            className="relative w-full max-w-lg rounded-t-3xl p-6 pb-10 slide-up"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)", borderBottom: "none" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1.5 rounded-full mx-auto mb-6" style={{ background: "var(--border)" }} />
+            <div className="flex flex-col gap-2">
+              {onboarded && (
+                <Link href="/dashboard" onClick={() => setMenuOpen(false)}
+                  className="flex items-center justify-between px-5 py-4 rounded-2xl font-bold text-base"
+                  style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)", textDecoration: "none" }}>
+                  <span>داشبوردك</span>
+                  <span>←</span>
+                </Link>
+              )}
+              {[
+                { label: "الأدوات", id: "features" },
+                { label: "المسارات", id: "tracks" },
+                { label: "كيف تبدأ", id: "steps" },
+              ].map((item) => (
+                <button key={item.id}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="flex items-center justify-between px-5 py-4 rounded-2xl font-bold text-base text-right"
+                  style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>
+                  <span>{item.label}</span>
+                  <span style={{ color: "var(--text-muted)" }}>↓</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ══════════════════════════════════════════ */}
       {/* ═══ الهيرو ═══ */}
@@ -143,7 +188,7 @@ export default function LandingPage() {
           خطة واضحة، جدول ذكي، ومتابعة لحظة بلحظة — بدون أرقام وهمية.
         </p>
 
-        <div className="flex flex-wrap justify-center gap-3 mb-9">
+        <div className="flex flex-wrap justify-center gap-3">
           {[
             { n: "8", l: "مسارات" },
             { n: "6", l: "أدوات" },
@@ -157,14 +202,6 @@ export default function LandingPage() {
             </div>
           ))}
         </div>
-
-        <Link href={ctaHref}
-          className="btn-primary glow-blue text-lg px-10 py-4"
-          style={{ textDecoration: "none", minHeight: "58px", display: "inline-flex", alignItems: "center" }}>
-          {ctaLabel} ←
-        </Link>
-
-        <p className="text-sm mt-4" style={{ color: "var(--text-muted)" }}>ما في تسجيل بالإيميل — اسمك ومسارك وبس</p>
 
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 scroll-hint">
           <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth={2} className="w-6 h-6">
@@ -201,7 +238,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════ */}
       {/* ═══ الأدوات ═══ */}
       {/* ══════════════════════════════════════════ */}
-      <section className="px-5 py-16 max-w-2xl mx-auto">
+      <section id="features" className="px-5 py-16 max-w-2xl mx-auto">
         <div className="reveal text-center mb-8">
           <p className="eyebrow mb-2" style={{ color: "var(--accent-light)" }}>أدواتك</p>
           <h2 className="font-black text-2xl" style={{ color: "var(--text)" }}>٦ أدوات تحصّلها بمكان واحد</h2>
@@ -237,7 +274,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════ */}
       {/* ═══ المسارات ═══ */}
       {/* ══════════════════════════════════════════ */}
-      <section className="px-5 py-16 max-w-2xl mx-auto">
+      <section id="tracks" className="px-5 py-16 max-w-2xl mx-auto">
         <div className="reveal text-center mb-8">
           <p className="eyebrow mb-2" style={{ color: "var(--accent-light)" }}>المسارات</p>
           <h2 className="font-black text-2xl" style={{ color: "var(--text)" }}>وش تستعد له؟</h2>
@@ -262,7 +299,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════ */}
       {/* ═══ كيف تبدأ ═══ */}
       {/* ══════════════════════════════════════════ */}
-      <section className="px-5 py-16 max-w-2xl mx-auto">
+      <section id="steps" className="px-5 py-16 max-w-2xl mx-auto">
         <div className="reveal text-center mb-8">
           <p className="eyebrow mb-2" style={{ color: "var(--accent-light)" }}>البداية</p>
           <h2 className="font-black text-2xl" style={{ color: "var(--text)" }}>ثلاث خطوات وتكون في دربك</h2>
@@ -293,18 +330,14 @@ export default function LandingPage() {
             background: "linear-gradient(145deg, color-mix(in srgb, var(--accent) 8%, transparent), var(--surface))",
             border: "1.5px solid color-mix(in srgb, var(--accent) 22%, transparent)",
           }}>
-          <h2 className="font-black text-2xl mb-3" style={{ color: "var(--text)" }}>
-            {onboarded ? "يلا نكمل الدرب" : "جاهز تبدأ؟"}
-          </h2>
+          <h2 className="font-black text-2xl mb-3" style={{ color: "var(--text)" }}>جاهز تبدأ دربك؟</h2>
           <p className="text-base mb-7 leading-relaxed" style={{ color: "var(--text-dim)" }}>
-            {onboarded
-              ? "جلستك اليومية ما بدأت بعد — ستريكك ينتظر."
-              : "أقل من دقيقة وأنت بداخل. بدون إيميل، بدون باسورد."}
+            أقل من دقيقة وأنت بداخل — اسمك ومسارك وبس. بدون إيميل، بدون باسورد.
           </p>
           <Link href={ctaHref}
             className="btn-primary glow-blue inline-flex items-center px-12 text-lg"
             style={{ textDecoration: "none", minHeight: "56px" }}>
-            {ctaLabel} ←
+            سجّل الآن ←
           </Link>
           <p className="text-xs mt-6" style={{ color: "var(--text-muted)" }}>صُنع في السعودية · مجاني بالكامل</p>
         </div>
