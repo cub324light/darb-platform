@@ -76,6 +76,7 @@ export default function DashboardPage() {
   const [allEvents, setAllEvents] = useState<ScheduleEvent[]>([]);
   const [examDate, setExamDate] = useState<string | null>(null);
   const [trackExamDates, setTrackExamDates] = useState<Record<string, string>>({});
+  const [trackFilter, setTrackFilter] = useState<TrackId | "all">("all");
   const [mounted, setMounted] = useState(false);
 
   /* ── تخصيص الصفحة: ترتيب وإظهار الأقسام ── */
@@ -264,7 +265,9 @@ export default function DashboardPage() {
               <div>
                 <p className="eyebrow">مساراتك</p>
                 <p className="title-md" style={{ color: "var(--text)" }}>
-                  {activeTrackIds.length > 1 ? `${activeTrackIds.length} مسارات نشطة` : track.title}
+                  {trackFilter === "all"
+                    ? (activeTrackIds.length > 1 ? `${activeTrackIds.length} مسارات نشطة` : track.title)
+                    : (TRACKS.find((tr) => tr.id === trackFilter)?.title ?? track.title)}
                 </p>
               </div>
               <Link href="/roadmap" className="text-[17px] font-bold" style={{ color: "var(--accent-light)" }}>
@@ -272,27 +275,52 @@ export default function DashboardPage() {
               </Link>
             </div>
 
-            {/* شريط التخزين — كل مسار له خانة ملوّنة */}
-            <div className="flex rounded-full overflow-hidden mb-4" style={{ height: "12px", gap: "3px" }}>
-              {activeTrackIds.map((tid) => {
-                const t = TRACKS.find((tr) => tr.id === tid);
-                const c = t?.color ?? "var(--accent)";
-                const examD = trackExamDates[tid];
-                const d = examD ? daysLeft(examD) : null;
-                /* حجم الشريحة: إذا كل المسارات بدون تواريخ → متساوي */
-                /* إذا فيه تواريخ: الأقرب اختباراً أصغر (ضغطه أكبر) */
-                const weight = (d !== null && d >= 0) ? Math.max(1, 60 - d) : 30;
-                return (
-                  <div key={tid} style={{ flex: weight, background: c, minWidth: "24px" }} />
-                );
-              })}
-              {/* رصيد فارغ */}
-              <div style={{ flex: 8, background: "var(--surface2)", minWidth: "8px" }} />
-            </div>
+            {/* شرائح الفلتر — [الكل] + كل مسار */}
+            {activeTrackIds.length > 1 && (
+              <div className="flex gap-2 mb-4 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+                <button onClick={() => setTrackFilter("all")}
+                  className="px-3.5 py-1.5 rounded-full text-[13px] font-bold whitespace-nowrap transition active:scale-95 flex-shrink-0"
+                  style={trackFilter === "all"
+                    ? { background: "var(--accent)", color: "white", border: "1px solid var(--accent)" }
+                    : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                  الكل
+                </button>
+                {activeTrackIds.map((tid) => {
+                  const t = TRACKS.find((tr) => tr.id === tid) ?? track;
+                  const active = trackFilter === tid;
+                  return (
+                    <button key={tid} onClick={() => setTrackFilter(tid)}
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-bold whitespace-nowrap transition active:scale-95 flex-shrink-0"
+                      style={active
+                        ? { background: t.color, color: "white", border: `1px solid ${t.color}` }
+                        : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                      <span className="w-2 h-2 rounded-full" style={{ background: active ? "white" : t.color }} />
+                      {t.title}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
-            {/* صفوف المسارات */}
+            {/* شريط التخزين المدمج — يظهر كله عند «الكل» (زي تخزين الآيفون) */}
+            {trackFilter === "all" && (
+              <div className="flex rounded-full overflow-hidden mb-4" style={{ height: "12px", gap: "3px" }}>
+                {activeTrackIds.map((tid) => {
+                  const t = TRACKS.find((tr) => tr.id === tid);
+                  const c = t?.color ?? "var(--accent)";
+                  const examD = trackExamDates[tid];
+                  const d = examD ? daysLeft(examD) : null;
+                  /* الأقرب اختباراً = شريحة أكبر (أولوية أعلى) */
+                  const weight = (d !== null && d >= 0) ? Math.max(1, 60 - d) : 30;
+                  return <div key={tid} style={{ flex: weight, background: c, minWidth: "24px" }} />;
+                })}
+                <div style={{ flex: 8, background: "var(--surface2)", minWidth: "8px" }} />
+              </div>
+            )}
+
+            {/* صفوف المسارات — تتفلتر حسب الاختيار */}
             <div className="flex flex-col gap-2.5">
-              {activeTrackIds.map((tid) => {
+              {activeTrackIds.filter((tid) => trackFilter === "all" || tid === trackFilter).map((tid) => {
                 const t = TRACKS.find((tr) => tr.id === tid) ?? track;
                 const c = t.color;
                 const examD = trackExamDates[tid] ?? "";
@@ -345,6 +373,33 @@ export default function DashboardPage() {
                 );
               })}
             </div>
+
+            {/* مواد المسار المُختار — تظهر فقط عند اختيار مسار محدد */}
+            {trackFilter !== "all" && (() => {
+              const t = TRACKS.find((tr) => tr.id === trackFilter);
+              if (!t) return null;
+              return (
+                <div className="mt-3">
+                  <p className="eyebrow mb-2">مواد {t.title}</p>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {t.subjects.map((s, i) => (
+                      <Link key={s.name} href="/roadmap"
+                        className="rounded-2xl px-4 py-3 flex items-center gap-3 transition active:scale-[0.97] subject-card"
+                        style={{
+                          background: "var(--surface)",
+                          border: `1.5px solid ${s.color}55`,
+                          boxShadow: `0 0 10px ${s.color}18`,
+                          minHeight: "54px",
+                          animationDelay: `${i * 60}ms`,
+                        }}>
+                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color, boxShadow: `0 0 5px ${s.color}88` }} />
+                        <span className="font-bold text-[16px]" style={{ color: "var(--text)" }}>{s.name}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </section>
         );
       }
