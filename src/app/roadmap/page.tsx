@@ -634,23 +634,35 @@ export default function RoadmapPage() {
             onChange={(v) => { const updated = { ...trackExamDates, [tid]: v }; setTrackExamDates(updated); saveTrackExamDates(updated); }}
             onClear={() => { const updated = { ...trackExamDates }; delete updated[tid]; setTrackExamDates(updated); saveTrackExamDates(updated); }} />
         </div>
-        {/* تقدّم كل مادة */}
-        <div className="flex flex-col gap-2">
-          {t.subjects.map((s) => {
-            const st = statsForSubject(t, s.name);
+        {/* تقدّم كل مادة — تُخفى المواد التي لا تحتوي أي دروس أو تمارين */}
+        {(() => {
+          const activeSubjects = t.subjects.filter((s) => statsForSubject(t, s.name).total > 0);
+          if (activeSubjects.length === 0) {
             return (
-              <div key={s.name} className="flex items-center gap-2.5">
-                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
-                <span className="text-[13px] font-bold flex-shrink-0" style={{ color: "var(--text)", minWidth: "58px" }}>{s.name}</span>
-                <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
-                  <div className="h-full rounded-full" style={{ width: `${st.pct}%`, background: s.color }} />
-                </div>
-                <span className="font-mono-nums text-[11px] font-black flex-shrink-0 text-left" style={{ color: s.color, minWidth: "32px" }}>{st.pct}%</span>
-                <span className="font-mono-nums text-[10px] flex-shrink-0 text-left" style={{ color: "var(--text-muted)", minWidth: "34px" }}>{st.done}/{st.total}</span>
-              </div>
+              <p className="text-[12px] font-semibold text-center py-1" style={{ color: "var(--text-muted)" }}>
+                ابدأ بإضافة دروسك من الخريطة
+              </p>
             );
-          })}
-        </div>
+          }
+          return (
+            <div className="flex flex-col gap-2">
+              {activeSubjects.map((s) => {
+                const st = statsForSubject(t, s.name);
+                return (
+                  <div key={s.name} className="flex items-center gap-2.5">
+                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
+                    <span className="text-[13px] font-bold flex-shrink-0" style={{ color: "var(--text)", minWidth: "58px" }}>{s.name}</span>
+                    <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
+                      <div className="h-full rounded-full" style={{ width: `${st.pct}%`, background: s.color }} />
+                    </div>
+                    <span className="font-mono-nums text-[11px] font-black flex-shrink-0 text-left" style={{ color: s.color, minWidth: "32px" }}>{st.pct}%</span>
+                    <span className="font-mono-nums text-[10px] flex-shrink-0 text-left" style={{ color: "var(--text-muted)", minWidth: "34px" }}>{st.done}/{st.total}</span>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
       </div>
     );
   };
@@ -704,25 +716,48 @@ export default function RoadmapPage() {
       {/* ══ الاختبارات: «الكل» = إحصائيات كل المواد مدمجة · أو اختبار واحد ══ */}
       {testTab === "all" ? (
         <div className="px-5 mb-5">
-          {/* شريط التقدم المدمج — كل مادة شريحة ممتلئة بنسبة تقدمها */}
+          {/* شريط التقدم المدمج — كل اختبار له برواز، وكل مادة شريحة بنسبة تقدمها */}
           {activeTrackIds.length > 0 && (() => {
-            const segs = activeTrackIds.flatMap((tid) => {
+            // المواد التي لها محتوى فعلي (دروس أو تمارين) لكل اختبار
+            const tracksWithContent = activeTrackIds.map((tid) => {
               const t = TRACKS.find((tr) => tr.id === tid);
-              if (!t) return [];
-              return t.subjects.map((s) => ({ key: `${tid}-${s.name}`, color: s.color, pct: statsForSubject(t, s.name).pct }));
-            });
-            const overall = segs.length
-              ? Math.round(segs.reduce((a, s) => a + s.pct, 0) / segs.length) : 0;
+              if (!t) return null;
+              const subjects = t.subjects.filter((s) => statsForSubject(t, s.name).total > 0);
+              return subjects.length > 0 ? { t, subjects } : null;
+            }).filter((x): x is { t: (typeof TRACKS)[number]; subjects: (typeof TRACKS)[number]["subjects"] } => x !== null);
+
+            const allSegs = tracksWithContent.flatMap(({ t, subjects }) =>
+              subjects.map((s) => statsForSubject(t, s.name).pct)
+            );
+            const overall = allSegs.length ? Math.round(allSegs.reduce((a, p) => a + p, 0) / allSegs.length) : 0;
+
+            if (tracksWithContent.length === 0) return null;
+
             return (
               <>
                 <div className="flex items-center justify-between mb-2 px-1">
                   <p className="eyebrow">تقدّمك في كل المواد</p>
                   <span className="font-mono-nums text-[13px] font-black" style={{ color: "var(--accent-light)" }}>{overall}%</span>
                 </div>
-                <div className="flex rounded-full overflow-hidden mb-4" style={{ height: "16px", gap: "2px", background: "var(--surface2)" }}>
-                  {segs.map((s) => (
-                    <div key={s.key} className="relative" style={{ flex: 1, background: `color-mix(in srgb, ${s.color} 22%, transparent)` }}>
-                      <div className="absolute inset-y-0 rounded-full" style={{ insetInlineStart: 0, width: `${s.pct}%`, background: s.color }} />
+                {/* الشريط: برواز مستقل لكل اختبار */}
+                <div className="flex mb-4" style={{ height: "18px", gap: "4px" }}>
+                  {tracksWithContent.map(({ t, subjects }) => (
+                    <div key={t.id} className="flex overflow-hidden"
+                      style={{
+                        flex: subjects.length,
+                        borderRadius: "6px",
+                        border: `2px solid ${t.color}`,
+                        gap: "1px",
+                        background: "var(--surface2)",
+                      }}>
+                      {subjects.map((s) => {
+                        const pct = statsForSubject(t, s.name).pct;
+                        return (
+                          <div key={`${t.id}-${s.name}`} className="relative" style={{ flex: 1, background: `color-mix(in srgb, ${s.color} 22%, transparent)` }}>
+                            <div className="absolute inset-y-0" style={{ insetInlineStart: 0, width: `${pct}%`, background: s.color }} />
+                          </div>
+                        );
+                      })}
                     </div>
                   ))}
                 </div>
