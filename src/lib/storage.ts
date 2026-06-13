@@ -333,7 +333,7 @@ export const DASH_SECTION_META: Record<DashSectionId, { label: string; desc: str
   track:       { label: "مسارك",        desc: "المواد والمسارات النشطة" },
   today:       { label: "يومك",         desc: "تقدّم اليوم وزر أوربت والعدّاد" },
   schedule:    { label: "جدول اليوم",   desc: "مواعيد المذاكرة وتعديلها" },
-  ai:          { label: "دربي الذكي",   desc: "المساعد الذكي للجداول والنصائح" },
+  ai:          { label: "دويرب",        desc: "مساعدك الذكي للجداول والنصائح" },
   weekly:      { label: "أسبوعك",       desc: "رسم دقائق التركيز اليومية" },
   quote:       { label: "اقتباس اليوم", desc: "جملة تحفيزية تتغيّر يومياً" },
   stats:       { label: "إحصاءاتك",     desc: "ساعات التركيز والجلسات والأخطاء" },

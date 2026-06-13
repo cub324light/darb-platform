@@ -266,7 +266,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
               <button key={t} onClick={() => setTab(t)}
                 className="flex-1 py-2 rounded-xl text-[17px] font-bold transition"
                 style={tab === t ? { background: "var(--accent)", color: "white" } : { color: "var(--text-muted)" }}>
-                {t === "manual" ? "يدوي" : "خطة ذكية"}
+                {t === "manual" ? "خطة يدوية" : "خطة مع دويرب"}
               </button>
             ))}
           </div>
@@ -490,14 +490,14 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
               <button onClick={() => runAI()} disabled={aiLoading || !busyText.trim()}
                 className="w-full py-4 rounded-2xl font-black text-[17px] min-h-[56px] mb-4 transition"
                 style={{ background: aiLoading || !busyText.trim() ? "var(--surface2)" : "var(--accent)", color: aiLoading || !busyText.trim() ? "var(--text-muted)" : "white", border: "none" }}>
-                {aiLoading ? "درب يبني الخطة..." : "اعمل لي خطة"}
+                {aiLoading ? "دويرب يبني الخطة..." : "اعمل لي خطة"}
               </button>
 
               {aiLoading && (
                 <div className="flex items-center justify-center gap-3 py-6">
                   <div className="w-6 h-6 rounded-full border-2 animate-spin"
                     style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }} />
-                  <span className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>درب يبني الخطة...</span>
+                  <span className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>دويرب يبني الخطة...</span>
                 </div>
               )}
 

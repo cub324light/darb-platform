@@ -9,6 +9,7 @@ import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, saveExamD
 import DashAI from "@/components/DashAI";
 import { syncUser } from "@/lib/firestore";
 import DayScheduler, { getEventsForDate } from "@/components/DayScheduler";
+import ExamDateButton from "@/components/ExamDateButton";
 
 const DAILY_TARGET = 200;
 
@@ -302,19 +303,16 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* شريط التخزين المدمج — يظهر كله عند «الكل» (زي تخزين الآيفون) */}
+            {/* شريط التخزين المدمج — حصص بحجم عدد مواد كل اختبار (زي تخزين الآيفون) */}
             {trackFilter === "all" && (
-              <div className="flex rounded-full overflow-hidden mb-4" style={{ height: "12px", gap: "3px" }}>
+              <div className="flex rounded-full overflow-hidden mb-4"
+                style={{ height: "16px", gap: "2px", background: "var(--surface2)" }}>
                 {activeTrackIds.map((tid) => {
                   const t = TRACKS.find((tr) => tr.id === tid);
                   const c = t?.color ?? "var(--accent)";
-                  const examD = trackExamDates[tid];
-                  const d = examD ? daysLeft(examD) : null;
-                  /* الأقرب اختباراً = شريحة أكبر (أولوية أعلى) */
-                  const weight = (d !== null && d >= 0) ? Math.max(1, 60 - d) : 30;
-                  return <div key={tid} style={{ flex: weight, background: c, minWidth: "24px" }} />;
+                  const weight = Math.max(1, t?.subjects.length ?? 1);
+                  return <div key={tid} style={{ flex: weight, background: c }} />;
                 })}
-                <div style={{ flex: 8, background: "var(--surface2)", minWidth: "8px" }} />
               </div>
             )}
 
@@ -344,31 +342,19 @@ export default function DashboardPage() {
                       <p className="text-[13px] font-semibold mt-0.5" style={{ color: urgentColor }}>
                         {d === null ? "تاريخ الاختبار غير محدد"
                           : d < 0   ? "انتهى الاختبار"
-                          : d === 0 ? "الاختبار اليوم! 🎯"
+                          : d === 0 ? "الاختبار اليوم — بالتوفيق"
                           : d === 1 ? "الاختبار بكرة — راجع ونم بدري"
                           : `${d} يوم على الاختبار`}
                       </p>
                     </div>
                     {/* زر تاريخ الاختبار */}
-                    <label className="relative flex flex-col items-center gap-0.5 cursor-pointer flex-shrink-0 select-none" style={{ minWidth: "44px" }}>
-                      <span className="text-[22px] leading-none">📅</span>
-                      {examD && (
-                        <span className="text-[10px] font-bold" style={{ color: c }}>
-                          {new Date(examD + "T00:00:00").toLocaleDateString("ar-SA", { month: "short", day: "numeric" })}
-                        </span>
-                      )}
-                      <input
-                        type="date"
-                        value={examD}
-                        onChange={(e) => {
-                          const updated = { ...trackExamDates, [tid]: e.target.value };
-                          setTrackExamDates(updated);
-                          saveTrackExamDates(updated);
-                        }}
-                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                        style={{ fontSize: "0" }}
-                      />
-                    </label>
+                    <ExamDateButton
+                      value={examD}
+                      color={c}
+                      min={new Date().toISOString().slice(0, 10)}
+                      onChange={(v) => { const updated = { ...trackExamDates, [tid]: v }; setTrackExamDates(updated); saveTrackExamDates(updated); }}
+                      onClear={() => { const updated = { ...trackExamDates }; delete updated[tid]; setTrackExamDates(updated); saveTrackExamDates(updated); }}
+                    />
                   </div>
                 );
               })}
@@ -503,12 +489,12 @@ export default function DashboardPage() {
               <button onClick={() => { setSchedOpen(true); setSchedTab("manual"); }}
                 className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
                 style={{ background: "transparent", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
-                تعديل يدوي
+                إضافة خطة يدوية
               </button>
               <button onClick={() => { setSchedOpen(true); setSchedTab("ai"); }}
                 className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
                 style={{ background: "var(--accent)", color: "white", border: "none" }}>
-                خطة ذكية
+                خطة مع دويرب
               </button>
             </div>
           </section>

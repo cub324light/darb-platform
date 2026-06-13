@@ -111,7 +111,7 @@ export default function DashAI({ subjects, onOpenScheduler }: Props) {
 
   return (
     <section className="card rise rise-6">
-      <p className="title-md mb-3" style={{ color: "var(--text)" }}>دربي الذكي</p>
+      <p className="title-md mb-3" style={{ color: "var(--text)" }}>دويرب — مساعدك الذكي</p>
 
       <div className="grid grid-cols-2 gap-2 mb-3">
         {QUICK_PROMPTS.map((p) => (

@@ -18,6 +18,7 @@ import {
 import { syncUser } from "@/lib/firestore";
 import Calendar from "@/components/Calendar";
 import DayScheduler, { getEventsForDate } from "@/components/DayScheduler";
+import ExamDateButton from "@/components/ExamDateButton";
 
 interface CustomLesson { id: string; subject: string; title: string; }
 
@@ -583,28 +584,20 @@ export default function RoadmapPage() {
           <div className="flex-1 min-w-0">
             <p className="font-extrabold text-[16px]" style={{ color: "var(--text)" }}>{t.title}</p>
             <p className="text-[12px] font-semibold mt-0.5" style={{ color: urgentColor }}>
-              {dl === null ? "اضغط 📅 لتحديد يوم الاختبار"
+              {dl === null ? "اضغط «تحديد الموعد» ليوم الاختبار"
                 : dl < 0   ? "انتهى الاختبار"
-                : dl === 0 ? "الاختبار اليوم! 🎯"
+                : dl === 0 ? "الاختبار اليوم — بالتوفيق"
                 : dl === 1 ? "الاختبار بكرة — راجع ونم بدري"
                 : `${dl} يوم على الاختبار`}
             </p>
           </div>
-          <label className="relative flex flex-col items-center gap-0.5 cursor-pointer flex-shrink-0 select-none" style={{ minWidth: "46px" }}>
-            <span className="text-[22px] leading-none">📅</span>
-            {d && (
-              <span className="text-[10px] font-bold" style={{ color: t.color }}>
-                {new Date(d + "T00:00:00").toLocaleDateString("ar-SA", { month: "short", day: "numeric" })}
-              </span>
-            )}
-            <input type="date" value={d} min={todayStr}
-              onChange={(e) => { const updated = { ...trackExamDates, [tid]: e.target.value }; setTrackExamDates(updated); saveTrackExamDates(updated); }}
-              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" style={{ fontSize: "0" }} />
-          </label>
-          {d && (
-            <button onClick={() => { const updated = { ...trackExamDates }; delete updated[tid]; setTrackExamDates(updated); saveTrackExamDates(updated); }}
-              className="text-[var(--text-muted)] text-base px-1.5 min-h-[40px] flex-shrink-0" aria-label="مسح">✕</button>
-          )}
+          <ExamDateButton
+            value={d}
+            color={t.color}
+            min={todayStr}
+            onChange={(v) => { const updated = { ...trackExamDates, [tid]: v }; setTrackExamDates(updated); saveTrackExamDates(updated); }}
+            onClear={() => { const updated = { ...trackExamDates }; delete updated[tid]; setTrackExamDates(updated); saveTrackExamDates(updated); }}
+          />
         </div>
         {withSubjects && (
           <div className="flex flex-wrap gap-1.5 mt-3 ps-4">
@@ -669,18 +662,16 @@ export default function RoadmapPage() {
       {/* ══ الاختبارات: «الكل» = نظرة مدمجة زي الآيفون · أو اختبار واحد ══ */}
       {testTab === "all" ? (
         <div className="px-5 mb-5">
-          {/* شريط التخزين المدمج */}
+          {/* شريط التخزين المدمج — حصص بحجم عدد مواد كل اختبار */}
           {activeTrackIds.length > 0 && (
-            <div className="flex rounded-full overflow-hidden mb-4" style={{ height: "12px", gap: "3px" }}>
+            <div className="flex rounded-full overflow-hidden mb-3.5"
+              style={{ height: "16px", gap: "2px", background: "var(--surface2)" }}>
               {activeTrackIds.map((tid) => {
                 const t = TRACKS.find((tr) => tr.id === tid);
                 const c = t?.color ?? "var(--accent)";
-                const d = trackExamDates[tid];
-                const dl = d ? daysLeftOf(d) : null;
-                const weight = (dl !== null && dl >= 0) ? Math.max(1, 60 - dl) : 30;
-                return <div key={tid} style={{ flex: weight, background: c, minWidth: "24px" }} />;
+                const weight = Math.max(1, t?.subjects.length ?? 1);
+                return <div key={tid} style={{ flex: weight, background: c }} />;
               })}
-              <div style={{ flex: 8, background: "var(--surface2)", minWidth: "8px" }} />
             </div>
           )}
           <p className="eyebrow mb-2.5 px-1">اختباراتك — اضغط اختبار فوق لفتح خريطته</p>
