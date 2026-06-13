@@ -184,11 +184,27 @@ export function saveSubjectExamDates(dates: Record<string, string>) {
   try { localStorage.setItem(SUBJECT_EXAM_DATES_KEY, JSON.stringify(dates)); } catch {}
 }
 
+/* ── تواريخ اختبار لكل مسار (مفتاح = TrackId) ── */
+const TRACK_EXAM_DATES_KEY = "darb_track_exam_dates";
+
+export function loadTrackExamDates(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(TRACK_EXAM_DATES_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+  } catch { return {}; }
+}
+
+export function saveTrackExamDates(dates: Record<string, string>) {
+  try { localStorage.setItem(TRACK_EXAM_DATES_KEY, JSON.stringify(dates)); } catch {}
+}
+
 export function resetAll() {
   try {
     ["darb_user","darb_stats","darb_vault","darb_cards","darb_lessons","darb_posts",
      "darb_schedule","darb_exam_date","darb_events","darb_exam_flow","darb_stage_reviews",
-     "darb_tadreeb_items","darb_tadreeb_done","darb_tasreebat_pct","darb_subject_exam_dates"].forEach((k) =>
+     "darb_tadreeb_items","darb_tadreeb_done","darb_tasreebat_pct","darb_subject_exam_dates",
+     "darb_track_exam_dates"].forEach((k) =>
       localStorage.removeItem(k)
     );
     /* تعليمات أول زيارة تظهر من جديد بعد الضبط */

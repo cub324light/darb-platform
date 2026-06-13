@@ -11,6 +11,7 @@ export interface Track {
   title: string;
   sub: string;
   icon: string;
+  color: string; // لون مميز لكل مسار في الشريط والبطاقات
   subjects: { name: string; icon: string; color: string }[];
 }
 
@@ -33,6 +34,7 @@ export const TRACKS: Track[] = [
     title: "القدرات",
     sub: "لفظي + كمي (قياس)",
     icon: "",
+    color: "#8B5CF6",
     subjects: [
       { name: "لفظي", icon: "", color: "#8B5CF6" },
       { name: "كمي",  icon: "", color: "#10B981" },
@@ -43,6 +45,7 @@ export const TRACKS: Track[] = [
     title: "التحصيلي",
     sub: "فيزياء · كيمياء · رياضيات · أحياء",
     icon: "",
+    color: "#3B82F6",
     subjects: TAHSILI_SUBJECTS,
   },
   {
@@ -50,6 +53,7 @@ export const TRACKS: Track[] = [
     title: "التحصيلي المبكر",
     sub: "لطلاب أول وثاني ثانوي",
     icon: "",
+    color: "#6366F1",
     subjects: TAHSILI_SUBJECTS,
   },
   {
@@ -57,6 +61,7 @@ export const TRACKS: Track[] = [
     title: "أرامكو CPC",
     sub: "إنجليزي + رياضيات",
     icon: "",
+    color: "#06B6D4",
     subjects: [
       { name: "إنجليزي", icon: "", color: "#3B82F6" },
       { name: "رياضيات", icon: "", color: "#10B981" },
@@ -67,6 +72,7 @@ export const TRACKS: Track[] = [
     title: "ITC",
     sub: "إنجليزي · رياضيات · منطق",
     icon: "",
+    color: "#F97316",
     subjects: [
       { name: "إنجليزي", icon: "", color: "#3B82F6" },
       { name: "رياضيات", icon: "", color: "#10B981" },
@@ -78,6 +84,7 @@ export const TRACKS: Track[] = [
     title: "آيلتس IELTS",
     sub: "استماع · قراءة · كتابة · محادثة",
     icon: "",
+    color: "#EF4444",
     subjects: [SKILL_LISTEN, SKILL_READ, SKILL_WRITE, SKILL_SPEAK],
   },
   {
@@ -85,6 +92,7 @@ export const TRACKS: Track[] = [
     title: "ستيب STEP",
     sub: "كفايات الإنجليزية (قياس)",
     icon: "",
+    color: "#10B981",
     subjects: [SKILL_READ, SKILL_GRAMMAR, SKILL_LISTEN, SKILL_WRITE],
   },
   {
@@ -92,6 +100,7 @@ export const TRACKS: Track[] = [
     title: "توفل TOEFL",
     sub: "iBT — المهارات الأربع",
     icon: "",
+    color: "#F59E0B",
     subjects: [SKILL_READ, SKILL_LISTEN, SKILL_SPEAK, SKILL_WRITE],
   },
   {
@@ -99,6 +108,7 @@ export const TRACKS: Track[] = [
     title: "دووليجو Duolingo",
     sub: "اختبار الإنجليزية السريع",
     icon: "",
+    color: "#EC4899",
     subjects: [SKILL_READ, SKILL_WRITE, SKILL_LISTEN, SKILL_SPEAK],
   },
 ];

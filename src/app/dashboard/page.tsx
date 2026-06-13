@@ -5,7 +5,7 @@ import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import { getTrack, TRACKS, type TrackId } from "@/lib/tracks";
-import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, saveExamDate, loadDashConfig, saveDashConfig, DASH_SECTION_META, type DarbUser, type ScheduleEvent, type DashItem, type DashSectionId, saveEvents } from "@/lib/storage";
+import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, saveExamDate, loadDashConfig, saveDashConfig, loadTrackExamDates, saveTrackExamDates, DASH_SECTION_META, type DarbUser, type ScheduleEvent, type DashItem, type DashSectionId, saveEvents } from "@/lib/storage";
 import DashAI from "@/components/DashAI";
 import { syncUser } from "@/lib/firestore";
 import DayScheduler, { getEventsForDate } from "@/components/DayScheduler";
@@ -75,6 +75,7 @@ export default function DashboardPage() {
   const [schedPrefill, setSchedPrefill] = useState("");
   const [allEvents, setAllEvents] = useState<ScheduleEvent[]>([]);
   const [examDate, setExamDate] = useState<string | null>(null);
+  const [trackExamDates, setTrackExamDates] = useState<Record<string, string>>({});
   const [mounted, setMounted] = useState(false);
 
   /* ── تخصيص الصفحة: ترتيب وإظهار الأقسام ── */
@@ -138,6 +139,7 @@ export default function DashboardPage() {
       }
     } catch {}
 
+    setTrackExamDates(loadTrackExamDates());
     setLayout(loadDashConfig().layout);
 
     // مزامنة مع Firestore
@@ -250,48 +252,119 @@ export default function DashboardPage() {
   /* ── رسم كل قسم حسب معرّفه ── */
   const renderSection = (id: DashSectionId) => {
     switch (id) {
-      case "track":
+      case "track": {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const daysLeft = (d: string) =>
+          Math.round((new Date(d + "T00:00:00").getTime() - new Date(todayStr + "T00:00:00").getTime()) / 86400000);
+
         return (
           <section className="card">
+            {/* رأس القسم */}
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="eyebrow">مسارك</p>
+                <p className="eyebrow">مساراتك</p>
                 <p className="title-md" style={{ color: "var(--text)" }}>
-                  {activeTrackIds.length > 1 ? `${activeTrackIds.length} مسارات` : track.title}
+                  {activeTrackIds.length > 1 ? `${activeTrackIds.length} مسارات نشطة` : track.title}
                 </p>
               </div>
               <Link href="/roadmap" className="text-[17px] font-bold" style={{ color: "var(--accent-light)" }}>
                 الخريطة ←
               </Link>
             </div>
-            {activeTrackIds.map((trackId) => {
-              const t = TRACKS.find((tr) => tr.id === trackId) ?? track;
-              return (
-                <div key={trackId} className="mb-3 last:mb-0">
-                  {activeTrackIds.length > 1 && <p className="eyebrow mb-2">{t.title}</p>}
-                  <div className="grid grid-cols-2 gap-2.5">
-                    {t.subjects.map((s, i) => (
-                      <Link key={s.name} href="/roadmap"
-                        className="rounded-2xl px-4 py-3.5 flex items-center gap-3 transition active:scale-[0.97] subject-card"
-                        style={{
-                          background: "var(--surface)",
-                          border: `1.5px solid ${s.color}55`,
-                          boxShadow: `0 0 10px ${s.color}18`,
-                          minHeight: "58px",
-                          animationDelay: `${i * 80}ms`,
-                        }}>
-                        <div className="w-2 h-2 rounded-full flex-shrink-0 subject-dot" style={{ background: s.color, boxShadow: `0 0 5px ${s.color}88` }} />
-                        <span className="font-bold text-[17px]" style={{ color: "var(--text)" }}>{s.name}</span>
-                      </Link>
-                    ))}
+
+            {/* شريط التخزين — كل مسار له خانة ملوّنة */}
+            <div className="flex rounded-full overflow-hidden mb-4" style={{ height: "12px", gap: "3px" }}>
+              {activeTrackIds.map((tid) => {
+                const t = TRACKS.find((tr) => tr.id === tid);
+                const c = t?.color ?? "var(--accent)";
+                const examD = trackExamDates[tid];
+                const d = examD ? daysLeft(examD) : null;
+                /* حجم الشريحة: إذا كل المسارات بدون تواريخ → متساوي */
+                /* إذا فيه تواريخ: الأقرب اختباراً أصغر (ضغطه أكبر) */
+                const weight = (d !== null && d >= 0) ? Math.max(1, 60 - d) : 30;
+                return (
+                  <div key={tid} style={{ flex: weight, background: c, minWidth: "24px" }} />
+                );
+              })}
+              {/* رصيد فارغ */}
+              <div style={{ flex: 8, background: "var(--surface2)", minWidth: "8px" }} />
+            </div>
+
+            {/* صفوف المسارات */}
+            <div className="flex flex-col gap-2.5">
+              {activeTrackIds.map((tid) => {
+                const t = TRACKS.find((tr) => tr.id === tid) ?? track;
+                const c = t.color;
+                const examD = trackExamDates[tid] ?? "";
+                const d = examD ? daysLeft(examD) : null;
+                const urgentColor = d === null ? "var(--text-muted)"
+                  : d <= 3 ? "#EF4444"
+                  : d <= 14 ? "#F97316"
+                  : "#10B981";
+
+                return (
+                  <div key={tid} className="flex items-center gap-3 rounded-2xl px-3.5 py-3"
+                    style={{
+                      background: `color-mix(in srgb, ${c} 7%, var(--surface2))`,
+                      border: `1.5px solid ${c}33`,
+                    }}>
+                    {/* الخط الدال على اللون */}
+                    <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: c, minHeight: "36px" }} />
+                    {/* الاسم والأيام */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-extrabold text-[16px]" style={{ color: "var(--text)" }}>{t.title}</p>
+                      <p className="text-[13px] font-semibold mt-0.5" style={{ color: urgentColor }}>
+                        {d === null ? "تاريخ الاختبار غير محدد"
+                          : d < 0   ? "انتهى الاختبار"
+                          : d === 0 ? "الاختبار اليوم! 🎯"
+                          : d === 1 ? "الاختبار بكرة — راجع ونم بدري"
+                          : `${d} يوم على الاختبار`}
+                      </p>
+                    </div>
+                    {/* زر تاريخ الاختبار */}
+                    <label className="relative flex flex-col items-center gap-0.5 cursor-pointer flex-shrink-0 select-none" style={{ minWidth: "44px" }}>
+                      <span className="text-[22px] leading-none">📅</span>
+                      {examD && (
+                        <span className="text-[10px] font-bold" style={{ color: c }}>
+                          {new Date(examD + "T00:00:00").toLocaleDateString("ar-SA", { month: "short", day: "numeric" })}
+                        </span>
+                      )}
+                      <input
+                        type="date"
+                        value={examD}
+                        onChange={(e) => {
+                          const updated = { ...trackExamDates, [tid]: e.target.value };
+                          setTrackExamDates(updated);
+                          saveTrackExamDates(updated);
+                        }}
+                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                        style={{ fontSize: "0" }}
+                      />
+                    </label>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </section>
         );
+      }
 
-      case "today":
+      case "today": {
+        /* أقرب موعد اختبار من كل المسارات أو التاريخ الفردي */
+        const todayForToday = new Date().toISOString().slice(0, 10);
+        const allDays = [
+          ...(examDate ? [{ d: examDays, label: "", color: "var(--gold)", tid: null }] : []),
+          ...activeTrackIds.map((tid) => {
+            const examD = trackExamDates[tid];
+            if (!examD) return null;
+            const d2 = Math.round((new Date(examD + "T00:00:00").getTime() - new Date(todayForToday + "T00:00:00").getTime()) / 86400000);
+            const t = TRACKS.find((tr) => tr.id === tid);
+            return { d: d2, label: t?.title ?? "", color: t?.color ?? "var(--accent)", tid };
+          }).filter(Boolean),
+        ].filter((x) => x !== null && x!.d !== null && x!.d! >= 0) as { d: number; label: string; color: string; tid: string | null }[];
+        allDays.sort((a, b) => a.d - b.d);
+        const nearest = allDays[0] ?? null;
+
         return (
           <section className="card">
             <div className="flex items-center justify-between mb-3">
@@ -300,22 +373,19 @@ export default function DashboardPage() {
                 {time ? time.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", hour12: true }) : "--:--"}
               </p>
             </div>
-            {examDays !== null && examDays >= 0 && (
+            {nearest && (
               <div className="rounded-xl px-3.5 py-2.5 mb-3 text-center"
                 style={{
-                  background: examDays <= 1 ? "color-mix(in srgb, #EF4444 10%, transparent)"
-                    : examDays <= 7 ? "color-mix(in srgb, #F97316 10%, transparent)"
-                    : "color-mix(in srgb, var(--gold) 10%, transparent)",
-                  border: examDays <= 1 ? "1px solid color-mix(in srgb, #EF4444 30%, transparent)"
-                    : examDays <= 7 ? "1px solid color-mix(in srgb, #F97316 30%, transparent)"
-                    : "1px solid color-mix(in srgb, var(--gold) 30%, transparent)",
+                  background: `color-mix(in srgb, ${nearest.d <= 1 ? "#EF4444" : nearest.d <= 7 ? "#F97316" : nearest.color} 10%, transparent)`,
+                  border: `1px solid color-mix(in srgb, ${nearest.d <= 1 ? "#EF4444" : nearest.d <= 7 ? "#F97316" : nearest.color} 30%, transparent)`,
                 }}>
                 <span className="text-[15px] font-bold"
-                  style={{ color: examDays <= 1 ? "#EF4444" : examDays <= 7 ? "#F97316" : "var(--gold)" }}>
-                  {examDays === 0 ? "اختبارك اليوم — بالتوفيق!"
-                    : examDays === 1 ? "اختبارك بكرة — راجع ونم بدري"
-                    : examDays <= 7 ? `${examDays} أيام على الاختبار — شدّ الحزام`
-                    : `باقي ${examDays} يوم على الاختبار`}
+                  style={{ color: nearest.d <= 1 ? "#EF4444" : nearest.d <= 7 ? "#F97316" : nearest.color }}>
+                  {nearest.label ? `${nearest.label} — ` : ""}
+                  {nearest.d === 0 ? "اختبارك اليوم — بالتوفيق!"
+                    : nearest.d === 1 ? "اختبارك بكرة — راجع ونم بدري"
+                    : nearest.d <= 7 ? `${nearest.d} أيام على الاختبار — شدّ الحزام`
+                    : `باقي ${nearest.d} يوم على الاختبار`}
                 </span>
               </div>
             )}
@@ -333,6 +403,7 @@ export default function DashboardPage() {
             </Link>
           </section>
         );
+      }
 
       case "schedule":
         return (
