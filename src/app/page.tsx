@@ -341,6 +341,9 @@ export default function LandingPage() {
           </Link>
           <p className="text-xs mt-6" style={{ color: "var(--text-muted)" }}>صُنع في السعودية · مجاني بالكامل</p>
         </div>
+        <Link href="/privacy" className="inline-block mt-8 text-xs" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+          سياسة الخصوصية
+        </Link>
       </section>
 
     </div>

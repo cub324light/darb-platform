@@ -242,13 +242,12 @@ export default function PricingPage() {
               </div>
             ))}
           </div>
-          <Link
-            href="/parent"
-            className="block w-full py-3 rounded-2xl font-bold text-center text-sm transition"
-            style={{ background: "rgba(16,185,129,0.08)", border: "1.5px solid #10B981", color: "#10B981" }}
+          <div
+            className="block w-full py-3 rounded-2xl font-bold text-center text-sm"
+            style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}
           >
-            اكتشف باقة سند
-          </Link>
+            قريباً
+          </div>
         </div>
 
         {/* Pay with effort */}

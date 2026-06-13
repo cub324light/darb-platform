@@ -4,10 +4,24 @@ import { Analytics } from "@vercel/analytics/next";
 import CloudSync from "@/components/CloudSync";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://darb-platform.vercel.app"),
   title: "درب | المنصة التي تعاملك كأخ",
   description: "YOUR PATH TO EXCELLENCE — تأسيس حقيقي للقدرات والتحصيلي وأرامكو CPC",
   manifest: "/manifest.json",
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "درب" },
+  openGraph: {
+    title: "درب | طريقك للتفوق",
+    description: "تأسيس حقيقي للقدرات والتحصيلي وأرامكو CPC",
+    url: "https://darb-platform.vercel.app",
+    siteName: "درب",
+    locale: "ar_SA",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "درب | طريقك للتفوق",
+    description: "تأسيس حقيقي للقدرات والتحصيلي وأرامكو CPC",
+  },
 };
 
 export const viewport: Viewport = {
