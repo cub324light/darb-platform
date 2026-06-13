@@ -12,6 +12,41 @@ import { getEventsForDate } from "@/components/DayScheduler";
 
 const DAILY_TARGET = 200;
 
+/* اقتباس اليوم — يتغير بتاريخ اليوم */
+const QUOTES = [
+  "الدرجة العالية ما تجي صدفة — تجي من جلسات صغيرة متراكمة.",
+  "اللي يذاكر ساعة كل يوم، يسبق اللي يذاكر عشر ساعات ليلة الاختبار.",
+  "ما فيه طالب فاشل، فيه طالب ما لقى طريقته. أنت لقيتها.",
+  "خل الجوال يستنى. مستقبلك ما يستنى.",
+  "كل سؤال تغلط فيه اليوم، درجة تكسبها يوم الاختبار.",
+  "الستريك مب رقم — هو دليل أنك صادق مع نفسك.",
+  "الفرق بين الحلم والهدف؟ جدول.",
+  "ذاكر وأنت متعب، ترتاح وأنت ناجح.",
+  "اللي زرعته اليوم، تحصده في القاعة.",
+  "أنت أقرب من أمس، وأبعد ما تكون عن البداية.",
+];
+function quoteOfToday(): string {
+  const d = new Date();
+  const dayOfYear = Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 0).getTime()) / 86400000);
+  return QUOTES[dayOfYear % QUOTES.length];
+}
+
+/* آخر 7 أيام للرسم */
+function last7Days(dayMins: Record<string, number>): { label: string; mins: number; isToday: boolean }[] {
+  const out = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    out.push({
+      label: d.toLocaleDateString("ar-SA", { weekday: "narrow" }),
+      mins: dayMins?.[key] ?? 0,
+      isToday: i === 0,
+    });
+  }
+  return out;
+}
+
 function fmtHour(h: number): string {
   if (h === 0) return "12 ص";
   if (h < 12) return `${h} ص`;
@@ -33,6 +68,7 @@ export default function DashboardPage() {
   const [todayEvents, setTodayEvents] = useState<ScheduleEvent[]>([]);
   const [examDays, setExamDays] = useState<number | null>(null);
   const [dueCards, setDueCards] = useState(0);
+  const [week, setWeek] = useState<{ label: string; mins: number; isToday: boolean }[]>([]);
 
   useEffect(() => {
     setUser(loadUser());
@@ -42,6 +78,7 @@ export default function DashboardPage() {
     setFocusHours(Math.floor(s.totalFocusMins / 60));
     setSessions(s.sessionsCount);
     setTodayMins(s.todayFocusMins);
+    setWeek(last7Days(s.dayMins));
     try {
       const vault = JSON.parse(localStorage.getItem("darb_vault") ?? "[]");
       setErrorsCount(Array.isArray(vault) ? vault.length : 0);
@@ -145,6 +182,28 @@ export default function DashboardPage() {
       {/* ═══ المحتوى ═══ */}
       <div className="page-content mt-4">
 
+        {/* تحذير الستريك — يظهر المساء إذا ما فيه جلسة اليوم */}
+        {streak > 0 && todayMins === 0 && (time?.getHours() ?? 0) >= 17 && (
+          <Link href="/orbit" className="rise block rounded-2xl px-4 py-3.5 transition active:scale-[0.98]"
+            style={{
+              background: "color-mix(in srgb, #EF4444 9%, transparent)",
+              border: "1px solid color-mix(in srgb, #EF4444 28%, transparent)",
+              textDecoration: "none",
+            }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[15px] font-black" style={{ color: "#EF4444" }}>
+                  ستريك {streak} يوم بخطر 🔥
+                </p>
+                <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                  جلسة وحدة قبل منتصف الليل تنقذه
+                </p>
+              </div>
+              <span className="text-lg font-black" style={{ color: "#EF4444" }}>←</span>
+            </div>
+          </Link>
+        )}
+
         {/* المسار */}
         <section className="card rise rise-1">
           <div className="flex items-center justify-between mb-4">
@@ -219,6 +278,54 @@ export default function DashboardPage() {
           <Link href="/orbit" className="btn-primary block text-center" style={{ textDecoration: "none" }}>
             ابدأ جلسة أوربت
           </Link>
+        </section>
+
+        {/* أسبوعك — رسم حقيقي من جلساتك */}
+        <section className="card rise rise-3">
+          <div className="flex items-center justify-between mb-4">
+            <p className="title-md" style={{ color: "var(--text)" }}>أسبوعك</p>
+            <p className="text-[13px] font-semibold" style={{ color: "var(--text-muted)" }}>
+              {week.reduce((a, d) => a + d.mins, 0)} دقيقة
+            </p>
+          </div>
+          <div className="flex items-end justify-between gap-2" style={{ height: "92px" }}>
+            {week.map((d, i) => {
+              const max = Math.max(...week.map((w) => w.mins), DAILY_TARGET / 2);
+              const h = d.mins === 0 ? 4 : Math.max(8, Math.round((d.mins / max) * 72));
+              return (
+                <div key={i} className="flex-1 flex flex-col items-center gap-1.5 min-w-0">
+                  {d.mins > 0 && (
+                    <span className="font-mono-nums text-[10px] font-bold" style={{ color: d.isToday ? "var(--accent-light)" : "var(--text-muted)" }}>
+                      {d.mins}
+                    </span>
+                  )}
+                  <div className="w-full rounded-full transition-all duration-700"
+                    style={{
+                      height: `${h}px`,
+                      maxWidth: "26px",
+                      background: d.isToday
+                        ? "linear-gradient(180deg, var(--accent-hi), var(--accent-2))"
+                        : d.mins > 0 ? "color-mix(in srgb, var(--accent) 45%, var(--surface2))" : "var(--surface2)",
+                      boxShadow: d.isToday && d.mins > 0 ? "0 0 10px color-mix(in srgb, var(--accent) 40%, transparent)" : "none",
+                    }} />
+                  <span className="text-[11px] font-bold" style={{ color: d.isToday ? "var(--accent-light)" : "var(--text-muted)" }}>
+                    {d.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* اقتباس اليوم */}
+        <section className="rise rise-3 rounded-2xl px-5 py-4"
+          style={{
+            background: "linear-gradient(135deg, color-mix(in srgb, var(--gold) 8%, transparent), transparent), var(--surface)",
+            border: "1px solid color-mix(in srgb, var(--gold) 18%, transparent)",
+          }}>
+          <p className="text-[15px] font-bold leading-relaxed" style={{ color: "var(--text-dim)" }}>
+            &ldquo;{quoteOfToday()}&rdquo;
+          </p>
         </section>
 
         {/* الإحصاءات */}

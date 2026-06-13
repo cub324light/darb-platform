@@ -584,6 +584,15 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
 }
 .scroll-hint { animation: bounceDown 1.8s ease-in-out infinite; }
 
+.hero-star {
+  position: absolute;
+  border-radius: 9999px;
+  background: var(--accent-light);
+  opacity: 0.3;
+  animation: twinkle 3.2s ease-in-out infinite;
+}
+[data-theme="light"] .hero-star { background: var(--gold); opacity: 0.45; }
+
 @keyframes orbitSpin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
@@ -628,6 +637,23 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
 
 @keyframes birdWingFlame { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(2deg); } }
 .bird-wing-flame { animation: birdWingFlame 2.2s ease-in-out infinite; transform-origin: bottom center; }
+
+/* ─── كونفيتي الإنجاز ─── */
+@keyframes confettiFall {
+  0%   { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+  85%  { opacity: 1; }
+  100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+}
+.confetti-piece {
+  position: fixed;
+  top: 0;
+  width: 9px;
+  height: 14px;
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 60;
+  animation: confettiFall 2.8s ease-in forwards;
+}
 .rise-6 { animation-delay: 0.40s; }
 
 @media (prefers-reduced-motion: reduce) {

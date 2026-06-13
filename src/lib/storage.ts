@@ -17,6 +17,7 @@ export interface DarbStats {
   sessionsCount: number;
   todayFocusMins: number;
   todayKey: string;
+  dayMins: Record<string, number>; // دقائق التركيز لكل يوم — للرسم الأسبوعي
 }
 
 const USER_KEY = "darb_user";
@@ -49,6 +50,7 @@ const EMPTY_STATS: DarbStats = {
   sessionsCount: 0,
   todayFocusMins: 0,
   todayKey: "",
+  dayMins: {},
 };
 
 export function loadStats(): DarbStats {
@@ -82,6 +84,18 @@ export function recordSession(focusMins: number, silverEarned: number): DarbStat
   s.todayKey = day;
   s.sessionsCount += 1;
   if (!s.sessionDays.includes(day)) s.sessionDays.push(day);
+  s.dayMins = { ...s.dayMins, [day]: (s.dayMins?.[day] ?? 0) + focusMins };
+  // نحتفظ بآخر 60 يوم فقط
+  const keys = Object.keys(s.dayMins).sort();
+  if (keys.length > 60) keys.slice(0, keys.length - 60).forEach((k) => delete s.dayMins[k]);
+  saveStats(s);
+  return s;
+}
+
+/* سيلفر إضافي (الأرينا وغيرها) */
+export function addSilver(n: number): DarbStats {
+  const s = loadStats();
+  s.silver = Math.max(0, s.silver + n);
   saveStats(s);
   return s;
 }

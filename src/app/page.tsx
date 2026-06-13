@@ -24,6 +24,17 @@ function useReveal() {
   return ref;
 }
 
+/* نجوم ثابتة (مواقع مرسومة مسبقاً عشان لا تختلف بين السيرفر والمتصفح) */
+const HERO_STARS = [
+  { x: 8, y: 12, size: 2, delay: 0 }, { x: 22, y: 28, size: 3, delay: 1.2 },
+  { x: 35, y: 8, size: 2, delay: 0.5 }, { x: 48, y: 18, size: 2, delay: 2.1 },
+  { x: 62, y: 6, size: 3, delay: 0.8 }, { x: 75, y: 22, size: 2, delay: 1.7 },
+  { x: 88, y: 10, size: 2, delay: 0.3 }, { x: 15, y: 45, size: 2, delay: 2.4 },
+  { x: 92, y: 38, size: 3, delay: 1.0 }, { x: 5, y: 70, size: 2, delay: 1.5 },
+  { x: 95, y: 65, size: 2, delay: 0.6 }, { x: 28, y: 85, size: 2, delay: 2.0 },
+  { x: 70, y: 88, size: 3, delay: 0.9 }, { x: 55, y: 75, size: 2, delay: 1.4 },
+];
+
 const FEATURES = [
   { title: "خزنة الأخطاء", desc: "كل سؤال غلطت فيه ينحفظ — عشان ما تغلط فيه مرتين. راجعها قبل الاختبار وادخل وأنت مرتاح.", color: "#F59E0B" },
   { title: "بنك المراجعة", desc: "بطاقات بنظام SM-2 العلمي للتكرار المتباعد. النظام يحسب لك متى تراجع كل معلومة قبل ما تنساها.", color: "#10B981" },
@@ -56,19 +67,44 @@ export default function LandingPage() {
     <div ref={rootRef} className="relative z-[1]">
 
       {/* ═══ الواجهة ═══ */}
-      <section className="min-h-dvh flex flex-col items-center justify-center px-6 text-center relative">
-        <div className="hero-float mb-2">
+      <section className="min-h-dvh flex flex-col items-center justify-center px-6 text-center relative overflow-hidden">
+        {/* نجوم الواجهة */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden>
+          {HERO_STARS.map((s, i) => (
+            <span key={i} className="hero-star"
+              style={{ left: `${s.x}%`, top: `${s.y}%`, width: s.size, height: s.size, animationDelay: `${s.delay}s` }} />
+          ))}
+        </div>
+
+        <div className="hero-float mb-2 relative">
           <Bird id="falcon" size={130} />
         </div>
-        <p className="font-black text-7xl mb-3 text-[var(--text)] hero-glow">درب</p>
+        <p className="font-black text-7xl mb-3 hero-glow"
+          style={{
+            background: "linear-gradient(135deg, var(--text) 30%, var(--accent-light) 70%, var(--accent-hi))",
+            WebkitBackgroundClip: "text",
+            backgroundClip: "text",
+            color: "transparent",
+          }}>درب</p>
         <p className="eyebrow mb-5" style={{ color: "var(--text-dim)" }}>YOUR PATH TO EXCELLENCE</p>
         <h1 className="title-xl mb-4 fade-in" style={{ color: "var(--text)" }}>
           المنصة التي تعاملك كأخ
         </h1>
-        <p className="text-lg leading-relaxed max-w-sm mb-9" style={{ color: "var(--text-dim)" }}>
+        <p className="text-lg leading-relaxed max-w-sm mb-7" style={{ color: "var(--text-dim)" }}>
           تأسيس حقيقي للقدرات والتحصيلي وأرامكو CPC واختبارات الإنجليزية.
           خطة، التزام، ووصول — بدون أرقام وهمية.
         </p>
+
+        {/* أرقام سريعة */}
+        <div className="flex items-center gap-2.5 mb-9 flex-wrap justify-center">
+          {["8 مسارات", "6 رفاق", "ذكاء يبني جدولك", "مجاني"].map((c) => (
+            <span key={c} className="text-[13px] font-bold px-3.5 py-1.5 rounded-full"
+              style={{ background: "color-mix(in srgb, var(--accent) 9%, transparent)", border: "1px solid color-mix(in srgb, var(--accent) 22%, transparent)", color: "var(--accent-light)" }}>
+              {c}
+            </span>
+          ))}
+        </div>
+
         <Link href="/onboarding" className="btn-primary glow-blue px-10" style={{ textDecoration: "none" }}>
           ابدأ رحلتك ←
         </Link>

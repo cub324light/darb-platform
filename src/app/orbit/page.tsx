@@ -4,6 +4,7 @@ import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import Bird from "@/components/Birds";
+import Confetti from "@/components/Confetti";
 import { getTrack } from "@/lib/tracks";
 import { loadUser, loadStats, recordSession } from "@/lib/storage";
 
@@ -229,6 +230,8 @@ export default function OrbitPage() {
 
   return (
     <div className="min-h-dvh flex flex-col pb-nav relative z-[1]">
+
+      {phase === "done" && <Confetti />}
 
       <PageGuide pageKey="orbit" steps={[
         { title: "أوربت — تايمر التركيز", desc: "اختر المادة اللي بتذاكرها، واضغط ابدأ الجلسة. النظام الافتراضي: 50 دقيقة تركيز + 10 راحة." },

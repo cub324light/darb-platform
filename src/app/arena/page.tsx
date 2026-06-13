@@ -1,9 +1,16 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
-import { loadUser } from "@/lib/storage";
+import Bird from "@/components/Birds";
+import Confetti from "@/components/Confetti";
+import { loadUser, addSilver } from "@/lib/storage";
 import { getTrack, type TrackId } from "@/lib/tracks";
+import { BIRDS } from "@/lib/birds";
+
+/* المنافس التدريبي: اسم + طير عشوائي، يجاوب بنفسه */
+const BOT_NAMES = ["سعود", "نورة", "فهد", "ريم", "خالد", "لمى", "تركي", "العنود"];
+const WIN_SILVER = 15;
 
 /* بنك أسئلة حقيقي لكل مسار */
 const QUESTION_BANK: Record<TrackId, { q: string; a: string; subject: string }[]> = {
@@ -67,13 +74,25 @@ export default function ArenaPage() {
   const [opScore, setOpScore] = useState(0);
   const [answered, setAnswered] = useState(false);
   const [timeLeft, setTimeLeft] = useState(15);
+  const [bot, setBot] = useState({ name: "سعود", bird: "raven" });
+  const [botFlash, setBotFlash] = useState(false);
+  const [myBird, setMyBird] = useState<string | undefined>(undefined);
+  const rewardedRef = useRef(false);
 
   useEffect(() => {
-    const track = getTrack(loadUser()?.track);
+    const u = loadUser();
+    setMyBird(u?.bird);
+    const track = getTrack(u?.track);
     setQuestions(QUESTION_BANK[track.id]);
   }, []);
 
   const startGame = () => {
+    const pool = BIRDS.filter((b) => b.id !== (myBird ?? "falcon"));
+    setBot({
+      name: BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)],
+      bird: pool[Math.floor(Math.random() * pool.length)].id,
+    });
+    rewardedRef.current = false;
     setGameState("playing");
     setCurrentQ(0);
     setMyScore(0);
@@ -82,21 +101,60 @@ export default function ArenaPage() {
     setTimeLeft(15);
   };
 
+  const nextQuestion = () => {
+    if (currentQ + 1 >= questions.length) {
+      setGameState("result");
+    } else {
+      setCurrentQ((p) => p + 1);
+      setAnswered(false);
+      setTimeLeft(15);
+    }
+  };
+
+  /* العداد الحقيقي: ينقص كل ثانية — الصفر = ضاع السؤال */
+  useEffect(() => {
+    if (gameState !== "playing" || answered) return;
+    const t = setTimeout(() => {
+      if (timeLeft <= 1) {
+        setTimeLeft(0);
+        setAnswered(true);
+        setTimeout(nextQuestion, 1400);
+      } else {
+        setTimeLeft((s) => s - 1);
+      }
+    }, 1000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameState, answered, timeLeft]);
+
+  /* المنافس يجاوب بنفسه: بعد 3-9 ثوان، يصيب 55% */
+  useEffect(() => {
+    if (gameState !== "playing" || answered) return;
+    const delay = 3000 + Math.random() * 6000;
+    const t = setTimeout(() => {
+      if (Math.random() < 0.55) {
+        setOpScore((p) => p + 1);
+        setBotFlash(true);
+        setTimeout(() => setBotFlash(false), 900);
+      }
+    }, delay);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameState, currentQ, answered]);
+
+  /* مكافأة الفوز — مرة وحدة لكل مباراة */
+  useEffect(() => {
+    if (gameState === "result" && myScore > opScore && !rewardedRef.current) {
+      rewardedRef.current = true;
+      addSilver(WIN_SILVER);
+    }
+  }, [gameState, myScore, opScore]);
+
   const answer = (correct: boolean) => {
     if (answered) return;
     setAnswered(true);
     if (correct) setMyScore((p) => p + 1);
-    else setOpScore((p) => p + (Math.random() > 0.5 ? 1 : 0));
-
-    setTimeout(() => {
-      if (currentQ + 1 >= questions.length) {
-        setGameState("result");
-      } else {
-        setCurrentQ((p) => p + 1);
-        setAnswered(false);
-        setTimeLeft(15);
-      }
-    }, 1000);
+    setTimeout(nextQuestion, 1400);
   };
 
   const q = questions[currentQ];
@@ -112,14 +170,23 @@ export default function ArenaPage() {
         </Dome>
 
         <div className="flex-1 flex flex-col items-center justify-center px-5 rise rise-1">
-          <div
-            className="w-28 h-28 rounded-3xl flex items-center justify-center mb-6"
-            style={{ background: "linear-gradient(0deg, rgba(245,158,11,0.1), rgba(245,158,11,0.1)), var(--surface)", border: "2px solid rgba(245,158,11,0.3)" }}
-          />
+          <div className="flex items-center gap-6 mb-7">
+            <div className="flex flex-col items-center gap-2">
+              <Bird id={myBird} size={86} />
+              <p className="text-sm font-black" style={{ color: "var(--accent-light)" }}>أنت</p>
+            </div>
+            <p className="font-black text-3xl" style={{ color: "var(--gold)" }}>VS</p>
+            <div className="flex flex-col items-center gap-2" style={{ transform: "scaleX(-1)" }}>
+              <Bird id="raven" size={86} />
+              <p className="text-sm font-black" style={{ color: "var(--danger)", transform: "scaleX(-1)" }}>منافس</p>
+            </div>
+          </div>
           <h2 className="font-black text-2xl text-[var(--text)] mb-2">تحدي 1v1</h2>
-          <p className="text-base text-[var(--text-muted)] text-center mb-8 max-w-xs leading-relaxed">
-            أسئلة سريعة من مسارك ضد منافس تدريبي.
-            التحدي الحقيقي ضد طلاب آخرين يفتح مع باقة شاهين.
+          <p className="text-base text-[var(--text-muted)] text-center mb-3 max-w-xs leading-relaxed">
+            أسئلة سريعة من مسارك ضد منافس يجاوب بنفسه — اسبقه قبل ما ياخذ النقطة.
+          </p>
+          <p className="text-sm font-bold mb-8" style={{ color: "var(--gold)" }}>
+            الفوز = +{WIN_SILVER} Silver
           </p>
 
           <button
@@ -138,12 +205,21 @@ export default function ArenaPage() {
 
   if (gameState === "result") {
     const won = myScore > opScore;
+    const draw = myScore === opScore;
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center px-5 pb-nav relative z-[1]">
+        {won && <Confetti />}
         <div className="text-center">
-          <h2 className="font-black text-2xl text-[var(--text)] mb-2">
-            {won ? "فزت!" : "المرة القادمة!"}
+          <div className="flex justify-center mb-4">
+            <Bird id={won ? myBird : bot.bird} size={110} />
+          </div>
+          <h2 className="font-black text-3xl text-[var(--text)] mb-1">
+            {won ? "فزت!" : draw ? "تعادل!" : "المرة القادمة!"}
           </h2>
+          {won && (
+            <p className="font-black text-lg mb-4" style={{ color: "var(--gold)" }}>+{WIN_SILVER} Silver</p>
+          )}
+          {!won && <div className="mb-4" />}
           <div className="flex justify-center gap-8 mb-6">
             <div className="text-center">
               <p className="font-mono-nums text-3xl font-black text-[var(--accent-light)]">{myScore}</p>
@@ -151,7 +227,7 @@ export default function ArenaPage() {
             </div>
             <div className="text-center">
               <p className="font-mono-nums text-3xl font-black text-[var(--danger)]">{opScore}</p>
-              <p className="text-xs text-[var(--text-muted)]">المنافس</p>
+              <p className="text-xs text-[var(--text-muted)]">{bot.name}</p>
             </div>
           </div>
           <div className="space-y-2 max-w-xs w-full">
@@ -171,24 +247,37 @@ export default function ArenaPage() {
   return (
     <div className="min-h-dvh flex flex-col pb-nav relative z-[1]">
       <div className="px-5 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-[var(--text-muted)]">أنت</span>
-          <span className="font-mono-nums text-xl font-black text-[var(--accent-light)]">{myScore}</span>
+        <div className="flex items-center gap-2.5">
+          <Bird id={myBird} size={42} animate={false} />
+          <div>
+            <p className="text-xs font-bold text-[var(--text-muted)]">أنت</p>
+            <p className="font-mono-nums text-xl font-black leading-none text-[var(--accent-light)]">{myScore}</p>
+          </div>
         </div>
         <span className="font-mono-nums font-black text-[var(--text)]">
           {currentQ + 1} / {questions.length}
         </span>
-        <div className="flex items-center gap-2">
-          <span className="font-mono-nums text-xl font-black text-[var(--danger)]">{opScore}</span>
-          <span className="text-sm font-bold text-[var(--text-muted)]">المنافس</span>
+        <div className="flex items-center gap-2.5">
+          <div className="text-left">
+            <p className="text-xs font-bold text-[var(--text-muted)]">{bot.name}</p>
+            <p className="font-mono-nums text-xl font-black leading-none text-[var(--danger)]">{opScore}</p>
+          </div>
+          <div style={{ transform: "scaleX(-1)", transition: "filter 0.3s", filter: botFlash ? "drop-shadow(0 0 12px #EF4444)" : "none" }}>
+            <Bird id={bot.bird} size={42} animate={botFlash} />
+          </div>
         </div>
       </div>
+      {botFlash && (
+        <p className="text-center text-xs font-bold fade-in" style={{ color: "var(--danger)" }}>
+          {bot.name} جاوب صح — اسبقه!
+        </p>
+      )}
 
       <div className="px-5 flex-1 flex flex-col justify-center rise rise-1">
         <div className="glass rounded-3xl p-6 mb-4">
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs px-2.5 py-1 rounded-full glass text-[var(--accent-light)]">{q.subject}</span>
-            <span className="font-mono-nums font-black text-lg text-[var(--gold)]">{timeLeft}s</span>
+            <span className="font-mono-nums font-black text-lg" style={{ color: timeLeft <= 5 ? "#EF4444" : "var(--gold)" }}>{timeLeft}s</span>
           </div>
           <p className="text-lg font-bold text-[var(--text)] leading-relaxed">{q.q}</p>
         </div>
