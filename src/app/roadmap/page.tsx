@@ -226,7 +226,7 @@ function NextStepOverlay({
 
 /* ═══════════════════════════════════════════════════════ */
 export default function RoadmapPage() {
-  const [track, setTrack]             = useState<Track | null>(null);
+  const [primaryTrack, setPrimaryTrack] = useState<Track | null>(null);
   const [done, setDone]               = useState<string[]>([]);
   const [custom, setCustom]           = useState<CustomLesson[]>([]);
   const [loaded, setLoaded]           = useState(false);
@@ -248,14 +248,17 @@ export default function RoadmapPage() {
   const [tadreebItems, setTadreebItems] = useState<TrainingItem[]>([]);
   const [tadreebDone, setTadreebDone]   = useState<string[]>([]);
   const [tasreebatPct, setTasreebatPct] = useState(0);
-  const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
   const [trackExamDates, setTrackExamDates] = useState<Record<string, string>>({});
   const [activeTrackIds, setActiveTrackIds] = useState<TrackId[]>([]);
+  const [testTab, setTestTab] = useState<TrackId | "all">("all");
 
   useEffect(() => {
     const u = loadUser();
-    setTrack(getTrack(u?.track));
-    setActiveTrackIds((u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[]);
+    setPrimaryTrack(getTrack(u?.track));
+    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+    setActiveTrackIds(ids);
+    // افتراضياً نعرض الاختبار الأساسي (خريطته كاملة) و«الكل» يدمج
+    if (u?.track) setTestTab(u.track as TrackId);
     setDone(loadList<string>(DONE_KEY));
     setCustom(loadList<CustomLesson>(CUSTOM_KEY));
     setExamDate(loadExamDate());
@@ -274,8 +277,8 @@ export default function RoadmapPage() {
   useEffect(() => { if (loaded) saveTadreebItems(tadreebItems); }, [tadreebItems, loaded]);
   useEffect(() => { if (loaded) saveTadreebDone(tadreebDone); }, [tadreebDone, loaded]);
 
-  /* مزامنة نسب التقدم مع Firestore — تظهر في لوحة الأدمن */
-  const progress = track ? computeProgress(track, done, custom, tadreebItems, tadreebDone) : null;
+  /* مزامنة نسب التقدم مع Firestore — تظهر في لوحة الأدمن (للمسار الأساسي) */
+  const progress = primaryTrack ? computeProgress(primaryTrack, done, custom, tadreebItems, tadreebDone) : null;
   const taseesSync = progress?.taseesPct ?? -1;
   const tadreebSync = progress?.tadreebPct ?? -1;
   useEffect(() => {
@@ -283,7 +286,10 @@ export default function RoadmapPage() {
     syncUser({ taseesProgress: taseesSync, tadreebProgress: tadreebSync });
   }, [loaded, taseesSync, tadreebSync]);
 
-  if (!track) return <div className="min-h-dvh" />;
+  if (!primaryTrack) return <div className="min-h-dvh" />;
+
+  /* الاختبار المعروض: «الكل» = نظرة مدمجة · أو اختبار محدد = خريطته الكاملة */
+  const track: Track = testTab === "all" ? primaryTrack : getTrack(testTab);
 
   const isTahsili = track.id === "تحصيلي" || track.id === "تحصيلي مبكر";
   const doneSet = new Set(done);
@@ -354,7 +360,9 @@ export default function RoadmapPage() {
     if (!user || user.track === newTrackId) return;
 
     saveUser({ ...user, track: newTrackId });
-    setTrack(getTrack(newTrackId));
+    setPrimaryTrack(getTrack(newTrackId));
+    setActiveTrackIds((prev) => (prev.includes(newTrackId) ? prev : [newTrackId, ...prev]));
+    setTestTab(newTrackId);
     syncUser({ track: newTrackId, taseesProgress: 0, tadreebProgress: 0 });
 
     // إعادة ضبط كل تقدم الخريطة للمسار الجديد
@@ -552,6 +560,66 @@ export default function RoadmapPage() {
     );
   }
 
+  /* ── أدوات عرض الاختبارات ── */
+  const daysLeftOf = (d: string) =>
+    Math.round((new Date(d + "T00:00:00").getTime() - new Date(todayStr + "T00:00:00").getTime()) / 86400000);
+
+  const renderTestRow = (tid: TrackId, withSubjects: boolean) => {
+    const t = TRACKS.find((tr) => tr.id === tid);
+    if (!t) return null;
+    const d = trackExamDates[tid] ?? "";
+    const dl = d ? daysLeftOf(d) : null;
+    const urgentColor = dl === null ? "var(--text-muted)"
+      : dl < 0 ? "var(--text-muted)"
+      : dl <= 3 ? "#EF4444"
+      : dl <= 14 ? "#F97316"
+      : "#10B981";
+    return (
+      <div key={tid} className="rounded-2xl px-3.5 py-3"
+        style={{ background: `color-mix(in srgb, ${t.color} 7%, var(--surface))`, border: `1.5px solid ${t.color}33` }}>
+        <div className="flex items-center gap-3">
+          {/* الخط الدال على لون الاختبار */}
+          <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: t.color, minHeight: "36px" }} />
+          <div className="flex-1 min-w-0">
+            <p className="font-extrabold text-[16px]" style={{ color: "var(--text)" }}>{t.title}</p>
+            <p className="text-[12px] font-semibold mt-0.5" style={{ color: urgentColor }}>
+              {dl === null ? "اضغط 📅 لتحديد يوم الاختبار"
+                : dl < 0   ? "انتهى الاختبار"
+                : dl === 0 ? "الاختبار اليوم! 🎯"
+                : dl === 1 ? "الاختبار بكرة — راجع ونم بدري"
+                : `${dl} يوم على الاختبار`}
+            </p>
+          </div>
+          <label className="relative flex flex-col items-center gap-0.5 cursor-pointer flex-shrink-0 select-none" style={{ minWidth: "46px" }}>
+            <span className="text-[22px] leading-none">📅</span>
+            {d && (
+              <span className="text-[10px] font-bold" style={{ color: t.color }}>
+                {new Date(d + "T00:00:00").toLocaleDateString("ar-SA", { month: "short", day: "numeric" })}
+              </span>
+            )}
+            <input type="date" value={d} min={todayStr}
+              onChange={(e) => { const updated = { ...trackExamDates, [tid]: e.target.value }; setTrackExamDates(updated); saveTrackExamDates(updated); }}
+              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" style={{ fontSize: "0" }} />
+          </label>
+          {d && (
+            <button onClick={() => { const updated = { ...trackExamDates }; delete updated[tid]; setTrackExamDates(updated); saveTrackExamDates(updated); }}
+              className="text-[var(--text-muted)] text-base px-1.5 min-h-[40px] flex-shrink-0" aria-label="مسح">✕</button>
+          )}
+        </div>
+        {withSubjects && (
+          <div className="flex flex-wrap gap-1.5 mt-3 ps-4">
+            {t.subjects.map((s) => (
+              <span key={s.name} className="px-2.5 py-1 rounded-lg text-[12px] font-bold"
+                style={{ background: `color-mix(in srgb, ${s.color} 14%, transparent)`, color: s.color, border: `1px solid ${s.color}44` }}>
+                {s.name}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   /* ══ الصفحة الرئيسية ══ */
   return (
     <div className="min-h-dvh pb-nav relative z-[1]">
@@ -563,104 +631,71 @@ export default function RoadmapPage() {
       <Dome compact>
         <div className="flex items-center justify-between">
           <h1 className="title-lg" style={{ color: "var(--text)" }}>خريطة الطريق</h1>
-          <span className="dome-chip text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>{track.icon} {track.title}</span>
+          <span className="dome-chip text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>
+            {testTab === "all" ? "كل الاختبارات" : `${track.icon} ${track.title}`}
+          </span>
         </div>
       </Dome>
       <div className="h-5" />
 
-      {/* فلتر المادة */}
+      {/* فلتر الاختبارات — [الكل] + كل اختبار */}
       <div className="px-5 mb-4 flex flex-wrap gap-2">
         <button
-          onClick={() => setSubjectFilter(null)}
-          className="px-3 py-1.5 rounded-xl text-[13px] font-bold transition"
-          style={subjectFilter === null
+          onClick={() => { setTestTab("all"); setSelected(null); }}
+          className="px-3.5 py-1.5 rounded-xl text-[13px] font-bold transition"
+          style={testTab === "all"
             ? { background: "var(--accent)", color: "white", border: "1.5px solid var(--accent)" }
             : { background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}>
           الكل
         </button>
-        {track.subjects.map((s) => (
-          <button key={s.name}
-            onClick={() => setSubjectFilter(subjectFilter === s.name ? null : s.name)}
-            className="px-3 py-1.5 rounded-xl text-[13px] font-bold transition"
-            style={subjectFilter === s.name
-              ? { background: s.color, color: "white", border: `1.5px solid ${s.color}` }
-              : { background: "transparent", border: `1.5px solid ${s.color}55`, color: s.color }}>
-            {s.name}
-          </button>
-        ))}
+        {activeTrackIds.map((tid) => {
+          const t = TRACKS.find((tr) => tr.id === tid);
+          if (!t) return null;
+          const active = testTab === tid;
+          return (
+            <button key={tid}
+              onClick={() => { setTestTab(tid); setSelected(null); }}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[13px] font-bold transition"
+              style={active
+                ? { background: t.color, color: "white", border: `1.5px solid ${t.color}` }
+                : { background: "transparent", border: `1.5px solid ${t.color}55`, color: t.color }}>
+              <span className="w-2 h-2 rounded-full" style={{ background: active ? "white" : t.color }} />
+              {t.title}
+            </button>
+          );
+        })}
       </div>
 
-      {/* ══ يوم الاختبار — اختبار واحد لكل اختبار (التحصيلي/القدرات/آيلتس) ══ */}
-      {activeTrackIds.length > 0 && (
+      {/* ══ الاختبارات: «الكل» = نظرة مدمجة زي الآيفون · أو اختبار واحد ══ */}
+      {testTab === "all" ? (
         <div className="px-5 mb-5">
-          <p className="eyebrow mb-2.5 px-1">يوم الاختبار</p>
-          <div className="flex flex-col gap-2">
-            {activeTrackIds.map((tid) => {
-              const t = TRACKS.find((tr) => tr.id === tid);
-              if (!t) return null;
-              const d = trackExamDates[tid] ?? "";
-              const daysLeft = d
-                ? Math.round((new Date(d + "T00:00:00").getTime() - new Date(todayStr + "T00:00:00").getTime()) / 86400000)
-                : null;
-              const urgentColor = daysLeft === null ? "var(--text-muted)"
-                : daysLeft < 0 ? "var(--text-muted)"
-                : daysLeft <= 3 ? "#EF4444"
-                : daysLeft <= 14 ? "#F97316"
-                : "#10B981";
-              return (
-                <div key={tid} className="flex items-center gap-3 rounded-2xl px-3.5 py-3"
-                  style={{ background: `color-mix(in srgb, ${t.color} 7%, var(--surface))`, border: `1.5px solid ${t.color}33` }}>
-                  {/* الخط الدال على لون الاختبار */}
-                  <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: t.color, minHeight: "36px" }} />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-extrabold text-[16px]" style={{ color: "var(--text)" }}>{t.title}</p>
-                    <p className="text-[12px] font-semibold mt-0.5" style={{ color: urgentColor }}>
-                      {daysLeft === null ? "اضغط 📅 لتحديد يوم الاختبار"
-                        : daysLeft < 0   ? "انتهى الاختبار"
-                        : daysLeft === 0 ? "الاختبار اليوم! 🎯"
-                        : daysLeft === 1 ? "الاختبار بكرة — راجع ونم بدري"
-                        : `${daysLeft} يوم على الاختبار`}
-                    </p>
-                  </div>
-                  {/* زر التاريخ 📅 */}
-                  <label className="relative flex flex-col items-center gap-0.5 cursor-pointer flex-shrink-0 select-none" style={{ minWidth: "46px" }}>
-                    <span className="text-[22px] leading-none">📅</span>
-                    {d && (
-                      <span className="text-[10px] font-bold" style={{ color: t.color }}>
-                        {new Date(d + "T00:00:00").toLocaleDateString("ar-SA", { month: "short", day: "numeric" })}
-                      </span>
-                    )}
-                    <input
-                      type="date"
-                      value={d}
-                      min={todayStr}
-                      onChange={(e) => {
-                        const updated = { ...trackExamDates, [tid]: e.target.value };
-                        setTrackExamDates(updated);
-                        saveTrackExamDates(updated);
-                      }}
-                      className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                      style={{ fontSize: "0" }}
-                    />
-                  </label>
-                  {/* مسح التاريخ */}
-                  {d && (
-                    <button
-                      onClick={() => {
-                        const updated = { ...trackExamDates };
-                        delete updated[tid];
-                        setTrackExamDates(updated);
-                        saveTrackExamDates(updated);
-                      }}
-                      className="text-[var(--text-muted)] text-base px-1.5 min-h-[40px] flex-shrink-0" aria-label="مسح">✕</button>
-                  )}
-                </div>
-              );
-            })}
+          {/* شريط التخزين المدمج */}
+          {activeTrackIds.length > 0 && (
+            <div className="flex rounded-full overflow-hidden mb-4" style={{ height: "12px", gap: "3px" }}>
+              {activeTrackIds.map((tid) => {
+                const t = TRACKS.find((tr) => tr.id === tid);
+                const c = t?.color ?? "var(--accent)";
+                const d = trackExamDates[tid];
+                const dl = d ? daysLeftOf(d) : null;
+                const weight = (dl !== null && dl >= 0) ? Math.max(1, 60 - dl) : 30;
+                return <div key={tid} style={{ flex: weight, background: c, minWidth: "24px" }} />;
+              })}
+              <div style={{ flex: 8, background: "var(--surface2)", minWidth: "8px" }} />
+            </div>
+          )}
+          <p className="eyebrow mb-2.5 px-1">اختباراتك — اضغط اختبار فوق لفتح خريطته</p>
+          <div className="flex flex-col gap-2.5">
+            {activeTrackIds.map((tid) => renderTestRow(tid, true))}
           </div>
+        </div>
+      ) : (
+        <div className="px-5 mb-5">
+          {renderTestRow(testTab, false)}
         </div>
       )}
 
+      {/* ══ المراحل — تظهر فقط عند اختيار اختبار محدد ══ */}
+      {testTab !== "all" && (<>
       {/* ══ التأسيس ══ */}
       <PhaseSection title="التأسيس" num={1} pct={taseesPct} complete={taseesComplete}
         unlocked={true} color="var(--accent)" accentText="var(--accent-light)">
@@ -677,7 +712,7 @@ export default function RoadmapPage() {
           </div>
         )}
         <div className="grid grid-cols-2 gap-3">
-          {track.subjects.filter(s => !subjectFilter || s.name === subjectFilter).map((s) => {
+          {track.subjects.map((s) => {
             const ls = lessonsOf(s.name);
             const dc = ls.filter((l) => doneSet.has(l.key)).length;
             const p  = ls.length === 0 ? 0 : Math.round((dc / ls.length) * 100);
@@ -721,7 +756,7 @@ export default function RoadmapPage() {
           </div>
         )}
         <div className="grid grid-cols-2 gap-3 mb-3">
-          {track.subjects.filter(s => !subjectFilter || s.name === subjectFilter).map((s) => {
+          {track.subjects.map((s) => {
             const items = trainingOf(s.name);
             const dc = items.filter((t) => tadreebDoneSet.has(t.id)).length;
             const p  = items.length === 0 ? 0 : Math.round((dc / items.length) * 100);
@@ -843,6 +878,7 @@ export default function RoadmapPage() {
           </div>
         )}
       </PhaseSection>
+      </>)}
 
       {/* تقويم الشهر */}
       <div className="px-5 mt-2 rise rise-4">
