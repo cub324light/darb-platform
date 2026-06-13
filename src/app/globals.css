@@ -400,6 +400,34 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
 
 .pb-nav { padding-bottom: calc(var(--nav-h) + 28px); }
 
+/* ═══════ أبعاد متجاوبة: جوال (افتراضي) → آيباد → لابتوب ═══════ */
+
+/* آيباد و التابلت */
+@media (min-width: 768px) {
+  .page, .pb-nav, .app-col {
+    max-width: 680px;
+    margin-inline: auto;
+    width: 100%;
+  }
+  .dome {
+    border-radius: 28px;
+    margin-top: 14px;
+    border: 1px solid var(--ring-strong);
+  }
+  .float-nav {
+    max-width: 520px;
+    margin-inline: auto;
+  }
+  .page-content { padding: 0 24px; gap: 16px; }
+}
+
+/* لابتوب وشاشات كبيرة */
+@media (min-width: 1100px) {
+  .page, .pb-nav, .app-col { max-width: 820px; }
+  .float-nav { max-width: 560px; }
+  html { font-size: 18px; }
+}
+
 /* ═══════ شريط التنقل العائم — كبسولة ═══════ */
 .float-nav {
   position: fixed;

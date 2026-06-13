@@ -162,7 +162,7 @@ export default function DashboardPage() {
               الخريطة ←
             </Link>
           </div>
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className={`grid grid-cols-2 gap-2.5 ${track.subjects.length >= 4 ? "md:grid-cols-4" : ""}`}>
             {track.subjects.map((s, i) => (
               <Link key={s.name} href="/roadmap"
                 className="rounded-2xl px-4 py-3.5 flex items-center gap-3 transition active:scale-[0.97] subject-card"
@@ -263,7 +263,7 @@ export default function DashboardPage() {
         {/* الأدوات */}
         <section className="rise rise-4">
           <p className="eyebrow mb-2.5 px-1">الأدوات</p>
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
             {TOOLS.map((a) => (
               <Link key={a.href} href={a.href}
                 className="card flex items-center gap-3.5 transition active:scale-[0.96]"

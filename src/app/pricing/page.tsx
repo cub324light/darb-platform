@@ -19,7 +19,7 @@ export default function PricingPage() {
   const [lifeTime, setLifeTime] = useState(false);
 
   return (
-    <div className="min-h-dvh ">
+    <div className="min-h-dvh app-col">
       {/* Nav */}
       <div className="px-5 py-4 flex items-center justify-between glass border-b border-[var(--border)]">
         <Link href="/" className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition">

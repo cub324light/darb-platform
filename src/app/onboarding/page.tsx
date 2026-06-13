@@ -24,7 +24,7 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-dvh flex flex-col">
+    <div className="min-h-dvh flex flex-col app-col">
       <Dome hideControls>
         <div className="text-center py-6">
           <p className="font-black text-5xl mb-1"

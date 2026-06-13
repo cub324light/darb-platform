@@ -66,7 +66,7 @@ export default function LandingPage() {
           المنصة التي تعاملك كأخ
         </h1>
         <p className="text-lg leading-relaxed max-w-sm mb-9" style={{ color: "var(--text-dim)" }}>
-          تأسيس حقيقي للتحصيلي والقدرات وأرامكو CPC.
+          تأسيس حقيقي للقدرات والتحصيلي وأرامكو CPC واختبارات الإنجليزية.
           خطة، التزام، ووصول — بدون أرقام وهمية.
         </p>
         <Link href="/onboarding" className="btn-primary glow-blue px-10" style={{ textDecoration: "none" }}>
@@ -80,12 +80,12 @@ export default function LandingPage() {
       </section>
 
       {/* ═══ المسارات ═══ */}
-      <section className="px-6 py-20 max-w-lg mx-auto">
+      <section className="px-6 py-20 max-w-lg md:max-w-3xl mx-auto">
         <div className="reveal text-center mb-10">
           <p className="eyebrow mb-2" style={{ color: "var(--accent-light)" }}>المسارات</p>
           <h2 className="title-lg" style={{ color: "var(--text)" }}>وش تستعد له؟</h2>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {TRACKS.map((t, i) => (
             <div key={t.id} className={`reveal reveal-d${(i % 3) + 1} rounded-2xl p-4`}
               style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
@@ -101,7 +101,7 @@ export default function LandingPage() {
       </section>
 
       {/* ═══ أوربت ═══ */}
-      <section className="px-6 py-20 max-w-lg mx-auto">
+      <section className="px-6 py-20 max-w-lg md:max-w-3xl mx-auto">
         <div className="flex flex-col items-center text-center">
           <div className="reveal relative mb-8">
             <svg width="180" height="180" viewBox="0 0 180 180">
@@ -125,12 +125,12 @@ export default function LandingPage() {
       </section>
 
       {/* ═══ الأدوات ═══ */}
-      <section className="px-6 py-20 max-w-lg mx-auto">
+      <section className="px-6 py-20 max-w-lg md:max-w-3xl mx-auto">
         <div className="reveal text-center mb-10">
           <p className="eyebrow mb-2" style={{ color: "var(--accent-light)" }}>أدواتك</p>
           <h2 className="title-lg" style={{ color: "var(--text)" }}>كل اللي تحتاجه — بمكان واحد</h2>
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {FEATURES.map((f, i) => (
             <div key={f.title}
               className={`reveal ${i % 2 === 0 ? "reveal-right" : "reveal-left"} rounded-2xl p-6`}
@@ -143,12 +143,12 @@ export default function LandingPage() {
       </section>
 
       {/* ═══ الرفاق ═══ */}
-      <section className="px-6 py-20 max-w-lg mx-auto">
+      <section className="px-6 py-20 max-w-lg md:max-w-3xl mx-auto">
         <div className="reveal text-center mb-10">
           <p className="eyebrow mb-2" style={{ color: "var(--accent-light)" }}>الرفاق</p>
           <h2 className="title-lg" style={{ color: "var(--text)" }}>اختر طيرك — يرافقك للنتيجة</h2>
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
           {BIRDS.map((b, i) => (
             <div key={b.id} className={`reveal reveal-d${(i % 3) + 1} rounded-2xl p-3 flex flex-col items-center gap-1.5`}
               style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
