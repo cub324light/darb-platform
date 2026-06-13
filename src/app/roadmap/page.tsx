@@ -973,25 +973,23 @@ export default function RoadmapPage() {
       {/* تقويم الشهر + جدول اليوم — ملاصقان بدون فاصل */}
       <div className="px-5 mt-2 rise rise-4">
         <p className="eyebrow mb-3 px-1">تقويم الشهر</p>
-        {/* غلاف يقص الزوايا السفلية للتقويم ليلتحم مع الجدول */}
-        <div style={{ overflow: "hidden", borderRadius: "24px 24px 0 0" }}>
-          <Calendar
-            examDate={examDate}
-            onExamDateChange={(d) => { setExamDate(d); saveExamDate(d); }}
-            onDayClick={(date) => { setSchedTab("manual"); setSchedulerDate(date); }}
-            getDayInfo={(date) =>
-              getEventsForDate(date, events).map((ev) => ({
-                id: ev.id,
-                label: ev.type === "study" ? (ev.subject ?? "مذاكرة") : (ev.label ?? "مشغول"),
-                color: ev.type === "study"
-                  ? (ev.subject ? subjectColor(track, ev.subject) : "var(--accent-light)")
-                  : "var(--danger)",
-                from: ev.fromHour,
-                to: ev.toHour,
-              }))
-            }
-          />
-        </div>
+        <Calendar
+          flushBottom
+          examDate={examDate}
+          onExamDateChange={(d) => { setExamDate(d); saveExamDate(d); }}
+          onDayClick={(date) => { setSchedTab("manual"); setSchedulerDate(date); }}
+          getDayInfo={(date) =>
+            getEventsForDate(date, events).map((ev) => ({
+              id: ev.id,
+              label: ev.type === "study" ? (ev.subject ?? "مذاكرة") : (ev.label ?? "مشغول"),
+              color: ev.type === "study"
+                ? (ev.subject ? subjectColor(track, ev.subject) : "var(--accent-light)")
+                : "var(--danger)",
+              from: ev.fromHour,
+              to: ev.toHour,
+            }))
+          }
+        />
 
         {/* جدول اليوم — ملاصق للتقويم بدون فاصل */}
         {(() => {

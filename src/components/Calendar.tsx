@@ -60,11 +60,13 @@ export default function Calendar({
   onExamDateChange,
   onDayClick,
   getDayInfo,
+  flushBottom,
 }: {
   examDate: string | null;
   onExamDateChange: (d: string | null) => void;
   onDayClick?: (date: string) => void;
   getDayInfo?: (date: string) => DayPeekItem[];
+  flushBottom?: boolean;
 }) {
   const [mode, setMode] = useState<Mode>("gregorian");
   const [viewDate, setViewDate] = useState(new Date());
@@ -287,7 +289,15 @@ export default function Calendar({
   ) : null;
 
   return (
-    <div className="card" ref={rootRef} style={{ touchAction: "manipulation" }}>
+    <div className="card" ref={rootRef} style={{
+      touchAction: "manipulation",
+      ...(flushBottom ? {
+        borderBottomLeftRadius: 0,
+        borderBottomRightRadius: 0,
+        borderBottom: "none",
+        boxShadow: "none",
+      } : {}),
+    }}>
       {/* التبديل بين الميلادي والهجري */}
       <div className="flex gap-1 mb-4 p-1 rounded-2xl" style={{ background: "var(--surface2)" }}>
         {(["gregorian", "hijri"] as Mode[]).map((m) => (
