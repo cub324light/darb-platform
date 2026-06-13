@@ -2,11 +2,9 @@
 import { useState, useEffect, useRef } from "react";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
-import Bird from "@/components/Birds";
 import Confetti from "@/components/Confetti";
 import { loadUser, addSilver } from "@/lib/storage";
 import { getTrack, type TrackId } from "@/lib/tracks";
-import { BIRDS } from "@/lib/birds";
 
 /* المنافس التدريبي: اسم + طير عشوائي، يجاوب بنفسه */
 const BOT_NAMES = ["سعود", "نورة", "فهد", "ريم", "خالد", "لمى", "تركي", "العنود"];
@@ -74,25 +72,21 @@ export default function ArenaPage() {
   const [opScore, setOpScore] = useState(0);
   const [answered, setAnswered] = useState(false);
   const [timeLeft, setTimeLeft] = useState(15);
-  const [bot, setBot] = useState({ name: "سعود", bird: "raven" });
+  const [bot, setBot] = useState({ name: "سعود" });
   const [botFlash, setBotFlash] = useState(false);
-  const [myBird, setMyBird] = useState<string | undefined>(undefined);
+  const [myName, setMyName] = useState("أنت");
   const rewardedRef = useRef(false);
 
   useEffect(() => {
     const u = loadUser();
-    setMyBird(u?.bird);
+    setMyName(u?.name ?? "أنت");
     const track = getTrack(u?.track);
     const qs = [...QUESTION_BANK[track.id]].sort(() => Math.random() - 0.5);
     setQuestions(qs);
   }, []);
 
   const startGame = () => {
-    const pool = BIRDS.filter((b) => b.id !== (myBird ?? "falcon"));
-    setBot({
-      name: BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)],
-      bird: pool[Math.floor(Math.random() * pool.length)].id,
-    });
+    setBot({ name: BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)] });
     rewardedRef.current = false;
     const u = loadUser();
     const track = getTrack(u?.track);
@@ -177,13 +171,19 @@ export default function ArenaPage() {
         <div className="flex-1 flex flex-col items-center justify-center px-5 rise rise-1">
           <div className="flex items-center gap-6 mb-7">
             <div className="flex flex-col items-center gap-2">
-              <Bird id={myBird} size={86} />
-              <p className="text-sm font-black" style={{ color: "var(--accent-light)" }}>أنت</p>
+              <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-black text-white"
+                style={{ background: "linear-gradient(135deg,var(--accent-2),var(--accent-light))" }}>
+                {myName.charAt(0)}
+              </div>
+              <p className="text-sm font-black" style={{ color: "var(--accent-light)" }}>{myName}</p>
             </div>
             <p className="font-black text-3xl" style={{ color: "var(--gold)" }}>VS</p>
-            <div className="flex flex-col items-center gap-2" style={{ transform: "scaleX(-1)" }}>
-              <Bird id="raven" size={86} />
-              <p className="text-sm font-black" style={{ color: "var(--danger)", transform: "scaleX(-1)" }}>منافس</p>
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-black text-white"
+                style={{ background: "linear-gradient(135deg,#7f1d1d,#EF4444)" }}>
+                ?
+              </div>
+              <p className="text-sm font-black" style={{ color: "var(--danger)" }}>منافس</p>
             </div>
           </div>
           <h2 className="font-black text-2xl text-[var(--text)] mb-2">تحدي 1v1</h2>
@@ -216,7 +216,10 @@ export default function ArenaPage() {
         {won && <Confetti />}
         <div className="text-center">
           <div className="flex justify-center mb-4">
-            <Bird id={won ? myBird : bot.bird} size={110} />
+            <div className="w-24 h-24 rounded-2xl flex items-center justify-center text-4xl font-black text-white"
+              style={{ background: won ? "linear-gradient(135deg,var(--accent-2),var(--accent-light))" : draw ? "linear-gradient(135deg,#92400e,#F59E0B)" : "linear-gradient(135deg,#7f1d1d,#EF4444)" }}>
+              {won ? "🏆" : draw ? "🤝" : "💪"}
+            </div>
           </div>
           <h2 className="font-black text-3xl text-[var(--text)] mb-1">
             {won ? "فزت!" : draw ? "تعادل!" : "المرة القادمة!"}
@@ -253,9 +256,12 @@ export default function ArenaPage() {
     <div className="min-h-dvh flex flex-col pb-nav relative z-[1]">
       <div className="px-5 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <Bird id={myBird} size={42} animate={false} />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-base font-black text-white flex-shrink-0"
+            style={{ background: "linear-gradient(135deg,var(--accent-2),var(--accent-light))" }}>
+            {myName.charAt(0)}
+          </div>
           <div>
-            <p className="text-xs font-bold text-[var(--text-muted)]">أنت</p>
+            <p className="text-xs font-bold text-[var(--text-muted)]">{myName}</p>
             <p className="font-mono-nums text-xl font-black leading-none text-[var(--accent-light)]">{myScore}</p>
           </div>
         </div>
@@ -267,8 +273,13 @@ export default function ArenaPage() {
             <p className="text-xs font-bold text-[var(--text-muted)]">{bot.name}</p>
             <p className="font-mono-nums text-xl font-black leading-none text-[var(--danger)]">{opScore}</p>
           </div>
-          <div style={{ transform: "scaleX(-1)", transition: "filter 0.3s", filter: botFlash ? "drop-shadow(0 0 12px #EF4444)" : "none" }}>
-            <Bird id={bot.bird} size={42} animate={botFlash} />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-base font-black text-white flex-shrink-0 transition-all"
+            style={{
+              background: "linear-gradient(135deg,#7f1d1d,#EF4444)",
+              boxShadow: botFlash ? "0 0 14px #EF4444" : "none",
+              transform: botFlash ? "scale(1.12)" : "scale(1)",
+            }}>
+            {bot.name.charAt(0)}
           </div>
         </div>
       </div>

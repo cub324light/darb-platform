@@ -4,7 +4,6 @@ import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
-import Bird from "@/components/Birds";
 import { getTrack } from "@/lib/tracks";
 import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, type DarbUser, type ScheduleEvent } from "@/lib/storage";
 import { syncUser } from "@/lib/firestore";
@@ -174,7 +173,6 @@ export default function DashboardPage() {
               {greeting}
             </p>
           </div>
-          {user && <Bird id={user.bird} size={64} />}
         </div>
 
         {/* Silver + streak في صف واحد */}
