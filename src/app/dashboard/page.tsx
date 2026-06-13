@@ -1,12 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import { getTrack, TRACKS, type TrackId } from "@/lib/tracks";
-import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, saveExamDate, loadDashConfig, saveDashConfig, type DarbUser, type ScheduleEvent, type DashConfig, saveEvents } from "@/lib/storage";
+import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, saveExamDate, loadDashConfig, saveDashConfig, DASH_SECTION_META, type DarbUser, type ScheduleEvent, type DashItem, type DashSectionId, saveEvents } from "@/lib/storage";
 import DashAI from "@/components/DashAI";
 import { syncUser } from "@/lib/firestore";
 import DayScheduler, { getEventsForDate } from "@/components/DayScheduler";
@@ -71,14 +70,21 @@ export default function DashboardPage() {
   const [dueCards, setDueCards] = useState(0);
   const [week, setWeek] = useState<{ label: string; mins: number; isToday: boolean }[]>([]);
   const [suggestion, setSuggestion] = useState<{ text: string; sub: string; href: string; color: string } | null>(null);
-  const [dashConfig, setDashConfig] = useState<DashConfig | null>(null);
   const [schedOpen, setSchedOpen] = useState(false);
   const [schedTab, setSchedTab] = useState<"manual" | "ai">("manual");
   const [schedPrefill, setSchedPrefill] = useState("");
-  const [customizeOpen, setCustomizeOpen] = useState(false);
   const [allEvents, setAllEvents] = useState<ScheduleEvent[]>([]);
   const [examDate, setExamDate] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+
+  /* ── تخصيص الصفحة: ترتيب وإظهار الأقسام ── */
+  const [layout, setLayout] = useState<DashItem[]>([]);
+  const [editMode, setEditMode] = useState(false);
+  const [dragId, setDragId] = useState<DashSectionId | null>(null);
+  const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const dragIdRef = useRef<DashSectionId | null>(null);
+  const lastY = useRef(0);
+  const autoScroll = useRef<number | null>(null);
 
   useEffect(() => {
     setUser(loadUser());
@@ -132,7 +138,7 @@ export default function DashboardPage() {
       }
     } catch {}
 
-    setDashConfig(loadDashConfig());
+    setLayout(loadDashConfig().layout);
 
     // مزامنة مع Firestore
     const u = loadUser();
@@ -169,7 +175,6 @@ export default function DashboardPage() {
       })
     ).values()
   );
-  const activeSubjects = allSubjects.length ? allSubjects : track.subjects;
   const todayPct = Math.min(100, Math.round((todayMins / DAILY_TARGET) * 100));
 
   const TOOLS = [
@@ -179,18 +184,360 @@ export default function DashboardPage() {
     { href: "/roadmap",label: "الخريطة", desc: "تقدمك بالدروس" },
   ];
 
+  /* ── منطق التخصيص: إخفاء/إظهار وإعادة الترتيب بالسحب ── */
+  const persist = (next: DashItem[]) => { setLayout(next); saveDashConfig({ layout: next }); };
+
+  const setVisible = (id: DashSectionId, visible: boolean) => {
+    persist(layout.map((it) => (it.id === id ? { ...it, visible } : it)));
+  };
+
+  const tryReorder = (y: number) => {
+    const dId = dragIdRef.current;
+    if (!dId) return;
+    const visible = layout.filter((l) => l.visible);
+    for (const item of visible) {
+      if (item.id === dId) continue;
+      const el = itemRefs.current[item.id];
+      if (!el) continue;
+      const r = el.getBoundingClientRect();
+      if (y >= r.top && y <= r.bottom) {
+        setLayout((prev) => {
+          const arr = [...prev];
+          const from = arr.findIndex((a) => a.id === dId);
+          const to = arr.findIndex((a) => a.id === item.id);
+          if (from === -1 || to === -1 || from === to) return prev;
+          const [moved] = arr.splice(from, 1);
+          arr.splice(to, 0, moved);
+          return arr;
+        });
+        break;
+      }
+    }
+  };
+
+  const handleDragStart = (e: React.PointerEvent, id: DashSectionId) => {
+    e.preventDefault();
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    dragIdRef.current = id;
+    setDragId(id);
+    lastY.current = e.clientY;
+    if (autoScroll.current) window.clearInterval(autoScroll.current);
+    autoScroll.current = window.setInterval(() => {
+      const y = lastY.current;
+      const edge = 130;
+      if (y < edge) { window.scrollBy(0, -10); tryReorder(y); }
+      else if (y > window.innerHeight - edge) { window.scrollBy(0, 10); tryReorder(y); }
+    }, 16);
+  };
+
+  const handleDragMove = (e: React.PointerEvent) => {
+    if (!dragIdRef.current) return;
+    lastY.current = e.clientY;
+    tryReorder(e.clientY);
+  };
+
+  const handleDragEnd = () => {
+    if (autoScroll.current) { window.clearInterval(autoScroll.current); autoScroll.current = null; }
+    if (dragIdRef.current) {
+      dragIdRef.current = null;
+      setDragId(null);
+      setLayout((prev) => { saveDashConfig({ layout: prev }); return prev; });
+    }
+  };
+
+  useEffect(() => () => { if (autoScroll.current) window.clearInterval(autoScroll.current); }, []);
+
+  /* ── رسم كل قسم حسب معرّفه ── */
+  const renderSection = (id: DashSectionId) => {
+    switch (id) {
+      case "track":
+        return (
+          <section className="card">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="eyebrow">مسارك</p>
+                <p className="title-md" style={{ color: "var(--text)" }}>
+                  {activeTrackIds.length > 1 ? `${activeTrackIds.length} مسارات` : track.title}
+                </p>
+              </div>
+              <Link href="/roadmap" className="text-[17px] font-bold" style={{ color: "var(--accent-light)" }}>
+                الخريطة ←
+              </Link>
+            </div>
+            {activeTrackIds.map((trackId) => {
+              const t = TRACKS.find((tr) => tr.id === trackId) ?? track;
+              return (
+                <div key={trackId} className="mb-3 last:mb-0">
+                  {activeTrackIds.length > 1 && <p className="eyebrow mb-2">{t.title}</p>}
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {t.subjects.map((s, i) => (
+                      <Link key={s.name} href="/roadmap"
+                        className="rounded-2xl px-4 py-3.5 flex items-center gap-3 transition active:scale-[0.97] subject-card"
+                        style={{
+                          background: "var(--surface)",
+                          border: `1.5px solid ${s.color}55`,
+                          boxShadow: `0 0 10px ${s.color}18`,
+                          minHeight: "58px",
+                          animationDelay: `${i * 80}ms`,
+                        }}>
+                        <div className="w-2 h-2 rounded-full flex-shrink-0 subject-dot" style={{ background: s.color, boxShadow: `0 0 5px ${s.color}88` }} />
+                        <span className="font-bold text-[17px]" style={{ color: "var(--text)" }}>{s.name}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </section>
+        );
+
+      case "today":
+        return (
+          <section className="card">
+            <div className="flex items-center justify-between mb-3">
+              <p className="title-md" style={{ color: "var(--text)" }}>يومك</p>
+              <p className="num-hero text-[17px]" style={{ color: "var(--text-dim)" }}>
+                {time ? time.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", hour12: true }) : "--:--"}
+              </p>
+            </div>
+            {examDays !== null && examDays >= 0 && (
+              <div className="rounded-xl px-3.5 py-2.5 mb-3 text-center"
+                style={{
+                  background: examDays <= 1 ? "color-mix(in srgb, #EF4444 10%, transparent)"
+                    : examDays <= 7 ? "color-mix(in srgb, #F97316 10%, transparent)"
+                    : "color-mix(in srgb, var(--gold) 10%, transparent)",
+                  border: examDays <= 1 ? "1px solid color-mix(in srgb, #EF4444 30%, transparent)"
+                    : examDays <= 7 ? "1px solid color-mix(in srgb, #F97316 30%, transparent)"
+                    : "1px solid color-mix(in srgb, var(--gold) 30%, transparent)",
+                }}>
+                <span className="text-[15px] font-bold"
+                  style={{ color: examDays <= 1 ? "#EF4444" : examDays <= 7 ? "#F97316" : "var(--gold)" }}>
+                  {examDays === 0 ? "اختبارك اليوم — بالتوفيق!"
+                    : examDays === 1 ? "اختبارك بكرة — راجع ونم بدري"
+                    : examDays <= 7 ? `${examDays} أيام على الاختبار — شدّ الحزام`
+                    : `باقي ${examDays} يوم على الاختبار`}
+                </span>
+              </div>
+            )}
+            <div className="h-2.5 rounded-full overflow-hidden mb-2.5" style={{ background: "var(--surface2)" }}>
+              <div className="h-full rounded-full transition-all duration-700"
+                style={{ width: `${todayPct}%`, background: "linear-gradient(90deg, var(--accent-2), var(--accent-hi))" }} />
+            </div>
+            <p className="body-sm mb-4">
+              {todayMins === 0
+                ? "ما بدأت اليوم — جلسة وحدة تكسر الصفر."
+                : `${todayMins} دقيقة من هدف ${DAILY_TARGET} دقيقة.`}
+            </p>
+            <Link href="/orbit" className="btn-primary block text-center" style={{ textDecoration: "none" }}>
+              ابدأ جلسة أوربت
+            </Link>
+          </section>
+        );
+
+      case "schedule":
+        return (
+          <section className="card">
+            <div className="flex items-center justify-between mb-3">
+              <p className="title-md" style={{ color: "var(--text)" }}>جدول اليوم</p>
+            </div>
+            {todayEvents.length === 0 ? (
+              <div className="flex items-center justify-center gap-2 rounded-2xl py-5"
+                style={{ background: "var(--surface2)", border: "1.5px dashed var(--border)", minHeight: "64px" }}>
+                <span className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>
+                  لا يوجد جدول اليوم — اضغط «خطة ذكية» تحت
+                </span>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {todayEvents.map((ev) => (
+                  <div key={ev.id} className="flex items-center gap-3 py-2.5 border-b border-[var(--border)] last:border-0">
+                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{ background: ev.type === "study" ? "var(--accent-light)" : "var(--danger)" }} />
+                    <span className="text-[17px] font-semibold flex-1" style={{ color: "var(--text)" }}>
+                      {ev.type === "study" ? (ev.subject ?? "") : (ev.label ?? "")}
+                    </span>
+                    <span className="text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>
+                      {fmtHour(ev.fromHour)} → {fmtHour(ev.toHour)}
+                    </span>
+                    <button
+                      onClick={() => {
+                        const updated = allEvents.filter((e) => e.id !== ev.id);
+                        setAllEvents(updated);
+                        saveEvents(updated);
+                        const tod = new Date().toISOString().slice(0, 10);
+                        setTodayEvents(getEventsForDate(tod, updated));
+                      }}
+                      className="text-[var(--danger)] text-base px-2 min-h-[44px] flex-shrink-0"
+                      aria-label="حذف">✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2 mt-3">
+              <button onClick={() => { setSchedOpen(true); setSchedTab("manual"); }}
+                className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
+                style={{ background: "transparent", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
+                تعديل يدوي
+              </button>
+              <button onClick={() => { setSchedOpen(true); setSchedTab("ai"); }}
+                className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
+                style={{ background: "var(--accent)", color: "white", border: "none" }}>
+                خطة ذكية
+              </button>
+            </div>
+          </section>
+        );
+
+      case "ai":
+        return (
+          <DashAI
+            subjects={allSubjects.map((s) => s.name)}
+            onOpenScheduler={(tab, prefill) => { setSchedTab(tab); setSchedPrefill(prefill ?? ""); setSchedOpen(true); }}
+          />
+        );
+
+      case "weekly":
+        return (
+          <section className="card">
+            <div className="flex items-center justify-between mb-4">
+              <p className="title-md" style={{ color: "var(--text)" }}>أسبوعك</p>
+              <p className="text-[13px] font-semibold" style={{ color: "var(--text-muted)" }}>
+                {week.reduce((a, d) => a + d.mins, 0)} دقيقة
+              </p>
+            </div>
+            <div className="flex items-end justify-between gap-2" style={{ height: "92px" }}>
+              {week.map((d, i) => {
+                const max = Math.max(...week.map((w) => w.mins), DAILY_TARGET / 2);
+                const h = d.mins === 0 ? 4 : Math.max(8, Math.round((d.mins / max) * 72));
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1.5 min-w-0">
+                    {d.mins > 0 && (
+                      <span className="font-mono-nums text-[10px] font-bold" style={{ color: d.isToday ? "var(--accent-light)" : "var(--text-muted)" }}>
+                        {d.mins}
+                      </span>
+                    )}
+                    <div className="w-full rounded-full transition-all duration-700"
+                      style={{
+                        height: `${h}px`,
+                        maxWidth: "26px",
+                        background: d.isToday
+                          ? "linear-gradient(180deg, var(--accent-hi), var(--accent-2))"
+                          : d.mins > 0 ? "color-mix(in srgb, var(--accent) 45%, var(--surface2))" : "var(--surface2)",
+                        boxShadow: d.isToday && d.mins > 0 ? "0 0 10px color-mix(in srgb, var(--accent) 40%, transparent)" : "none",
+                      }} />
+                    <span className="text-[11px] font-bold" style={{ color: d.isToday ? "var(--accent-light)" : "var(--text-muted)" }}>
+                      {d.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        );
+
+      case "quote":
+        return (
+          <section className="rounded-2xl px-5 py-4"
+            style={{
+              background: "linear-gradient(135deg, color-mix(in srgb, var(--gold) 8%, transparent), transparent), var(--surface)",
+              border: "1px solid color-mix(in srgb, var(--gold) 18%, transparent)",
+            }}>
+            <p className="text-[15px] font-bold leading-relaxed" style={{ color: "var(--text-dim)" }}>
+              &ldquo;{quoteOfToday()}&rdquo;
+            </p>
+          </section>
+        );
+
+      case "stats":
+        return (
+          <section>
+            <p className="eyebrow mb-2.5 px-1">إحصاءاتك</p>
+            <div className="grid grid-cols-3 gap-2.5">
+              {[
+                { val: focusHours,  unit: "ساعة تركيز", color: "var(--accent-light)" },
+                { val: sessions,    unit: "جلسة أوربت", color: "var(--success)" },
+                { val: errorsCount, unit: "خطأ بالخزنة", color: "var(--danger)" },
+              ].map((s) => (
+                <div key={s.unit} className="card text-center" style={{ padding: "18px 8px" }}>
+                  <p className="num-hero text-[34px] leading-none" style={{ color: s.color }}>{s.val}</p>
+                  <p className="text-[17px] font-semibold mt-2 whitespace-nowrap" style={{ color: "var(--text-muted)" }}>{s.unit}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+
+      case "tools":
+        return (
+          <section>
+            <p className="eyebrow mb-2.5 px-1">الأدوات</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+              {TOOLS.map((a) => (
+                <Link key={a.href} href={a.href}
+                  className="card flex items-center gap-3.5 transition active:scale-[0.96]"
+                  style={{ padding: "16px", minHeight: "82px", textDecoration: "none" }}>
+                  <div className="min-w-0">
+                    <p className="font-extrabold text-[15.5px] leading-tight" style={{ color: "var(--text)" }}>{a.label}</p>
+                    <p className="text-[12.5px] mt-1" style={{ color: "var(--text-muted)" }}>{a.desc}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        );
+
+      case "community":
+        return (
+          <section className="grid grid-cols-2 gap-2.5">
+            <Link href="/council" className="card flex items-center gap-3 active:scale-[0.97] transition"
+              style={{ minHeight: "74px", textDecoration: "none" }}>
+              <div>
+                <p className="font-extrabold text-[17px]" style={{ color: "var(--text)" }}>المجلس</p>
+                <p className="text-[17px]" style={{ color: "var(--text-muted)" }}>نقاشات الطلاب</p>
+              </div>
+            </Link>
+            <Link href="/arena" className="card flex items-center gap-3 active:scale-[0.97] transition"
+              style={{ minHeight: "74px", textDecoration: "none", borderColor: "color-mix(in srgb, var(--gold) 25%, transparent)" }}>
+              <div>
+                <p className="font-extrabold text-[17px]" style={{ color: "var(--gold)" }}>الأرينا</p>
+                <p className="text-[17px]" style={{ color: "var(--text-muted)" }}>تحدي 1v1</p>
+              </div>
+            </Link>
+          </section>
+        );
+
+      case "certificate":
+        return (
+          <section className="card flex items-center gap-4"
+            style={{ borderColor: "color-mix(in srgb, var(--gold) 22%, transparent)" }}>
+            <div className="flex-1 min-w-0">
+              <p className="font-extrabold text-[14.5px]" style={{ color: "var(--gold)" }}>شهادة الانضباط الرقمية</p>
+              <p className="text-[17px]" style={{ color: "var(--text-muted)" }}>
+                {focusHours === 0 ? "تبدأ مع أول ساعة تركيز" : `${focusHours} ساعة موثقة حتى الآن`}
+              </p>
+            </div>
+            <Link href="/pricing" className="text-[17px] font-bold flex-shrink-0" style={{ color: "var(--accent-light)" }}>
+              شاهين ←
+            </Link>
+          </section>
+        );
+    }
+  };
+
+  const visibleItems = layout.filter((l) => l.visible);
+  const hiddenItems = layout.filter((l) => !l.visible);
+
   return (
     <div className="page">
 
       <PageGuide pageKey="dashboard" steps={[
         { title: "أهلاً بك في درب", desc: "هذي صفحتك الرئيسية — تشوف فيها تقدم يومك، الستريك، وSilver اللي جمعته من جلسات التركيز." },
         { title: "يومك بنظرة وحدة", desc: "شريط التقدم يوضح كم ذاكرت اليوم من هدفك، وجدول اليوم يعرض المواعيد اللي بنيتها مع المساعد الذكي." },
-        { title: "أدواتك تحت", desc: "من القائمة السفلية توصل لأوربت (التايمر)، الخريطة، خزنة الأخطاء، وبنك المراجعة. كل وحدة لها دور." },
+        { title: "رتّبها على ذوقك", desc: "اضغط «تخصيص» فوق — تقدر تسحب الأقسام وترتّبها، تخفيها بزر ✕، وترجّعها من «إضافة قسم» تحت." },
       ]} />
 
       {/* ═══ القبة ═══ */}
       <Dome compact>
-        {/* أهلاً بخط كبير + الرفيق */}
         <div className="flex items-start justify-between mb-2">
           <div>
             <p className="title-lg text-right mb-1" style={{ color: "var(--text)" }}>
@@ -202,7 +549,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Silver + streak في صف واحد */}
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-1.5">
             <span className="font-mono-nums font-black text-3xl leading-none" style={{ color: "var(--gold-light)" }}>{silver}</span>
@@ -224,8 +570,8 @@ export default function DashboardPage() {
       {/* ═══ المحتوى ═══ */}
       <div className="page-content mt-4">
 
-        {/* تحذير الستريك — يظهر المساء إذا ما فيه جلسة اليوم */}
-        {streak > 0 && todayMins === 0 && (time?.getHours() ?? 0) >= 17 && (
+        {/* تنبيهات ثابتة (لا تُرتّب) */}
+        {!editMode && streak > 0 && todayMins === 0 && (time?.getHours() ?? 0) >= 17 && (
           <Link href="/orbit" className="rise block rounded-2xl px-4 py-3.5 transition active:scale-[0.98]"
             style={{
               background: "color-mix(in srgb, #EF4444 9%, transparent)",
@@ -234,20 +580,15 @@ export default function DashboardPage() {
             }}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[15px] font-black" style={{ color: "#EF4444" }}>
-                  ستريك {streak} يوم بخطر 🔥
-                </p>
-                <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>
-                  جلسة وحدة قبل منتصف الليل تنقذه
-                </p>
+                <p className="text-[15px] font-black" style={{ color: "#EF4444" }}>ستريك {streak} يوم بخطر 🔥</p>
+                <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>جلسة وحدة قبل منتصف الليل تنقذه</p>
               </div>
               <span className="text-lg font-black" style={{ color: "#EF4444" }}>←</span>
             </div>
           </Link>
         )}
 
-        {/* اقتراح ذكي */}
-        {suggestion && (
+        {!editMode && suggestion && (
           <Link href={suggestion.href} className="rise block rounded-2xl px-4 py-3.5 transition active:scale-[0.98]"
             style={{
               background: `color-mix(in srgb, ${suggestion.color} 9%, transparent)`,
@@ -265,239 +606,8 @@ export default function DashboardPage() {
           </Link>
         )}
 
-        {/* زر تخصيص الصفحة */}
-        <div className="flex justify-end">
-          <button onClick={() => setCustomizeOpen(true)}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-bold"
-            style={{ background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
-            <span>⚙</span>
-            <span>تخصيص</span>
-          </button>
-        </div>
-
-        {/* المسار */}
-        <section className="card rise rise-1">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="eyebrow">مسارك</p>
-              <p className="title-md" style={{ color: "var(--text)" }}>
-                {activeTrackIds.length > 1 ? `${activeTrackIds.length} مسارات` : track.title}
-              </p>
-            </div>
-            <Link href="/roadmap" className="text-[17px] font-bold" style={{ color: "var(--accent-light)" }}>
-              الخريطة ←
-            </Link>
-          </div>
-          {activeTrackIds.map((trackId) => {
-            const t = TRACKS.find((tr) => tr.id === trackId) ?? track;
-            return (
-              <div key={trackId} className="mb-3 last:mb-0">
-                {activeTrackIds.length > 1 && (
-                  <p className="eyebrow mb-2">{t.title}</p>
-                )}
-                <div className="grid grid-cols-2 gap-2.5">
-                  {t.subjects.map((s, i) => (
-                    <Link key={s.name} href="/roadmap"
-                      className="rounded-2xl px-4 py-3.5 flex items-center gap-3 transition active:scale-[0.97] subject-card"
-                      style={{
-                        background: "var(--surface)",
-                        border: `1.5px solid ${s.color}55`,
-                        boxShadow: `0 0 10px ${s.color}18`,
-                        minHeight: "58px",
-                        animationDelay: `${i * 80}ms`,
-                      }}>
-                      <div className="w-2 h-2 rounded-full flex-shrink-0 subject-dot" style={{ background: s.color, boxShadow: `0 0 5px ${s.color}88` }} />
-                      <span className="font-bold text-[17px]" style={{ color: "var(--text)" }}>{s.name}</span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </section>
-
-        {/* اليوم: تقدم + ساعة + CTA في بطاقة واحدة */}
-        <section className="card rise rise-2">
-          <div className="flex items-center justify-between mb-3">
-            <p className="title-md" style={{ color: "var(--text)" }}>يومك</p>
-            <p className="num-hero text-[17px]" style={{ color: "var(--text-dim)" }}>
-              {time ? time.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", hour12: true }) : "--:--"}
-            </p>
-          </div>
-          {examDays !== null && examDays >= 0 && (
-            <div className="rounded-xl px-3.5 py-2.5 mb-3 text-center"
-              style={{
-                background: examDays <= 1 ? "color-mix(in srgb, #EF4444 10%, transparent)"
-                  : examDays <= 7 ? "color-mix(in srgb, #F97316 10%, transparent)"
-                  : "color-mix(in srgb, var(--gold) 10%, transparent)",
-                border: examDays <= 1 ? "1px solid color-mix(in srgb, #EF4444 30%, transparent)"
-                  : examDays <= 7 ? "1px solid color-mix(in srgb, #F97316 30%, transparent)"
-                  : "1px solid color-mix(in srgb, var(--gold) 30%, transparent)",
-              }}>
-              <span className="text-[15px] font-bold"
-                style={{ color: examDays <= 1 ? "#EF4444" : examDays <= 7 ? "#F97316" : "var(--gold)" }}>
-                {examDays === 0 ? "اختبارك اليوم — بالتوفيق!"
-                  : examDays === 1 ? "اختبارك بكرة — راجع ونم بدري"
-                  : examDays <= 7 ? `${examDays} أيام على الاختبار — شدّ الحزام`
-                  : `باقي ${examDays} يوم على الاختبار`}
-              </span>
-            </div>
-          )}
-          <div className="h-2.5 rounded-full overflow-hidden mb-2.5" style={{ background: "var(--surface2)" }}>
-            <div className="h-full rounded-full transition-all duration-700"
-              style={{ width: `${todayPct}%`, background: "linear-gradient(90deg, var(--accent-2), var(--accent-hi))" }} />
-          </div>
-          <p className="body-sm mb-4">
-            {todayMins === 0
-              ? "ما بدأت اليوم — جلسة وحدة تكسر الصفر."
-              : `${todayMins} دقيقة من هدف ${DAILY_TARGET} دقيقة.`}
-          </p>
-          <Link href="/orbit" className="btn-primary block text-center" style={{ textDecoration: "none" }}>
-            ابدأ جلسة أوربت
-          </Link>
-        </section>
-
-        {/* جدول اليوم — مع تعديل يدوي / خطة ذكية تحته مباشرة */}
-        {(dashConfig?.showSchedule ?? true) && <section className="card rise rise-2">
-          <div className="flex items-center justify-between mb-3">
-            <p className="title-md" style={{ color: "var(--text)" }}>جدول اليوم</p>
-          </div>
-
-          {todayEvents.length === 0 ? (
-            <div
-              className="flex items-center justify-center gap-2 rounded-2xl py-5"
-              style={{
-                background: "var(--surface2)",
-                border: "1.5px dashed var(--border)",
-                minHeight: "64px",
-              }}
-            >
-              <span className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>
-                لا يوجد جدول اليوم — اضغط «خطة ذكية» تحت
-              </span>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {todayEvents.map((ev) => (
-                <div
-                  key={ev.id}
-                  className="flex items-center gap-3 py-2.5 border-b border-[var(--border)] last:border-0"
-                >
-                  <div
-                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                    style={{ background: ev.type === "study" ? "var(--accent-light)" : "var(--danger)" }}
-                  />
-                  <span className="text-[17px] font-semibold flex-1" style={{ color: "var(--text)" }}>
-                    {ev.type === "study" ? (ev.subject ?? "") : (ev.label ?? "")}
-                  </span>
-                  <span className="text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>
-                    {fmtHour(ev.fromHour)} → {fmtHour(ev.toHour)}
-                  </span>
-                  <button
-                    onClick={() => {
-                      const updated = allEvents.filter((e) => e.id !== ev.id);
-                      setAllEvents(updated);
-                      saveEvents(updated);
-                      const tod = new Date().toISOString().slice(0, 10);
-                      setTodayEvents(getEventsForDate(tod, updated));
-                    }}
-                    className="text-[var(--danger)] text-base px-2 min-h-[44px] flex-shrink-0"
-                    aria-label="حذف">✕</button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="flex gap-2 mt-3">
-            <button onClick={() => { setSchedOpen(true); setSchedTab("manual"); }}
-              className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
-              style={{ background: "transparent", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
-              تعديل يدوي
-            </button>
-            <button onClick={() => { setSchedOpen(true); setSchedTab("ai"); }}
-              className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
-              style={{ background: "var(--accent)", color: "white", border: "none" }}>
-              خطة ذكية
-            </button>
-          </div>
-        </section>}
-
-        {/* دربي الذكي — تحت الجدول مباشرة */}
-        {(dashConfig?.showAI ?? true) && <DashAI
-          subjects={allSubjects.map((s) => s.name)}
-          onOpenScheduler={(tab, prefill) => { setSchedTab(tab); setSchedPrefill(prefill ?? ""); setSchedOpen(true); }}
-        />}
-
-        {/* أسبوعك — رسم حقيقي من جلساتك */}
-        {(dashConfig?.showWeekly ?? true) && (
-        <section className="card rise rise-3">
-          <div className="flex items-center justify-between mb-4">
-            <p className="title-md" style={{ color: "var(--text)" }}>أسبوعك</p>
-            <p className="text-[13px] font-semibold" style={{ color: "var(--text-muted)" }}>
-              {week.reduce((a, d) => a + d.mins, 0)} دقيقة
-            </p>
-          </div>
-          <div className="flex items-end justify-between gap-2" style={{ height: "92px" }}>
-            {week.map((d, i) => {
-              const max = Math.max(...week.map((w) => w.mins), DAILY_TARGET / 2);
-              const h = d.mins === 0 ? 4 : Math.max(8, Math.round((d.mins / max) * 72));
-              return (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1.5 min-w-0">
-                  {d.mins > 0 && (
-                    <span className="font-mono-nums text-[10px] font-bold" style={{ color: d.isToday ? "var(--accent-light)" : "var(--text-muted)" }}>
-                      {d.mins}
-                    </span>
-                  )}
-                  <div className="w-full rounded-full transition-all duration-700"
-                    style={{
-                      height: `${h}px`,
-                      maxWidth: "26px",
-                      background: d.isToday
-                        ? "linear-gradient(180deg, var(--accent-hi), var(--accent-2))"
-                        : d.mins > 0 ? "color-mix(in srgb, var(--accent) 45%, var(--surface2))" : "var(--surface2)",
-                      boxShadow: d.isToday && d.mins > 0 ? "0 0 10px color-mix(in srgb, var(--accent) 40%, transparent)" : "none",
-                    }} />
-                  <span className="text-[11px] font-bold" style={{ color: d.isToday ? "var(--accent-light)" : "var(--text-muted)" }}>
-                    {d.label}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-        )}
-
-        {/* اقتباس اليوم */}
-        <section className="rise rise-3 rounded-2xl px-5 py-4"
-          style={{
-            background: "linear-gradient(135deg, color-mix(in srgb, var(--gold) 8%, transparent), transparent), var(--surface)",
-            border: "1px solid color-mix(in srgb, var(--gold) 18%, transparent)",
-          }}>
-          <p className="text-[15px] font-bold leading-relaxed" style={{ color: "var(--text-dim)" }}>
-            &ldquo;{quoteOfToday()}&rdquo;
-          </p>
-        </section>
-
-        {/* الإحصاءات */}
-        {(dashConfig?.showStats ?? true) && <section className="rise rise-3">
-          <p className="eyebrow mb-2.5 px-1">إحصاءاتك</p>
-          <div className="grid grid-cols-3 gap-2.5">
-            {[
-              { val: focusHours,  unit: "ساعة تركيز", color: "var(--accent-light)" },
-              { val: sessions,    unit: "جلسة أوربت", color: "var(--success)" },
-              { val: errorsCount, unit: "خطأ بالخزنة", color: "var(--danger)" },
-            ].map((s) => (
-              <div key={s.unit} className="card text-center" style={{ padding: "18px 8px" }}>
-                <p className="num-hero text-[34px] leading-none" style={{ color: s.color }}>{s.val}</p>
-                <p className="text-[17px] font-semibold mt-2 whitespace-nowrap" style={{ color: "var(--text-muted)" }}>{s.unit}</p>
-              </div>
-            ))}
-          </div>
-        </section>}
-
-        {/* تنبيه المراجعة المستحقة */}
-        {dueCards > 0 && (
-          <Link href="/review" className="rise rise-4 block rounded-2xl px-4 py-3.5 transition active:scale-[0.98]"
+        {!editMode && dueCards > 0 && (
+          <Link href="/review" className="rise block rounded-2xl px-4 py-3.5 transition active:scale-[0.98]"
             style={{
               background: "color-mix(in srgb, var(--success) 8%, transparent)",
               border: "1px solid color-mix(in srgb, var(--success) 25%, transparent)",
@@ -505,66 +615,124 @@ export default function DashboardPage() {
             }}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[15px] font-black" style={{ color: "var(--success)" }}>
-                  {dueCards} بطاقة مراجعة مستحقة اليوم
-                </p>
-                <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>
-                  راجعها الحين — قبل ما تنسى
-                </p>
+                <p className="text-[15px] font-black" style={{ color: "var(--success)" }}>{dueCards} بطاقة مراجعة مستحقة اليوم</p>
+                <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>راجعها الحين — قبل ما تنسى</p>
               </div>
               <span className="text-lg font-black" style={{ color: "var(--success)" }}>←</span>
             </div>
           </Link>
         )}
 
-        {/* الأدوات */}
-        {(dashConfig?.showTools ?? true) && <section className="rise rise-4">
-          <p className="eyebrow mb-2.5 px-1">الأدوات</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-            {TOOLS.map((a) => (
-              <Link key={a.href} href={a.href}
-                className="card flex items-center gap-3.5 transition active:scale-[0.96]"
-                style={{ padding: "16px", minHeight: "82px", textDecoration: "none" }}>
-                <div className="min-w-0">
-                  <p className="font-extrabold text-[15.5px] leading-tight" style={{ color: "var(--text)" }}>{a.label}</p>
-                  <p className="text-[12.5px] mt-1" style={{ color: "var(--text-muted)" }}>{a.desc}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>}
-
-        {/* المجتمع */}
-        <section className="grid grid-cols-2 gap-2.5 rise rise-5">
-          <Link href="/council" className="card flex items-center gap-3 active:scale-[0.97] transition"
-            style={{ minHeight: "74px", textDecoration: "none" }}>
-            <div>
-              <p className="font-extrabold text-[17px]" style={{ color: "var(--text)" }}>المجلس</p>
-              <p className="text-[17px]" style={{ color: "var(--text-muted)" }}>نقاشات الطلاب</p>
-            </div>
-          </Link>
-          <Link href="/arena" className="card flex items-center gap-3 active:scale-[0.97] transition"
-            style={{ minHeight: "74px", textDecoration: "none", borderColor: "color-mix(in srgb, var(--gold) 25%, transparent)" }}>
-            <div>
-              <p className="font-extrabold text-[17px]" style={{ color: "var(--gold)" }}>الأرينا</p>
-              <p className="text-[17px]" style={{ color: "var(--text-muted)" }}>تحدي 1v1</p>
-            </div>
-          </Link>
-        </section>
-
-        {/* الشهادة + الترقية */}
-        <section className="card flex items-center gap-4 rise rise-6"
-          style={{ borderColor: "color-mix(in srgb, var(--gold) 22%, transparent)" }}>
-          <div className="flex-1 min-w-0">
-            <p className="font-extrabold text-[14.5px]" style={{ color: "var(--gold)" }}>شهادة الانضباط الرقمية</p>
-            <p className="text-[17px]" style={{ color: "var(--text-muted)" }}>
-              {focusHours === 0 ? "تبدأ مع أول ساعة تركيز" : `${focusHours} ساعة موثقة حتى الآن`}
+        {/* شريط التخصيص */}
+        <div className="flex justify-between items-center">
+          {editMode ? (
+            <p className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>
+              اسحب ⠿ للترتيب · اضغط ✕ للإخفاء
             </p>
+          ) : <span />}
+          <button onClick={() => { if (editMode) saveDashConfig({ layout }); setEditMode((v) => !v); }}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] font-bold transition active:scale-95"
+            style={editMode
+              ? { background: "var(--accent)", color: "white", border: "none" }
+              : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+            <span>{editMode ? "✓" : "⚙"}</span>
+            <span>{editMode ? "تم" : "تخصيص"}</span>
+          </button>
+        </div>
+
+        {/* الأقسام القابلة للترتيب */}
+        {visibleItems.map((item) => (
+          <div
+            key={item.id}
+            ref={(el) => { itemRefs.current[item.id] = el; }}
+            className={`relative ${dragId === item.id ? "z-50" : ""}`}
+            style={
+              editMode
+                ? {
+                    transition: dragId === item.id ? "none" : "transform .12s ease",
+                    transform: dragId === item.id ? "scale(1.02)" : "none",
+                    boxShadow: dragId === item.id ? "0 14px 34px rgba(0,0,0,.5)" : "none",
+                    borderRadius: "20px",
+                    outline: "2px dashed color-mix(in srgb, var(--accent) 45%, transparent)",
+                    outlineOffset: "3px",
+                    opacity: dragId && dragId !== item.id ? 0.92 : 1,
+                  }
+                : undefined
+            }
+          >
+            {/* محتوى القسم — معطّل اللمس أثناء التخصيص */}
+            <div style={{ pointerEvents: editMode ? "none" : "auto" }}>
+              {renderSection(item.id)}
+            </div>
+
+            {editMode && (
+              <>
+                {/* مقبض السحب */}
+                <button
+                  onPointerDown={(e) => handleDragStart(e, item.id)}
+                  onPointerMove={handleDragMove}
+                  onPointerUp={handleDragEnd}
+                  onPointerCancel={handleDragEnd}
+                  aria-label="اسحب لإعادة الترتيب"
+                  className="absolute z-30 flex items-center justify-center rounded-xl font-black"
+                  style={{
+                    insetInlineStart: "-6px",
+                    top: "-10px",
+                    width: "38px",
+                    height: "38px",
+                    fontSize: "18px",
+                    touchAction: "none",
+                    cursor: "grab",
+                    background: "var(--accent)",
+                    color: "white",
+                    boxShadow: "0 4px 12px rgba(0,0,0,.35)",
+                  }}>
+                  ⠿
+                </button>
+                {/* زر الإخفاء */}
+                <button
+                  onClick={() => setVisible(item.id, false)}
+                  aria-label="إخفاء القسم"
+                  className="absolute z-30 flex items-center justify-center rounded-full font-black"
+                  style={{
+                    insetInlineEnd: "-8px",
+                    top: "-10px",
+                    width: "30px",
+                    height: "30px",
+                    fontSize: "14px",
+                    background: "var(--danger)",
+                    color: "white",
+                    boxShadow: "0 4px 12px rgba(0,0,0,.35)",
+                  }}>
+                  ✕
+                </button>
+              </>
+            )}
           </div>
-          <Link href="/pricing" className="text-[17px] font-bold flex-shrink-0" style={{ color: "var(--accent-light)" }}>
-            شاهين ←
-          </Link>
-        </section>
+        ))}
+
+        {/* درج إضافة الأقسام المخفية */}
+        {editMode && (
+          <section className="card" style={{ border: "1.5px dashed var(--border)", background: "var(--surface2)" }}>
+            <p className="eyebrow mb-3">إضافة قسم</p>
+            {hiddenItems.length === 0 ? (
+              <p className="text-[14px] font-semibold" style={{ color: "var(--text-muted)" }}>
+                كل الأقسام ظاهرة — اسحب ⠿ لإعادة ترتيبها أو ✕ لإخفائها.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {hiddenItems.map((item) => (
+                  <button key={item.id} onClick={() => setVisible(item.id, true)}
+                    className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-[14px] font-bold transition active:scale-95"
+                    style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}>
+                    <span className="text-[18px] leading-none" style={{ color: "var(--accent-light)" }}>＋</span>
+                    {DASH_SECTION_META[item.id].label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
       </div>
 
@@ -583,59 +751,6 @@ export default function DashboardPage() {
           prefillText={schedPrefill}
           initialTab={schedTab}
         />
-      )}
-
-      {/* Customize Bottom Sheet */}
-      {customizeOpen && mounted && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-end" onClick={() => setCustomizeOpen(false)}>
-          <div className="absolute inset-0 bg-black/55 fade-in" />
-          <div className="relative w-full rounded-t-3xl max-h-[80vh] overflow-y-auto slide-up"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)", borderBottom: "none" }}
-            onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 z-10 pt-4 pb-3 px-5" style={{ background: "var(--surface)", borderBottom: "1px solid var(--border)" }}>
-              <div className="w-10 h-1.5 rounded-full bg-[var(--border)] mx-auto mb-3" />
-              <div className="flex items-center justify-between">
-                <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>تخصيص الصفحة الرئيسية</p>
-                <button onClick={() => setCustomizeOpen(false)} className="w-8 h-8 rounded-xl flex items-center justify-center text-base"
-                  style={{ background: "var(--surface2)", color: "var(--text-muted)" }}>✕</button>
-              </div>
-            </div>
-            <div className="px-5 py-4 pb-10">
-              <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-                {([
-                  { key: "showStats"    as keyof DashConfig, label: "الإحصاءات",   desc: "ساعات التركيز والجلسات المنجزة" },
-                  { key: "showWeekly"   as keyof DashConfig, label: "رسم الأسبوع", desc: "مخطط التقدم اليومي بالدقائق" },
-                  { key: "showSchedule" as keyof DashConfig, label: "جدول اليوم",  desc: "مواعيد المذاكرة والمشاغيل" },
-                  { key: "showTools"    as keyof DashConfig, label: "الأدوات",     desc: "أوربت، الخزنة، المراجعة، الخريطة" },
-                  { key: "showAI"       as keyof DashConfig, label: "دربي الذكي",  desc: "المساعد الذكي للجداول والنصائح" },
-                ]).map(({ key, label, desc }, i, arr) => {
-                  const cfg = dashConfig ?? { showStats: true, showWeekly: true, showSchedule: true, showTools: true, showAI: true };
-                  const on = cfg[key];
-                  return (
-                    <button key={key} onClick={() => {
-                      const next = { ...cfg, [key]: !on };
-                      setDashConfig(next);
-                      saveDashConfig(next);
-                    }}
-                      className="w-full flex items-center justify-between px-4 py-3.5 transition"
-                      style={{ background: "var(--surface2)", borderBottom: i < arr.length - 1 ? "1px solid var(--border)" : "none" }}>
-                      <div className="text-right">
-                        <p className="font-bold text-[15px]" style={{ color: "var(--text)" }}>{label}</p>
-                        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{desc}</p>
-                      </div>
-                      <div className="w-10 rounded-full flex items-center px-0.5 transition-colors flex-shrink-0 mr-3"
-                        style={{ background: on ? "var(--accent)" : "var(--border)", height: "22px" }}>
-                        <div className="w-4 h-4 rounded-full bg-white transition-transform"
-                          style={{ transform: on ? "translateX(18px)" : "translateX(0)" }} />
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </div>,
-        document.body
       )}
     </div>
   );

@@ -6,8 +6,7 @@ import {
   loadUser, saveUser, loadStats, computeStreak,
   loadTheme, applyTheme, resetAll,
   loadExamDate, saveExamDate,
-  loadDashConfig, saveDashConfig,
-  type DarbUser, type Theme, type DashConfig,
+  type DarbUser, type Theme,
 } from "@/lib/storage";
 import { syncUser } from "@/lib/firestore";
 import {
@@ -47,7 +46,6 @@ export default function ProfileButton() {
   const [examDate, setExamDate] = useState("");
   const [theme, setThemeState]      = useState<Theme>("dark");
   const [activeTracksState, setActiveTracksState] = useState<TrackId[]>([]);
-  const [dashConfig, setDashConfig] = useState<DashConfig | null>(null);
 
   // الحساب السحابي
   const [authUser, setAuthUser] = useState<User | null>(null);
@@ -122,7 +120,6 @@ export default function ProfileButton() {
     setExamDate(loadExamDate() ?? "");
     setThemeState(loadTheme());
     setActiveTracksState(u?.activeTracks ?? (u?.track ? [u.track] : []));
-    setDashConfig(loadDashConfig());
   }, [open]);
 
   const switchTheme = (t: Theme) => {
@@ -141,15 +138,6 @@ export default function ProfileButton() {
       saveUser(updated);
       setUser(updated);
       syncUser({ track: primaryTrack });
-      return next;
-    });
-  };
-
-  const toggleDash = (key: keyof DashConfig) => {
-    setDashConfig((prev) => {
-      const next = prev ? { ...prev, [key]: !prev[key] } : loadDashConfig();
-      next[key] = !next[key];
-      saveDashConfig(next);
       return next;
     });
   };
@@ -421,36 +409,14 @@ export default function ProfileButton() {
               ))}
             </div>
 
-            {/* تخصيص الصفحة الرئيسية */}
-            {dashConfig && (
-              <>
-                <p className="label mb-3">تخصيص الصفحة الرئيسية</p>
-                <div className="rounded-2xl overflow-hidden mb-6"
-                  style={{ border: "1px solid var(--border)" }}>
-                  {([
-                    { key: "showStats"    as keyof DashConfig, label: "الإحصاءات" },
-                    { key: "showWeekly"   as keyof DashConfig, label: "رسم الأسبوع" },
-                    { key: "showSchedule" as keyof DashConfig, label: "جدول اليوم" },
-                    { key: "showTools"    as keyof DashConfig, label: "الأدوات" },
-                    { key: "showAI"       as keyof DashConfig, label: "دربي الذكي" },
-                  ]).map(({ key, label }, i, arr) => (
-                    <button key={key} onClick={() => toggleDash(key)}
-                      className="w-full flex items-center justify-between px-4 py-3.5 transition"
-                      style={{
-                        background: "var(--surface2)",
-                        borderBottom: i < arr.length - 1 ? "1px solid var(--border)" : "none",
-                      }}>
-                      <span className="font-bold text-[15px]" style={{ color: "var(--text)" }}>{label}</span>
-                      <div className="w-10 h-5.5 rounded-full flex items-center px-0.5 transition-colors"
-                        style={{ background: dashConfig[key] ? "var(--accent)" : "var(--border)", height: "22px" }}>
-                        <div className="w-4 h-4 rounded-full bg-white transition-transform"
-                          style={{ transform: dashConfig[key] ? "translateX(18px)" : "translateX(0)" }} />
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
+            {/* تخصيص الصفحة الرئيسية — صار بالسحب من الصفحة نفسها */}
+            <p className="label mb-3">تخصيص الصفحة الرئيسية</p>
+            <div className="rounded-2xl px-4 py-3.5 mb-6"
+              style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+              <p className="text-[14px] font-semibold leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                صار التخصيص من الصفحة الرئيسية مباشرة — اضغط زر «تخصيص» فوق، تقدر تسحب الأقسام وترتّبها، تخفيها بزر ✕، وترجّعها من «إضافة قسم».
+              </p>
+            </div>
 
             <button onClick={reset} className="w-full py-3.5 rounded-2xl text-sm font-bold transition"
               style={{ background: "transparent", border: "1px solid rgba(239,68,68,0.3)", color: "var(--danger)" }}>

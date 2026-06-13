@@ -304,30 +304,71 @@ export function saveSchedule(s: WeeklySchedule) {
   try { localStorage.setItem(SCHEDULE_KEY, JSON.stringify(s)); } catch {}
 }
 
-/* ── إعدادات الصفحة الرئيسية ── */
-export interface DashConfig {
-  showStats: boolean;
-  showWeekly: boolean;
-  showSchedule: boolean;
-  showTools: boolean;
-  showAI: boolean;
+/* ── إعدادات الصفحة الرئيسية: ترتيب وإظهار الأقسام ── */
+export type DashSectionId =
+  | "track" | "today" | "schedule" | "ai" | "weekly"
+  | "quote" | "stats" | "tools" | "community" | "certificate";
+
+export interface DashItem { id: DashSectionId; visible: boolean; }
+export interface DashConfig { layout: DashItem[]; }
+
+/* أسماء ووصف كل قسم — تظهر في وضع التخصيص ودرج الإضافة */
+export const DASH_SECTION_META: Record<DashSectionId, { label: string; desc: string }> = {
+  track:       { label: "مسارك",        desc: "المواد والمسارات النشطة" },
+  today:       { label: "يومك",         desc: "تقدّم اليوم وزر أوربت والعدّاد" },
+  schedule:    { label: "جدول اليوم",   desc: "مواعيد المذاكرة وتعديلها" },
+  ai:          { label: "دربي الذكي",   desc: "المساعد الذكي للجداول والنصائح" },
+  weekly:      { label: "أسبوعك",       desc: "رسم دقائق التركيز اليومية" },
+  quote:       { label: "اقتباس اليوم", desc: "جملة تحفيزية تتغيّر يومياً" },
+  stats:       { label: "إحصاءاتك",     desc: "ساعات التركيز والجلسات والأخطاء" },
+  tools:       { label: "الأدوات",      desc: "أوربت، الخزنة، المراجعة، الخريطة" },
+  community:   { label: "المجتمع",      desc: "المجلس والأرينا" },
+  certificate: { label: "الشهادة",      desc: "شهادة الانضباط والترقية" },
+};
+
+const DASH_DEFAULT_ORDER: DashSectionId[] = [
+  "track", "today", "schedule", "ai", "weekly",
+  "quote", "stats", "tools", "community", "certificate",
+];
+
+function defaultLayout(): DashItem[] {
+  return DASH_DEFAULT_ORDER.map((id) => ({ id, visible: true }));
 }
 
 const DASH_CONFIG_KEY = "darb_dash_config";
-const DEFAULT_DASH_CONFIG: DashConfig = {
-  showStats: true,
-  showWeekly: true,
-  showSchedule: true,
-  showTools: true,
-  showAI: true,
-};
 
 export function loadDashConfig(): DashConfig {
-  if (typeof window === "undefined") return { ...DEFAULT_DASH_CONFIG };
+  if (typeof window === "undefined") return { layout: defaultLayout() };
   try {
     const raw = localStorage.getItem(DASH_CONFIG_KEY);
-    return raw ? { ...DEFAULT_DASH_CONFIG, ...JSON.parse(raw) } : { ...DEFAULT_DASH_CONFIG };
-  } catch { return { ...DEFAULT_DASH_CONFIG }; }
+    if (!raw) return { layout: defaultLayout() };
+    const parsed = JSON.parse(raw);
+
+    // الصيغة الجديدة: { layout: [...] } — نُكمل أي قسم ناقص ونُسقط المجهول
+    if (parsed && Array.isArray(parsed.layout)) {
+      const known: DashItem[] = parsed.layout.filter(
+        (it: DashItem) => it && DASH_DEFAULT_ORDER.includes(it.id)
+      );
+      const seen = new Set(known.map((it) => it.id));
+      const merged = [
+        ...known,
+        ...DASH_DEFAULT_ORDER.filter((id) => !seen.has(id)).map((id) => ({ id, visible: true })),
+      ];
+      return { layout: merged };
+    }
+
+    // ترحيل من الصيغة القديمة: { showStats, showWeekly, showSchedule, showTools, showAI }
+    const oldVis: Partial<Record<DashSectionId, boolean>> = {
+      stats: parsed.showStats,
+      weekly: parsed.showWeekly,
+      schedule: parsed.showSchedule,
+      tools: parsed.showTools,
+      ai: parsed.showAI,
+    };
+    return { layout: DASH_DEFAULT_ORDER.map((id) => ({ id, visible: oldVis[id] ?? true })) };
+  } catch {
+    return { layout: defaultLayout() };
+  }
 }
 
 export function saveDashConfig(cfg: DashConfig) {
