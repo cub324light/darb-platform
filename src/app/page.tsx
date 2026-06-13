@@ -85,15 +85,12 @@ export default function LandingPage() {
           <p className="eyebrow mb-2" style={{ color: "var(--accent-light)" }}>المسارات</p>
           <h2 className="title-lg" style={{ color: "var(--text)" }}>وش تستعد له؟</h2>
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-2 gap-3">
           {TRACKS.map((t, i) => (
-            <div key={t.id} className={`reveal reveal-d${i + 1} rounded-2xl p-5 flex items-center gap-4`}
+            <div key={t.id} className={`reveal reveal-d${(i % 3) + 1} rounded-2xl p-4`}
               style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-              <span className="text-3xl">{t.icon}</span>
-              <div>
-                <p className="font-black text-lg" style={{ color: "var(--text)" }}>{t.title}</p>
-                <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>{t.sub}</p>
-              </div>
+              <p className="font-black text-base" style={{ color: "var(--text)" }}>{t.title}</p>
+              <p className="text-xs mt-1 leading-snug" style={{ color: "var(--text-muted)" }}>{t.sub}</p>
             </div>
           ))}
         </div>

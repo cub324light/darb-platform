@@ -157,7 +157,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
   const callAI = async (prompt: string) => {
     setAiLoading(true);
     try {
-      const res  = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt }) });
+      const res  = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt, subjects: subjects.map((s) => s.name) }) });
       const data = await res.json();
       const raw = (data.text ?? data.error ?? "حدث خطأ في الاستجابة").replace(/\n{3,}/g, "\n\n").trim();
       const parsed = parseAISchedule(raw, date, subjects);
@@ -178,7 +178,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
 
   const runAI = () => {
     if (isOffTopicQuestion(busyText)) {
-      setAiResult("أنا فقط أبني جداول دراسية 📅\nاكتب مشاغيلك أو قل «ابي جدول جاهز»");
+      setAiResult("أنا فقط أبني جداول دراسية\nاكتب مشاغيلك أو قل «ابي جدول جاهز»");
       return;
     }
     const subjectsList = subjects.map((s) => s.name).join("، ");

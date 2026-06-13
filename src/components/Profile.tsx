@@ -191,25 +191,22 @@ export default function ProfileButton() {
 
             {/* المسار */}
             <p className="label mb-3">مسارك</p>
-            <div className="flex flex-col gap-2.5 mb-6">
+            <div className="grid grid-cols-2 gap-2.5 mb-6">
               {TRACKS.map((t) => {
                 const active = t.id === track.id;
                 return (
                   <button
                     key={t.id}
                     onClick={() => switchTrack(t.id)}
-                    className="w-full rounded-2xl p-4 flex items-center gap-3 text-right transition active:scale-[0.98]"
+                    className="rounded-2xl p-3.5 text-right transition active:scale-[0.98] relative"
                     style={{
                       background: active ? "color-mix(in srgb, var(--accent) 12%, transparent)" : "var(--surface2)",
                       border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
                     }}
                   >
-                    <span className="text-2xl">{t.icon}</span>
-                    <div className="flex-1">
-                      <p className="font-bold text-base text-[var(--text)]">{t.title}</p>
-                      <p className="text-xs text-[var(--text-muted)]">{t.sub}</p>
-                    </div>
-                    {active && <span className="text-[var(--accent-light)] text-lg font-black">✓</span>}
+                    {active && <span className="absolute top-2 left-2.5 text-[var(--accent-light)] text-base font-black">✓</span>}
+                    <p className="font-bold text-[15px] text-[var(--text)]">{t.title}</p>
+                    <p className="text-[11px] text-[var(--text-muted)] mt-0.5 leading-snug">{t.sub}</p>
                   </button>
                 );
               })}

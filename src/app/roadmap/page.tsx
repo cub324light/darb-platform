@@ -36,7 +36,7 @@ function computeProgress(
   track: Track, done: string[], custom: CustomLesson[],
   tadreebItems: TrainingItem[], tadreebDone: string[],
 ): { taseesPct: number; tadreebPct: number } {
-  const isTahsili = track.id === "تحصيلي";
+  const isTahsili = track.id === "تحصيلي" || track.id === "تحصيلي مبكر";
   const doneSet = new Set(done);
   const lessonKeys = track.subjects.flatMap((s) =>
     isTahsili && s.name in RAKAN_SCHEDULE
@@ -278,7 +278,7 @@ export default function RoadmapPage() {
 
   if (!track) return <div className="min-h-dvh" />;
 
-  const isTahsili = track.id === "تحصيلي";
+  const isTahsili = track.id === "تحصيلي" || track.id === "تحصيلي مبكر";
   const doneSet = new Set(done);
   const tadreebDoneSet = new Set(tadreebDone);
 

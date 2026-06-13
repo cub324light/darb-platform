@@ -14,7 +14,7 @@ service cloud.firestore {
             || (request.resource.data.name is string
                 && request.resource.data.name.size() <= 30))
         && (!('track' in request.resource.data)
-            || request.resource.data.track in ['تحصيلي', 'قدرات', 'CPC'])
+            || request.resource.data.track in ['تحصيلي', 'قدرات', 'CPC', 'تحصيلي مبكر', 'ايلتس', 'ستيب', 'توفل', 'دوليقو'])
         && (!('bird' in request.resource.data)
             || request.resource.data.bird in ['falcon', 'hoopoe', 'swan', 'raven', 'peacock', 'phoenix'])
         && (!('streak' in request.resource.data)

@@ -25,6 +25,36 @@ const QUESTION_BANK: Record<TrackId, { q: string; a: string; subject: string }[]
     { q: "Complete: She ____ to work every day. (go)", a: "goes", subject: "إنجليزي" },
     { q: "ما مساحة دائرة نصف قطرها 7؟ (π ≈ 22/7)", a: "154", subject: "رياضيات" },
   ],
+  "تحصيلي مبكر": [
+    { q: "ما وحدة قياس القوة؟", a: "نيوتن (N)", subject: "فيزياء" },
+    { q: "ما ناتج: ‎(x + 2)² ؟", a: "x² + 4x + 4", subject: "رياضيات" },
+    { q: "ما الرقم الذري للهيدروجين؟", a: "1", subject: "كيمياء" },
+    { q: "أين تحدث عملية البناء الضوئي في الخلية؟", a: "البلاستيدات الخضراء", subject: "أحياء" },
+  ],
+  ايلتس: [
+    { q: "Choose the correct word: The results ____ surprising. (was/were)", a: "were", subject: "كتابة" },
+    { q: "What does «in a nutshell» mean?", a: "باختصار — in summary", subject: "قراءة" },
+    { q: "Synonym of «significant»:", a: "important / considerable", subject: "قراءة" },
+    { q: "Task 2 essay: كم كلمة كحد أدنى؟", a: "250 كلمة", subject: "كتابة" },
+  ],
+  ستيب: [
+    { q: "Choose: He ____ in Riyadh since 2019. (lives/has lived)", a: "has lived", subject: "قواعد" },
+    { q: "Antonym of «ancient»:", a: "modern", subject: "قراءة" },
+    { q: "Choose: If I ____ rich, I would travel. (am/were)", a: "were", subject: "قواعد" },
+    { q: "What is the main idea of a paragraph usually found in?", a: "Topic sentence — الجملة الافتتاحية", subject: "قراءة" },
+  ],
+  توفل: [
+    { q: "Synonym of «crucial»:", a: "essential / vital", subject: "قراءة" },
+    { q: "كم مدة قسم الاستماع في TOEFL iBT تقريباً؟", a: "36 دقيقة تقريباً", subject: "استماع" },
+    { q: "Choose: The professor insisted that the student ____ early. (arrive/arrives)", a: "arrive (subjunctive)", subject: "قواعد" },
+    { q: "Integrated Writing: تقرأ وتسمع ثم؟", a: "تكتب ملخصاً يربط المحاضرة بالنص", subject: "كتابة" },
+  ],
+  دوليقو: [
+    { q: "Choose the real English word: «blicket / bridge / brold»", a: "bridge", subject: "قراءة" },
+    { q: "كم تستغرق نتيجة اختبار Duolingo عادة؟", a: "48 ساعة", subject: "قراءة" },
+    { q: "Fill: She has been studying ____ three hours. (for/since)", a: "for", subject: "كتابة" },
+    { q: "Describe the image: ما المطلوب في هذا السؤال؟", a: "وصف الصورة بجملة كاملة صحيحة", subject: "محادثة" },
+  ],
 };
 
 type GameState = "lobby" | "playing" | "result";

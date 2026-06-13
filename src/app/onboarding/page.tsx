@@ -56,25 +56,22 @@ export default function OnboardingPage() {
         {/* المسار — كلها أزرق */}
         <div>
           <p className="label mb-3">وش تستعد له؟</p>
-          <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-2.5">
             {TRACKS.map((t) => {
               const active = track === t.id;
               return (
                 <button
                   key={t.id}
                   onClick={() => setTrack(t.id)}
-                  className="w-full rounded-2xl p-5 text-right flex items-center gap-4 transition-all duration-200 active:scale-[0.98]"
+                  className="rounded-2xl p-4 text-right transition-all duration-200 active:scale-[0.98] relative"
                   style={{
                     background: active ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
                     border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
                   }}
                 >
-                  <span className="text-3xl">{t.icon}</span>
-                  <div className="flex-1">
-                    <p className="font-black text-lg text-[var(--text)]">{t.title}</p>
-                    <p className="text-sm text-[var(--text-muted)] mt-0.5">{t.sub}</p>
-                  </div>
-                  {active && <span className="text-2xl font-black text-[var(--accent-light)]">✓</span>}
+                  {active && <span className="absolute top-2 left-2.5 text-lg font-black text-[var(--accent-light)]">✓</span>}
+                  <p className="font-black text-base text-[var(--text)]">{t.title}</p>
+                  <p className="text-xs text-[var(--text-muted)] mt-1 leading-snug">{t.sub}</p>
                 </button>
               );
             })}
