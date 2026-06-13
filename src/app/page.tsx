@@ -7,9 +7,10 @@ import { BIRDS } from "@/lib/birds";
 
 /* ─── صفحة الهبوط: تعريف بالمنصة مع أنميشن سكرول ─── */
 
-function useReveal() {
+function useReveal(active: boolean) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    if (!active) return;
     const root = ref.current;
     if (!root) return;
     const els = root.querySelectorAll(".reveal");
@@ -19,7 +20,7 @@ function useReveal() {
     );
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
-  }, []);
+  }, [active]);
   return ref;
 }
 
@@ -43,7 +44,7 @@ const FEATURES = [
 export default function LandingPage() {
   const [onboarded, setOnboarded] = useState(false);
   const [checking, setChecking] = useState(true);
-  const rootRef = useReveal();
+  const rootRef = useReveal(!checking);
 
   useEffect(() => {
     try {
