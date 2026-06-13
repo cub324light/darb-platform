@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { TRACKS, type TrackId } from "@/lib/tracks";
-import { saveUser } from "@/lib/storage";
+import { saveUser, saveExamDate } from "@/lib/storage";
 import { registerUser } from "@/lib/firestore";
 import Dome from "@/components/Dome";
 
@@ -12,6 +12,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [track, setTrack] = useState<TrackId | null>(null);
+  const [examDate, setExamDate] = useState("");
 
   const ready = name.trim().length > 0 && track !== null;
 
@@ -19,6 +20,7 @@ export default function OnboardingPage() {
     if (!ready || !track) return;
     const trimmedName = name.trim();
     saveUser({ name: trimmedName, track, onboarded: true });
+    if (examDate) saveExamDate(examDate);
     registerUser(trimmedName, track);
     router.push("/dashboard");
   };
@@ -76,6 +78,29 @@ export default function OnboardingPage() {
               );
             })}
           </div>
+        </div>
+
+        {/* تاريخ الاختبار */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <p className="label">متى اختبارك؟</p>
+            <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
+          </div>
+          <input
+            type="date"
+            value={examDate}
+            onChange={(e) => setExamDate(e.target.value)}
+            min={new Date().toISOString().slice(0, 10)}
+            className="w-full rounded-2xl px-5 py-4 text-base text-[var(--text)] outline-none transition-colors min-h-[56px]"
+            style={{ background: "var(--surface)", border: "2px solid var(--border)", colorScheme: "dark" }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+          />
+          {examDate && (
+            <p className="text-sm mt-2 font-semibold" style={{ color: "var(--gold)" }}>
+              {Math.max(0, Math.round((new Date(examDate + "T00:00:00").getTime() - new Date(new Date().toISOString().slice(0,10) + "T00:00:00").getTime()) / 86400000))} يوم على الاختبار
+            </p>
+          )}
         </div>
 
         {/* دخول */}

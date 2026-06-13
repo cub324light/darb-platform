@@ -5,6 +5,13 @@ import Dome from "@/components/Dome";
 import { loadUser, loadList, saveList } from "@/lib/storage";
 import { getTrack, type Track } from "@/lib/tracks";
 
+interface Reply {
+  id: number;
+  user: string;
+  time: number;
+  content: string;
+}
+
 interface Post {
   id: number;
   user: string;
@@ -12,6 +19,7 @@ interface Post {
   content: string;
   subject: string;
   likes: number;
+  replies?: Reply[];
 }
 
 const POSTS_KEY = "darb_posts";
@@ -34,6 +42,8 @@ export default function CouncilPage() {
   const [newPost, setNewPost] = useState("");
   const [newSubject, setNewSubject] = useState("عام");
   const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
+  const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [replyText, setReplyText] = useState("");
 
   useEffect(() => {
     const u = loadUser();
@@ -57,6 +67,7 @@ export default function CouncilPage() {
       content: newPost.trim(),
       subject: newSubject,
       likes: 0,
+      replies: [],
     }, ...p]);
     setNewPost("");
   };
@@ -69,6 +80,18 @@ export default function CouncilPage() {
       setPosts((ps) => ps.map((x) => (x.id === id ? { ...x, likes: Math.max(0, x.likes + delta) } : x)));
       return next;
     });
+  };
+
+  const addReply = (postId: number) => {
+    if (!replyText.trim()) return;
+    setPosts((ps) => ps.map((p) => p.id === postId ? {
+      ...p,
+      replies: [...(p.replies ?? []), {
+        id: Date.now(), user: userName, time: Date.now(), content: replyText.trim(),
+      }],
+    } : p));
+    setReplyText("");
+    setReplyingTo(null);
   };
 
   return (
@@ -144,40 +167,95 @@ export default function CouncilPage() {
           )}
 
           {posts.map((post) => (
-            <div key={post.id} className="glass rounded-2xl p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0"
-                  style={{ background: "linear-gradient(135deg,var(--accent-2),var(--accent-light))" }}
-                >
-                  {post.user.charAt(0)}
+            <div key={post.id} className="glass rounded-2xl overflow-hidden">
+              <div className="p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div
+                    className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0"
+                    style={{ background: "linear-gradient(135deg,var(--accent-2),var(--accent-light))" }}
+                  >
+                    {post.user.charAt(0)}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-[var(--text)]">{post.user}</p>
+                    <p className="text-[13px] text-[var(--text-muted)]">{timeAgo(post.time)}</p>
+                  </div>
+                  <span
+                    className="text-[13px] px-2.5 py-1 rounded-full font-medium"
+                    style={{ background: "color-mix(in srgb, var(--accent) 13%, transparent)", color: "var(--accent-light)" }}
+                  >
+                    {post.subject}
+                  </span>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-[var(--text)]">{post.user}</p>
-                  <p className="text-[17px] text-[var(--text-muted)]">{timeAgo(post.time)}</p>
+                <p className="text-base text-[var(--text-dim)] leading-relaxed mb-3">{post.content}</p>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => toggleLike(post.id)}
+                    className={`flex items-center gap-1.5 text-sm transition min-h-[40px] ${likedPosts.has(post.id) ? "text-[var(--danger)]" : "text-[var(--text-muted)]"}`}
+                  >
+                    ♥ {post.likes}
+                  </button>
+                  <button
+                    onClick={() => { setReplyingTo(replyingTo === post.id ? null : post.id); setReplyText(""); }}
+                    className="text-sm font-semibold min-h-[40px]"
+                    style={{ color: replyingTo === post.id ? "var(--accent-light)" : "var(--text-muted)" }}
+                  >
+                    رد {(post.replies?.length ?? 0) > 0 ? `(${post.replies!.length})` : ""}
+                  </button>
+                  {post.user === userName && (
+                    <button
+                      onClick={() => setPosts((p) => p.filter((x) => x.id !== post.id))}
+                      className="text-sm text-[var(--text-muted)] min-h-[40px] mr-auto"
+                    >
+                      حذف
+                    </button>
+                  )}
                 </div>
-                <span
-                  className="text-[17px] px-2.5 py-1 rounded-full font-medium"
-                  style={{ background: "color-mix(in srgb, var(--accent) 13%, transparent)", color: "var(--accent-light)" }}
-                >
-                  {post.subject}
-                </span>
               </div>
-              <p className="text-base text-[var(--text-dim)] leading-relaxed mb-3">{post.content}</p>
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => toggleLike(post.id)}
-                  className={`flex items-center gap-1.5 text-sm transition min-h-[40px] ${likedPosts.has(post.id) ? "text-[var(--danger)]" : "text-[var(--text-muted)]"}`}
-                >
-                  ♥ {post.likes}
-                </button>
-                <button
-                  onClick={() => setPosts((p) => p.filter((x) => x.id !== post.id))}
-                  className="text-sm text-[var(--text-muted)] min-h-[40px] mr-auto"
-                >
-                  حذف
-                </button>
-              </div>
+
+              {/* الردود */}
+              {((post.replies?.length ?? 0) > 0 || replyingTo === post.id) && (
+                <div className="border-t border-[var(--border)] px-4 py-3 flex flex-col gap-3"
+                  style={{ background: "color-mix(in srgb, var(--surface2) 60%, transparent)" }}>
+                  {post.replies?.map((r) => (
+                    <div key={r.id} className="flex items-start gap-2.5">
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black text-white flex-shrink-0"
+                        style={{ background: "linear-gradient(135deg,var(--accent-2),var(--accent-light))" }}>
+                        {r.user.charAt(0)}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-sm font-bold text-[var(--text)]">{r.user}</span>
+                          <span className="text-[11px] text-[var(--text-muted)]">{timeAgo(r.time)}</span>
+                        </div>
+                        <p className="text-sm text-[var(--text-dim)] mt-0.5 leading-relaxed">{r.content}</p>
+                      </div>
+                    </div>
+                  ))}
+
+                  {replyingTo === post.id && (
+                    <div className="flex gap-2 mt-1">
+                      <input
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
+                        placeholder="اكتب رداً..."
+                        onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addReply(post.id); } }}
+                        className="flex-1 rounded-xl px-3 py-2.5 text-sm text-[var(--text)] placeholder-[var(--text-muted)] outline-none min-h-[44px]"
+                        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => addReply(post.id)}
+                        disabled={!replyText.trim()}
+                        className="px-4 rounded-xl font-bold text-sm min-h-[44px]"
+                        style={{ background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)", opacity: replyText.trim() ? 1 : 0.4 }}
+                      >
+                        أرسل
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>

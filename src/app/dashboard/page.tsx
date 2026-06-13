@@ -69,6 +69,7 @@ export default function DashboardPage() {
   const [examDays, setExamDays] = useState<number | null>(null);
   const [dueCards, setDueCards] = useState(0);
   const [week, setWeek] = useState<{ label: string; mins: number; isToday: boolean }[]>([]);
+  const [suggestion, setSuggestion] = useState<{ text: string; sub: string; href: string; color: string } | null>(null);
 
   useEffect(() => {
     setUser(loadUser());
@@ -101,6 +102,22 @@ export default function DashboardPage() {
       );
       setExamDays(diff);
     }
+
+    // اقتراح ذكي
+    try {
+      const vault = JSON.parse(localStorage.getItem("darb_vault") ?? "[]");
+      const unreviewedVault = Array.isArray(vault) ? vault.filter((e: { reviewCount: number }) => e.reviewCount === 0).length : 0;
+      const cardsRaw = JSON.parse(localStorage.getItem("darb_cards") ?? "[]");
+      const due = Array.isArray(cardsRaw) ? cardsRaw.filter((c: { dueDate: number }) => c.dueDate <= Date.now()).length : 0;
+      const todS = loadStats();
+      if (due > 0) {
+        setSuggestion({ text: `${due} بطاقة مراجعة مستحقة`, sub: "راجعها الحين قبل ما تنسى", href: "/review", color: "#10B981" });
+      } else if (unreviewedVault > 0) {
+        setSuggestion({ text: `${unreviewedVault} خطأ لم تراجعه بعد`, sub: "افتح الخزنة وراجعها", href: "/vault", color: "#F59E0B" });
+      } else if (todS.todayFocusMins === 0) {
+        setSuggestion({ text: "ما بدأت اليوم بعد", sub: "جلسة أوربت تكسر الصفر", href: "/orbit", color: "#2563EB" });
+      }
+    } catch {}
 
     // مزامنة مع Firestore
     const u = loadUser();
@@ -200,6 +217,25 @@ export default function DashboardPage() {
                 </p>
               </div>
               <span className="text-lg font-black" style={{ color: "#EF4444" }}>←</span>
+            </div>
+          </Link>
+        )}
+
+        {/* اقتراح ذكي */}
+        {suggestion && (
+          <Link href={suggestion.href} className="rise block rounded-2xl px-4 py-3.5 transition active:scale-[0.98]"
+            style={{
+              background: `color-mix(in srgb, ${suggestion.color} 9%, transparent)`,
+              border: `1px solid color-mix(in srgb, ${suggestion.color} 28%, transparent)`,
+              textDecoration: "none",
+            }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[13px] font-bold mb-0.5" style={{ color: "var(--text-muted)" }}>خطوتك التالية</p>
+                <p className="text-[15px] font-black" style={{ color: suggestion.color }}>{suggestion.text}</p>
+                <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>{suggestion.sub}</p>
+              </div>
+              <span className="text-lg font-black" style={{ color: suggestion.color }}>←</span>
             </div>
           </Link>
         )}

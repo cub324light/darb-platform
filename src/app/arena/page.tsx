@@ -83,7 +83,8 @@ export default function ArenaPage() {
     const u = loadUser();
     setMyBird(u?.bird);
     const track = getTrack(u?.track);
-    setQuestions(QUESTION_BANK[track.id]);
+    const qs = [...QUESTION_BANK[track.id]].sort(() => Math.random() - 0.5);
+    setQuestions(qs);
   }, []);
 
   const startGame = () => {
@@ -93,6 +94,10 @@ export default function ArenaPage() {
       bird: pool[Math.floor(Math.random() * pool.length)].id,
     });
     rewardedRef.current = false;
+    const u = loadUser();
+    const track = getTrack(u?.track);
+    const qs = [...QUESTION_BANK[track.id]].sort(() => Math.random() - 0.5);
+    setQuestions(qs);
     setGameState("playing");
     setCurrentQ(0);
     setMyScore(0);

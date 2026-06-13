@@ -21,6 +21,9 @@ export default function VaultPage() {
   const [filterCat, setFilterCat] = useState<string>("الكل");
   const [sortBy, setSortBy] = useState<"recent" | "priority">("recent");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [searchQ, setSearchQ] = useState("");
+  const [undoItem, setUndoItem] = useState<VaultError | null>(null);
+  const [undoTimer, setUndoTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [newQ, setNewQ] = useState("");
   const [newSubject, setNewSubject] = useState("");
   const [newCat, setNewCat] = useState<string>(ERROR_CATEGORIES[0]);
@@ -48,6 +51,10 @@ export default function VaultPage() {
     .filter((e) => {
       if (filterSubject !== "الكل" && e.subject !== filterSubject) return false;
       if (filterCat !== "الكل" && e.category !== filterCat) return false;
+      if (searchQ.trim()) {
+        const q = searchQ.trim().toLowerCase();
+        if (!e.question.toLowerCase().includes(q) && !(e.note ?? "").toLowerCase().includes(q)) return false;
+      }
       return true;
     })
     .sort((a, b) => sortBy === "priority"
@@ -63,6 +70,24 @@ export default function VaultPage() {
       note: newNote.trim(), createdAt: Date.now(), reviewCount: 0,
     }, ...p]);
     setNewQ(""); setNewNote(""); setShowAdd(false);
+  };
+
+  const deleteError = (id: string) => {
+    const item = errors.find((e) => e.id === id);
+    if (!item) return;
+    setErrors((p) => p.filter((e) => e.id !== id));
+    setExpandedId(null);
+    setUndoItem(item);
+    if (undoTimer) clearTimeout(undoTimer);
+    const t = setTimeout(() => { setUndoItem(null); }, 3500);
+    setUndoTimer(t);
+  };
+
+  const undoDelete = () => {
+    if (!undoItem) return;
+    if (undoTimer) clearTimeout(undoTimer);
+    setErrors((p) => [undoItem, ...p]);
+    setUndoItem(null);
   };
 
   const categoryCount = (cat: string) => errors.filter((e) => e.category === cat).length;
@@ -95,6 +120,31 @@ export default function VaultPage() {
         </div>
       </Dome>
       <div className="h-5" />
+
+      {/* ── شريط البحث ── */}
+      <div className="px-5 mb-5 rise rise-1">
+        <div className="relative">
+          <input
+            value={searchQ}
+            onChange={(e) => setSearchQ(e.target.value)}
+            placeholder="ابحث في أخطائك..."
+            className="w-full rounded-2xl px-5 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none min-h-[52px] pr-11"
+            style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}
+          />
+          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={1.7} className="w-5 h-5">
+              <circle cx="9" cy="9" r="5.5" /><path strokeLinecap="round" d="M13.5 13.5l3 3" />
+            </svg>
+          </span>
+          {searchQ && (
+            <button
+              onClick={() => setSearchQ("")}
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-sm"
+              style={{ background: "var(--surface2)", color: "var(--text-muted)" }}
+            >×</button>
+          )}
+        </div>
+      </div>
 
       {/* ── شريط الحد ── */}
       {isPlanFree && (
@@ -279,7 +329,7 @@ export default function VaultPage() {
                         style={{ background: "transparent", border: `1.5px solid ${color}`, color: color }}>
                         راجعته ✓
                       </button>
-                      <button onClick={() => setErrors((p) => p.filter((e) => e.id !== error.id))}
+                      <button onClick={() => deleteError(error.id)}
                         className="py-4 rounded-2xl text-base font-black transition min-h-[56px]"
                         style={{ background: "var(--surface2)", border: "1px solid rgba(239,68,68,0.3)", color: "#EF4444" }}>
                         حذف
@@ -295,6 +345,23 @@ export default function VaultPage() {
 
       <div className="h-6" />
       <BottomNav />
+
+      {/* ── تنبيه التراجع عن الحذف ── */}
+      {undoItem && (
+        <div
+          className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl"
+          style={{ background: "var(--surface)", border: "1.5px solid var(--border)", minWidth: "260px", maxWidth: "90vw" }}
+        >
+          <p className="flex-1 text-sm font-semibold text-[var(--text)] truncate">حُذف: {undoItem.question.slice(0, 30)}{undoItem.question.length > 30 ? "…" : ""}</p>
+          <button
+            onClick={undoDelete}
+            className="text-sm font-black px-3 py-1.5 rounded-xl"
+            style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)", border: "1.5px solid var(--accent)" }}
+          >
+            تراجع
+          </button>
+        </div>
+      )}
     </div>
   );
 }

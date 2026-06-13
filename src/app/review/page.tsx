@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
+import Confetti from "@/components/Confetti";
 import { sm2, nextReviewText } from "@/lib/sm2";
 import { getTrack, subjectColor, type Track } from "@/lib/tracks";
 import { loadUser, loadList, saveList } from "@/lib/storage";
@@ -25,6 +26,7 @@ export default function ReviewPage() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [sessionDone, setSessionDone] = useState(false);
   const [reviewed, setReviewed] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
 
   /* إضافة بطاقة */
   const [showAdd, setShowAdd] = useState(false);
@@ -69,6 +71,7 @@ export default function ReviewPage() {
     setShowAnswer(false);
     setSessionDone(false);
     setReviewed(0);
+    setCorrectCount(0);
     setMode("session");
   };
 
@@ -77,6 +80,7 @@ export default function ReviewPage() {
     const result = sm2(card, grade);
     setCards((prev) => prev.map((c) => c.id === card.id ? { ...c, ...result } : c));
     setReviewed((p) => p + 1);
+    if (grade >= 3) setCorrectCount((p) => p + 1);
     if (currentIdx + 1 >= sessionCards.length) {
       setSessionDone(true);
     } else {
@@ -88,12 +92,36 @@ export default function ReviewPage() {
   /* ── عرض الجلسة ── */
   if (mode === "session") {
     if (sessionDone) {
+      const accuracy = reviewed > 0 ? Math.round((correctCount / reviewed) * 100) : 0;
+      const great = accuracy >= 80;
+      const circumference = 2 * Math.PI * 36;
+      const dash = (accuracy / 100) * circumference;
       return (
         <div className="min-h-dvh flex flex-col items-center justify-center px-6 pb-nav relative z-[1]">
+          {great && <Confetti count={24} />}
           <div className="text-center">
-            <h2 className="font-black text-3xl text-[var(--text)] mb-3">الجلسة منتهية!</h2>
-            <p className="text-lg text-[var(--text-muted)] mb-2">راجعت {reviewed} بطاقة</p>
-            <p className="text-base text-[var(--success)] mb-10">المراجعة القادمة محسوبة تلقائياً</p>
+            {/* دائرة الدقة */}
+            <div className="relative inline-flex mb-5">
+              <svg width="96" height="96" viewBox="0 0 96 96" className="-rotate-90">
+                <circle cx="48" cy="48" r="36" fill="none" stroke="var(--border)" strokeWidth="7" />
+                <circle cx="48" cy="48" r="36" fill="none"
+                  stroke={great ? "#10B981" : accuracy >= 50 ? "#F59E0B" : "#EF4444"}
+                  strokeWidth="7" strokeLinecap="round"
+                  strokeDasharray={`${dash} ${circumference}`}
+                  style={{ transition: "stroke-dasharray 1s ease" }}
+                />
+              </svg>
+              <span className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="font-mono-nums font-black text-2xl text-[var(--text)]">{accuracy}%</span>
+              </span>
+            </div>
+            <h2 className="font-black text-3xl text-[var(--text)] mb-2">
+              {great ? "ممتاز!" : accuracy >= 50 ? "كويس!" : "تحتاج تراجع أكثر"}
+            </h2>
+            <p className="text-base text-[var(--text-muted)] mb-1">
+              {correctCount} صح من {reviewed} بطاقة
+            </p>
+            <p className="text-sm text-[var(--success)] mb-10">المراجعة القادمة محسوبة تلقائياً</p>
             <button
               onClick={() => setMode("list")}
               className="w-full max-w-xs py-5 rounded-2xl font-black text-lg min-h-[60px] glow-blue"

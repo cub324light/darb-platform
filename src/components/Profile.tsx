@@ -5,6 +5,7 @@ import { TRACKS, getTrack, type TrackId } from "@/lib/tracks";
 import {
   loadUser, saveUser, loadStats, computeStreak,
   loadTheme, applyTheme, resetAll,
+  loadExamDate, saveExamDate,
   type DarbUser, type Theme,
 } from "@/lib/storage";
 import { syncUser } from "@/lib/firestore";
@@ -38,6 +39,7 @@ export default function ProfileButton() {
   const [editName, setEditName] = useState("");
   const [editing, setEditing] = useState(false);
   const [stats, setStats] = useState({ streak: 0, silver: 0, hours: 0, sessions: 0 });
+  const [examDate, setExamDate] = useState("");
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -53,6 +55,7 @@ export default function ProfileButton() {
       hours: Math.floor(s.totalFocusMins / 60),
       sessions: s.sessionsCount,
     });
+    setExamDate(loadExamDate() ?? "");
   }, [open]);
 
   const track = getTrack(user?.track);
@@ -187,6 +190,31 @@ export default function ProfileButton() {
                   </button>
                 );
               })}
+            </div>
+
+            {/* تاريخ الاختبار */}
+            <p className="label mb-3">تاريخ الاختبار</p>
+            <div className="mb-6">
+              <input
+                type="date"
+                value={examDate}
+                onChange={(e) => { setExamDate(e.target.value); saveExamDate(e.target.value || null); }}
+                min={new Date().toISOString().slice(0, 10)}
+                className="w-full rounded-2xl px-4 py-3.5 text-base text-[var(--text)] outline-none min-h-[52px]"
+                style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", colorScheme: "dark" }}
+              />
+              {examDate && (
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-sm font-bold" style={{ color: "var(--gold)" }}>
+                    {Math.max(0, Math.round((new Date(examDate + "T00:00:00").getTime() - new Date(new Date().toISOString().slice(0,10) + "T00:00:00").getTime()) / 86400000))} يوم على الاختبار
+                  </p>
+                  <button
+                    onClick={() => { setExamDate(""); saveExamDate(null); }}
+                    className="text-sm font-semibold"
+                    style={{ color: "var(--text-muted)" }}
+                  >إزالة</button>
+                </div>
+              )}
             </div>
 
             {/* المسار */}
