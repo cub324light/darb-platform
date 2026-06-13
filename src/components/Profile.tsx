@@ -261,9 +261,11 @@ export default function ProfileButton() {
                 <div className="rounded-2xl p-4" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-base">☁️</span>
-                    <p className="font-bold text-[15px] text-[var(--text)] truncate flex-1">{authUser.email}</p>
+                    <p className="font-bold text-[15px] text-[var(--text)] truncate flex-1">{authUser.displayName || authUser.email}</p>
                   </div>
-                  <p className="text-[13px] text-[var(--text-muted)] mb-3">بياناتك محفوظة وتتزامن تلقائياً</p>
+                  <p className="text-[13px] text-[var(--text-muted)] mb-3">
+                    {authUser.email ? `${authUser.email} · ` : ""}بياناتك محفوظة وتتزامن تلقائياً
+                  </p>
                   <div className="flex gap-2">
                     <button onClick={manualSync} className="flex-1 py-2.5 rounded-xl text-sm font-bold"
                       style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>

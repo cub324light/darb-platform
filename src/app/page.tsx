@@ -1,9 +1,11 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { TRACKS } from "@/lib/tracks";
 import Logo from "@/components/Logo";
 import { loadTheme, applyTheme, type Theme } from "@/lib/storage";
+import { onAuth } from "@/lib/cloud";
 
 function useReveal(active: boolean) {
   const ref = useRef<HTMLDivElement>(null);
@@ -68,7 +70,7 @@ const FEATURES = [
 ];
 
 const STEPS = [
-  { n: "١", title: "سجّل في ثانية", desc: "اسمك + مسارك + تاريخ اختبارك — بدون إيميل، بدون باسورد." },
+  { n: "١", title: "ادخل بثانية", desc: "بحساب Google أو Apple — يحفظ تقدّمك ويزامنه على كل أجهزتك." },
   { n: "٢", title: "شوف خريطتك", desc: "كل دروس مسارك مرتّبة. ابدأ من التأسيس واقفل كل مرحلة." },
   { n: "٣", title: "ذاكر يومياً", desc: "أوربت للتركيز، الخزنة للأخطاء، المراجعة للحفظ — كل شي بمكان." },
 ];
@@ -80,6 +82,7 @@ const PAIN = [
 ];
 
 export default function LandingPage() {
+  const router = useRouter();
   const [onboarded, setOnboarded] = useState(false);
   const [checking, setChecking] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -95,6 +98,20 @@ export default function LandingPage() {
     setTheme(loadTheme());
     setChecking(false);
   }, []);
+
+  /* المسجّل دخوله يُوجَّه مباشرة للتطبيق */
+  useEffect(() => {
+    const unsub = onAuth((u) => {
+      if (!u) return;
+      let isOnboarded = false;
+      try {
+        const raw = localStorage.getItem("darb_user");
+        isOnboarded = !!(raw ? JSON.parse(raw)?.onboarded : false);
+      } catch {}
+      router.replace(isOnboarded ? "/dashboard" : "/onboarding");
+    });
+    return unsub;
+  }, [router]);
 
   const toggleTheme = () => {
     const next: Theme = theme === "dark" ? "light" : "dark";
@@ -353,7 +370,7 @@ export default function LandingPage() {
           }}>
           <h2 className="font-black text-2xl mb-3" style={{ color: "var(--text)" }}>جاهز تبدأ دربك؟</h2>
           <p className="text-base mb-7 leading-relaxed" style={{ color: "var(--text-dim)" }}>
-            أقل من دقيقة وأنت بداخل — اسمك ومسارك وبس. بدون إيميل، بدون باسورد.
+            أقل من دقيقة وأنت بداخل — ادخل بحساب Google أو Apple واختر مسارك.
           </p>
           <Link href={ctaHref}
             className="btn-primary glow-blue inline-flex items-center px-12 text-lg"

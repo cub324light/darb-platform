@@ -201,8 +201,8 @@ export function saveTrackExamDates(dates: Record<string, string>) {
 
 export function resetAll() {
   try {
-    ["darb_user","darb_stats","darb_vault","darb_cards","darb_lessons","darb_posts",
-     "darb_schedule","darb_exam_date","darb_events","darb_exam_flow","darb_stage_reviews",
+    ["darb_user","darb_stats","darb_vault","darb_cards","darb_lessons","darb_done_lessons",
+     "darb_posts","darb_schedule","darb_exam_date","darb_events","darb_exam_flow","darb_stage_reviews",
      "darb_tadreeb_items","darb_tadreeb_done","darb_tasreebat_pct","darb_subject_exam_dates",
      "darb_track_exam_dates","darb_dash_config","darb_dash_sched_v2"].forEach((k) =>
       localStorage.removeItem(k)

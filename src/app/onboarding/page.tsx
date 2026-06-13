@@ -1,9 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { TRACKS, TRACK_GROUPS, type TrackId } from "@/lib/tracks";
 import { saveUser, saveExamDate } from "@/lib/storage";
 import { registerUser } from "@/lib/firestore";
+import { currentUser, pushBackup } from "@/lib/cloud";
 import Dome from "@/components/Dome";
 
 const STUDY_LEVELS = ["ثانوي", "جامعي", "خريج", "أخرى"];
@@ -20,13 +21,19 @@ export default function OnboardingPage() {
   const [activeTracks, setActiveTracks] = useState<TrackId[]>([]);
   const [examDate, setExamDate]         = useState("");
 
+  /* املأ الاسم مبدئياً من حساب Google/Apple */
+  useEffect(() => {
+    const dn = currentUser()?.displayName;
+    if (dn) setName((prev) => prev || dn.split(" ")[0]);
+  }, []);
+
   const toggleTrack = (id: TrackId) => {
     setActiveTracks((prev) =>
       prev.includes(id) ? prev.filter((t) => t !== id) : prev.length >= MAX_TRACKS ? prev : [...prev, id]
     );
   };
 
-  const finish = () => {
+  const finish = async () => {
     if (!activeTracks.length) return;
     const trimmedName = name.trim();
     const primaryTrack = activeTracks[0];
@@ -40,6 +47,7 @@ export default function OnboardingPage() {
     });
     if (examDate) saveExamDate(examDate);
     registerUser(trimmedName, primaryTrack);
+    await pushBackup(); // احفظ إعدادك في السحابة فوراً
     router.push("/dashboard");
   };
 
