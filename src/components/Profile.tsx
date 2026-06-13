@@ -29,6 +29,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     const next: Theme = theme === "dark" ? "light" : "dark";
     setTheme(next);
     applyTheme(next);
+    saveLogoMode(next === "light" ? "day" : "night");
   };
 
   return (

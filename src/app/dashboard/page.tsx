@@ -265,6 +265,16 @@ export default function DashboardPage() {
           </Link>
         )}
 
+        {/* زر تخصيص الصفحة */}
+        <div className="flex justify-end">
+          <button onClick={() => setCustomizeOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-bold"
+            style={{ background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+            <span>⚙</span>
+            <span>تخصيص</span>
+          </button>
+        </div>
+
         {/* المسار */}
         <section className="card rise rise-1">
           <div className="flex items-center justify-between mb-4">
@@ -457,10 +467,6 @@ export default function DashboardPage() {
         {(dashConfig?.showSchedule ?? true) && <section className="card rise rise-5">
           <div className="flex items-center justify-between mb-3">
             <p className="title-md" style={{ color: "var(--text)" }}>جدول اليوم</p>
-            <button onClick={() => setCustomizeOpen(true)}
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-base"
-              style={{ background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}
-              aria-label="تخصيص">⚙</button>
           </div>
 
           {todayEvents.length === 0 ? (
@@ -493,6 +499,16 @@ export default function DashboardPage() {
                   <span className="text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>
                     {fmtHour(ev.fromHour)} → {fmtHour(ev.toHour)}
                   </span>
+                  <button
+                    onClick={() => {
+                      const updated = allEvents.filter((e) => e.id !== ev.id);
+                      setAllEvents(updated);
+                      saveEvents(updated);
+                      const tod = new Date().toISOString().slice(0, 10);
+                      setTodayEvents(getEventsForDate(tod, updated));
+                    }}
+                    className="text-[var(--danger)] text-base px-2 min-h-[44px] flex-shrink-0"
+                    aria-label="حذف">✕</button>
                 </div>
               ))}
             </div>

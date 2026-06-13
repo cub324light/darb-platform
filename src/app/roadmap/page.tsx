@@ -12,6 +12,7 @@ import {
   loadStageReviews, saveStageReviews,
   loadTadreebItems, saveTadreebItems, loadTadreebDone, saveTadreebDone,
   loadTasreebatPct, saveTasreebatPct,
+  loadSubjectExamDates, saveSubjectExamDates,
   type ScheduleEvent, type ExamFlow, type StageReviews, type TrainingItem,
 } from "@/lib/storage";
 import { syncUser } from "@/lib/firestore";
@@ -247,6 +248,8 @@ export default function RoadmapPage() {
   const [tadreebItems, setTadreebItems] = useState<TrainingItem[]>([]);
   const [tadreebDone, setTadreebDone]   = useState<string[]>([]);
   const [tasreebatPct, setTasreebatPct] = useState(0);
+  const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
+  const [subjectExamDates, setSubjectExamDates] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setTrack(getTrack(loadUser()?.track));
@@ -259,6 +262,7 @@ export default function RoadmapPage() {
     setTadreebItems(loadTadreebItems());
     setTadreebDone(loadTadreebDone());
     setTasreebatPct(loadTasreebatPct());
+    setSubjectExamDates(loadSubjectExamDates());
     setLoaded(true);
   }, []);
 
@@ -422,6 +426,31 @@ export default function RoadmapPage() {
               <span className="text-sm text-[var(--text-muted)]">{lessons.length} درس</span>
               {totals && <><span className="text-sm text-[var(--text-muted)]">{totals.hours} ساعة</span><span className="text-sm text-[var(--text-muted)]">ص {totals.pages}</span></>}
             </div>
+            <div className="mt-4 pt-3 border-t border-[var(--border)] flex items-center gap-3">
+              <span className="text-sm font-bold flex-shrink-0" style={{ color: "var(--text-muted)" }}>يوم الاختبار:</span>
+              <input
+                type="date"
+                value={subjectExamDates[selected] ?? ""}
+                onChange={(e) => {
+                  const updated = { ...subjectExamDates, [selected]: e.target.value };
+                  setSubjectExamDates(updated);
+                  saveSubjectExamDates(updated);
+                }}
+                min={new Date().toISOString().slice(0, 10)}
+                className="flex-1 rounded-xl px-3 py-2 text-sm outline-none"
+                style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)", colorScheme: "dark" }}
+              />
+              {subjectExamDates[selected] && (
+                <button
+                  onClick={() => {
+                    const updated = { ...subjectExamDates };
+                    delete updated[selected];
+                    setSubjectExamDates(updated);
+                    saveSubjectExamDates(updated);
+                  }}
+                  className="text-[var(--text-muted)] text-sm px-2">✕</button>
+              )}
+            </div>
           </div>
         </div>
         {!isTahsili && (
@@ -504,6 +533,31 @@ export default function RoadmapPage() {
             <div className="h-2.5 bg-[var(--border)] rounded-full overflow-hidden">
               <div className="h-full rounded-full" style={{ width: pct + "%", background: color }} />
             </div>
+            <div className="mt-4 pt-3 border-t border-[var(--border)] flex items-center gap-3">
+              <span className="text-sm font-bold flex-shrink-0" style={{ color: "var(--text-muted)" }}>يوم الاختبار:</span>
+              <input
+                type="date"
+                value={subjectExamDates[selected] ?? ""}
+                onChange={(e) => {
+                  const updated = { ...subjectExamDates, [selected]: e.target.value };
+                  setSubjectExamDates(updated);
+                  saveSubjectExamDates(updated);
+                }}
+                min={new Date().toISOString().slice(0, 10)}
+                className="flex-1 rounded-xl px-3 py-2 text-sm outline-none"
+                style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)", colorScheme: "dark" }}
+              />
+              {subjectExamDates[selected] && (
+                <button
+                  onClick={() => {
+                    const updated = { ...subjectExamDates };
+                    delete updated[selected];
+                    setSubjectExamDates(updated);
+                    saveSubjectExamDates(updated);
+                  }}
+                  className="text-[var(--text-muted)] text-sm px-2">✕</button>
+              )}
+            </div>
           </div>
         </div>
         <div className="px-5 mb-6 flex gap-2.5">
@@ -561,6 +615,28 @@ export default function RoadmapPage() {
       </Dome>
       <div className="h-5" />
 
+      {/* فلتر المادة */}
+      <div className="px-5 mb-4 flex flex-wrap gap-2">
+        <button
+          onClick={() => setSubjectFilter(null)}
+          className="px-3 py-1.5 rounded-xl text-[13px] font-bold transition"
+          style={subjectFilter === null
+            ? { background: "var(--accent)", color: "white", border: "1.5px solid var(--accent)" }
+            : { background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}>
+          الكل
+        </button>
+        {track.subjects.map((s) => (
+          <button key={s.name}
+            onClick={() => setSubjectFilter(subjectFilter === s.name ? null : s.name)}
+            className="px-3 py-1.5 rounded-xl text-[13px] font-bold transition"
+            style={subjectFilter === s.name
+              ? { background: s.color, color: "white", border: `1.5px solid ${s.color}` }
+              : { background: "transparent", border: `1.5px solid ${s.color}55`, color: s.color }}>
+            {s.name}
+          </button>
+        ))}
+      </div>
+
       {/* ══ التأسيس ══ */}
       <PhaseSection title="التأسيس" num={1} pct={taseesPct} complete={taseesComplete}
         unlocked={true} color="var(--accent)" accentText="var(--accent-light)">
@@ -577,7 +653,7 @@ export default function RoadmapPage() {
           </div>
         )}
         <div className="grid grid-cols-2 gap-3">
-          {track.subjects.map((s) => {
+          {track.subjects.filter(s => !subjectFilter || s.name === subjectFilter).map((s) => {
             const ls = lessonsOf(s.name);
             const dc = ls.filter((l) => doneSet.has(l.key)).length;
             const p  = ls.length === 0 ? 0 : Math.round((dc / ls.length) * 100);
@@ -598,6 +674,11 @@ export default function RoadmapPage() {
                     <span className="font-mono-nums font-black text-xs" style={{ color: s.color }}>{p}%</span>
                   </div>
                 </div>
+                {subjectExamDates[s.name] && (
+                  <p className="text-[10px] font-bold mt-1" style={{ color: "var(--gold)" }}>
+                    اختبار: {new Date(subjectExamDates[s.name] + "T12:00:00").toLocaleDateString("ar-SA", { month: "short", day: "numeric" })}
+                  </p>
+                )}
               </button>
             );
           })}
@@ -621,7 +702,7 @@ export default function RoadmapPage() {
           </div>
         )}
         <div className="grid grid-cols-2 gap-3 mb-3">
-          {track.subjects.map((s) => {
+          {track.subjects.filter(s => !subjectFilter || s.name === subjectFilter).map((s) => {
             const items = trainingOf(s.name);
             const dc = items.filter((t) => tadreebDoneSet.has(t.id)).length;
             const p  = items.length === 0 ? 0 : Math.round((dc / items.length) * 100);
