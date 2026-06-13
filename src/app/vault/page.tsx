@@ -18,6 +18,7 @@ export default function VaultPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [filterSubject, setFilterSubject] = useState<string>("الكل");
   const [filterCat, setFilterCat] = useState<string>("الكل");
+  const [sortBy, setSortBy] = useState<"recent" | "priority">("recent");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [newQ, setNewQ] = useState("");
   const [newSubject, setNewSubject] = useState("");
@@ -42,11 +43,16 @@ export default function VaultPage() {
 
   const subjects = track?.subjects.map((s) => s.name) ?? [];
 
-  const filtered = errors.filter((e) => {
-    if (filterSubject !== "الكل" && e.subject !== filterSubject) return false;
-    if (filterCat !== "الكل" && e.category !== filterCat) return false;
-    return true;
-  });
+  const filtered = errors
+    .filter((e) => {
+      if (filterSubject !== "الكل" && e.subject !== filterSubject) return false;
+      if (filterCat !== "الكل" && e.category !== filterCat) return false;
+      return true;
+    })
+    .sort((a, b) => sortBy === "priority"
+      ? a.reviewCount - b.reviewCount
+      : b.createdAt - a.createdAt
+    );
 
   const addError = () => {
     if (!newQ.trim() || atLimit) return;
@@ -67,9 +73,17 @@ export default function VaultPage() {
       <Dome compact>
         <div className="flex items-center justify-between">
           <h1 className="title-lg" style={{ color: "var(--text)" }}>خزنة الأخطاء</h1>
-          <div className="dome-chip">
-            <span className="num-hero text-base" style={{ color: "var(--gold-light)" }}>{errors.length}</span>
-            {isPlanFree && <span className="text-[17px] font-semibold" style={{ color: "var(--text-dim)" }}>/{FREE_LIMIT}</span>}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSortBy((s) => s === "recent" ? "priority" : "recent")}
+              className="dome-chip text-[15px] font-bold transition"
+              style={{ color: sortBy === "priority" ? "var(--gold)" : "var(--text-dim)" }}>
+              {sortBy === "priority" ? "أولوية" : "أحدث"}
+            </button>
+            <div className="dome-chip">
+              <span className="num-hero text-base" style={{ color: "var(--gold-light)" }}>{errors.length}</span>
+              {isPlanFree && <span className="text-[17px] font-semibold" style={{ color: "var(--text-dim)" }}>/{FREE_LIMIT}</span>}
+            </div>
           </div>
         </div>
       </Dome>

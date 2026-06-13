@@ -30,6 +30,7 @@ export default function DashboardPage() {
   const [greeting, setGreeting] = useState("");
   const [todayEvents, setTodayEvents] = useState<ScheduleEvent[]>([]);
   const [examDays, setExamDays] = useState<number | null>(null);
+  const [dueCards, setDueCards] = useState(0);
 
   useEffect(() => {
     setUser(loadUser());
@@ -42,6 +43,10 @@ export default function DashboardPage() {
     try {
       const vault = JSON.parse(localStorage.getItem("darb_vault") ?? "[]");
       setErrorsCount(Array.isArray(vault) ? vault.length : 0);
+    } catch {}
+    try {
+      const cards = JSON.parse(localStorage.getItem("darb_cards") ?? "[]");
+      setDueCards(Array.isArray(cards) ? cards.filter((c: { dueDate: number }) => c.dueDate <= Date.now()).length : 0);
     } catch {}
 
     // load today's events
@@ -172,10 +177,19 @@ export default function DashboardPage() {
           </div>
           {examDays !== null && examDays >= 0 && (
             <div className="rounded-xl px-3.5 py-2.5 mb-3 text-center"
-              style={{ background: "color-mix(in srgb, var(--gold) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--gold) 30%, transparent)" }}>
-              <span className="text-[15px] font-bold" style={{ color: "var(--gold)" }}>
+              style={{
+                background: examDays <= 1 ? "color-mix(in srgb, #EF4444 10%, transparent)"
+                  : examDays <= 7 ? "color-mix(in srgb, #F97316 10%, transparent)"
+                  : "color-mix(in srgb, var(--gold) 10%, transparent)",
+                border: examDays <= 1 ? "1px solid color-mix(in srgb, #EF4444 30%, transparent)"
+                  : examDays <= 7 ? "1px solid color-mix(in srgb, #F97316 30%, transparent)"
+                  : "1px solid color-mix(in srgb, var(--gold) 30%, transparent)",
+              }}>
+              <span className="text-[15px] font-bold"
+                style={{ color: examDays <= 1 ? "#EF4444" : examDays <= 7 ? "#F97316" : "var(--gold)" }}>
                 {examDays === 0 ? "اختبارك اليوم — بالتوفيق!"
                   : examDays === 1 ? "اختبارك بكرة — راجع ونم بدري"
+                  : examDays <= 7 ? `${examDays} أيام على الاختبار — شدّ الحزام`
                   : `باقي ${examDays} يوم على الاختبار`}
               </span>
             </div>
@@ -210,6 +224,28 @@ export default function DashboardPage() {
             ))}
           </div>
         </section>
+
+        {/* تنبيه المراجعة المستحقة */}
+        {dueCards > 0 && (
+          <Link href="/review" className="rise rise-4 block rounded-2xl px-4 py-3.5 transition active:scale-[0.98]"
+            style={{
+              background: "color-mix(in srgb, var(--success) 8%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--success) 25%, transparent)",
+              textDecoration: "none",
+            }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[15px] font-black" style={{ color: "var(--success)" }}>
+                  {dueCards} بطاقة مراجعة مستحقة اليوم
+                </p>
+                <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                  راجعها الحين — قبل ما تنسى
+                </p>
+              </div>
+              <span className="text-lg font-black" style={{ color: "var(--success)" }}>←</span>
+            </div>
+          </Link>
+        )}
 
         {/* الأدوات */}
         <section className="rise rise-4">

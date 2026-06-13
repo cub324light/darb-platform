@@ -1,6 +1,23 @@
 "use client";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+function useDueCards() {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    const calc = () => {
+      try {
+        const cards = JSON.parse(localStorage.getItem("darb_cards") ?? "[]");
+        setCount(Array.isArray(cards) ? cards.filter((c: { dueDate: number }) => c.dueDate <= Date.now()).length : 0);
+      } catch {}
+    };
+    calc();
+    const t = setInterval(calc, 60000);
+    return () => clearInterval(t);
+  }, []);
+  return count;
+}
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "الرئيسية", icon: (a: boolean) => (
@@ -32,13 +49,23 @@ const NAV_ITEMS = [
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const dueCount = useDueCards();
   return (
     <nav className="float-nav flex items-stretch px-2" aria-label="التنقل الرئيسي">
       {NAV_ITEMS.map((item) => {
         const active = pathname === item.href;
+        const badge = item.href === "/review" && dueCount > 0 ? dueCount : 0;
         return (
           <Link key={item.href} href={item.href} className={`float-nav-item ${active ? "active" : ""}`}>
-            <span className="nav-bubble">{item.icon(active)}</span>
+            <span className="nav-bubble relative">
+              {item.icon(active)}
+              {badge > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-black flex items-center justify-center"
+                  style={{ background: "#EF4444", color: "#fff", lineHeight: 1 }}>
+                  {badge > 9 ? "9+" : badge}
+                </span>
+              )}
+            </span>
             <span className={`text-[11.5px] ${active ? "font-extrabold" : "font-semibold"}`}>{item.label}</span>
           </Link>
         );

@@ -20,6 +20,15 @@ const SUBJECT_GLOWS: Record<string, string> = {
 
 const SILVER_PER_SESSION = 10;
 
+const BREAK_TIPS = [
+  "قم امش — ولو دقيقتين، جسمك يشكرك",
+  "حضّر كوب ماء — التركيز يحتاج ترطيب",
+  "انظر بعيد عن الشاشة لثلاثين ثانية — يرتاح عينك",
+  "خذ ثلاثة أنفاس عميقة — يصفي الذهن",
+  "تمدد وحرك رقبتك — كل ساعة تركيز تستحق دقيقة راحة",
+  "احمد الله على صحتك — وواصل",
+];
+
 /* كل 5 دقائق تركيز = دقيقة راحة */
 function calcBreak(focus: number) { return Math.max(1, Math.floor(focus / 5)); }
 
@@ -47,6 +56,7 @@ export default function OrbitPage() {
   const [totalFocusMins, setTotalFocusMins] = useState(0);
   const [subjects, setSubjects] = useState<{ name: string; color: string }[]>([]);
   const [subject, setSubject]   = useState<string>("");
+  const [breakTip] = useState(() => BREAK_TIPS[Math.floor(Math.random() * BREAK_TIPS.length)]);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   /* نهاية الجلسة كطابع زمني حقيقي — العدّ ما يتجمد لو راح التطبيق للخلفية */
   const endAtRef = useRef(0);
@@ -75,6 +85,10 @@ export default function OrbitPage() {
   const progress  = 1 - secondsLeft / totalSecs;
   const mins      = Math.floor(secondsLeft / 60);
   const secs      = secondsLeft % 60;
+
+  const vibrate = useCallback((pattern: number | number[]) => {
+    try { navigator.vibrate?.(pattern); } catch {}
+  }, []);
 
   const playBeep = useCallback(() => {
     try {
@@ -116,13 +130,15 @@ export default function OrbitPage() {
     setTotalFocusMins(s.todayFocusMins);
     setSessionsToday((p) => p + 1);
     playBeep();
+    vibrate([100, 50, 100]);
     notify("انتهت جلسة التركيز", `أحسنت! خذ راحة ${calcBreak(focusMins)} دقيقة`);
-  }, [focusMins, breakSecs, playBeep, notify]);
+  }, [focusMins, breakSecs, playBeep, notify, vibrate]);
 
   const finishBreak = useCallback(() => {
     setPhase("done"); playBeep();
+    vibrate(200);
     notify("انتهت الراحة", "جاهز لجولة جديدة؟");
-  }, [playBeep, notify]);
+  }, [playBeep, notify, vibrate]);
 
   const reset = useCallback(() => {
     setPhase("idle"); setSecondsLeft(focusSecs);
@@ -154,6 +170,22 @@ export default function OrbitPage() {
       document.removeEventListener("visibilitychange", onVis);
     };
   }, [phase, startBreak, finishBreak]);
+
+  /* اختصارات لوحة المفاتيح: مسافة = بدء/إيقاف | Escape = إعادة تعيين */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === " " || e.code === "Space") {
+        e.preventDefault();
+        if (phase === "idle") { setShowEdit(false); startFocus(); }
+        else if (phase === "focus") reset();
+        else if (phase === "done") startFocus();
+      } else if (e.key === "Escape") {
+        if (phase !== "idle") reset();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [phase, startFocus, reset]);
 
   /* عنوان التبويب يعرض العدّاد أثناء الجلسة */
   useEffect(() => {
@@ -374,11 +406,14 @@ export default function OrbitPage() {
         {/* أزرار التحكم */}
         <div className="w-full max-w-xs space-y-3">
           {phase === "idle" && (
-            <button onClick={() => { setShowEdit(false); startFocus(); }}
-              className="w-full py-5 rounded-2xl font-black text-xl transition glow-blue min-h-[60px]"
-              style={{ background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
-              ابدأ الجلسة
-            </button>
+            <div className="flex flex-col items-center gap-2">
+              <button onClick={() => { setShowEdit(false); startFocus(); }}
+                className="w-full py-5 rounded-2xl font-black text-xl transition glow-blue min-h-[60px]"
+                style={{ background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
+                ابدأ الجلسة
+              </button>
+              <p className="text-xs text-[var(--text-muted)]">أو اضغط المسافة</p>
+            </div>
           )}
 
           {phase === "focus" && (
@@ -389,9 +424,10 @@ export default function OrbitPage() {
           )}
 
           {phase === "break" && (
-            <div className="text-center text-sm text-[var(--text-dim)] glass rounded-2xl px-4 py-3">
-              <p className="font-bold text-[var(--gold)]">وقت الراحة</p>
-              <p className="text-xs mt-1">الجلسة القادمة تبدأ تلقائياً بعد {mins}:{String(secs).padStart(2, "0")}</p>
+            <div className="text-center glass rounded-2xl px-5 py-4">
+              <p className="text-sm font-bold text-[var(--gold)] mb-1.5">وقت الراحة</p>
+              <p className="text-sm text-[var(--text-dim)] leading-relaxed mb-2">{breakTip}</p>
+              <p className="text-xs text-[var(--text-muted)]">الجلسة القادمة تبدأ تلقائياً بعد {mins}:{String(secs).padStart(2, "0")}</p>
             </div>
           )}
 
