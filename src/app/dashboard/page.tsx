@@ -137,7 +137,7 @@ export default function DashboardPage() {
       if (due > 0) {
         setSuggestion({ text: `${due} بطاقة مراجعة مستحقة`, sub: "راجعها الحين قبل ما تنسى", href: "/review", color: "var(--success)" });
       } else if (unreviewedVault > 0) {
-        setSuggestion({ text: `${unreviewedVault} خطأ لم تراجعه بعد`, sub: "افتح الخزنة وراجعها", href: "/vault", color: "var(--gold)" });
+        setSuggestion({ text: `${unreviewedVault} خطأ لم تراجعه بعد`, sub: "افتح الخزنة وراجعها", href: "/vault", color: "var(--accent)" });
       } else if (todS.todayFocusMins === 0) {
         setSuggestion({ text: "ما بدأت اليوم بعد", sub: "جلسة أوربت تكسر الصفر", href: "/orbit", color: "var(--accent)" });
       }
