@@ -21,10 +21,10 @@ const SKILL_SPEAK   = { name: "محادثة",  icon: "", color: "#EF4444" };
 const SKILL_GRAMMAR = { name: "قواعد",   icon: "", color: "#3B82F6" };
 
 const TAHSILI_SUBJECTS = [
+  { name: "أحياء",   icon: "", color: "#F59E0B" },
   { name: "فيزياء",  icon: "", color: "#8B5CF6" },
   { name: "رياضيات", icon: "", color: "#10B981" },
   { name: "كيمياء",  icon: "", color: "#EF4444" },
-  { name: "أحياء",   icon: "", color: "#F59E0B" },
 ];
 
 export const TRACKS: Track[] = [
@@ -121,10 +121,10 @@ export const SUBJECT_GROUPS: { label: string; subjects: SubjectInfo[] }[] = [
   {
     label: "الثانوية",
     subjects: [
+      { name: "أحياء",   color: "#F59E0B", testedBy: ["التحصيلي"] },
       { name: "فيزياء",  color: "#8B5CF6", testedBy: ["التحصيلي"] },
       { name: "رياضيات", color: "#10B981", testedBy: ["التحصيلي", "CPC", "ITC"] },
       { name: "كيمياء",  color: "#EF4444", testedBy: ["التحصيلي"] },
-      { name: "أحياء",   color: "#F59E0B", testedBy: ["التحصيلي"] },
     ],
   },
   {

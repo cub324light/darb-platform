@@ -181,7 +181,7 @@ export default function LandingPage() {
             backgroundClip: "text",
             color: "transparent",
           }}>
-          منصة التحضير الذكية<br />للطلاب السعوديين
+          منصة التحضير الذكية<br />للطلاب
         </h1>
 
         <p className="text-lg leading-relaxed max-w-md mb-8" style={{ color: "var(--text-dim)" }}>

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { TRACKS, TRACK_GROUPS, SUBJECT_GROUPS, getTrack, type TrackId, type SubjectInfo } from "@/lib/tracks";
+import { TRACKS, TRACK_GROUPS, getTrack, type TrackId } from "@/lib/tracks";
 import {
   loadUser, saveUser, loadStats, computeStreak,
   loadTheme, applyTheme, resetAll,
@@ -46,9 +46,9 @@ export default function ProfileButton() {
   const [editing, setEditing] = useState(false);
   const [stats, setStats] = useState({ streak: 0, silver: 0, hours: 0, sessions: 0 });
   const [examDate, setExamDate] = useState("");
-  const [logoMode, setLogoMode]   = useState<LogoMode>("night");
-  const [selectedSubs, setSelectedSubs] = useState<string[]>([]);
-  const [dashConfig, setDashConfig]     = useState<DashConfig | null>(null);
+  const [logoMode, setLogoMode]     = useState<LogoMode>("night");
+  const [activeTracksState, setActiveTracksState] = useState<TrackId[]>([]);
+  const [dashConfig, setDashConfig] = useState<DashConfig | null>(null);
 
   // الحساب السحابي
   const [authUser, setAuthUser] = useState<User | null>(null);
@@ -122,7 +122,7 @@ export default function ProfileButton() {
     });
     setExamDate(loadExamDate() ?? "");
     setLogoMode(loadLogoMode());
-    setSelectedSubs(u?.subjects ?? []);
+    setActiveTracksState(u?.activeTracks ?? (u?.track ? [u.track] : []));
     setDashConfig(loadDashConfig());
   }, [open]);
 
@@ -131,13 +131,17 @@ export default function ProfileButton() {
     saveLogoMode(mode);
   };
 
-  const toggleSub = (name: string) => {
-    setSelectedSubs((prev) => {
-      const next = prev.includes(name) ? prev.filter((s) => s !== name) : prev.length >= 3 ? prev : [...prev, name];
+  const toggleActiveTrack = (id: TrackId) => {
+    setActiveTracksState((prev) => {
+      const next = prev.includes(id)
+        ? prev.filter((t) => t !== id)
+        : prev.length >= 3 ? prev : [...prev, id];
       if (!user) return next;
-      const updated = { ...user, subjects: next };
+      const primaryTrack = next[0] ?? user.track;
+      const updated = { ...user, track: primaryTrack, activeTracks: next };
       saveUser(updated);
       setUser(updated);
+      syncUser({ track: primaryTrack });
       return next;
     });
   };
@@ -160,14 +164,6 @@ export default function ProfileButton() {
     setUser(next);
     setEditing(false);
     syncUser({ name: next.name });
-  };
-
-  const switchTrack = (id: TrackId) => {
-    if (!user) return;
-    const next = { ...user, track: id };
-    saveUser(next);
-    setUser(next);
-    syncUser({ track: id });
   };
 
   const reset = () => {
@@ -270,43 +266,6 @@ export default function ProfileButton() {
               })}
             </div>
 
-            {/* مواضيع المذاكرة */}
-            <p className="label mb-3">مواضيعك (حد أقصى 3)</p>
-            <div className="flex flex-col gap-3.5 mb-6">
-              {SUBJECT_GROUPS.map((group) => (
-                <div key={group.label}>
-                  <p className="text-[10px] font-black tracking-widest mb-2 px-0.5"
-                    style={{ color: "var(--text-muted)" }}>
-                    ── {group.label} ──
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {group.subjects.map((sub: SubjectInfo) => {
-                      const selected = selectedSubs.includes(sub.name);
-                      const disabled = !selected && selectedSubs.length >= 3;
-                      return (
-                        <button key={sub.name}
-                          onClick={() => !disabled && toggleSub(sub.name)}
-                          className="rounded-xl p-3 text-right transition active:scale-[0.97]"
-                          style={{
-                            background: selected ? `color-mix(in srgb, ${sub.color} 14%, transparent)` : "var(--surface2)",
-                            border: `2px solid ${selected ? sub.color : "var(--border)"}`,
-                            opacity: disabled ? 0.38 : 1,
-                          }}>
-                          <p className="font-black text-[14px]" style={{ color: selected ? sub.color : "var(--text)" }}>
-                            {sub.name}
-                          </p>
-                          <div className="pt-1 mt-1" style={{ borderTop: `1px solid ${sub.color}30` }}>
-                            <p className="text-[10px] font-semibold" style={{ color: "var(--text-muted)" }}>
-                              {sub.testedBy.join(" · ")}
-                            </p>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
 
             {/* الحساب السحابي */}
             <p className="label mb-3">حسابك السحابي</p>
@@ -413,8 +372,17 @@ export default function ProfileButton() {
               )}
             </div>
 
-            {/* المسار — مجمّع */}
-            <p className="label mb-3">مسارك</p>
+            {/* المسارات — متعددة (حد أقصى 3) */}
+            <div className="flex items-center gap-2 mb-3">
+              <p className="label">مساراتك</p>
+              <span className="text-xs px-2 py-0.5 rounded-full font-black"
+                style={{
+                  background: activeTracksState.length >= 3 ? "color-mix(in srgb, var(--gold) 15%, transparent)" : "color-mix(in srgb, var(--accent) 12%, transparent)",
+                  color: activeTracksState.length >= 3 ? "var(--gold)" : "var(--accent-light)",
+                }}>
+                {activeTracksState.length}/3
+              </span>
+            </div>
             <div className="flex flex-col gap-3.5 mb-6">
               {TRACK_GROUPS.map((group) => (
                 <div key={group.label}>
@@ -425,17 +393,27 @@ export default function ProfileButton() {
                   <div className="grid grid-cols-2 gap-2">
                     {group.ids.map((id) => {
                       const t = TRACKS.find((tr) => tr.id === id)!;
-                      const active = t.id === track.id;
+                      const selected = activeTracksState.includes(id);
+                      const disabled = !selected && activeTracksState.length >= 3;
                       return (
-                        <button key={t.id} onClick={() => switchTrack(t.id)}
+                        <button key={t.id} onClick={() => !disabled && toggleActiveTrack(t.id)}
                           className="rounded-xl p-3 text-right transition active:scale-[0.98] relative"
                           style={{
-                            background: active ? "color-mix(in srgb, var(--accent) 12%, transparent)" : "var(--surface2)",
-                            border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
+                            background: selected ? "color-mix(in srgb, var(--accent) 12%, transparent)" : "var(--surface2)",
+                            border: `2px solid ${selected ? "var(--accent)" : "var(--border)"}`,
+                            opacity: disabled ? 0.38 : 1,
                           }}>
-                          {active && <span className="absolute top-2 left-2.5 text-[var(--accent-light)] text-sm font-black">✓</span>}
+                          {selected && <span className="absolute top-2 left-2.5 text-[var(--accent-light)] text-sm font-black">✓</span>}
                           <p className="font-bold text-[14px] text-[var(--text)]">{t.title}</p>
                           <p className="text-[10px] text-[var(--text-muted)] mt-0.5 leading-snug">{t.sub}</p>
+                          {t.subjects.length > 0 && (
+                            <div className="flex gap-1 mt-1.5 flex-wrap">
+                              {t.subjects.map((s) => (
+                                <span key={s.name} className="w-1.5 h-1.5 rounded-full inline-block"
+                                  style={{ background: s.color }} />
+                              ))}
+                            </div>
+                          )}
                         </button>
                       );
                     })}

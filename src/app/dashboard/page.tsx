@@ -1,14 +1,15 @@
 "use client";
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
-import { getTrack, resolveSubjects } from "@/lib/tracks";
-import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, loadDashConfig, type DarbUser, type ScheduleEvent, type DashConfig } from "@/lib/storage";
+import { getTrack, TRACKS, type TrackId } from "@/lib/tracks";
+import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, saveExamDate, loadDashConfig, saveDashConfig, type DarbUser, type ScheduleEvent, type DashConfig, saveEvents } from "@/lib/storage";
 import DashAI from "@/components/DashAI";
 import { syncUser } from "@/lib/firestore";
-import { getEventsForDate } from "@/components/DayScheduler";
+import DayScheduler, { getEventsForDate } from "@/components/DayScheduler";
 
 const DAILY_TARGET = 200;
 
@@ -71,6 +72,13 @@ export default function DashboardPage() {
   const [week, setWeek] = useState<{ label: string; mins: number; isToday: boolean }[]>([]);
   const [suggestion, setSuggestion] = useState<{ text: string; sub: string; href: string; color: string } | null>(null);
   const [dashConfig, setDashConfig] = useState<DashConfig | null>(null);
+  const [schedOpen, setSchedOpen] = useState(false);
+  const [schedTab, setSchedTab] = useState<"manual" | "ai">("manual");
+  const [schedPrefill, setSchedPrefill] = useState("");
+  const [customizeOpen, setCustomizeOpen] = useState(false);
+  const [allEvents, setAllEvents] = useState<ScheduleEvent[]>([]);
+  const [examDate, setExamDate] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setUser(loadUser());
@@ -92,17 +100,21 @@ export default function DashboardPage() {
 
     // load today's events
     const today = new Date().toISOString().slice(0, 10);
-    const allEvents = loadEvents();
-    setTodayEvents(getEventsForDate(today, allEvents));
+    const eventsData = loadEvents();
+    setAllEvents(eventsData);
+    setTodayEvents(getEventsForDate(today, eventsData));
 
     // عداد أيام الاختبار
-    const examDate = loadExamDate();
-    if (examDate) {
+    const examDateVal = loadExamDate();
+    setExamDate(examDateVal);
+    if (examDateVal) {
       const diff = Math.round(
-        (new Date(examDate + "T00:00:00").getTime() - new Date(today + "T00:00:00").getTime()) / 86400000
+        (new Date(examDateVal + "T00:00:00").getTime() - new Date(today + "T00:00:00").getTime()) / 86400000
       );
       setExamDays(diff);
     }
+
+    setMounted(true);
 
     // اقتراح ذكي
     try {
@@ -147,10 +159,17 @@ export default function DashboardPage() {
   }, []);
 
   const track = getTrack(user?.track);
-  // إذا اختار المستخدم مواد محددة، استخدمها — وإلا استخدم مواد المسار
-  const activeSubjects = user?.subjects?.length
-    ? resolveSubjects(user.subjects)
-    : track.subjects.map((s) => ({ name: s.name, color: s.color }));
+  // كل مواد المسارات النشطة للمستخدم
+  const activeTrackIds: TrackId[] = (user?.activeTracks?.length ? user.activeTracks : [user?.track]).filter(Boolean) as TrackId[];
+  const allSubjects = Array.from(
+    new Map(
+      activeTrackIds.flatMap((id) => {
+        const t = TRACKS.find((tr) => tr.id === id);
+        return t ? t.subjects.map((s) => [s.name, s]) : [];
+      })
+    ).values()
+  );
+  const activeSubjects = allSubjects.length ? allSubjects : track.subjects;
   const todayPct = Math.min(100, Math.round((todayMins / DAILY_TARGET) * 100));
 
   const TOOLS = [
@@ -249,36 +268,42 @@ export default function DashboardPage() {
         {/* المسار */}
         <section className="card rise rise-1">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
-                style={{ background: "color-mix(in srgb, var(--accent) 13%, transparent)", border: "1px solid color-mix(in srgb, var(--accent) 22%, transparent)" }}>
-                {track.icon}
-              </div>
-              <div>
-                <p className="eyebrow">مسارك</p>
-                <p className="title-md" style={{ color: "var(--text)" }}>{track.title}</p>
-              </div>
+            <div>
+              <p className="eyebrow">مسارك</p>
+              <p className="title-md" style={{ color: "var(--text)" }}>
+                {activeTrackIds.length > 1 ? `${activeTrackIds.length} مسارات` : track.title}
+              </p>
             </div>
             <Link href="/roadmap" className="text-[17px] font-bold" style={{ color: "var(--accent-light)" }}>
               الخريطة ←
             </Link>
           </div>
-          <div className={`grid grid-cols-2 gap-2.5 ${activeSubjects.length >= 4 ? "md:grid-cols-4" : ""}`}>
-            {activeSubjects.map((s, i) => (
-              <Link key={s.name} href="/roadmap"
-                className="rounded-2xl px-4 py-3.5 flex items-center gap-3 transition active:scale-[0.97] subject-card"
-                style={{
-                  background: "var(--surface)",
-                  border: `1.5px solid ${s.color}55`,
-                  boxShadow: `0 0 10px ${s.color}18`,
-                  minHeight: "58px",
-                  animationDelay: `${i * 80}ms`,
-                }}>
-                <div className="w-2 h-2 rounded-full flex-shrink-0 subject-dot" style={{ background: s.color, boxShadow: `0 0 5px ${s.color}88` }} />
-                <span className="font-bold text-[17px]" style={{ color: "var(--text)" }}>{s.name}</span>
-              </Link>
-            ))}
-          </div>
+          {activeTrackIds.map((trackId) => {
+            const t = TRACKS.find((tr) => tr.id === trackId) ?? track;
+            return (
+              <div key={trackId} className="mb-3 last:mb-0">
+                {activeTrackIds.length > 1 && (
+                  <p className="eyebrow mb-2">{t.title}</p>
+                )}
+                <div className="grid grid-cols-2 gap-2.5">
+                  {t.subjects.map((s, i) => (
+                    <Link key={s.name} href="/roadmap"
+                      className="rounded-2xl px-4 py-3.5 flex items-center gap-3 transition active:scale-[0.97] subject-card"
+                      style={{
+                        background: "var(--surface)",
+                        border: `1.5px solid ${s.color}55`,
+                        boxShadow: `0 0 10px ${s.color}18`,
+                        minHeight: "58px",
+                        animationDelay: `${i * 80}ms`,
+                      }}>
+                      <div className="w-2 h-2 rounded-full flex-shrink-0 subject-dot" style={{ background: s.color, boxShadow: `0 0 5px ${s.color}88` }} />
+                      <span className="font-bold text-[17px]" style={{ color: "var(--text)" }}>{s.name}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </section>
 
         {/* اليوم: تقدم + ساعة + CTA في بطاقة واحدة */}
@@ -432,27 +457,25 @@ export default function DashboardPage() {
         {(dashConfig?.showSchedule ?? true) && <section className="card rise rise-5">
           <div className="flex items-center justify-between mb-3">
             <p className="title-md" style={{ color: "var(--text)" }}>جدول اليوم</p>
-            <Link href="/roadmap" className="text-[17px] font-bold" style={{ color: "var(--accent-light)", textDecoration: "none" }}>
-              تعديل ←
-            </Link>
+            <button onClick={() => setCustomizeOpen(true)}
+              className="w-8 h-8 rounded-xl flex items-center justify-center text-base"
+              style={{ background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}
+              aria-label="تخصيص">⚙</button>
           </div>
 
           {todayEvents.length === 0 ? (
-            <Link
-              href="/roadmap"
-              className="flex items-center justify-center gap-2 rounded-2xl py-5 transition active:scale-[0.98]"
+            <div
+              className="flex items-center justify-center gap-2 rounded-2xl py-5"
               style={{
                 background: "var(--surface2)",
                 border: "1.5px dashed var(--border)",
-                textDecoration: "none",
                 minHeight: "64px",
               }}
             >
               <span className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>
-                لا يوجد جدول اليوم — اضغط لإضافة
+                لا يوجد جدول اليوم
               </span>
-              <span className="text-[19px]" style={{ color: "var(--accent)" }}>+</span>
-            </Link>
+            </div>
           ) : (
             <div className="flex flex-col gap-2">
               {todayEvents.map((ev) => (
@@ -474,10 +497,26 @@ export default function DashboardPage() {
               ))}
             </div>
           )}
+
+          <div className="flex gap-2 mt-3">
+            <button onClick={() => { setSchedOpen(true); setSchedTab("manual"); }}
+              className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
+              style={{ background: "transparent", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
+              تعديل يدوي
+            </button>
+            <button onClick={() => { setSchedOpen(true); setSchedTab("ai"); }}
+              className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
+              style={{ background: "var(--accent)", color: "white", border: "none" }}>
+              خطة ذكية
+            </button>
+          </div>
         </section>}
 
         {/* دربي الذكي — تحت الجدول */}
-        {(dashConfig?.showAI ?? true) && <DashAI subjects={user?.subjects ?? track.subjects.map((s) => s.name)} />}
+        {(dashConfig?.showAI ?? true) && <DashAI
+          subjects={allSubjects.map((s) => s.name)}
+          onOpenScheduler={(tab, prefill) => { setSchedTab(tab); setSchedPrefill(prefill ?? ""); setSchedOpen(true); }}
+        />}
 
         {/* المجتمع */}
         <section className="grid grid-cols-2 gap-2.5 rise rise-5">
@@ -514,6 +553,74 @@ export default function DashboardPage() {
       </div>
 
       <BottomNav />
+
+      {/* DayScheduler Modal */}
+      {schedOpen && mounted && (
+        <DayScheduler
+          date={new Date().toISOString().slice(0, 10)}
+          events={allEvents}
+          subjects={allSubjects}
+          examDate={examDate}
+          onExamDateChange={(d) => { setExamDate(d); saveExamDate(d); }}
+          onEventsChange={(evs) => { setAllEvents(evs); saveEvents(evs); const today = new Date().toISOString().slice(0, 10); setTodayEvents(getEventsForDate(today, evs)); }}
+          onClose={() => setSchedOpen(false)}
+          prefillText={schedPrefill}
+          initialTab={schedTab}
+        />
+      )}
+
+      {/* Customize Bottom Sheet */}
+      {customizeOpen && mounted && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-end" onClick={() => setCustomizeOpen(false)}>
+          <div className="absolute inset-0 bg-black/55 fade-in" />
+          <div className="relative w-full rounded-t-3xl max-h-[80vh] overflow-y-auto slide-up"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)", borderBottom: "none" }}
+            onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 z-10 pt-4 pb-3 px-5" style={{ background: "var(--surface)", borderBottom: "1px solid var(--border)" }}>
+              <div className="w-10 h-1.5 rounded-full bg-[var(--border)] mx-auto mb-3" />
+              <div className="flex items-center justify-between">
+                <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>تخصيص الصفحة الرئيسية</p>
+                <button onClick={() => setCustomizeOpen(false)} className="w-8 h-8 rounded-xl flex items-center justify-center text-base"
+                  style={{ background: "var(--surface2)", color: "var(--text-muted)" }}>✕</button>
+              </div>
+            </div>
+            <div className="px-5 py-4 pb-10">
+              <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+                {([
+                  { key: "showStats"    as keyof DashConfig, label: "الإحصاءات",   desc: "ساعات التركيز والجلسات المنجزة" },
+                  { key: "showWeekly"   as keyof DashConfig, label: "رسم الأسبوع", desc: "مخطط التقدم اليومي بالدقائق" },
+                  { key: "showSchedule" as keyof DashConfig, label: "جدول اليوم",  desc: "مواعيد المذاكرة والمشاغيل" },
+                  { key: "showTools"    as keyof DashConfig, label: "الأدوات",     desc: "أوربت، الخزنة، المراجعة، الخريطة" },
+                  { key: "showAI"       as keyof DashConfig, label: "دربي الذكي",  desc: "المساعد الذكي للجداول والنصائح" },
+                ]).map(({ key, label, desc }, i, arr) => {
+                  const cfg = dashConfig ?? { showStats: true, showWeekly: true, showSchedule: true, showTools: true, showAI: true };
+                  const on = cfg[key];
+                  return (
+                    <button key={key} onClick={() => {
+                      const next = { ...cfg, [key]: !on };
+                      setDashConfig(next);
+                      saveDashConfig(next);
+                    }}
+                      className="w-full flex items-center justify-between px-4 py-3.5 transition"
+                      style={{ background: "var(--surface2)", borderBottom: i < arr.length - 1 ? "1px solid var(--border)" : "none" }}>
+                      <div className="text-right">
+                        <p className="font-bold text-[15px]" style={{ color: "var(--text)" }}>{label}</p>
+                        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{desc}</p>
+                      </div>
+                      <div className="w-10 rounded-full flex items-center px-0.5 transition-colors flex-shrink-0 mr-3"
+                        style={{ background: on ? "var(--accent)" : "var(--border)", height: "22px" }}>
+                        <div className="w-4 h-4 rounded-full bg-white transition-transform"
+                          style={{ transform: on ? "translateX(18px)" : "translateX(0)" }} />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

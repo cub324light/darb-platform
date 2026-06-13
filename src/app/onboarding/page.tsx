@@ -1,67 +1,48 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { TRACKS, TRACK_GROUPS, SUBJECT_GROUPS, getTrack, type TrackId, type SubjectInfo } from "@/lib/tracks";
+import { TRACKS, TRACK_GROUPS, type TrackId } from "@/lib/tracks";
 import { saveUser, saveExamDate } from "@/lib/storage";
 import { registerUser } from "@/lib/firestore";
 import Dome from "@/components/Dome";
 
 const STUDY_LEVELS = ["ثانوي", "جامعي", "خريج", "أخرى"];
-const MAX_SUBJECTS = 3;
-
-function defaultSubjectsForTrack(trackId: TrackId): string[] {
-  return getTrack(trackId).subjects.slice(0, MAX_SUBJECTS).map((s) => s.name);
-}
+const MAX_TRACKS = 3;
 
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState<0 | 1 | 2>(0);
 
-  // Step 0
-  const [name, setName]           = useState("");
-  const [age, setAge]             = useState("");
+  const [name, setName]             = useState("");
+  const [age, setAge]               = useState("");
   const [studyLevel, setStudyLevel] = useState("");
 
-  // Step 1
-  const [track, setTrack] = useState<TrackId | null>(null);
+  const [activeTracks, setActiveTracks] = useState<TrackId[]>([]);
+  const [examDate, setExamDate]         = useState("");
 
-  // Step 2
-  const [subjects, setSubjects] = useState<string[]>([]);
-  const [examDate, setExamDate] = useState("");
-
-  const goStep1 = () => { if (name.trim()) setStep(1); };
-
-  const goStep2 = (trackId: TrackId) => {
-    setTrack(trackId);
-    setSubjects(defaultSubjectsForTrack(trackId));
-    setStep(2);
-  };
-
-  const toggleSubject = (subName: string) => {
-    setSubjects((prev) => {
-      if (prev.includes(subName)) return prev.filter((s) => s !== subName);
-      if (prev.length >= MAX_SUBJECTS) return prev;
-      return [...prev, subName];
-    });
+  const toggleTrack = (id: TrackId) => {
+    setActiveTracks((prev) =>
+      prev.includes(id) ? prev.filter((t) => t !== id) : prev.length >= MAX_TRACKS ? prev : [...prev, id]
+    );
   };
 
   const finish = () => {
-    if (!track || subjects.length === 0) return;
+    if (!activeTracks.length) return;
     const trimmedName = name.trim();
+    const primaryTrack = activeTracks[0];
     saveUser({
       name: trimmedName,
-      track,
+      track: primaryTrack,
+      activeTracks,
       onboarded: true,
       age: age ? parseInt(age) : undefined,
       studyLevel: studyLevel || undefined,
-      subjects,
     });
     if (examDate) saveExamDate(examDate);
-    registerUser(trimmedName, track);
+    registerUser(trimmedName, primaryTrack);
     router.push("/dashboard");
   };
 
-  /* ── رأس الصفحة ثابت لكل الخطوات ── */
   const header = (
     <Dome hideControls>
       <div className="text-center py-5">
@@ -74,7 +55,6 @@ export default function OnboardingPage() {
     </Dome>
   );
 
-  /* ── مؤشر الخطوات ── */
   const stepDots = (
     <div className="flex items-center justify-center gap-2 mb-7">
       {[0, 1, 2].map((s) => (
@@ -84,7 +64,6 @@ export default function OnboardingPage() {
     </div>
   );
 
-  /* ═══ الخطوة 0: الاسم + العمر + المرحلة ═══ */
   if (step === 0) return (
     <div className="min-h-dvh flex flex-col app-col">
       {header}
@@ -106,9 +85,7 @@ export default function OnboardingPage() {
           <div className="flex items-center gap-2 mb-3">
             <p className="label">عمرك؟</p>
             <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-              style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>
-              اختياري
-            </span>
+              style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
           </div>
           <input type="number" value={age} onChange={(e) => setAge(e.target.value)}
             placeholder="مثال: 18" min={13} max={60}
@@ -122,9 +99,7 @@ export default function OnboardingPage() {
           <div className="flex items-center gap-2 mb-3">
             <p className="label">مرحلتك الدراسية؟</p>
             <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-              style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>
-              اختياري
-            </span>
+              style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
           </div>
           <div className="grid grid-cols-2 gap-2.5">
             {STUDY_LEVELS.map((lvl) => {
@@ -144,7 +119,7 @@ export default function OnboardingPage() {
           </div>
         </div>
 
-        <button className="btn-primary glow-blue" onClick={goStep1}
+        <button className="btn-primary glow-blue" onClick={() => { if (name.trim()) setStep(1); }}
           disabled={!name.trim()} style={{ opacity: name.trim() ? 1 : 0.4 }}>
           التالي ←
         </button>
@@ -152,35 +127,52 @@ export default function OnboardingPage() {
     </div>
   );
 
-  /* ═══ الخطوة 1: اختيار المسار ═══ */
   if (step === 1) return (
     <div className="min-h-dvh flex flex-col app-col">
       {header}
       <div className="flex-1 px-6 py-8 max-w-sm mx-auto w-full">
         {stepDots}
-        <p className="label mb-5">وش تستعد له؟</p>
+        <div className="flex items-center gap-2 mb-5">
+          <p className="label">اختر مساراتك</p>
+          <span className="text-xs px-2 py-0.5 rounded-full font-black"
+            style={{
+              background: activeTracks.length >= MAX_TRACKS ? "color-mix(in srgb, var(--gold) 15%, transparent)" : "color-mix(in srgb, var(--accent) 12%, transparent)",
+              color: activeTracks.length >= MAX_TRACKS ? "var(--gold)" : "var(--accent-light)",
+            }}>
+            {activeTracks.length}/{MAX_TRACKS}
+          </span>
+        </div>
 
         <div className="flex flex-col gap-5 mb-6">
           {TRACK_GROUPS.map((group) => (
             <div key={group.label}>
-              <p className="text-[11px] font-black tracking-widest mb-2.5 px-1"
-                style={{ color: "var(--text-muted)" }}>
+              <p className="text-[11px] font-black tracking-widest mb-2.5 px-1" style={{ color: "var(--text-muted)" }}>
                 ── {group.label} ──
               </p>
               <div className="grid grid-cols-2 gap-2.5">
                 {group.ids.map((id) => {
                   const t = TRACKS.find((tr) => tr.id === id)!;
-                  const active = track === id;
+                  const selected = activeTracks.includes(id);
+                  const disabled = !selected && activeTracks.length >= MAX_TRACKS;
                   return (
-                    <button key={id} onClick={() => goStep2(id)}
+                    <button key={id} onClick={() => !disabled && toggleTrack(id)}
                       className="rounded-2xl p-4 text-right transition-all duration-200 active:scale-[0.98] relative"
                       style={{
-                        background: active ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
-                        border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
+                        background: selected ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
+                        border: `2px solid ${selected ? "var(--accent)" : "var(--border)"}`,
+                        opacity: disabled ? 0.38 : 1,
                       }}>
-                      {active && <span className="absolute top-2 left-2.5 text-base font-black text-[var(--accent-light)]">✓</span>}
+                      {selected && <span className="absolute top-2 left-2.5 text-base font-black text-[var(--accent-light)]">✓</span>}
                       <p className="font-black text-base text-[var(--text)]">{t.title}</p>
                       <p className="text-xs text-[var(--text-muted)] mt-1 leading-snug">{t.sub}</p>
+                      {t.subjects.length > 0 && (
+                        <div className="flex gap-1 mt-2 flex-wrap">
+                          {t.subjects.map((s) => (
+                            <span key={s.name} className="w-2 h-2 rounded-full inline-block"
+                              style={{ background: s.color }} />
+                          ))}
+                        </div>
+                      )}
                     </button>
                   );
                 })}
@@ -189,76 +181,48 @@ export default function OnboardingPage() {
           ))}
         </div>
 
-        <button onClick={() => setStep(0)} className="text-[15px] font-semibold w-full text-center py-2"
-          style={{ color: "var(--text-muted)" }}>
-          ← رجوع
+        <button className="btn-primary glow-blue mb-3" onClick={() => { if (activeTracks.length) setStep(2); }}
+          disabled={activeTracks.length === 0} style={{ opacity: activeTracks.length > 0 ? 1 : 0.4 }}>
+          التالي ←
         </button>
+        <button onClick={() => setStep(0)} className="text-[15px] font-semibold w-full text-center py-2"
+          style={{ color: "var(--text-muted)" }}>← رجوع</button>
       </div>
     </div>
   );
 
-  /* ═══ الخطوة 2: المواد + تاريخ الاختبار ═══ */
   return (
     <div className="min-h-dvh flex flex-col app-col">
       {header}
       <div className="flex-1 px-6 py-8 max-w-sm mx-auto w-full">
         {stepDots}
 
-        {/* اختيار المواد */}
         <div className="mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <p className="label">اختر مواضيعك</p>
-            <span className="text-xs px-2 py-0.5 rounded-full font-black"
-              style={{ background: subjects.length >= MAX_SUBJECTS ? "color-mix(in srgb, var(--gold) 15%, transparent)" : "color-mix(in srgb, var(--accent) 12%, transparent)", color: subjects.length >= MAX_SUBJECTS ? "var(--gold)" : "var(--accent-light)" }}>
-              {subjects.length}/{MAX_SUBJECTS}
-            </span>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            {SUBJECT_GROUPS.map((group) => (
-              <div key={group.label}>
-                <p className="text-[11px] font-black tracking-widest mb-2 px-1"
-                  style={{ color: "var(--text-muted)" }}>
-                  ── {group.label} ──
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {group.subjects.map((sub: SubjectInfo) => {
-                    const selected = subjects.includes(sub.name);
-                    const disabled = !selected && subjects.length >= MAX_SUBJECTS;
-                    return (
-                      <button key={sub.name}
-                        onClick={() => !disabled && toggleSubject(sub.name)}
-                        className="rounded-2xl p-3.5 text-right transition-all duration-200 active:scale-[0.97]"
-                        style={{
-                          background: selected ? `color-mix(in srgb, ${sub.color} 15%, transparent)` : "var(--surface)",
-                          border: `2px solid ${selected ? sub.color : "var(--border)"}`,
-                          opacity: disabled ? 0.38 : 1,
-                        }}>
-                        <p className="font-black text-[15px]" style={{ color: selected ? sub.color : "var(--text)" }}>
-                          {sub.name}
-                        </p>
-                        <div className="pt-1.5 mt-1" style={{ borderTop: `1px solid ${sub.color}35` }}>
-                          <p className="text-[10px] font-semibold leading-snug" style={{ color: "var(--text-muted)" }}>
-                            {sub.testedBy.join(" · ")}
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })}
+          <p className="label mb-4">مساراتك المختارة</p>
+          <div className="flex flex-col gap-2.5">
+            {activeTracks.map((id) => {
+              const t = TRACKS.find((tr) => tr.id === id)!;
+              return (
+                <div key={id} className="rounded-2xl px-4 py-3 flex items-center gap-3"
+                  style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid color-mix(in srgb, var(--accent) 28%, transparent)" }}>
+                  <div className="flex gap-1">
+                    {t.subjects.map((s) => (
+                      <span key={s.name} className="w-2.5 h-2.5 rounded-full" style={{ background: s.color }} />
+                    ))}
+                  </div>
+                  <span className="font-bold text-[15px] flex-1" style={{ color: "var(--accent-light)" }}>{t.title}</span>
+                  <button onClick={() => toggleTrack(id)} className="text-[var(--text-muted)] text-sm font-bold px-2 py-1">✕</button>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
-        {/* تاريخ الاختبار */}
         <div className="mb-7">
           <div className="flex items-center gap-2 mb-3">
             <p className="label">متى اختبارك؟</p>
             <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-              style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>
-              اختياري
-            </span>
+              style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
           </div>
           <input type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)}
             min={new Date().toISOString().slice(0, 10)}
@@ -274,14 +238,11 @@ export default function OnboardingPage() {
         </div>
 
         <button className="btn-primary glow-blue mb-3" onClick={finish}
-          disabled={subjects.length === 0} style={{ opacity: subjects.length > 0 ? 1 : 0.4 }}>
+          disabled={activeTracks.length === 0} style={{ opacity: activeTracks.length > 0 ? 1 : 0.4 }}>
           يلا نبدأ ←
         </button>
-
         <button onClick={() => setStep(1)} className="text-[15px] font-semibold w-full text-center py-2"
-          style={{ color: "var(--text-muted)" }}>
-          ← رجوع
-        </button>
+          style={{ color: "var(--text-muted)" }}>← رجوع</button>
       </div>
     </div>
   );

@@ -11,6 +11,7 @@ export interface DarbUser {
   age?: number;
   studyLevel?: string;
   subjects?: string[]; // up to 3 selected subject names
+  activeTracks?: TrackId[];
 }
 
 export interface DarbStats {

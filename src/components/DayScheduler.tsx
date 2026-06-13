@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import type { ScheduleEvent } from "@/lib/storage";
 
@@ -92,6 +92,13 @@ const HOURS     = Array.from({ length: 19 }, (_, i) => i + 5);
 const END_HOURS = Array.from({ length: 19 }, (_, i) => i + 6);
 const WEEK_DAY_NAMES = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 
+const AI_QUICK_PROMPTS = [
+  { label: "عطني جدول جاهز", text: "عطني جدول دراسي جاهز لليوم" },
+  { label: "مشغول الصباح (٦-١٢)", text: "من 6 ص الى 12 م مشغول، اعمل لي جدول للأوقات الفارغة" },
+  { label: "مشغول الليل", text: "من 9 م الى 12 ص مشغول، اعمل لي جدول للأوقات الفارغة" },
+  { label: "جدول بدون مدرسة", text: "من 7 ص الى 2 م مشغول بالمدرسة، اعمل لي جدول بعدها" },
+];
+
 interface Props {
   date: string;
   events: ScheduleEvent[];
@@ -100,9 +107,11 @@ interface Props {
   onExamDateChange: (d: string | null) => void;
   onEventsChange: (events: ScheduleEvent[]) => void;
   onClose: () => void;
+  prefillText?: string;
+  initialTab?: "manual" | "ai";
 }
 
-export default function DayScheduler({ date, events, subjects, examDate, onExamDateChange, onEventsChange, onClose }: Props) {
+export default function DayScheduler({ date, events, subjects, examDate, onExamDateChange, onEventsChange, onClose, prefillText, initialTab }: Props) {
   const [mounted, setMounted] = useState(false);
   const [tab, setTab] = useState<"manual" | "ai">("manual");
 
@@ -122,8 +131,14 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
   const [editText, setEditText]   = useState("");
   const [showEdit, setShowEdit]   = useState(false);
   const [applyFeedback, setApplyFeedback] = useState("");
+  const [scheduleStrategy, setScheduleStrategy] = useState<"mixed" | "per-track" | "time-blocks">("mixed");
 
   useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => {
+    if (prefillText) setBusyText(prefillText);
+    if (initialTab) setTab(initialTab);
+  }, [prefillText, initialTab]);
 
   const dayEvents  = getEventsForDate(date, events);
   const dateObj    = new Date(date + "T12:00:00");
@@ -176,8 +191,9 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
     return /^(وش|ايش|شو|ما\s*هو|ما\s*هي|كيف\s+(?!أوزع|اوزع|ارتب|انظم|أنظم)|هل|ابي|اريد|ودي|اعطني|قل\s*لي|اشرح)\s+(?!جدول|خطة|وقت|مشغول|فارغ|ساعة|صباح|مساء|برنامج|مادة|مواد)/.test(s);
   };
 
-  const runAI = () => {
-    if (isOffTopicQuestion(busyText)) {
+  const runAI = (overrideText?: string) => {
+    const textToUse = overrideText ?? busyText;
+    if (!overrideText && isOffTopicQuestion(textToUse)) {
       setAiResult("أنا فقط أبني جداول دراسية\nاكتب مشاغيلك أو قل «ابي جدول جاهز»");
       return;
     }
@@ -185,9 +201,14 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
     const examCtx = examDate
       ? `\nيوم الاختبار: ${new Date(examDate + "T12:00:00").toLocaleDateString("ar-SA", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}`
       : "";
-    callAI(`أنت مساعد جدول دراسي. اليوم: ${arabicDate}.${examCtx}
+    const strategyCtx = scheduleStrategy === "per-track"
+      ? "\nاستراتيجية: خصص كل يوم لمسار/مادة واحدة فقط."
+      : scheduleStrategy === "time-blocks"
+      ? "\nاستراتيجية: خصص فترات زمنية مختلفة لمسارات مختلفة في نفس اليوم."
+      : "\nاستراتيجية: وزّع المواد من مختلف المسارات على مدار اليوم.";
+    callAI(`أنت مساعد جدول دراسي. اليوم: ${arabicDate}.${examCtx}${strategyCtx}
 المواد: ${subjectsList}.
-مشاغيل الطالب: ${busyText}
+مشاغيل الطالب: ${textToUse}
 
 اقترح جدولاً دراسياً للأوقات الفارغة باستخدام نظام Orbit (50 دقيقة تركيز + 10 دقائق راحة).
 اكتب كل فترة بهذه الصيغة فقط — أرقام ساعات صحيحة فقط بدون دقائق:
@@ -214,6 +235,14 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
 
   const toggleMultiDay = (d: number) =>
     setMultiDays((p) => p.includes(d) ? p.filter((x) => x !== d) : [...p, d]);
+
+  const scheduleSummary = useMemo(() => {
+    if (!aiResult) return null;
+    const parsed = parseAISchedule(aiResult, date, subjects);
+    const studyMins = parsed.filter(e => e.type === "study").reduce((sum, e) => sum + (e.toHour - e.fromHour) * 60, 0);
+    const hours = Math.round(studyMins / 60 * 10) / 10;
+    return { hours, weekly: Math.round(hours * 7 * 10) / 10, monthly: Math.round(hours * 30 * 10) / 10 };
+  }, [aiResult, date, subjects]);
 
   if (!mounted) return null;
 
@@ -392,7 +421,22 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
           {/* ══ AI TAB ══ */}
           {tab === "ai" && (
             <div>
-              <p className="title-md mb-4" style={{ color: "var(--text)" }}>أدخل مشاغيلك</p>
+              <p className="title-md mb-3" style={{ color: "var(--text)" }}>أدخل مشاغيلك</p>
+
+              {/* أزرار الاختصار */}
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {AI_QUICK_PROMPTS.map((p) => (
+                  <button key={p.label} onClick={() => { setBusyText(p.text); runAI(p.text); }}
+                    className="px-3 py-2.5 rounded-xl text-[13px] font-bold text-right transition active:scale-[0.97] leading-snug"
+                    style={{
+                      background: "color-mix(in srgb, var(--accent) 10%, transparent)",
+                      border: "1px solid color-mix(in srgb, var(--accent) 28%, transparent)",
+                      color: "var(--accent-light)",
+                    }}>
+                    {p.label}
+                  </button>
+                ))}
+              </div>
 
               <textarea value={busyText} onChange={(e) => setBusyText(e.target.value)} rows={3}
                 placeholder="مثال: من 8ص-2م مدرسة، من 6م-8م رياضة..."
@@ -413,6 +457,26 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
                 </div>
               )}
 
+              {/* اختيار الاستراتيجية */}
+              <div className="mb-3">
+                <p className="text-[13px] font-bold mb-2" style={{ color: "var(--text-muted)" }}>استراتيجية التوزيع:</p>
+                <div className="flex gap-2">
+                  {([
+                    { id: "mixed" as const, label: "مختلط" },
+                    { id: "per-track" as const, label: "يوم لكل مسار" },
+                    { id: "time-blocks" as const, label: "فترات محددة" },
+                  ]).map(({ id, label }) => (
+                    <button key={id} onClick={() => setScheduleStrategy(id)}
+                      className="flex-1 py-2 rounded-xl text-[13px] font-bold transition"
+                      style={scheduleStrategy === id
+                        ? { background: "var(--accent)", color: "white", border: "1.5px solid var(--accent)" }
+                        : { background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {examDate && (
                 <div className="flex items-center gap-2 rounded-xl px-3 py-2 mb-3"
                   style={{ background: "color-mix(in srgb, var(--gold) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--gold) 30%, transparent)" }}>
@@ -423,10 +487,10 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
                 </div>
               )}
 
-              <button onClick={runAI} disabled={aiLoading || !busyText.trim()}
+              <button onClick={() => runAI()} disabled={aiLoading || !busyText.trim()}
                 className="w-full py-4 rounded-2xl font-black text-[17px] min-h-[56px] mb-4 transition"
                 style={{ background: aiLoading || !busyText.trim() ? "var(--surface2)" : "var(--accent)", color: aiLoading || !busyText.trim() ? "var(--text-muted)" : "white", border: "none" }}>
-                {aiLoading ? "درب يبني الخطة..." : "🤖 اعمل لي خطة"}
+                {aiLoading ? "درب يبني الخطة..." : "اعمل لي خطة"}
               </button>
 
               {aiLoading && (
@@ -460,6 +524,22 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
                       تطبيق
                     </button>
                   </div>
+
+                  {/* ملخص الجدول */}
+                  {scheduleSummary && (
+                    <div className="flex gap-2 mt-2 mb-3">
+                      {[
+                        { label: "يومياً", val: `${scheduleSummary.hours} س` },
+                        { label: "أسبوعياً", val: `${scheduleSummary.weekly} س` },
+                        { label: "شهرياً", val: `${scheduleSummary.monthly} س` },
+                      ].map(({ label, val }) => (
+                        <div key={label} className="flex-1 text-center rounded-xl py-2" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                          <p className="text-[13px] font-black" style={{ color: "var(--accent-light)" }}>{val}</p>
+                          <p className="text-[10px] font-semibold mt-0.5" style={{ color: "var(--text-muted)" }}>{label}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* حقل التعديل */}
                   {showEdit && (
