@@ -8,6 +8,8 @@ import {
   type DarbUser, type Theme,
 } from "@/lib/storage";
 import { syncUser } from "@/lib/firestore";
+import Bird from "@/components/Birds";
+import { BIRDS, type BirdId } from "@/lib/birds";
 
 /* ─── زر البروفايل (يسار) + اللوحة المنزلقة ─── */
 
@@ -70,6 +72,14 @@ export default function ProfileButton() {
     saveUser(next);
     setUser(next);
     syncUser({ track: id });
+  };
+
+  const switchBird = (id: BirdId) => {
+    if (!user) return;
+    const next = { ...user, bird: id };
+    saveUser(next);
+    setUser(next);
+    syncUser({ bird: id });
   };
 
   const reset = () => {
@@ -145,6 +155,38 @@ export default function ProfileButton() {
                   <p className="text-[17px] text-[var(--text-muted)] font-semibold">{s.label}</p>
                 </div>
               ))}
+            </div>
+
+            {/* الرفيق */}
+            <p className="label mb-3">رفيقك</p>
+            <div className="grid grid-cols-3 gap-2.5 mb-6">
+              {BIRDS.map((b) => {
+                const active = (user?.bird ?? "falcon") === b.id;
+                return (
+                  <button
+                    key={b.id}
+                    onClick={() => switchBird(b.id)}
+                    className="rounded-2xl p-3 flex flex-col items-center gap-1.5 transition active:scale-[0.96] relative"
+                    style={{
+                      background: active ? "color-mix(in srgb, var(--accent) 12%, transparent)" : "var(--surface2)",
+                      border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
+                    }}
+                  >
+                    {b.plan !== "free" && (
+                      <span className="absolute top-1.5 left-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-md"
+                        style={{
+                          background: b.plan === "anqa" ? "color-mix(in srgb, var(--gold) 15%, transparent)" : "color-mix(in srgb, var(--accent) 12%, transparent)",
+                          color: b.plan === "anqa" ? "var(--gold)" : "var(--accent-light)",
+                        }}>
+                        {b.planName}
+                      </span>
+                    )}
+                    <Bird id={b.id} size={56} animate={active} />
+                    <p className="font-bold text-sm" style={{ color: active ? "var(--text)" : "var(--text-dim)" }}>{b.name}</p>
+                    <p className="text-[11px] leading-tight text-center" style={{ color: "var(--text-muted)" }}>{b.symbol}</p>
+                  </button>
+                );
+              })}
             </div>
 
             {/* المسار */}

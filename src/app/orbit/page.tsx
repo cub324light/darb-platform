@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
+import Bird from "@/components/Birds";
 import { getTrack } from "@/lib/tracks";
 import { loadUser, loadStats, recordSession } from "@/lib/storage";
 
@@ -58,6 +59,7 @@ export default function OrbitPage() {
   const [subjects, setSubjects] = useState<{ name: string; color: string }[]>([]);
   const [subject, setSubject]   = useState<string>("");
   const [breakTip] = useState(() => BREAK_TIPS[Math.floor(Math.random() * BREAK_TIPS.length)]);
+  const [birdId, setBirdId] = useState<string | undefined>(undefined);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   /* نهاية الجلسة كطابع زمني حقيقي — العدّ ما يتجمد لو راح التطبيق للخلفية */
   const endAtRef = useRef(0);
@@ -68,7 +70,9 @@ export default function OrbitPage() {
   const breakSecs = breakMins * 60;
 
   useEffect(() => {
-    const track = getTrack(loadUser()?.track);
+    const u = loadUser();
+    setBirdId(u?.bird);
+    const track = getTrack(u?.track);
     setSubjects(track.subjects.map((s) => ({ name: s.name, color: s.color })));
     setSubject(track.subjects[0]?.name ?? "");
     const s = loadStats();
@@ -312,11 +316,12 @@ export default function OrbitPage() {
 
         </div>
 
-        {/* رسالة الحالة — فقط أثناء التشغيل */}
+        {/* رسالة الحالة مع الرفيق — فقط أثناء التشغيل */}
         {phase !== "idle" && (
-          <div className="rounded-2xl px-5 py-3 max-w-[280px] text-center mb-5"
+          <div className="rounded-2xl px-5 py-3 max-w-[300px] mb-5 flex items-center gap-3"
             style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-            <p className="text-sm text-[var(--text-dim)] leading-relaxed">{statusMsg}</p>
+            <Bird id={birdId} size={48} />
+            <p className="text-sm text-[var(--text-dim)] leading-relaxed flex-1 text-right">{statusMsg}</p>
           </div>
         )}
 

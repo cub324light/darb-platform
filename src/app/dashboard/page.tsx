@@ -4,6 +4,7 @@ import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
+import Bird from "@/components/Birds";
 import { getTrack } from "@/lib/tracks";
 import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, type DarbUser, type ScheduleEvent } from "@/lib/storage";
 import { syncUser } from "@/lib/firestore";
@@ -109,13 +110,18 @@ export default function DashboardPage() {
 
       {/* ═══ القبة ═══ */}
       <Dome compact>
-        {/* أهلاً بخط كبير */}
-        <p className="title-lg text-right mb-1" style={{ color: "var(--text)" }}>
-          أهلاً، {user ? user.name : <span className="skeleton" style={{ width: "90px", height: "1em", verticalAlign: "middle" }} />}
-        </p>
-        <p className="text-[17px] font-semibold text-right mb-2" style={{ color: "var(--text-muted)" }}>
-          {greeting}
-        </p>
+        {/* أهلاً بخط كبير + الرفيق */}
+        <div className="flex items-start justify-between mb-2">
+          <div>
+            <p className="title-lg text-right mb-1" style={{ color: "var(--text)" }}>
+              أهلاً، {user ? user.name : <span className="skeleton" style={{ width: "90px", height: "1em", verticalAlign: "middle" }} />}
+            </p>
+            <p className="text-[17px] font-semibold text-right" style={{ color: "var(--text-muted)" }}>
+              {greeting}
+            </p>
+          </div>
+          {user && <Bird id={user.bird} size={64} />}
+        </div>
 
         {/* Silver + streak في صف واحد */}
         <div className="flex items-center justify-between">

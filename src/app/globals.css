@@ -561,6 +561,45 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
   to   { transform: rotate(360deg); }
 }
 .orbit-ring { animation: orbitSpin 14s linear infinite; transform-origin: center; }
+
+/* ─── الطيور الرفيقة ─── */
+.bird { overflow: visible; }
+.bird g, .bird path, .bird circle { transform-box: fill-box; }
+
+@keyframes birdBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+.bird-bob { animation: birdBob 3.4s ease-in-out infinite; }
+
+@keyframes birdWing { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(-4deg); } }
+.bird-wing { animation: birdWing 3.4s ease-in-out infinite; transform-origin: top center; }
+
+@keyframes birdBlink { 0%,91%,100% { transform: scaleY(1); } 94% { transform: scaleY(0.1); } }
+.bird-eye { animation: birdBlink 5s ease-in-out infinite; transform-origin: center; }
+
+@keyframes birdTail { 0%,100% { transform: rotate(-2.5deg); } 50% { transform: rotate(2.5deg); } }
+.bird-tail { animation: birdTail 3.8s ease-in-out infinite; transform-origin: top left; }
+
+@keyframes birdCrest { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(-7deg); } }
+.bird-crest { animation: birdCrest 3.2s ease-in-out infinite; transform-origin: bottom left; }
+
+@keyframes birdNeck { 0%,100% { transform: rotate(-1.5deg); } 50% { transform: rotate(2deg); } }
+.bird-neck { animation: birdNeck 4.4s ease-in-out infinite; transform-origin: bottom center; }
+
+@keyframes birdFlame { 0%,100% { transform: scaleY(1); opacity: 0.95; } 50% { transform: scaleY(1.14); opacity: 1; } }
+.bird-flame { animation: birdFlame 1.5s ease-in-out infinite; transform-origin: bottom center; }
+.bird-flame-2 { animation-delay: 0.4s; }
+.bird-flame-3 { animation-delay: 0.8s; }
+
+@keyframes birdSheen { 0%,100% { opacity: 0.2; } 50% { opacity: 0.7; } }
+.bird-sheen { animation: birdSheen 3.6s ease-in-out infinite; }
+
+@keyframes birdFan { 0%,100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
+.bird-fan { animation: birdFan 5s ease-in-out infinite; transform-origin: center bottom; }
+
+@keyframes birdRipple { 0%,100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+.bird-ripple { animation: birdRipple 3.2s ease-in-out infinite; }
+
+@keyframes birdWingFlame { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(2deg); } }
+.bird-wing-flame { animation: birdWingFlame 2.2s ease-in-out infinite; transform-origin: bottom center; }
 .rise-6 { animation-delay: 0.40s; }
 
 @media (prefers-reduced-motion: reduce) {

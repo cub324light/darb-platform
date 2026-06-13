@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { TRACKS } from "@/lib/tracks";
+import Bird from "@/components/Birds";
+import { BIRDS } from "@/lib/birds";
 
 /* ─── صفحة الهبوط: تعريف بالمنصة مع أنميشن سكرول ─── */
 
@@ -55,9 +57,10 @@ export default function LandingPage() {
 
       {/* ═══ الواجهة ═══ */}
       <section className="min-h-dvh flex flex-col items-center justify-center px-6 text-center relative">
-        <div className="hero-float">
-          <p className="font-black text-7xl mb-3 text-[var(--text)] hero-glow">درب</p>
+        <div className="hero-float mb-2">
+          <Bird id="falcon" size={130} />
         </div>
+        <p className="font-black text-7xl mb-3 text-[var(--text)] hero-glow">درب</p>
         <p className="eyebrow mb-5" style={{ color: "var(--text-dim)" }}>YOUR PATH TO EXCELLENCE</p>
         <h1 className="title-xl mb-4 fade-in" style={{ color: "var(--text)" }}>
           المنصة التي تعاملك كأخ
@@ -140,6 +143,27 @@ export default function LandingPage() {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* ═══ الرفاق ═══ */}
+      <section className="px-6 py-20 max-w-lg mx-auto">
+        <div className="reveal text-center mb-10">
+          <p className="eyebrow mb-2" style={{ color: "var(--accent-light)" }}>الرفاق</p>
+          <h2 className="title-lg" style={{ color: "var(--text)" }}>اختر طيرك — يرافقك للنتيجة</h2>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          {BIRDS.map((b, i) => (
+            <div key={b.id} className={`reveal reveal-d${(i % 3) + 1} rounded-2xl p-3 flex flex-col items-center gap-1.5`}
+              style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+              <Bird id={b.id} size={62} />
+              <p className="font-bold text-sm" style={{ color: "var(--text)" }}>{b.name}</p>
+              <p className="text-[11px] text-center leading-tight" style={{ color: "var(--text-muted)" }}>{b.symbol}</p>
+            </div>
+          ))}
+        </div>
+        <p className="reveal reveal-d3 text-center text-sm mt-7" style={{ color: "var(--text-dim)" }}>
+          ألوان كل طير تتغير مع الوضع الليلي والنهاري
+        </p>
       </section>
 
       {/* ═══ الختام ═══ */}
