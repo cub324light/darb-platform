@@ -1,13 +1,11 @@
 /* ─── تخزين حقيقي في localStorage — صفر بيانات وهمية ─── */
 import type { TrackId } from "./tracks";
-import type { BirdId } from "./birds";
 
 export interface DarbUser {
   name: string;
   track: TrackId;
   examDate?: string;
   onboarded: boolean;
-  bird?: BirdId;
   age?: number;
   studyLevel?: string;
   subjects?: string[]; // up to 3 selected subject names
