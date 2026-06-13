@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { TRACKS } from "@/lib/tracks";
 import Bird from "@/components/Birds";
@@ -42,7 +41,7 @@ const FEATURES = [
 ];
 
 export default function LandingPage() {
-  const router = useRouter();
+  const [onboarded, setOnboarded] = useState(false);
   const [checking, setChecking] = useState(true);
   const rootRef = useReveal();
 
@@ -50,10 +49,10 @@ export default function LandingPage() {
     try {
       const raw = localStorage.getItem("darb_user");
       const user = raw ? JSON.parse(raw) : null;
-      if (user?.onboarded) { router.replace("/dashboard"); return; }
+      if (user?.onboarded) setOnboarded(true);
     } catch {}
     setChecking(false);
-  }, [router]);
+  }, []);
 
   if (checking) {
     return (
@@ -66,8 +65,20 @@ export default function LandingPage() {
   return (
     <div ref={rootRef} className="relative z-[1]">
 
+      {/* ── شريط علوي للمسجّلين ── */}
+      {onboarded && (
+        <div className="fixed top-0 inset-x-0 z-50 flex justify-between items-center px-5 py-3"
+          style={{ background: "color-mix(in srgb, var(--bg) 88%, transparent)", backdropFilter: "blur(12px)", borderBottom: "1px solid var(--border)" }}>
+          <span className="font-black text-xl" style={{ color: "var(--accent-light)" }}>درب</span>
+          <Link href="/dashboard" className="btn-primary py-2 px-5 text-sm" style={{ textDecoration: "none" }}>
+            داشبوردك ←
+          </Link>
+        </div>
+      )}
+
       {/* ═══ الواجهة ═══ */}
-      <section className="min-h-dvh flex flex-col items-center justify-center px-6 text-center relative overflow-hidden">
+      <section className="min-h-dvh flex flex-col items-center justify-center px-6 text-center relative overflow-hidden"
+        style={{ paddingTop: onboarded ? "72px" : 0 }}>
         {/* نجوم الواجهة */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden>
           {HERO_STARS.map((s, i) => (
@@ -105,9 +116,15 @@ export default function LandingPage() {
           ))}
         </div>
 
-        <Link href="/onboarding" className="btn-primary glow-blue px-10" style={{ textDecoration: "none" }}>
-          ابدأ رحلتك ←
-        </Link>
+        {onboarded ? (
+          <Link href="/dashboard" className="btn-primary glow-blue px-10" style={{ textDecoration: "none" }}>
+            ادخل لداشبوردك ←
+          </Link>
+        ) : (
+          <Link href="/onboarding" className="btn-primary glow-blue px-10" style={{ textDecoration: "none" }}>
+            ابدأ رحلتك ←
+          </Link>
+        )}
         <div className="absolute bottom-8 scroll-hint">
           <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth={2} className="w-7 h-7">
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -202,12 +219,20 @@ export default function LandingPage() {
       {/* ═══ الختام ═══ */}
       <section className="px-6 pt-16 pb-24 max-w-lg mx-auto text-center">
         <div className="reveal">
-          <h2 className="title-xl mb-4" style={{ color: "var(--text)" }}>جاهز تبدأ دربك؟</h2>
+          <h2 className="title-xl mb-4" style={{ color: "var(--text)" }}>
+            {onboarded ? "يلا نكمل الدرب" : "جاهز تبدأ دربك؟"}
+          </h2>
           <p className="text-base mb-9 leading-relaxed" style={{ color: "var(--text-dim)" }}>
-            التسجيل ياخذ أقل من دقيقة — اسمك ومسارك وبس.
+            {onboarded
+              ? "داشبوردك ينتظرك — جلستك اليومية ما بدأت بعد."
+              : "التسجيل ياخذ أقل من دقيقة — اسمك ومسارك وبس."}
           </p>
-          <Link href="/onboarding" className="btn-primary glow-blue inline-block px-12" style={{ textDecoration: "none" }}>
-            سجّل دخولك ←
+          <Link
+            href={onboarded ? "/dashboard" : "/onboarding"}
+            className="btn-primary glow-blue inline-block px-12"
+            style={{ textDecoration: "none" }}
+          >
+            {onboarded ? "ادخل لداشبوردك ←" : "سجّل دخولك ←"}
           </Link>
           <p className="text-sm mt-10" style={{ color: "var(--text-muted)" }}>صُنع في السعودية</p>
         </div>
