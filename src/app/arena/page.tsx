@@ -60,6 +60,12 @@ const QUESTION_BANK: Record<TrackId, { q: string; a: string; subject: string }[]
     { q: "Fill: She has been studying ____ three hours. (for/since)", a: "for", subject: "كتابة" },
     { q: "Describe the image: ما المطلوب في هذا السؤال؟", a: "وصف الصورة بجملة كاملة صحيحة", subject: "محادثة" },
   ],
+  ITC: [
+    { q: "Choose the synonym of «efficient»:", a: "effective / productive", subject: "إنجليزي" },
+    { q: "ما ناتج: 15% من 200؟", a: "30", subject: "رياضيات" },
+    { q: "أي الخيارات ليس من أنواع قواعد البيانات؟", a: "HDMI (هذا منفذ، وليس قاعدة بيانات)", subject: "منطق" },
+    { q: "Complete: He ____ the report before the deadline. (finish)", a: "finished / had finished", subject: "إنجليزي" },
+  ],
 };
 
 type GameState = "lobby" | "playing" | "result";

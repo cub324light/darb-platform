@@ -4,8 +4,9 @@ import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
-import { getTrack } from "@/lib/tracks";
-import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, type DarbUser, type ScheduleEvent } from "@/lib/storage";
+import { getTrack, resolveSubjects } from "@/lib/tracks";
+import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, loadDashConfig, type DarbUser, type ScheduleEvent, type DashConfig } from "@/lib/storage";
+import DashAI from "@/components/DashAI";
 import { syncUser } from "@/lib/firestore";
 import { getEventsForDate } from "@/components/DayScheduler";
 
@@ -69,6 +70,7 @@ export default function DashboardPage() {
   const [dueCards, setDueCards] = useState(0);
   const [week, setWeek] = useState<{ label: string; mins: number; isToday: boolean }[]>([]);
   const [suggestion, setSuggestion] = useState<{ text: string; sub: string; href: string; color: string } | null>(null);
+  const [dashConfig, setDashConfig] = useState<DashConfig | null>(null);
 
   useEffect(() => {
     setUser(loadUser());
@@ -118,6 +120,8 @@ export default function DashboardPage() {
       }
     } catch {}
 
+    setDashConfig(loadDashConfig());
+
     // مزامنة مع Firestore
     const u = loadUser();
     if (u) {
@@ -143,6 +147,10 @@ export default function DashboardPage() {
   }, []);
 
   const track = getTrack(user?.track);
+  // إذا اختار المستخدم مواد محددة، استخدمها — وإلا استخدم مواد المسار
+  const activeSubjects = user?.subjects?.length
+    ? resolveSubjects(user.subjects)
+    : track.subjects.map((s) => ({ name: s.name, color: s.color }));
   const todayPct = Math.min(100, Math.round((todayMins / DAILY_TARGET) * 100));
 
   const TOOLS = [
@@ -255,8 +263,8 @@ export default function DashboardPage() {
               الخريطة ←
             </Link>
           </div>
-          <div className={`grid grid-cols-2 gap-2.5 ${track.subjects.length >= 4 ? "md:grid-cols-4" : ""}`}>
-            {track.subjects.map((s, i) => (
+          <div className={`grid grid-cols-2 gap-2.5 ${activeSubjects.length >= 4 ? "md:grid-cols-4" : ""}`}>
+            {activeSubjects.map((s, i) => (
               <Link key={s.name} href="/roadmap"
                 className="rounded-2xl px-4 py-3.5 flex items-center gap-3 transition active:scale-[0.97] subject-card"
                 style={{
@@ -315,6 +323,7 @@ export default function DashboardPage() {
         </section>
 
         {/* أسبوعك — رسم حقيقي من جلساتك */}
+        {(dashConfig?.showWeekly ?? true) && (
         <section className="card rise rise-3">
           <div className="flex items-center justify-between mb-4">
             <p className="title-md" style={{ color: "var(--text)" }}>أسبوعك</p>
@@ -350,6 +359,7 @@ export default function DashboardPage() {
             })}
           </div>
         </section>
+        )}
 
         {/* اقتباس اليوم */}
         <section className="rise rise-3 rounded-2xl px-5 py-4"
@@ -363,7 +373,7 @@ export default function DashboardPage() {
         </section>
 
         {/* الإحصاءات */}
-        <section className="rise rise-3">
+        {(dashConfig?.showStats ?? true) && <section className="rise rise-3">
           <p className="eyebrow mb-2.5 px-1">إحصاءاتك</p>
           <div className="grid grid-cols-3 gap-2.5">
             {[
@@ -377,7 +387,7 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
-        </section>
+        </section>}
 
         {/* تنبيه المراجعة المستحقة */}
         {dueCards > 0 && (
@@ -402,7 +412,7 @@ export default function DashboardPage() {
         )}
 
         {/* الأدوات */}
-        <section className="rise rise-4">
+        {(dashConfig?.showTools ?? true) && <section className="rise rise-4">
           <p className="eyebrow mb-2.5 px-1">الأدوات</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
             {TOOLS.map((a) => (
@@ -416,10 +426,10 @@ export default function DashboardPage() {
               </Link>
             ))}
           </div>
-        </section>
+        </section>}
 
         {/* جدول اليوم */}
-        <section className="card rise rise-5">
+        {(dashConfig?.showSchedule ?? true) && <section className="card rise rise-5">
           <div className="flex items-center justify-between mb-3">
             <p className="title-md" style={{ color: "var(--text)" }}>جدول اليوم</p>
             <Link href="/roadmap" className="text-[17px] font-bold" style={{ color: "var(--accent-light)", textDecoration: "none" }}>
@@ -464,7 +474,10 @@ export default function DashboardPage() {
               ))}
             </div>
           )}
-        </section>
+        </section>}
+
+        {/* دربي الذكي — تحت الجدول */}
+        {(dashConfig?.showAI ?? true) && <DashAI subjects={user?.subjects ?? track.subjects.map((s) => s.name)} />}
 
         {/* المجتمع */}
         <section className="grid grid-cols-2 gap-2.5 rise rise-5">

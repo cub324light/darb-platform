@@ -8,6 +8,9 @@ export interface DarbUser {
   examDate?: string;
   onboarded: boolean;
   bird?: BirdId;
+  age?: number;
+  studyLevel?: string;
+  subjects?: string[]; // up to 3 selected subject names
 }
 
 export interface DarbStats {
@@ -301,4 +304,34 @@ export function loadSchedule(): WeeklySchedule | null {
 
 export function saveSchedule(s: WeeklySchedule) {
   try { localStorage.setItem(SCHEDULE_KEY, JSON.stringify(s)); } catch {}
+}
+
+/* ── إعدادات الصفحة الرئيسية ── */
+export interface DashConfig {
+  showStats: boolean;
+  showWeekly: boolean;
+  showSchedule: boolean;
+  showTools: boolean;
+  showAI: boolean;
+}
+
+const DASH_CONFIG_KEY = "darb_dash_config";
+const DEFAULT_DASH_CONFIG: DashConfig = {
+  showStats: true,
+  showWeekly: true,
+  showSchedule: true,
+  showTools: true,
+  showAI: true,
+};
+
+export function loadDashConfig(): DashConfig {
+  if (typeof window === "undefined") return { ...DEFAULT_DASH_CONFIG };
+  try {
+    const raw = localStorage.getItem(DASH_CONFIG_KEY);
+    return raw ? { ...DEFAULT_DASH_CONFIG, ...JSON.parse(raw) } : { ...DEFAULT_DASH_CONFIG };
+  } catch { return { ...DEFAULT_DASH_CONFIG }; }
+}
+
+export function saveDashConfig(cfg: DashConfig) {
+  try { localStorage.setItem(DASH_CONFIG_KEY, JSON.stringify(cfg)); } catch {}
 }

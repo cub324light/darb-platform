@@ -1,13 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { TRACKS, getTrack, type TrackId } from "@/lib/tracks";
+import { TRACKS, TRACK_GROUPS, SUBJECT_GROUPS, getTrack, type TrackId, type SubjectInfo } from "@/lib/tracks";
 import {
   loadUser, saveUser, loadStats, computeStreak,
   loadTheme, applyTheme, resetAll,
   loadExamDate, saveExamDate,
   loadLogoMode, saveLogoMode,
-  type DarbUser, type Theme, type LogoMode,
+  loadDashConfig, saveDashConfig,
+  type DarbUser, type Theme, type LogoMode, type DashConfig,
 } from "@/lib/storage";
 import { syncUser } from "@/lib/firestore";
 import {
@@ -45,7 +46,9 @@ export default function ProfileButton() {
   const [editing, setEditing] = useState(false);
   const [stats, setStats] = useState({ streak: 0, silver: 0, hours: 0, sessions: 0 });
   const [examDate, setExamDate] = useState("");
-  const [logoMode, setLogoMode] = useState<LogoMode>("night");
+  const [logoMode, setLogoMode]   = useState<LogoMode>("night");
+  const [selectedSubs, setSelectedSubs] = useState<string[]>([]);
+  const [dashConfig, setDashConfig]     = useState<DashConfig | null>(null);
 
   // الحساب السحابي
   const [authUser, setAuthUser] = useState<User | null>(null);
@@ -119,11 +122,33 @@ export default function ProfileButton() {
     });
     setExamDate(loadExamDate() ?? "");
     setLogoMode(loadLogoMode());
+    setSelectedSubs(u?.subjects ?? []);
+    setDashConfig(loadDashConfig());
   }, [open]);
 
   const switchLogo = (mode: LogoMode) => {
     setLogoMode(mode);
     saveLogoMode(mode);
+  };
+
+  const toggleSub = (name: string) => {
+    setSelectedSubs((prev) => {
+      const next = prev.includes(name) ? prev.filter((s) => s !== name) : prev.length >= 3 ? prev : [...prev, name];
+      if (!user) return next;
+      const updated = { ...user, subjects: next };
+      saveUser(updated);
+      setUser(updated);
+      return next;
+    });
+  };
+
+  const toggleDash = (key: keyof DashConfig) => {
+    setDashConfig((prev) => {
+      const next = prev ? { ...prev, [key]: !prev[key] } : loadDashConfig();
+      next[key] = !next[key];
+      saveDashConfig(next);
+      return next;
+    });
   };
 
   const track = getTrack(user?.track);
@@ -245,6 +270,44 @@ export default function ProfileButton() {
               })}
             </div>
 
+            {/* مواضيع المذاكرة */}
+            <p className="label mb-3">مواضيعك (حد أقصى 3)</p>
+            <div className="flex flex-col gap-3.5 mb-6">
+              {SUBJECT_GROUPS.map((group) => (
+                <div key={group.label}>
+                  <p className="text-[10px] font-black tracking-widest mb-2 px-0.5"
+                    style={{ color: "var(--text-muted)" }}>
+                    ── {group.label} ──
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {group.subjects.map((sub: SubjectInfo) => {
+                      const selected = selectedSubs.includes(sub.name);
+                      const disabled = !selected && selectedSubs.length >= 3;
+                      return (
+                        <button key={sub.name}
+                          onClick={() => !disabled && toggleSub(sub.name)}
+                          className="rounded-xl p-3 text-right transition active:scale-[0.97]"
+                          style={{
+                            background: selected ? `color-mix(in srgb, ${sub.color} 14%, transparent)` : "var(--surface2)",
+                            border: `2px solid ${selected ? sub.color : "var(--border)"}`,
+                            opacity: disabled ? 0.38 : 1,
+                          }}>
+                          <p className="font-black text-[14px]" style={{ color: selected ? sub.color : "var(--text)" }}>
+                            {sub.name}
+                          </p>
+                          <div className="pt-1 mt-1" style={{ borderTop: `1px solid ${sub.color}30` }}>
+                            <p className="text-[10px] font-semibold" style={{ color: "var(--text-muted)" }}>
+                              {sub.testedBy.join(" · ")}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
             {/* الحساب السحابي */}
             <p className="label mb-3">حسابك السحابي</p>
             <div className="mb-6">
@@ -350,28 +413,67 @@ export default function ProfileButton() {
               )}
             </div>
 
-            {/* المسار */}
+            {/* المسار — مجمّع */}
             <p className="label mb-3">مسارك</p>
-            <div className="grid grid-cols-2 gap-2.5 mb-6">
-              {TRACKS.map((t) => {
-                const active = t.id === track.id;
-                return (
-                  <button
-                    key={t.id}
-                    onClick={() => switchTrack(t.id)}
-                    className="rounded-2xl p-3.5 text-right transition active:scale-[0.98] relative"
-                    style={{
-                      background: active ? "color-mix(in srgb, var(--accent) 12%, transparent)" : "var(--surface2)",
-                      border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
-                    }}
-                  >
-                    {active && <span className="absolute top-2 left-2.5 text-[var(--accent-light)] text-base font-black">✓</span>}
-                    <p className="font-bold text-[15px] text-[var(--text)]">{t.title}</p>
-                    <p className="text-[11px] text-[var(--text-muted)] mt-0.5 leading-snug">{t.sub}</p>
-                  </button>
-                );
-              })}
+            <div className="flex flex-col gap-3.5 mb-6">
+              {TRACK_GROUPS.map((group) => (
+                <div key={group.label}>
+                  <p className="text-[10px] font-black tracking-widest mb-2 px-0.5"
+                    style={{ color: "var(--text-muted)" }}>
+                    ── {group.label} ──
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {group.ids.map((id) => {
+                      const t = TRACKS.find((tr) => tr.id === id)!;
+                      const active = t.id === track.id;
+                      return (
+                        <button key={t.id} onClick={() => switchTrack(t.id)}
+                          className="rounded-xl p-3 text-right transition active:scale-[0.98] relative"
+                          style={{
+                            background: active ? "color-mix(in srgb, var(--accent) 12%, transparent)" : "var(--surface2)",
+                            border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
+                          }}>
+                          {active && <span className="absolute top-2 left-2.5 text-[var(--accent-light)] text-sm font-black">✓</span>}
+                          <p className="font-bold text-[14px] text-[var(--text)]">{t.title}</p>
+                          <p className="text-[10px] text-[var(--text-muted)] mt-0.5 leading-snug">{t.sub}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
+
+            {/* تخصيص الصفحة الرئيسية */}
+            {dashConfig && (
+              <>
+                <p className="label mb-3">تخصيص الصفحة الرئيسية</p>
+                <div className="rounded-2xl overflow-hidden mb-6"
+                  style={{ border: "1px solid var(--border)" }}>
+                  {([
+                    { key: "showStats"    as keyof DashConfig, label: "الإحصاءات" },
+                    { key: "showWeekly"   as keyof DashConfig, label: "رسم الأسبوع" },
+                    { key: "showSchedule" as keyof DashConfig, label: "جدول اليوم" },
+                    { key: "showTools"    as keyof DashConfig, label: "الأدوات" },
+                    { key: "showAI"       as keyof DashConfig, label: "دربي الذكي" },
+                  ]).map(({ key, label }, i, arr) => (
+                    <button key={key} onClick={() => toggleDash(key)}
+                      className="w-full flex items-center justify-between px-4 py-3.5 transition"
+                      style={{
+                        background: "var(--surface2)",
+                        borderBottom: i < arr.length - 1 ? "1px solid var(--border)" : "none",
+                      }}>
+                      <span className="font-bold text-[15px]" style={{ color: "var(--text)" }}>{label}</span>
+                      <div className="w-10 h-5.5 rounded-full flex items-center px-0.5 transition-colors"
+                        style={{ background: dashConfig[key] ? "var(--accent)" : "var(--border)", height: "22px" }}>
+                        <div className="w-4 h-4 rounded-full bg-white transition-transform"
+                          style={{ transform: dashConfig[key] ? "translateX(18px)" : "translateX(0)" }} />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
 
             <button onClick={reset} className="w-full py-3.5 rounded-2xl text-sm font-bold transition"
               style={{ background: "transparent", border: "1px solid rgba(239,68,68,0.3)", color: "var(--danger)" }}>
