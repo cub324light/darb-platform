@@ -152,6 +152,22 @@ export function applyTheme(theme: Theme) {
   } catch {}
 }
 
+/* ── نمط الشعار: ليلي (أزرق) أو نهاري (ذهبي) ── */
+export type LogoMode = "night" | "day";
+const LOGO_KEY = "darb_logo";
+
+export function loadLogoMode(): LogoMode {
+  if (typeof window === "undefined") return "night";
+  return (localStorage.getItem(LOGO_KEY) as LogoMode) === "day" ? "day" : "night";
+}
+
+export function saveLogoMode(mode: LogoMode) {
+  try {
+    localStorage.setItem(LOGO_KEY, mode);
+    window.dispatchEvent(new CustomEvent("darb-logo", { detail: mode }));
+  } catch {}
+}
+
 /* ── تاريخ الاختبار ── */
 const EXAM_KEY = "darb_exam_date";
 

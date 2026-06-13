@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { TRACKS } from "@/lib/tracks";
+import Logo from "@/components/Logo";
 
 function useReveal(active: boolean) {
   const ref = useRef<HTMLDivElement>(null);
@@ -95,7 +96,7 @@ export default function LandingPage() {
   if (checking) {
     return (
       <div className="min-h-dvh flex items-center justify-center">
-        <p className="font-black text-5xl text-[var(--accent-light)]" style={{ letterSpacing: "-1px" }}>درب</p>
+        <Logo className="font-black text-5xl" style={{ letterSpacing: "-1px" }} />
       </div>
     );
   }
@@ -108,7 +109,7 @@ export default function LandingPage() {
       {/* ── ناف بار: درب يمين + ثلاث نقاط يسار ── */}
       <nav className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-5 py-3.5"
         style={{ background: "color-mix(in srgb, var(--bg) 90%, transparent)", backdropFilter: "blur(14px)", borderBottom: "1px solid var(--border)" }}>
-        <span className="font-black text-2xl" style={{ color: "var(--accent-light)", letterSpacing: "-0.5px" }}>درب</span>
+        <Logo className="font-black text-2xl" style={{ letterSpacing: "-0.5px" }} />
         <button
           onClick={() => setMenuOpen(true)}
           className="w-10 h-10 rounded-xl flex flex-col items-center justify-center gap-[5px]"

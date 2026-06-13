@@ -6,7 +6,8 @@ import {
   loadUser, saveUser, loadStats, computeStreak,
   loadTheme, applyTheme, resetAll,
   loadExamDate, saveExamDate,
-  type DarbUser, type Theme,
+  loadLogoMode, saveLogoMode,
+  type DarbUser, type Theme, type LogoMode,
 } from "@/lib/storage";
 import { syncUser } from "@/lib/firestore";
 import {
@@ -44,6 +45,7 @@ export default function ProfileButton() {
   const [editing, setEditing] = useState(false);
   const [stats, setStats] = useState({ streak: 0, silver: 0, hours: 0, sessions: 0 });
   const [examDate, setExamDate] = useState("");
+  const [logoMode, setLogoMode] = useState<LogoMode>("night");
 
   // الحساب السحابي
   const [authUser, setAuthUser] = useState<User | null>(null);
@@ -116,7 +118,13 @@ export default function ProfileButton() {
       sessions: s.sessionsCount,
     });
     setExamDate(loadExamDate() ?? "");
+    setLogoMode(loadLogoMode());
   }, [open]);
+
+  const switchLogo = (mode: LogoMode) => {
+    setLogoMode(mode);
+    saveLogoMode(mode);
+  };
 
   const track = getTrack(user?.track);
 
@@ -210,6 +218,31 @@ export default function ProfileButton() {
                   <p className="text-[17px] text-[var(--text-muted)] font-semibold">{s.label}</p>
                 </div>
               ))}
+            </div>
+
+            {/* نمط الشعار */}
+            <p className="label mb-3">شعار درب</p>
+            <div className="grid grid-cols-2 gap-2.5 mb-6">
+              {([
+                { mode: "night" as LogoMode, title: "ليلي", color: "var(--accent-light)" },
+                { mode: "day" as LogoMode, title: "نهاري", color: "var(--gold)" },
+              ]).map((o) => {
+                const active = logoMode === o.mode;
+                return (
+                  <button
+                    key={o.mode}
+                    onClick={() => switchLogo(o.mode)}
+                    className="rounded-2xl py-4 flex flex-col items-center gap-1.5 transition active:scale-[0.98]"
+                    style={{
+                      background: active ? "color-mix(in srgb, var(--accent) 10%, transparent)" : "var(--surface2)",
+                      border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
+                    }}
+                  >
+                    <span className="font-black text-3xl" style={{ color: o.color, textShadow: `0 0 18px color-mix(in srgb, ${o.color} 45%, transparent)` }}>درب</span>
+                    <span className="text-[13px] font-bold text-[var(--text-muted)]">{o.title}</span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* الحساب السحابي */}
