@@ -6,9 +6,8 @@ import {
   loadUser, saveUser, loadStats, computeStreak,
   loadTheme, applyTheme, resetAll,
   loadExamDate, saveExamDate,
-  loadLogoMode, saveLogoMode,
   loadDashConfig, saveDashConfig,
-  type DarbUser, type Theme, type LogoMode, type DashConfig,
+  type DarbUser, type Theme, type DashConfig,
 } from "@/lib/storage";
 import { syncUser } from "@/lib/firestore";
 import {
@@ -29,7 +28,6 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     const next: Theme = theme === "dark" ? "light" : "dark";
     setTheme(next);
     applyTheme(next);
-    saveLogoMode(next === "light" ? "day" : "night");
   };
 
   return (
@@ -47,7 +45,7 @@ export default function ProfileButton() {
   const [editing, setEditing] = useState(false);
   const [stats, setStats] = useState({ streak: 0, silver: 0, hours: 0, sessions: 0 });
   const [examDate, setExamDate] = useState("");
-  const [logoMode, setLogoMode]     = useState<LogoMode>("night");
+  const [theme, setThemeState]      = useState<Theme>("dark");
   const [activeTracksState, setActiveTracksState] = useState<TrackId[]>([]);
   const [dashConfig, setDashConfig] = useState<DashConfig | null>(null);
 
@@ -122,14 +120,14 @@ export default function ProfileButton() {
       sessions: s.sessionsCount,
     });
     setExamDate(loadExamDate() ?? "");
-    setLogoMode(loadLogoMode());
+    setThemeState(loadTheme());
     setActiveTracksState(u?.activeTracks ?? (u?.track ? [u.track] : []));
     setDashConfig(loadDashConfig());
   }, [open]);
 
-  const switchLogo = (mode: LogoMode) => {
-    setLogoMode(mode);
-    saveLogoMode(mode);
+  const switchTheme = (t: Theme) => {
+    setThemeState(t);
+    applyTheme(t);
   };
 
   const toggleActiveTrack = (id: TrackId) => {
@@ -223,7 +221,6 @@ export default function ProfileButton() {
                   </>
                 )}
               </div>
-              <ThemeToggle />
             </div>
 
             {/* الإحصاءات الحقيقية */}
@@ -242,26 +239,27 @@ export default function ProfileButton() {
               ))}
             </div>
 
-            {/* نمط الشعار */}
-            <p className="label mb-3">شعار درب</p>
+            {/* المظهر — ليلي/نهاري: يبدّل الموقع كامل ولون شعار درب معاً */}
+            <p className="label mb-3">المظهر</p>
             <div className="grid grid-cols-2 gap-2.5 mb-6">
               {([
-                { mode: "night" as LogoMode, title: "ليلي", color: "var(--accent-light)" },
-                { mode: "day" as LogoMode, title: "نهاري", color: "var(--gold)" },
+                { mode: "dark" as Theme,  title: "ليلي",  emoji: "🌙", logo: "#3B82F6" },
+                { mode: "light" as Theme, title: "نهاري", emoji: "☀️", logo: "#F5B40A" },
               ]).map((o) => {
-                const active = logoMode === o.mode;
+                const active = theme === o.mode;
                 return (
                   <button
                     key={o.mode}
-                    onClick={() => switchLogo(o.mode)}
+                    onClick={() => switchTheme(o.mode)}
                     className="rounded-2xl py-4 flex flex-col items-center gap-1.5 transition active:scale-[0.98]"
                     style={{
-                      background: active ? "color-mix(in srgb, var(--accent) 10%, transparent)" : "var(--surface2)",
+                      background: active ? "color-mix(in srgb, var(--accent) 12%, transparent)" : "var(--surface2)",
                       border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
                     }}
                   >
-                    <span className="font-black text-3xl" style={{ color: o.color, textShadow: `0 0 18px color-mix(in srgb, ${o.color} 45%, transparent)` }}>درب</span>
-                    <span className="text-[13px] font-bold text-[var(--text-muted)]">{o.title}</span>
+                    <span className="font-black text-3xl" style={{ color: o.logo, textShadow: `0 0 18px color-mix(in srgb, ${o.logo} 45%, transparent)` }}>درب</span>
+                    <span className="text-[13px] font-bold text-[var(--text-muted)]">{o.emoji} {o.title}</span>
+                    {active && <span className="text-[11px] font-black" style={{ color: "var(--accent-light)" }}>✓ الحالي</span>}
                   </button>
                 );
               })}
