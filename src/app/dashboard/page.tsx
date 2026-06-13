@@ -450,28 +450,26 @@ export default function DashboardPage() {
 
       case "schedule":
         return (
-          <div>
-            {/* غلاف يقص الزوايا السفلية للتقويم ليلتحم مع الجدول */}
-            <div style={{ overflow: "hidden", borderRadius: "24px 24px 0 0" }}>
-              <Calendar
-                examDate={examDate}
-                onExamDateChange={(d) => { setExamDate(d); saveExamDate(d); }}
-                onDayClick={(date) => setCalDate(date)}
-                getDayInfo={(date) =>
-                  getEventsForDate(date, allEvents).map((ev) => {
-                    const subj = allSubjects.find((s) => s.name === ev.subject);
-                    return {
-                      id: ev.id,
-                      label: ev.type === "study" ? (ev.subject ?? "مذاكرة") : (ev.label ?? "مشغول"),
-                      color: ev.type === "study" ? (subj?.color ?? "var(--accent-light)") : "var(--danger)",
-                      from: ev.fromHour,
-                      to: ev.toHour,
-                    };
-                  })
-                }
-              />
-            </div>
-            <section className="card" style={{ borderTopLeftRadius: 0, borderTopRightRadius: 0, borderTop: "none" }}>
+          <div className="flex flex-col gap-4">
+            {/* التقويم فوق — وبينه وبين جدول اليوم فاصل */}
+            <Calendar
+              examDate={examDate}
+              onExamDateChange={(d) => { setExamDate(d); saveExamDate(d); }}
+              onDayClick={(date) => setCalDate(date)}
+              getDayInfo={(date) =>
+                getEventsForDate(date, allEvents).map((ev) => {
+                  const subj = allSubjects.find((s) => s.name === ev.subject);
+                  return {
+                    id: ev.id,
+                    label: ev.type === "study" ? (ev.subject ?? "مذاكرة") : (ev.label ?? "مشغول"),
+                    color: ev.type === "study" ? (subj?.color ?? "var(--accent-light)") : "var(--danger)",
+                    from: ev.fromHour,
+                    to: ev.toHour,
+                  };
+                })
+              }
+            />
+            <section className="card">
               <div className="flex items-center justify-between mb-3">
                 <p className="title-md" style={{ color: "var(--text)" }}>جدول اليوم</p>
               </div>
