@@ -136,7 +136,7 @@ export default function LandingPage() {
                 <Link href="/dashboard" onClick={() => setMenuOpen(false)}
                   className="flex items-center justify-between px-5 py-4 rounded-2xl font-bold text-base"
                   style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)", textDecoration: "none" }}>
-                  <span>داشبوردك</span>
+                  <span>ادخل للتطبيق</span>
                   <span>←</span>
                 </Link>
               )}
