@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div dir="rtl">
 
-## Getting Started
+# درب 🌟
 
-First, run the development server:
+**المنصة التي تعاملك كأخ** — تأسيس حقيقي للقدرات والتحصيلي وأرامكو CPC.
+
+منصة تعليمية سعودية تساعد الطالب يبني خطته، يلتزم فيها، ويوصل.
+
+---
+
+## المميزات
+
+- **ثلاثة مسارات**: التحصيلي · القدرات · أرامكو CPC — كل مسار بمواده وخريطته
+- **الخريطة التفاعلية**: تأسيس ← تدريب ← تسريبات، مع نقاط مراجعة كل ربع
+- **أوربت**: تايمر تركيز 50/10 بنظام Orbit
+- **خزنة الأخطاء**: سجّل أخطاءك وراجعها قبل الاختبار
+- **بنك المراجعة**: تكرار متباعد بخوارزمية SM-2
+- **مساعد ذكي**: يبني جدول يومك حول مشاغيلك بالذكاء الاصطناعي
+- **ستريك يومي** 🔥 وإحصائيات حقيقية بدون أرقام وهمية
+- **وضع ليلي ونهاري** مع سماء متحركة (نجوم وشهب بالليل، شمس وطيور بالنهار)
+- **تقويم هجري وميلادي** لتحديد يوم الاختبار
+- **لوحة إدارة** محمية لمتابعة المستخدمين وتقدمهم
+
+## التقنيات
+
+| | |
+|---|---|
+| الواجهة | Next.js (App Router) · React · TypeScript |
+| التصميم | Tailwind CSS v4 · RTL بالكامل · خط Cairo |
+| البيانات | Firebase Firestore + localStorage |
+| الذكاء | Groq API (Llama 3.3 70B) |
+| النشر | Firebase Hosting / Vercel |
+
+## التشغيل محلياً
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+ثم افتح `http://localhost:3000`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### متغيرات البيئة
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| المتغير | الوظيفة |
+|---|---|
+| `GROQ_API_KEY` | مفتاح الذكاء الاصطناعي (إلزامي للمساعد الذكي) |
+| `ADMIN_PASS` | كلمة سر لوحة الإدارة `/admin` |
+| `FIREBASE_SERVICE_ACCOUNT` | بيانات اعتماد السيرفر (خارج Firebase Hosting فقط) |
 
-## Learn More
+## النشر
 
-To learn more about Next.js, take a look at the following resources:
+كل push على `main` ينشر تلقائياً عبر GitHub Actions على Firebase Hosting.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+للنشر اليدوي:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+firebase experiments:enable webframeworks
+firebase deploy
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+<p align="center">صُنع بـ 💙 في السعودية</p>
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+</div>

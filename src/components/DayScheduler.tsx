@@ -43,6 +43,7 @@ function parseHourArabic(num: string, mins: string, period: string): number {
   const p = period.trim();
   let h = n;
   if (p === "م" || p === "مساء" || p === "مساءً") h = n === 12 ? 12 : n + 12;
+  else if (p === "ظ" || p === "ظهر" || p === "ظهراً") h = 12;
   else if (p === "ص" || p === "صباح" || p === "صباحاً") h = n === 12 ? 0 : n;
   // إذا فيه دقائق (≥30) نرفع الساعة للأعلى لتجنب from=to
   return h + (m >= 30 ? 1 : 0);
@@ -60,7 +61,7 @@ function parseAISchedule(text: string, date: string, subjects: { name: string }[
 
     // من [الساعة] H[:MM] [ص/م] [N دقيقة] إلى [الساعة] H[:MM] [ص/م] [N دقيقة] [—–-:] النشاط
     const m = line.match(
-      /من\s+(?:الساعة\s+)?(\d+)(?::(\d+))?\s*(?:\d+\s*(?:دقيقة|دق|د)\s*)?([صم]?)\s*(?:إلى|الى)\s*(?:الساعة\s+)?(\d+)(?::(\d+))?\s*([صم]?)\s*(?:\d+\s*(?:دقيقة|دق|د)\s*)?[—–\-:]\s*(.+)/
+      /من\s+(?:الساعة\s+)?(\d+)(?::(\d+))?\s*(?:\d+\s*(?:دقيقة|دق|د)\s*)?([صمظ]?)\s*(?:إلى|الى)\s*(?:الساعة\s+)?(\d+)(?::(\d+))?\s*([صمظ]?)\s*(?:\d+\s*(?:دقيقة|دق|د)\s*)?[—–\-:]\s*(.+)/
     );
     if (!m) continue;
 
@@ -160,7 +161,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
       const data = await res.json();
       const raw = (data.text ?? data.error ?? "حدث خطأ في الاستجابة").replace(/\n{3,}/g, "\n\n").trim();
       const parsed = parseAISchedule(raw, date, subjects);
-      setAiResult(parsed.length > 0 ? raw : "أنا فقط أبني جداول دراسية 📅\nأدخل مشاغيلك مثل: من 8ص إلى 2م مدرسة");
+      setAiResult(parsed.length > 0 ? raw : "أنا فقط أبني جداول دراسية\nأدخل مشاغيلك مثل: من 8ص إلى 2م مدرسة");
     } catch { setAiResult("حدث خطأ، تحقق من الاتصال وحاول مجدداً."); }
     finally  { setAiLoading(false); }
   };
@@ -205,9 +206,9 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
 
   const applyPlan = () => {
     const parsed = parseAISchedule(aiResult, date, subjects);
-    if (parsed.length === 0) { setApplyFeedback("⚠️ لم أتمكن من قراءة الجدول — تأكد أن الخطة بالصيغة الصحيحة"); return; }
+    if (parsed.length === 0) { setApplyFeedback("لم أتمكن من قراءة الجدول — تأكد أن الخطة بالصيغة الصحيحة"); return; }
     onEventsChange([...events, ...parsed]);
-    setApplyFeedback(`✅ أُضيف ${parsed.length} حدث للجدول`);
+    setApplyFeedback(`أُضيف ${parsed.length} حدث للجدول`);
     setTab("manual");
   };
 
@@ -218,23 +219,23 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
 
   const modal = createPortal(
     <div className="fixed inset-0 z-[9999] flex items-end" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/55" />
-      <div className="relative w-full rounded-t-3xl max-h-[90vh] overflow-y-auto"
-        style={{ background: "var(--surface)", border: "1px solid var(--border)", borderBottom: "none" }}
+      <div className="absolute inset-0 bg-black/55 fade-in" />
+      <div className="relative w-full rounded-t-3xl max-h-[90vh] overflow-y-auto slide-up"
+        style={{ background: "var(--surface)", border: "1px solid var(--border)", borderBottom: "none", overscrollBehavior: "contain" }}
         onClick={(e) => e.stopPropagation()}>
 
         {/* Header */}
         <div className="sticky top-0 z-10 pt-4 pb-3 px-5" style={{ background: "var(--surface)", borderBottom: "1px solid var(--border)" }}>
           <div className="w-10 h-1.5 rounded-full bg-[var(--border)] mx-auto mb-3" />
           <div className="flex items-center justify-between">
-            <p className="font-black text-[15px]" style={{ color: "var(--text)" }}>{arabicDate}</p>
+            <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>{arabicDate}</p>
             <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center text-base"
               style={{ background: "var(--surface2)", color: "var(--text-muted)" }}>✕</button>
           </div>
           <div className="flex gap-1 mt-3 p-1 rounded-2xl" style={{ background: "var(--surface2)" }}>
             {(["manual", "ai"] as const).map((t) => (
               <button key={t} onClick={() => setTab(t)}
-                className="flex-1 py-2 rounded-xl text-[13px] font-bold transition"
+                className="flex-1 py-2 rounded-xl text-[17px] font-bold transition"
                 style={tab === t ? { background: "var(--accent)", color: "white" } : { color: "var(--text-muted)" }}>
                 {t === "manual" ? "يدوي" : "خطة ذكية"}
               </button>
@@ -248,13 +249,13 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
           {tab === "manual" && (
             <div>
               {applyFeedback && (
-                <div className="rounded-2xl px-4 py-3 mb-4 text-[13px] font-bold text-center"
+                <div className="rounded-2xl px-4 py-3 mb-4 text-[17px] font-bold text-center"
                   style={{ background: "color-mix(in srgb, var(--success) 12%, var(--surface2))", border: "1px solid color-mix(in srgb, var(--success) 30%, transparent)", color: "var(--success)" }}>
                   {applyFeedback}
                 </div>
               )}
               {dayEvents.length === 0 && !applyFeedback && (
-                <p className="text-[13px] mb-4 text-center" style={{ color: "var(--text-muted)" }}>لا توجد أحداث لهذا اليوم</p>
+                <p className="text-[17px] mb-4 text-center" style={{ color: "var(--text-muted)" }}>لا توجد أحداث لهذا اليوم</p>
               )}
               {dayEvents.length > 0 && (
                 <div className="flex flex-col gap-2 mb-4">
@@ -263,10 +264,10 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
                       style={{ background: "var(--surface2)", border: "1px solid var(--border)", minHeight: "48px" }}>
                       <div className="w-3 h-3 rounded-full flex-shrink-0"
                         style={{ background: ev.type === "study" ? "var(--accent-light)" : "var(--danger)" }} />
-                      <span className="font-bold text-[14px] flex-1" style={{ color: "var(--text)" }}>
+                      <span className="font-bold text-[17px] flex-1" style={{ color: "var(--text)" }}>
                         {ev.type === "study" ? (ev.subject ?? "") : (ev.label ?? "")}
                       </span>
-                      <span className="text-[12px] font-semibold" style={{ color: "var(--text-muted)" }}>
+                      <span className="text-[17px] font-semibold" style={{ color: "var(--text-muted)" }}>
                         {fmtHour(ev.fromHour)} → {fmtHour(ev.toHour)}
                       </span>
                       <button onClick={() => deleteEvent(ev.id)}
@@ -279,11 +280,11 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
               {addMode === null && (
                 <div className="flex gap-2 mb-4">
                   <button onClick={() => { setAddMode("study"); setAddSubject(subjects[0]?.name ?? ""); }}
-                    className="flex-1 py-3 rounded-2xl font-bold text-[13px] min-h-[44px]"
+                    className="flex-1 py-3 rounded-2xl font-bold text-[17px] min-h-[44px]"
                     style={{ background: "transparent", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
                     + إضافة دراسة</button>
                   <button onClick={() => { setAddMode("busy"); setAddLabel(""); }}
-                    className="flex-1 py-3 rounded-2xl font-bold text-[13px] min-h-[44px]"
+                    className="flex-1 py-3 rounded-2xl font-bold text-[17px] min-h-[44px]"
                     style={{ background: "transparent", border: "1.5px solid var(--danger)", color: "var(--danger)" }}>
                     + إضافة مشغول</button>
                 </div>
@@ -292,16 +293,16 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
               {addMode !== null && (
                 <div className="rounded-2xl p-4 mb-4" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
                   <div className="flex items-center justify-between mb-3">
-                    <p className="font-black text-[14px]" style={{ color: "var(--text)" }}>
+                    <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>
                       {addMode === "study" ? "إضافة دراسة" : "إضافة مشغول"}</p>
                     <button onClick={() => setAddMode(null)} className="text-[var(--text-muted)] text-base px-1 min-h-[44px]">✕</button>
                   </div>
 
                   {addMode === "study" && (
                     <div className="mb-3">
-                      <label className="text-[12px] font-bold mb-1 block" style={{ color: "var(--text-muted)" }}>المادة</label>
+                      <label className="text-[17px] font-bold mb-1 block" style={{ color: "var(--text-muted)" }}>المادة</label>
                       <select value={addSubject} onChange={(e) => setAddSubject(e.target.value)}
-                        className="w-full rounded-xl px-3 py-3 text-[14px] outline-none min-h-[44px]"
+                        className="w-full rounded-xl px-3 py-3 text-[17px] outline-none min-h-[44px]"
                         style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
                         {subjects.map((s) => <option key={s.name} value={s.name}>{s.name}</option>)}
                       </select>
@@ -309,27 +310,27 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
                   )}
                   {addMode === "busy" && (
                     <div className="mb-3">
-                      <label className="text-[12px] font-bold mb-1 block" style={{ color: "var(--text-muted)" }}>التسمية</label>
+                      <label className="text-[17px] font-bold mb-1 block" style={{ color: "var(--text-muted)" }}>التسمية</label>
                       <input value={addLabel} onChange={(e) => setAddLabel(e.target.value)}
                         placeholder="مثال: مدرسة، رياضة، عمل..."
-                        className="w-full rounded-xl px-3 py-3 text-[14px] outline-none min-h-[44px]"
+                        className="w-full rounded-xl px-3 py-3 text-[17px] outline-none min-h-[44px]"
                         style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
                     </div>
                   )}
 
                   <div className="flex gap-3 mb-3">
                     <div className="flex-1">
-                      <label className="text-[12px] font-bold mb-1 block" style={{ color: "var(--text-muted)" }}>من</label>
+                      <label className="text-[17px] font-bold mb-1 block" style={{ color: "var(--text-muted)" }}>من</label>
                       <select value={addFrom} onChange={(e) => { const v = Number(e.target.value); setAddFrom(v); if (addTo <= v) setAddTo(v + 1); }}
-                        className="w-full rounded-xl px-3 py-3 text-[14px] outline-none min-h-[44px]"
+                        className="w-full rounded-xl px-3 py-3 text-[17px] outline-none min-h-[44px]"
                         style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
                         {HOURS.map((h) => <option key={h} value={h}>{fmtHour(h)}</option>)}
                       </select>
                     </div>
                     <div className="flex-1">
-                      <label className="text-[12px] font-bold mb-1 block" style={{ color: "var(--text-muted)" }}>إلى</label>
+                      <label className="text-[17px] font-bold mb-1 block" style={{ color: "var(--text-muted)" }}>إلى</label>
                       <select value={addTo} onChange={(e) => setAddTo(Number(e.target.value))}
-                        className="w-full rounded-xl px-3 py-3 text-[14px] outline-none min-h-[44px]"
+                        className="w-full rounded-xl px-3 py-3 text-[17px] outline-none min-h-[44px]"
                         style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
                         {END_HOURS.filter((h) => h > addFrom).map((h) => <option key={h} value={h}>{fmtHour(h)}</option>)}
                       </select>
@@ -337,11 +338,11 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
                   </div>
 
                   <div className="mb-4">
-                    <label className="text-[12px] font-bold mb-2 block" style={{ color: "var(--text-muted)" }}>التكرار</label>
+                    <label className="text-[17px] font-bold mb-2 block" style={{ color: "var(--text-muted)" }}>التكرار</label>
                     <div className="flex flex-wrap gap-2">
                       {(["once", "weekly", "multi"] as const).map((r) => (
                         <button key={r} onClick={() => setRecurrence(r)}
-                          className="px-3 py-2 rounded-xl text-[12px] font-bold min-h-[44px] transition"
+                          className="px-3 py-2 rounded-xl text-[17px] font-bold min-h-[44px] transition"
                           style={recurrence === r
                             ? { background: "var(--accent)", color: "white", border: "1.5px solid var(--accent)" }
                             : { background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}>
@@ -355,7 +356,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
                       <div className="flex flex-wrap gap-2 mt-3">
                         {WEEK_DAY_NAMES.map((name, idx) => (
                           <button key={idx} onClick={() => toggleMultiDay(idx)}
-                            className="px-3 py-2 rounded-xl text-[12px] font-bold min-h-[44px] transition"
+                            className="px-3 py-2 rounded-xl text-[17px] font-bold min-h-[44px] transition"
                             style={multiDays.includes(idx)
                               ? { background: "var(--accent)", color: "white", border: "1.5px solid var(--accent)" }
                               : { background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}>
@@ -365,7 +366,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
                       </div>
                     )}
                   </div>
-                  <button onClick={addEvent} className="w-full py-3 rounded-2xl font-black text-[14px] min-h-[44px]"
+                  <button onClick={addEvent} className="w-full py-3 rounded-2xl font-black text-[17px] min-h-[44px]"
                     style={{ background: "var(--accent)", color: "white" }}>إضافة للجدول</button>
                 </div>
               )}
@@ -374,11 +375,11 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
               <div className="flex items-center gap-3 rounded-2xl px-4 py-3 mt-2"
                 style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
                 <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: "var(--gold)" }} />
-                <span className="text-[13px] flex-1 font-bold" style={{ color: "var(--text-muted)" }}>
+                <span className="text-[17px] flex-1 font-bold" style={{ color: "var(--text-muted)" }}>
                   {examDate === date ? "يوم الاختبار محدد لهذا اليوم" : "تعيين كيوم اختبار"}
                 </span>
                 <button onClick={() => onExamDateChange(examDate === date ? null : date)}
-                  className="px-3 py-2 rounded-xl text-[12px] font-bold min-h-[44px]"
+                  className="px-3 py-2 rounded-xl text-[17px] font-bold min-h-[44px]"
                   style={examDate === date
                     ? { background: "var(--gold)", color: "#1a1200", border: "none" }
                     : { background: "transparent", border: "1.5px solid var(--gold)", color: "var(--gold)" }}>
@@ -395,15 +396,15 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
 
               <textarea value={busyText} onChange={(e) => setBusyText(e.target.value)} rows={3}
                 placeholder="مثال: من 8ص-2م مدرسة، من 6م-8م رياضة..."
-                className="w-full rounded-2xl px-4 py-3 text-[14px] outline-none resize-none"
+                className="w-full rounded-2xl px-4 py-3 text-[17px] outline-none resize-none"
                 style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)", minHeight: "90px" }} />
 
               {subjects.length > 0 && (
                 <div className="mt-3 mb-3">
-                  <p className="text-[12px] font-bold mb-2" style={{ color: "var(--text-muted)" }}>المواد:</p>
+                  <p className="text-[17px] font-bold mb-2" style={{ color: "var(--text-muted)" }}>المواد:</p>
                   <div className="flex flex-wrap gap-2">
                     {subjects.map((s) => (
-                      <span key={s.name} className="px-3 py-1.5 rounded-xl text-[12px] font-bold"
+                      <span key={s.name} className="px-3 py-1.5 rounded-xl text-[17px] font-bold"
                         style={{ background: s.color + "20", border: `1px solid ${s.color}55`, color: s.color }}>
                         {s.name}
                       </span>
@@ -416,14 +417,14 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
                 <div className="flex items-center gap-2 rounded-xl px-3 py-2 mb-3"
                   style={{ background: "color-mix(in srgb, var(--gold) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--gold) 30%, transparent)" }}>
                   <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: "var(--gold)" }} />
-                  <span className="text-[12px] font-semibold" style={{ color: "var(--gold)" }}>
+                  <span className="text-[17px] font-semibold" style={{ color: "var(--gold)" }}>
                     يوم الاختبار: {new Date(examDate + "T12:00:00").toLocaleDateString("ar-SA", { weekday: "long", month: "long", day: "numeric" })}
                   </span>
                 </div>
               )}
 
               <button onClick={runAI} disabled={aiLoading || !busyText.trim()}
-                className="w-full py-4 rounded-2xl font-black text-[16px] min-h-[56px] mb-4 transition"
+                className="w-full py-4 rounded-2xl font-black text-[17px] min-h-[56px] mb-4 transition"
                 style={{ background: aiLoading || !busyText.trim() ? "var(--surface2)" : "var(--accent)", color: aiLoading || !busyText.trim() ? "var(--text-muted)" : "white", border: "none" }}>
                 {aiLoading ? "درب يبني الخطة..." : "🤖 اعمل لي خطة"}
               </button>
@@ -432,7 +433,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
                 <div className="flex items-center justify-center gap-3 py-6">
                   <div className="w-6 h-6 rounded-full border-2 animate-spin"
                     style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }} />
-                  <span className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>درب يبني الخطة...</span>
+                  <span className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>درب يبني الخطة...</span>
                 </div>
               )}
 
@@ -449,27 +450,27 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
                   {/* زرا التعديل والتطبيق */}
                   <div className="flex gap-2 mb-3">
                     <button onClick={() => { setShowEdit((v) => !v); setApplyFeedback(""); }}
-                      className="flex-1 py-3 rounded-2xl font-bold text-[14px] min-h-[48px]"
+                      className="flex-1 py-3 rounded-2xl font-bold text-[17px] min-h-[48px]"
                       style={{ background: "transparent", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
-                      ✏️ تعديل
+                      تعديل
                     </button>
                     <button onClick={() => { setApplyFeedback(""); applyPlan(); }}
-                      className="flex-1 py-3 rounded-2xl font-black text-[14px] min-h-[48px]"
+                      className="flex-1 py-3 rounded-2xl font-black text-[17px] min-h-[48px]"
                       style={{ background: "var(--accent)", color: "white", border: "none" }}>
-                      ✅ تطبيق
+                      تطبيق
                     </button>
                   </div>
 
                   {/* حقل التعديل */}
                   {showEdit && (
                     <div className="rounded-2xl p-4 mb-3" style={{ background: "var(--surface2)", border: "1.5px solid var(--accent)" }}>
-                      <p className="text-[12px] font-bold mb-2" style={{ color: "var(--text-muted)" }}>وش تبي تعدّل؟</p>
+                      <p className="text-[17px] font-bold mb-2" style={{ color: "var(--text-muted)" }}>وش تبي تعدّل؟</p>
                       <textarea value={editText} onChange={(e) => setEditText(e.target.value)} rows={2}
                         placeholder="مثال: غيّر رياضيات إلى كيمياء في الفترة الأولى..."
-                        className="w-full rounded-xl px-3 py-3 text-[13px] outline-none resize-none mb-3"
+                        className="w-full rounded-xl px-3 py-3 text-[17px] outline-none resize-none mb-3"
                         style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)", minHeight: "70px" }} />
                       <button onClick={runEdit} disabled={!editText.trim()}
-                        className="w-full py-2.5 rounded-xl font-bold text-[13px] min-h-[44px]"
+                        className="w-full py-2.5 rounded-xl font-bold text-[17px] min-h-[44px]"
                         style={{ background: editText.trim() ? "var(--accent)" : "var(--surface)", color: editText.trim() ? "white" : "var(--text-muted)", border: "none" }}>
                         أعد بناء الخطة
                       </button>
@@ -477,7 +478,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
                   )}
 
                   {applyFeedback && (
-                    <p className="text-[12px] font-bold text-center py-2" style={{ color: applyFeedback.startsWith("✅") ? "var(--success)" : "var(--danger)" }}>
+                    <p className="text-[17px] font-bold text-center py-2" style={{ color: applyFeedback.startsWith("أُضيف") ? "var(--success)" : "var(--danger)" }}>
                       {applyFeedback}
                     </p>
                   )}

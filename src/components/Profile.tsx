@@ -7,6 +7,7 @@ import {
   loadTheme, applyTheme, resetAll,
   type DarbUser, type Theme,
 } from "@/lib/storage";
+import { syncUser } from "@/lib/firestore";
 
 /* ─── زر البروفايل (يسار) + اللوحة المنزلقة ─── */
 
@@ -60,6 +61,7 @@ export default function ProfileButton() {
     saveUser(next);
     setUser(next);
     setEditing(false);
+    syncUser({ name: next.name });
   };
 
   const switchTrack = (id: TrackId) => {
@@ -67,6 +69,7 @@ export default function ProfileButton() {
     const next = { ...user, track: id };
     saveUser(next);
     setUser(next);
+    syncUser({ track: id });
   };
 
   const reset = () => {
@@ -80,7 +83,7 @@ export default function ProfileButton() {
           <div className="absolute inset-0 bg-black/55 fade-in" />
           <div
             className="relative w-full max-w-lg rounded-t-3xl p-6 pb-10 slide-up"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)", borderBottom: "none", maxHeight: "82vh", overflowY: "auto" }}
+            style={{ background: "var(--surface)", border: "1px solid var(--border)", borderBottom: "none", maxHeight: "82vh", overflowY: "auto", overscrollBehavior: "contain" }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* رأس اللوحة: زر رجوع + مقبض */}
@@ -88,7 +91,7 @@ export default function ProfileButton() {
               <div className="w-10 h-1.5 rounded-full bg-[var(--border)]" />
               <button
                 onClick={() => setOpen(false)}
-                className="text-[13px] font-bold px-3 py-1.5 rounded-xl"
+                className="text-[17px] font-bold px-3 py-1.5 rounded-xl"
                 style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-dim)" }}
               >
                 رجوع ←
@@ -139,7 +142,7 @@ export default function ProfileButton() {
                 <div key={s.label} className="rounded-2xl p-3 text-center" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
                   {s.icon && <p className="text-base">{s.icon}</p>}
                   <p className="font-mono-nums font-black text-lg text-[var(--text)]">{s.val}</p>
-                  <p className="text-[11px] text-[var(--text-muted)] font-semibold">{s.label}</p>
+                  <p className="text-[17px] text-[var(--text-muted)] font-semibold">{s.label}</p>
                 </div>
               ))}
             </div>

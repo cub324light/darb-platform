@@ -48,6 +48,8 @@ export default function OrbitPage() {
   const [subjects, setSubjects] = useState<{ name: string; color: string }[]>([]);
   const [subject, setSubject]   = useState<string>("");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  /* نهاية الجلسة كطابع زمني حقيقي — العدّ ما يتجمد لو راح التطبيق للخلفية */
+  const endAtRef = useRef(0);
 
   const focusMins = durMode === "25" ? 25 : durMode === "50" ? 50 : durMode === "90" ? 90 : customMins;
   const breakMins = calcBreak(focusMins);
@@ -87,20 +89,40 @@ export default function OrbitPage() {
     } catch {}
   }, []);
 
+  /* إشعار نظام لو كان التطبيق بالخلفية وقت انتهاء الجلسة */
+  const notify = useCallback((title: string, body: string) => {
+    try {
+      if (document.hidden && "Notification" in window && Notification.permission === "granted") {
+        new Notification(title, { body, icon: "/icon.svg" });
+      }
+    } catch {}
+  }, []);
+
   const startFocus = useCallback(() => {
+    try {
+      if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+    } catch {}
+    endAtRef.current = Date.now() + focusSecs * 1000;
     setPhase("focus"); setSecondsLeft(focusSecs);
   }, [focusSecs]);
 
   const startBreak = useCallback(() => {
+    endAtRef.current = Date.now() + breakSecs * 1000;
     setPhase("break"); setSecondsLeft(breakSecs);
     const s = recordSession(focusMins, SILVER_PER_SESSION);
     setSilverTotal(s.silver);
     setTotalFocusMins(s.todayFocusMins);
     setSessionsToday((p) => p + 1);
     playBeep();
-  }, [focusMins, breakSecs, playBeep]);
+    notify("انتهت جلسة التركيز", `أحسنت! خذ راحة ${calcBreak(focusMins)} دقيقة`);
+  }, [focusMins, breakSecs, playBeep, notify]);
 
-  const finishBreak = useCallback(() => { setPhase("done"); playBeep(); }, [playBeep]);
+  const finishBreak = useCallback(() => {
+    setPhase("done"); playBeep();
+    notify("انتهت الراحة", "جاهز لجولة جديدة؟");
+  }, [playBeep, notify]);
 
   const reset = useCallback(() => {
     setPhase("idle"); setSecondsLeft(focusSecs);
@@ -108,21 +130,41 @@ export default function OrbitPage() {
   }, [focusSecs]);
 
   useEffect(() => {
-    if (phase === "idle" || phase === "done") {
+    if (phase !== "focus" && phase !== "break") {
       if (intervalRef.current) clearInterval(intervalRef.current);
       return;
     }
-    intervalRef.current = setInterval(() => {
-      setSecondsLeft((prev) => {
-        if (prev <= 1) {
-          if (phase === "focus") { startBreak(); return breakSecs; }
-          else { finishBreak(); return 0; }
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [phase, startBreak, finishBreak, breakSecs]);
+    let fired = false;
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((endAtRef.current - Date.now()) / 1000));
+      setSecondsLeft(remaining);
+      if (remaining <= 0 && !fired) {
+        fired = true;
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        if (phase === "focus") startBreak();
+        else finishBreak();
+      }
+    };
+    intervalRef.current = setInterval(tick, 500);
+    /* تصحيح فوري عند الرجوع للتبويب */
+    const onVis = () => { if (!document.hidden) tick(); };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [phase, startBreak, finishBreak]);
+
+  /* عنوان التبويب يعرض العدّاد أثناء الجلسة */
+  useEffect(() => {
+    const base = "درب | المنصة التي تعاملك كأخ";
+    if (phase === "focus" || phase === "break") {
+      document.title = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")} ${phase === "focus" ? "تركيز" : "راحة"} — درب`;
+    } else {
+      document.title = base;
+    }
+    return () => { document.title = base; };
+  }, [phase, mins, secs]);
 
   /* تقييس المدة المخصصة: مضاعف 5 بين 5 و 360 */
   const applyCustom = (val: number) => {
@@ -136,7 +178,6 @@ export default function OrbitPage() {
   const circumference = 2 * Math.PI * radius;
   const dashOffset    = circumference * (1 - progress);
   const strokeColor   = phase === "break" ? "#F59E0B" : currentColor;
-  const durLabel      = durationLabel(phase === "break" ? focusMins : focusMins);
 
   const statusMsg =
     phase === "idle"  ? "خل الجوال يستنى. درب يستنى نتائجك."
@@ -321,7 +362,7 @@ export default function OrbitPage() {
                 {/* تراجع */}
                 <button
                   onClick={() => { setDurMode(prevDur.mode); setCustomMins(prevDur.custom); setCustomInput(String(prevDur.custom)); }}
-                  className="text-[13px] font-semibold text-center w-full"
+                  className="text-[17px] font-semibold text-center w-full"
                   style={{ color: "var(--text-muted)" }}>
                   ↩ تراجع
                 </button>

@@ -76,7 +76,7 @@ export default function CouncilPage() {
       <Dome compact>
         <div className="flex items-center justify-between">
           <h1 className="title-lg" style={{ color: "var(--text)" }}>المجلس</h1>
-          <span className="dome-chip text-[13px] font-bold" style={{ color: "var(--text-dim)" }}>{posts.length} منشور</span>
+          <span className="dome-chip text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>{posts.length} منشور</span>
         </div>
       </Dome>
       <div className="h-5" />
@@ -154,10 +154,10 @@ export default function CouncilPage() {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-bold text-[var(--text)]">{post.user}</p>
-                  <p className="text-[10px] text-[var(--text-muted)]">{timeAgo(post.time)}</p>
+                  <p className="text-[17px] text-[var(--text-muted)]">{timeAgo(post.time)}</p>
                 </div>
                 <span
-                  className="text-[11px] px-2.5 py-1 rounded-full font-medium"
+                  className="text-[17px] px-2.5 py-1 rounded-full font-medium"
                   style={{ background: "color-mix(in srgb, var(--accent) 13%, transparent)", color: "var(--accent-light)" }}
                 >
                   {post.subject}

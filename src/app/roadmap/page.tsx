@@ -6,13 +6,14 @@ import Dome from "@/components/Dome";
 import { RAKAN_SCHEDULE } from "@/lib/constants";
 import { getTrack, subjectColor, type Track } from "@/lib/tracks";
 import {
-  loadUser, loadList, saveList, loadExamDate, saveExamDate,
+  loadUser, saveUser, loadList, saveList, loadExamDate, saveExamDate,
   loadEvents, saveEvents, loadExamFlow, saveExamFlow,
   loadStageReviews, saveStageReviews,
   loadTadreebItems, saveTadreebItems, loadTadreebDone, saveTadreebDone,
   loadTasreebatPct, saveTasreebatPct,
   type ScheduleEvent, type ExamFlow, type StageReviews, type TrainingItem,
 } from "@/lib/storage";
+import { syncUser } from "@/lib/firestore";
 import Calendar from "@/components/Calendar";
 import DayScheduler from "@/components/DayScheduler";
 
@@ -29,15 +30,39 @@ const TAHSILI_TOTALS: Record<TahsiliSubject, { hours: number; pages: string }> =
   أحياء:    { hours: 37, pages: "266-353" },
 };
 
+/* نسب التقدم — تُحسب قبل الـ render لمزامنتها مع Firestore */
+function computeProgress(
+  track: Track, done: string[], custom: CustomLesson[],
+  tadreebItems: TrainingItem[], tadreebDone: string[],
+): { taseesPct: number; tadreebPct: number } {
+  const isTahsili = track.id === "تحصيلي";
+  const doneSet = new Set(done);
+  const lessonKeys = track.subjects.flatMap((s) =>
+    isTahsili && s.name in RAKAN_SCHEDULE
+      ? RAKAN_SCHEDULE[s.name as TahsiliSubject].map((l) => `${s.name}-${l.lesson}`)
+      : custom.filter((c) => c.subject === s.name).map((c) => `custom-${c.id}`)
+  );
+  const taseesPct = lessonKeys.length === 0 ? 0
+    : Math.round((lessonKeys.filter((k) => doneSet.has(k)).length / lessonKeys.length) * 100);
+
+  const tdSet = new Set(tadreebDone);
+  const subjectNames = new Set(track.subjects.map((s) => s.name));
+  const training = tadreebItems.filter((t) => subjectNames.has(t.subject));
+  const tadreebPct = training.length === 0 ? 0
+    : Math.round((training.filter((t) => tdSet.has(t.id)).length / training.length) * 100);
+
+  return { taseesPct, tadreebPct };
+}
+
 const TASEES_CHECKPOINTS: { key: keyof StageReviews; pct: number; label: string }[] = [
-  { key: "tasees25", pct: 25, label: "ربع التأسيس 🏁 — خذ 10 دقائق للمراجعة" },
-  { key: "tasees50", pct: 50, label: "نصف التأسيس! 💪 — راجع قبل المتابعة" },
-  { key: "tasees75", pct: 75, label: "ثلاثة أرباع التأسيس 🌟 — آخر ربع" },
+  { key: "tasees25", pct: 25, label: "ربع التأسيس — خذ 10 دقائق للمراجعة" },
+  { key: "tasees50", pct: 50, label: "نصف التأسيس — راجع قبل المتابعة" },
+  { key: "tasees75", pct: 75, label: "ثلاثة أرباع التأسيس — آخر ربع" },
 ];
 const TADREEB_CHECKPOINTS: { key: keyof StageReviews; pct: number; label: string }[] = [
-  { key: "tadreeb25", pct: 25, label: "ربع التدريب 🏁 — راجع حلولك" },
-  { key: "tadreeb50", pct: 50, label: "نصف التدريب! 💪 — مرحلة ممتازة" },
-  { key: "tadreeb75", pct: 75, label: "ثلاثة أرباع التدريب 🌟 — اقتربت" },
+  { key: "tadreeb25", pct: 25, label: "ربع التدريب — راجع حلولك" },
+  { key: "tadreeb50", pct: 50, label: "نصف التدريب — مرحلة ممتازة" },
+  { key: "tadreeb75", pct: 75, label: "ثلاثة أرباع التدريب — اقتربت" },
 ];
 
 /* ─── ReviewBanner ─── */
@@ -45,8 +70,8 @@ function ReviewBanner({ label, onDismiss }: { label: string; onDismiss: () => vo
   return (
     <div className="rounded-2xl p-3.5 mb-3 flex items-center gap-3"
       style={{ background: "color-mix(in srgb, var(--accent) 12%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--accent) 32%, transparent)" }}>
-      <p className="flex-1 font-bold text-[13px]" style={{ color: "var(--text)" }}>{label}</p>
-      <button onClick={onDismiss} className="px-3 py-2 rounded-xl font-bold text-[12px] min-h-[40px] flex-shrink-0"
+      <p className="flex-1 font-bold text-[17px]" style={{ color: "var(--text)" }}>{label}</p>
+      <button onClick={onDismiss} className="px-3 py-2 rounded-xl font-bold text-[17px] min-h-[40px] flex-shrink-0"
         style={{ background: "var(--accent)", color: "white", border: "none" }}>تمت ✓</button>
     </div>
   );
@@ -68,8 +93,8 @@ function PhaseSection({ title, num, pct, complete, unlocked, color, accentText, 
           {complete ? "✓" : num}
         </div>
         <p className="font-black text-base flex-1" style={{ color: unlocked ? "var(--text)" : "var(--text-muted)" }}>{title}</p>
-        <span className="font-mono-nums font-black text-[15px]" style={{ color: unlocked ? accentText : "var(--text-muted)" }}>
-          {unlocked ? `${pct}%` : "🔒"}
+        <span className="font-mono-nums font-black text-[17px]" style={{ color: unlocked ? accentText : "var(--text-muted)" }}>
+          {unlocked ? `${pct}%` : "—"}
         </span>
       </div>
       <div className="h-2.5 bg-[var(--border)] rounded-full overflow-hidden mb-3">
@@ -79,7 +104,7 @@ function PhaseSection({ title, num, pct, complete, unlocked, color, accentText, 
       {!unlocked ? (
         <div className="rounded-2xl py-5 flex items-center justify-center"
           style={{ background: "var(--surface)", border: "1.5px dashed var(--border)" }}>
-          <span className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>🔒 {lockedMsg}</span>
+          <span className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>{lockedMsg}</span>
         </div>
       ) : <div>{children}</div>}
     </div>
@@ -106,15 +131,15 @@ function NextStepOverlay({
     : skipped ? "لم تُسجَّل الدرجة" : "";
 
   const FORWARD_OPTS = [
-    { id: "cpc",    icon: "🏭", title: "مسار CPC — أرامكو",      sub: "ابتعاث أو توظيف أرامكو" },
-    { id: "qudrat", icon: "🧠", title: "اختبار القدرات",          sub: "كمي ولفظي — قياس" },
-    { id: "other",  icon: "📖", title: "مادة أخرى",               sub: "تخصص أو مسار جديد" },
-    { id: "rest",   icon: "😴", title: "استراحة مستحقة",           sub: "خذ نفسك — رجعت أقوى" },
+    { id: "cpc",    title: "مسار CPC — أرامكو",      sub: "ابتعاث أو توظيف أرامكو" },
+    { id: "qudrat", title: "اختبار القدرات",          sub: "كمي ولفظي — قياس" },
+    { id: "other",  title: "مادة أخرى",               sub: "تخصص أو مسار جديد" },
+    { id: "rest",   title: "استراحة مستحقة",           sub: "خذ نفسك — رجعت أقوى" },
   ];
   const RETRY_OPTS = [
-    { id: "from_tasees",  icon: "🔄", title: "أعد التأسيس من الصفر", sub: "إعادة بناء كاملة", action: onResetTasees },
-    { id: "from_tadreeb", icon: "⚡", title: "أعد التدريب",           sub: "التأسيس جيد — عمّق التمارين", action: onResetTadreeb },
-    { id: "diagnostic",   icon: "🔍", title: "اختبار تشخيصي",         sub: "حدد وين الضعف بالضبط", action: undefined },
+    { id: "from_tasees",  title: "أعد التأسيس من الصفر", sub: "إعادة بناء كاملة", action: onResetTasees },
+    { id: "from_tadreeb", title: "أعد التدريب",           sub: "التأسيس جيد — عمّق التمارين", action: onResetTadreeb },
+    { id: "diagnostic",   title: "اختبار تشخيصي",         sub: "حدد وين الضعف بالضبط", action: undefined },
   ];
 
   const overlay = (
@@ -123,7 +148,7 @@ function NextStepOverlay({
       <div className="sticky top-0 z-10 px-5 pt-safe pt-4 pb-3 flex items-center gap-3"
         style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
         {canDismiss && (
-          <button onClick={onClose} className="dome-chip text-[14px] font-bold flex-shrink-0" style={{ color: "var(--text)" }}>← رجوع</button>
+          <button onClick={onClose} className="dome-chip text-[17px] font-bold flex-shrink-0" style={{ color: "var(--text)" }}>← رجوع</button>
         )}
         <p className="title-lg flex-1 text-right" style={{ color: "var(--text)" }}>وش تبي تكمل؟</p>
       </div>
@@ -133,8 +158,7 @@ function NextStepOverlay({
         {gradeDisplay && (
           <div className="rounded-2xl px-4 py-3 flex items-center gap-2"
             style={{ background: "color-mix(in srgb, var(--gold) 12%, var(--surface))", border: "1px solid color-mix(in srgb, var(--gold) 35%, transparent)" }}>
-            <span className="text-lg">🎓</span>
-            <span className="font-bold text-[14px]" style={{ color: "var(--gold)" }}>{gradeDisplay}</span>
+            <span className="font-bold text-[17px]" style={{ color: "var(--gold)" }}>{gradeDisplay}</span>
           </div>
         )}
 
@@ -150,10 +174,10 @@ function NextStepOverlay({
                   border: currentPlan === opt.id ? "2px solid var(--accent)" : "1.5px solid var(--border)",
                   minHeight: "72px",
                 }}>
-                <span className="text-2xl flex-shrink-0">{opt.icon}</span>
+
                 <div className="flex-1 min-w-0">
-                  <p className="font-black text-[15px]" style={{ color: "var(--text)" }}>{opt.title}</p>
-                  <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>{opt.sub}</p>
+                  <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>{opt.title}</p>
+                  <p className="text-[17px] mt-0.5" style={{ color: "var(--text-muted)" }}>{opt.sub}</p>
                 </div>
                 {currentPlan === opt.id && <span className="text-[var(--accent)] text-xl flex-shrink-0">✓</span>}
               </button>
@@ -177,10 +201,10 @@ function NextStepOverlay({
                   border: currentPlan === opt.id ? "2px solid var(--danger)" : "1.5px solid var(--border)",
                   minHeight: "72px",
                 }}>
-                <span className="text-2xl flex-shrink-0">{opt.icon}</span>
+
                 <div className="flex-1 min-w-0">
-                  <p className="font-black text-[15px]" style={{ color: "var(--text)" }}>{opt.title}</p>
-                  <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>{opt.sub}</p>
+                  <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>{opt.title}</p>
+                  <p className="text-[17px] mt-0.5" style={{ color: "var(--text-muted)" }}>{opt.sub}</p>
                 </div>
                 {currentPlan === opt.id && <span className="text-[var(--danger)] text-xl flex-shrink-0">✓</span>}
               </button>
@@ -188,7 +212,7 @@ function NextStepOverlay({
           </div>
         </div>
 
-        <p className="text-[11px] text-center" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[17px] text-center" style={{ color: "var(--text-muted)" }}>
           القرار يُحفظ ويمكنك تغييره في أي وقت من خريطة الطريق
         </p>
       </div>
@@ -241,6 +265,15 @@ export default function RoadmapPage() {
   useEffect(() => { if (loaded) saveList(CUSTOM_KEY, custom); }, [custom, loaded]);
   useEffect(() => { if (loaded) saveTadreebItems(tadreebItems); }, [tadreebItems, loaded]);
   useEffect(() => { if (loaded) saveTadreebDone(tadreebDone); }, [tadreebDone, loaded]);
+
+  /* مزامنة نسب التقدم مع Firestore — تظهر في لوحة الأدمن */
+  const progress = track ? computeProgress(track, done, custom, tadreebItems, tadreebDone) : null;
+  const taseesSync = progress?.taseesPct ?? -1;
+  const tadreebSync = progress?.tadreebPct ?? -1;
+  useEffect(() => {
+    if (!loaded || taseesSync < 0) return;
+    syncUser({ taseesProgress: taseesSync, tadreebProgress: tadreebSync });
+  }, [loaded, taseesSync, tadreebSync]);
 
   if (!track) return <div className="min-h-dvh" />;
 
@@ -302,6 +335,33 @@ export default function RoadmapPage() {
     setTasreebatPct(v); saveTasreebatPct(v);
   };
 
+  const switchTrack = (plan: string) => {
+    const PLAN_TO_TRACK: Record<string, "تحصيلي" | "قدرات" | "CPC"> = {
+      cpc: "CPC", qudrat: "قدرات", other: "تحصيلي",
+    };
+    const newTrackId = PLAN_TO_TRACK[plan];
+    if (!newTrackId) return; // rest / from_* لا يغيّر المسار
+
+    const user = loadUser();
+    if (!user || user.track === newTrackId) return;
+
+    saveUser({ ...user, track: newTrackId });
+    setTrack(getTrack(newTrackId));
+    syncUser({ track: newTrackId, taseesProgress: 0, tadreebProgress: 0 });
+
+    // إعادة ضبط كل تقدم الخريطة للمسار الجديد
+    const fresh: string[] = [];
+    setDone(fresh); saveList(DONE_KEY, fresh);
+    setCustom([]); saveList(CUSTOM_KEY, []);
+    const freshReviews: StageReviews = {};
+    setStageReviews(freshReviews); saveStageReviews(freshReviews);
+    const freshTD: string[] = [];
+    setTadreebDone(freshTD); saveTadreebDone(freshTD);
+    setTasreebatPct(0); saveTasreebatPct(0);
+    const freshFlow: ExamFlow = {};
+    setExamFlow(freshFlow); saveExamFlow(freshFlow);
+  };
+
   const resetTasees = () => {
     /* إعادة كل شيء من الصفر — يبقى المسار والتمارين */
     const freshDone: string[] = [];
@@ -342,9 +402,9 @@ export default function RoadmapPage() {
       <div className="min-h-dvh pb-nav relative z-[1]">
         <Dome compact>
           <div className="flex items-center justify-between">
-            <button onClick={() => setSelected(null)} className="dome-chip text-[14px] font-bold" style={{ color: "var(--text)" }}>← رجوع</button>
+            <button onClick={() => setSelected(null)} className="dome-chip text-[17px] font-bold" style={{ color: "var(--text)" }}>← رجوع</button>
             <h1 className="title-lg" style={{ color: "var(--text)" }}>{selected}</h1>
-            <span className="dome-chip num-hero text-[14px]" style={{ color: "var(--text)" }}>{dc}/{lessons.length}</span>
+            <span className="dome-chip num-hero text-[17px]" style={{ color: "var(--text)" }}>{dc}/{lessons.length}</span>
           </div>
         </Dome>
         <div className="h-5" />
@@ -428,9 +488,9 @@ export default function RoadmapPage() {
       <div className="min-h-dvh pb-nav relative z-[1]">
         <Dome compact>
           <div className="flex items-center justify-between">
-            <button onClick={() => setSelected(null)} className="dome-chip text-[14px] font-bold" style={{ color: "var(--text)" }}>← رجوع</button>
+            <button onClick={() => setSelected(null)} className="dome-chip text-[17px] font-bold" style={{ color: "var(--text)" }}>← رجوع</button>
             <h1 className="title-lg" style={{ color: "var(--text)" }}>{selected}</h1>
-            <span className="dome-chip num-hero text-[14px]" style={{ color: "var(--text)" }}>{dc}/{items.length}</span>
+            <span className="dome-chip num-hero text-[17px]" style={{ color: "var(--text)" }}>{dc}/{items.length}</span>
           </div>
         </Dome>
         <div className="h-5" />
@@ -490,7 +550,7 @@ export default function RoadmapPage() {
       <Dome compact>
         <div className="flex items-center justify-between">
           <h1 className="title-lg" style={{ color: "var(--text)" }}>خريطة الطريق</h1>
-          <span className="dome-chip text-[13px] font-bold" style={{ color: "var(--text-dim)" }}>{track.icon} {track.title}</span>
+          <span className="dome-chip text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>{track.icon} {track.title}</span>
         </div>
       </Dome>
       <div className="h-5" />
@@ -506,8 +566,8 @@ export default function RoadmapPage() {
         {taseesComplete && (
           <div className="rounded-2xl p-3.5 mb-3 flex items-center gap-2"
             style={{ background: "color-mix(in srgb, #10B981 10%, var(--surface))", border: "1px solid color-mix(in srgb, #10B981 30%, transparent)" }}>
-            <span>✅</span>
-            <span className="font-bold text-[13px]" style={{ color: "#10B981" }}>التأسيس مكتمل — انتقلت للتدريب</span>
+            <span>✓</span>
+            <span className="font-bold text-[17px]" style={{ color: "#10B981" }}>التأسيس مكتمل — انتقلت للتدريب</span>
           </div>
         )}
         <div className="grid grid-cols-2 gap-3">
@@ -550,8 +610,8 @@ export default function RoadmapPage() {
         {tadreebComplete && (
           <div className="rounded-2xl p-3.5 mb-3 flex items-center gap-2"
             style={{ background: "color-mix(in srgb, #10B981 10%, var(--surface))", border: "1px solid color-mix(in srgb, #10B981 30%, transparent)" }}>
-            <span>✅</span>
-            <span className="font-bold text-[13px]" style={{ color: "#10B981" }}>التدريب مكتمل — انتقلت للتسريبات</span>
+            <span>✓</span>
+            <span className="font-bold text-[17px]" style={{ color: "#10B981" }}>التدريب مكتمل — انتقلت للتسريبات</span>
           </div>
         )}
         <div className="grid grid-cols-2 gap-3 mb-3">
@@ -582,7 +642,7 @@ export default function RoadmapPage() {
         </div>
         {allTraining.length === 0 && !examFlow.skippedTadreeb && (
           <button onClick={() => updFlow({ skippedTadreeb: true })}
-            className="w-full py-3 rounded-2xl font-bold text-[13px] min-h-[44px]"
+            className="w-full py-3 rounded-2xl font-bold text-[17px] min-h-[44px]"
             style={{ background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}>
             تخطي التدريب والانتقال للتسريبات
           </button>
@@ -598,7 +658,7 @@ export default function RoadmapPage() {
         {/* تتبع الأوراق */}
         {!examPast && (
           <div className="mb-4">
-            <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[17px] mb-3" style={{ color: "var(--text-muted)" }}>
               سجّل تقدمك في حل الاختبارات السابقة (0–99%)
             </p>
             <div className="flex items-center gap-3">
@@ -615,7 +675,7 @@ export default function RoadmapPage() {
                 className="w-11 h-11 rounded-xl font-black text-xl flex-shrink-0 flex items-center justify-center"
                 style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}>+</button>
             </div>
-            <p className="text-[11px] text-center mt-2" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[17px] text-center mt-2" style={{ color: "var(--text-muted)" }}>
               الـ 1% الأخير يكتمل بإدخال درجتك بعد الاختبار
             </p>
           </div>
@@ -625,11 +685,11 @@ export default function RoadmapPage() {
         {examPast && !hasGrade && !skipped && (
           <div className="rounded-2xl p-5 mb-3"
             style={{ background: "color-mix(in srgb, var(--gold) 10%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--gold) 40%, transparent)" }}>
-            <p className="font-black text-[16px] mb-1" style={{ color: "var(--gold)" }}>🎓 يوم الاختبار وصل!</p>
-            <p className="text-[13px] mb-4" style={{ color: "var(--text-muted)" }}>أدخل درجتك لتكمل الـ 1% الأخير</p>
+            <p className="font-black text-[17px] mb-1" style={{ color: "var(--gold)" }}>يوم الاختبار وصل!</p>
+            <p className="text-[17px] mb-4" style={{ color: "var(--text-muted)" }}>أدخل درجتك لتكمل الـ 1% الأخير</p>
             <div className="flex gap-2 mb-3">
               <input type="number" value={gradeInput} onChange={(e) => setGradeInput(e.target.value)}
-                placeholder="الدرجة..." className="flex-1 rounded-xl px-4 py-3 text-[15px] font-bold outline-none min-h-[48px]"
+                placeholder="الدرجة..." className="flex-1 rounded-xl px-4 py-3 text-[17px] font-bold outline-none min-h-[48px]"
                 style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
               <button
                 onClick={() => {
@@ -640,15 +700,15 @@ export default function RoadmapPage() {
                   }
                 }}
                 disabled={!gradeInput.trim() || isNaN(parseFloat(gradeInput))}
-                className="px-5 rounded-xl font-black text-[14px] min-h-[48px]"
+                className="px-5 rounded-xl font-black text-[17px] min-h-[48px]"
                 style={{ background: "var(--gold)", color: "#1a1200", border: "none" }}>سجّل</button>
             </div>
             <button onClick={() => { updFlow({ skippedGrade: true }); setShowNextStep(true); }}
-              className="w-full py-2.5 rounded-xl text-[13px] font-bold"
+              className="w-full py-2.5 rounded-xl text-[17px] font-bold"
               style={{ background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}>
               ما أبي أقولها
             </button>
-            <p className="text-[11px] mt-1.5 text-center" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
+            <p className="text-[17px] mt-1.5 text-center" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
               لا يُفضَّل هذا — اكتب درجتك الحقيقية لتستفيد من التوصيات
             </p>
           </div>
@@ -658,21 +718,20 @@ export default function RoadmapPage() {
         {gradeOrSkipped && examFlow.plan && (
           <div className="rounded-2xl p-4 flex items-center gap-3"
             style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--accent) 25%, transparent)" }}>
-            <span className="text-xl">✅</span>
             <div className="flex-1">
-              <p className="font-bold text-[13px]" style={{ color: "var(--text)" }}>الخطة المختارة</p>
-              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-                {examFlow.plan === "cpc"           && "🏭 مسار CPC — أرامكو"}
-                {examFlow.plan === "qudrat"         && "🧠 اختبار القدرات"}
-                {examFlow.plan === "other"          && "📖 مادة جديدة"}
-                {examFlow.plan === "rest"           && "😴 استراحة مستحقة"}
-                {examFlow.plan === "from_tasees"    && "🔄 إعادة التأسيس"}
-                {examFlow.plan === "from_tadreeb"   && "⚡ إعادة التدريب"}
-                {examFlow.plan === "diagnostic"     && "🔍 اختبار تشخيصي"}
+              <p className="font-bold text-[17px]" style={{ color: "var(--text)" }}>الخطة المختارة</p>
+              <p className="text-[17px]" style={{ color: "var(--text-muted)" }}>
+                {examFlow.plan === "cpc"           && "مسار CPC — أرامكو"}
+                {examFlow.plan === "qudrat"         && "اختبار القدرات"}
+                {examFlow.plan === "other"          && "مادة جديدة"}
+                {examFlow.plan === "rest"           && "استراحة مستحقة"}
+                {examFlow.plan === "from_tasees"    && "إعادة التأسيس"}
+                {examFlow.plan === "from_tadreeb"   && "إعادة التدريب"}
+                {examFlow.plan === "diagnostic"     && "اختبار تشخيصي"}
               </p>
             </div>
             <button onClick={() => setShowNextStep(true)}
-              className="text-[var(--accent-light)] text-[12px] font-bold px-2 min-h-[44px]">
+              className="text-[var(--accent-light)] text-[17px] font-bold px-2 min-h-[44px]">
               تغيير
             </button>
           </div>
@@ -714,6 +773,7 @@ export default function RoadmapPage() {
           canDismiss={!!examFlow.plan}
           onPick={(plan) => {
             updFlow({ plan });
+            switchTrack(plan);
             setShowNextStep(false);
           }}
           onResetTasees={resetTasees}

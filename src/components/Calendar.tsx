@@ -123,7 +123,7 @@ export default function Calendar({
       <div className="flex gap-1 mb-4 p-1 rounded-2xl" style={{ background: "var(--surface2)" }}>
         {(["gregorian", "hijri"] as Mode[]).map((m) => (
           <button key={m} onClick={() => { setMode(m); setViewDate(new Date()); }}
-            className="flex-1 py-2 rounded-xl text-[13px] font-bold transition"
+            className="flex-1 py-2 rounded-xl text-[17px] font-bold transition"
             style={mode === m ? { background: "var(--accent)", color: "white" } : { color: "var(--text-muted)" }}>
             {m === "gregorian" ? "ميلادي" : "هجري"}
           </button>
@@ -133,18 +133,18 @@ export default function Calendar({
       {/* تنقل الأشهر — RTL: أول عنصر = يمين = السابق */}
       <div className="flex items-center justify-between mb-4">
         <button onClick={prev}
-          className="w-9 h-9 rounded-2xl flex items-center justify-center text-[18px]"
+          className="w-9 h-9 rounded-2xl flex items-center justify-center text-[19px]"
           style={{ background: "var(--surface2)", color: "var(--text-dim)" }}>›</button>
-        <p className="font-black text-[16px]" style={{ color: "var(--text)" }}>{header()}</p>
+        <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>{header()}</p>
         <button onClick={next}
-          className="w-9 h-9 rounded-2xl flex items-center justify-center text-[18px]"
+          className="w-9 h-9 rounded-2xl flex items-center justify-center text-[19px]"
           style={{ background: "var(--surface2)", color: "var(--text-dim)" }}>‹</button>
       </div>
 
       {/* رؤوس الأيام */}
       <div className="grid grid-cols-7 mb-1">
         {DOW.map((h) => (
-          <div key={h} className="text-center text-[11px] font-bold py-1" style={{ color: "var(--text-muted)" }}>{h}</div>
+          <div key={h} className="text-center text-[17px] font-bold py-1" style={{ color: "var(--text-muted)" }}>{h}</div>
         ))}
       </div>
 
@@ -171,7 +171,7 @@ export default function Calendar({
                 aria-label={cell.label.toString()}
               >
                 <span
-                  className="w-8 h-8 flex items-center justify-center rounded-full text-[13px] font-bold"
+                  className="w-8 h-8 flex items-center justify-center rounded-full text-[17px] font-bold"
                   style={
                     isExam
                       ? { background: "var(--gold)", color: "#1a1200", outline: isToday ? "2.5px solid var(--accent)" : "none", outlineOffset: "2px" }
@@ -194,7 +194,7 @@ export default function Calendar({
       {examDate && (
         <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[var(--border)]">
           <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: "var(--gold)" }} />
-          <span className="text-[12px] flex-1" style={{ color: "var(--text-dim)" }}>
+          <span className="text-[17px] flex-1" style={{ color: "var(--text-dim)" }}>
             {"يوم الاختبار: "}
             {new Date(examDate + "T12:00:00").toLocaleDateString("ar-SA", {
               weekday: "long", month: "long", day: "numeric", year: "numeric",
@@ -203,7 +203,7 @@ export default function Calendar({
           <button onClick={() => onExamDateChange(null)} className="text-[var(--text-muted)] text-sm px-1 min-h-[28px]">✕</button>
         </div>
       )}
-      <p className="text-[11px] mt-2 text-center" style={{ color: "var(--text-muted)" }}>
+      <p className="text-[17px] mt-2 text-center" style={{ color: "var(--text-muted)" }}>
         {onDayClick ? "اضغط أي يوم لعرض جدوله" : "اضغط أي يوم لتحديد يوم الاختبار"}
       </p>
     </div>

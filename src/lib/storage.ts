@@ -127,6 +127,10 @@ export function loadTheme(): Theme {
 
 export function applyTheme(theme: Theme) {
   document.documentElement.setAttribute("data-theme", theme);
+  // لون شريط المتصفح على الجوال يتبع الثيم
+  document
+    .querySelector('meta[name="theme-color"]')
+    ?.setAttribute("content", theme === "light" ? "#F8F4EC" : "#07070D");
   try {
     localStorage.setItem("darb_theme", theme);
   } catch {}

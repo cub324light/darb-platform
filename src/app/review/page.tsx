@@ -193,7 +193,7 @@ export default function ReviewPage() {
       <Dome compact>
         <div className="flex items-center justify-between">
           <h1 className="title-lg" style={{ color: "var(--text)" }}>بنك المراجعة</h1>
-          <span className="dome-chip text-[13px] font-bold" style={{ color: "var(--text-dim)" }}>SM-2</span>
+          <span className="dome-chip text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>SM-2</span>
         </div>
       </Dome>
       <div className="h-5" />
