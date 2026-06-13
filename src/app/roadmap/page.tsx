@@ -565,50 +565,92 @@ export default function RoadmapPage() {
   const daysLeftOf = (d: string) =>
     Math.round((new Date(d + "T00:00:00").getTime() - new Date(todayStr + "T00:00:00").getTime()) / 86400000);
 
-  const renderTestRow = (tid: TrackId, withSubjects: boolean) => {
+  /* تقدم مادة داخل اختبار: تأسيس + تدريب */
+  const statsForSubject = (tr: Track, subj: string) => {
+    const isT = tr.id === "تحصيلي" || tr.id === "تحصيلي مبكر";
+    const lessonKeys = (isT && subj in RAKAN_SCHEDULE)
+      ? RAKAN_SCHEDULE[subj as TahsiliSubject].map((l) => `${subj}-${l.lesson}`)
+      : custom.filter((c) => c.subject === subj).map((c) => `custom-${c.id}`);
+    const training = tadreebItems.filter((t) => t.subject === subj);
+    const total = lessonKeys.length + training.length;
+    const done = lessonKeys.filter((k) => doneSet.has(k)).length
+      + training.filter((t) => tadreebDoneSet.has(t.id)).length;
+    return { done, total, pct: total === 0 ? 0 : Math.round((done / total) * 100) };
+  };
+
+  const examLabel = (dl: number | null) =>
+    dl === null ? "اضغط «تحديد الموعد» ليوم الاختبار"
+      : dl < 0   ? "انتهى الاختبار"
+      : dl === 0 ? "الاختبار اليوم — بالتوفيق"
+      : dl === 1 ? "الاختبار بكرة — راجع ونم بدري"
+      : `${dl} يوم على الاختبار`;
+
+  const examColor = (dl: number | null) =>
+    dl === null || dl < 0 ? "var(--text-muted)"
+      : dl <= 3 ? "#EF4444"
+      : dl <= 14 ? "#F97316"
+      : "#10B981";
+
+  /* صف اختبار مبسّط (للوضع المفرد) — الموعد فقط */
+  const renderTestRow = (tid: TrackId) => {
     const t = TRACKS.find((tr) => tr.id === tid);
     if (!t) return null;
     const d = trackExamDates[tid] ?? "";
     const dl = d ? daysLeftOf(d) : null;
-    const urgentColor = dl === null ? "var(--text-muted)"
-      : dl < 0 ? "var(--text-muted)"
-      : dl <= 3 ? "#EF4444"
-      : dl <= 14 ? "#F97316"
-      : "#10B981";
     return (
       <div key={tid} className="rounded-2xl px-3.5 py-3"
         style={{ background: `color-mix(in srgb, ${t.color} 7%, var(--surface))`, border: `1.5px solid ${t.color}33` }}>
         <div className="flex items-center gap-3">
-          {/* الخط الدال على لون الاختبار */}
           <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: t.color, minHeight: "36px" }} />
           <div className="flex-1 min-w-0">
             <p className="font-extrabold text-[16px]" style={{ color: "var(--text)" }}>{t.title}</p>
-            <p className="text-[12px] font-semibold mt-0.5" style={{ color: urgentColor }}>
-              {dl === null ? "اضغط «تحديد الموعد» ليوم الاختبار"
-                : dl < 0   ? "انتهى الاختبار"
-                : dl === 0 ? "الاختبار اليوم — بالتوفيق"
-                : dl === 1 ? "الاختبار بكرة — راجع ونم بدري"
-                : `${dl} يوم على الاختبار`}
-            </p>
+            <p className="text-[12px] font-semibold mt-0.5" style={{ color: examColor(dl) }}>{examLabel(dl)}</p>
           </div>
-          <ExamDateButton
-            value={d}
-            color={t.color}
-            min={todayStr}
+          <ExamDateButton value={d} color={t.color} min={todayStr}
             onChange={(v) => { const updated = { ...trackExamDates, [tid]: v }; setTrackExamDates(updated); saveTrackExamDates(updated); }}
-            onClear={() => { const updated = { ...trackExamDates }; delete updated[tid]; setTrackExamDates(updated); saveTrackExamDates(updated); }}
-          />
+            onClear={() => { const updated = { ...trackExamDates }; delete updated[tid]; setTrackExamDates(updated); saveTrackExamDates(updated); }} />
         </div>
-        {withSubjects && (
-          <div className="flex flex-wrap gap-1.5 mt-3 ps-4">
-            {t.subjects.map((s) => (
-              <span key={s.name} className="px-2.5 py-1 rounded-lg text-[12px] font-bold"
-                style={{ background: `color-mix(in srgb, ${s.color} 14%, transparent)`, color: s.color, border: `1px solid ${s.color}44` }}>
-                {s.name}
-              </span>
-            ))}
+      </div>
+    );
+  };
+
+  /* بطاقة اختبار كاملة (لوضع «الكل») — الموعد + تقدّم كل مادة */
+  const renderTestCard = (tid: TrackId) => {
+    const t = TRACKS.find((tr) => tr.id === tid);
+    if (!t) return null;
+    const d = trackExamDates[tid] ?? "";
+    const dl = d ? daysLeftOf(d) : null;
+    return (
+      <div key={tid} className="rounded-2xl p-3.5"
+        style={{ background: `color-mix(in srgb, ${t.color} 6%, var(--surface))`, border: `1.5px solid ${t.color}33` }}>
+        {/* رأس: اسم الاختبار + الموعد */}
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: t.color, minHeight: "34px" }} />
+          <div className="flex-1 min-w-0">
+            <p className="font-extrabold text-[16px]" style={{ color: "var(--text)" }}>{t.title}</p>
+            <p className="text-[12px] font-semibold mt-0.5" style={{ color: examColor(dl) }}>{examLabel(dl)}</p>
           </div>
-        )}
+          <ExamDateButton value={d} color={t.color} min={todayStr}
+            onChange={(v) => { const updated = { ...trackExamDates, [tid]: v }; setTrackExamDates(updated); saveTrackExamDates(updated); }}
+            onClear={() => { const updated = { ...trackExamDates }; delete updated[tid]; setTrackExamDates(updated); saveTrackExamDates(updated); }} />
+        </div>
+        {/* تقدّم كل مادة */}
+        <div className="flex flex-col gap-2">
+          {t.subjects.map((s) => {
+            const st = statsForSubject(t, s.name);
+            return (
+              <div key={s.name} className="flex items-center gap-2.5">
+                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
+                <span className="text-[13px] font-bold flex-shrink-0" style={{ color: "var(--text)", minWidth: "58px" }}>{s.name}</span>
+                <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
+                  <div className="h-full rounded-full" style={{ width: `${st.pct}%`, background: s.color }} />
+                </div>
+                <span className="font-mono-nums text-[11px] font-black flex-shrink-0 text-left" style={{ color: s.color, minWidth: "32px" }}>{st.pct}%</span>
+                <span className="font-mono-nums text-[10px] flex-shrink-0 text-left" style={{ color: "var(--text-muted)", minWidth: "34px" }}>{st.done}/{st.total}</span>
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   };
@@ -659,29 +701,42 @@ export default function RoadmapPage() {
         })}
       </div>
 
-      {/* ══ الاختبارات: «الكل» = نظرة مدمجة زي الآيفون · أو اختبار واحد ══ */}
+      {/* ══ الاختبارات: «الكل» = إحصائيات كل المواد مدمجة · أو اختبار واحد ══ */}
       {testTab === "all" ? (
         <div className="px-5 mb-5">
-          {/* شريط التخزين المدمج — حصص بحجم عدد مواد كل اختبار */}
-          {activeTrackIds.length > 0 && (
-            <div className="flex rounded-full overflow-hidden mb-3.5"
-              style={{ height: "16px", gap: "2px", background: "var(--surface2)" }}>
-              {activeTrackIds.map((tid) => {
-                const t = TRACKS.find((tr) => tr.id === tid);
-                const c = t?.color ?? "var(--accent)";
-                const weight = Math.max(1, t?.subjects.length ?? 1);
-                return <div key={tid} style={{ flex: weight, background: c }} />;
-              })}
-            </div>
-          )}
+          {/* شريط التقدم المدمج — كل مادة شريحة ممتلئة بنسبة تقدمها */}
+          {activeTrackIds.length > 0 && (() => {
+            const segs = activeTrackIds.flatMap((tid) => {
+              const t = TRACKS.find((tr) => tr.id === tid);
+              if (!t) return [];
+              return t.subjects.map((s) => ({ key: `${tid}-${s.name}`, color: s.color, pct: statsForSubject(t, s.name).pct }));
+            });
+            const overall = segs.length
+              ? Math.round(segs.reduce((a, s) => a + s.pct, 0) / segs.length) : 0;
+            return (
+              <>
+                <div className="flex items-center justify-between mb-2 px-1">
+                  <p className="eyebrow">تقدّمك في كل المواد</p>
+                  <span className="font-mono-nums text-[13px] font-black" style={{ color: "var(--accent-light)" }}>{overall}%</span>
+                </div>
+                <div className="flex rounded-full overflow-hidden mb-4" style={{ height: "16px", gap: "2px", background: "var(--surface2)" }}>
+                  {segs.map((s) => (
+                    <div key={s.key} className="relative" style={{ flex: 1, background: `color-mix(in srgb, ${s.color} 22%, transparent)` }}>
+                      <div className="absolute inset-y-0 rounded-full" style={{ insetInlineStart: 0, width: `${s.pct}%`, background: s.color }} />
+                    </div>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
           <p className="eyebrow mb-2.5 px-1">اختباراتك — اضغط اختبار فوق لفتح خريطته</p>
-          <div className="flex flex-col gap-2.5">
-            {activeTrackIds.map((tid) => renderTestRow(tid, true))}
+          <div className="flex flex-col gap-3">
+            {activeTrackIds.map((tid) => renderTestCard(tid))}
           </div>
         </div>
       ) : (
         <div className="px-5 mb-5">
-          {renderTestRow(testTab, false)}
+          {renderTestRow(testTab)}
         </div>
       )}
 

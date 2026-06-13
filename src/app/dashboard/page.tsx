@@ -489,12 +489,12 @@ export default function DashboardPage() {
               <button onClick={() => { setSchedOpen(true); setSchedTab("manual"); }}
                 className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
                 style={{ background: "transparent", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
-                إضافة خطة يدوية
+                يدوي
               </button>
               <button onClick={() => { setSchedOpen(true); setSchedTab("ai"); }}
                 className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
                 style={{ background: "var(--accent)", color: "white", border: "none" }}>
-                خطة مع دويرب
+                مساعد دويرب
               </button>
             </div>
           </section>

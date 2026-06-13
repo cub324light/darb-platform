@@ -204,7 +204,7 @@ export function resetAll() {
     ["darb_user","darb_stats","darb_vault","darb_cards","darb_lessons","darb_posts",
      "darb_schedule","darb_exam_date","darb_events","darb_exam_flow","darb_stage_reviews",
      "darb_tadreeb_items","darb_tadreeb_done","darb_tasreebat_pct","darb_subject_exam_dates",
-     "darb_track_exam_dates"].forEach((k) =>
+     "darb_track_exam_dates","darb_dash_config","darb_dash_sched_v2"].forEach((k) =>
       localStorage.removeItem(k)
     );
     /* تعليمات أول زيارة تظهر من جديد بعد الضبط */
@@ -342,8 +342,9 @@ export const DASH_SECTION_META: Record<DashSectionId, { label: string; desc: str
   certificate: { label: "الشهادة",      desc: "شهادة الانضباط والترقية" },
 };
 
+/* جدول اليوم ثاني عنصر تلقائياً */
 const DASH_DEFAULT_ORDER: DashSectionId[] = [
-  "track", "today", "schedule", "ai", "weekly",
+  "track", "schedule", "today", "ai", "weekly",
   "quote", "stats", "tools", "community", "certificate",
 ];
 
@@ -352,12 +353,31 @@ function defaultLayout(): DashItem[] {
 }
 
 const DASH_CONFIG_KEY = "darb_dash_config";
+const DASH_SCHED2_KEY = "darb_dash_sched_v2"; // علم ترحيل لمرة واحدة
+
+/* ترحيل لمرة واحدة: انقل «جدول اليوم» ليصير ثاني عنصر — يُحترم تخصيص المستخدم بعدها */
+function migrateScheduleSecond(layout: DashItem[]): DashItem[] {
+  try {
+    if (localStorage.getItem(DASH_SCHED2_KEY)) return layout;
+    const out = [...layout];
+    const idx = out.findIndex((i) => i.id === "schedule");
+    if (idx > 1) {
+      const [sched] = out.splice(idx, 1);
+      out.splice(1, 0, sched);
+    }
+    localStorage.setItem(DASH_SCHED2_KEY, "1");
+    localStorage.setItem(DASH_CONFIG_KEY, JSON.stringify({ layout: out }));
+    return out;
+  } catch {
+    return layout;
+  }
+}
 
 export function loadDashConfig(): DashConfig {
   if (typeof window === "undefined") return { layout: defaultLayout() };
   try {
     const raw = localStorage.getItem(DASH_CONFIG_KEY);
-    if (!raw) return { layout: defaultLayout() };
+    if (!raw) return { layout: migrateScheduleSecond(defaultLayout()) };
     const parsed = JSON.parse(raw);
 
     // الصيغة الجديدة: { layout: [...] } — نُكمل أي قسم ناقص ونُسقط المجهول
@@ -370,7 +390,7 @@ export function loadDashConfig(): DashConfig {
         ...known,
         ...DASH_DEFAULT_ORDER.filter((id) => !seen.has(id)).map((id) => ({ id, visible: true })),
       ];
-      return { layout: merged };
+      return { layout: migrateScheduleSecond(merged) };
     }
 
     // ترحيل من الصيغة القديمة: { showStats, showWeekly, showSchedule, showTools, showAI }
@@ -381,7 +401,7 @@ export function loadDashConfig(): DashConfig {
       tools: parsed.showTools,
       ai: parsed.showAI,
     };
-    return { layout: DASH_DEFAULT_ORDER.map((id) => ({ id, visible: oldVis[id] ?? true })) };
+    return { layout: migrateScheduleSecond(DASH_DEFAULT_ORDER.map((id) => ({ id, visible: oldVis[id] ?? true }))) };
   } catch {
     return { layout: defaultLayout() };
   }
