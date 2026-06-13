@@ -33,6 +33,14 @@ const TAHSILI_TOTALS: Record<TahsiliSubject, { hours: number; pages: string }> =
   أحياء:    { hours: 37, pages: "266-353" },
 };
 
+function fmtHour(h: number): string {
+  if (h === 0) return "12 ص";
+  if (h < 12) return `${h} ص`;
+  if (h === 12) return "12 م";
+  if (h === 24) return "12 ص";
+  return `${h - 12} م`;
+}
+
 /* نسب التقدم — تُحسب قبل الـ render لمزامنتها مع Firestore */
 function computeProgress(
   track: Track, done: string[], custom: CustomLesson[],
@@ -240,6 +248,7 @@ export default function RoadmapPage() {
   const [examDate, setExamDate]             = useState<string | null>(null);
   const [events, setEvents]                 = useState<ScheduleEvent[]>([]);
   const [schedulerDate, setSchedulerDate]   = useState<string | null>(null);
+  const [schedTab, setSchedTab]             = useState<"manual" | "ai">("manual");
 
   const [examFlow, setExamFlow]           = useState<ExamFlow>({});
   const [stageReviews, setStageReviews]   = useState<StageReviews>({});
@@ -961,25 +970,77 @@ export default function RoadmapPage() {
       </PhaseSection>
       </>)}
 
-      {/* تقويم الشهر */}
+      {/* تقويم الشهر + جدول اليوم — ملاصقان بدون فاصل */}
       <div className="px-5 mt-2 rise rise-4">
         <p className="eyebrow mb-3 px-1">تقويم الشهر</p>
-        <Calendar
-          examDate={examDate}
-          onExamDateChange={(d) => { setExamDate(d); saveExamDate(d); }}
-          onDayClick={(date) => setSchedulerDate(date)}
-          getDayInfo={(date) =>
-            getEventsForDate(date, events).map((ev) => ({
-              id: ev.id,
-              label: ev.type === "study" ? (ev.subject ?? "مذاكرة") : (ev.label ?? "مشغول"),
-              color: ev.type === "study"
-                ? (ev.subject ? subjectColor(track, ev.subject) : "var(--accent-light)")
-                : "var(--danger)",
-              from: ev.fromHour,
-              to: ev.toHour,
-            }))
-          }
-        />
+        {/* غلاف يقص الزوايا السفلية للتقويم ليلتحم مع الجدول */}
+        <div style={{ overflow: "hidden", borderRadius: "24px 24px 0 0" }}>
+          <Calendar
+            examDate={examDate}
+            onExamDateChange={(d) => { setExamDate(d); saveExamDate(d); }}
+            onDayClick={(date) => { setSchedTab("manual"); setSchedulerDate(date); }}
+            getDayInfo={(date) =>
+              getEventsForDate(date, events).map((ev) => ({
+                id: ev.id,
+                label: ev.type === "study" ? (ev.subject ?? "مذاكرة") : (ev.label ?? "مشغول"),
+                color: ev.type === "study"
+                  ? (ev.subject ? subjectColor(track, ev.subject) : "var(--accent-light)")
+                  : "var(--danger)",
+                from: ev.fromHour,
+                to: ev.toHour,
+              }))
+            }
+          />
+        </div>
+
+        {/* جدول اليوم — ملاصق للتقويم بدون فاصل */}
+        {(() => {
+          const todayEvents = getEventsForDate(todayStr, events);
+          return (
+            <section className="card" style={{ borderTopLeftRadius: 0, borderTopRightRadius: 0, borderTop: "none" }}>
+              <div className="flex items-center justify-between mb-3">
+                <p className="title-md" style={{ color: "var(--text)" }}>جدول اليوم</p>
+              </div>
+              {todayEvents.length === 0 ? (
+                <div className="flex items-center justify-center gap-2 rounded-2xl py-5"
+                  style={{ background: "var(--surface2)", border: "1.5px dashed var(--border)", minHeight: "64px" }}>
+                  <span className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>
+                    لا يوجد جدول اليوم — اضغط «مساعد دويرب» تحت
+                  </span>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {todayEvents.map((ev) => (
+                    <div key={ev.id} className="flex items-center gap-3 py-2.5 border-b border-[var(--border)] last:border-0">
+                      <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                        style={{ background: ev.type === "study" ? "var(--accent-light)" : "var(--danger)" }} />
+                      <span className="text-[17px] font-semibold flex-1" style={{ color: "var(--text)" }}>
+                        {ev.type === "study" ? (ev.subject ?? "") : (ev.label ?? "")}
+                      </span>
+                      <span className="text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>
+                        {fmtHour(ev.fromHour)} → {fmtHour(ev.toHour)}
+                      </span>
+                      <button onClick={() => { const updated = events.filter((e) => e.id !== ev.id); setEvents(updated); saveEvents(updated); }}
+                        className="text-[var(--danger)] text-base px-2 min-h-[44px] flex-shrink-0" aria-label="حذف">✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2 mt-3">
+                <button onClick={() => { setSchedTab("manual"); setSchedulerDate(todayStr); }}
+                  className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
+                  style={{ background: "transparent", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
+                  يدوي
+                </button>
+                <button onClick={() => { setSchedTab("ai"); setSchedulerDate(todayStr); }}
+                  className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
+                  style={{ background: "var(--accent)", color: "white", border: "none" }}>
+                  مساعد دويرب
+                </button>
+              </div>
+            </section>
+          );
+        })()}
       </div>
 
       <div className="h-6" />
@@ -995,6 +1056,7 @@ export default function RoadmapPage() {
           onExamDateChange={(d) => { setExamDate(d); saveExamDate(d); }}
           onEventsChange={(updated) => { setEvents(updated); saveEvents(updated); }}
           onClose={() => setSchedulerDate(null)}
+          initialTab={schedTab}
         />
       )}
 
