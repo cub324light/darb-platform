@@ -42,7 +42,9 @@ export default function SignInScreen({ initialError }: { initialError?: string |
       else await signIn(email, pass);
       /* onAuth في البوابة يلتقط الدخول ويبدأ المزامنة */
     } catch (e) {
-      setErr(authErrorMsg((e as FirebaseError)?.code ?? ""));
+      const code = (e as FirebaseError)?.code ?? "";
+      /* نُلحق رمز الخطأ للتشخيص — مثل Google */
+      setErr(authErrorMsg(code) + (code ? ` (${code})` : ""));
       setBusy(null);
     }
   };
