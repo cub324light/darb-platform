@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { TRACKS, TRACK_GROUPS, type TrackId } from "@/lib/tracks";
 import { saveUser, saveExamDate, saveResults } from "@/lib/storage";
 import { registerUser } from "@/lib/firestore";
@@ -13,7 +12,6 @@ const GRADES = ["أول ثانوي", "ثاني ثانوي", "ثالث ثانوي
 const MAX_TRACKS = 3;
 
 export default function OnboardingPage() {
-  const router = useRouter();
   const [step, setStep] = useState<0 | 1 | 2>(0);
 
   const [name, setName]             = useState("");
@@ -64,8 +62,8 @@ export default function OnboardingPage() {
       })));
     }
     registerUser(trimmedName, primaryTrack);
-    await pushBackup(); // احفظ إعدادك في السحابة فوراً
-    router.push("/dashboard");
+    await pushBackup().catch(() => {}); // محاولة حفظ — ما يوقف التدفق
+    window.location.href = "/dashboard";
   };
 
   const header = (

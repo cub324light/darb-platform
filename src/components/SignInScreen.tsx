@@ -21,10 +21,10 @@ export default function SignInScreen({ initialError }: { initialError?: string |
     setBusy("google");
     try {
       await signInWithGoogle();
-      /* نجاح: البوابة (AuthGate) تلتقط الدخول وتبدّل الشاشة */
+      /* popup نجح على الويب — أعِد التحميل عشان AuthGate يلتقط الجلسة */
+      window.location.href = "/dashboard";
     } catch (e) {
       const code = (e as FirebaseError)?.code ?? "";
-      /* نُلحق رمز الخطأ للتشخيص — يساعد لو السبب من إعداد Firebase */
       setErr(authErrorMsg(code) + (code ? ` (${code})` : ""));
       setBusy(null);
     }
@@ -40,10 +40,10 @@ export default function SignInScreen({ initialError }: { initialError?: string |
     try {
       if (mode === "signup") await signUp(email, pass);
       else await signIn(email, pass);
-      /* onAuth في البوابة يلتقط الدخول ويبدأ المزامنة */
+      /* Firebase حفظ الجلسة — نعيد تحميل الصفحة عشان AuthGate يلتقطها */
+      window.location.href = "/dashboard";
     } catch (e) {
       const code = (e as FirebaseError)?.code ?? "";
-      /* نُلحق رمز الخطأ للتشخيص — مثل Google */
       setErr(authErrorMsg(code) + (code ? ` (${code})` : ""));
       setBusy(null);
     }
