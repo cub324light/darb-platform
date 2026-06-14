@@ -5,7 +5,6 @@ import { TRACKS, TRACK_GROUPS, getTrack, type TrackId } from "@/lib/tracks";
 import {
   loadUser, saveUser, loadStats, computeStreak,
   loadTheme, applyTheme, resetAll,
-  loadExamDate, saveExamDate,
   loadResults, saveResults,
   type DarbUser, type Theme, type ExamResult,
 } from "@/lib/storage";
@@ -44,8 +43,6 @@ export default function ProfileButton() {
   const [editName, setEditName] = useState("");
   const [editing, setEditing] = useState(false);
   const [stats, setStats] = useState({ streak: 0, silver: 0, hours: 0, sessions: 0 });
-  const [examDate, setExamDate] = useState("");
-  const [theme, setThemeState]      = useState<Theme>("dark");
   const [activeTracksState, setActiveTracksState] = useState<TrackId[]>([]);
 
   // نتائجي
@@ -124,8 +121,6 @@ export default function ProfileButton() {
       hours: Math.floor(s.totalFocusMins / 60),
       sessions: s.sessionsCount,
     });
-    setExamDate(loadExamDate() ?? "");
-    setThemeState(loadTheme());
     setActiveTracksState(u?.activeTracks ?? (u?.track ? [u.track] : []));
     setResults(loadResults());
   }, [open]);
@@ -144,11 +139,6 @@ export default function ProfileButton() {
   const deleteResult = (id: string) => {
     const next = results.filter((r) => r.id !== id);
     setResults(next); saveResults(next);
-  };
-
-  const switchTheme = (t: Theme) => {
-    setThemeState(t);
-    applyTheme(t);
   };
 
   const toggleActiveTrack = (id: TrackId) => {
@@ -256,33 +246,6 @@ export default function ProfileButton() {
               ))}
             </div>
 
-            {/* المظهر — ليلي/نهاري: يبدّل الموقع كامل ولون شعار درب معاً */}
-            <p className="label mb-3">المظهر</p>
-            <div className="grid grid-cols-2 gap-2.5 mb-6">
-              {([
-                { mode: "dark" as Theme,  title: "ليلي",  emoji: "🌙", logo: "#3B82F6" },
-                { mode: "light" as Theme, title: "نهاري", emoji: "☀️", logo: "#F5B40A" },
-              ]).map((o) => {
-                const active = theme === o.mode;
-                return (
-                  <button
-                    key={o.mode}
-                    onClick={() => switchTheme(o.mode)}
-                    className="rounded-2xl py-4 flex flex-col items-center gap-1.5 transition active:scale-[0.98]"
-                    style={{
-                      background: active ? "color-mix(in srgb, var(--accent) 12%, transparent)" : "var(--surface2)",
-                      border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
-                    }}
-                  >
-                    <span className="font-black text-3xl" style={{ color: o.logo, textShadow: `0 0 18px color-mix(in srgb, ${o.logo} 45%, transparent)` }}>درب</span>
-                    <span className="text-[13px] font-bold text-[var(--text-muted)]">{o.emoji} {o.title}</span>
-                    {active && <span className="text-[11px] font-black" style={{ color: "var(--accent-light)" }}>✓ الحالي</span>}
-                  </button>
-                );
-              })}
-            </div>
-
-
             {/* الحساب السحابي */}
             <p className="label mb-3">حسابك السحابي</p>
             <div className="mb-6">
@@ -362,31 +325,6 @@ export default function ProfileButton() {
                   </span>
                   <span className="text-[var(--accent-light)]">←</span>
                 </button>
-              )}
-            </div>
-
-            {/* تاريخ الاختبار */}
-            <p className="label mb-3">تاريخ الاختبار</p>
-            <div className="mb-6">
-              <input
-                type="date"
-                value={examDate}
-                onChange={(e) => { setExamDate(e.target.value); saveExamDate(e.target.value || null); }}
-                min={new Date().toISOString().slice(0, 10)}
-                className="w-full rounded-2xl px-4 py-3.5 text-base text-[var(--text)] outline-none min-h-[52px]"
-                style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", colorScheme: "dark" }}
-              />
-              {examDate && (
-                <div className="flex items-center justify-between mt-2">
-                  <p className="text-sm font-bold" style={{ color: "var(--gold)" }}>
-                    {Math.max(0, Math.round((new Date(examDate + "T00:00:00").getTime() - new Date(new Date().toISOString().slice(0,10) + "T00:00:00").getTime()) / 86400000))} يوم على الاختبار
-                  </p>
-                  <button
-                    onClick={() => { setExamDate(""); saveExamDate(null); }}
-                    className="text-sm font-semibold"
-                    style={{ color: "var(--text-muted)" }}
-                  >إزالة</button>
-                </div>
               )}
             </div>
 
