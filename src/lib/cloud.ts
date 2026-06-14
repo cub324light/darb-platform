@@ -5,12 +5,15 @@
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   signOut as fbSignOut,
   onAuthStateChanged,
   GoogleAuthProvider,
   signInWithRedirect,
   signInWithPopup,
   getRedirectResult,
+  browserLocalPersistence,
+  setPersistence,
   type User,
 } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
@@ -42,13 +45,21 @@ export function onAuth(cb: (u: User | null) => void) {
 }
 
 export async function signUp(email: string, password: string) {
+  /* نثبّت الجلسة في localStorage صراحةً قبل الإنشاء */
+  await setPersistence(auth, browserLocalPersistence);
   const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
   return cred.user;
 }
 
 export async function signIn(email: string, password: string) {
+  /* نثبّت الجلسة في localStorage صراحةً قبل الدخول */
+  await setPersistence(auth, browserLocalPersistence);
   const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
   return cred.user;
+}
+
+export async function resetPassword(email: string) {
+  await sendPasswordResetEmail(auth, email.trim());
 }
 
 export async function signOutUser() {

@@ -2,26 +2,26 @@
 import { useState } from "react";
 import {
   signInWithGoogle,
-  signIn, signUp, authErrorMsg,
+  signIn, signUp, resetPassword, authErrorMsg,
 } from "@/lib/cloud";
 import Logo from "@/components/Logo";
 import type { FirebaseError } from "firebase/app";
 
-/* شاشة تسجيل الدخول الإجبارية — Google، والإيميل خيار ثانوي */
 export default function SignInScreen({ initialError }: { initialError?: string | null }) {
-  const [busy, setBusy] = useState<"google" | "email" | null>(null);
+  const [busy, setBusy] = useState<"google" | "email" | "reset" | null>(null);
   const [err, setErr] = useState(initialError ?? "");
+  const [info, setInfo] = useState("");
   const [showEmail, setShowEmail] = useState(false);
+  const [showReset, setShowReset] = useState(false);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
 
   const oauthGoogle = async () => {
-    setErr("");
+    setErr(""); setInfo("");
     setBusy("google");
     try {
       await signInWithGoogle();
-      /* popup نجح على الويب — أعِد التحميل عشان AuthGate يلتقط الجلسة */
       window.location.href = "/dashboard";
     } catch (e) {
       const code = (e as FirebaseError)?.code ?? "";
@@ -31,7 +31,7 @@ export default function SignInScreen({ initialError }: { initialError?: string |
   };
 
   const submitEmail = async () => {
-    setErr("");
+    setErr(""); setInfo("");
     if (!email.trim() || pass.length < 6) {
       setErr("اكتب الإيميل وكلمة مرور ٦ أحرف على الأقل");
       return;
@@ -40,11 +40,34 @@ export default function SignInScreen({ initialError }: { initialError?: string |
     try {
       if (mode === "signup") await signUp(email, pass);
       else await signIn(email, pass);
-      /* Firebase حفظ الجلسة — نعيد تحميل الصفحة عشان AuthGate يلتقطها */
       window.location.href = "/dashboard";
     } catch (e) {
       const code = (e as FirebaseError)?.code ?? "";
+      /* لو الإيميل مسجّل بالفعل → حوّل لوضع الدخول */
+      if (code === "auth/email-already-in-use") {
+        setMode("signin");
+        setErr("هذا الإيميل مسجّل — ادخل بكلمة مرورك، أو استخدم «نسيت كلمة المرور»");
+      } else if (code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found") {
+        setErr("الإيميل أو كلمة المرور غير صحيحة — جرّب «نسيت كلمة المرور» لإعادة تعيينها");
+      } else {
+        setErr(authErrorMsg(code) + (code ? ` (${code})` : ""));
+      }
+      setBusy(null);
+    }
+  };
+
+  const submitReset = async () => {
+    setErr(""); setInfo("");
+    if (!email.trim()) { setErr("اكتب إيميلك أولاً"); return; }
+    setBusy("reset");
+    try {
+      await resetPassword(email);
+      setInfo("أُرسل رابط إعادة التعيين على إيميلك ✓ — تحقّق من صندوق الوارد (أو Spam)");
+      setShowReset(false);
+    } catch (e) {
+      const code = (e as FirebaseError)?.code ?? "";
       setErr(authErrorMsg(code) + (code ? ` (${code})` : ""));
+    } finally {
       setBusy(null);
     }
   };
@@ -52,7 +75,6 @@ export default function SignInScreen({ initialError }: { initialError?: string |
   return (
     <div className="min-h-dvh flex flex-col items-center justify-center px-6 py-10 relative z-[1]">
       <div className="w-full max-w-sm flex flex-col items-center">
-        {/* الشعار — يتبع الثيم (أزرق ليلي / ذهبي نهاري) */}
         <Logo className="font-black text-5xl mb-2" />
         <p className="eyebrow mb-1" style={{ color: "var(--text-dim)" }}>YOUR PATH TO EXCELLENCE</p>
         <p className="text-[15px] text-center leading-relaxed mb-8" style={{ color: "var(--text-muted)" }}>
@@ -72,22 +94,45 @@ export default function SignInScreen({ initialError }: { initialError?: string |
           {busy === "google" ? "جارٍ التحويل..." : "المتابعة بحساب Google"}
         </button>
 
-        {/* خطأ */}
+        {/* رسائل */}
         {err && (
-          <p className="text-[13px] text-center mt-1 mb-1 font-semibold" style={{ color: "var(--danger)" }}>{err}</p>
+          <p className="text-[13px] text-center mt-1 mb-1 font-semibold px-2" style={{ color: "var(--danger)" }}>{err}</p>
+        )}
+        {info && (
+          <p className="text-[13px] text-center mt-1 mb-1 font-semibold px-2" style={{ color: "var(--accent-light)" }}>{info}</p>
         )}
 
-        {/* الإيميل (ثانوي) */}
+        {/* الإيميل */}
         {!showEmail ? (
-          <button onClick={() => { setShowEmail(true); setErr(""); }}
+          <button onClick={() => { setShowEmail(true); setErr(""); setInfo(""); }}
             className="mt-4 text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>
             أو الدخول بالإيميل
           </button>
+        ) : showReset ? (
+          /* ─── نسيت كلمة المرور ─── */
+          <div className="w-full mt-5 flex flex-col gap-3">
+            <p className="text-[14px] font-bold text-center" style={{ color: "var(--text)" }}>
+              إعادة تعيين كلمة المرور
+            </p>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+              placeholder="الإيميل" autoComplete="email" inputMode="email"
+              className="w-full rounded-2xl px-4 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none min-h-[52px]"
+              style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }} />
+            <button onClick={submitReset} disabled={busy !== null}
+              className="btn-primary glow-blue" style={{ opacity: busy ? 0.6 : 1 }}>
+              {busy === "reset" ? "جارٍ الإرسال..." : "أرسل رابط الإعادة ←"}
+            </button>
+            <button onClick={() => { setShowReset(false); setErr(""); setInfo(""); }}
+              className="text-[13px] font-bold text-center" style={{ color: "var(--text-muted)" }}>
+              ← رجوع
+            </button>
+          </div>
         ) : (
+          /* ─── دخول / إنشاء حساب ─── */
           <div className="w-full mt-5 flex flex-col gap-3">
             <div className="flex rounded-2xl p-1" style={{ background: "var(--surface2)" }}>
               {(["signin", "signup"] as const).map((m) => (
-                <button key={m} onClick={() => { setMode(m); setErr(""); }}
+                <button key={m} onClick={() => { setMode(m); setErr(""); setInfo(""); }}
                   className="flex-1 py-2.5 rounded-xl text-[14px] font-bold transition"
                   style={mode === m ? { background: "var(--accent)", color: "white" } : { color: "var(--text-muted)" }}>
                   {m === "signin" ? "دخول" : "حساب جديد"}
@@ -100,13 +145,20 @@ export default function SignInScreen({ initialError }: { initialError?: string |
               style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }} />
             <input type="password" value={pass} onChange={(e) => setPass(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") submitEmail(); }}
-              placeholder="كلمة المرور (٦ أحرف على الأقل)" autoComplete={mode === "signup" ? "new-password" : "current-password"}
+              placeholder="كلمة المرور (٦ أحرف على الأقل)"
+              autoComplete={mode === "signup" ? "new-password" : "current-password"}
               className="w-full rounded-2xl px-4 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none min-h-[52px]"
               style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }} />
             <button onClick={submitEmail} disabled={busy !== null}
               className="btn-primary glow-blue" style={{ opacity: busy ? 0.6 : 1 }}>
               {busy === "email" ? "لحظة..." : mode === "signin" ? "دخول ←" : "إنشاء حساب ←"}
             </button>
+            {mode === "signin" && (
+              <button onClick={() => { setShowReset(true); setErr(""); setInfo(""); }}
+                className="text-[13px] font-bold text-center" style={{ color: "var(--text-muted)" }}>
+                نسيت كلمة المرور؟
+              </button>
+            )}
           </div>
         )}
 
