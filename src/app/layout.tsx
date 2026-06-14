@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import CloudSync from "@/components/CloudSync";
 import AuthGate from "@/components/AuthGate";
 
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthGate>{children}</AuthGate>
         <CloudSync />
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
