@@ -8,6 +8,8 @@ export interface DarbUser {
   onboarded: boolean;
   age?: number;
   studyLevel?: string;
+  grade?: string;       // الصف (يُسأل لو المرحلة ثانوي): أول/ثاني/ثالث ثانوي
+  studyHours?: number;  // كم ساعة يقدر يذاكر باليوم
   subjects?: string[]; // up to 3 selected subject names
   activeTracks?: TrackId[];
 }
@@ -204,7 +206,7 @@ export function resetAll() {
     ["darb_user","darb_stats","darb_vault","darb_cards","darb_lessons","darb_done_lessons",
      "darb_posts","darb_schedule","darb_exam_date","darb_events","darb_exam_flow","darb_stage_reviews",
      "darb_tadreeb_items","darb_tadreeb_done","darb_tasreebat_pct","darb_subject_exam_dates",
-     "darb_track_exam_dates","darb_dash_config","darb_dash_sched_v2"].forEach((k) =>
+     "darb_track_exam_dates","darb_results","darb_dash_config","darb_dash_sched_v2"].forEach((k) =>
       localStorage.removeItem(k)
     );
     /* تعليمات أول زيارة تظهر من جديد بعد الضبط */
@@ -213,6 +215,19 @@ export function resetAll() {
       .forEach((k) => localStorage.removeItem(k));
   } catch {}
 }
+
+/* ── نتائج اختبارات الطالب («نتائجي») — سجل يدوي يضيفه الطالب ── */
+export interface ExamResult {
+  id: string;
+  exam: string;     // اسم الاختبار (مسار أو نص حر)
+  date?: string;    // YYYY-MM-DD
+  score?: string;   // الدرجة كنص (يسمح 87.5 أو 6.5 ...)
+  note?: string;
+}
+
+const RESULTS_KEY = "darb_results";
+export function loadResults(): ExamResult[] { return loadList<ExamResult>(RESULTS_KEY); }
+export function saveResults(list: ExamResult[]) { saveList(RESULTS_KEY, list); }
 
 /* ── تقدم الاختبار والدرجات ── */
 export interface ExamFlow {

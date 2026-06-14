@@ -6,7 +6,8 @@ import {
   loadUser, saveUser, loadStats, computeStreak,
   loadTheme, applyTheme, resetAll,
   loadExamDate, saveExamDate,
-  type DarbUser, type Theme,
+  loadResults, saveResults,
+  type DarbUser, type Theme, type ExamResult,
 } from "@/lib/storage";
 import { syncUser } from "@/lib/firestore";
 import {
@@ -46,6 +47,12 @@ export default function ProfileButton() {
   const [examDate, setExamDate] = useState("");
   const [theme, setThemeState]      = useState<Theme>("dark");
   const [activeTracksState, setActiveTracksState] = useState<TrackId[]>([]);
+
+  // نتائجي
+  const [results, setResults] = useState<ExamResult[]>([]);
+  const [resExam, setResExam]   = useState("");
+  const [resScore, setResScore] = useState("");
+  const [resDate, setResDate]   = useState("");
 
   // الحساب السحابي
   const [authUser, setAuthUser] = useState<User | null>(null);
@@ -120,7 +127,24 @@ export default function ProfileButton() {
     setExamDate(loadExamDate() ?? "");
     setThemeState(loadTheme());
     setActiveTracksState(u?.activeTracks ?? (u?.track ? [u.track] : []));
+    setResults(loadResults());
   }, [open]);
+
+  const addResult = () => {
+    const exam = resExam.trim();
+    if (!exam) return;
+    const next: ExamResult[] = [
+      { id: `${Date.now()}`, exam, score: resScore.trim() || undefined, date: resDate || undefined },
+      ...results,
+    ];
+    setResults(next); saveResults(next);
+    setResExam(""); setResScore(""); setResDate("");
+  };
+
+  const deleteResult = (id: string) => {
+    const next = results.filter((r) => r.id !== id);
+    setResults(next); saveResults(next);
+  };
 
   const switchTheme = (t: Theme) => {
     setThemeState(t);
@@ -128,18 +152,23 @@ export default function ProfileButton() {
   };
 
   const toggleActiveTrack = (id: TrackId) => {
-    setActiveTracksState((prev) => {
-      const next = prev.includes(id)
-        ? prev.filter((t) => t !== id)
-        : prev.length >= 3 ? prev : [...prev, id];
-      if (!user) return next;
-      const primaryTrack = next[0] ?? user.track;
-      const updated = { ...user, track: primaryTrack, activeTracks: next };
-      saveUser(updated);
-      setUser(updated);
-      syncUser({ track: primaryTrack });
-      return next;
-    });
+    if (!user) return;
+    const prev = activeTracksState;
+    const next = prev.includes(id)
+      ? prev.filter((t) => t !== id)
+      : prev.length >= 3 ? prev : [...prev, id];
+    if (next === prev) return; // تجاوز الحد الأقصى — لا تغيير
+    const primaryTrack = next[0] ?? user.track;
+    /* تأكيد فقط عند تغيّر المسار الأساسي — لأنه يبدّل خريطتك وأولوياتك */
+    if (primaryTrack !== user.track &&
+        !confirm("تغيير مسارك الأساسي يبدّل خريطتك وأولوياتك. متأكد؟")) {
+      return;
+    }
+    const updated = { ...user, track: primaryTrack, activeTracks: next };
+    saveUser(updated);
+    setUser(updated);
+    setActiveTracksState(next);
+    syncUser({ track: primaryTrack });
   };
 
   const track = getTrack(user?.track);
@@ -359,6 +388,52 @@ export default function ProfileButton() {
                   >إزالة</button>
                 </div>
               )}
+            </div>
+
+            {/* نتائجي — سجل نتائج الاختبارات */}
+            <p className="label mb-3">نتائجي</p>
+            <div className="mb-6">
+              {results.length > 0 && (
+                <div className="flex flex-col gap-2 mb-3">
+                  {results.map((r) => (
+                    <div key={r.id} className="rounded-2xl px-4 py-3 flex items-center gap-3"
+                      style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-[15px] text-[var(--text)] truncate">{r.exam}</p>
+                        {r.date && <p className="text-[12px] text-[var(--text-muted)]">{r.date}</p>}
+                      </div>
+                      {r.score && <span className="font-black text-[16px]" style={{ color: "var(--gold)" }}>{r.score}</span>}
+                      <button onClick={() => deleteResult(r.id)} className="text-[var(--text-muted)] text-sm font-bold px-1">✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2 mb-2">
+                <input list="darb-exam-options" value={resExam} onChange={(e) => setResExam(e.target.value)}
+                  placeholder="الاختبار" maxLength={30}
+                  className="flex-1 min-w-0 rounded-2xl px-4 py-3 text-[15px] text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+                  style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
+                <datalist id="darb-exam-options">
+                  {activeTracksState.map((id) => {
+                    const t = TRACKS.find((tr) => tr.id === id);
+                    return t ? <option key={id} value={t.title} /> : null;
+                  })}
+                </datalist>
+                <input value={resScore} inputMode="decimal" onChange={(e) => setResScore(e.target.value)}
+                  placeholder="الدرجة" maxLength={6}
+                  className="w-20 rounded-2xl px-3 py-3 text-[15px] text-center text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+                  style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
+              </div>
+              <div className="flex gap-2">
+                <input type="date" value={resDate} onChange={(e) => setResDate(e.target.value)}
+                  className="flex-1 rounded-2xl px-4 py-3 text-[15px] text-[var(--text)] outline-none"
+                  style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", colorScheme: "dark" }} />
+                <button onClick={addResult} disabled={!resExam.trim()}
+                  className="px-5 rounded-2xl font-black text-[15px]"
+                  style={{ background: resExam.trim() ? "var(--accent)" : "var(--surface2)", color: resExam.trim() ? "white" : "var(--text-muted)", border: "none" }}>
+                  أضف
+                </button>
+              </div>
             </div>
 
             {/* المسارات — متعددة (حد أقصى 3) */}

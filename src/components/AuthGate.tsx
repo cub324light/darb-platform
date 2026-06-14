@@ -7,6 +7,7 @@ import {
 } from "@/lib/cloud";
 import { loadUser } from "@/lib/storage";
 import SignInScreen from "./SignInScreen";
+import Logo from "./Logo";
 
 /* المسارات العامة — تُعرض بدون تسجيل دخول للطالب:
    «/» و«/privacy» تسويقية، و«/admin» له حماية كلمة سر خاصة على الخادم. */
@@ -15,10 +16,7 @@ const PUBLIC_PATHS = ["/", "/privacy", "/admin"];
 function Splash({ label }: { label?: string }) {
   return (
     <div className="min-h-dvh flex flex-col items-center justify-center gap-4 relative z-[1]">
-      <p className="font-black text-5xl"
-        style={{ color: "var(--text)", letterSpacing: "-1px", filter: "drop-shadow(0 0 22px color-mix(in srgb, var(--accent) 45%, transparent))" }}>
-        درب
-      </p>
+      <Logo className="font-black text-5xl" style={{ letterSpacing: "-1px" }} />
       {label && <p className="text-[14px] font-semibold" style={{ color: "var(--text-muted)" }}>{label}</p>}
     </div>
   );

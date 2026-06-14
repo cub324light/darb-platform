@@ -14,12 +14,21 @@ function useReveal(active: boolean) {
     const root = ref.current;
     if (!root) return;
     const els = root.querySelectorAll(".reveal");
+    const showAll = () => els.forEach((el) => el.classList.add("visible"));
+
+    /* لو المتصفح ما يدعم IntersectionObserver، أظهر كل شيء فوراً */
+    if (typeof IntersectionObserver === "undefined") { showAll(); return; }
+
     const io = new IntersectionObserver(
       (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add("visible"); }),
-      { threshold: 0.12 }
+      { threshold: 0.05 }
     );
     els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
+
+    /* أمان: لو لأي سبب ما اشتغل المراقب (قسم أسفل الصفحة لا يُكشف)،
+       أظهر العناصر المتبقية بعد مهلة قصيرة حتى يبقى زر الدخول ظاهراً دائماً */
+    const fallback = setTimeout(showAll, 1600);
+    return () => { io.disconnect(); clearTimeout(fallback); };
   }, [active]);
   return ref;
 }

@@ -4,6 +4,7 @@ import {
   signInWithGoogle,
   signIn, signUp, authErrorMsg,
 } from "@/lib/cloud";
+import Logo from "@/components/Logo";
 import type { FirebaseError } from "firebase/app";
 
 /* شاشة تسجيل الدخول الإجبارية — Google، والإيميل خيار ثانوي */
@@ -20,9 +21,11 @@ export default function SignInScreen({ initialError }: { initialError?: string |
     setBusy("google");
     try {
       await signInWithGoogle();
-      /* redirect — تنتقل الصفحة للمزوّد ثم ترجع؛ البوابة تكمل الباقي */
+      /* نجاح: البوابة (AuthGate) تلتقط الدخول وتبدّل الشاشة */
     } catch (e) {
-      setErr(authErrorMsg((e as FirebaseError)?.code ?? ""));
+      const code = (e as FirebaseError)?.code ?? "";
+      /* نُلحق رمز الخطأ للتشخيص — يساعد لو السبب من إعداد Firebase */
+      setErr(authErrorMsg(code) + (code ? ` (${code})` : ""));
       setBusy(null);
     }
   };
@@ -47,11 +50,8 @@ export default function SignInScreen({ initialError }: { initialError?: string |
   return (
     <div className="min-h-dvh flex flex-col items-center justify-center px-6 py-10 relative z-[1]">
       <div className="w-full max-w-sm flex flex-col items-center">
-        {/* الشعار */}
-        <p className="font-black text-5xl mb-2"
-          style={{ color: "var(--text)", filter: "drop-shadow(0 0 22px color-mix(in srgb, var(--accent) 45%, transparent))" }}>
-          درب
-        </p>
+        {/* الشعار — يتبع الثيم (أزرق ليلي / ذهبي نهاري) */}
+        <Logo className="font-black text-5xl mb-2" />
         <p className="eyebrow mb-1" style={{ color: "var(--text-dim)" }}>YOUR PATH TO EXCELLENCE</p>
         <p className="text-[15px] text-center leading-relaxed mb-8" style={{ color: "var(--text-muted)" }}>
           سجّل دخولك عشان نحفظ تقدّمك ونزامنه على كل أجهزتك.

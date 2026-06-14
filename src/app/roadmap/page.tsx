@@ -13,6 +13,7 @@ import {
   loadTadreebItems, saveTadreebItems, loadTadreebDone, saveTadreebDone,
   loadTasreebatPct, saveTasreebatPct,
   loadTrackExamDates, saveTrackExamDates,
+  loadResults, saveResults,
   type ScheduleEvent, type ExamFlow, type StageReviews, type TrainingItem,
 } from "@/lib/storage";
 import { syncUser } from "@/lib/firestore";
@@ -368,6 +369,7 @@ export default function RoadmapPage() {
 
     const user = loadUser();
     if (!user || user.track === newTrackId) return;
+    if (!confirm("تبديل المسار يصفّر تقدّمك في الخريطة الحالية. متأكد؟")) return;
 
     saveUser({ ...user, track: newTrackId });
     setPrimaryTrack(getTrack(newTrackId));
@@ -927,6 +929,12 @@ export default function RoadmapPage() {
                   const g = parseFloat(gradeInput);
                   if (!isNaN(g)) {
                     updFlow({ grade: g });
+                    /* سجّل النتيجة في «نتائجي» تلقائياً */
+                    saveResults([
+                      { id: `${Date.now()}`, exam: primaryTrack?.title ?? "اختبار",
+                        score: String(g), date: loadExamDate() ?? new Date().toISOString().slice(0, 10) },
+                      ...loadResults(),
+                    ]);
                     setShowNextStep(true);
                   }
                 }}
