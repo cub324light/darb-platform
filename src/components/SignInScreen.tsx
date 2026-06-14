@@ -13,7 +13,7 @@ export default function SignInScreen({ initialError }: { initialError?: string |
   const [info, setInfo] = useState("");
   const [showEmail, setShowEmail] = useState(false);
   const [showReset, setShowReset] = useState(false);
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup">("signup");
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
 
@@ -153,6 +153,11 @@ export default function SignInScreen({ initialError }: { initialError?: string |
               className="btn-primary glow-blue" style={{ opacity: busy ? 0.6 : 1 }}>
               {busy === "email" ? "لحظة..." : mode === "signin" ? "دخول ←" : "إنشاء حساب ←"}
             </button>
+            <p className="text-[12px] text-center leading-relaxed" style={{ color: "var(--text-muted)" }}>
+              {mode === "signup"
+                ? "أول مرة؟ اكتب أي إيميل وكلمة مرور جديدة وأنشئ حسابك."
+                : "ادخل بإيميلك وكلمة المرور التي أنشأتها."}
+            </p>
             {mode === "signin" && (
               <button onClick={() => { setShowReset(true); setErr(""); setInfo(""); }}
                 className="text-[13px] font-bold text-center" style={{ color: "var(--text-muted)" }}>
