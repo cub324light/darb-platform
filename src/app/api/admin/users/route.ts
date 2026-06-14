@@ -24,16 +24,27 @@ function safeEqual(a: string, b: string): boolean {
   return timingSafeEqual(ba, bb);
 }
 
-/* يعمل تلقائياً على Firebase Hosting (بيانات اعتماد المشروع نفسه).
-   خارج Google Cloud: ضع محتوى Service Account JSON في FIREBASE_SERVICE_ACCOUNT */
 function adminDb() {
   if (getApps().length === 0) {
     const sa = process.env.FIREBASE_SERVICE_ACCOUNT;
-    initializeApp(
-      sa
-        ? { credential: cert(JSON.parse(sa)) }
-        : { credential: applicationDefault(), projectId: "my-education-platform-a160e" }
-    );
+    if (sa) {
+      let parsed: object;
+      try {
+        parsed = JSON.parse(sa);
+      } catch {
+        throw new Error("FIREBASE_SERVICE_ACCOUNT ليس JSON صالحاً — تأكد من النسخ الكامل");
+      }
+      initializeApp({ credential: cert(parsed as Parameters<typeof cert>[0]) });
+    } else {
+      try {
+        initializeApp({
+          credential: applicationDefault(),
+          projectId: "my-education-platform-a160e",
+        });
+      } catch {
+        throw new Error("FIREBASE_SERVICE_ACCOUNT غير موجود — أضفه في Vercel Environment Variables");
+      }
+    }
   }
   return getFirestore();
 }
@@ -45,15 +56,27 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => null);
-  const password = body?.password;
+  const { password, mode } = (body ?? {}) as { password?: string; mode?: string };
 
   const adminPass = process.env.ADMIN_PASS ?? "darb-admin-2026";
   if (typeof password !== "string" || !safeEqual(password, adminPass)) {
     return NextResponse.json({ error: "كلمة السر خاطئة" }, { status: 401 });
   }
 
+  /* وضع التشخيص — يتحقق من إعداد Firebase فقط */
+  if (mode === "ping") {
+    try {
+      const db = adminDb();
+      await db.collection("users").limit(1).get();
+      return NextResponse.json({ ok: true, msg: "Firebase متصل بنجاح" });
+    } catch (e) {
+      return NextResponse.json({ ok: false, msg: String(e) }, { status: 500 });
+    }
+  }
+
   try {
-    const snap = await adminDb().collection("users").get();
+    const db = adminDb();
+    const snap = await db.collection("users").get();
     const users = snap.docs.map((d) => {
       const data = d.data();
       return {
@@ -66,15 +89,20 @@ export async function POST(req: NextRequest) {
         silver: data.silver ?? 0,
         taseesProgress: data.taseesProgress ?? 0,
         tadreebProgress: data.tadreebProgress ?? 0,
+        school: data.school ?? "",
+        region: data.region ?? "",
+        city: data.city ?? "",
+        phone: data.phone ?? "",
         joinedAt: data.joinedAt ? { seconds: data.joinedAt.seconds } : null,
         lastSeen: data.lastSeen ? { seconds: data.lastSeen.seconds } : null,
       };
     });
     users.sort((a, b) => (b.lastSeen?.seconds ?? 0) - (a.lastSeen?.seconds ?? 0));
     return NextResponse.json({ users });
-  } catch {
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
     return NextResponse.json(
-      { error: "تعذر جلب البيانات — تأكد من بيانات اعتماد Firebase على الخادم" },
+      { error: `تعذر جلب البيانات: ${msg}` },
       { status: 500 }
     );
   }

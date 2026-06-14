@@ -1,13 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import CloudSync from "@/components/CloudSync";
 import AuthGate from "@/components/AuthGate";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://darb-platform.vercel.app"),
   title: "درب | المنصة التي تعاملك كأخ",
-  description: "YOUR PATH TO EXCELLENCE — تأسيس حقيقي للقدرات والتحصيلي وأرامكو CPC",
+  description: "منصة تعليمية سعودية لتأسيس القدرات والتحصيلي وأرامكو CPC — تمارين وخرائط دراسية وذكاء اصطناعي يساعدك تتفوق",
   manifest: "/manifest.json",
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "درب" },
   openGraph: {
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthGate>{children}</AuthGate>
         <CloudSync />
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

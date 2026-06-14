@@ -14,7 +14,11 @@ export function getOrCreateUid(): string {
 }
 
 /* ─── تسجيل مستخدم جديد (عند الـ onboarding) ─── */
-export async function registerUser(name: string, track: string) {
+export async function registerUser(
+  name: string,
+  track: string,
+  extras?: { school?: string; region?: string; city?: string; phone?: string },
+) {
   try {
     const uid = getOrCreateUid();
     await setDoc(doc(db, "users", uid), {
@@ -28,6 +32,10 @@ export async function registerUser(name: string, track: string) {
       silver: 0,
       taseesProgress: 0,
       tadreebProgress: 0,
+      ...(extras?.school  ? { school:  extras.school  } : {}),
+      ...(extras?.region  ? { region:  extras.region  } : {}),
+      ...(extras?.city    ? { city:    extras.city    } : {}),
+      ...(extras?.phone   ? { phone:   extras.phone   } : {}),
     }, { merge: true });
   } catch {}
 }

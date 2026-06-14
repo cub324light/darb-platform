@@ -2,29 +2,46 @@
 import { useState } from "react";
 import {
   signInWithGoogle,
-  signIn, signUp, authErrorMsg,
+  signIn, signUp, sendPasswordReset, authErrorMsg,
 } from "@/lib/cloud";
 import Logo from "@/components/Logo";
 import type { FirebaseError } from "firebase/app";
+
+function EyeIcon({ open }: { open: boolean }) {
+  return open ? (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+  ) : (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+      <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+      <line x1="1" y1="1" x2="23" y2="23"/>
+    </svg>
+  );
+}
 
 /* شاشة تسجيل الدخول الإجبارية — Google، والإيميل خيار ثانوي */
 export default function SignInScreen({ initialError }: { initialError?: string | null }) {
   const [busy, setBusy] = useState<"google" | "email" | null>(null);
   const [err, setErr] = useState(initialError ?? "");
   const [showEmail, setShowEmail] = useState(false);
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signin");
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
+  const [confirmPass, setConfirmPass] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   const oauthGoogle = async () => {
     setErr("");
     setBusy("google");
     try {
       await signInWithGoogle();
-      /* نجاح: البوابة (AuthGate) تلتقط الدخول وتبدّل الشاشة */
     } catch (e) {
       const code = (e as FirebaseError)?.code ?? "";
-      /* نُلحق رمز الخطأ للتشخيص — يساعد لو السبب من إعداد Firebase */
       setErr(authErrorMsg(code) + (code ? ` (${code})` : ""));
       setBusy(null);
     }
@@ -36,23 +53,67 @@ export default function SignInScreen({ initialError }: { initialError?: string |
       setErr("اكتب الإيميل وكلمة مرور ٦ أحرف على الأقل");
       return;
     }
+    if (mode === "signup" && pass !== confirmPass) {
+      setErr("كلمة المرور وتأكيدها غير متطابقتَين");
+      return;
+    }
     setBusy("email");
     try {
       if (mode === "signup") await signUp(email, pass);
       else await signIn(email, pass);
-      /* onAuth في البوابة يلتقط الدخول ويبدأ المزامنة */
     } catch (e) {
       setErr(authErrorMsg((e as FirebaseError)?.code ?? ""));
       setBusy(null);
     }
   };
 
+  const submitReset = async () => {
+    setErr("");
+    if (!email.trim()) { setErr("اكتب الإيميل أولاً"); return; }
+    setBusy("email");
+    try {
+      await sendPasswordReset(email.trim());
+      setResetSent(true);
+    } catch (e) {
+      setErr(authErrorMsg((e as FirebaseError)?.code ?? ""));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const passField = (
+    val: string, setVal: (v: string) => void,
+    show: boolean, setShow: (v: boolean) => void,
+    placeholder: string, autoComplete: string,
+    onEnter?: () => void,
+  ) => (
+    <div className="relative w-full">
+      <input
+        type={show ? "text" : "password"}
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter" && onEnter) onEnter(); }}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        className="w-full rounded-2xl px-4 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none min-h-[52px]"
+        style={{ background: "var(--surface)", border: "1.5px solid var(--border)", paddingLeft: "48px" }}
+      />
+      <button
+        type="button"
+        onClick={() => setShow(!show)}
+        className="absolute left-3 top-1/2 -translate-y-1/2 p-1"
+        style={{ color: "var(--text-muted)" }}
+        tabIndex={-1}
+      >
+        <EyeIcon open={show} />
+      </button>
+    </div>
+  );
+
   return (
     <div className="min-h-dvh flex flex-col items-center justify-center px-6 py-10 relative z-[1]">
       <div className="w-full max-w-sm flex flex-col items-center">
-        {/* الشعار — يتبع الثيم (أزرق ليلي / ذهبي نهاري) */}
         <Logo className="font-black text-5xl mb-2" />
-        <p className="eyebrow mb-1" style={{ color: "var(--text-dim)" }}>YOUR PATH TO EXCELLENCE</p>
         <p className="text-[15px] text-center leading-relaxed mb-8" style={{ color: "var(--text-muted)" }}>
           سجّل دخولك عشان نحفظ تقدّمك ونزامنه على كل أجهزتك.
         </p>
@@ -72,7 +133,9 @@ export default function SignInScreen({ initialError }: { initialError?: string |
 
         {/* خطأ */}
         {err && (
-          <p className="text-[13px] text-center mt-1 mb-1 font-semibold" style={{ color: "var(--danger)" }}>{err}</p>
+          <div className="w-full rounded-xl px-4 py-3 mb-2" style={{ background: "color-mix(in srgb, var(--danger) 12%, transparent)", border: "1.5px solid var(--danger)" }}>
+            <p className="text-[13px] text-center font-semibold" style={{ color: "var(--danger)" }}>{err}</p>
+          </div>
         )}
 
         {/* الإيميل (ثانوي) */}
@@ -81,11 +144,38 @@ export default function SignInScreen({ initialError }: { initialError?: string |
             className="mt-4 text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>
             أو الدخول بالإيميل
           </button>
+        ) : mode === "forgot" ? (
+          <div className="w-full mt-5 flex flex-col gap-3">
+            <p className="text-[15px] font-bold text-center" style={{ color: "var(--text)" }}>إعادة تعيين كلمة المرور</p>
+            <p className="text-[13px] text-center" style={{ color: "var(--text-muted)" }}>
+              لو سجّلت عن طريق Google، استخدم زر Google للدخول — ما في كلمة مرور.
+            </p>
+            {resetSent ? (
+              <div className="rounded-xl px-4 py-3" style={{ background: "color-mix(in srgb, #10B981 12%, transparent)", border: "1.5px solid #10B981" }}>
+                <p className="text-[13px] text-center font-semibold" style={{ color: "#10B981" }}>تم إرسال رسالة إعادة التعيين — تحقق من بريدك</p>
+              </div>
+            ) : (
+              <>
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                  placeholder="الإيميل" autoComplete="email" inputMode="email"
+                  className="w-full rounded-2xl px-4 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none min-h-[52px]"
+                  style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }} />
+                <button onClick={submitReset} disabled={busy !== null}
+                  className="btn-primary glow-blue" style={{ opacity: busy ? 0.6 : 1 }}>
+                  {busy === "email" ? "جاري الإرسال..." : "إرسال رابط إعادة التعيين"}
+                </button>
+              </>
+            )}
+            <button onClick={() => { setMode("signin"); setErr(""); setResetSent(false); }}
+              className="text-[14px] font-bold text-center py-2" style={{ color: "var(--text-muted)" }}>
+              ← رجوع
+            </button>
+          </div>
         ) : (
           <div className="w-full mt-5 flex flex-col gap-3">
             <div className="flex rounded-2xl p-1" style={{ background: "var(--surface2)" }}>
               {(["signin", "signup"] as const).map((m) => (
-                <button key={m} onClick={() => { setMode(m); setErr(""); }}
+                <button key={m} onClick={() => { setMode(m); setErr(""); setConfirmPass(""); }}
                   className="flex-1 py-2.5 rounded-xl text-[14px] font-bold transition"
                   style={mode === m ? { background: "var(--accent)", color: "white" } : { color: "var(--text-muted)" }}>
                   {m === "signin" ? "دخول" : "حساب جديد"}
@@ -96,15 +186,28 @@ export default function SignInScreen({ initialError }: { initialError?: string |
               placeholder="الإيميل" autoComplete="email" inputMode="email"
               className="w-full rounded-2xl px-4 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none min-h-[52px]"
               style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }} />
-            <input type="password" value={pass} onChange={(e) => setPass(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") submitEmail(); }}
-              placeholder="كلمة المرور (٦ أحرف على الأقل)" autoComplete={mode === "signup" ? "new-password" : "current-password"}
-              className="w-full rounded-2xl px-4 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none min-h-[52px]"
-              style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }} />
+            {passField(
+              pass, setPass, showPass, setShowPass,
+              "كلمة المرور (٦ أحرف على الأقل)",
+              mode === "signup" ? "new-password" : "current-password",
+              mode === "signin" ? submitEmail : undefined,
+            )}
+            {mode === "signup" && passField(
+              confirmPass, setConfirmPass, showConfirmPass, setShowConfirmPass,
+              "تأكيد كلمة المرور",
+              "new-password",
+              submitEmail,
+            )}
             <button onClick={submitEmail} disabled={busy !== null}
               className="btn-primary glow-blue" style={{ opacity: busy ? 0.6 : 1 }}>
               {busy === "email" ? "لحظة..." : mode === "signin" ? "دخول ←" : "إنشاء حساب ←"}
             </button>
+            {mode === "signin" && (
+              <button onClick={() => { setMode("forgot"); setErr(""); }}
+                className="text-[13px] text-center py-1" style={{ color: "var(--text-muted)" }}>
+                نسيت كلمة المرور؟
+              </button>
+            )}
           </div>
         )}
 

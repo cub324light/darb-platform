@@ -7,6 +7,7 @@ import {
   signInWithEmailAndPassword,
   signOut as fbSignOut,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   GoogleAuthProvider,
   signInWithRedirect,
   signInWithPopup,
@@ -53,6 +54,10 @@ export async function signIn(email: string, password: string) {
 export async function signOutUser() {
   await fbSignOut(auth);
   initialSyncDone = false;
+}
+
+export async function sendPasswordReset(email: string) {
+  await sendPasswordResetEmail(auth, email);
 }
 
 /* ─── Google — popup على الويب، redirect على iOS/PWA ─── */

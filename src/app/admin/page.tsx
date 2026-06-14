@@ -11,6 +11,10 @@ interface AdminUser {
   silver: number;
   taseesProgress: number;
   tadreebProgress: number;
+  school: string;
+  region: string;
+  city: string;
+  phone: string;
   joinedAt: { seconds: number } | null;
   lastSeen: { seconds: number } | null;
 }
@@ -41,29 +45,33 @@ function ProgressCell({ pct }: { pct: number }) {
 }
 
 export default function AdminPage() {
-  const [pass, setPass]       = useState("");
-  const [authed, setAuthed]   = useState(false);
-  const [users, setUsers]     = useState<AdminUser[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState("");
-  const [search, setSearch]   = useState("");
+  const [pass, setPass]         = useState("");
+  const [authed, setAuthed]     = useState(false);
+  const [users, setUsers]       = useState<AdminUser[]>([]);
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState("");
+  const [search, setSearch]     = useState("");
+  const [pingMsg, setPingMsg]   = useState("");
+  const [pinging, setPinging]   = useState(false);
+
+  const callApi = async (mode?: string) => {
+    const res = await fetch("/api/admin/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: pass, mode }),
+    });
+    const data = await res.json() as Record<string, unknown>;
+    return { ok: res.ok, data, status: res.status };
+  };
 
   const login = async () => {
     if (!pass.trim() || loading) return;
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: pass }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "حدث خطأ");
-        return;
-      }
-      setUsers(data.users ?? []);
+      const { ok, data } = await callApi();
+      if (!ok) { setError(data.error as string ?? "حدث خطأ"); return; }
+      setUsers((data.users as AdminUser[]) ?? []);
       setAuthed(true);
     } catch {
       setError("خطأ في الاتصال");
@@ -72,8 +80,26 @@ export default function AdminPage() {
     }
   };
 
+  const ping = async () => {
+    if (!pass.trim() || pinging) return;
+    setPinging(true);
+    setPingMsg("");
+    try {
+      const { ok, data } = await callApi("ping");
+      setPingMsg(ok ? `✅ ${data.msg}` : `❌ ${data.msg ?? data.error}`);
+    } catch {
+      setPingMsg("❌ خطأ في الاتصال");
+    } finally {
+      setPinging(false);
+    }
+  };
+
   const filtered = users.filter((u) =>
-    !search || u.name?.toLowerCase().includes(search.toLowerCase()) || u.track?.includes(search)
+    !search ||
+    u.name?.toLowerCase().includes(search.toLowerCase()) ||
+    u.track?.includes(search) ||
+    u.region?.includes(search) ||
+    u.city?.includes(search)
   );
 
   if (!authed) {
@@ -94,9 +120,21 @@ export default function AdminPage() {
             className="w-full rounded-2xl px-5 py-4 text-lg outline-none"
             style={{ background: "var(--surface)", border: "2px solid var(--border)", color: "var(--text)" }}
           />
-          {error && <p className="text-center text-[15px]" style={{ color: "var(--danger)" }}>{error}</p>}
+          {error && (
+            <div className="rounded-xl px-4 py-3" style={{ background: "color-mix(in srgb, var(--danger) 12%, transparent)", border: "1.5px solid var(--danger)" }}>
+              <p className="text-center text-[14px] font-semibold" style={{ color: "var(--danger)" }}>{error}</p>
+            </div>
+          )}
+          {pingMsg && (
+            <p className="text-center text-[13px]" style={{ color: pingMsg.startsWith("✅") ? "#10B981" : "var(--danger)" }}>{pingMsg}</p>
+          )}
           <button onClick={login} disabled={loading} className="btn-primary" style={{ opacity: loading ? 0.5 : 1 }}>
             {loading ? "جاري التحقق..." : "دخول"}
+          </button>
+          <button onClick={ping} disabled={pinging || !pass.trim()}
+            className="text-[14px] text-center py-2 font-semibold"
+            style={{ color: "var(--text-muted)", opacity: pass.trim() ? 1 : 0.5 }}>
+            {pinging ? "يتحقق..." : "تشخيص اتصال Firebase"}
           </button>
         </div>
       </div>
@@ -106,7 +144,7 @@ export default function AdminPage() {
   return (
     <div className="min-h-dvh px-4 py-6" style={{ background: "var(--bg)" }}>
       {/* الهيدر */}
-      <div className="max-w-5xl mx-auto mb-6 flex items-center justify-between gap-4 flex-wrap">
+      <div className="max-w-6xl mx-auto mb-6 flex items-center justify-between gap-4 flex-wrap">
         <div>
           <p className="title-md" style={{ color: "var(--text)" }}>لوحة الإدارة</p>
           <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>{users.length} مستخدم مسجّل</p>
@@ -114,14 +152,14 @@ export default function AdminPage() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="ابحث باسم أو مسار..."
+          placeholder="ابحث باسم، مسار، منطقة..."
           className="rounded-2xl px-4 py-3 text-[15px] outline-none"
-          style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)", width: "220px" }}
+          style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)", width: "240px" }}
         />
       </div>
 
       {/* الإحصائيات */}
-      <div className="max-w-5xl mx-auto grid grid-cols-2 gap-3 mb-6 sm:grid-cols-4">
+      <div className="max-w-6xl mx-auto grid grid-cols-2 gap-3 mb-6 sm:grid-cols-4">
         {[
           { label: "إجمالي المستخدمين", val: users.length },
           { label: "مسار تحصيلي", val: users.filter((u) => u.track === "تحصيلي").length },
@@ -136,19 +174,21 @@ export default function AdminPage() {
         ))}
       </div>
 
-      {/* الجدول — يتمرر أفقياً على الجوال */}
-      <div className="max-w-5xl mx-auto rounded-2xl overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
-        <div style={{ minWidth: "780px" }}>
+      {/* الجدول */}
+      <div className="max-w-6xl mx-auto rounded-2xl overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
+        <div style={{ minWidth: "1100px" }}>
           {/* رأس الجدول */}
           <div className="grid text-[13px] font-bold px-4 py-3"
-            style={{ gridTemplateColumns: "1fr 80px 60px 70px 70px 80px 80px 90px 90px", background: "var(--surface2)", color: "var(--text-muted)" }}>
+            style={{ gridTemplateColumns: "1fr 80px 80px 70px 60px 70px 70px 80px 80px 100px 100px", background: "var(--surface2)", color: "var(--text-muted)" }}>
             <span>الاسم</span>
             <span className="text-center">المسار</span>
+            <span className="text-center">المنطقة</span>
             <span className="text-center">ستريك</span>
             <span className="text-center">التركيز</span>
-            <span className="text-center">الجلسات</span>
             <span className="text-center">التأسيس</span>
             <span className="text-center">التدريب</span>
+            <span className="text-center">المدرسة</span>
+            <span className="text-center">الجوال</span>
             <span className="text-center">تاريخ الدخول</span>
             <span className="text-center">آخر نشاط</span>
           </div>
@@ -158,28 +198,30 @@ export default function AdminPage() {
             <div className="py-12 text-center text-[15px]" style={{ color: "var(--text-muted)" }}>لا يوجد مستخدمون</div>
           ) : filtered.map((u, i) => (
             <div key={u.id}
-              className="grid items-center px-4 py-3.5 text-[14px]"
+              className="grid items-center px-4 py-3.5 text-[13px]"
               style={{
-                gridTemplateColumns: "1fr 80px 60px 70px 70px 80px 80px 90px 90px",
+                gridTemplateColumns: "1fr 80px 80px 70px 60px 70px 70px 80px 80px 100px 100px",
                 borderTop: i > 0 ? "1px solid var(--border)" : "none",
                 background: i % 2 === 0 ? "var(--surface)" : "var(--bg)",
               }}>
               <span className="font-bold" style={{ color: "var(--text)" }}>{u.name || "—"}</span>
               <span className="text-center">
-                <span className="px-2 py-0.5 rounded-full text-[12px] font-bold"
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold"
                   style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>
                   {u.track || "—"}
                 </span>
               </span>
+              <span className="text-center text-[12px]" style={{ color: "var(--text-muted)" }}>{u.region || u.city || "—"}</span>
               <span className="text-center font-bold" style={{ color: u.streak > 0 ? "var(--gold)" : "var(--text-muted)" }}>
-                {u.streak > 0 ? `${u.streak}` : "—"}
+                {u.streak > 0 ? u.streak : "—"}
               </span>
               <span className="text-center" style={{ color: "var(--text-dim)" }}>{fmtHours(u.focusMins)}</span>
-              <span className="text-center" style={{ color: "var(--text-dim)" }}>{u.sessions || 0}</span>
               <span className="flex justify-center"><ProgressCell pct={u.taseesProgress} /></span>
               <span className="flex justify-center"><ProgressCell pct={u.tadreebProgress} /></span>
-              <span className="text-center text-[12px]" style={{ color: "var(--text-muted)" }}>{fmt(u.joinedAt)}</span>
-              <span className="text-center text-[12px]" style={{ color: "var(--text-muted)" }}>{fmt(u.lastSeen)}</span>
+              <span className="text-center text-[11px]" style={{ color: "var(--text-muted)" }}>{u.school || "—"}</span>
+              <span className="text-center text-[11px]" style={{ color: "var(--text-muted)" }}>{u.phone || "—"}</span>
+              <span className="text-center text-[11px]" style={{ color: "var(--text-muted)" }}>{fmt(u.joinedAt)}</span>
+              <span className="text-center text-[11px]" style={{ color: "var(--text-muted)" }}>{fmt(u.lastSeen)}</span>
             </div>
           ))}
         </div>

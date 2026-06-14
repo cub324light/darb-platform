@@ -11,6 +11,10 @@ import Logo from "@/components/Logo";
 const STUDY_LEVELS = ["ثانوي", "جامعي", "خريج", "أخرى"];
 const GRADES = ["أول ثانوي", "ثاني ثانوي", "ثالث ثانوي"];
 const MAX_TRACKS = 3;
+const SAUDI_REGIONS = [
+  "الرياض","مكة المكرمة","المدينة المنورة","القصيم","الشرقية",
+  "عسير","تبوك","حائل","الحدود الشمالية","جازان","نجران","الباحة","الجوف",
+];
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -21,6 +25,11 @@ export default function OnboardingPage() {
   const [studyLevel, setStudyLevel] = useState("");
   const [grade, setGrade]           = useState("");
   const [studyHours, setStudyHours] = useState("");
+
+  const [school, setSchool]   = useState("");
+  const [region, setRegion]   = useState("");
+  const [city, setCity]       = useState("");
+  const [phone, setPhone]     = useState("");
 
   const [activeTracks, setActiveTracks] = useState<TrackId[]>([]);
   const [examDate, setExamDate]         = useState("");
@@ -43,6 +52,12 @@ export default function OnboardingPage() {
     if (!activeTracks.length) return;
     const trimmedName = name.trim();
     const primaryTrack = activeTracks[0];
+    const extras = {
+      school: school.trim() || undefined,
+      region: region || undefined,
+      city: city.trim() || undefined,
+      phone: phone.trim() || undefined,
+    };
     saveUser({
       name: trimmedName,
       track: primaryTrack,
@@ -52,6 +67,7 @@ export default function OnboardingPage() {
       studyLevel: studyLevel || undefined,
       grade: studyLevel === "ثانوي" && grade ? grade : undefined,
       studyHours: studyHours ? parseInt(studyHours) : undefined,
+      ...extras,
     });
     if (examDate) saveExamDate(examDate);
     /* احفظ النتائج السابقة (الي فيها اختبار أو درجة) في «نتائجي» */
@@ -63,7 +79,7 @@ export default function OnboardingPage() {
         score: p.score.trim() || undefined,
       })));
     }
-    registerUser(trimmedName, primaryTrack);
+    registerUser(trimmedName, primaryTrack, extras);
     await pushBackup(); // احفظ إعدادك في السحابة فوراً
     router.push("/dashboard");
   };
@@ -72,7 +88,6 @@ export default function OnboardingPage() {
     <Dome hideControls>
       <div className="text-center py-5">
         <Logo className="font-black text-5xl mb-1 block" />
-        <p className="eyebrow" style={{ color: "var(--text-dim)" }}>YOUR PATH TO EXCELLENCE</p>
       </div>
     </Dome>
   );
@@ -175,6 +190,72 @@ export default function OnboardingPage() {
           </div>
           <input type="number" value={studyHours} onChange={(e) => setStudyHours(e.target.value)}
             placeholder="مثال: 3" min={1} max={16}
+            className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+            style={{ background: "var(--surface)", border: "2px solid var(--border)" }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
+        </div>
+
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <p className="label">المدرسة أو الجامعة؟</p>
+            <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+              style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
+          </div>
+          <input type="text" value={school} onChange={(e) => setSchool(e.target.value)}
+            placeholder="مثال: ثانوية الملك فهد" maxLength={60}
+            className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+            style={{ background: "var(--surface)", border: "2px solid var(--border)" }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
+        </div>
+
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <p className="label">المنطقة؟</p>
+            <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+              style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {SAUDI_REGIONS.map((r) => {
+              const active = region === r;
+              return (
+                <button key={r} onClick={() => setRegion(active ? "" : r)}
+                  className="rounded-2xl py-2.5 font-semibold text-[14px] transition active:scale-[0.98]"
+                  style={{
+                    background: active ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
+                    border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
+                    color: active ? "var(--accent-light)" : "var(--text)",
+                  }}>
+                  {r}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <p className="label">المدينة أو المحافظة؟</p>
+            <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+              style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
+          </div>
+          <input type="text" value={city} onChange={(e) => setCity(e.target.value)}
+            placeholder="مثال: جدة، الدمام..." maxLength={40}
+            className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+            style={{ background: "var(--surface)", border: "2px solid var(--border)" }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
+        </div>
+
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <p className="label">رقم الجوال؟</p>
+            <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+              style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
+          </div>
+          <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
+            placeholder="05XXXXXXXX" maxLength={15} inputMode="tel"
             className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
             style={{ background: "var(--surface)", border: "2px solid var(--border)" }}
             onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}

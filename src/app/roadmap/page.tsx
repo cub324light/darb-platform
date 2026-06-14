@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
+import TopicExtractor from "@/components/TopicExtractor";
 import { RAKAN_SCHEDULE } from "@/lib/constants";
 import { getTrack, subjectColor, TRACKS, type Track, type TrackId } from "@/lib/tracks";
 import {
@@ -452,13 +453,23 @@ export default function RoadmapPage() {
           </div>
         </div>
         {!isTahsili && (
-          <div className="px-5 mb-6 flex gap-2.5">
-            <input value={newLesson} onChange={(e) => setNewLesson(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addCustom()}
-              placeholder={`درس جديد في ${selected}...`}
-              className="flex-1 min-w-0 rounded-2xl px-4 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none min-h-[54px]"
-              style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }} />
-            <button onClick={addCustom} className="px-6 rounded-2xl font-black text-lg min-h-[54px]"
-              style={{ background: "transparent", border: `1.5px solid ${color}`, color }}>+</button>
+          <div className="px-5 mb-6 flex flex-col gap-3">
+            <div className="flex gap-2.5">
+              <input value={newLesson} onChange={(e) => setNewLesson(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addCustom()}
+                placeholder={`درس جديد في ${selected}...`}
+                className="flex-1 min-w-0 rounded-2xl px-4 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none min-h-[54px]"
+                style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }} />
+              <button onClick={addCustom} className="px-6 rounded-2xl font-black text-lg min-h-[54px]"
+                style={{ background: "transparent", border: `1.5px solid ${color}`, color }}>+</button>
+            </div>
+            <TopicExtractor
+              subject={selected}
+              color={color}
+              onAdd={(titles) => setCustom((p) => [
+                ...p,
+                ...titles.map((t, i) => ({ id: `${Date.now()}-${i}`, subject: selected, title: t })),
+              ])}
+            />
           </div>
         )}
         <div className="px-5 flex flex-col gap-3 rise rise-2">
