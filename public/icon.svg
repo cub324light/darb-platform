@@ -6,10 +6,8 @@
     </linearGradient>
   </defs>
   <rect width="512" height="512" rx="115" fill="url(#bg)"/>
-  <!-- الدرب: مسار متعرج يصعد نحو النجمة -->
-  <path d="M110 400 C 210 400 250 330 250 260 C 250 195 290 150 380 142"
-        stroke="#2563EB" stroke-width="38" stroke-linecap="round" fill="none"/>
-  <circle cx="110" cy="400" r="26" fill="#2563EB"/>
-  <!-- نجمة الوصول -->
-  <path d="M396 78 l17 46 46 17 -46 17 -17 46 -17 -46 -46 -17 46 -17 z" fill="#16275B"/>
+  <!-- درب — مكتوبة بالأزرق، بدون نجمة -->
+  <text x="256" y="256" text-anchor="middle" dominant-baseline="central"
+        font-family="'Tajawal','Segoe UI',Tahoma,sans-serif" font-weight="700"
+        font-size="240" fill="#2563EB">درب</text>
 </svg>
