@@ -62,7 +62,7 @@ export default function OnboardingPage() {
       })));
     }
     registerUser(trimmedName, primaryTrack);
-    await pushBackup().catch(() => {}); // محاولة حفظ — ما يوقف التدفق
+    pushBackup().catch(() => {}); // fire-and-forget — ما ننتظره
     window.location.href = "/dashboard";
   };
 

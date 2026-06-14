@@ -116,9 +116,18 @@ export function authErrorMsg(code: string): string {
 /* تُستدعى من البوابة بعد تسجيل الدخول:
    اسحب من السحابة؛ وإن لم توجد نسخة وعندك بيانات محلية ارفعها (ترحيل حساب مجهول قديم). */
 export async function initialSync(): Promise<void> {
+  /* timeout 6 ثواني — لو Firestore ما ردّ (قواعد غير منشورة مثلاً) نكمل بدونه */
+  const timeout = new Promise<void>((resolve) => setTimeout(resolve, 6000));
   try {
-    const restored = await pullBackup();
-    if (!restored && hasLocalData()) await pushBackup();
+    await Promise.race([
+      (async () => {
+        const restored = await pullBackup();
+        if (!restored && hasLocalData()) await pushBackup();
+      })(),
+      timeout,
+    ]);
+  } catch {
+    /* نكمل في كل الأحوال */
   } finally {
     initialSyncDone = true;
   }
