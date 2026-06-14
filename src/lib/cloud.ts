@@ -17,14 +17,15 @@ import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import { loadUser, loadStats, computeStreak } from "./storage";
 
-/* المفاتيح التي تُحفظ في السحابة (كل بيانات المستخدم) */
+/* المفاتيح التي تُحفظ في السحابة (كل بيانات المستخدم)
+   ملاحظة: darb_theme متعمداً غير مدرج — الثيم خاص بكل جهاز */
 const BACKUP_KEYS = [
   "darb_user", "darb_stats", "darb_vault", "darb_cards", "darb_lessons",
   "darb_done_lessons", "darb_posts", "darb_schedule", "darb_exam_date",
   "darb_events", "darb_exam_flow", "darb_stage_reviews",
   "darb_tadreeb_items", "darb_tadreeb_done", "darb_tasreebat_pct",
   "darb_subject_exam_dates", "darb_track_exam_dates", "darb_dash_config",
-  "darb_results",
+  "darb_dash_sched_v2", "darb_results",
 ];
 
 /* علم اكتمال أول سحب — يمنع الرفع قبل استرجاع نسخة السحابة */

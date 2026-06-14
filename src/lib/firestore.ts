@@ -31,7 +31,6 @@ export async function registerUser(name: string, track: string) {
 export async function syncUser(data: {
   name?: string;
   track?: string;
-  bird?: string;
   streak?: number;
   focusMins?: number;
   sessions?: number;
