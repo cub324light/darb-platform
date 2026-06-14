@@ -1,10 +1,12 @@
 "use client";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "./firebase";
+import { db, auth } from "./firebase";
 
-/* ─── UID مستمر في localStorage ─── */
+/* UID المستخدم — يُفضّل Firebase Auth UID لربط البريد الإلكتروني، بديله localStorage */
 export function getOrCreateUid(): string {
   if (typeof window === "undefined") return "ssr";
+  const firebaseUid = auth.currentUser?.uid;
+  if (firebaseUid) return firebaseUid;
   let uid = localStorage.getItem("darb_uid");
   if (!uid) {
     uid = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -21,6 +23,7 @@ export async function registerUser(
 ) {
   try {
     const uid = getOrCreateUid();
+    const email = auth.currentUser?.email ?? "";
     await setDoc(doc(db, "users", uid), {
       name,
       track,
@@ -32,6 +35,7 @@ export async function registerUser(
       silver: 0,
       taseesProgress: 0,
       tadreebProgress: 0,
+      ...(email                ? { email               } : {}),
       ...(extras?.school  ? { school:  extras.school  } : {}),
       ...(extras?.region  ? { region:  extras.region  } : {}),
       ...(extras?.city    ? { city:    extras.city    } : {}),
