@@ -70,7 +70,7 @@ const FEATURES = [
 ];
 
 const STEPS = [
-  { n: "١", title: "ادخل بثانية", desc: "بحساب Google أو Apple — يحفظ تقدّمك ويزامنه على كل أجهزتك." },
+  { n: "١", title: "ادخل بثانية", desc: "بحساب Google — يحفظ تقدّمك ويزامنه على كل أجهزتك." },
   { n: "٢", title: "شوف خريطتك", desc: "كل دروس مسارك مرتّبة. ابدأ من التأسيس واقفل كل مرحلة." },
   { n: "٣", title: "ذاكر يومياً", desc: "أوربت للتركيز، الخزنة للأخطاء، المراجعة للحفظ — كل شي بمكان." },
 ];
@@ -370,7 +370,7 @@ export default function LandingPage() {
           }}>
           <h2 className="font-black text-2xl mb-3" style={{ color: "var(--text)" }}>جاهز تبدأ دربك؟</h2>
           <p className="text-base mb-7 leading-relaxed" style={{ color: "var(--text-dim)" }}>
-            أقل من دقيقة وأنت بداخل — ادخل بحساب Google أو Apple واختر مسارك.
+            أقل من دقيقة وأنت بداخل — ادخل بحساب Google واختر مسارك.
           </p>
           <Link href={ctaHref}
             className="btn-primary glow-blue inline-flex items-center px-12 text-lg"

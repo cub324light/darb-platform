@@ -29,6 +29,9 @@ export default function VaultPage() {
   const [newSubject, setNewSubject] = useState("");
   const [newCat, setNewCat] = useState<string>(ERROR_CATEGORIES[0]);
   const [newNote, setNewNote] = useState("");
+  /* شرح دويرب لكل خطأ (تخزين مؤقت بالـ id) */
+  const [explainById, setExplainById] = useState<Record<string, string>>({});
+  const [explainLoadingId, setExplainLoadingId] = useState<string | null>(null);
 
   useEffect(() => {
     const u = loadUser();
@@ -98,6 +101,28 @@ export default function VaultPage() {
 
   const categoryCount = (cat: string) => errors.filter((e) => e.category === cat).length;
   const colorOf = (subj: string) => colorForSubject(activeIds, subj);
+
+  /* اطلب من دويرب شرح خطأ — نتيجة مخزّنة مؤقتاً حتى لا تتكرر الطلبات */
+  const explainError = async (error: VaultError) => {
+    if (explainById[error.id] || explainLoadingId) return;
+    setExplainLoadingId(error.id);
+    try {
+      const promptText =
+        `السؤال أو المفهوم: ${error.question}\nالمادة: ${error.subject}\nتصنيف الخطأ: ${error.category}` +
+        (error.note ? `\nملاحظة الطالب: ${error.note}` : "");
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: promptText, subjects, mode: "explain" }),
+      });
+      const data = (await res.json()) as { text?: string; error?: string };
+      setExplainById((p) => ({ ...p, [error.id]: (data.text ?? data.error ?? "تعذّر الشرح").trim() }));
+    } catch {
+      setExplainById((p) => ({ ...p, [error.id]: "تعذّر الاتصال — حاول مرة ثانية" }));
+    } finally {
+      setExplainLoadingId(null);
+    }
+  };
 
   return (
     <div className="page">
@@ -350,6 +375,34 @@ export default function VaultPage() {
                         <p className="text-base text-[var(--text-dim)] leading-relaxed">{error.note}</p>
                       </div>
                     )}
+
+                    {/* ── شرح دويرب ── */}
+                    {explainById[error.id] ? (
+                      <div className="rounded-2xl p-5"
+                        style={{
+                          background: "color-mix(in srgb, var(--accent) 6%, var(--surface2))",
+                          border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)",
+                        }}>
+                        <p className="text-sm font-bold mb-2" style={{ color: "var(--accent-light)" }}>شرح دويرب 🤖</p>
+                        <p className="text-base leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>
+                          {explainById[error.id]}
+                        </p>
+                      </div>
+                    ) : (
+                      <button onClick={() => explainError(error)} disabled={explainLoadingId === error.id}
+                        className="w-full py-3.5 rounded-2xl text-base font-bold transition min-h-[52px] flex items-center justify-center gap-2"
+                        style={{
+                          background: "color-mix(in srgb, var(--accent) 10%, transparent)",
+                          border: "1.5px solid color-mix(in srgb, var(--accent) 30%, transparent)",
+                          color: "var(--accent-light)",
+                        }}>
+                        {explainLoadingId === error.id ? (
+                          <span className="inline-block w-4 h-4 rounded-full border-2 animate-spin"
+                            style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }} />
+                        ) : "اشرح لي 🤖"}
+                      </button>
+                    )}
+
                     <div className="grid grid-cols-2 gap-3">
                       <button onClick={() => setErrors((p) => p.map((e) => e.id === error.id ? { ...e, reviewCount: e.reviewCount + 1 } : e))}
                         className="py-4 rounded-2xl text-base font-black transition min-h-[56px]"

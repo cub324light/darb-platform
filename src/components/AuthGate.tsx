@@ -36,7 +36,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   const [synced, setSynced] = useState(isInitialSyncDone());
   const [redirectErr, setRedirectErr] = useState<string | null>(null);
 
-  /* أكمل تسجيل الدخول القادم عبر redirect (Google/Apple) */
+  /* أكمل تسجيل الدخول القادم عبر redirect (Google) */
   useEffect(() => {
     consumeRedirectResult().then((e) => { if (e) setRedirectErr(e); });
   }, []);

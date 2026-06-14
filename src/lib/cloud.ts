@@ -1,6 +1,6 @@
 "use client";
 /* ─── تسجيل الدخول + مزامنة كل البيانات مع Firebase ───
-   الدخول إجباري (Google / Apple / إيميل). بعد الدخول تُسترجع نسخة
+   الدخول إجباري (Google / إيميل). بعد الدخول تُسترجع نسخة
    السحابة إلى localStorage، وتُرفع تلقائياً عند أي تغيير ومغادرة الصفحة. */
 import {
   createUserWithEmailAndPassword,
@@ -8,7 +8,6 @@ import {
   signOut as fbSignOut,
   onAuthStateChanged,
   GoogleAuthProvider,
-  OAuthProvider,
   signInWithRedirect,
   getRedirectResult,
   type User,
@@ -54,17 +53,10 @@ export async function signOutUser() {
   initialSyncDone = false;
 }
 
-/* ─── Google + Apple — تدفّق redirect (موثوق على iOS Safari/PWA) ─── */
+/* ─── Google — تدفّق redirect (موثوق على iOS Safari/PWA) ─── */
 export async function signInWithGoogle() {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
-  await signInWithRedirect(auth, provider);
-}
-
-export async function signInWithApple() {
-  const provider = new OAuthProvider("apple.com");
-  provider.addScope("email");
-  provider.addScope("name");
   await signInWithRedirect(auth, provider);
 }
 

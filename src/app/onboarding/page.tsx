@@ -21,7 +21,7 @@ export default function OnboardingPage() {
   const [activeTracks, setActiveTracks] = useState<TrackId[]>([]);
   const [examDate, setExamDate]         = useState("");
 
-  /* املأ الاسم مبدئياً من حساب Google/Apple */
+  /* املأ الاسم مبدئياً من حساب Google */
   useEffect(() => {
     const dn = currentUser()?.displayName;
     if (dn) setName((prev) => prev || dn.split(" ")[0]);

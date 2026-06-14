@@ -5,6 +5,7 @@ import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import Confetti from "@/components/Confetti";
+import QuizGen from "@/components/QuizGen";
 import { sm2, nextReviewText } from "@/lib/sm2";
 import { subjectsForTracks, colorForSubject, type TrackId } from "@/lib/tracks";
 import { loadUser, loadList, saveList } from "@/lib/storage";
@@ -333,6 +334,13 @@ export default function ReviewPage() {
           </div>
         )}
       </div>
+
+      {/* توليد أسئلة تدريب من دويرب */}
+      {subjectList.length > 0 && (
+        <div className="px-5 mb-6">
+          <QuizGen subjects={subjectList} />
+        </div>
+      )}
 
       {/* مستحقة الآن */}
       {dueCards.length > 0 && (
