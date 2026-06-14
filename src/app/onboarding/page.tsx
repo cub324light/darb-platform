@@ -85,7 +85,6 @@ export default function OnboardingPage() {
     <Dome hideControls>
       <div className="text-center py-5">
         <Logo className="font-black text-5xl mb-1 block" />
-        <p className="eyebrow" style={{ color: "var(--text-dim)" }}>YOUR PATH TO EXCELLENCE</p>
       </div>
     </Dome>
   );

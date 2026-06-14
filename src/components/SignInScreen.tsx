@@ -150,8 +150,7 @@ export default function SignInScreen({ initialError }: { initialError?: string |
   return (
     <div className="min-h-dvh flex flex-col items-center justify-center px-6 py-10 relative z-[1]">
       <div className="w-full max-w-sm flex flex-col items-center">
-        <Logo className="font-black text-5xl mb-2" />
-        <p className="eyebrow mb-1" style={{ color: "var(--text-dim)" }}>YOUR PATH TO EXCELLENCE</p>
+        <Logo className="font-black text-5xl mb-4" />
         <p className="text-[15px] text-center leading-relaxed mb-8" style={{ color: "var(--text-muted)" }}>
           سجّل دخولك عشان نحفظ تقدّمك ونزامنه على كل أجهزتك.
         </p>
