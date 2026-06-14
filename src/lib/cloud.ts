@@ -55,22 +55,24 @@ export async function signOutUser() {
   initialSyncDone = false;
 }
 
-/* ─── Google — popup على الويب، redirect على iOS/PWA ─── */
+/* ─── Google — popup أولاً دائماً (أكثر موثوقية ويُظهر الأخطاء فوراً)؛
+   نلجأ لـ redirect فقط لو المتصفح منع البوب-أب ─── */
 export async function signInWithGoogle() {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
-  if (isIOS || isStandalone) {
-    await signInWithRedirect(auth, provider);
-  } else {
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (e) {
-      if ((e as { code?: string })?.code === "auth/popup-blocked") {
-        await signInWithRedirect(auth, provider);
-      } else throw e;
-    }
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (e) {
+    const code = (e as { code?: string })?.code ?? "";
+    /* البوب-أب ممنوع/مُغلق (شائع في PWA على الجوال) → جرّب redirect */
+    if (
+      code === "auth/popup-blocked" ||
+      code === "auth/popup-closed-by-user" ||
+      code === "auth/cancelled-popup-request" ||
+      code === "auth/operation-not-supported-in-this-environment"
+    ) {
+      await signInWithRedirect(auth, provider);
+    } else throw e;
   }
 }
 
