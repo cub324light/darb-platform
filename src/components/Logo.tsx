@@ -1,4 +1,8 @@
-/* شعار "درب" — دائماً أزرق بغض النظر عن المظهر */
+"use client";
+import { useEffect, useState } from "react";
+
+/* شعار "درب" — يتبع مظهر الموقع تلقائياً:
+   ليلي (مظهر داكن) → أزرق متوهّج · نهاري (مظهر فاتح) → ذهبي. */
 export default function Logo({
   className = "",
   style = {},
@@ -6,15 +10,23 @@ export default function Logo({
   className?: string;
   style?: React.CSSProperties;
 }) {
+  const [day, setDay] = useState(false);
+
+  useEffect(() => {
+    const read = () => setDay(document.documentElement.getAttribute("data-theme") === "light");
+    read();
+    const obs = new MutationObserver(read);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => obs.disconnect();
+  }, []);
+
+  const color = day ? "var(--gold)" : "var(--accent-light)";
+  const glow = day
+    ? "0 0 22px color-mix(in srgb, var(--gold) 48%, transparent)"
+    : "0 0 22px color-mix(in srgb, var(--accent-light) 40%, transparent)";
+
   return (
-    <span
-      className={className}
-      style={{
-        color: "var(--accent-light)",
-        textShadow: "0 0 22px color-mix(in srgb, var(--accent-light) 40%, transparent)",
-        ...style,
-      }}
-    >
+    <span className={className} style={{ color, textShadow: glow, transition: "color .3s, text-shadow .3s", ...style }}>
       درب
     </span>
   );

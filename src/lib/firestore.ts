@@ -1,22 +1,17 @@
 "use client";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "./firebase";
+import { db, auth } from "./firebase";
 
-/* ─── UID مستمر في localStorage ─── */
+/* ─── معرّف المستخدم: نستخدم UID المصادقة (يطابق قواعد Firestore) ─── */
 export function getOrCreateUid(): string {
-  if (typeof window === "undefined") return "ssr";
-  let uid = localStorage.getItem("darb_uid");
-  if (!uid) {
-    uid = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-    localStorage.setItem("darb_uid", uid);
-  }
-  return uid;
+  return auth.currentUser?.uid ?? "";
 }
 
 /* ─── تسجيل مستخدم جديد (عند الـ onboarding) ─── */
 export async function registerUser(name: string, track: string) {
   try {
-    const uid = getOrCreateUid();
+    const uid = auth.currentUser?.uid;
+    if (!uid) return; // لا كتابة بدون تسجيل دخول — القواعد ترفضها
     await setDoc(doc(db, "users", uid), {
       name,
       track,
@@ -45,7 +40,8 @@ export async function syncUser(data: {
   tadreebProgress?: number;
 }) {
   try {
-    const uid = getOrCreateUid();
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
     await setDoc(doc(db, "users", uid), {
       ...data,
       lastSeen: serverTimestamp(),
