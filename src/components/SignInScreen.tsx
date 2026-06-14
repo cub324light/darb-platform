@@ -16,6 +16,7 @@ export default function SignInScreen({ initialError }: { initialError?: string |
   const [mode, setMode] = useState<"signin" | "signup">("signup");
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
+  const [done, setDone] = useState(false); // auth succeeded, waiting for AuthGate
 
   const oauthGoogle = async () => {
     setErr(""); setInfo("");
@@ -32,25 +33,35 @@ export default function SignInScreen({ initialError }: { initialError?: string |
 
   const submitEmail = async () => {
     setErr(""); setInfo("");
-    if (!email.trim() || pass.length < 6) {
-      setErr("اكتب الإيميل وكلمة مرور ٦ أحرف على الأقل");
-      return;
-    }
+    if (!email.trim()) { setErr("اكتب إيميلك"); return; }
+    if (pass.length < 6) { setErr("كلمة المرور ٦ أحرف على الأقل"); return; }
     setBusy("email");
     try {
       if (mode === "signup") await signUp(email, pass);
       else await signIn(email, pass);
-      window.location.href = "/dashboard";
+      /* النجاح: AuthGate سيلتقط onAuthStateChanged ويتولى الانتقال تلقائياً
+         لا حاجة لـ window.location.href — نجنّب مشكلة السباق مع IndexedDB */
+      setDone(true);
+      setInfo("تم الدخول بنجاح ✓  جارٍ التحميل...");
     } catch (e) {
-      const code = (e as FirebaseError)?.code ?? "";
-      /* لو الإيميل مسجّل بالفعل → حوّل لوضع الدخول */
+      const raw = e as FirebaseError;
+      const code = raw?.code ?? "";
+      console.error("[SignIn] auth/email error:", code, raw?.message ?? e);
       if (code === "auth/email-already-in-use") {
         setMode("signin");
-        setErr("هذا الإيميل مسجّل — ادخل بكلمة مرورك، أو استخدم «نسيت كلمة المرور»");
-      } else if (code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found") {
-        setErr("الإيميل أو كلمة المرور غير صحيحة — جرّب «نسيت كلمة المرور» لإعادة تعيينها");
+        setErr("هذا الإيميل مسجّل — ادخل بكلمة مرورك أو استخدم «نسيت كلمة المرور»");
+      } else if (
+        code === "auth/invalid-credential" ||
+        code === "auth/wrong-password" ||
+        code === "auth/user-not-found"
+      ) {
+        setErr("الإيميل أو كلمة المرور غير صحيحة — جرّب «نسيت كلمة المرور»");
+      } else if (code === "auth/too-many-requests") {
+        setErr("محاولات كثيرة — انتظر دقيقة وحاول مرة ثانية");
+      } else if (code === "auth/network-request-failed") {
+        setErr("تأكد من اتصالك بالإنترنت وحاول مرة ثانية");
       } else {
-        setErr(authErrorMsg(code) + (code ? ` (${code})` : ""));
+        setErr((authErrorMsg(code) || "صار خطأ غير متوقع") + (code ? `  [${code}]` : ""));
       }
       setBusy(null);
     }
@@ -62,7 +73,7 @@ export default function SignInScreen({ initialError }: { initialError?: string |
     setBusy("reset");
     try {
       await resetPassword(email);
-      setInfo("أُرسل رابط إعادة التعيين على إيميلك ✓ — تحقّق من صندوق الوارد (أو Spam)");
+      setInfo("أُرسل رابط إعادة التعيين على إيميلك ✓ — تحقّق من صندوق الوارد أو Spam");
       setShowReset(false);
     } catch (e) {
       const code = (e as FirebaseError)?.code ?? "";
@@ -71,6 +82,23 @@ export default function SignInScreen({ initialError }: { initialError?: string |
       setBusy(null);
     }
   };
+
+  /* حالة نجاح الدخول — AuthGate سيستبدل هذا المكوّن قريباً */
+  if (done) {
+    return (
+      <div className="min-h-dvh flex flex-col items-center justify-center gap-4 px-6 relative z-[1]">
+        <Logo className="font-black text-5xl mb-2" />
+        <p className="text-[16px] font-bold text-center" style={{ color: "var(--accent-light)" }}>
+          تم الدخول بنجاح ✓
+        </p>
+        <p className="text-[14px] text-center" style={{ color: "var(--text-muted)" }}>
+          جارٍ تحميل بياناتك...
+        </p>
+        <div className="w-8 h-8 rounded-full border-2 border-transparent animate-spin mt-2"
+          style={{ borderTopColor: "var(--accent)" }} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-dvh flex flex-col items-center justify-center px-6 py-10 relative z-[1]">
@@ -94,12 +122,22 @@ export default function SignInScreen({ initialError }: { initialError?: string |
           {busy === "google" ? "جارٍ التحويل..." : "المتابعة بحساب Google"}
         </button>
 
-        {/* رسائل */}
+        {/* رسائل الخطأ والمعلومات */}
         {err && (
-          <p className="text-[13px] text-center mt-1 mb-1 font-semibold px-2" style={{ color: "var(--danger)" }}>{err}</p>
+          <div className="w-full rounded-2xl px-4 py-3 mt-2 mb-1"
+            style={{ background: "rgba(239,68,68,0.12)", border: "2px solid #EF4444" }}>
+            <p className="text-[14px] text-center font-bold leading-snug" style={{ color: "#EF4444" }}>
+              {err}
+            </p>
+          </div>
         )}
         {info && (
-          <p className="text-[13px] text-center mt-1 mb-1 font-semibold px-2" style={{ color: "var(--accent-light)" }}>{info}</p>
+          <div className="w-full rounded-2xl px-4 py-3 mt-2 mb-1"
+            style={{ background: "rgba(59,130,246,0.12)", border: "2px solid var(--accent)" }}>
+            <p className="text-[14px] text-center font-bold" style={{ color: "var(--accent-light)" }}>
+              {info}
+            </p>
+          </div>
         )}
 
         {/* الإيميل */}
