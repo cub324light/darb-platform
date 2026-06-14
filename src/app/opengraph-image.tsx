@@ -19,9 +19,9 @@ export default async function Image() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #16275B 0%, #07070D 100%)",
+          background: "linear-gradient(135deg, #F5B40A 0%, #D4920A 100%)",
           fontFamily: "Tajawal",
-          color: "#FFFFFF",
+          color: "#2563EB",
           direction: "rtl",
         }}
       >
@@ -34,14 +34,14 @@ export default async function Image() {
             strokeLinecap="round"
             fill="none"
           />
-          <circle cx="110" cy="400" r="26" fill="#60A5FA" />
-          <path d="M396 78 l17 46 46 17 -46 17 -17 46 -17 -46 -46 -17 46 -17 z" fill="#F5B40A" />
+          <circle cx="110" cy="400" r="26" fill="#2563EB" />
+          <path d="M396 78 l17 46 46 17 -46 17 -17 46 -17 -46 -46 -17 46 -17 z" fill="#16275B" />
         </svg>
 
-        <div style={{ fontSize: 190, fontWeight: 700, lineHeight: 1, color: "#60A5FA" }}>درب</div>
+        <div style={{ fontSize: 190, fontWeight: 700, lineHeight: 1, color: "#2563EB" }}>درب</div>
 
         {/* الكلمات معكوسة في المصدر لأن Satori يصفّها يساراً—لتظهر "طريقك للتفوق" */}
-        <div style={{ fontSize: 50, fontWeight: 700, marginTop: 22, color: "#E5E7EB" }}>
+        <div style={{ fontSize: 50, fontWeight: 700, marginTop: 22, color: "#1E3A8A" }}>
           للتفوق طريقك
         </div>
       </div>

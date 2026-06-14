@@ -10,6 +10,7 @@ import DashAI from "@/components/DashAI";
 import { syncUser } from "@/lib/firestore";
 import DayScheduler, { getEventsForDate } from "@/components/DayScheduler";
 import ExamDateButton from "@/components/ExamDateButton";
+import Calendar from "@/components/Calendar";
 
 const DAILY_TARGET = 200;
 
@@ -74,6 +75,7 @@ export default function DashboardPage() {
   const [schedOpen, setSchedOpen] = useState(false);
   const [schedTab, setSchedTab] = useState<"manual" | "ai">("manual");
   const [schedPrefill, setSchedPrefill] = useState("");
+  const [calDate, setCalDate] = useState<string | null>(null);
   const [allEvents, setAllEvents] = useState<ScheduleEvent[]>([]);
   const [examDate, setExamDate] = useState<string | null>(null);
   const [trackExamDates, setTrackExamDates] = useState<Record<string, string>>({});
@@ -133,11 +135,11 @@ export default function DashboardPage() {
       const due = Array.isArray(cardsRaw) ? cardsRaw.filter((c: { dueDate: number }) => c.dueDate <= Date.now()).length : 0;
       const todS = loadStats();
       if (due > 0) {
-        setSuggestion({ text: `${due} بطاقة مراجعة مستحقة`, sub: "راجعها الحين قبل ما تنسى", href: "/review", color: "#10B981" });
+        setSuggestion({ text: `${due} بطاقة مراجعة مستحقة`, sub: "راجعها الحين قبل ما تنسى", href: "/review", color: "var(--success)" });
       } else if (unreviewedVault > 0) {
-        setSuggestion({ text: `${unreviewedVault} خطأ لم تراجعه بعد`, sub: "افتح الخزنة وراجعها", href: "/vault", color: "#F59E0B" });
+        setSuggestion({ text: `${unreviewedVault} خطأ لم تراجعه بعد`, sub: "افتح الخزنة وراجعها", href: "/vault", color: "var(--accent)" });
       } else if (todS.todayFocusMins === 0) {
-        setSuggestion({ text: "ما بدأت اليوم بعد", sub: "جلسة أوربت تكسر الصفر", href: "/orbit", color: "#2563EB" });
+        setSuggestion({ text: "ما بدأت اليوم بعد", sub: "جلسة أوربت تكسر الصفر", href: "/orbit", color: "var(--accent)" });
       }
     } catch {}
 
@@ -448,57 +450,78 @@ export default function DashboardPage() {
 
       case "schedule":
         return (
-          <section className="card">
-            <div className="flex items-center justify-between mb-3">
-              <p className="title-md" style={{ color: "var(--text)" }}>جدول اليوم</p>
-            </div>
-            {todayEvents.length === 0 ? (
-              <div className="flex items-center justify-center gap-2 rounded-2xl py-5"
-                style={{ background: "var(--surface2)", border: "1.5px dashed var(--border)", minHeight: "64px" }}>
-                <span className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>
-                  لا يوجد جدول اليوم — اضغط «خطة ذكية» تحت
-                </span>
+          <div className="flex flex-col gap-4">
+            {/* التقويم فوق — وبينه وبين جدول اليوم فاصل */}
+            <Calendar
+              examDate={examDate}
+              onExamDateChange={(d) => { setExamDate(d); saveExamDate(d); }}
+              onDayClick={(date) => setCalDate(date)}
+              getDayInfo={(date) =>
+                getEventsForDate(date, allEvents).map((ev) => {
+                  const subj = allSubjects.find((s) => s.name === ev.subject);
+                  return {
+                    id: ev.id,
+                    label: ev.type === "study" ? (ev.subject ?? "مذاكرة") : (ev.label ?? "مشغول"),
+                    color: ev.type === "study" ? (subj?.color ?? "var(--accent-light)") : "var(--danger)",
+                    from: ev.fromHour,
+                    to: ev.toHour,
+                  };
+                })
+              }
+            />
+            <section className="card">
+              <div className="flex items-center justify-between mb-3">
+                <p className="title-md" style={{ color: "var(--text)" }}>جدول اليوم</p>
               </div>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {todayEvents.map((ev) => (
-                  <div key={ev.id} className="flex items-center gap-3 py-2.5 border-b border-[var(--border)] last:border-0">
-                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                      style={{ background: ev.type === "study" ? "var(--accent-light)" : "var(--danger)" }} />
-                    <span className="text-[17px] font-semibold flex-1" style={{ color: "var(--text)" }}>
-                      {ev.type === "study" ? (ev.subject ?? "") : (ev.label ?? "")}
-                    </span>
-                    <span className="text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>
-                      {fmtHour(ev.fromHour)} → {fmtHour(ev.toHour)}
-                    </span>
-                    <button
-                      onClick={() => {
-                        const updated = allEvents.filter((e) => e.id !== ev.id);
-                        setAllEvents(updated);
-                        saveEvents(updated);
-                        const tod = new Date().toISOString().slice(0, 10);
-                        setTodayEvents(getEventsForDate(tod, updated));
-                      }}
-                      className="text-[var(--danger)] text-base px-2 min-h-[44px] flex-shrink-0"
-                      aria-label="حذف">✕</button>
-                  </div>
-                ))}
+              {todayEvents.length === 0 ? (
+                <div className="flex items-center justify-center gap-2 rounded-2xl py-5"
+                  style={{ background: "var(--surface2)", border: "1.5px dashed var(--border)", minHeight: "64px" }}>
+                  <span className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>
+                    لا يوجد جدول اليوم — اضغط «خطة ذكية» تحت
+                  </span>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {todayEvents.map((ev) => (
+                    <div key={ev.id} className="flex items-center gap-3 py-2.5 border-b border-[var(--border)] last:border-0">
+                      <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                        style={{ background: ev.type === "study" ? "var(--accent-light)" : "var(--danger)" }} />
+                      <span className="text-[17px] font-semibold flex-1" style={{ color: "var(--text)" }}>
+                        {ev.type === "study" ? (ev.subject ?? "") : (ev.label ?? "")}
+                      </span>
+                      <span className="text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>
+                        {fmtHour(ev.fromHour)} → {fmtHour(ev.toHour)}
+                      </span>
+                      <button
+                        onClick={() => {
+                          const updated = allEvents.filter((e) => e.id !== ev.id);
+                          setAllEvents(updated);
+                          saveEvents(updated);
+                          const tod = new Date().toISOString().slice(0, 10);
+                          setTodayEvents(getEventsForDate(tod, updated));
+                        }}
+                        className="text-[var(--danger)] text-base px-2 min-h-[44px] flex-shrink-0"
+                        aria-label="حذف">✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2 mt-3">
+                <button onClick={() => { setSchedOpen(true); setSchedTab("manual"); }}
+                  className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
+                  style={{ background: "transparent", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
+                  يدوي
+                </button>
+                <button onClick={() => { setSchedOpen(true); setSchedTab("ai"); }}
+                  className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
+                  style={{ background: "var(--accent)", color: "white", border: "none" }}>
+                  مساعد دويرب
+                </button>
               </div>
-            )}
-            <div className="flex gap-2 mt-3">
-              <button onClick={() => { setSchedOpen(true); setSchedTab("manual"); }}
-                className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
-                style={{ background: "transparent", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
-                يدوي
-              </button>
-              <button onClick={() => { setSchedOpen(true); setSchedTab("ai"); }}
-                className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
-                style={{ background: "var(--accent)", color: "white", border: "none" }}>
-                مساعد دويرب
-              </button>
-            </div>
-          </section>
+            </section>
+          </div>
         );
+
 
       case "ai":
         return (
@@ -850,7 +873,7 @@ export default function DashboardPage() {
 
       <BottomNav />
 
-      {/* DayScheduler Modal */}
+      {/* DayScheduler Modal — اليوم (من الأزرار) */}
       {schedOpen && mounted && (
         <DayScheduler
           date={new Date().toISOString().slice(0, 10)}
@@ -862,6 +885,19 @@ export default function DashboardPage() {
           onClose={() => setSchedOpen(false)}
           prefillText={schedPrefill}
           initialTab={schedTab}
+        />
+      )}
+
+      {/* DayScheduler Modal — من التقويم */}
+      {calDate && mounted && (
+        <DayScheduler
+          date={calDate}
+          events={allEvents}
+          subjects={allSubjects}
+          examDate={examDate}
+          onExamDateChange={(d) => { setExamDate(d); saveExamDate(d); }}
+          onEventsChange={(evs) => { setAllEvents(evs); saveEvents(evs); const today = new Date().toISOString().slice(0, 10); setTodayEvents(getEventsForDate(today, evs)); }}
+          onClose={() => setCalDate(null)}
         />
       )}
     </div>

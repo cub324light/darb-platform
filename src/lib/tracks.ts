@@ -162,6 +162,30 @@ export function getTrack(id?: string | null): Track {
   return TRACKS.find((t) => t.id === id) ?? TRACKS[1];
 }
 
+/* مواد كل الاختبارات النشطة للطالب — بدون تكرار (الكل في مكان واحد) */
+export function subjectsForTracks(ids: TrackId[]): { name: string; color: string }[] {
+  const map = new Map<string, { name: string; color: string }>();
+  for (const id of ids) {
+    const t = TRACKS.find((tr) => tr.id === id);
+    if (!t) continue;
+    for (const s of t.subjects) if (!map.has(s.name)) map.set(s.name, { name: s.name, color: s.color });
+  }
+  return [...map.values()];
+}
+
+/* لون مادة من أي اختبار نشط (ثم بحث شامل ثم اللون الافتراضي) */
+export function colorForSubject(ids: TrackId[], subject: string): string {
+  for (const id of ids) {
+    const s = TRACKS.find((tr) => tr.id === id)?.subjects.find((su) => su.name === subject);
+    if (s) return s.color;
+  }
+  for (const t of TRACKS) {
+    const s = t.subjects.find((su) => su.name === subject);
+    if (s) return s.color;
+  }
+  return TRACK_BLUE;
+}
+
 export function subjectColor(track: Track, subject: string): string {
   return track.subjects.find((s) => s.name === subject)?.color ?? TRACK_BLUE;
 }

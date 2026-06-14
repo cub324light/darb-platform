@@ -1,12 +1,16 @@
 "use client";
 /* ─── تسجيل الدخول + مزامنة كل البيانات مع Firebase ───
-   التطبيق يشتغل بدون تسجيل دخول (localStorage). عند تسجيل الدخول
-   تُحفظ نسخة كاملة من البيانات في السحابة وتُسترجع على أي جهاز. */
+   الدخول إجباري (Google / إيميل). بعد الدخول تُسترجع نسخة
+   السحابة إلى localStorage، وتُرفع تلقائياً عند أي تغيير ومغادرة الصفحة. */
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut as fbSignOut,
   onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithRedirect,
+  signInWithPopup,
+  getRedirectResult,
   type User,
 } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
@@ -19,7 +23,13 @@ const BACKUP_KEYS = [
   "darb_done_lessons", "darb_posts", "darb_schedule", "darb_exam_date",
   "darb_events", "darb_exam_flow", "darb_stage_reviews",
   "darb_tadreeb_items", "darb_tadreeb_done", "darb_tasreebat_pct",
+  "darb_subject_exam_dates", "darb_track_exam_dates", "darb_dash_config",
+  "darb_results",
 ];
+
+/* علم اكتمال أول سحب — يمنع الرفع قبل استرجاع نسخة السحابة */
+let initialSyncDone = false;
+export function isInitialSyncDone(): boolean { return initialSyncDone; }
 
 /* ─── المصادقة ─── */
 export function currentUser(): User | null {
@@ -42,6 +52,38 @@ export async function signIn(email: string, password: string) {
 
 export async function signOutUser() {
   await fbSignOut(auth);
+  initialSyncDone = false;
+}
+
+/* ─── Google — popup على الويب، redirect على iOS/PWA ─── */
+export async function signInWithGoogle() {
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
+  if (isIOS || isStandalone) {
+    await signInWithRedirect(auth, provider);
+  } else {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (e) {
+      if ((e as { code?: string })?.code === "auth/popup-blocked") {
+        await signInWithRedirect(auth, provider);
+      } else throw e;
+    }
+  }
+}
+
+/* يُستدعى عند إقلاع البوابة لإكمال تسجيل الدخول عبر redirect.
+   يرجع رسالة خطأ بالعربي إن فشل، أو null إن لا شيء/نجح. */
+export async function consumeRedirectResult(): Promise<string | null> {
+  try {
+    await getRedirectResult(auth);
+    return null;
+  } catch (e) {
+    const code = (e as { code?: string })?.code ?? "";
+    return code ? authErrorMsg(code) : "تعذّر تسجيل الدخول — حاول مرة ثانية";
+  }
 }
 
 /* رسائل خطأ مفهومة بالعربي */
@@ -57,8 +99,28 @@ export function authErrorMsg(code: string): string {
     case "auth/network-request-failed": return "تأكد من اتصالك بالإنترنت";
     case "auth/operation-not-allowed":
     case "auth/configuration-not-found":
-      return "تسجيل الدخول بالإيميل غير مفعّل — فعّله من Firebase: Authentication ← Sign-in method ← Email/Password";
+      return "طريقة الدخول هذي غير مفعّلة — فعّلها من Firebase: Authentication ← Sign-in method";
+    case "auth/account-exists-with-different-credential":
+      return "عندك حساب بنفس الإيميل بطريقة دخول ثانية — جرّب الطريقة الأخرى";
+    case "auth/popup-closed-by-user":
+    case "auth/cancelled-popup-request":
+    case "auth/user-cancelled":
+      return "أُلغي تسجيل الدخول";
+    case "auth/unauthorized-domain":
+      return "هذا النطاق غير مصرّح — أضِفه في Firebase: Authentication ← Settings ← Authorized domains";
     default: return "صار خطأ — حاول مرة ثانية";
+  }
+}
+
+/* ─── المزامنة الأولية: مرة واحدة بعد ثبوت تسجيل الدخول ─── */
+/* تُستدعى من البوابة بعد تسجيل الدخول:
+   اسحب من السحابة؛ وإن لم توجد نسخة وعندك بيانات محلية ارفعها (ترحيل حساب مجهول قديم). */
+export async function initialSync(): Promise<void> {
+  try {
+    const restored = await pullBackup();
+    if (!restored && hasLocalData()) await pushBackup();
+  } finally {
+    initialSyncDone = true;
   }
 }
 

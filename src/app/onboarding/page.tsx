@@ -1,12 +1,15 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { TRACKS, TRACK_GROUPS, type TrackId } from "@/lib/tracks";
-import { saveUser, saveExamDate } from "@/lib/storage";
+import { saveUser, saveExamDate, saveResults } from "@/lib/storage";
 import { registerUser } from "@/lib/firestore";
+import { currentUser, pushBackup } from "@/lib/cloud";
 import Dome from "@/components/Dome";
+import Logo from "@/components/Logo";
 
 const STUDY_LEVELS = ["ثانوي", "جامعي", "خريج", "أخرى"];
+const GRADES = ["أول ثانوي", "ثاني ثانوي", "ثالث ثانوي"];
 const MAX_TRACKS = 3;
 
 export default function OnboardingPage() {
@@ -16,9 +19,19 @@ export default function OnboardingPage() {
   const [name, setName]             = useState("");
   const [age, setAge]               = useState("");
   const [studyLevel, setStudyLevel] = useState("");
+  const [grade, setGrade]           = useState("");
+  const [studyHours, setStudyHours] = useState("");
 
   const [activeTracks, setActiveTracks] = useState<TrackId[]>([]);
   const [examDate, setExamDate]         = useState("");
+  /* نتائج اختبارات سابقة (اختياري) — تُحفظ في «نتائجي» */
+  const [prevExams, setPrevExams] = useState<{ exam: string; score: string }[]>([]);
+
+  /* املأ الاسم مبدئياً من حساب Google */
+  useEffect(() => {
+    const dn = currentUser()?.displayName;
+    if (dn) setName((prev) => prev || dn.split(" ")[0]);
+  }, []);
 
   const toggleTrack = (id: TrackId) => {
     setActiveTracks((prev) =>
@@ -26,7 +39,7 @@ export default function OnboardingPage() {
     );
   };
 
-  const finish = () => {
+  const finish = async () => {
     if (!activeTracks.length) return;
     const trimmedName = name.trim();
     const primaryTrack = activeTracks[0];
@@ -37,19 +50,28 @@ export default function OnboardingPage() {
       onboarded: true,
       age: age ? parseInt(age) : undefined,
       studyLevel: studyLevel || undefined,
+      grade: studyLevel === "ثانوي" && grade ? grade : undefined,
+      studyHours: studyHours ? parseInt(studyHours) : undefined,
     });
     if (examDate) saveExamDate(examDate);
+    /* احفظ النتائج السابقة (الي فيها اختبار أو درجة) في «نتائجي» */
+    const validPrev = prevExams.filter((p) => p.exam.trim() || p.score.trim());
+    if (validPrev.length) {
+      saveResults(validPrev.map((p, i) => ({
+        id: `${Date.now()}-${i}`,
+        exam: p.exam.trim() || primaryTrack,
+        score: p.score.trim() || undefined,
+      })));
+    }
     registerUser(trimmedName, primaryTrack);
+    await pushBackup(); // احفظ إعدادك في السحابة فوراً
     router.push("/dashboard");
   };
 
   const header = (
     <Dome hideControls>
       <div className="text-center py-5">
-        <p className="font-black text-5xl mb-1"
-          style={{ color: "var(--text)", filter: "drop-shadow(0 0 22px color-mix(in srgb, var(--accent) 45%, transparent))" }}>
-          درب
-        </p>
+        <Logo className="font-black text-5xl mb-1 block" />
         <p className="eyebrow" style={{ color: "var(--text-dim)" }}>YOUR PATH TO EXCELLENCE</p>
       </div>
     </Dome>
@@ -117,6 +139,46 @@ export default function OnboardingPage() {
               );
             })}
           </div>
+        </div>
+
+        {studyLevel === "ثانوي" && (
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <p className="label">أي صف؟</p>
+              <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {GRADES.map((g) => {
+                const active = grade === g;
+                return (
+                  <button key={g} onClick={() => setGrade(active ? "" : g)}
+                    className="rounded-2xl py-3 font-bold text-[14px] transition active:scale-[0.98]"
+                    style={{
+                      background: active ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
+                      border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
+                      color: active ? "var(--accent-light)" : "var(--text)",
+                    }}>
+                    {g}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <p className="label">كم ساعة تقدر تذاكر باليوم؟</p>
+            <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+              style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
+          </div>
+          <input type="number" value={studyHours} onChange={(e) => setStudyHours(e.target.value)}
+            placeholder="مثال: 3" min={1} max={16}
+            className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+            style={{ background: "var(--surface)", border: "2px solid var(--border)" }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
         </div>
 
         <button className="btn-primary glow-blue" onClick={() => { if (name.trim()) setStep(1); }}
@@ -235,6 +297,39 @@ export default function OnboardingPage() {
               {Math.max(0, Math.round((new Date(examDate + "T00:00:00").getTime() - new Date(new Date().toISOString().slice(0,10) + "T00:00:00").getTime()) / 86400000))} يوم على الاختبار
             </p>
           )}
+        </div>
+
+        <div className="mb-7">
+          <div className="flex items-center gap-2 mb-3">
+            <p className="label">اختبرت من قبل؟</p>
+            <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+              style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
+          </div>
+          <div className="flex flex-col gap-2.5">
+            {prevExams.map((p, i) => (
+              <div key={i} className="flex gap-2">
+                <input value={p.exam}
+                  onChange={(e) => setPrevExams((prev) => prev.map((x, j) => j === i ? { ...x, exam: e.target.value } : x))}
+                  placeholder="الاختبار (مثال: قدرات)" maxLength={30}
+                  className="flex-1 min-w-0 rounded-2xl px-4 py-3 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+                  style={{ background: "var(--surface)", border: "2px solid var(--border)" }} />
+                <input value={p.score} inputMode="decimal"
+                  onChange={(e) => setPrevExams((prev) => prev.map((x, j) => j === i ? { ...x, score: e.target.value } : x))}
+                  placeholder="الدرجة" maxLength={6}
+                  className="w-20 rounded-2xl px-3 py-3 text-base text-center text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+                  style={{ background: "var(--surface)", border: "2px solid var(--border)" }} />
+                <button onClick={() => setPrevExams((prev) => prev.filter((_, j) => j !== i))}
+                  className="px-3 rounded-2xl font-bold text-[var(--text-muted)]"
+                  style={{ background: "var(--surface)", border: "2px solid var(--border)" }}>✕</button>
+              </div>
+            ))}
+            <button onClick={() => setPrevExams((prev) => [...prev, { exam: "", score: "" }])}
+              className="rounded-2xl py-3 font-bold text-[15px]"
+              style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid color-mix(in srgb, var(--accent) 30%, transparent)", color: "var(--accent-light)" }}>
+              + أضف نتيجة سابقة
+            </button>
+          </div>
+          <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>تنحفظ في «نتائجي» وتقدر تعدّلها بعدين.</p>
         </div>
 
         <button className="btn-primary glow-blue mb-3" onClick={finish}

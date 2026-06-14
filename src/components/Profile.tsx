@@ -5,8 +5,8 @@ import { TRACKS, TRACK_GROUPS, getTrack, type TrackId } from "@/lib/tracks";
 import {
   loadUser, saveUser, loadStats, computeStreak,
   loadTheme, applyTheme, resetAll,
-  loadExamDate, saveExamDate,
-  type DarbUser, type Theme,
+  loadResults, saveResults,
+  type DarbUser, type Theme, type ExamResult,
 } from "@/lib/storage";
 import { syncUser } from "@/lib/firestore";
 import {
@@ -43,9 +43,13 @@ export default function ProfileButton() {
   const [editName, setEditName] = useState("");
   const [editing, setEditing] = useState(false);
   const [stats, setStats] = useState({ streak: 0, silver: 0, hours: 0, sessions: 0 });
-  const [examDate, setExamDate] = useState("");
-  const [theme, setThemeState]      = useState<Theme>("dark");
   const [activeTracksState, setActiveTracksState] = useState<TrackId[]>([]);
+
+  // نتائجي
+  const [results, setResults] = useState<ExamResult[]>([]);
+  const [resExam, setResExam]   = useState("");
+  const [resScore, setResScore] = useState("");
+  const [resDate, setResDate]   = useState("");
 
   // الحساب السحابي
   const [authUser, setAuthUser] = useState<User | null>(null);
@@ -117,29 +121,44 @@ export default function ProfileButton() {
       hours: Math.floor(s.totalFocusMins / 60),
       sessions: s.sessionsCount,
     });
-    setExamDate(loadExamDate() ?? "");
-    setThemeState(loadTheme());
     setActiveTracksState(u?.activeTracks ?? (u?.track ? [u.track] : []));
+    setResults(loadResults());
   }, [open]);
 
-  const switchTheme = (t: Theme) => {
-    setThemeState(t);
-    applyTheme(t);
+  const addResult = () => {
+    const exam = resExam.trim();
+    if (!exam) return;
+    const next: ExamResult[] = [
+      { id: `${Date.now()}`, exam, score: resScore.trim() || undefined, date: resDate || undefined },
+      ...results,
+    ];
+    setResults(next); saveResults(next);
+    setResExam(""); setResScore(""); setResDate("");
+  };
+
+  const deleteResult = (id: string) => {
+    const next = results.filter((r) => r.id !== id);
+    setResults(next); saveResults(next);
   };
 
   const toggleActiveTrack = (id: TrackId) => {
-    setActiveTracksState((prev) => {
-      const next = prev.includes(id)
-        ? prev.filter((t) => t !== id)
-        : prev.length >= 3 ? prev : [...prev, id];
-      if (!user) return next;
-      const primaryTrack = next[0] ?? user.track;
-      const updated = { ...user, track: primaryTrack, activeTracks: next };
-      saveUser(updated);
-      setUser(updated);
-      syncUser({ track: primaryTrack });
-      return next;
-    });
+    if (!user) return;
+    const prev = activeTracksState;
+    const next = prev.includes(id)
+      ? prev.filter((t) => t !== id)
+      : prev.length >= 3 ? prev : [...prev, id];
+    if (next === prev) return; // تجاوز الحد الأقصى — لا تغيير
+    const primaryTrack = next[0] ?? user.track;
+    /* تأكيد فقط عند تغيّر المسار الأساسي — لأنه يبدّل خريطتك وأولوياتك */
+    if (primaryTrack !== user.track &&
+        !confirm("تغيير مسارك الأساسي يبدّل خريطتك وأولوياتك. متأكد؟")) {
+      return;
+    }
+    const updated = { ...user, track: primaryTrack, activeTracks: next };
+    saveUser(updated);
+    setUser(updated);
+    setActiveTracksState(next);
+    syncUser({ track: primaryTrack });
   };
 
   const track = getTrack(user?.track);
@@ -227,33 +246,6 @@ export default function ProfileButton() {
               ))}
             </div>
 
-            {/* المظهر — ليلي/نهاري: يبدّل الموقع كامل ولون شعار درب معاً */}
-            <p className="label mb-3">المظهر</p>
-            <div className="grid grid-cols-2 gap-2.5 mb-6">
-              {([
-                { mode: "dark" as Theme,  title: "ليلي",  emoji: "🌙", logo: "#3B82F6" },
-                { mode: "light" as Theme, title: "نهاري", emoji: "☀️", logo: "#F5B40A" },
-              ]).map((o) => {
-                const active = theme === o.mode;
-                return (
-                  <button
-                    key={o.mode}
-                    onClick={() => switchTheme(o.mode)}
-                    className="rounded-2xl py-4 flex flex-col items-center gap-1.5 transition active:scale-[0.98]"
-                    style={{
-                      background: active ? "color-mix(in srgb, var(--accent) 12%, transparent)" : "var(--surface2)",
-                      border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
-                    }}
-                  >
-                    <span className="font-black text-3xl" style={{ color: o.logo, textShadow: `0 0 18px color-mix(in srgb, ${o.logo} 45%, transparent)` }}>درب</span>
-                    <span className="text-[13px] font-bold text-[var(--text-muted)]">{o.emoji} {o.title}</span>
-                    {active && <span className="text-[11px] font-black" style={{ color: "var(--accent-light)" }}>✓ الحالي</span>}
-                  </button>
-                );
-              })}
-            </div>
-
-
             {/* الحساب السحابي */}
             <p className="label mb-3">حسابك السحابي</p>
             <div className="mb-6">
@@ -261,9 +253,11 @@ export default function ProfileButton() {
                 <div className="rounded-2xl p-4" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-base">☁️</span>
-                    <p className="font-bold text-[15px] text-[var(--text)] truncate flex-1">{authUser.email}</p>
+                    <p className="font-bold text-[15px] text-[var(--text)] truncate flex-1">{authUser.displayName || authUser.email}</p>
                   </div>
-                  <p className="text-[13px] text-[var(--text-muted)] mb-3">بياناتك محفوظة وتتزامن تلقائياً</p>
+                  <p className="text-[13px] text-[var(--text-muted)] mb-3">
+                    {authUser.email ? `${authUser.email} · ` : ""}بياناتك محفوظة وتتزامن تلقائياً
+                  </p>
                   <div className="flex gap-2">
                     <button onClick={manualSync} className="flex-1 py-2.5 rounded-xl text-sm font-bold"
                       style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
@@ -334,29 +328,50 @@ export default function ProfileButton() {
               )}
             </div>
 
-            {/* تاريخ الاختبار */}
-            <p className="label mb-3">تاريخ الاختبار</p>
+            {/* نتائجي — سجل نتائج الاختبارات */}
+            <p className="label mb-3">نتائجي</p>
             <div className="mb-6">
-              <input
-                type="date"
-                value={examDate}
-                onChange={(e) => { setExamDate(e.target.value); saveExamDate(e.target.value || null); }}
-                min={new Date().toISOString().slice(0, 10)}
-                className="w-full rounded-2xl px-4 py-3.5 text-base text-[var(--text)] outline-none min-h-[52px]"
-                style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", colorScheme: "dark" }}
-              />
-              {examDate && (
-                <div className="flex items-center justify-between mt-2">
-                  <p className="text-sm font-bold" style={{ color: "var(--gold)" }}>
-                    {Math.max(0, Math.round((new Date(examDate + "T00:00:00").getTime() - new Date(new Date().toISOString().slice(0,10) + "T00:00:00").getTime()) / 86400000))} يوم على الاختبار
-                  </p>
-                  <button
-                    onClick={() => { setExamDate(""); saveExamDate(null); }}
-                    className="text-sm font-semibold"
-                    style={{ color: "var(--text-muted)" }}
-                  >إزالة</button>
+              {results.length > 0 && (
+                <div className="flex flex-col gap-2 mb-3">
+                  {results.map((r) => (
+                    <div key={r.id} className="rounded-2xl px-4 py-3 flex items-center gap-3"
+                      style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-[15px] text-[var(--text)] truncate">{r.exam}</p>
+                        {r.date && <p className="text-[12px] text-[var(--text-muted)]">{r.date}</p>}
+                      </div>
+                      {r.score && <span className="font-black text-[16px]" style={{ color: "var(--gold)" }}>{r.score}</span>}
+                      <button onClick={() => deleteResult(r.id)} className="text-[var(--text-muted)] text-sm font-bold px-1">✕</button>
+                    </div>
+                  ))}
                 </div>
               )}
+              <div className="flex gap-2 mb-2">
+                <input list="darb-exam-options" value={resExam} onChange={(e) => setResExam(e.target.value)}
+                  placeholder="الاختبار" maxLength={30}
+                  className="flex-1 min-w-0 rounded-2xl px-4 py-3 text-[15px] text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+                  style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
+                <datalist id="darb-exam-options">
+                  {activeTracksState.map((id) => {
+                    const t = TRACKS.find((tr) => tr.id === id);
+                    return t ? <option key={id} value={t.title} /> : null;
+                  })}
+                </datalist>
+                <input value={resScore} inputMode="decimal" onChange={(e) => setResScore(e.target.value)}
+                  placeholder="الدرجة" maxLength={6}
+                  className="w-20 rounded-2xl px-3 py-3 text-[15px] text-center text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+                  style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
+              </div>
+              <div className="flex gap-2">
+                <input type="date" value={resDate} onChange={(e) => setResDate(e.target.value)}
+                  className="flex-1 rounded-2xl px-4 py-3 text-[15px] text-[var(--text)] outline-none"
+                  style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", colorScheme: "dark" }} />
+                <button onClick={addResult} disabled={!resExam.trim()}
+                  className="px-5 rounded-2xl font-black text-[15px]"
+                  style={{ background: resExam.trim() ? "var(--accent)" : "var(--surface2)", color: resExam.trim() ? "white" : "var(--text-muted)", border: "none" }}>
+                  أضف
+                </button>
+              </div>
             </div>
 
             {/* المسارات — متعددة (حد أقصى 3) */}

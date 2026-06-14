@@ -5,15 +5,16 @@ import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import { ERROR_CATEGORIES } from "@/lib/constants";
-import { getTrack, subjectColor, type Track } from "@/lib/tracks";
+import { subjectsForTracks, colorForSubject, type TrackId } from "@/lib/tracks";
 import { loadUser, loadList, saveList } from "@/lib/storage";
 import type { VaultError } from "@/lib/types";
 
-const FREE_LIMIT = 20;
+const PER_SUBJECT_LIMIT = 25;
 const VAULT_KEY = "darb_vault";
 
 export default function VaultPage() {
-  const [track, setTrack] = useState<Track | null>(null);
+  const [activeIds, setActiveIds] = useState<TrackId[]>([]);
+  const [subjectList, setSubjectList] = useState<{ name: string; color: string }[]>([]);
   const [errors, setErrors] = useState<VaultError[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
@@ -28,11 +29,18 @@ export default function VaultPage() {
   const [newSubject, setNewSubject] = useState("");
   const [newCat, setNewCat] = useState<string>(ERROR_CATEGORIES[0]);
   const [newNote, setNewNote] = useState("");
+  /* شرح دويرب لكل خطأ (تخزين مؤقت بالـ id) */
+  const [explainById, setExplainById] = useState<Record<string, string>>({});
+  const [explainLoadingId, setExplainLoadingId] = useState<string | null>(null);
 
   useEffect(() => {
-    const t = getTrack(loadUser()?.track);
-    setTrack(t);
-    setNewSubject(t.subjects[0]?.name ?? "");
+    const u = loadUser();
+    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
+    setActiveIds(finalIds);
+    const subs = subjectsForTracks(finalIds);
+    setSubjectList(subs);
+    setNewSubject(subs[0]?.name ?? "");
     setErrors(loadList<VaultError>(VAULT_KEY));
     setLoaded(true);
   }, []);
@@ -43,9 +51,10 @@ export default function VaultPage() {
   }, [errors, loaded]);
 
   const isPlanFree = true;
-  const atLimit = isPlanFree && errors.length >= FREE_LIMIT;
-
-  const subjects = track?.subjects.map((s) => s.name) ?? [];
+  const subjects = subjectList.map((s) => s.name);
+  const countForSubject = (subj: string) => errors.filter((e) => e.subject === subj).length;
+  /* الحد لكل مادة على حدة — كل مادة لها 25 مكاناً مستقلاً */
+  const atLimit = isPlanFree && countForSubject(newSubject) >= PER_SUBJECT_LIMIT;
 
   const filtered = errors
     .filter((e) => {
@@ -91,7 +100,29 @@ export default function VaultPage() {
   };
 
   const categoryCount = (cat: string) => errors.filter((e) => e.category === cat).length;
-  const colorOf = (subj: string) => (track ? subjectColor(track, subj) : "var(--accent)");
+  const colorOf = (subj: string) => colorForSubject(activeIds, subj);
+
+  /* اطلب من دويرب شرح خطأ — نتيجة مخزّنة مؤقتاً حتى لا تتكرر الطلبات */
+  const explainError = async (error: VaultError) => {
+    if (explainById[error.id] || explainLoadingId) return;
+    setExplainLoadingId(error.id);
+    try {
+      const promptText =
+        `السؤال أو المفهوم: ${error.question}\nالمادة: ${error.subject}\nتصنيف الخطأ: ${error.category}` +
+        (error.note ? `\nملاحظة الطالب: ${error.note}` : "");
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: promptText, subjects, mode: "explain" }),
+      });
+      const data = (await res.json()) as { text?: string; error?: string };
+      setExplainById((p) => ({ ...p, [error.id]: (data.text ?? data.error ?? "تعذّر الشرح").trim() }));
+    } catch {
+      setExplainById((p) => ({ ...p, [error.id]: "تعذّر الاتصال — حاول مرة ثانية" }));
+    } finally {
+      setExplainLoadingId(null);
+    }
+  };
 
   return (
     <div className="page">
@@ -114,7 +145,7 @@ export default function VaultPage() {
             </button>
             <div className="dome-chip">
               <span className="num-hero text-base" style={{ color: "var(--gold-light)" }}>{errors.length}</span>
-              {isPlanFree && <span className="text-[17px] font-semibold" style={{ color: "var(--text-dim)" }}>/{FREE_LIMIT}</span>}
+              <span className="text-[15px] font-semibold" style={{ color: "var(--text-dim)" }}>خطأ</span>
             </div>
           </div>
         </div>
@@ -146,28 +177,34 @@ export default function VaultPage() {
         </div>
       </div>
 
-      {/* ── شريط الحد ── */}
-      {isPlanFree && (
-        <div className="px-5 mb-7 rise rise-1">
-          <div className="flex justify-between mb-2">
-            <span className="body-sm">الاستخدام</span>
-            <span className="body-sm">{errors.length} / {FREE_LIMIT}</span>
+      {/* ── شريط الحد — لكل مادة ٢٥ خطأً مستقلة ── */}
+      {isPlanFree && (() => {
+        const isAll = filterSubject === "الكل";
+        const cap = isAll ? subjects.length * PER_SUBJECT_LIMIT : PER_SUBJECT_LIMIT;
+        const used = isAll ? errors.length : countForSubject(filterSubject);
+        const full = cap > 0 && used >= cap;
+        return (
+          <div className="px-5 mb-7 rise rise-1">
+            <div className="flex justify-between mb-2">
+              <span className="body-sm">{isAll ? "إجمالي الأخطاء" : `أخطاء ${filterSubject}`}</span>
+              <span className="body-sm">{used} / {cap}</span>
+            </div>
+            <div className="h-2 bg-[var(--border)] rounded-full overflow-hidden">
+              <div className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: (cap === 0 ? 0 : Math.min(100, (used / cap) * 100)) + "%",
+                  background: full ? "#EF4444" : "#F59E0B",
+                }} />
+            </div>
+            {!isAll && full && (
+              <p className="text-sm text-[var(--danger)] mt-2 text-center">
+                وصلت ٢٥ خطأ في {filterSubject}.{" "}
+                <Link href="/pricing" className="text-[var(--accent-light)] underline font-semibold">رقّي لشاهين</Link>
+              </p>
+            )}
           </div>
-          <div className="h-2 bg-[var(--border)] rounded-full overflow-hidden">
-            <div className="h-full rounded-full transition-all duration-500"
-              style={{
-                width: (errors.length / FREE_LIMIT) * 100 + "%",
-                background: errors.length >= FREE_LIMIT - 5 ? "#EF4444" : "#F59E0B",
-              }} />
-          </div>
-          {atLimit && (
-            <p className="text-sm text-[var(--danger)] mt-2 text-center">
-              وصلت الحد المجاني.{" "}
-              <Link href="/pricing" className="text-[var(--accent-light)] underline font-semibold">رقّي لشاهين</Link>
-            </p>
-          )}
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── تصنيفات الخطأ ── */}
       <div className="px-5 mb-7 rise rise-2">
@@ -209,9 +246,8 @@ export default function VaultPage() {
         </div>
       </div>
 
-      {/* ── زر الإضافة — فوق القائمة وبمتناول الإبهام ── */}
-      {!atLimit && (
-        <div className="px-5 mb-6 rise rise-4">
+      {/* ── زر الإضافة — متاح دائماً (الحد لكل مادة على حدة) ── */}
+      <div className="px-5 mb-6 rise rise-4">
           {!showAdd ? (
             <button onClick={() => setShowAdd(true)}
               className="w-full py-5 rounded-2xl text-lg font-bold text-[var(--text-dim)] transition min-h-[60px]"
@@ -246,11 +282,28 @@ export default function VaultPage() {
                 className="rounded-2xl px-4 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none min-h-[52px]"
                 style={{ background: "var(--surface2)", border: "1px solid var(--border)" }} />
 
+              {/* عدّاد أخطاء المادة المختارة — كل مادة لها ٢٥ */}
+              <div className="flex items-center justify-between px-1">
+                <span className="text-sm text-[var(--text-muted)]">أخطاء {newSubject}</span>
+                <span className="text-sm font-bold" style={{ color: atLimit ? "var(--danger)" : "var(--text-dim)" }}>
+                  {countForSubject(newSubject)} / {PER_SUBJECT_LIMIT}
+                </span>
+              </div>
+
+              {atLimit && (
+                <p className="text-sm text-[var(--danger)] text-center">
+                  مادة {newSubject} ممتلئة — اختر مادة ثانية أو{" "}
+                  <Link href="/pricing" className="text-[var(--accent-light)] underline font-semibold">رقّي لشاهين</Link>
+                </p>
+              )}
+
               <div className="grid grid-cols-2 gap-3">
-                <button onClick={addError}
+                <button onClick={addError} disabled={atLimit}
                   className="py-4 rounded-2xl font-bold text-base transition min-h-[54px] glow-gold"
-                  style={{ background: "rgba(245,158,11,0.08)", border: "1.5px solid #F59E0B", color: "#F59E0B" }}>
-                  أضف للخزنة
+                  style={atLimit
+                    ? { background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }
+                    : { background: "rgba(245,158,11,0.08)", border: "1.5px solid #F59E0B", color: "#F59E0B" }}>
+                  {atLimit ? "المادة ممتلئة" : "أضف للخزنة"}
                 </button>
                 <button onClick={() => setShowAdd(false)}
                   className="py-4 rounded-2xl text-base font-medium text-[var(--text-muted)] transition min-h-[54px]"
@@ -261,7 +314,6 @@ export default function VaultPage() {
             </div>
           )}
         </div>
-      )}
 
       {/* ── القائمة ── */}
       <div className="px-5 flex flex-col gap-5 rise rise-5">
@@ -323,6 +375,34 @@ export default function VaultPage() {
                         <p className="text-base text-[var(--text-dim)] leading-relaxed">{error.note}</p>
                       </div>
                     )}
+
+                    {/* ── شرح دويرب ── */}
+                    {explainById[error.id] ? (
+                      <div className="rounded-2xl p-5"
+                        style={{
+                          background: "color-mix(in srgb, var(--accent) 6%, var(--surface2))",
+                          border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)",
+                        }}>
+                        <p className="text-sm font-bold mb-2" style={{ color: "var(--accent-light)" }}>شرح دويرب 🤖</p>
+                        <p className="text-base leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>
+                          {explainById[error.id]}
+                        </p>
+                      </div>
+                    ) : (
+                      <button onClick={() => explainError(error)} disabled={explainLoadingId === error.id}
+                        className="w-full py-3.5 rounded-2xl text-base font-bold transition min-h-[52px] flex items-center justify-center gap-2"
+                        style={{
+                          background: "color-mix(in srgb, var(--accent) 10%, transparent)",
+                          border: "1.5px solid color-mix(in srgb, var(--accent) 30%, transparent)",
+                          color: "var(--accent-light)",
+                        }}>
+                        {explainLoadingId === error.id ? (
+                          <span className="inline-block w-4 h-4 rounded-full border-2 animate-spin"
+                            style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }} />
+                        ) : "اشرح لي 🤖"}
+                      </button>
+                    )}
+
                     <div className="grid grid-cols-2 gap-3">
                       <button onClick={() => setErrors((p) => p.map((e) => e.id === error.id ? { ...e, reviewCount: e.reviewCount + 1 } : e))}
                         className="py-4 rounded-2xl text-base font-black transition min-h-[56px]"

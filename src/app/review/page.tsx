@@ -1,15 +1,18 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import Confetti from "@/components/Confetti";
+import QuizGen from "@/components/QuizGen";
 import { sm2, nextReviewText } from "@/lib/sm2";
-import { getTrack, subjectColor, type Track } from "@/lib/tracks";
+import { subjectsForTracks, colorForSubject, type TrackId } from "@/lib/tracks";
 import { loadUser, loadList, saveList } from "@/lib/storage";
 import type { ReviewCard, SM2Grade } from "@/lib/types";
 
 const CARDS_KEY = "darb_cards";
+const PER_SUBJECT_LIMIT = 100;
 
 const GRADE_COLORS = ["#EF4444", "#EF4444", "#F59E0B", "#F59E0B", "#10B981", "#10B981"];
 const GRADE_LABELS = ["ما أعرف", "غلط", "صعب", "متوسط", "سهل", "سهل جداً"];
@@ -17,7 +20,8 @@ const GRADE_LABELS = ["ما أعرف", "غلط", "صعب", "متوسط", "سهل
 type Mode = "list" | "session";
 
 export default function ReviewPage() {
-  const [track, setTrack] = useState<Track | null>(null);
+  const [activeIds, setActiveIds] = useState<TrackId[]>([]);
+  const [subjectList, setSubjectList] = useState<{ name: string; color: string }[]>([]);
   const [cards, setCards] = useState<ReviewCard[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [mode, setMode] = useState<Mode>("list");
@@ -35,9 +39,13 @@ export default function ReviewPage() {
   const [newSubject, setNewSubject] = useState("");
 
   useEffect(() => {
-    const t = getTrack(loadUser()?.track);
-    setTrack(t);
-    setNewSubject(t.subjects[0]?.name ?? "");
+    const u = loadUser();
+    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
+    setActiveIds(finalIds);
+    const subs = subjectsForTracks(finalIds);
+    setSubjectList(subs);
+    setNewSubject(subs[0]?.name ?? "");
     setCards(loadList<ReviewCard>(CARDS_KEY));
     setLoaded(true);
   }, []);
@@ -46,14 +54,17 @@ export default function ReviewPage() {
     if (loaded) saveList(CARDS_KEY, cards);
   }, [cards, loaded]);
 
-  const colorOf = (subj: string) => (track ? subjectColor(track, subj) : "var(--accent)");
-  const subjects = track?.subjects.map((s) => s.name) ?? [];
+  const colorOf = (subj: string) => colorForSubject(activeIds, subj);
+  const subjects = subjectList.map((s) => s.name);
+  const countForSubject = (subj: string) => cards.filter((c) => c.subject === subj).length;
+  /* الحد لكل مادة — ١٠٠ بطاقة لكل مادة ثم اشتراك */
+  const atLimit = countForSubject(newSubject) >= PER_SUBJECT_LIMIT;
 
   const dueCards = cards.filter((c) => c.dueDate <= Date.now());
   const upcomingCards = cards.filter((c) => c.dueDate > Date.now());
 
   const addCard = () => {
-    if (!newQ.trim() || !newA.trim()) return;
+    if (!newQ.trim() || !newA.trim() || atLimit) return;
     setCards((p) => [{
       id: Date.now().toString(),
       question: newQ.trim(), answer: newA.trim(), subject: newSubject,
@@ -290,11 +301,29 @@ export default function ReviewPage() {
               {subjects.map((s) => <option key={s}>{s}</option>)}
             </select>
 
+            {/* عدّاد بطاقات المادة — ١٠٠ لكل مادة */}
+            <div className="flex items-center justify-between px-1">
+              <span className="text-sm text-[var(--text-muted)]">بطاقات {newSubject}</span>
+              <span className="text-sm font-bold" style={{ color: atLimit ? "var(--danger)" : "var(--text-dim)" }}>
+                {countForSubject(newSubject)} / {PER_SUBJECT_LIMIT}
+              </span>
+            </div>
+
+            {atLimit && (
+              <p className="text-sm text-[var(--danger)] text-center">
+                وصلت ١٠٠ بطاقة في {newSubject} —{" "}
+                <Link href="/pricing" className="text-[var(--accent-light)] underline font-semibold">اشترك في شاهين</Link>
+                {" "}للمزيد
+              </p>
+            )}
+
             <div className="grid grid-cols-2 gap-3">
-              <button onClick={addCard}
+              <button onClick={addCard} disabled={atLimit}
                 className="py-4 rounded-2xl font-bold text-base transition min-h-[54px] glow-blue"
-                style={{ background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
-                أضف البطاقة
+                style={atLimit
+                  ? { background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }
+                  : { background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
+                {atLimit ? "المادة ممتلئة" : "أضف البطاقة"}
               </button>
               <button onClick={() => setShowAdd(false)}
                 className="py-4 rounded-2xl text-base font-medium text-[var(--text-muted)] transition min-h-[54px]"
@@ -305,6 +334,13 @@ export default function ReviewPage() {
           </div>
         )}
       </div>
+
+      {/* توليد أسئلة تدريب من دويرب */}
+      {subjectList.length > 0 && (
+        <div className="px-5 mb-6">
+          <QuizGen subjects={subjectList} />
+        </div>
+      )}
 
       {/* مستحقة الآن */}
       {dueCards.length > 0 && (
