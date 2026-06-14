@@ -11,6 +11,11 @@ const STUDY_LEVELS = ["ثانوي", "جامعي", "خريج", "أخرى"];
 const GRADES = ["أول ثانوي", "ثاني ثانوي", "ثالث ثانوي"];
 const MAX_TRACKS = 3;
 
+const SAUDI_REGIONS = [
+  "الرياض", "مكة المكرمة", "المدينة المنورة", "القصيم", "المنطقة الشرقية",
+  "عسير", "تبوك", "حائل", "الحدود الشمالية", "جازان", "نجران", "الباحة", "الجوف",
+];
+
 export default function OnboardingPage() {
   const [step, setStep] = useState<0 | 1 | 2>(0);
 
@@ -19,6 +24,10 @@ export default function OnboardingPage() {
   const [studyLevel, setStudyLevel] = useState("");
   const [grade, setGrade]           = useState("");
   const [studyHours, setStudyHours] = useState("");
+  const [school, setSchool]         = useState("");
+  const [region, setRegion]         = useState("");
+  const [city, setCity]             = useState("");
+  const [phone, setPhone]           = useState("");
 
   const [activeTracks, setActiveTracks] = useState<TrackId[]>([]);
   const [examDate, setExamDate]         = useState("");
@@ -41,6 +50,12 @@ export default function OnboardingPage() {
     if (!activeTracks.length) return;
     const trimmedName = name.trim();
     const primaryTrack = activeTracks[0];
+    const extras = {
+      school:  school.trim()  || undefined,
+      region:  region         || undefined,
+      city:    city.trim()    || undefined,
+      phone:   phone.trim()   || undefined,
+    };
     saveUser({
       name: trimmedName,
       track: primaryTrack,
@@ -50,9 +65,9 @@ export default function OnboardingPage() {
       studyLevel: studyLevel || undefined,
       grade: studyLevel === "ثانوي" && grade ? grade : undefined,
       studyHours: studyHours ? parseInt(studyHours) : undefined,
+      ...extras,
     });
     if (examDate) saveExamDate(examDate);
-    /* احفظ النتائج السابقة (الي فيها اختبار أو درجة) في «نتائجي» */
     const validPrev = prevExams.filter((p) => p.exam.trim() || p.score.trim());
     if (validPrev.length) {
       saveResults(validPrev.map((p, i) => ({
@@ -61,7 +76,7 @@ export default function OnboardingPage() {
         score: p.score.trim() || undefined,
       })));
     }
-    registerUser(trimmedName, primaryTrack);
+    registerUser(trimmedName, primaryTrack, extras);
     pushBackup().catch(() => {}); // fire-and-forget — ما ننتظره
     window.location.href = "/dashboard";
   };
@@ -177,6 +192,51 @@ export default function OnboardingPage() {
             style={{ background: "var(--surface)", border: "2px solid var(--border)" }}
             onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
             onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
+        </div>
+
+        {/* ─── المدرسة والموقع والجوال ─── */}
+        <div className="flex flex-col gap-4">
+          {[
+            { label: "اسم المدرسة / الجامعة", value: school, setter: setSchool, placeholder: "مثال: ثانوية الملك فهد", type: "text" as const },
+            { label: "المدينة أو المحافظة",   value: city,   setter: setCity,   placeholder: "مثال: الرياض، جدة، الدمام...", type: "text" as const },
+            { label: "رقم الجوال",             value: phone,  setter: setPhone,  placeholder: "05xxxxxxxx", type: "tel" as const },
+          ].map(({ label, value, setter, placeholder, type }) => (
+            <div key={label}>
+              <div className="flex items-center gap-2 mb-3">
+                <p className="label">{label}</p>
+                <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                  style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
+              </div>
+              <input type={type} value={value} onChange={(e) => setter(e.target.value)}
+                placeholder={placeholder}
+                className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+                style={{ background: "var(--surface)", border: "2px solid var(--border)" }}
+                onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+                onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
+            </div>
+          ))}
+
+          {/* المنطقة — قائمة منسدلة */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <p className="label">المنطقة</p>
+              <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {SAUDI_REGIONS.map((r) => (
+                <button key={r} onClick={() => setRegion(region === r ? "" : r)}
+                  className="rounded-2xl py-2.5 px-3 font-bold text-[13px] text-right transition active:scale-[0.98]"
+                  style={{
+                    background: region === r ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
+                    border: `2px solid ${region === r ? "var(--accent)" : "var(--border)"}`,
+                    color: region === r ? "var(--accent-light)" : "var(--text)",
+                  }}>
+                  {r}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         <button className="btn-primary glow-blue" onClick={() => { if (name.trim()) setStep(1); }}

@@ -8,13 +8,23 @@ export function getOrCreateUid(): string {
 }
 
 /* ─── تسجيل مستخدم جديد (عند الـ onboarding) ─── */
-export async function registerUser(name: string, track: string) {
+export async function registerUser(
+  name: string,
+  track: string,
+  extras?: { school?: string; region?: string; city?: string; phone?: string },
+) {
   try {
     const uid = auth.currentUser?.uid;
-    if (!uid) return; // لا كتابة بدون تسجيل دخول — القواعد ترفضها
+    if (!uid) return;
+    const extra: Record<string, string> = {};
+    if (extras?.school) extra.school = extras.school;
+    if (extras?.region) extra.region = extras.region;
+    if (extras?.city)   extra.city   = extras.city;
+    if (extras?.phone)  extra.phone  = extras.phone;
     await setDoc(doc(db, "users", uid), {
       name,
       track,
+      ...extra,
       joinedAt: serverTimestamp(),
       lastSeen: serverTimestamp(),
       streak: 0,

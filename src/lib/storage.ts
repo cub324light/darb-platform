@@ -8,10 +8,14 @@ export interface DarbUser {
   onboarded: boolean;
   age?: number;
   studyLevel?: string;
-  grade?: string;       // الصف (يُسأل لو المرحلة ثانوي): أول/ثاني/ثالث ثانوي
-  studyHours?: number;  // كم ساعة يقدر يذاكر باليوم
-  subjects?: string[]; // up to 3 selected subject names
+  grade?: string;
+  studyHours?: number;
+  subjects?: string[];
   activeTracks?: TrackId[];
+  school?: string;   // اسم المدرسة
+  region?: string;   // المنطقة (الرياض، مكة المكرمة...)
+  city?: string;     // المدينة أو المحافظة
+  phone?: string;    // رقم الجوال
 }
 
 export interface DarbStats {
