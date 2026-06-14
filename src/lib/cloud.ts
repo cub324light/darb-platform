@@ -9,6 +9,7 @@ import {
   onAuthStateChanged,
   GoogleAuthProvider,
   signInWithRedirect,
+  signInWithPopup,
   getRedirectResult,
   type User,
 } from "firebase/auth";
@@ -53,11 +54,23 @@ export async function signOutUser() {
   initialSyncDone = false;
 }
 
-/* ─── Google — تدفّق redirect (موثوق على iOS Safari/PWA) ─── */
+/* ─── Google — popup على الويب، redirect على iOS/PWA ─── */
 export async function signInWithGoogle() {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
-  await signInWithRedirect(auth, provider);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
+  if (isIOS || isStandalone) {
+    await signInWithRedirect(auth, provider);
+  } else {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (e) {
+      if ((e as { code?: string })?.code === "auth/popup-blocked") {
+        await signInWithRedirect(auth, provider);
+      } else throw e;
+    }
+  }
 }
 
 /* يُستدعى عند إقلاع البوابة لإكمال تسجيل الدخول عبر redirect.

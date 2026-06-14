@@ -4,7 +4,8 @@ import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import Confetti from "@/components/Confetti";
-import { getTrack } from "@/lib/tracks";
+import { subjectsForTracks } from "@/lib/tracks";
+import type { TrackId } from "@/lib/tracks";
 import { loadUser, loadStats, recordSession } from "@/lib/storage";
 
 type Phase = "idle" | "focus" | "break" | "done";
@@ -75,9 +76,11 @@ export default function OrbitPage() {
 
   useEffect(() => {
     const u = loadUser();
-    const track = getTrack(u?.track);
-    setSubjects(track.subjects.map((s) => ({ name: s.name, color: s.color })));
-    setSubject(track.subjects[0]?.name ?? "");
+    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
+    const subs = subjectsForTracks(finalIds);
+    setSubjects(subs);
+    setSubject(subs[0]?.name ?? "");
     const s = loadStats();
     setSilverTotal(s.silver);
     setTotalFocusMins(s.todayFocusMins);
