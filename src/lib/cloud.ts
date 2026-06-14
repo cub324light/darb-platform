@@ -12,7 +12,10 @@ import {
   signInWithRedirect,
   signInWithPopup,
   getRedirectResult,
+  indexedDBLocalPersistence,
   browserLocalPersistence,
+  browserSessionPersistence,
+  inMemoryPersistence,
   setPersistence,
   type User,
 } from "firebase/auth";
@@ -44,16 +47,34 @@ export function onAuth(cb: (u: User | null) => void) {
   return onAuthStateChanged(auth, cb);
 }
 
+/* ─── تثبيت الجلسة: نجرّب أكثر من نوع تخزين بالترتيب حتى ينجح أحدها.
+   لا نُفشل الدخول لو كل الأنواع رُفضت (بعض المتصفحات/الوضع الخاص تمنع
+   IndexedDB وlocalStorage) — نكمل بالذاكرة على الأقل لهذه الجلسة. */
+async function ensurePersistence(): Promise<void> {
+  const types = [
+    indexedDBLocalPersistence,
+    browserLocalPersistence,
+    browserSessionPersistence,
+    inMemoryPersistence,
+  ];
+  for (const p of types) {
+    try {
+      await setPersistence(auth, p);
+      return;
+    } catch {
+      /* جرّب النوع التالي */
+    }
+  }
+}
+
 export async function signUp(email: string, password: string) {
-  /* نثبّت الجلسة في localStorage صراحةً قبل الإنشاء */
-  await setPersistence(auth, browserLocalPersistence);
+  await ensurePersistence();
   const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
   return cred.user;
 }
 
 export async function signIn(email: string, password: string) {
-  /* نثبّت الجلسة في localStorage صراحةً قبل الدخول */
-  await setPersistence(auth, browserLocalPersistence);
+  await ensurePersistence();
   const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
   return cred.user;
 }
