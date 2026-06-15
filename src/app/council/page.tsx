@@ -58,15 +58,16 @@ function timeAgo(ms: number): string {
 export default function CouncilPage() {
   /* ─ حالة المستخدم الحالي ─ */
   const [authUid, setAuthUid] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string>("طالب");
-  const [userTrackIds, setUserTrackIds] = useState<string[]>([]);
-
-  useEffect(() => {
+  const [userName] = useState<string>(() => {
+    if (typeof window === "undefined") return "طالب";
+    return loadUser()?.name ?? "طالب";
+  });
+  const [userTrackIds] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
     const u = loadUser();
-    setUserName(u?.name ?? "طالب");
     const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
-    setUserTrackIds(ids as string[]);
-  }, []);
+    return ids as string[];
+  });
 
   useEffect(() => onAuth((u) => setAuthUid(u?.uid ?? null)), []);
 
