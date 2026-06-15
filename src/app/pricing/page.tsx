@@ -188,7 +188,7 @@ export default function PricingPage() {
                 </div>
                 <div className="text-left">
                   <span className="font-mono-nums text-3xl font-black text-[var(--gold)]">
-                    {lifeTime ? "209" : "119"}
+                    {lifeTime ? "279" : "119"}
                   </span>
                   <span className="text-xs text-[var(--text-muted)]">
                     {lifeTime ? " ريال مدى الحياة" : " ريال/سنة"}
@@ -210,7 +210,7 @@ export default function PricingPage() {
                   className={`px-3 py-1 rounded-full text-xs font-medium transition ${lifeTime ? "text-[var(--gold)]" : "glass text-[var(--text-muted)]"}`}
                   style={lifeTime ? { background: "rgba(245,158,11,0.08)", border: "1px solid #F59E0B" } : undefined}
                 >
-                  مدى الحياة — 209
+                  مدى الحياة — 279
                 </button>
               </div>
 
@@ -239,7 +239,7 @@ export default function PricingPage() {
 
               {lifeTime && (
                 <p className="text-[17px] text-center text-[var(--text-muted)] mt-2">
-                  لماذا 209 تحديداً؟ لأنه رقم محسوب — يعكس قيمة حقيقية.
+                  لماذا 279 تحديداً؟ لأنه رقم محسوب — يعكس قيمة حقيقية.
                 </p>
               )}
             </div>
@@ -331,7 +331,7 @@ export default function PricingPage() {
 
         {/* Footer note */}
         <p className="text-center text-xs text-[var(--text-muted)] mt-8">
-          سبب 209 تحديداً: يبدو &ldquo;محسوباً&rdquo; مش &ldquo;مقرباً&rdquo; — يزيد المصداقية.
+          سبب 279 تحديداً: يبدو &ldquo;محسوباً&rdquo; مش &ldquo;مقرباً&rdquo; — يزيد المصداقية.
           <br />
           سبب 35: يعكس قيمة أعلى ولا يزال أرخص من أي منافس.
         </p>

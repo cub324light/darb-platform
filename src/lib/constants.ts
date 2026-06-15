@@ -53,7 +53,7 @@ export const PLANS = [
     name: "عنقاء",
     price: 119,
     period: "سنة",
-    priceLifetime: 209,
+    priceLifetime: 279,
     badge: "النخبة والمؤسسون",
     color: "#F59E0B",
     features: [

@@ -146,6 +146,15 @@ export default function DashboardPage() {
 
   const [studiersData, setStudiersData] = useState<{ count: number; regions: Record<string, number> } | null>(null);
 
+  /* إخفاء حكمة اليوم عند الضغط على ✕ */
+  const [hideQuote, setHideQuote] = useState(() =>
+    typeof window !== "undefined" && localStorage.getItem("darb_hide_quote") === "1"
+  );
+  const dismissQuote = () => {
+    try { localStorage.setItem("darb_hide_quote", "1"); } catch {}
+    setHideQuote(true);
+  };
+
   const [schedOpen, setSchedOpen] = useState(false);
   const [schedTab, setSchedTab] = useState<"manual" | "ai">("manual");
   const [schedPrefill, setSchedPrefill] = useState("");
@@ -604,13 +613,19 @@ export default function DashboardPage() {
         );
 
       case "quote":
+        if (hideQuote) return null;
         return (
-          <section className="rounded-2xl px-5 py-4"
+          <section className="rounded-2xl px-5 py-4 relative"
             style={{
               background: "linear-gradient(135deg, color-mix(in srgb, var(--gold) 8%, transparent), transparent), var(--surface)",
               border: "1px solid color-mix(in srgb, var(--gold) 18%, transparent)",
             }}>
-            <p className="text-[15px] font-bold leading-relaxed" style={{ color: "var(--text-dim)" }}>
+            <button onClick={dismissQuote} aria-label="حذف الحكمة"
+              className="absolute top-2.5 left-2.5 w-6 h-6 rounded-full flex items-center justify-center text-[13px] font-bold"
+              style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+              ✕
+            </button>
+            <p className="text-[15px] font-bold leading-relaxed pl-7" style={{ color: "var(--text-dim)" }}>
               &ldquo;{quoteOfToday()}&rdquo;
             </p>
           </section>

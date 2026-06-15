@@ -86,6 +86,13 @@ export default function OrbitPage() {
     return subjectsForTracks(finalIds)[0]?.name ?? "";
   });
   const [breakTip] = useState(() => BREAK_TIPS[Math.floor(Math.random() * BREAK_TIPS.length)]);
+  const [hideTip, setHideTip] = useState(() =>
+    typeof window !== "undefined" && localStorage.getItem("darb_hide_tips") === "1"
+  );
+  const dismissTip = () => {
+    try { localStorage.setItem("darb_hide_tips", "1"); } catch {}
+    setHideTip(true);
+  };
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   /* نهاية الجلسة كطابع زمني حقيقي — العدّ ما يتجمد لو راح التطبيق للخلفية */
   const endAtRef = useRef(0);
@@ -448,9 +455,18 @@ export default function OrbitPage() {
           )}
 
           {phase === "break" && (
-            <div className="text-center glass rounded-2xl px-5 py-4">
+            <div className="text-center glass rounded-2xl px-5 py-4 relative">
               <p className="text-sm font-bold text-[var(--gold)] mb-1.5">وقت الراحة</p>
-              <p className="text-sm text-[var(--text-dim)] leading-relaxed mb-2">{breakTip}</p>
+              {!hideTip && (
+                <div className="relative mb-2">
+                  <button onClick={dismissTip} aria-label="حذف النصيحة"
+                    className="absolute top-0 left-0 w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold"
+                    style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                    ✕
+                  </button>
+                  <p className="text-sm text-[var(--text-dim)] leading-relaxed px-6">{breakTip}</p>
+                </div>
+              )}
               <p className="text-xs text-[var(--text-muted)]">الجلسة القادمة تبدأ تلقائياً بعد {mins}:{String(secs).padStart(2, "0")}</p>
             </div>
           )}
