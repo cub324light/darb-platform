@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, type ReactNode } from "react";
 import ProfileButton, { ThemeToggle } from "@/components/Profile";
+import SettingsButton from "@/components/SettingsPanel";
 
 /* ─── القبة: سماء محتواة داخل الهيدر — توقيع درب البصري ───
    المحتوى فوقها دائماً (z-2) والزينة خلفه (z-1) داخل حدود القبة فقط،
@@ -96,6 +97,7 @@ export default function Dome({
           <div className="flex justify-end gap-2 mb-3">
             <ThemeToggle className="" />
             <ProfileButton />
+            <SettingsButton />
           </div>
         )}
         {children}

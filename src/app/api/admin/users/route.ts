@@ -85,6 +85,39 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  /* إيقاف مؤقت لمدة محددة */
+  if (mode === "setBlockedUntil") {
+    const { uid, durationHours } = (body ?? {}) as { uid?: string; durationHours?: number };
+    if (typeof uid !== "string" || !uid) {
+      return NextResponse.json({ error: "uid مفقود" }, { status: 400 });
+    }
+
+    let blockUntil: number | null = null;
+    let blocked = false;
+
+    if (durationHours !== null && durationHours !== undefined && durationHours > 0) {
+      blockUntil = Date.now() + durationHours * 3600 * 1000;
+      blocked = true;
+    }
+    // durationHours === 0 means permanent block (no expiry)
+    if (durationHours === 0) {
+      blocked = true;
+      blockUntil = null;
+    }
+
+    try {
+      const app = adminApp();
+      await getFirestore(app).collection("users").doc(uid).set(
+        { blocked, blockUntil: blockUntil ?? null },
+        { merge: true }
+      );
+      return NextResponse.json({ ok: true, uid, blocked, blockUntil });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return NextResponse.json({ error: `تعذّر الإيقاف: ${msg}` }, { status: 500 });
+    }
+  }
+
   /* إيقاف / تفعيل مستخدم */
   if (mode === "setBlocked") {
     const { uid, blocked } = (body ?? {}) as { uid?: string; blocked?: boolean };
@@ -177,6 +210,7 @@ export async function POST(req: NextRequest) {
         grade:           pick("grade"),
         studyHours:      (data.studyHours ?? prof.studyHours ?? "") as string | number,
         durationDays,
+        blockUntil: typeof data.blockUntil === "number" ? data.blockUntil : null,
         joinedAt:  joinedMs  ? { seconds: data.joinedAt.seconds  } : null,
         lastSeen:  lastSeenMs ? { seconds: data.lastSeen.seconds } : null,
       };

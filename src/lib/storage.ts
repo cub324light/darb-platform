@@ -344,7 +344,8 @@ export function saveSchedule(s: WeeklySchedule) {
 /* ── إعدادات الصفحة الرئيسية: ترتيب وإظهار الأقسام ── */
 export type DashSectionId =
   | "track" | "today" | "schedule" | "ai" | "weekly"
-  | "quote" | "stats" | "tools" | "community" | "certificate";
+  | "quote" | "stats" | "tools" | "community" | "certificate"
+  | "studiers" | "map";
 
 export interface DashItem { id: DashSectionId; visible: boolean; }
 export interface DashConfig { layout: DashItem[]; }
@@ -361,16 +362,20 @@ export const DASH_SECTION_META: Record<DashSectionId, { label: string; desc: str
   tools:       { label: "الأدوات",      desc: "أوربت، الخزنة، المراجعة، الخريطة" },
   community:   { label: "المجتمع",      desc: "المجلس والأرينا" },
   certificate: { label: "الشهادة",      desc: "شهادة الانضباط والترقية" },
+  studiers:    { label: "كم يذاكر الآن",   desc: "عدد الطلاب النشطين على المنصة الآن" },
+  map:         { label: "خريطة السعودية",   desc: "توزيع الطلاب على مناطق المملكة" },
 };
 
 /* جدول اليوم ثاني عنصر تلقائياً */
 const DASH_DEFAULT_ORDER: DashSectionId[] = [
   "track", "schedule", "today", "ai", "weekly",
   "quote", "stats", "tools", "community", "certificate",
+  "studiers", "map",
 ];
 
 function defaultLayout(): DashItem[] {
-  return DASH_DEFAULT_ORDER.map((id) => ({ id, visible: true }));
+  const hidden = new Set<DashSectionId>(["studiers", "map"]);
+  return DASH_DEFAULT_ORDER.map((id) => ({ id, visible: !hidden.has(id) }));
 }
 
 const DASH_CONFIG_KEY = "darb_dash_config";
@@ -407,9 +412,10 @@ export function loadDashConfig(): DashConfig {
         (it: DashItem) => it && DASH_DEFAULT_ORDER.includes(it.id)
       );
       const seen = new Set(known.map((it) => it.id));
+      const hiddenByDefault = new Set<DashSectionId>(["studiers", "map"]);
       const merged = [
         ...known,
-        ...DASH_DEFAULT_ORDER.filter((id) => !seen.has(id)).map((id) => ({ id, visible: true })),
+        ...DASH_DEFAULT_ORDER.filter((id) => !seen.has(id)).map((id) => ({ id, visible: !hiddenByDefault.has(id) })),
       ];
       return { layout: migrateScheduleSecond(merged) };
     }

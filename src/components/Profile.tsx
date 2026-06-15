@@ -1,22 +1,17 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { TRACKS, TRACK_GROUPS, type TrackId } from "@/lib/tracks";
+import { TRACKS } from "@/lib/tracks";
 import {
   loadUser, saveUser, loadStats, computeStreak,
-  loadTheme, applyTheme, resetAll,
+  loadTheme, applyTheme,
   loadResults, saveResults,
-  type DarbUser, type Theme, type ExamResult,
+  type DarbUser, type Theme, type ExamResult, type DarbStats,
 } from "@/lib/storage";
 import { syncUser } from "@/lib/firestore";
 import { getPlan, PLAN_NAMES, PLAN_COLORS } from "@/lib/plan";
 import type { PlanId } from "@/lib/types";
-import {
-  onAuth, signIn, signUp, signOutUser, authErrorMsg,
-  pushBackup, pullBackup,
-} from "@/lib/cloud";
-import type { User } from "firebase/auth";
-import type { FirebaseError } from "firebase/app";
+import { computeXP, getLevel, getUnlockedBadgeIds, BADGE_DEFS } from "@/lib/xp";
 
 /* ─── زر البروفايل (يسار) + اللوحة المنزلقة ─── */
 
@@ -44,7 +39,8 @@ export default function ProfileButton() {
   const [editName, setEditName] = useState("");
   const [editing, setEditing] = useState(false);
   const [stats, setStats] = useState({ streak: 0, silver: 0, hours: 0, sessions: 0 });
-  const [activeTracksState, setActiveTracksState] = useState<TrackId[]>([]);
+  const [rawStats, setRawStats] = useState<DarbStats | null>(null);
+  const [vaultCount, setVaultCount] = useState(0);
   const [planId, setPlanId] = useState<PlanId>("free");
 
   // نتائجي
@@ -53,62 +49,6 @@ export default function ProfileButton() {
   const [resScore, setResScore] = useState("");
   const [resDate, setResDate]   = useState("");
 
-  // الحساب السحابي
-  const [authUser, setAuthUser] = useState<User | null>(null);
-  const [authMode, setAuthMode] = useState<"signin" | "signup">("signup");
-  const [authOpen, setAuthOpen] = useState(false);
-  const [authEmail, setAuthEmail] = useState("");
-  const [authPass, setAuthPass] = useState("");
-  const [authBusy, setAuthBusy] = useState(false);
-  const [authErr, setAuthErr] = useState("");
-  const [syncMsg, setSyncMsg] = useState("");
-
-  useEffect(() => onAuth(setAuthUser), []);
-
-  const submitAuth = async () => {
-    setAuthErr("");
-    if (!authEmail.trim() || authPass.length < 6) {
-      setAuthErr("اكتب الإيميل وكلمة مرور ٦ أحرف على الأقل");
-      return;
-    }
-    setAuthBusy(true);
-    try {
-      if (authMode === "signup") {
-        await signUp(authEmail, authPass);
-        await pushBackup(); // ارفع بياناتك الحالية للسحابة
-        setSyncMsg("تم إنشاء الحساب وحفظ بياناتك ☁️");
-        setAuthOpen(false);
-      } else {
-        await signIn(authEmail, authPass);
-        const restored = await pullBackup();
-        if (restored) {
-          window.location.reload(); // حمّل بياناتك المسترجعة
-          return;
-        }
-        await pushBackup();
-        setSyncMsg("تم تسجيل الدخول ☁️");
-        setAuthOpen(false);
-      }
-      setAuthPass("");
-    } catch (e) {
-      setAuthErr(authErrorMsg((e as FirebaseError)?.code ?? ""));
-    } finally {
-      setAuthBusy(false);
-    }
-  };
-
-  const manualSync = async () => {
-    setSyncMsg("جارٍ الحفظ…");
-    const ok = await pushBackup();
-    setSyncMsg(ok ? "تم الحفظ في السحابة ✓" : "تعذّر الحفظ — تأكد من الاتصال");
-  };
-
-  const doSignOut = async () => {
-    await pushBackup();
-    await signOutUser();
-    setSyncMsg("");
-  };
-
   useEffect(() => {
     if (!open) return;
     const id = setTimeout(() => {
@@ -116,15 +56,23 @@ export default function ProfileButton() {
       setUser(u);
       setEditName(u?.name ?? "");
       const s = loadStats();
+      setRawStats(s);
       setStats({
         streak: computeStreak(s),
         silver: s.silver,
         hours: Math.floor(s.totalFocusMins / 60),
         sessions: s.sessionsCount,
       });
-      setActiveTracksState(u?.activeTracks ?? (u?.track ? [u.track] : []));
       setPlanId(getPlan());
       setResults(loadResults());
+      // عدد عناصر الخزنة
+      try {
+        const vaultRaw = localStorage.getItem("darb_vault");
+        const vault = vaultRaw ? JSON.parse(vaultRaw) : [];
+        setVaultCount(Array.isArray(vault) ? vault.length : 0);
+      } catch {
+        setVaultCount(0);
+      }
     }, 0);
     return () => clearTimeout(id);
   }, [open]);
@@ -145,26 +93,6 @@ export default function ProfileButton() {
     setResults(next); saveResults(next);
   };
 
-  const toggleActiveTrack = (id: TrackId) => {
-    if (!user) return;
-    const prev = activeTracksState;
-    const next = prev.includes(id)
-      ? prev.filter((t) => t !== id)
-      : prev.length >= 3 ? prev : [...prev, id];
-    if (next === prev) return; // تجاوز الحد الأقصى — لا تغيير
-    const primaryTrack = next[0] ?? user.track;
-    /* تأكيد فقط عند تغيّر المسار الأساسي — لأنه يبدّل خريطتك وأولوياتك */
-    if (primaryTrack !== user.track &&
-        !confirm("تغيير مسارك الأساسي يبدّل خريطتك وأولوياتك. متأكد؟")) {
-      return;
-    }
-    const updated = { ...user, track: primaryTrack, activeTracks: next };
-    saveUser(updated);
-    setUser(updated);
-    setActiveTracksState(next);
-    syncUser({ track: primaryTrack });
-  };
-
   const saveName = () => {
     if (!user || !editName.trim()) return;
     const next = { ...user, name: editName.trim() };
@@ -172,12 +100,6 @@ export default function ProfileButton() {
     setUser(next);
     setEditing(false);
     syncUser({ name: next.name });
-  };
-
-  const reset = () => {
-    if (!confirm("متأكد؟ راح ينمسح كل شيء وتبدأ من الصفر.")) return;
-    resetAll();
-    window.location.href = "/onboarding";
   };
 
   const modal = open && typeof document !== "undefined" && createPortal(
@@ -251,6 +173,59 @@ export default function ProfileButton() {
               </span>
             </button>
 
+            {/* XP + المستوى */}
+            {rawStats && (() => {
+              const xp = computeXP(rawStats);
+              const level = getLevel(xp);
+              return (
+                <div className="rounded-2xl px-4 py-4 mb-6" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl" style={{ color: level.color }}>{level.icon}</span>
+                      <span className="font-black text-[15px]" style={{ color: level.color }}>{level.name}</span>
+                    </div>
+                    <span className="font-mono-nums text-[13px] font-bold" style={{ color: "var(--text-muted)" }}>{xp.toLocaleString("ar")} XP</span>
+                  </div>
+                  <div className="w-full rounded-full h-2 overflow-hidden" style={{ background: "var(--border)" }}>
+                    <div className="h-full rounded-full transition-all"
+                      style={{ width: `${level.progress}%`, background: level.color }} />
+                  </div>
+                  {level.next && (
+                    <p className="text-[12px] mt-1.5" style={{ color: "var(--text-muted)" }}>
+                      {level.next.name} — يحتاج {level.next.minXp.toLocaleString("ar")} XP
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* الشارات */}
+            {rawStats && (() => {
+              const unlockedIds = new Set(getUnlockedBadgeIds(rawStats, vaultCount));
+              return (
+                <div className="mb-6">
+                  <p className="label mb-3">شاراتك</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {BADGE_DEFS.map((b) => {
+                      const unlocked = unlockedIds.has(b.id);
+                      return (
+                        <div key={b.id}
+                          className="rounded-2xl p-3 flex flex-col items-center gap-1 text-center"
+                          style={{
+                            background: unlocked ? "color-mix(in srgb, var(--accent) 10%, var(--surface2))" : "var(--surface2)",
+                            border: `1.5px solid ${unlocked ? "color-mix(in srgb, var(--accent) 40%, transparent)" : "var(--border)"}`,
+                            opacity: unlocked ? 1 : 0.4,
+                          }}>
+                          <span className="text-2xl">{b.icon}</span>
+                          <p className="text-[12px] font-bold leading-tight" style={{ color: unlocked ? "var(--text)" : "var(--text-muted)" }}>{b.label}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* الإحصاءات الحقيقية */}
             <div className="grid grid-cols-4 gap-2 mb-6">
               {[
@@ -265,88 +240,6 @@ export default function ProfileButton() {
                   <p className="text-[17px] text-[var(--text-muted)] font-semibold">{s.label}</p>
                 </div>
               ))}
-            </div>
-
-            {/* الحساب السحابي */}
-            <p className="label mb-3">حسابك السحابي</p>
-            <div className="mb-6">
-              {authUser ? (
-                <div className="rounded-2xl p-4" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-base">☁️</span>
-                    <p className="font-bold text-[15px] text-[var(--text)] truncate flex-1">{authUser.displayName || authUser.email}</p>
-                  </div>
-                  <p className="text-[13px] text-[var(--text-muted)] mb-3">
-                    {authUser.email ? `${authUser.email} · ` : ""}بياناتك محفوظة وتتزامن تلقائياً
-                  </p>
-                  <div className="flex gap-2">
-                    <button onClick={manualSync} className="flex-1 py-2.5 rounded-xl text-sm font-bold"
-                      style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
-                      احفظ الآن
-                    </button>
-                    <button onClick={doSignOut} className="px-4 py-2.5 rounded-xl text-sm font-bold"
-                      style={{ background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
-                      خروج
-                    </button>
-                  </div>
-                  {syncMsg && <p className="text-[13px] mt-2 font-semibold" style={{ color: "var(--accent-light)" }}>{syncMsg}</p>}
-                </div>
-              ) : authOpen ? (
-                <div className="rounded-2xl p-4" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-                  <div className="flex gap-2 mb-3">
-                    <button onClick={() => { setAuthMode("signup"); setAuthErr(""); }}
-                      className="flex-1 py-2 rounded-xl text-sm font-bold transition"
-                      style={authMode === "signup"
-                        ? { background: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }
-                        : { background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
-                      حساب جديد
-                    </button>
-                    <button onClick={() => { setAuthMode("signin"); setAuthErr(""); }}
-                      className="flex-1 py-2 rounded-xl text-sm font-bold transition"
-                      style={authMode === "signin"
-                        ? { background: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }
-                        : { background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
-                      تسجيل دخول
-                    </button>
-                  </div>
-                  <input
-                    type="email" inputMode="email" dir="ltr" placeholder="الإيميل"
-                    value={authEmail} onChange={(e) => setAuthEmail(e.target.value)}
-                    className="w-full rounded-xl px-4 py-3 text-base text-[var(--text)] outline-none mb-2 text-left"
-                    style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}
-                  />
-                  <input
-                    type="password" dir="ltr" placeholder="كلمة المرور (٦ أحرف+)"
-                    value={authPass} onChange={(e) => setAuthPass(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") submitAuth(); }}
-                    className="w-full rounded-xl px-4 py-3 text-base text-[var(--text)] outline-none mb-2 text-left"
-                    style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}
-                  />
-                  {authErr && <p className="text-[13px] mb-2 font-semibold" style={{ color: "var(--danger)" }}>{authErr}</p>}
-                  <div className="flex gap-2">
-                    <button onClick={submitAuth} disabled={authBusy}
-                      className="flex-1 py-3 rounded-xl font-bold text-white disabled:opacity-60"
-                      style={{ background: "linear-gradient(135deg,var(--accent-2),var(--accent-light))" }}>
-                      {authBusy ? "…" : authMode === "signup" ? "أنشئ الحساب" : "دخول"}
-                    </button>
-                    <button onClick={() => { setAuthOpen(false); setAuthErr(""); }}
-                      className="px-4 rounded-xl text-sm font-bold" style={{ background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
-                      إلغاء
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button onClick={() => { setAuthOpen(true); setAuthMode("signup"); }}
-                  className="w-full rounded-2xl p-4 text-right flex items-center gap-3"
-                  style={{ background: "var(--surface2)", border: "1.5px dashed var(--accent)" }}>
-                  <span className="text-2xl">☁️</span>
-                  <span className="flex-1">
-                    <span className="block font-bold text-[15px] text-[var(--text)]">سجّل دخولك واحفظ بياناتك</span>
-                    <span className="block text-[13px] text-[var(--text-muted)]">عشان ما تروح لو غيّرت الجهاز</span>
-                  </span>
-                  <span className="text-[var(--accent-light)]">←</span>
-                </button>
-              )}
             </div>
 
             {/* نتائجي — سجل نتائج الاختبارات */}
@@ -373,10 +266,9 @@ export default function ProfileButton() {
                   className="flex-1 min-w-0 rounded-2xl px-4 py-3 text-[15px] text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
                   style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
                 <datalist id="darb-exam-options">
-                  {activeTracksState.map((id) => {
-                    const t = TRACKS.find((tr) => tr.id === id);
-                    return t ? <option key={id} value={t.title} /> : null;
-                  })}
+                  {TRACKS.map((t) => (
+                    <option key={t.id} value={t.title} />
+                  ))}
                 </datalist>
                 <input value={resScore} inputMode="decimal" onChange={(e) => setResScore(e.target.value)}
                   placeholder="الدرجة" maxLength={6}
@@ -394,70 +286,6 @@ export default function ProfileButton() {
                 </button>
               </div>
             </div>
-
-            {/* المسارات — متعددة (حد أقصى 3) */}
-            <div className="flex items-center gap-2 mb-3">
-              <p className="label">مساراتك</p>
-              <span className="text-xs px-2 py-0.5 rounded-full font-black"
-                style={{
-                  background: activeTracksState.length >= 3 ? "color-mix(in srgb, var(--gold) 15%, transparent)" : "color-mix(in srgb, var(--accent) 12%, transparent)",
-                  color: activeTracksState.length >= 3 ? "var(--gold)" : "var(--accent-light)",
-                }}>
-                {activeTracksState.length}/3
-              </span>
-            </div>
-            <div className="flex flex-col gap-3.5 mb-6">
-              {TRACK_GROUPS.map((group) => (
-                <div key={group.label}>
-                  <p className="text-[10px] font-black tracking-widest mb-2 px-0.5"
-                    style={{ color: "var(--text-muted)" }}>
-                    ── {group.label} ──
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {group.ids.map((id) => {
-                      const t = TRACKS.find((tr) => tr.id === id)!;
-                      const selected = activeTracksState.includes(id);
-                      const disabled = !selected && activeTracksState.length >= 3;
-                      return (
-                        <button key={t.id} onClick={() => !disabled && toggleActiveTrack(t.id)}
-                          className="rounded-xl p-3 text-right transition active:scale-[0.98] relative"
-                          style={{
-                            background: selected ? "color-mix(in srgb, var(--accent) 12%, transparent)" : "var(--surface2)",
-                            border: `2px solid ${selected ? "var(--accent)" : "var(--border)"}`,
-                            opacity: disabled ? 0.38 : 1,
-                          }}>
-                          {selected && <span className="absolute top-2 left-2.5 text-[var(--accent-light)] text-sm font-black">✓</span>}
-                          <p className="font-bold text-[14px] text-[var(--text)]">{t.title}</p>
-                          <p className="text-[10px] text-[var(--text-muted)] mt-0.5 leading-snug">{t.sub}</p>
-                          {t.subjects.length > 0 && (
-                            <div className="flex gap-1 mt-1.5 flex-wrap">
-                              {t.subjects.map((s) => (
-                                <span key={s.name} className="w-1.5 h-1.5 rounded-full inline-block"
-                                  style={{ background: s.color }} />
-                              ))}
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* تخصيص الصفحة الرئيسية — صار بالسحب من الصفحة نفسها */}
-            <p className="label mb-3">تخصيص الصفحة الرئيسية</p>
-            <div className="rounded-2xl px-4 py-3.5 mb-6"
-              style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-              <p className="text-[14px] font-semibold leading-relaxed" style={{ color: "var(--text-muted)" }}>
-                صار التخصيص من الصفحة الرئيسية مباشرة — اضغط زر «تخصيص» فوق، تقدر تسحب الأقسام وترتّبها، تخفيها بزر ✕، وترجّعها من «إضافة قسم».
-              </p>
-            </div>
-
-            <button onClick={reset} className="w-full py-3.5 rounded-2xl text-sm font-bold transition"
-              style={{ background: "transparent", border: "1px solid rgba(239,68,68,0.3)", color: "var(--danger)" }}>
-              إعادة الضبط من الصفر
-            </button>
           </div>
     </div>,
     document.body

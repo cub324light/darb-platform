@@ -25,6 +25,7 @@ interface AdminUser {
   grade: string;
   studyHours: string | number;
   durationDays: number | null;
+  blockUntil: number | null;
   joinedAt: { seconds: number } | null;
   lastSeen: { seconds: number } | null;
 }
@@ -152,8 +153,21 @@ export default function AdminPage() {
     setActionBusy(true); setActionMsg("");
     try {
       const { ok, data } = await callAction("setBlocked", { uid, blocked });
-      if (ok) { applyLocal(uid, { blocked }); setActionMsg(blocked ? "🚫 تم إيقاف المستخدم" : "✅ تم تفعيل المستخدم"); }
+      if (ok) { applyLocal(uid, { blocked, blockUntil: null }); setActionMsg(blocked ? "🚫 تم إيقاف المستخدم" : "✅ تم تفعيل المستخدم"); }
       else setActionMsg(`❌ ${data.error ?? "تعذّر التحديث"}`);
+    } catch { setActionMsg("❌ خطأ في الاتصال"); }
+    finally { setActionBusy(false); }
+  };
+
+  const timedBlock = async (uid: string, durationHours: number) => {
+    setActionBusy(true); setActionMsg("");
+    try {
+      const { ok, data } = await callAction("setBlockedUntil", { uid, durationHours });
+      if (ok) {
+        const blockUntil = (data as { blockUntil?: number | null }).blockUntil ?? null;
+        applyLocal(uid, { blocked: true, blockUntil });
+        setActionMsg(durationHours === 0 ? "🚫 تم الإيقاف الدائم" : `🚫 موقوف لمدة ${durationHours < 24 ? `${durationHours}س` : `${Math.round(durationHours / 24)} يوم`}`);
+      } else setActionMsg(`❌ ${(data as Record<string,string>).error ?? "تعذّر الإيقاف"}`);
     } catch { setActionMsg("❌ خطأ في الاتصال"); }
     finally { setActionBusy(false); }
   };
@@ -452,15 +466,34 @@ export default function AdminPage() {
                 })}
               </div>
 
-              <p className="text-[12px] font-black mt-1" style={{ color: "var(--text-muted)" }}>الحالة</p>
-              <button onClick={() => !actionBusy && toggleBlock(detail.id, !detail.blocked)}
-                disabled={actionBusy}
-                className="py-2.5 rounded-xl text-[14px] font-bold transition disabled:opacity-60"
-                style={detail.blocked
-                  ? { background: "color-mix(in srgb, var(--success) 12%, transparent)", border: "1.5px solid var(--success)", color: "var(--success)" }
-                  : { background: "color-mix(in srgb, var(--danger) 10%, transparent)", border: "1.5px solid var(--danger)", color: "var(--danger)" }}>
-                {detail.blocked ? "✅ إلغاء الإيقاف وتفعيل الحساب" : "🚫 إيقاف هذا المستخدم"}
-              </button>
+              <p className="text-[12px] font-black mt-1" style={{ color: "var(--text-muted)" }}>الإيقاف</p>
+              {detail.blocked && (
+                <div className="rounded-xl px-3 py-2 text-[13px] font-bold" style={{ background: "color-mix(in srgb, var(--danger) 10%, transparent)", border: "1px solid var(--danger)", color: "var(--danger)" }}>
+                  {detail.blockUntil ? `موقوف حتى ${new Date(detail.blockUntil).toLocaleDateString("ar-SA")}` : "موقوف بشكل دائم"}
+                </div>
+              )}
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { label: "ساعة", hours: 1 },
+                  { label: "٢٤ ساعة", hours: 24 },
+                  { label: "٧ أيام", hours: 168 },
+                  { label: "٣٠ يوماً", hours: 720 },
+                  { label: "دائم", hours: 0 },
+                ] as { label: string; hours: number }[]).map(({ label, hours }) => (
+                  <button key={label} onClick={() => !actionBusy && timedBlock(detail.id, hours)}
+                    disabled={actionBusy}
+                    className="py-2 rounded-xl text-[12px] font-bold transition disabled:opacity-50"
+                    style={{ background: "color-mix(in srgb, var(--danger) 10%, transparent)", border: "1.5px solid var(--danger)", color: "var(--danger)" }}>
+                    {label}
+                  </button>
+                ))}
+                <button onClick={() => !actionBusy && toggleBlock(detail.id, false)}
+                  disabled={actionBusy || !detail.blocked}
+                  className="py-2 rounded-xl text-[12px] font-bold transition disabled:opacity-40"
+                  style={{ background: "color-mix(in srgb, var(--success) 10%, transparent)", border: "1.5px solid var(--success)", color: "var(--success)" }}>
+                  رفع الإيقاف
+                </button>
+              </div>
 
               {actionMsg && (
                 <p className="text-[13px] font-bold text-center" style={{ color: "var(--text-dim)" }}>{actionMsg}</p>

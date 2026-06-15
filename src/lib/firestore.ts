@@ -50,6 +50,7 @@ export async function syncUser(data: {
   track?: string;
   bird?: string;
   plan?: string;
+  isPrivate?: boolean;
   streak?: number;
   focusMins?: number;
   sessions?: number;

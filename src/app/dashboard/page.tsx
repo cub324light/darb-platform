@@ -143,6 +143,8 @@ export default function DashboardPage() {
     typeof window !== "undefined" ? new Date() : null
   );
 
+  const [studiersData, setStudiersData] = useState<{ count: number; regions: Record<string, number> } | null>(null);
+
   const [schedOpen, setSchedOpen] = useState(false);
   const [schedTab, setSchedTab] = useState<"manual" | "ai">("manual");
   const [schedPrefill, setSchedPrefill] = useState("");
@@ -263,6 +265,25 @@ export default function DashboardPage() {
   };
 
   useEffect(() => () => { if (autoScroll.current) window.clearInterval(autoScroll.current); }, []);
+
+  /* جلب بيانات الطلاب النشطين عند ظهور قسم studiers أو map */
+  useEffect(() => {
+    const hasStudiers = layout.some((l) => l.id === "studiers" && l.visible);
+    const hasMap = layout.some((l) => l.id === "map" && l.visible);
+    if (!hasStudiers && !hasMap) return;
+    fetch("/api/social", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: "studiers" }),
+    })
+      .then((r) => r.json())
+      .then((d: unknown) => {
+        if (d && typeof d === "object" && typeof (d as Record<string, unknown>).count === "number") {
+          setStudiersData(d as { count: number; regions: Record<string, number> });
+        }
+      })
+      .catch(() => {});
+  }, [layout]);
 
   /* ── رسم كل قسم حسب معرّفه ── */
   const renderSection = (id: DashSectionId) => {
@@ -667,6 +688,110 @@ export default function DashboardPage() {
             </Link>
           </section>
         );
+
+      case "studiers":
+        return (
+          <section className="card">
+            <p className="eyebrow">المجتمع</p>
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <p className="title-md" style={{ color: "var(--text)" }}>
+                  {studiersData === null ? "..." : `${studiersData.count} طالب`}
+                </p>
+                <p className="body-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
+                  يذاكرون الآن على المنصة
+                </p>
+              </div>
+              <div className="text-5xl" style={{ filter: "drop-shadow(0 0 12px color-mix(in srgb,var(--accent) 40%,transparent))" }}>
+                📚
+              </div>
+            </div>
+            {studiersData && studiersData.count === 0 && (
+              <p className="text-[13px] mt-3" style={{ color: "var(--text-muted)" }}>
+                كن أول من يذاكر الآن — ابدأ جلسة أوربت
+              </p>
+            )}
+          </section>
+        );
+
+      case "map": {
+        const REGIONS = [
+          { name: "الرياض",           cx: 178, cy: 185 },
+          { name: "مكة المكرمة",      cx: 88,  cy: 200 },
+          { name: "المدينة المنورة",   cx: 98,  cy: 142 },
+          { name: "القصيم",           cx: 153, cy: 130 },
+          { name: "المنطقة الشرقية",  cx: 238, cy: 158 },
+          { name: "عسير",             cx: 108, cy: 248 },
+          { name: "تبوك",             cx: 60,  cy: 85  },
+          { name: "حائل",             cx: 143, cy: 100 },
+          { name: "الحدود الشمالية",  cx: 153, cy: 52  },
+          { name: "جازان",            cx: 83,  cy: 278 },
+          { name: "نجران",            cx: 158, cy: 265 },
+          { name: "الباحة",           cx: 98,  cy: 230 },
+          { name: "الجوف",            cx: 103, cy: 55  },
+        ];
+
+        const regionCounts = studiersData?.regions ?? {};
+        const maxCount = Math.max(1, ...Object.values(regionCounts));
+
+        return (
+          <section className="card">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="eyebrow">توزيع الطلاب</p>
+                <p className="title-md" style={{ color: "var(--text)" }}>خريطة المملكة</p>
+              </div>
+              {studiersData && (
+                <span className="dome-chip text-[13px]" style={{ color: "var(--text-muted)" }}>
+                  {studiersData.count} نشط
+                </span>
+              )}
+            </div>
+            <div className="relative mx-auto" style={{ maxWidth: "280px" }}>
+              <svg viewBox="0 0 280 310" className="w-full" style={{ direction: "ltr" }}>
+                {/* خلفية */}
+                <rect x="0" y="0" width="280" height="310" fill="none" />
+                {REGIONS.map((r) => {
+                  const count = regionCounts[r.name] ?? 0;
+                  const intensity = count > 0 ? 0.2 + 0.8 * (count / maxCount) : 0;
+                  const fillColor = count > 0
+                    ? `color-mix(in srgb, var(--accent) ${Math.round(intensity * 80)}%, var(--surface2))`
+                    : "var(--surface2)";
+                  return (
+                    <g key={r.name}>
+                      <circle
+                        cx={r.cx} cy={r.cy} r={count > 0 ? 18 : 14}
+                        fill={fillColor}
+                        stroke={count > 0 ? "var(--accent)" : "var(--border)"}
+                        strokeWidth={count > 0 ? 1.5 : 1}
+                        opacity={count > 0 ? 1 : 0.5}
+                      />
+                      {count > 0 && (
+                        <text x={r.cx} y={r.cy + 1} textAnchor="middle" dominantBaseline="middle"
+                          fontSize="10" fontWeight="bold" fill="var(--accent-light)">
+                          {count}
+                        </text>
+                      )}
+                    </g>
+                  );
+                })}
+              </svg>
+              {/* Legend */}
+              <div className="mt-2 flex flex-wrap gap-2">
+                {REGIONS.filter((r) => (regionCounts[r.name] ?? 0) > 0).map((r) => (
+                  <span key={r.name} className="text-[11px] px-2 py-0.5 rounded-full font-medium"
+                    style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>
+                    {r.name}: {regionCounts[r.name]}
+                  </span>
+                ))}
+                {Object.keys(regionCounts).length === 0 && (
+                  <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>لا يوجد طلاب نشطون حالياً</p>
+                )}
+              </div>
+            </div>
+          </section>
+        );
+      }
     }
   };
 
