@@ -56,7 +56,7 @@ async function pdfToImages(file: File, maxPages = 3): Promise<string[]> {
     if (!ctx) continue;
     canvas.width = viewport.width;
     canvas.height = viewport.height;
-    await page.render({ canvasContext: ctx, viewport }).promise;
+    await page.render({ canvas, canvasContext: ctx, viewport } as Parameters<typeof page.render>[0]).promise;
     out.push(canvas.toDataURL("image/jpeg", 0.8));
   }
   return out;

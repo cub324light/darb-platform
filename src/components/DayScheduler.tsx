@@ -1,7 +1,8 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import type { ScheduleEvent } from "@/lib/storage";
+import { fmtHour, normalizeDigits } from "@/lib/utils";
 
 export type { ScheduleEvent };
 
@@ -18,21 +19,6 @@ export function getEventsForDate(date: string, events: ScheduleEvent[]): Schedul
       return false;
     })
     .sort((a, b) => a.fromHour - b.fromHour);
-}
-
-function fmtHour(h: number): string {
-  if (h === 0) return "12 ص";
-  if (h < 12) return `${h} ص`;
-  if (h === 12) return "12 م";
-  if (h === 24) return "12 ص";
-  return `${h - 12} م`;
-}
-
-/* ─── تطبيع الأرقام العربية إلى غربية ─── */
-function normalizeDigits(s: string): string {
-  return s
-    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
-    .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06F0));
 }
 
 /* ─── تحويل رقم + مؤشر الفترة ─── */
@@ -112,8 +98,7 @@ interface Props {
 }
 
 export default function DayScheduler({ date, events, subjects, examDate, onExamDateChange, onEventsChange, onClose, prefillText, initialTab }: Props) {
-  const [mounted, setMounted] = useState(false);
-  const [tab, setTab] = useState<"manual" | "ai">("manual");
+  const [tab, setTab] = useState<"manual" | "ai">(initialTab ?? "manual");
 
   // Manual
   const [addMode, setAddMode]     = useState<"study" | "busy" | null>(null);
@@ -125,20 +110,13 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
   const [multiDays, setMultiDays] = useState<number[]>([]);
 
   // AI
-  const [busyText, setBusyText]   = useState("");
+  const [busyText, setBusyText]   = useState(prefillText ?? "");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult]   = useState("");
   const [editText, setEditText]   = useState("");
   const [showEdit, setShowEdit]   = useState(false);
   const [applyFeedback, setApplyFeedback] = useState("");
   const [scheduleStrategy, setScheduleStrategy] = useState<"mixed" | "per-track" | "time-blocks">("mixed");
-
-  useEffect(() => { setMounted(true); }, []);
-
-  useEffect(() => {
-    if (prefillText) setBusyText(prefillText);
-    if (initialTab) setTab(initialTab);
-  }, [prefillText, initialTab]);
 
   const dayEvents  = getEventsForDate(date, events);
   const dateObj    = new Date(date + "T12:00:00");
@@ -244,7 +222,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
     return { hours, weekly: Math.round(hours * 7 * 10) / 10, monthly: Math.round(hours * 30 * 10) / 10 };
   }, [aiResult, date, subjects]);
 
-  if (!mounted) return null;
+  if (typeof document === "undefined") return null;
 
   const modal = createPortal(
     <div className="fixed inset-0 z-[9999] flex items-end" onClick={onClose}>

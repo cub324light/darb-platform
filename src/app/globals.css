@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 /* ═══════════════════════════════════════════
@@ -96,7 +95,7 @@ html[data-theme="light"] { color-scheme: light; }
 body {
   background: var(--body-bg);
   color: var(--text);
-  font-family: 'Cairo', sans-serif;
+  font-family: var(--font-cairo), 'Cairo', sans-serif;
   min-height: 100dvh;
   overflow-x: hidden;
   direction: rtl;
@@ -111,7 +110,7 @@ h1, h2, h3, h4, .title-xl, .title-lg, .title-md {
   text-wrap: balance;
 }
 
-.font-mono-nums { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; }
+.font-mono-nums { font-family: var(--font-mono), 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; }
 
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -381,7 +380,7 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
 }
 .label { font-size: 13px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.05em; }
 
-.num-hero { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-variant-numeric: tabular-nums; }
+.num-hero { font-family: var(--font-mono), 'IBM Plex Mono', monospace; font-weight: 700; font-variant-numeric: tabular-nums; }
 
 /* ═══════ تخطيط الصفحة ═══════ */
 .page {

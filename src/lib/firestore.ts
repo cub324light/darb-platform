@@ -2,9 +2,17 @@
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db, auth } from "./firebase";
 
-/* ─── معرّف المستخدم: نستخدم UID المصادقة (يطابق قواعد Firestore) ─── */
+/* UID المستخدم — يُفضّل Firebase Auth UID لربط البريد الإلكتروني، بديله localStorage */
 export function getOrCreateUid(): string {
-  return auth.currentUser?.uid ?? "";
+  if (typeof window === "undefined") return "ssr";
+  const firebaseUid = auth.currentUser?.uid;
+  if (firebaseUid) return firebaseUid;
+  let uid = localStorage.getItem("darb_uid");
+  if (!uid) {
+    uid = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    localStorage.setItem("darb_uid", uid);
+  }
+  return uid;
 }
 
 /* ─── تسجيل مستخدم جديد (عند الـ onboarding) ─── */
@@ -16,15 +24,10 @@ export async function registerUser(
   try {
     const uid = auth.currentUser?.uid;
     if (!uid) return;
-    const extra: Record<string, string> = {};
-    if (extras?.school) extra.school = extras.school;
-    if (extras?.region) extra.region = extras.region;
-    if (extras?.city)   extra.city   = extras.city;
-    if (extras?.phone)  extra.phone  = extras.phone;
+    const email = auth.currentUser?.email ?? "";
     await setDoc(doc(db, "users", uid), {
       name,
       track,
-      ...extra,
       joinedAt: serverTimestamp(),
       lastSeen: serverTimestamp(),
       streak: 0,
@@ -33,6 +36,11 @@ export async function registerUser(
       silver: 0,
       taseesProgress: 0,
       tadreebProgress: 0,
+      ...(email           ? { email               } : {}),
+      ...(extras?.school  ? { school: extras.school } : {}),
+      ...(extras?.region  ? { region: extras.region } : {}),
+      ...(extras?.city    ? { city:   extras.city   } : {}),
+      ...(extras?.phone   ? { phone:  extras.phone  } : {}),
     }, { merge: true });
   } catch {}
 }
@@ -41,6 +49,9 @@ export async function registerUser(
 export async function syncUser(data: {
   name?: string;
   track?: string;
+  bird?: string;
+  plan?: string;
+  isPrivate?: boolean;
   streak?: number;
   focusMins?: number;
   sessions?: number;

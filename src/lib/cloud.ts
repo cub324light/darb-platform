@@ -21,7 +21,8 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
-import { loadUser, loadStats, computeStreak } from "./storage";
+import { loadUser, saveUser, loadStats, computeStreak } from "./storage";
+import { normalizePlan } from "./plan";
 
 /* المفاتيح التي تُحفظ في السحابة (كل بيانات المستخدم)
    ملاحظة: darb_theme متعمداً غير مدرج — الثيم خاص بكل جهاز */
@@ -37,6 +38,11 @@ const BACKUP_KEYS = [
 /* علم اكتمال أول سحب — يمنع الرفع قبل استرجاع نسخة السحابة */
 let initialSyncDone = false;
 export function isInitialSyncDone(): boolean { return initialSyncDone; }
+
+/* حالة إيقاف الحساب — تُضبط من لوحة الإدارة (top-level field).
+   العميل يقرأها فقط ولا يكتبها، فلا يستطيع فكّ الإيقاف عن نفسه. */
+let accountBlocked = false;
+export function isAccountBlocked(): boolean { return accountBlocked; }
 
 /* ─── المصادقة ─── */
 export function currentUser(): User | null {
@@ -86,6 +92,11 @@ export async function resetPassword(email: string) {
 export async function signOutUser() {
   await fbSignOut(auth);
   initialSyncDone = false;
+  accountBlocked = false;
+}
+
+export async function sendPasswordReset(email: string) {
+  await sendPasswordResetEmail(auth, email);
 }
 
 /* ─── Google — popup أولاً دائماً (أكثر موثوقية ويُظهر الأخطاء فوراً)؛
@@ -194,6 +205,7 @@ export async function pushBackup(): Promise<boolean> {
         email: u.email ?? null,
         name: usr?.name ?? null,
         track: usr?.track ?? null,
+        plan: normalizePlan(usr?.plan),
         streak: computeStreak(st),
         focusMins: st.totalFocusMins,
         sessions: st.sessionsCount,
@@ -217,12 +229,28 @@ export async function pullBackup(): Promise<boolean> {
   try {
     const snap = await getDoc(doc(db, "users", u.uid));
     if (!snap.exists()) return false;
-    const backup = snap.data().backup as Record<string, string> | undefined;
-    if (!backup || Object.keys(backup).length === 0) return false;
-    for (const [k, v] of Object.entries(backup)) {
-      if (typeof v === "string") localStorage.setItem(k, v);
+    const data = snap.data();
+
+    /* حالة الإيقاف والباقة محفوظتان كحقول عُليا يضبطها الأدمن — تُقرأ دائماً */
+    accountBlocked = data.blocked === true;
+    const cloudPlan = data.plan as string | undefined;
+
+    const backup = data.backup as Record<string, string> | undefined;
+    const hasBackup = !!backup && Object.keys(backup).length > 0;
+    if (hasBackup) {
+      for (const [k, v] of Object.entries(backup!)) {
+        if (typeof v === "string") localStorage.setItem(k, v);
+      }
     }
-    return true;
+
+    /* الباقة من السحابة هي المرجع — تُطبَّق بعد استرجاع النسخة لتتجاوز ما بداخلها
+       (يضمن وصول الباقة الممنوحة من الأدمن إلى الجهاز) */
+    if (cloudPlan) {
+      const local = loadUser();
+      if (local) saveUser({ ...local, plan: normalizePlan(cloudPlan) });
+    }
+
+    return hasBackup;
   } catch {
     return false;
   }

@@ -20,10 +20,22 @@ const GRADE_LABELS = ["ما أعرف", "غلط", "صعب", "متوسط", "سهل
 type Mode = "list" | "session";
 
 export default function ReviewPage() {
-  const [activeIds, setActiveIds] = useState<TrackId[]>([]);
-  const [subjectList, setSubjectList] = useState<{ name: string; color: string }[]>([]);
-  const [cards, setCards] = useState<ReviewCard[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const [activeIds] = useState<TrackId[]>(() => {
+    if (typeof window === "undefined") return ["تحصيلي"] as TrackId[];
+    const u = loadUser();
+    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+    return ids.length ? ids : (["تحصيلي"] as TrackId[]);
+  });
+  const [subjectList] = useState<{ name: string; color: string }[]>(() => {
+    if (typeof window === "undefined") return [];
+    const u = loadUser();
+    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
+    return subjectsForTracks(finalIds);
+  });
+  const [cards, setCards] = useState<ReviewCard[]>(() =>
+    typeof window !== "undefined" ? loadList<ReviewCard>(CARDS_KEY) : []
+  );
   const [mode, setMode] = useState<Mode>("list");
   const [sessionCards, setSessionCards] = useState<ReviewCard[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -36,23 +48,15 @@ export default function ReviewPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [newQ, setNewQ] = useState("");
   const [newA, setNewA] = useState("");
-  const [newSubject, setNewSubject] = useState("");
-
-  useEffect(() => {
+  const [newSubject, setNewSubject] = useState(() => {
+    if (typeof window === "undefined") return "";
     const u = loadUser();
     const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
     const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
-    setActiveIds(finalIds);
-    const subs = subjectsForTracks(finalIds);
-    setSubjectList(subs);
-    setNewSubject(subs[0]?.name ?? "");
-    setCards(loadList<ReviewCard>(CARDS_KEY));
-    setLoaded(true);
-  }, []);
+    return subjectsForTracks(finalIds)[0]?.name ?? "";
+  });
 
-  useEffect(() => {
-    if (loaded) saveList(CARDS_KEY, cards);
-  }, [cards, loaded]);
+  useEffect(() => { saveList(CARDS_KEY, cards); }, [cards]);
 
   const colorOf = (subj: string) => colorForSubject(activeIds, subj);
   const subjects = subjectList.map((s) => s.name);
@@ -60,8 +64,10 @@ export default function ReviewPage() {
   /* الحد لكل مادة — ١٠٠ بطاقة لكل مادة ثم اشتراك */
   const atLimit = countForSubject(newSubject) >= PER_SUBJECT_LIMIT;
 
-  const dueCards = cards.filter((c) => c.dueDate <= Date.now());
-  const upcomingCards = cards.filter((c) => c.dueDate > Date.now());
+  /* now ثابت منذ تحميل الصفحة — تحديد البطاقات المستحقة */
+  const [now] = useState<number>(Date.now);
+  const dueCards = cards.filter((c) => c.dueDate <= now);
+  const upcomingCards = cards.filter((c) => c.dueDate > now);
 
   const addCard = () => {
     if (!newQ.trim() || !newA.trim() || atLimit) return;
@@ -388,14 +394,14 @@ export default function ReviewPage() {
         </div>
       )}
 
-      {loaded && cards.length === 0 && (
+      {cards.length === 0 && (
         <div className="text-center py-12 px-6">
           <p className="text-xl font-black text-[var(--text)] mb-2">بنك المراجعة فاضي</p>
           <p className="text-base text-[var(--text-muted)]">أضف أول بطاقة، والنظام يحسب لك متى تراجعها تلقائياً.</p>
         </div>
       )}
 
-      {loaded && cards.length > 0 && dueCards.length === 0 && (
+      {cards.length > 0 && dueCards.length === 0 && (
         <div className="text-center py-10 px-6">
           <p className="text-xl font-black text-[var(--success)] mb-2">أحسنت! لا مراجعات مستحقة</p>
           <p className="text-base text-[var(--text-muted)]">{upcomingCards.length} بطاقة قادمة لاحقاً</p>

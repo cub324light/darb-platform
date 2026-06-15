@@ -1,9 +1,24 @@
 import type { Metadata, Viewport } from "next";
+import { Cairo, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import CloudSync from "@/components/CloudSync";
 import AuthGate from "@/components/AuthGate";
+
+/* الخطوط تُستضاف ذاتياً عبر next/font — صفر طلبات خارجية، بلا انزياح، وتحميل أسرع بكثير */
+const cairo = Cairo({
+  subsets: ["arabic", "latin"],
+  variable: "--font-cairo",
+  display: "swap",
+});
+
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://darb-platform.vercel.app"),
@@ -48,8 +63,13 @@ try {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ar" dir="rtl" data-theme="dark" suppressHydrationWarning>
+    <html lang="ar" dir="rtl" data-theme="dark" className={`${cairo.variable} ${plexMono.variable}`} suppressHydrationWarning>
       <head>
+        {/* تهيئة اتصال مبكرة بخوادم Firebase — يسرّع تسجيل الدخول والمزامنة */}
+        <link rel="preconnect" href="https://firestore.googleapis.com" crossOrigin="" />
+        <link rel="preconnect" href="https://www.googleapis.com" crossOrigin="" />
+        <link rel="preconnect" href="https://securetoken.googleapis.com" crossOrigin="" />
+        <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>

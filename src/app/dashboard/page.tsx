@@ -5,12 +5,14 @@ import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import { getTrack, TRACKS, type TrackId } from "@/lib/tracks";
+import { fmtHour } from "@/lib/utils";
 import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, saveExamDate, loadDashConfig, saveDashConfig, loadTrackExamDates, saveTrackExamDates, DASH_SECTION_META, type DarbUser, type ScheduleEvent, type DashItem, type DashSectionId, saveEvents } from "@/lib/storage";
 import DashAI from "@/components/DashAI";
 import { syncUser } from "@/lib/firestore";
 import DayScheduler, { getEventsForDate } from "@/components/DayScheduler";
 import ExamDateButton from "@/components/ExamDateButton";
 import Calendar from "@/components/Calendar";
+import SaudiMap from "@/components/SaudiMap";
 
 const DAILY_TARGET = 200;
 
@@ -49,41 +51,120 @@ function last7Days(dayMins: Record<string, number>): { label: string; mins: numb
   return out;
 }
 
-function fmtHour(h: number): string {
-  if (h === 0) return "12 ص";
-  if (h < 12) return `${h} ص`;
-  if (h === 12) return "12 م";
-  if (h === 24) return "12 ص";
-  return `${h - 12} م`;
+
+
+function computeGreeting(h: number): string {
+  if (h < 5) return "وقت الذئاب";
+  if (h < 12) return "صباح التفوق";
+  if (h < 17) return "وقت التركيز";
+  if (h < 21) return "مساء الإنجاز";
+  return "الليل للنخبة";
 }
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<DarbUser | null>(null);
-  const [streak, setStreak] = useState(0);
-  const [silver, setSilver] = useState(0);
-  const [focusHours, setFocusHours] = useState(0);
-  const [sessions, setSessions] = useState(0);
-  const [errorsCount, setErrorsCount] = useState(0);
-  const [todayMins, setTodayMins] = useState(0);
-  const [time, setTime] = useState<Date | null>(null);
-  const [greeting, setGreeting] = useState("");
-  const [todayEvents, setTodayEvents] = useState<ScheduleEvent[]>([]);
-  const [examDays, setExamDays] = useState<number | null>(null);
-  const [dueCards, setDueCards] = useState(0);
-  const [week, setWeek] = useState<{ label: string; mins: number; isToday: boolean }[]>([]);
-  const [suggestion, setSuggestion] = useState<{ text: string; sub: string; href: string; color: string } | null>(null);
+  const [user] = useState<DarbUser | null>(() =>
+    typeof window !== "undefined" ? loadUser() : null
+  );
+  const [streak] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    return computeStreak(loadStats());
+  });
+  const [silver] = useState(() =>
+    typeof window !== "undefined" ? loadStats().silver : 0
+  );
+  const [focusHours] = useState(() =>
+    typeof window !== "undefined" ? Math.floor(loadStats().totalFocusMins / 60) : 0
+  );
+  const [sessions] = useState(() =>
+    typeof window !== "undefined" ? loadStats().sessionsCount : 0
+  );
+  const [todayMins] = useState(() =>
+    typeof window !== "undefined" ? loadStats().todayFocusMins : 0
+  );
+  const [week] = useState(() =>
+    typeof window !== "undefined" ? last7Days(loadStats().dayMins) : []
+  );
+  const [errorsCount] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    try {
+      const v = JSON.parse(localStorage.getItem("darb_vault") ?? "[]");
+      return Array.isArray(v) ? v.length : 0;
+    } catch { return 0; }
+  });
+  const [dueCards] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    try {
+      const c = JSON.parse(localStorage.getItem("darb_cards") ?? "[]");
+      const now = Date.now();
+      return Array.isArray(c) ? c.filter((x: { dueDate: number }) => x.dueDate <= now).length : 0;
+    } catch { return 0; }
+  });
+  const [allEvents, setAllEvents] = useState<ScheduleEvent[]>(() =>
+    typeof window !== "undefined" ? loadEvents() : []
+  );
+  const [todayEvents, setTodayEvents] = useState<ScheduleEvent[]>(() => {
+    if (typeof window === "undefined") return [];
+    const today = new Date().toISOString().slice(0, 10);
+    return getEventsForDate(today, loadEvents());
+  });
+  const [examDate, setExamDate] = useState<string | null>(() =>
+    typeof window !== "undefined" ? loadExamDate() : null
+  );
+  const [examDays] = useState<number | null>(() => {
+    if (typeof window === "undefined") return null;
+    const d = loadExamDate();
+    if (!d) return null;
+    const today = new Date().toISOString().slice(0, 10);
+    return Math.round((new Date(d + "T00:00:00").getTime() - new Date(today + "T00:00:00").getTime()) / 86400000);
+  });
+  const [suggestion] = useState<{ text: string; sub: string; href: string; color: string } | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const now = Date.now();
+      const v = JSON.parse(localStorage.getItem("darb_vault") ?? "[]");
+      const c = JSON.parse(localStorage.getItem("darb_cards") ?? "[]");
+      const vaultArr: { reviewCount?: number }[] = Array.isArray(v) ? v : [];
+      const cardsArr: { dueDate: number }[] = Array.isArray(c) ? c : [];
+      const due = cardsArr.filter((x) => x.dueDate <= now).length;
+      const unreviewed = vaultArr.filter((e) => e.reviewCount === 0).length;
+      const s = loadStats();
+      if (due > 0) return { text: `${due} بطاقة مراجعة مستحقة`, sub: "راجعها الحين قبل ما تنسى", href: "/review", color: "var(--success)" };
+      if (unreviewed > 0) return { text: `${unreviewed} خطأ لم تراجعه بعد`, sub: "افتح الخزنة وراجعها", href: "/vault", color: "var(--accent)" };
+      if (s.todayFocusMins === 0) return { text: "ما بدأت اليوم بعد", sub: "جلسة أوربت تكسر الصفر", href: "/orbit", color: "var(--accent)" };
+    } catch {}
+    return null;
+  });
+  const [trackExamDates, setTrackExamDates] = useState<Record<string, string>>(() =>
+    typeof window !== "undefined" ? loadTrackExamDates() : {}
+  );
+  const [greeting] = useState(() =>
+    typeof window !== "undefined" ? computeGreeting(new Date().getHours()) : ""
+  );
+  const [time, setTime] = useState<Date | null>(() =>
+    typeof window !== "undefined" ? new Date() : null
+  );
+
+  const [studiersData, setStudiersData] = useState<{ count: number; regions: Record<string, number> } | null>(null);
+
+  /* إخفاء حكمة اليوم عند الضغط على ✕ */
+  const [hideQuote, setHideQuote] = useState(() =>
+    typeof window !== "undefined" && localStorage.getItem("darb_hide_quote") === "1"
+  );
+  const dismissQuote = () => {
+    try { localStorage.setItem("darb_hide_quote", "1"); } catch {}
+    setHideQuote(true);
+  };
+
   const [schedOpen, setSchedOpen] = useState(false);
   const [schedTab, setSchedTab] = useState<"manual" | "ai">("manual");
   const [schedPrefill, setSchedPrefill] = useState("");
   const [calDate, setCalDate] = useState<string | null>(null);
-  const [allEvents, setAllEvents] = useState<ScheduleEvent[]>([]);
-  const [examDate, setExamDate] = useState<string | null>(null);
-  const [trackExamDates, setTrackExamDates] = useState<Record<string, string>>({});
   const [trackFilter, setTrackFilter] = useState<TrackId | "all">("all");
-  const [mounted, setMounted] = useState(false);
 
   /* ── تخصيص الصفحة: ترتيب وإظهار الأقسام ── */
-  const [layout, setLayout] = useState<DashItem[]>([]);
+  const [layout, setLayout] = useState<DashItem[]>(() =>
+    typeof window !== "undefined" ? loadDashConfig().layout : []
+  );
   const [editMode, setEditMode] = useState(false);
   const [dragId, setDragId] = useState<DashSectionId | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -91,83 +172,25 @@ export default function DashboardPage() {
   const lastY = useRef(0);
   const autoScroll = useRef<number | null>(null);
 
+  /* ساعة — تحديث كل ٣٠ ثانية */
   useEffect(() => {
-    setUser(loadUser());
-    const s = loadStats();
-    setStreak(computeStreak(s));
-    setSilver(s.silver);
-    setFocusHours(Math.floor(s.totalFocusMins / 60));
-    setSessions(s.sessionsCount);
-    setTodayMins(s.todayFocusMins);
-    setWeek(last7Days(s.dayMins));
-    try {
-      const vault = JSON.parse(localStorage.getItem("darb_vault") ?? "[]");
-      setErrorsCount(Array.isArray(vault) ? vault.length : 0);
-    } catch {}
-    try {
-      const cards = JSON.parse(localStorage.getItem("darb_cards") ?? "[]");
-      setDueCards(Array.isArray(cards) ? cards.filter((c: { dueDate: number }) => c.dueDate <= Date.now()).length : 0);
-    } catch {}
-
-    // load today's events
-    const today = new Date().toISOString().slice(0, 10);
-    const eventsData = loadEvents();
-    setAllEvents(eventsData);
-    setTodayEvents(getEventsForDate(today, eventsData));
-
-    // عداد أيام الاختبار
-    const examDateVal = loadExamDate();
-    setExamDate(examDateVal);
-    if (examDateVal) {
-      const diff = Math.round(
-        (new Date(examDateVal + "T00:00:00").getTime() - new Date(today + "T00:00:00").getTime()) / 86400000
-      );
-      setExamDays(diff);
-    }
-
-    setMounted(true);
-
-    // اقتراح ذكي
-    try {
-      const vault = JSON.parse(localStorage.getItem("darb_vault") ?? "[]");
-      const unreviewedVault = Array.isArray(vault) ? vault.filter((e: { reviewCount: number }) => e.reviewCount === 0).length : 0;
-      const cardsRaw = JSON.parse(localStorage.getItem("darb_cards") ?? "[]");
-      const due = Array.isArray(cardsRaw) ? cardsRaw.filter((c: { dueDate: number }) => c.dueDate <= Date.now()).length : 0;
-      const todS = loadStats();
-      if (due > 0) {
-        setSuggestion({ text: `${due} بطاقة مراجعة مستحقة`, sub: "راجعها الحين قبل ما تنسى", href: "/review", color: "var(--success)" });
-      } else if (unreviewedVault > 0) {
-        setSuggestion({ text: `${unreviewedVault} خطأ لم تراجعه بعد`, sub: "افتح الخزنة وراجعها", href: "/vault", color: "var(--accent)" });
-      } else if (todS.todayFocusMins === 0) {
-        setSuggestion({ text: "ما بدأت اليوم بعد", sub: "جلسة أوربت تكسر الصفر", href: "/orbit", color: "var(--accent)" });
-      }
-    } catch {}
-
-    setTrackExamDates(loadTrackExamDates());
-    setLayout(loadDashConfig().layout);
-
-    // مزامنة مع Firestore
-    const u = loadUser();
-    if (u) {
-      syncUser({
-        name: u.name,
-        track: u.track,
-        streak: computeStreak(s),
-        focusMins: s.totalFocusMins,
-        sessions: s.sessionsCount,
-        silver: s.silver,
-      });
-    }
-
-    const h = new Date().getHours();
-    if (h < 5) setGreeting("وقت الذئاب");
-    else if (h < 12) setGreeting("صباح التفوق");
-    else if (h < 17) setGreeting("وقت التركيز");
-    else if (h < 21) setGreeting("مساء الإنجاز");
-    else setGreeting("الليل للنخبة");
-    setTime(new Date());
     const t = setInterval(() => setTime(new Date()), 30000);
     return () => clearInterval(t);
+  }, []);
+
+  /* مزامنة مع Firestore عند التحميل */
+  useEffect(() => {
+    const u = loadUser();
+    if (!u) return;
+    const s = loadStats();
+    syncUser({
+      name: u.name,
+      track: u.track,
+      streak: computeStreak(s),
+      focusMins: s.totalFocusMins,
+      sessions: s.sessionsCount,
+      silver: s.silver,
+    });
   }, []);
 
   const track = getTrack(user?.track);
@@ -252,6 +275,25 @@ export default function DashboardPage() {
   };
 
   useEffect(() => () => { if (autoScroll.current) window.clearInterval(autoScroll.current); }, []);
+
+  /* جلب بيانات الطلاب النشطين عند ظهور قسم studiers أو map */
+  useEffect(() => {
+    const hasStudiers = layout.some((l) => l.id === "studiers" && l.visible);
+    const hasMap = layout.some((l) => l.id === "map" && l.visible);
+    if (!hasStudiers && !hasMap) return;
+    fetch("/api/social", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: "studiers" }),
+    })
+      .then((r) => r.json())
+      .then((d: unknown) => {
+        if (d && typeof d === "object" && typeof (d as Record<string, unknown>).count === "number") {
+          setStudiersData(d as { count: number; regions: Record<string, number> });
+        }
+      })
+      .catch(() => {});
+  }, [layout]);
 
   /* ── رسم كل قسم حسب معرّفه ── */
   const renderSection = (id: DashSectionId) => {
@@ -571,13 +613,19 @@ export default function DashboardPage() {
         );
 
       case "quote":
+        if (hideQuote) return null;
         return (
-          <section className="rounded-2xl px-5 py-4"
+          <section className="rounded-2xl px-5 py-4 relative"
             style={{
               background: "linear-gradient(135deg, color-mix(in srgb, var(--gold) 8%, transparent), transparent), var(--surface)",
               border: "1px solid color-mix(in srgb, var(--gold) 18%, transparent)",
             }}>
-            <p className="text-[15px] font-bold leading-relaxed" style={{ color: "var(--text-dim)" }}>
+            <button onClick={dismissQuote} aria-label="حذف الحكمة"
+              className="absolute top-2.5 left-2.5 w-6 h-6 rounded-full flex items-center justify-center text-[13px] font-bold"
+              style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+              ✕
+            </button>
+            <p className="text-[15px] font-bold leading-relaxed pl-7" style={{ color: "var(--text-dim)" }}>
               &ldquo;{quoteOfToday()}&rdquo;
             </p>
           </section>
@@ -656,6 +704,57 @@ export default function DashboardPage() {
             </Link>
           </section>
         );
+
+      case "studiers":
+        return (
+          <section className="card">
+            <p className="eyebrow">المجتمع</p>
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <p className="title-md" style={{ color: "var(--text)" }}>
+                  {studiersData === null ? "..." : `${studiersData.count} طالب`}
+                </p>
+                <p className="body-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
+                  يذاكرون الآن على المنصة
+                </p>
+              </div>
+              <div className="text-5xl" style={{ filter: "drop-shadow(0 0 12px color-mix(in srgb,var(--accent) 40%,transparent))" }}>
+                📚
+              </div>
+            </div>
+            {studiersData && studiersData.count === 0 && (
+              <p className="text-[13px] mt-3" style={{ color: "var(--text-muted)" }}>
+                كن أول من يذاكر الآن — ابدأ جلسة أوربت
+              </p>
+            )}
+          </section>
+        );
+
+      case "map": {
+        const regionCounts = studiersData?.regions ?? {};
+
+        return (
+          <section className="card">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="eyebrow">توزيع الطلاب</p>
+                <p className="title-md" style={{ color: "var(--text)" }}>خريطة المملكة</p>
+              </div>
+              {studiersData && (
+                <span className="dome-chip text-[13px]" style={{ color: "var(--text-muted)" }}>
+                  {studiersData.count} نشط
+                </span>
+              )}
+            </div>
+            <SaudiMap regionCounts={regionCounts} className="w-full" />
+            {Object.keys(regionCounts).length === 0 && (
+              <p className="text-[13px] mt-3 text-center" style={{ color: "var(--text-muted)" }}>
+                لا يوجد طلاب نشطون حالياً
+              </p>
+            )}
+          </section>
+        );
+      }
     }
   };
 
@@ -874,7 +973,7 @@ export default function DashboardPage() {
       <BottomNav />
 
       {/* DayScheduler Modal — اليوم (من الأزرار) */}
-      {schedOpen && mounted && (
+      {schedOpen && (
         <DayScheduler
           date={new Date().toISOString().slice(0, 10)}
           events={allEvents}
@@ -889,7 +988,7 @@ export default function DashboardPage() {
       )}
 
       {/* DayScheduler Modal — من التقويم */}
-      {calDate && mounted && (
+      {calDate && (
         <DayScheduler
           date={calDate}
           events={allEvents}

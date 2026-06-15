@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { fmtHour } from "@/lib/utils";
 
 type Mode = "gregorian" | "hijri";
 
@@ -14,13 +15,6 @@ export interface DayPeekItem { id: string; label: string; color: string; from: n
 interface CalCell { greg: Date; label: number; inMonth: boolean; }
 
 function dk(d: Date) { return d.toISOString().slice(0, 10); }
-
-function fmtHour(h: number): string {
-  if (h === 0 || h === 24) return "12 ص";
-  if (h < 12) return `${h} ص`;
-  if (h === 12) return "12 م";
-  return `${h - 12} م`;
-}
 
 function hijriOf(d: Date): { year: number; month: number; day: number } {
   try {
@@ -70,12 +64,9 @@ export default function Calendar({
 }) {
   const [mode, setMode] = useState<Mode>("gregorian");
   const [viewDate, setViewDate] = useState(new Date());
-  const [mounted, setMounted] = useState(false);
   const [peek, setPeek] = useState<PeekState | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const todayKey = dk(new Date());
-
-  useEffect(() => { setMounted(true); }, []);
 
   /* تموضع المعاينة من زر اليوم — يشتغل للماوس واللمس */
   const peekFromEl = useCallback((btn: HTMLElement) => {
@@ -213,7 +204,7 @@ export default function Calendar({
   };
 
   /* بطاقة المعاينة العائمة */
-  const peekCard = peek && mounted ? createPortal(
+  const peekCard = peek && typeof document !== "undefined" ? createPortal(
     (() => {
       const items = getDayInfo?.(peek.key) ?? [];
       const isExam = peek.key === examDate;

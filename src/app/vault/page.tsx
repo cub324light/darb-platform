@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
@@ -7,16 +7,29 @@ import PageGuide from "@/components/PageGuide";
 import { ERROR_CATEGORIES } from "@/lib/constants";
 import { subjectsForTracks, colorForSubject, type TrackId } from "@/lib/tracks";
 import { loadUser, loadList, saveList } from "@/lib/storage";
+import { getPlan, VAULT_FREE_LIMIT } from "@/lib/plan";
 import type { VaultError } from "@/lib/types";
 
-const PER_SUBJECT_LIMIT = 25;
+const PER_SUBJECT_LIMIT = VAULT_FREE_LIMIT;
 const VAULT_KEY = "darb_vault";
 
 export default function VaultPage() {
-  const [activeIds, setActiveIds] = useState<TrackId[]>([]);
-  const [subjectList, setSubjectList] = useState<{ name: string; color: string }[]>([]);
-  const [errors, setErrors] = useState<VaultError[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const [activeIds] = useState<TrackId[]>(() => {
+    if (typeof window === "undefined") return ["تحصيلي"] as TrackId[];
+    const u = loadUser();
+    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+    return ids.length ? ids : (["تحصيلي"] as TrackId[]);
+  });
+  const [subjectList] = useState<{ name: string; color: string }[]>(() => {
+    if (typeof window === "undefined") return [];
+    const u = loadUser();
+    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
+    return subjectsForTracks(finalIds);
+  });
+  const [errors, setErrors] = useState<VaultError[]>(() =>
+    typeof window !== "undefined" ? loadList<VaultError>(VAULT_KEY) : []
+  );
   const [showAdd, setShowAdd] = useState(false);
   const [filterSubject, setFilterSubject] = useState<string>("الكل");
   const [filterCat, setFilterCat] = useState<string>("الكل");
@@ -24,33 +37,26 @@ export default function VaultPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchQ, setSearchQ] = useState("");
   const [undoItem, setUndoItem] = useState<VaultError | null>(null);
-  const [undoTimer, setUndoTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [newQ, setNewQ] = useState("");
-  const [newSubject, setNewSubject] = useState("");
+  const [newSubject, setNewSubject] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const u = loadUser();
+    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
+    return subjectsForTracks(finalIds)[0]?.name ?? "";
+  });
   const [newCat, setNewCat] = useState<string>(ERROR_CATEGORIES[0]);
   const [newNote, setNewNote] = useState("");
   /* شرح دويرب لكل خطأ (تخزين مؤقت بالـ id) */
   const [explainById, setExplainById] = useState<Record<string, string>>({});
   const [explainLoadingId, setExplainLoadingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const u = loadUser();
-    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
-    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
-    setActiveIds(finalIds);
-    const subs = subjectsForTracks(finalIds);
-    setSubjectList(subs);
-    setNewSubject(subs[0]?.name ?? "");
-    setErrors(loadList<VaultError>(VAULT_KEY));
-    setLoaded(true);
-  }, []);
-
   /* حفظ تلقائي عند أي تغيير */
-  useEffect(() => {
-    if (loaded) saveList(VAULT_KEY, errors);
-  }, [errors, loaded]);
+  useEffect(() => { saveList(VAULT_KEY, errors); }, [errors]);
 
-  const isPlanFree = true;
+  const [now] = useState<number>(Date.now);
+  const [isPlanFree] = useState(() => getPlan() === "free");
   const subjects = subjectList.map((s) => s.name);
   const countForSubject = (subj: string) => errors.filter((e) => e.subject === subj).length;
   /* الحد لكل مادة على حدة — كل مادة لها 25 مكاناً مستقلاً */
@@ -87,14 +93,13 @@ export default function VaultPage() {
     setErrors((p) => p.filter((e) => e.id !== id));
     setExpandedId(null);
     setUndoItem(item);
-    if (undoTimer) clearTimeout(undoTimer);
-    const t = setTimeout(() => { setUndoItem(null); }, 3500);
-    setUndoTimer(t);
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    undoTimerRef.current = setTimeout(() => { setUndoItem(null); }, 3500);
   };
 
   const undoDelete = () => {
     if (!undoItem) return;
-    if (undoTimer) clearTimeout(undoTimer);
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
     setErrors((p) => [undoItem, ...p]);
     setUndoItem(null);
   };
@@ -318,7 +323,7 @@ export default function VaultPage() {
       {/* ── القائمة ── */}
       <div className="px-5 flex flex-col gap-5 rise rise-5">
 
-        {loaded && filtered.length === 0 && (
+        {filtered.length === 0 && (
           <div className="text-center py-14">
             <p className="title-md text-[var(--text)] mb-2">الخزنة فارغة</p>
             <p className="body-sm">أول ما تغلط في سؤال، احفظه هنا — عشان ما تغلط فيه مرتين.</p>
@@ -328,7 +333,7 @@ export default function VaultPage() {
         {filtered.map((error) => {
           const color = colorOf(error.subject);
           const isExpanded = expandedId === error.id;
-          const daysAgo = Math.round((Date.now() - error.createdAt) / 86400000);
+          const daysAgo = Math.round((now - error.createdAt) / 86400000);
 
           return (
             <div key={error.id}

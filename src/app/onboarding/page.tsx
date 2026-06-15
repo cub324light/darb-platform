@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { TRACKS, TRACK_GROUPS, type TrackId } from "@/lib/tracks";
 import { saveUser, saveExamDate, saveResults } from "@/lib/storage";
 import { registerUser } from "@/lib/firestore";
@@ -10,7 +10,6 @@ import Logo from "@/components/Logo";
 const STUDY_LEVELS = ["ثانوي", "جامعي", "خريج", "أخرى"];
 const GRADES = ["أول ثانوي", "ثاني ثانوي", "ثالث ثانوي"];
 const MAX_TRACKS = 3;
-
 const SAUDI_REGIONS = [
   "الرياض", "مكة المكرمة", "المدينة المنورة", "القصيم", "المنطقة الشرقية",
   "عسير", "تبوك", "حائل", "الحدود الشمالية", "جازان", "نجران", "الباحة", "الجوف",
@@ -19,26 +18,23 @@ const SAUDI_REGIONS = [
 export default function OnboardingPage() {
   const [step, setStep] = useState<0 | 1 | 2>(0);
 
-  const [name, setName]             = useState("");
+  const [name, setName] = useState(() => {
+    const dn = typeof window !== "undefined" ? currentUser()?.displayName : undefined;
+    return dn ? dn.split(" ")[0] : "";
+  });
   const [age, setAge]               = useState("");
   const [studyLevel, setStudyLevel] = useState("");
   const [grade, setGrade]           = useState("");
   const [studyHours, setStudyHours] = useState("");
-  const [school, setSchool]         = useState("");
-  const [region, setRegion]         = useState("");
-  const [city, setCity]             = useState("");
-  const [phone, setPhone]           = useState("");
+  const [school, setSchool]   = useState("");
+  const [region, setRegion]   = useState("");
+  const [city, setCity]       = useState("");
+  const [phone, setPhone]     = useState("");
 
   const [activeTracks, setActiveTracks] = useState<TrackId[]>([]);
   const [examDate, setExamDate]         = useState("");
   /* نتائج اختبارات سابقة (اختياري) — تُحفظ في «نتائجي» */
   const [prevExams, setPrevExams] = useState<{ exam: string; score: string }[]>([]);
-
-  /* املأ الاسم مبدئياً من حساب Google */
-  useEffect(() => {
-    const dn = currentUser()?.displayName;
-    if (dn) setName((prev) => prev || dn.split(" ")[0]);
-  }, []);
 
   const toggleTrack = (id: TrackId) => {
     setActiveTracks((prev) =>
@@ -51,10 +47,10 @@ export default function OnboardingPage() {
     const trimmedName = name.trim();
     const primaryTrack = activeTracks[0];
     const extras = {
-      school:  school.trim()  || undefined,
-      region:  region         || undefined,
-      city:    city.trim()    || undefined,
-      phone:   phone.trim()   || undefined,
+      school: school.trim() || undefined,
+      region: region        || undefined,
+      city:   city.trim()   || undefined,
+      phone:  phone.trim()  || undefined,
     };
     saveUser({
       name: trimmedName,
@@ -77,7 +73,7 @@ export default function OnboardingPage() {
       })));
     }
     registerUser(trimmedName, primaryTrack, extras);
-    pushBackup().catch(() => {}); // fire-and-forget — ما ننتظره
+    pushBackup().catch(() => {});
     window.location.href = "/dashboard";
   };
 
@@ -215,7 +211,6 @@ export default function OnboardingPage() {
             </div>
           ))}
 
-          {/* المنطقة — قائمة منسدلة */}
           <div>
             <div className="flex items-center gap-2 mb-3">
               <p className="label">المنطقة</p>

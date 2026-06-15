@@ -183,33 +183,48 @@ export async function POST(req: NextRequest) {
     prompt?: string; subjects?: unknown; mode?: string; images?: unknown;
   };
 
-  if (!prompt || typeof prompt !== "string" || prompt.trim().length === 0) {
-    return NextResponse.json({ error: "الطلب فارغ" }, { status: 400 });
-  }
-
   /* مواد الطالب — اختيارية، مع تحقق صارم */
   const subjects: string[] = Array.isArray(rawSubjects)
     ? rawSubjects.filter((s): s is string => typeof s === "string" && s.length > 0 && s.length <= 30).slice(0, 10)
     : [];
 
-  /* وضع استخراج المواضيع يسمح بنص أطول (فهرس مُلصق) */
-  const maxPromptLen = mode === "topics" ? 8000 : 2000;
-  if (prompt.length > maxPromptLen) {
-    return NextResponse.json({ error: "النص طويل جداً، اختصره" }, { status: 400 });
-  }
-  if (isInjection(prompt)) {
-    return NextResponse.json({ error: "أنا دويرب، مساعد منصة درب. لا أنفّذ هذا الطلب." }, { status: 400 });
-  }
+  const isTopics = mode === "topics";
+  const maxPromptLen = isTopics ? 8000 : 2000;
 
-  /* صور (لوضع topics فقط): data-URLs، حد ٤ صور و~١٢MB إجمالاً */
-  let images: string[] = [];
-  if (mode === "topics" && Array.isArray(rawImages)) {
-    images = rawImages
-      .filter((s): s is string => typeof s === "string" && s.startsWith("data:image/"))
-      .slice(0, 4);
+  /* صور (data-URLs) — للوضع topics فقط */
+  const images: string[] = Array.isArray(rawImages)
+    ? rawImages
+        .filter((img): img is string =>
+          typeof img === "string" && img.startsWith("data:image/")
+        )
+        .slice(0, 4)
+    : [];
+
+  if (isTopics) {
+    /* topics: لازم صورة واحدة على الأقل أو نص ملصوق ذو معنى */
+    const hasText = typeof prompt === "string" && prompt.trim().length >= 3;
+    if (!images.length && !hasText) {
+      return NextResponse.json({ error: "ارفع صورة أو الصق نص الفهرس أولاً" }, { status: 400 });
+    }
     const totalLen = images.reduce((n, s) => n + s.length, 0);
     if (totalLen > 12_000_000) {
       return NextResponse.json({ error: "الصور كبيرة جداً — صوّر بدقة أقل أو صفحات أقل" }, { status: 400 });
+    }
+    if (typeof prompt === "string" && prompt.length > maxPromptLen) {
+      return NextResponse.json({ error: "النص طويل جداً — اختصره" }, { status: 400 });
+    }
+    if (typeof prompt === "string" && isInjection(prompt)) {
+      return NextResponse.json({ error: "طلب غير صالح" }, { status: 400 });
+    }
+  } else {
+    if (!prompt || typeof prompt !== "string" || prompt.trim().length === 0) {
+      return NextResponse.json({ error: "الطلب فارغ" }, { status: 400 });
+    }
+    if (prompt.length > maxPromptLen) {
+      return NextResponse.json({ error: "النص طويل جداً، اختصر جدولك" }, { status: 400 });
+    }
+    if (isInjection(prompt)) {
+      return NextResponse.json({ error: "أنا دويرب، محلل الجداول. أدخل جدولك وسأبني لك خطة دراسة." }, { status: 400 });
     }
   }
 
@@ -235,14 +250,14 @@ export async function POST(req: NextRequest) {
   })();
 
   /* مع الصور نستخدم موديل الرؤية (Llama 4 Scout)؛ غيره نصّي */
-  const useVision = mode === "topics" && images.length > 0;
+  const useVision = isTopics && images.length > 0;
   const model = useVision ? "meta-llama/llama-4-scout-17b-16e-instruct" : "llama-3.3-70b-versatile";
   const userContent = useVision
     ? [
-        { type: "text", text: prompt.trim() },
+        { type: "text", text: prompt?.trim() || "استخرج المواضيع من هذه الصور" },
         ...images.map((url) => ({ type: "image_url", image_url: { url } })),
       ]
-    : prompt.trim();
+    : (prompt?.trim() ?? "");
 
   try {
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -266,7 +281,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "الخادم مشغول، حاول بعد ثوانٍ" }, { status: 429 });
     }
     if (!response.ok) {
-      return NextResponse.json({ error: "خطأ في الاتصال بالخادم" }, { status: 502 });
+      /* في وضع الصور نُمرّر سبب Groq لتسهيل التشخيص (نموذج/حجم صورة) */
+      let detail = "";
+      if (useVision) {
+        try {
+          const errJson = await response.json() as { error?: { message?: string } };
+          detail = errJson?.error?.message ? ` — ${errJson.error.message}` : "";
+        } catch { /* تجاهل */ }
+      }
+      return NextResponse.json({ error: `تعذّر تحليل الصورة${detail || "، حاول بصورة أوضح"}` }, { status: 502 });
     }
 
     const data = (await response.json()) as { choices?: { message?: { content?: string } }[] };

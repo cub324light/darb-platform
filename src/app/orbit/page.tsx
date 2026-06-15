@@ -59,12 +59,40 @@ export default function OrbitPage() {
   const [showEdit, setShowEdit]           = useState(false);
   const [prevDur, setPrevDur]             = useState<{mode: DurMode; custom: number}>({mode: "50", custom: 50});
   const [secondsLeft, setSecondsLeft]     = useState(50 * 60);
-  const [sessionsToday, setSessionsToday] = useState(0);
-  const [silverTotal, setSilverTotal]     = useState(0);
-  const [totalFocusMins, setTotalFocusMins] = useState(0);
-  const [subjects, setSubjects] = useState<{ name: string; color: string }[]>([]);
-  const [subject, setSubject]   = useState<string>("");
+  const [sessionsToday, setSessionsToday] = useState(() => {
+    const s = typeof window !== "undefined" ? loadStats() : null;
+    return s?.sessionsCount ?? 0;
+  });
+  const [silverTotal, setSilverTotal] = useState(() => {
+    const s = typeof window !== "undefined" ? loadStats() : null;
+    return s?.silver ?? 0;
+  });
+  const [totalFocusMins, setTotalFocusMins] = useState(() => {
+    const s = typeof window !== "undefined" ? loadStats() : null;
+    return s?.todayFocusMins ?? 0;
+  });
+  const [subjects] = useState<{ name: string; color: string }[]>(() => {
+    if (typeof window === "undefined") return [];
+    const u = loadUser();
+    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
+    return subjectsForTracks(finalIds);
+  });
+  const [subject, setSubject] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    const u = loadUser();
+    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
+    return subjectsForTracks(finalIds)[0]?.name ?? "";
+  });
   const [breakTip] = useState(() => BREAK_TIPS[Math.floor(Math.random() * BREAK_TIPS.length)]);
+  const [hideTip, setHideTip] = useState(() =>
+    typeof window !== "undefined" && localStorage.getItem("darb_hide_tips") === "1"
+  );
+  const dismissTip = () => {
+    try { localStorage.setItem("darb_hide_tips", "1"); } catch {}
+    setHideTip(true);
+  };
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   /* نهاية الجلسة كطابع زمني حقيقي — العدّ ما يتجمد لو راح التطبيق للخلفية */
   const endAtRef = useRef(0);
@@ -74,28 +102,12 @@ export default function OrbitPage() {
   const focusSecs = focusMins * 60;
   const breakSecs = breakMins * 60;
 
-  useEffect(() => {
-    const u = loadUser();
-    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
-    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
-    const subs = subjectsForTracks(finalIds);
-    setSubjects(subs);
-    setSubject(subs[0]?.name ?? "");
-    const s = loadStats();
-    setSilverTotal(s.silver);
-    setTotalFocusMins(s.todayFocusMins);
-    setSessionsToday(s.sessionsCount);
-  }, []);
-
-  /* تحديث العداد عند تغيير المدة في وضع الانتظار */
-  useEffect(() => {
-    if (phase === "idle") setSecondsLeft(focusSecs);
-  }, [focusMins, phase, focusSecs]);
-
-  const totalSecs = phase === "break" ? breakSecs : focusSecs;
-  const progress  = 1 - secondsLeft / totalSecs;
-  const mins      = Math.floor(secondsLeft / 60);
-  const secs      = secondsLeft % 60;
+  /* في وضع الانتظار نعرض مدة الجلسة مباشرة — بدون state وسيط */
+  const displaySecs = phase === "idle" ? focusSecs : secondsLeft;
+  const totalSecs   = phase === "break" ? breakSecs : focusSecs;
+  const progress    = 1 - displaySecs / totalSecs;
+  const mins        = Math.floor(displaySecs / 60);
+  const secs        = displaySecs % 60;
 
   const vibrate = useCallback((pattern: number | number[]) => {
     try { navigator.vibrate?.(pattern); } catch {}
@@ -443,9 +455,18 @@ export default function OrbitPage() {
           )}
 
           {phase === "break" && (
-            <div className="text-center glass rounded-2xl px-5 py-4">
+            <div className="text-center glass rounded-2xl px-5 py-4 relative">
               <p className="text-sm font-bold text-[var(--gold)] mb-1.5">وقت الراحة</p>
-              <p className="text-sm text-[var(--text-dim)] leading-relaxed mb-2">{breakTip}</p>
+              {!hideTip && (
+                <div className="relative mb-2">
+                  <button onClick={dismissTip} aria-label="حذف النصيحة"
+                    className="absolute top-0 left-0 w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold"
+                    style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                    ✕
+                  </button>
+                  <p className="text-sm text-[var(--text-dim)] leading-relaxed px-6">{breakTip}</p>
+                </div>
+              )}
               <p className="text-xs text-[var(--text-muted)]">الجلسة القادمة تبدأ تلقائياً بعد {mins}:{String(secs).padStart(2, "0")}</p>
             </div>
           )}

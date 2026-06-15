@@ -1,31 +1,52 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import {
+  collection, addDoc, onSnapshot,
+  orderBy, query, limit, serverTimestamp,
+  type Unsubscribe,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { onAuth } from "@/lib/cloud";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
-import { loadUser, loadList, saveList } from "@/lib/storage";
-import { getTrack, type Track } from "@/lib/tracks";
+import FriendsPanel from "@/components/FriendsPanel";
+import { loadUser } from "@/lib/storage";
+import type { TrackId } from "@/lib/tracks";
 
-interface Reply {
-  id: number;
-  user: string;
-  time: number;
+/* ─── بيانات ─── */
+interface ChatMessage {
+  id: string;
+  uid: string;
+  name: string;
   content: string;
+  createdAt: number; // ms
+  isOfficial?: boolean;
 }
 
-interface Post {
-  id: number;
-  user: string;
-  time: number;
-  content: string;
-  subject: string;
-  likes: number;
-  replies?: Reply[];
+interface ChatGroup {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  trackId?: string;
 }
 
-const POSTS_KEY = "darb_posts";
+const CHAT_GROUPS: ChatGroup[] = [
+  { id: "general",       name: "عام",          icon: "💬", description: "نقاش عام لجميع الطلاب" },
+  { id: "tahsili",       name: "تحصيلي",       icon: "📚", description: "طلاب مسار التحصيلي",          trackId: "تحصيلي" },
+  { id: "tahsili-early", name: "تحصيلي مبكر",  icon: "🌱", description: "طلاب التحصيلي المبكر",        trackId: "تحصيلي مبكر" },
+  { id: "qudurat",       name: "قدرات",        icon: "💡", description: "طلاب مسار القدرات",            trackId: "قدرات" },
+  { id: "cpc",           name: "أرامكو CPC",   icon: "🏆", description: "Computer Programming Contest", trackId: "CPC" },
+  { id: "itc",           name: "ITC",          icon: "💻", description: "طلاب اختبار ITC",              trackId: "ITC" },
+  { id: "ielts",         name: "آيلتس",        icon: "🌍", description: "IELTS preparation group",      trackId: "ايلتس" },
+  { id: "step",          name: "ستيب",         icon: "📖", description: "STEP preparation group",       trackId: "ستيب" },
+  { id: "toefl",         name: "توفل",         icon: "🗽", description: "TOEFL preparation group",      trackId: "توفل" },
+  { id: "duolingo",      name: "دووليجو",      icon: "🦉", description: "Duolingo English Test",        trackId: "دوليقو" },
+];
 
-function timeAgo(ts: number): string {
-  const mins = Math.round((Date.now() - ts) / 60000);
+/* ─── أداة الوقت ─── */
+function timeAgo(ms: number): string {
+  const mins = Math.round((Date.now() - ms) / 60000);
   if (mins < 1) return "الآن";
   if (mins < 60) return `منذ ${mins} دقيقة`;
   const hours = Math.round(mins / 60);
@@ -33,243 +54,458 @@ function timeAgo(ts: number): string {
   return `منذ ${Math.round(hours / 24)} يوم`;
 }
 
+/* ─── الصفحة ─── */
 export default function CouncilPage() {
-  const [activeTab, setActiveTab] = useState<"feed" | "clash">("feed");
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loaded, setLoaded] = useState(false);
-  const [track, setTrack] = useState<Track | null>(null);
-  const [userName, setUserName] = useState("");
-  const [newPost, setNewPost] = useState("");
-  const [newSubject, setNewSubject] = useState("عام");
-  const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
-  const [replyingTo, setReplyingTo] = useState<number | null>(null);
-  const [replyText, setReplyText] = useState("");
-
-  useEffect(() => {
+  /* ─ حالة المستخدم الحالي ─ */
+  const [authUid, setAuthUid] = useState<string | null>(null);
+  const [userName] = useState<string>(() => {
+    if (typeof window === "undefined") return "طالب";
+    return loadUser()?.name ?? "طالب";
+  });
+  const [userTrackIds] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
     const u = loadUser();
-    setUserName(u?.name ?? "طالب");
-    const t = getTrack(u?.track);
-    setTrack(t);
-    setPosts(loadList<Post>(POSTS_KEY));
-    setLoaded(true);
-  }, []);
+    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+    return ids as string[];
+  });
 
-  useEffect(() => { if (loaded) saveList(POSTS_KEY, posts); }, [posts, loaded]);
+  useEffect(() => onAuth((u) => setAuthUid(u?.uid ?? null)), []);
 
-  const subjects = ["عام", ...(track?.subjects.map((s) => s.name) ?? [])];
+  /* ─ حالة المجموعة النشطة ─ */
+  const [activeGroup, setActiveGroup] = useState<ChatGroup | null>(null);
+  const [activeChannel, setActiveChannel] = useState<"general" | "official">("general");
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showFriends, setShowFriends] = useState(false);
 
-  const publish = () => {
-    if (!newPost.trim()) return;
-    setPosts((p) => [{
-      id: Date.now(),
-      user: userName,
-      time: Date.now(),
-      content: newPost.trim(),
-      subject: newSubject,
-      likes: 0,
-      replies: [],
-    }, ...p]);
-    setNewPost("");
+  /* ─ رسائل عام (من Firestore) ─ */
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [msgLoading, setMsgLoading] = useState(false);
+
+  /* ─ رسائل رسمي (من API) ─ */
+  const [officialMessages, setOfficialMessages] = useState<ChatMessage[]>([]);
+
+  /* ─ حقل الإدخال ─ */
+  const [msgText, setMsgText] = useState("");
+  const [sending, setSending] = useState(false);
+
+  /* ─ آخر رسالة لكل مجموعة (للمعاينة) — من الذاكرة المحلية ─ */
+  const [lastMessages, setLastMessages] = useState<Record<string, { text: string; time: number } | null>>({});
+
+  /* ─ مرجع إلغاء الاشتراك في onSnapshot ─ */
+  const unsubscribeRef = useRef<Unsubscribe | null>(null);
+
+  /* ─ التمرير للأسفل ─ */
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, officialMessages]);
+
+  /* ─ فتح مجموعة ─ */
+  const openGroup = (group: ChatGroup) => {
+    // ألغِ الاشتراك السابق إن وُجد
+    unsubscribeRef.current?.();
+    unsubscribeRef.current = null;
+
+    setActiveGroup(group);
+    setActiveChannel("general");
+    setIsFullscreen(true);
+    setMsgText("");
+    setMessages([]);
+    setMsgLoading(true);
+
+    // اشترك في رسائل القناة العامة من Firestore
+    const q = query(
+      collection(db, "chats", group.id, "messages"),
+      orderBy("createdAt", "asc"),
+      limit(100)
+    );
+    unsubscribeRef.current = onSnapshot(q, (snap) => {
+      const msgs: ChatMessage[] = snap.docs.map((d) => {
+        const data = d.data();
+        const ts = data.createdAt;
+        const createdAt = ts?.toMillis ? ts.toMillis() : (ts?.seconds ? ts.seconds * 1000 : Date.now());
+        return {
+          id: d.id,
+          uid: data.uid ?? "",
+          name: data.name ?? "طالب",
+          content: data.content ?? "",
+          createdAt,
+        };
+      });
+      setMessages(msgs);
+      setMsgLoading(false);
+      // حدّث آخر رسالة في القائمة
+      if (msgs.length > 0) {
+        const last = msgs[msgs.length - 1];
+        setLastMessages((prev) => ({
+          ...prev,
+          [group.id]: { text: last.content, time: last.createdAt },
+        }));
+      }
+    }, () => setMsgLoading(false));
+
+    // جلب الإعلانات الرسمية
+    fetch("/api/social", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: "getAnnouncements" }),
+    })
+      .then((r) => r.json())
+      .then((d: { announcements?: { id: string; title: string; content: string; createdAt?: { seconds: number } }[] }) => {
+        if (d.announcements) {
+          setOfficialMessages(
+            d.announcements.map((a) => ({
+              id: a.id,
+              uid: "official",
+              name: "درب الرسمي",
+              content: `${a.title}\n${a.content}`,
+              createdAt: a.createdAt?.seconds ? a.createdAt.seconds * 1000 : Date.now(),
+              isOfficial: true,
+            }))
+          );
+        }
+      })
+      .catch(() => {});
   };
 
-  const toggleLike = (id: number) => {
-    setLikedPosts((p) => {
-      const next = new Set(p);
-      const delta = next.has(id) ? -1 : 1;
-      if (next.has(id)) next.delete(id); else next.add(id);
-      setPosts((ps) => ps.map((x) => (x.id === id ? { ...x, likes: Math.max(0, x.likes + delta) } : x)));
-      return next;
-    });
+  /* ─ إغلاق المجموعة ─ */
+  const closeGroup = () => {
+    unsubscribeRef.current?.();
+    unsubscribeRef.current = null;
+    setActiveGroup(null);
+    setIsFullscreen(false);
+    setMessages([]);
+    setOfficialMessages([]);
   };
 
-  const addReply = (postId: number) => {
-    if (!replyText.trim()) return;
-    setPosts((ps) => ps.map((p) => p.id === postId ? {
-      ...p,
-      replies: [...(p.replies ?? []), {
-        id: Date.now(), user: userName, time: Date.now(), content: replyText.trim(),
-      }],
-    } : p));
-    setReplyText("");
-    setReplyingTo(null);
+  /* ─ إرسال رسالة ─ */
+  const sendMessage = async () => {
+    const text = msgText.trim();
+    if (!text || !activeGroup || !authUid || sending) return;
+    setSending(true);
+    setMsgText("");
+    try {
+      await addDoc(collection(db, "chats", activeGroup.id, "messages"), {
+        uid: authUid,
+        name: userName,
+        content: text,
+        createdAt: serverTimestamp(),
+      });
+    } catch {
+      setMsgText(text); // أعِد النص عند الفشل
+    } finally {
+      setSending(false);
+    }
   };
 
-  return (
-    <div className="min-h-dvh pb-nav relative z-[1]">
-      <Dome compact>
-        <div className="flex items-center justify-between">
-          <h1 className="title-lg" style={{ color: "var(--text)" }}>المجلس</h1>
-          <span className="dome-chip text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>{posts.length} منشور</span>
-        </div>
-      </Dome>
-      <div className="h-5" />
+  /* ─ تنظيف عند مغادرة الصفحة ─ */
+  useEffect(() => () => { unsubscribeRef.current?.(); }, []);
 
-      {/* Tabs */}
-      <div className="px-5 mb-4 rise rise-1">
-        <div className="grid grid-cols-2 glass rounded-2xl p-1 gap-1">
-          <button
-            onClick={() => setActiveTab("feed")}
-            className={`py-3 rounded-xl text-base font-bold transition min-h-[48px] ${activeTab === "feed" ? "text-[var(--accent-light)]" : "text-[var(--text-muted)]"}`}
-            style={activeTab === "feed" ? { background: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1.5px solid var(--accent)" } : undefined}
+  /* ─ الرسائل الحالية حسب القناة ─ */
+  const displayedMessages = activeChannel === "official" ? officialMessages : messages;
+
+  /* ─ ترتيب المجموعات — مجموعات المسار أولاً ─ */
+  const sortedGroups = [...CHAT_GROUPS].sort((a, b) => {
+    const aIn = a.trackId ? userTrackIds.includes(a.trackId) : false;
+    const bIn = b.trackId ? userTrackIds.includes(b.trackId) : false;
+    return aIn === bIn ? 0 : aIn ? -1 : 1;
+  });
+
+  /* ══════════════════════════════════════════════════
+     شاشة المحادثة
+  ══════════════════════════════════════════════════ */
+  if (activeGroup) {
+    const isMyTrack = activeGroup.trackId ? userTrackIds.includes(activeGroup.trackId) : false;
+    const isGuest = !authUid;
+
+    return (
+      <>
+        <div
+          className="fixed flex flex-col"
+          style={{ inset: 0, zIndex: isFullscreen ? 9999 : 50, background: "var(--bg)" }}
+        >
+          {/* ─ الرأس ─ */}
+          <div
+            className="flex items-center gap-3 px-4 flex-shrink-0"
+            style={{
+              paddingTop: "calc(12px + env(safe-area-inset-top))",
+              paddingBottom: "12px",
+              borderBottom: "1px solid var(--border)",
+              background: "var(--bg)",
+            }}
           >
-            النقاشات
-          </button>
-          <button
-            onClick={() => setActiveTab("clash")}
-            className={`py-3 rounded-xl text-base font-bold transition min-h-[48px] ${activeTab === "clash" ? "text-[var(--accent-light)]" : "text-[var(--text-muted)]"}`}
-            style={activeTab === "clash" ? { background: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1.5px solid var(--accent)" } : undefined}
-          >
-            Regional Clash
-          </button>
-        </div>
-      </div>
-
-      {activeTab === "feed" ? (
-        <div className="px-5 space-y-4 rise rise-2">
-
-          {/* صندوق الكتابة */}
-          <div className="rounded-2xl p-4 flex flex-col gap-3"
-            style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-            <textarea
-              value={newPost}
-              onChange={(e) => setNewPost(e.target.value)}
-              rows={2}
-              placeholder={`شارك سؤال أو فايدة يا ${userName}...`}
-              className="w-full rounded-xl px-3 py-2.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] resize-none outline-none"
-              style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}
-            />
-            <div className="flex gap-2.5">
-              <select
-                value={newSubject}
-                onChange={(e) => setNewSubject(e.target.value)}
-                className="rounded-xl px-3 py-2.5 text-sm text-[var(--text)] outline-none min-h-[48px]"
-                style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}
-              >
-                {subjects.map((s) => <option key={s}>{s}</option>)}
-              </select>
-              <button
-                onClick={publish}
-                disabled={!newPost.trim()}
-                className="flex-1 rounded-xl font-bold text-base transition min-h-[48px]"
-                style={{ background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)", opacity: newPost.trim() ? 1 : 0.4 }}
-              >
-                انشر
-              </button>
-            </div>
+            <button onClick={closeGroup}
+              className="flex items-center gap-1 font-bold text-sm min-h-[44px] px-1"
+              style={{ color: "var(--accent-light)" }}>
+              ← رجوع
+            </button>
+            <span className="text-xl">{activeGroup.icon}</span>
+            <p className="font-bold flex-1 text-[16px]" style={{ color: "var(--text)" }}>
+              {activeGroup.name}
+            </p>
+            {isMyTrack && (
+              <span className="text-[11px] px-2 py-0.5 rounded-full font-bold"
+                style={{
+                  background: "color-mix(in srgb, var(--accent) 12%, transparent)",
+                  color: "var(--accent-light)",
+                  border: "1px solid var(--accent)",
+                }}>
+                مسارك
+              </span>
+            )}
+            <button
+              onClick={() => setIsFullscreen((f) => !f)}
+              className="w-9 h-9 flex items-center justify-center rounded-xl text-lg"
+              style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}
+              aria-label={isFullscreen ? "إغلاق الشاشة الكاملة" : "شاشة كاملة"}
+            >
+              {isFullscreen ? "✕" : "⛶"}
+            </button>
           </div>
 
-          {/* المنشورات */}
-          {loaded && posts.length === 0 && (
-            <div className="text-center py-12">
-              <p className="title-md text-[var(--text)] mb-2">المجلس هادئ</p>
-              <p className="body-sm max-w-xs mx-auto">كن أول من يفتح النقاش — سؤال غلطت فيه، فايدة، أو تجربة مذاكرة.</p>
+          {/* ─ تبويبات القنوات ─ */}
+          <div className="flex gap-1.5 px-3 py-2 flex-shrink-0"
+            style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)" }}>
+            {(["general", "official"] as const).map((ch) => {
+              const isActive = activeChannel === ch;
+              return (
+                <button key={ch} onClick={() => setActiveChannel(ch)}
+                  className="flex-1 rounded-xl py-2.5 font-bold text-sm transition"
+                  style={isActive ? {
+                    border: `1.5px solid ${ch === "official" ? "var(--gold)" : "var(--accent)"}`,
+                    color: ch === "official" ? "var(--gold)" : "var(--accent-light)",
+                    background: `color-mix(in srgb, ${ch === "official" ? "var(--gold)" : "var(--accent)"} 12%, transparent)`,
+                  } : {
+                    border: "1.5px solid var(--border)",
+                    color: "var(--text-muted)",
+                    background: "transparent",
+                  }}>
+                  {ch === "general" ? "💬 عام" : "📢 رسمي"}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* ─ قائمة الرسائل ─ */}
+          <div className="flex-1 overflow-y-auto px-4 py-3" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {msgLoading && activeChannel === "general" ? (
+              <div className="flex flex-col items-center justify-center flex-1 py-16 gap-2">
+                <div className="w-8 h-8 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
+                <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>جارٍ التحميل...</p>
+              </div>
+            ) : displayedMessages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center flex-1 gap-2 py-16">
+                <p className="text-4xl">{activeChannel === "official" ? "📢" : "💬"}</p>
+                <p className="font-bold" style={{ color: "var(--text)" }}>
+                  {activeChannel === "official" ? "لا توجد إعلانات رسمية بعد" : "ابدأ النقاش"}
+                </p>
+                {activeChannel === "general" && (
+                  <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>{activeGroup.description}</p>
+                )}
+              </div>
+            ) : (
+              displayedMessages.map((msg) => {
+                const isMine = msg.uid === authUid;
+                return (
+                  <div key={msg.id} className="flex gap-2.5"
+                    style={{ flexDirection: isMine ? "row-reverse" : "row" }}>
+                    {/* الأفاتار */}
+                    <div className="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center text-sm font-black text-white"
+                      style={{
+                        background: msg.isOfficial
+                          ? "linear-gradient(135deg,var(--gold),var(--gold-light))"
+                          : isMine
+                          ? "linear-gradient(135deg,var(--accent-2),var(--accent-light))"
+                          : "linear-gradient(135deg,#475569,#64748B)",
+                      }}>
+                      {msg.isOfficial ? "📢" : (msg.name?.charAt(0) || "؟")}
+                    </div>
+                    {/* الفقاعة */}
+                    <div className="flex flex-col gap-0.5"
+                      style={{ maxWidth: "75%", alignItems: isMine ? "flex-end" : "flex-start" }}>
+                      {!isMine && (
+                        <p className="text-[11px] font-bold"
+                          style={{ color: msg.isOfficial ? "var(--gold)" : "var(--accent-light)" }}>
+                          {msg.isOfficial ? "درب الرسمي" : msg.name}
+                        </p>
+                      )}
+                      <div className="rounded-2xl px-3 py-2.5"
+                        style={{
+                          background: isMine
+                            ? "color-mix(in srgb, var(--accent) 15%, var(--surface))"
+                            : msg.isOfficial
+                            ? "color-mix(in srgb, var(--gold) 10%, var(--surface))"
+                            : "var(--surface)",
+                          border: msg.isOfficial
+                            ? "1px solid color-mix(in srgb, var(--gold) 40%, var(--border))"
+                            : "1px solid var(--border)",
+                        }}>
+                        <p className="text-[14px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>
+                          {msg.content}
+                        </p>
+                      </div>
+                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                        {timeAgo(msg.createdAt)}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* ─ حقل الإدخال ─ */}
+          {activeChannel === "general" ? (
+            isGuest ? (
+              /* الزائر لا يستطيع الكتابة */
+              <div className="px-4 py-3 border-t text-center flex-shrink-0"
+                style={{
+                  borderColor: "var(--border)",
+                  paddingBottom: "calc(12px + env(safe-area-inset-bottom))",
+                  background: "var(--bg)",
+                }}>
+                <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+                  سجّل دخولك للمشاركة في النقاش
+                </p>
+              </div>
+            ) : (
+              <div className="px-3 py-3 border-t flex gap-2 flex-shrink-0"
+                style={{
+                  borderColor: "var(--border)",
+                  paddingBottom: "calc(12px + env(safe-area-inset-bottom))",
+                  background: "var(--bg)",
+                }}>
+                <input
+                  value={msgText}
+                  onChange={(e) => setMsgText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+                  placeholder="اكتب رسالة..."
+                  maxLength={1000}
+                  className="flex-1 rounded-2xl px-4 py-3 text-[15px] outline-none"
+                  style={{
+                    background: "var(--surface)",
+                    border: "1.5px solid var(--border)",
+                    color: "var(--text)",
+                  }}
+                />
+                <button
+                  onClick={sendMessage}
+                  disabled={!msgText.trim() || sending}
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white flex-shrink-0 text-lg transition"
+                  style={{ background: msgText.trim() && !sending ? "var(--accent)" : "var(--border)" }}
+                >
+                  {sending ? "⋯" : "↑"}
+                </button>
+              </div>
+            )
+          ) : (
+            <div className="px-4 py-3 border-t text-center flex-shrink-0"
+              style={{
+                borderColor: "var(--border)",
+                paddingBottom: "calc(12px + env(safe-area-inset-bottom))",
+                background: "var(--bg)",
+              }}>
+              <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+                قراءة فقط — القناة الرسمية لـ {activeGroup.name}
+              </p>
             </div>
           )}
+        </div>
 
-          {posts.map((post) => (
-            <div key={post.id} className="glass rounded-2xl overflow-hidden">
-              <div className="p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <div
-                    className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0"
-                    style={{ background: "linear-gradient(135deg,var(--accent-2),var(--accent-light))" }}
-                  >
-                    {post.user.charAt(0)}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-bold text-[var(--text)]">{post.user}</p>
-                    <p className="text-[13px] text-[var(--text-muted)]">{timeAgo(post.time)}</p>
-                  </div>
-                  <span
-                    className="text-[13px] px-2.5 py-1 rounded-full font-medium"
-                    style={{ background: "color-mix(in srgb, var(--accent) 13%, transparent)", color: "var(--accent-light)" }}
-                  >
-                    {post.subject}
-                  </span>
-                </div>
-                <p className="text-base text-[var(--text-dim)] leading-relaxed mb-3">{post.content}</p>
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => toggleLike(post.id)}
-                    className={`flex items-center gap-1.5 text-sm transition min-h-[40px] ${likedPosts.has(post.id) ? "text-[var(--danger)]" : "text-[var(--text-muted)]"}`}
-                  >
-                    ♥ {post.likes}
-                  </button>
-                  <button
-                    onClick={() => { setReplyingTo(replyingTo === post.id ? null : post.id); setReplyText(""); }}
-                    className="text-sm font-semibold min-h-[40px]"
-                    style={{ color: replyingTo === post.id ? "var(--accent-light)" : "var(--text-muted)" }}
-                  >
-                    رد {(post.replies?.length ?? 0) > 0 ? `(${post.replies!.length})` : ""}
-                  </button>
-                  {post.user === userName && (
-                    <button
-                      onClick={() => setPosts((p) => p.filter((x) => x.id !== post.id))}
-                      className="text-sm text-[var(--text-muted)] min-h-[40px] mr-auto"
-                    >
-                      حذف
-                    </button>
-                  )}
-                </div>
+        {!isFullscreen && <BottomNav />}
+      </>
+    );
+  }
+
+  /* ══════════════════════════════════════════════════
+     الشاشة الرئيسية — قائمة المجموعات
+  ══════════════════════════════════════════════════ */
+  return (
+    <div className="min-h-dvh pb-nav">
+      <Dome compact>
+        <h1 className="title-lg" style={{ color: "var(--text)" }}>المجلس</h1>
+      </Dome>
+
+      <div className="h-2" />
+
+      {/* ─ مدخل الأصدقاء ─ */}
+      <button
+        onClick={() => setShowFriends(true)}
+        className="flex items-center gap-3 px-5 py-4 text-right transition active:opacity-70 w-full"
+        style={{ borderBottom: "1px solid var(--border)" }}
+      >
+        <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
+          style={{
+            background: "color-mix(in srgb, var(--gold) 12%, var(--surface))",
+            border: "1.5px solid color-mix(in srgb, var(--gold) 40%, var(--border))",
+          }}>
+          👥
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-[15px]" style={{ color: "var(--text)" }}>الأصدقاء</p>
+          <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>ابحث عن زملائك وأضفهم</p>
+        </div>
+        <span className="text-[var(--text-muted)] text-lg flex-shrink-0">‹</span>
+      </button>
+
+      {/* ─ قائمة المجموعات ─ */}
+      <div className="flex flex-col">
+        {sortedGroups.map((group) => {
+          const isMyTrack = group.trackId ? userTrackIds.includes(group.trackId) : false;
+          const last = lastMessages[group.id];
+
+          return (
+            <button
+              key={group.id}
+              onClick={() => openGroup(group)}
+              className="flex items-center gap-3 px-5 py-4 text-right transition active:opacity-70 w-full"
+              style={{
+                borderBottom: "1px solid var(--border)",
+                background: isMyTrack
+                  ? "color-mix(in srgb, var(--accent) 4%, transparent)"
+                  : "transparent",
+              }}
+            >
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
+                style={{
+                  background: isMyTrack
+                    ? "color-mix(in srgb, var(--accent) 12%, var(--surface))"
+                    : "var(--surface)",
+                  border: isMyTrack
+                    ? "1.5px solid color-mix(in srgb, var(--accent) 40%, var(--border))"
+                    : "1px solid var(--border)",
+                }}>
+                {group.icon}
               </div>
-
-              {/* الردود */}
-              {((post.replies?.length ?? 0) > 0 || replyingTo === post.id) && (
-                <div className="border-t border-[var(--border)] px-4 py-3 flex flex-col gap-3"
-                  style={{ background: "color-mix(in srgb, var(--surface2) 60%, transparent)" }}>
-                  {post.replies?.map((r) => (
-                    <div key={r.id} className="flex items-start gap-2.5">
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black text-white flex-shrink-0"
-                        style={{ background: "linear-gradient(135deg,var(--accent-2),var(--accent-light))" }}>
-                        {r.user.charAt(0)}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-sm font-bold text-[var(--text)]">{r.user}</span>
-                          <span className="text-[11px] text-[var(--text-muted)]">{timeAgo(r.time)}</span>
-                        </div>
-                        <p className="text-sm text-[var(--text-dim)] mt-0.5 leading-relaxed">{r.content}</p>
-                      </div>
-                    </div>
-                  ))}
-
-                  {replyingTo === post.id && (
-                    <div className="flex gap-2 mt-1">
-                      <input
-                        value={replyText}
-                        onChange={(e) => setReplyText(e.target.value)}
-                        placeholder="اكتب رداً..."
-                        onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addReply(post.id); } }}
-                        className="flex-1 rounded-xl px-3 py-2.5 text-sm text-[var(--text)] placeholder-[var(--text-muted)] outline-none min-h-[44px]"
-                        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
-                        autoFocus
-                      />
-                      <button
-                        onClick={() => addReply(post.id)}
-                        disabled={!replyText.trim()}
-                        className="px-4 rounded-xl font-bold text-sm min-h-[44px]"
-                        style={{ background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)", opacity: replyText.trim() ? 1 : 0.4 }}
-                      >
-                        أرسل
-                      </button>
-                    </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="font-bold text-[15px]" style={{ color: "var(--text)" }}>{group.name}</p>
+                  {isMyTrack && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0"
+                      style={{
+                        background: "color-mix(in srgb, var(--accent) 12%, transparent)",
+                        color: "var(--accent-light)",
+                        border: "1px solid color-mix(in srgb, var(--accent) 35%, transparent)",
+                      }}>
+                      مسارك
+                    </span>
                   )}
                 </div>
+                <p className="text-[13px] truncate mt-0.5" style={{ color: "var(--text-muted)" }}>
+                  {last ? last.text : group.description}
+                </p>
+              </div>
+              {last && (
+                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                  style={{ background: "var(--accent)" }} />
               )}
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="px-5 rise rise-2">
-          <div className="glass rounded-2xl p-8 text-center">
-            <p className="font-black text-lg text-[var(--text)] mb-2">Regional Clash</p>
-            <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-xs mx-auto">
-              تصنيف المناطق حسب ساعات التركيز الأسبوعية — يفتح تلقائياً عند انضمام طلاب من منطقتك.
-              ساعاتك الحقيقية من أوربت هي اللي تحسب.
-            </p>
-          </div>
-        </div>
-      )}
+            </button>
+          );
+        })}
+      </div>
+
+      {showFriends && <FriendsPanel onClose={() => setShowFriends(false)} />}
 
       <BottomNav />
     </div>
