@@ -320,11 +320,17 @@ export default function AdminPage() {
           </div>
           {error && (
             <div className="rounded-xl px-4 py-3" style={{ background: "color-mix(in srgb, var(--danger) 12%, transparent)", border: "1.5px solid var(--danger)" }}>
-              <p className="text-center text-[14px] font-semibold" style={{ color: "var(--danger)" }}>{error}</p>
+              <p className="text-center text-[14px] font-semibold" style={{ color: "var(--danger)", whiteSpace: "pre-line", wordBreak: "break-word" }}>{error}</p>
             </div>
           )}
           {pingMsg && (
-            <p className="text-center text-[13px] font-semibold" style={{ color: pingMsg.startsWith("✅") ? "#10B981" : "var(--danger)" }}>{pingMsg}</p>
+            <div className="rounded-xl px-4 py-3 text-right" dir="rtl"
+              style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+              <p className="text-[12.5px] font-semibold leading-relaxed"
+                style={{ color: pingMsg.startsWith("✅") ? "#10B981" : "var(--danger)", whiteSpace: "pre-line", wordBreak: "break-word" }}>
+                {pingMsg}
+              </p>
+            </div>
           )}
           <button onClick={login} disabled={loading} className="btn-primary" style={{ opacity: loading ? 0.5 : 1 }}>
             {loading ? "جاري التحقق..." : "دخول"}
