@@ -3,6 +3,9 @@ import { timingSafeEqual } from "crypto";
 import { initializeApp, getApps, cert, applicationDefault } from "firebase-admin/app";
 import { getFirestore, FieldValue, Timestamp } from "firebase-admin/firestore";
 
+/* firebase-admin يحتاج Node APIs — نمنع تجميعه على Edge */
+export const runtime = "nodejs";
+
 /* حماية من الإساءة: 30 طلب بالدقيقة لكل IP */
 const attempts = new Map<string, { count: number; reset: number }>();
 function allowAttempt(ip: string): boolean {
@@ -33,11 +36,11 @@ function adminApp() {
     catch { throw new Error("FIREBASE_SERVICE_ACCOUNT ليس JSON صالحاً — تأكد من النسخ الكامل"); }
     return initializeApp({ credential: cert(parsed as Parameters<typeof cert>[0]) });
   }
-  try {
+  /* بدون مفتاح، applicationDefault() يتعلّق على Vercel — نفشل فوراً */
+  if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
     return initializeApp({ credential: applicationDefault(), projectId: "my-education-platform-a160e" });
-  } catch {
-    throw new Error("FIREBASE_SERVICE_ACCOUNT غير موجود — أضفه في Vercel Environment Variables");
   }
+  throw new Error("FIREBASE_SERVICE_ACCOUNT غير مضبوط — أضفه في إعدادات Vercel ثم أعد النشر");
 }
 
 export async function POST(req: NextRequest) {

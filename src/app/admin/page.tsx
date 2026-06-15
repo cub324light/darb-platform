@@ -85,7 +85,16 @@ export default function AdminPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password: pass, mode }),
     });
-    const data = await res.json() as Record<string, unknown>;
+    /* نقرأ النص أولاً: لو الرد ليس JSON (صفحة خطأ من Vercel عند الانهيار
+       أو تجاوز الوقت) نُظهر الكود الحقيقي بدل «خطأ في الاتصال» المبهم */
+    const raw = await res.text();
+    let data: Record<string, unknown>;
+    try {
+      data = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+    } catch {
+      const snippet = raw.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 120);
+      data = { error: `استجابة غير متوقعة (HTTP ${res.status})${snippet ? `: ${snippet}` : ""}` };
+    }
     return { ok: res.ok, data };
   };
 
@@ -97,7 +106,7 @@ export default function AdminPage() {
       if (!ok) { setError(data.error as string ?? "حدث خطأ"); return; }
       setUsers((data.users as AdminUser[]) ?? []);
       setAuthed(true);
-    } catch { setError("خطأ في الاتصال"); }
+    } catch (e) { setError(`تعذّر الوصول للخادم: ${e instanceof Error ? e.message : "تحقّق من الإنترنت"}`); }
     finally { setLoading(false); }
   };
 
