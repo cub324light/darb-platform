@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
-import { initializeApp, getApps, cert, applicationDefault } from "firebase-admin/app";
-import { getFirestore, FieldValue, Timestamp } from "firebase-admin/firestore";
+import type { Timestamp } from "firebase-admin/firestore";
 
 /* firebase-admin يحتاج Node APIs — نمنع تجميعه على Edge */
 export const runtime = "nodejs";
@@ -27,7 +26,9 @@ function safeEqual(a: string, b: string): boolean {
   return timingSafeEqual(ba, bb);
 }
 
-function adminApp() {
+/* تهيئة ديناميكية — أي فشل في تحميل firebase-admin يصبح خطأً JSON بدل انهيار 500 */
+async function adminApp() {
+  const { initializeApp, getApps, cert, applicationDefault } = await import("firebase-admin/app");
   if (getApps().length > 0) return getApps()[0]!;
   const sa = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (sa) {
@@ -36,7 +37,6 @@ function adminApp() {
     catch { throw new Error("FIREBASE_SERVICE_ACCOUNT ليس JSON صالحاً — تأكد من النسخ الكامل"); }
     return initializeApp({ credential: cert(parsed as Parameters<typeof cert>[0]) });
   }
-  /* بدون مفتاح، applicationDefault() يتعلّق على Vercel — نفشل فوراً */
   if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
     return initializeApp({ credential: applicationDefault(), projectId: "my-education-platform-a160e" });
   }
@@ -57,7 +57,8 @@ export async function POST(req: NextRequest) {
   const { mode } = (body ?? {}) as { mode?: string };
 
   try {
-    const app = adminApp();
+    const app = await adminApp();
+    const { getFirestore, FieldValue, Timestamp } = await import("firebase-admin/firestore");
     const db = getFirestore(app);
 
     /* -------- search: البحث عن مستخدمين بالاسم -------- */

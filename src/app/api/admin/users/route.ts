@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
-import { initializeApp, getApps, cert, applicationDefault } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
-import { getAuth } from "firebase-admin/auth";
 
 /* firebase-admin يحتاج Node APIs — نمنع تجميعه على Edge، ونمدّد المهلة
    لأن مسح كل المستخدمين (Auth + Firestore) قد يتجاوز الافتراضي */
@@ -30,7 +27,10 @@ function safeEqual(a: string, b: string): boolean {
   return timingSafeEqual(ba, bb);
 }
 
-function adminApp() {
+/* تهيئة firebase-admin عبر استيراد ديناميكي — أي فشل في تحميل المكتبة
+   أو غياب المفتاح يصبح خطأً قابلاً للالتقاط (JSON) بدل انهيار الموديول (500). */
+async function adminApp() {
+  const { initializeApp, getApps, cert, applicationDefault } = await import("firebase-admin/app");
   if (getApps().length > 0) return getApps()[0]!;
   const sa = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (sa) {
@@ -39,112 +39,121 @@ function adminApp() {
     catch { throw new Error("FIREBASE_SERVICE_ACCOUNT ليس JSON صالحاً — تأكد من نسخ الملف كاملاً"); }
     return initializeApp({ credential: cert(parsed as Parameters<typeof cert>[0]) });
   }
-  /* الاعتماد الافتراضي يصلح محلياً فقط (GOOGLE_APPLICATION_CREDENTIALS).
-     على Vercel بدون مفتاح، applicationDefault() يتعلّق على خادم بيانات GCP
-     حتى تنتهي المهلة فيرجع رداً غير JSON → "خطأ في الاتصال". لذا نفشل فوراً. */
+  /* الاعتماد الافتراضي يصلح محلياً فقط (GOOGLE_APPLICATION_CREDENTIALS) */
   if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
     return initializeApp({ credential: applicationDefault(), projectId: "my-education-platform-a160e" });
   }
   throw new Error("FIREBASE_SERVICE_ACCOUNT غير مضبوط — أضفه في إعدادات Vercel (Environment Variables) ثم أعد النشر");
 }
 
+async function adminDb() {
+  const app = await adminApp();
+  const { getFirestore } = await import("firebase-admin/firestore");
+  return getFirestore(app);
+}
+
+async function adminAuth() {
+  const app = await adminApp();
+  const { getAuth } = await import("firebase-admin/auth");
+  return getAuth(app);
+}
+
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (!allowAttempt(ip)) {
-    return NextResponse.json({ error: "محاولات كثيرة — انتظر دقيقة" }, { status: 429 });
-  }
-
-  const body = await req.json().catch(() => null);
-  const { password, mode } = (body ?? {}) as { password?: string; mode?: string };
-
-  const adminPass = process.env.ADMIN_PASS ?? "darb-admin-2026";
-  if (typeof password !== "string" || !safeEqual(password, adminPass)) {
-    return NextResponse.json({ error: "كلمة السر خاطئة" }, { status: 401 });
-  }
-
-  /* وضع التشخيص */
-  if (mode === "ping") {
-    try {
-      const app = adminApp();
-      await getFirestore(app).collection("users").limit(1).get();
-      return NextResponse.json({ ok: true, msg: "Firebase متصل بنجاح" });
-    } catch (e) {
-      return NextResponse.json({ ok: false, msg: String(e) }, { status: 500 });
-    }
-  }
-
-  /* تعيين باقة لمستخدم */
-  if (mode === "setPlan") {
-    const { uid, plan } = (body ?? {}) as { uid?: string; plan?: string };
-    if (typeof uid !== "string" || !uid) {
-      return NextResponse.json({ error: "uid مفقود" }, { status: 400 });
-    }
-    if (plan !== "free" && plan !== "shaheen" && plan !== "anqa") {
-      return NextResponse.json({ error: "باقة غير صالحة" }, { status: 400 });
-    }
-    try {
-      const app = adminApp();
-      await getFirestore(app).collection("users").doc(uid).set({ plan }, { merge: true });
-      return NextResponse.json({ ok: true, uid, plan });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      return NextResponse.json({ error: `تعذّر التعيين: ${msg}` }, { status: 500 });
-    }
-  }
-
-  /* إيقاف مؤقت لمدة محددة */
-  if (mode === "setBlockedUntil") {
-    const { uid, durationHours } = (body ?? {}) as { uid?: string; durationHours?: number };
-    if (typeof uid !== "string" || !uid) {
-      return NextResponse.json({ error: "uid مفقود" }, { status: 400 });
-    }
-
-    let blockUntil: number | null = null;
-    let blocked = false;
-
-    if (durationHours !== null && durationHours !== undefined && durationHours > 0) {
-      blockUntil = Date.now() + durationHours * 3600 * 1000;
-      blocked = true;
-    }
-    // durationHours === 0 means permanent block (no expiry)
-    if (durationHours === 0) {
-      blocked = true;
-      blockUntil = null;
-    }
-
-    try {
-      const app = adminApp();
-      await getFirestore(app).collection("users").doc(uid).set(
-        { blocked, blockUntil: blockUntil ?? null },
-        { merge: true }
-      );
-      return NextResponse.json({ ok: true, uid, blocked, blockUntil });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      return NextResponse.json({ error: `تعذّر الإيقاف: ${msg}` }, { status: 500 });
-    }
-  }
-
-  /* إيقاف / تفعيل مستخدم */
-  if (mode === "setBlocked") {
-    const { uid, blocked } = (body ?? {}) as { uid?: string; blocked?: boolean };
-    if (typeof uid !== "string" || !uid) {
-      return NextResponse.json({ error: "uid مفقود" }, { status: 400 });
-    }
-    try {
-      const app = adminApp();
-      await getFirestore(app).collection("users").doc(uid).set({ blocked: !!blocked }, { merge: true });
-      return NextResponse.json({ ok: true, uid, blocked: !!blocked });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      return NextResponse.json({ error: `تعذّر التحديث: ${msg}` }, { status: 500 });
-    }
-  }
-
   try {
-    const app = adminApp();
-    const db  = getFirestore(app);
-    const fbAuth = getAuth(app);
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    if (!allowAttempt(ip)) {
+      return NextResponse.json({ error: "محاولات كثيرة — انتظر دقيقة" }, { status: 429 });
+    }
+
+    const body = await req.json().catch(() => null);
+    const { password, mode } = (body ?? {}) as { password?: string; mode?: string };
+
+    const adminPass = process.env.ADMIN_PASS ?? "darb-admin-2026";
+    if (typeof password !== "string" || !safeEqual(password, adminPass)) {
+      return NextResponse.json({ error: "كلمة السر خاطئة" }, { status: 401 });
+    }
+
+    /* وضع التشخيص */
+    if (mode === "ping") {
+      try {
+        const db = await adminDb();
+        await db.collection("users").limit(1).get();
+        return NextResponse.json({ ok: true, msg: "Firebase متصل بنجاح" });
+      } catch (e) {
+        return NextResponse.json({ ok: false, msg: e instanceof Error ? e.message : String(e) }, { status: 500 });
+      }
+    }
+
+    /* تعيين باقة لمستخدم */
+    if (mode === "setPlan") {
+      const { uid, plan } = (body ?? {}) as { uid?: string; plan?: string };
+      if (typeof uid !== "string" || !uid) {
+        return NextResponse.json({ error: "uid مفقود" }, { status: 400 });
+      }
+      if (plan !== "free" && plan !== "shaheen" && plan !== "anqa") {
+        return NextResponse.json({ error: "باقة غير صالحة" }, { status: 400 });
+      }
+      try {
+        const db = await adminDb();
+        await db.collection("users").doc(uid).set({ plan }, { merge: true });
+        return NextResponse.json({ ok: true, uid, plan });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        return NextResponse.json({ error: `تعذّر التعيين: ${msg}` }, { status: 500 });
+      }
+    }
+
+    /* إيقاف مؤقت لمدة محددة */
+    if (mode === "setBlockedUntil") {
+      const { uid, durationHours } = (body ?? {}) as { uid?: string; durationHours?: number };
+      if (typeof uid !== "string" || !uid) {
+        return NextResponse.json({ error: "uid مفقود" }, { status: 400 });
+      }
+
+      let blockUntil: number | null = null;
+      let blocked = false;
+
+      if (durationHours !== null && durationHours !== undefined && durationHours > 0) {
+        blockUntil = Date.now() + durationHours * 3600 * 1000;
+        blocked = true;
+      }
+      // durationHours === 0 means permanent block (no expiry)
+      if (durationHours === 0) {
+        blocked = true;
+        blockUntil = null;
+      }
+
+      try {
+        const db = await adminDb();
+        await db.collection("users").doc(uid).set(
+          { blocked, blockUntil: blockUntil ?? null },
+          { merge: true }
+        );
+        return NextResponse.json({ ok: true, uid, blocked, blockUntil });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        return NextResponse.json({ error: `تعذّر الإيقاف: ${msg}` }, { status: 500 });
+      }
+    }
+
+    /* إيقاف / تفعيل مستخدم */
+    if (mode === "setBlocked") {
+      const { uid, blocked } = (body ?? {}) as { uid?: string; blocked?: boolean };
+      if (typeof uid !== "string" || !uid) {
+        return NextResponse.json({ error: "uid مفقود" }, { status: 400 });
+      }
+      try {
+        const db = await adminDb();
+        await db.collection("users").doc(uid).set({ blocked: !!blocked }, { merge: true });
+        return NextResponse.json({ ok: true, uid, blocked: !!blocked });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        return NextResponse.json({ error: `تعذّر التحديث: ${msg}` }, { status: 500 });
+      }
+    }
+
+    const db  = await adminDb();
+    const fbAuth = await adminAuth();
 
     /* جلب مستخدمي Firebase Auth (للإيميلات) */
     const authEmailMap = new Map<string, string>();
@@ -226,7 +235,8 @@ export async function POST(req: NextRequest) {
     users.sort((a, b) => (b.lastSeen?.seconds ?? 0) - (a.lastSeen?.seconds ?? 0));
     return NextResponse.json({ users });
   } catch (e) {
+    /* شبكة أمان نهائية — أي خطأ غير متوقع يرجع JSON واضح بدل انهيار 500 */
     const msg = e instanceof Error ? e.message : String(e);
-    return NextResponse.json({ error: `تعذر جلب البيانات: ${msg}` }, { status: 500 });
+    return NextResponse.json({ error: `خطأ في الخادم: ${msg}` }, { status: 500 });
   }
 }
