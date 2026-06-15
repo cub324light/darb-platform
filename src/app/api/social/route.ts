@@ -112,28 +112,40 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    /* -------- getAnnouncements: جلب الإعلانات الرسمية -------- */
+    /* -------- getAnnouncements: جلب الإعلانات الرسمية --------
+       groupId اختياري: لو مُرسل نعيد إعلانات هذا القروب + إعلانات «الكل».
+       بدونه (لوحة الأدمن) نعيد كل الإعلانات. المثبّت يطفو فوق. */
     if (mode === "getAnnouncements") {
+      const { groupId } = body as { groupId?: string };
       const snap = await db.collection("announcements")
         .orderBy("createdAt", "desc")
-        .limit(20)
+        .limit(100)
         .get();
-      const announcements = snap.docs.map((d) => {
+      let announcements = snap.docs.map((d) => {
         const data = d.data();
         const createdAt = data.createdAt as Timestamp | undefined;
         return {
           id: d.id,
           title: data.title ?? "",
           content: data.content ?? "",
+          groupId: (data.groupId as string) ?? "all",
+          pinned: data.pinned === true,
           createdAt: createdAt ? { seconds: createdAt.seconds } : undefined,
         };
       });
+      if (groupId) {
+        announcements = announcements.filter((a) => a.groupId === "all" || a.groupId === groupId);
+      }
+      /* المثبّت أولاً (الترتيب ثابت فيحافظ على createdAt تنازلياً داخل كل فئة) */
+      announcements.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
       return NextResponse.json({ announcements });
     }
 
     /* -------- announce: نشر إعلان (للمشرف فقط) -------- */
     if (mode === "announce") {
-      const { password, title, content } = body as { password?: string; title?: string; content?: string };
+      const { password, title, content, groupId, pinned } = body as {
+        password?: string; title?: string; content?: string; groupId?: string; pinned?: boolean;
+      };
       const adminPass = process.env.ADMIN_PASS ?? "darb-admin-2026";
       if (typeof password !== "string" || !safeEqual(password, adminPass)) {
         return NextResponse.json({ error: "كلمة السر خاطئة" }, { status: 401 });
@@ -147,9 +159,62 @@ export async function POST(req: NextRequest) {
       const ref = await db.collection("announcements").add({
         title: title.trim(),
         content: content.trim(),
+        groupId: typeof groupId === "string" && groupId ? groupId : "all",
+        pinned: pinned === true,
         createdAt: FieldValue.serverTimestamp(),
       });
       return NextResponse.json({ ok: true, id: ref.id });
+    }
+
+    /* -------- editAnnouncement: تعديل إعلان (للمشرف فقط) -------- */
+    if (mode === "editAnnouncement") {
+      const { password, id, title, content, groupId } = body as {
+        password?: string; id?: string; title?: string; content?: string; groupId?: string;
+      };
+      const adminPass = process.env.ADMIN_PASS ?? "darb-admin-2026";
+      if (typeof password !== "string" || !safeEqual(password, adminPass)) {
+        return NextResponse.json({ error: "كلمة السر خاطئة" }, { status: 401 });
+      }
+      if (!id || typeof id !== "string") {
+        return NextResponse.json({ error: "معرّف الإعلان مفقود" }, { status: 400 });
+      }
+      if (!title || !title.trim() || !content || !content.trim()) {
+        return NextResponse.json({ error: "العنوان والمحتوى مطلوبان" }, { status: 400 });
+      }
+      await db.collection("announcements").doc(id).set({
+        title: title.trim(),
+        content: content.trim(),
+        ...(typeof groupId === "string" && groupId ? { groupId } : {}),
+      }, { merge: true });
+      return NextResponse.json({ ok: true });
+    }
+
+    /* -------- pinAnnouncement: تثبيت / إلغاء تثبيت (للمشرف فقط) -------- */
+    if (mode === "pinAnnouncement") {
+      const { password, id, pinned } = body as { password?: string; id?: string; pinned?: boolean };
+      const adminPass = process.env.ADMIN_PASS ?? "darb-admin-2026";
+      if (typeof password !== "string" || !safeEqual(password, adminPass)) {
+        return NextResponse.json({ error: "كلمة السر خاطئة" }, { status: 401 });
+      }
+      if (!id || typeof id !== "string") {
+        return NextResponse.json({ error: "معرّف الإعلان مفقود" }, { status: 400 });
+      }
+      await db.collection("announcements").doc(id).set({ pinned: pinned === true }, { merge: true });
+      return NextResponse.json({ ok: true, pinned: pinned === true });
+    }
+
+    /* -------- deleteAnnouncement: حذف إعلان (للمشرف فقط) -------- */
+    if (mode === "deleteAnnouncement") {
+      const { password, id } = body as { password?: string; id?: string };
+      const adminPass = process.env.ADMIN_PASS ?? "darb-admin-2026";
+      if (typeof password !== "string" || !safeEqual(password, adminPass)) {
+        return NextResponse.json({ error: "كلمة السر خاطئة" }, { status: 401 });
+      }
+      if (!id || typeof id !== "string") {
+        return NextResponse.json({ error: "معرّف الإعلان مفقود" }, { status: 400 });
+      }
+      await db.collection("announcements").doc(id).delete();
+      return NextResponse.json({ ok: true });
     }
 
     /* -------- getFriends: جلب قائمة الأصدقاء -------- */
