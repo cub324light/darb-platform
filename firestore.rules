@@ -1,23 +1,24 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // كل مستخدم يقرأ ويكتب في مستنده فقط (بعد تسجيل الدخول).
-    // لوحة الأدمن تقرأ الجميع عبر Admin SDK من السيرفر (تتجاوز هذه القواعد).
+
+    // Each user can read/write only their own document
     match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      // Friends subcollection
       match /friends/{fid} {
         allow read, write: if request.auth != null && request.auth.uid == uid;
       }
     }
 
-    // الإعلانات الرسمية — قراءة للجميع المسجّلين، كتابة من الخادم فقط (Admin SDK)
+    // Official announcements: signed-in users read; writes only from server (Admin SDK)
     match /announcements/{id} {
       allow read: if request.auth != null;
       allow write: if false;
     }
 
-    // رسائل المجلس — القراءة والكتابة للمسجّلين
-    // كل رسالة: { uid, name, content, createdAt }
+    // Council chat messages: signed-in users read and post their own messages
     match /chats/{groupId}/messages/{msgId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null
@@ -27,7 +28,7 @@ service cloud.firestore {
         && request.resource.data.content.size() <= 1000;
     }
 
-    // كل مجموعة أخرى: ممنوعة بالكامل
+    // Everything else: denied
     match /{document=**} {
       allow read, write: if false;
     }

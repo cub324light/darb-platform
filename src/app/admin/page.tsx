@@ -130,7 +130,7 @@ export default function AdminPage() {
   const [announceContent, setAnnounceContent] = useState("");
   const [announceBusy, setAnnounceBusy] = useState(false);
   const [announceMsg, setAnnounceMsg] = useState("");
-  const [showAnnounce, setShowAnnounce] = useState(false);
+  const [showAnnounce, setShowAnnounce] = useState(true);
 
   const callAction = async (mode: string, extra: Record<string, unknown>) => {
     const res = await fetch("/api/admin/users", {
