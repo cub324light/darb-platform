@@ -57,14 +57,30 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   const [authResolved, setAuthResolved] = useState(false);
   const [synced, setSynced] = useState(isInitialSyncDone());
   const [redirectErr, setRedirectErr] = useState<string | null>(null);
+  /* وضع الزائر — يتجاوز تسجيل الدخول ويحفظ البيانات محلياً فقط */
+  const [guestMode, setGuestMode] = useState(() =>
+    typeof window !== "undefined" && localStorage.getItem("darb_guest_mode") === "1"
+  );
+
+  const enterGuestMode = () => {
+    try { localStorage.setItem("darb_guest_mode", "1"); } catch {}
+    setGuestMode(true);
+  };
 
   /* أكمل تسجيل الدخول القادم عبر redirect (Google) */
   useEffect(() => {
     consumeRedirectResult().then((e) => { if (e) setRedirectErr(e); });
   }, []);
 
-  /* راقب حالة المصادقة */
-  useEffect(() => onAuth((u) => { setUser(u); setAuthResolved(true); }), []);
+  /* راقب حالة المصادقة — عند الدخول بحساب حقيقي نلغي وضع الزائر */
+  useEffect(() => onAuth((u) => {
+    setUser(u);
+    setAuthResolved(true);
+    if (u) {
+      try { localStorage.removeItem("darb_guest_mode"); } catch {}
+      setGuestMode(false);
+    }
+  }), []);
 
   /* المزامنة الأولية بعد ثبوت تسجيل الدخول */
   useEffect(() => {
@@ -80,8 +96,9 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   /* مسجّل لكنه لم يُكمل onboarding → وجّهه لصفحة الإعداد */
-  const onboarded = synced && !!user ? !!loadUser()?.onboarded : false;
-  const needsOnboarding = synced && !!user && !onboarded && pathname !== "/onboarding";
+  const authed = !!user || guestMode;
+  const onboarded = (synced || guestMode) && authed ? !!loadUser()?.onboarded : false;
+  const needsOnboarding = (synced || guestMode) && authed && !onboarded && pathname !== "/onboarding";
 
   useEffect(() => {
     if (needsOnboarding) router.replace("/onboarding");
@@ -89,8 +106,8 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (isPublic) return <>{children}</>;
   if (!authResolved) return <Splash />;
-  if (!user) return <SignInScreen initialError={redirectErr} />;
-  if (!synced) return <Splash label="جارٍ استرجاع بياناتك..." />;
+  if (!authed) return <SignInScreen initialError={redirectErr} onGuest={enterGuestMode} />;
+  if (!synced && !guestMode) return <Splash label="جارٍ استرجاع بياناتك..." />;
   if (isAccountBlocked()) return <BlockedScreen />;
   if (needsOnboarding) return <Splash />;
   return <>{children}</>;
