@@ -4,6 +4,11 @@ import { initializeApp, getApps, cert, applicationDefault } from "firebase-admin
 import { getFirestore } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 
+/* firebase-admin يحتاج Node APIs — نمنع تجميعه على Edge، ونمدّد المهلة
+   لأن مسح كل المستخدمين (Auth + Firestore) قد يتجاوز الافتراضي */
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 /* حماية من تخمين كلمة السر: 5 محاولات بالدقيقة لكل IP */
 const attempts = new Map<string, { count: number; reset: number }>();
 function allowAttempt(ip: string): boolean {
