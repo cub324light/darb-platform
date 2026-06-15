@@ -31,14 +31,16 @@ function adminApp() {
   if (sa) {
     let parsed: object;
     try { parsed = JSON.parse(sa); }
-    catch { throw new Error("FIREBASE_SERVICE_ACCOUNT ليس JSON صالحاً — تأكد من النسخ الكامل"); }
+    catch { throw new Error("FIREBASE_SERVICE_ACCOUNT ليس JSON صالحاً — تأكد من نسخ الملف كاملاً"); }
     return initializeApp({ credential: cert(parsed as Parameters<typeof cert>[0]) });
   }
-  try {
+  /* الاعتماد الافتراضي يصلح محلياً فقط (GOOGLE_APPLICATION_CREDENTIALS).
+     على Vercel بدون مفتاح، applicationDefault() يتعلّق على خادم بيانات GCP
+     حتى تنتهي المهلة فيرجع رداً غير JSON → "خطأ في الاتصال". لذا نفشل فوراً. */
+  if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
     return initializeApp({ credential: applicationDefault(), projectId: "my-education-platform-a160e" });
-  } catch {
-    throw new Error("FIREBASE_SERVICE_ACCOUNT غير موجود — أضفه في Vercel Environment Variables");
   }
+  throw new Error("FIREBASE_SERVICE_ACCOUNT غير مضبوط — أضفه في إعدادات Vercel (Environment Variables) ثم أعد النشر");
 }
 
 export async function POST(req: NextRequest) {
