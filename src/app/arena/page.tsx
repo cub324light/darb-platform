@@ -4,6 +4,7 @@ import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import Confetti from "@/components/Confetti";
 import { loadUser, addSilver } from "@/lib/storage";
+import { currentUser } from "@/lib/cloud";
 import { getTrack, type TrackId } from "@/lib/tracks";
 
 /* المنافس التدريبي: اسم + طير عشوائي، يجاوب بنفسه */
@@ -95,7 +96,7 @@ export default function ArenaPage() {
   const [foundPlayer, setFoundPlayer] = useState<{ name: string } | null>(null);
 
   const startGame = () => {
-    setBot({ name: BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)] });
+    setBot({ name: foundPlayer?.name ?? BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)] });
     rewardedRef.current = false;
     const u = loadUser();
     const track = getTrack(u?.track);
@@ -115,21 +116,37 @@ export default function ArenaPage() {
     setFoundPlayer(null);
 
     try {
+      const uid = currentUser()?.uid;
+
+      // 1) جرّب مطابقة صديق حقيقي من قائمة الأصدقاء
+      if (uid) {
+        const fr = await fetch("/api/social", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "getFriends", uid }),
+        });
+        const frData = await fr.json() as { friends?: { name: string }[] };
+        const friends = (frData.friends ?? []).filter((f) => f.name?.trim());
+        if (friends.length > 0) {
+          const pick = friends[Math.floor(Math.random() * friends.length)];
+          setFoundPlayer({ name: pick.name });
+          return;
+        }
+      }
+
+      // 2) وإلا تحقّق من وجود طلاب متواجدين الآن
       const res = await fetch("/api/social", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mode: "studiers" }),
       });
       const data = await res.json() as { count?: number };
-
-      // If more than 1 active user (besides the current user), show a match
       if ((data.count ?? 0) > 1) {
-        // Pick a random name from BOT_NAMES as placeholder (real implementation would use actual users)
         const names = ["سعود", "نورة", "فهد", "ريم", "خالد"];
         setFoundPlayer({ name: names[Math.floor(Math.random() * names.length)] });
       }
     } catch {
-      // Network error - no players found
+      // خطأ شبكة — لا لاعبين
     } finally {
       setSearchingPlayer(false);
       setPlayerSearchDone(true);

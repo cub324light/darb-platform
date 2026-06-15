@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
+import FriendsPanel from "@/components/FriendsPanel";
 import { loadUser, loadList, saveList } from "@/lib/storage";
 import { subjectsForTracks, TRACKS, type TrackId } from "@/lib/tracks";
 
@@ -74,6 +75,9 @@ export default function CouncilPage() {
   const [activeGroup, setActiveGroup] = useState<ChatGroup | null>(null);
   const [activeChannel, setActiveChannel] = useState<"general" | "official">("general");
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  /* ─ لوحة الأصدقاء ─ */
+  const [showFriends, setShowFriends] = useState(false);
 
   /* ─ حالة الرسائل ─ */
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -442,6 +446,32 @@ export default function CouncilPage() {
 
       <div className="h-2" />
 
+      {/* ─ مدخل الأصدقاء ─ */}
+      <button
+        onClick={() => setShowFriends(true)}
+        className="flex items-center gap-3 px-5 py-4 text-right transition active:opacity-70 w-full"
+        style={{ borderBottom: "1px solid var(--border)" }}
+      >
+        <div
+          className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
+          style={{
+            background: "color-mix(in srgb, var(--gold) 12%, var(--surface))",
+            border: "1.5px solid color-mix(in srgb, var(--gold) 40%, var(--border))",
+          }}
+        >
+          👥
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-[15px]" style={{ color: "var(--text)" }}>
+            الأصدقاء
+          </p>
+          <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+            ابحث عن زملائك وأضفهم
+          </p>
+        </div>
+        <span className="text-[var(--text-muted)] text-lg flex-shrink-0">‹</span>
+      </button>
+
       {/* ─ قائمة المجموعات ─ */}
       <div className="flex flex-col">
         {sortedGroups.map((group) => {
@@ -518,6 +548,8 @@ export default function CouncilPage() {
           );
         })}
       </div>
+
+      {showFriends && <FriendsPanel onClose={() => setShowFriends(false)} />}
 
       <BottomNav />
     </div>
