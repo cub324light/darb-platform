@@ -51,20 +51,12 @@ export default function CouncilPage() {
 
   useEffect(() => onAuth((u) => setAuthUid(u?.uid ?? null)), []);
 
-  /* ─ فتح «عام» تلقائياً عند فتح الصفحة (مرة واحدة) ─ */
-  useEffect(() => {
-    const general = CHAT_GROUPS.find((g) => g.id === "general");
-    if (general) {
-      setActiveGroup(general);
-      setActiveChannel("general");
-      setIsFullscreen(true);
-    }
-  }, []);
-
-  /* ─ حالة المجموعة النشطة ─ */
-  const [activeGroup, setActiveGroup] = useState<ChatGroup | null>(null);
+  /* ─ حالة المجموعة النشطة — «عام» مفتوح وملء الشاشة تلقائياً عند الدخول ─ */
+  const [activeGroup, setActiveGroup] = useState<ChatGroup | null>(
+    () => CHAT_GROUPS.find((g) => g.id === "general") ?? null
+  );
   const [activeChannel, setActiveChannel] = useState<"general" | "official">("general");
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(true);
   const [showFriends, setShowFriends] = useState(false);
 
   /* ─ رسائل عام (من Firestore) ─ */
@@ -87,12 +79,18 @@ export default function CouncilPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, officialMessages]);
 
-  /* ─ اشتراك Firestore + إعلانات عند تغيّر المجموعة النشطة ─ */
-  useEffect(() => {
-    if (!activeGroup) return;
+  /* ─ تصفير الرسائل عند تبديل المجموعة (نمط React: ضبط الحالة أثناء العرض) ─ */
+  const [loadedGroupId, setLoadedGroupId] = useState<string | null>(null);
+  if (activeGroup && activeGroup.id !== loadedGroupId) {
+    setLoadedGroupId(activeGroup.id);
     setMessages([]);
     setOfficialMessages([]);
     setMsgLoading(true);
+  }
+
+  /* ─ اشتراك Firestore + إعلانات عند تغيّر المجموعة النشطة ─ */
+  useEffect(() => {
+    if (!activeGroup) return;
 
     const q = query(
       collection(db, "chats", activeGroup.id, "messages"),

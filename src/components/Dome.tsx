@@ -2,12 +2,18 @@
 import { useEffect, useState, useRef, type ReactNode } from "react";
 import ProfileButton, { ThemeToggle } from "@/components/Profile";
 import SettingsButton from "@/components/SettingsPanel";
+import NotificationBell from "@/components/NotificationBell";
+import { loadUser, loadEvents, type ScheduleEvent } from "@/lib/storage";
 
-/* ── ساعة صغيرة مع إعدادات 12/24 ── */
+/* ── ساعة صغيرة مع إعدادات 12/24 + لغة ع/EN ── */
+type Lang = "ar" | "en";
 function ClockWidget() {
   const [time, setTime] = useState("");
   const [fmt, setFmt] = useState<"12" | "24">(() =>
     typeof window !== "undefined" ? (localStorage.getItem("darb_clock_fmt") as "12" | "24" ?? "12") : "12"
+  );
+  const [lang, setLang] = useState<Lang>(() =>
+    typeof window !== "undefined" ? (localStorage.getItem("darb_lang") as Lang ?? "ar") : "ar"
   );
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -15,12 +21,13 @@ function ClockWidget() {
   useEffect(() => {
     const tick = () => {
       const d = new Date();
-      setTime(d.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", hour12: fmt === "12" }));
+      const locale = lang === "ar" ? "ar-SA" : "en-US";
+      setTime(d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit", hour12: fmt === "12" }));
     };
     tick();
     const t = setInterval(tick, 10000);
     return () => clearInterval(t);
-  }, [fmt]);
+  }, [fmt, lang]);
 
   useEffect(() => {
     const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
@@ -28,7 +35,12 @@ function ClockWidget() {
     return () => document.removeEventListener("mousedown", close);
   }, []);
 
-  const setFormat = (f: "12" | "24") => { setFmt(f); localStorage.setItem("darb_clock_fmt", f); setOpen(false); };
+  const setFormat = (f: "12" | "24") => { setFmt(f); localStorage.setItem("darb_clock_fmt", f); };
+  const setLanguage = (l: Lang) => { setLang(l); localStorage.setItem("darb_lang", l); };
+
+  const labels = lang === "ar"
+    ? { fmt: "الصيغة", lang: "اللغة", h12: "12 ساعة", h24: "24 ساعة" }
+    : { fmt: "Format", lang: "Language", h12: "12-hour", h24: "24-hour" };
 
   return (
     <div ref={ref} className="relative">
@@ -39,16 +51,109 @@ function ClockWidget() {
       </button>
       {open && (
         <div className="absolute left-0 top-full mt-1.5 z-[99] rounded-xl shadow-xl flex flex-col overflow-hidden"
-          style={{ background: "var(--surface)", border: "1.5px solid var(--border)", minWidth: "120px" }}>
+          style={{ background: "var(--surface)", border: "1.5px solid var(--border)", minWidth: "150px" }} dir={lang === "ar" ? "rtl" : "ltr"}>
+          <p className="px-4 pt-2.5 pb-1 text-[10px] font-bold" style={{ color: "var(--text-muted)", textAlign: lang === "ar" ? "right" : "left" }}>{labels.fmt}</p>
           {(["12", "24"] as const).map((f) => (
             <button key={f} onClick={() => setFormat(f)}
-              className="px-4 py-2.5 text-[13px] font-bold text-right transition hover:brightness-110"
-              style={{ background: fmt === f ? "color-mix(in srgb, var(--accent) 12%, transparent)" : "transparent",
+              className="px-4 py-2 text-[13px] font-bold transition hover:brightness-110"
+              style={{ textAlign: lang === "ar" ? "right" : "left",
+                       background: fmt === f ? "color-mix(in srgb, var(--accent) 12%, transparent)" : "transparent",
                        color: fmt === f ? "var(--accent-light)" : "var(--text-dim)" }}>
-              {f === "12" ? "12 ساعة (ص/م)" : "24 ساعة"}
+              {f === "12" ? labels.h12 : labels.h24}
+            </button>
+          ))}
+          <p className="px-4 pt-2.5 pb-1 text-[10px] font-bold border-t" style={{ color: "var(--text-muted)", borderColor: "var(--border)", textAlign: lang === "ar" ? "right" : "left" }}>{labels.lang}</p>
+          {(["ar", "en"] as const).map((l) => (
+            <button key={l} onClick={() => setLanguage(l)}
+              className="px-4 py-2 text-[13px] font-bold transition hover:brightness-110"
+              style={{ textAlign: lang === "ar" ? "right" : "left",
+                       background: lang === l ? "color-mix(in srgb, var(--accent) 12%, transparent)" : "transparent",
+                       color: lang === l ? "var(--accent-light)" : "var(--text-dim)" }}>
+              {l === "ar" ? "العربية" : "English"}
             </button>
           ))}
         </div>
+      )}
+    </div>
+  );
+}
+
+/* ── حساب أقرب جلسة مذاكرة قادمة من أحداث الجدول ── */
+function nextStudySession(): { label: string; whenMs: number; durationH: number } | null {
+  const events = loadEvents().filter((e) => e.type === "study");
+  if (!events.length) return null;
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0, 10);
+
+  const occursOn = (e: ScheduleEvent, date: Date, dateStr: string): boolean => {
+    const r = e.recurrence;
+    switch (r.kind) {
+      case "once": return r.date === dateStr;
+      case "weekly": return date.getDay() === r.dayOfWeek;
+      case "daily": return dateStr >= r.fromDate;
+      case "multiweekly": return r.days.includes(date.getDay());
+    }
+  };
+
+  let best: { label: string; whenMs: number; durationH: number } | null = null;
+  for (let i = 0; i < 8; i++) {
+    const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+    const dateStr = i === 0 ? todayStr : date.toISOString().slice(0, 10);
+    for (const e of events) {
+      if (!occursOn(e, date, dateStr)) continue;
+      const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), e.fromHour, 0, 0);
+      const whenMs = start.getTime();
+      if (whenMs <= now.getTime()) continue;
+      if (!best || whenMs < best.whenMs) {
+        best = { label: e.subject || e.label || "مذاكرة", whenMs, durationH: Math.max(1, e.toHour - e.fromHour) };
+      }
+    }
+    if (best) break; // أقرب يوم فيه جلسة يكفي
+  }
+  return best;
+}
+
+/* ── ترحيب «أهلا فلان» + الجلسة القادمة ── */
+function GreetingWidget() {
+  const [name] = useState<string>(() =>
+    typeof window !== "undefined" ? (loadUser()?.name ?? "") : ""
+  );
+  const [next, setNext] = useState<{ label: string; whenMs: number; durationH: number } | null>(null);
+
+  useEffect(() => {
+    const refresh = () => setNext(nextStudySession());
+    refresh();
+    const t = setInterval(refresh, 60000);
+    return () => clearInterval(t);
+  }, []);
+
+  if (!name) return <div className="flex-1" />;
+
+  const whenText = (ms: number) => {
+    const d = new Date(ms);
+    const fmt = localStorage.getItem("darb_clock_fmt") !== "24";
+    const time = d.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", hour12: fmt });
+    const today = new Date();
+    const dayDiff = Math.floor((new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+      - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()) / 86400000);
+    if (dayDiff === 0) return `اليوم ${time}`;
+    if (dayDiff === 1) return `غداً ${time}`;
+    return `${d.toLocaleDateString("ar-SA", { weekday: "long" })} ${time}`;
+  };
+
+  return (
+    <div className="flex-1 min-w-0" dir="rtl">
+      <p className="font-black text-[15px] truncate" style={{ color: "var(--text)" }}>
+        أهلاً {name} 👋
+      </p>
+      {next ? (
+        <p className="text-[11px] truncate" style={{ color: "var(--text-muted)" }}>
+          📚 {next.label} · {whenText(next.whenMs)} · {next.durationH} ساعة
+        </p>
+      ) : (
+        <p className="text-[11px] truncate" style={{ color: "var(--text-muted)" }}>
+          لا توجد جلسة مذاكرة قادمة
+        </p>
       )}
     </div>
   );
@@ -145,11 +250,15 @@ export default function Dome({
       {/* ── المحتوى ── */}
       <div className="dome-content" style={{ padding: compact ? "calc(18px + env(safe-area-inset-top)) 18px 16px" : "calc(26px + env(safe-area-inset-top)) 18px 22px" }}>
         {!hideControls && (
-          <div className="flex justify-end items-center gap-2 mb-3">
-            <ClockWidget />
-            <ThemeToggle className="" />
-            <ProfileButton />
-            <SettingsButton />
+          <div className="flex justify-between items-center gap-2 mb-3" dir="ltr">
+            <GreetingWidget />
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <SettingsButton />
+              <ProfileButton />
+              <NotificationBell />
+              <ThemeToggle className="" />
+              <ClockWidget />
+            </div>
           </div>
         )}
         {children}

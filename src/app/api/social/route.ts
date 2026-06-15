@@ -224,11 +224,50 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "uid مفقود" }, { status: 400 });
       }
       const snap = await db.collection("users").doc(uid).collection("friends").get();
-      const friends = snap.docs.map((d) => {
+      /* نثري كل صديق بحالة الخصوصية الحيّة من وثيقته (القائمة قصيرة) */
+      const friends = await Promise.all(snap.docs.map(async (d) => {
         const data = d.data();
-        return { uid: d.id, name: data.name ?? "", track: data.track ?? "" };
-      });
+        let isPrivate = false;
+        let name = data.name ?? "";
+        let track = data.track ?? "";
+        try {
+          const live = (await db.collection("users").doc(d.id).get()).data();
+          if (live) {
+            isPrivate = live.isPrivate === true;
+            name = live.name ?? name;
+            track = live.track ?? track;
+          }
+        } catch {}
+        return { uid: d.id, name, track, isPrivate };
+      }));
       return NextResponse.json({ friends });
+    }
+
+    /* -------- getProfile: بروفايل صديق + إحصاءاته -------- */
+    if (mode === "getProfile") {
+      const { targetUid } = body as { targetUid?: string };
+      if (!targetUid || typeof targetUid !== "string") {
+        return NextResponse.json({ error: "targetUid مفقود" }, { status: 400 });
+      }
+      const doc = await db.collection("users").doc(targetUid).get();
+      if (!doc.exists) {
+        return NextResponse.json({ error: "الحساب غير موجود" }, { status: 404 });
+      }
+      const data = doc.data()!;
+      const lastSeen = data.lastSeen as Timestamp | undefined;
+      return NextResponse.json({
+        profile: {
+          uid: targetUid,
+          name: data.name ?? "",
+          track: data.track ?? "",
+          isPrivate: data.isPrivate === true,
+          streak: Number(data.streak ?? 0),
+          focusMins: Number(data.focusMins ?? 0),
+          sessions: Number(data.sessions ?? 0),
+          silver: Number(data.silver ?? 0),
+          lastSeen: lastSeen ? lastSeen.toMillis() : null,
+        },
+      });
     }
 
     /* -------- addFriend: إضافة صديق -------- */

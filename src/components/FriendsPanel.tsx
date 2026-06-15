@@ -7,6 +7,19 @@ interface Person {
   uid: string;
   name: string;
   track: string;
+  isPrivate?: boolean;
+}
+
+interface Profile {
+  uid: string;
+  name: string;
+  track: string;
+  isPrivate: boolean;
+  streak: number;
+  focusMins: number;
+  sessions: number;
+  silver: number;
+  lastSeen: number | null;
 }
 
 /* ─── لوحة الأصدقاء — بحث + قائمة + إضافة/حذف ─── */
@@ -21,6 +34,10 @@ export default function FriendsPanel({ onClose }: { onClose: () => void }) {
   const [friends, setFriends] = useState<Person[]>([]);
   const [busyUid, setBusyUid] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+
+  /* ─ بروفايل مفتوح ─ */
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   /* ─ معرّف المستخدم الحالي — نراقب حالة المصادقة حتى تثبت ─ */
   useEffect(() => onAuth((u) => setUid(u?.uid ?? null)), []);
@@ -122,6 +139,26 @@ export default function FriendsPanel({ onClose }: { onClose: () => void }) {
     }
   };
 
+  /* ─ فتح بروفايل صديق + إحصاءاته ─ */
+  const openProfile = async (p: Person) => {
+    setProfile(null);
+    setProfileLoading(true);
+    try {
+      const res = await fetch("/api/social", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "getProfile", targetUid: p.uid }),
+      });
+      const d = (await res.json()) as { profile?: Profile };
+      if (d.profile) setProfile(d.profile);
+      else flash("تعذّر فتح البروفايل");
+    } catch {
+      flash("تعذّر الاتصال");
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
   /* ─ بطاقة شخص ─ */
   const personRow = (p: Person, action: "add" | "remove") => (
     <div
@@ -129,22 +166,30 @@ export default function FriendsPanel({ onClose }: { onClose: () => void }) {
       className="flex items-center gap-3 px-4 py-3 rounded-2xl"
       style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
     >
-      <div
-        className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-black text-white"
+      <button
+        onClick={() => openProfile(p)}
+        className="relative w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-black text-white"
         style={{ background: "linear-gradient(135deg,var(--accent-2),var(--accent-light))" }}
+        aria-label={`بروفايل ${p.name}`}
       >
         {p.name.charAt(0) || "؟"}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-bold text-[15px] truncate" style={{ color: "var(--text)" }}>
+        {/* نقطة حمراء = حساب خاص */}
+        {p.isPrivate && (
+          <span className="absolute -top-1 -left-1 w-3.5 h-3.5 rounded-full border-2"
+            style={{ background: "#EF4444", borderColor: "var(--surface)" }} />
+        )}
+      </button>
+      <button onClick={() => openProfile(p)} className="flex-1 min-w-0 text-right">
+        <p className="font-bold text-[15px] truncate flex items-center gap-1.5" style={{ color: "var(--text)" }}>
           {p.name || "طالب"}
+          {p.isPrivate && <span className="text-[11px] font-bold" style={{ color: "#EF4444" }}>● خاص</span>}
         </p>
         {p.track && (
           <p className="text-[12px] truncate" style={{ color: "var(--text-muted)" }}>
             {p.track}
           </p>
         )}
-      </div>
+      </button>
       {action === "add" ? (
         <button
           onClick={() => addFriend(p)}
@@ -274,6 +319,58 @@ export default function FriendsPanel({ onClose }: { onClose: () => void }) {
               </div>
             ) : (
               friends.map((p) => personRow(p, "remove"))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* بروفايل صديق */}
+      {(profile || profileLoading) && (
+        <div className="fixed inset-0 flex items-end sm:items-center justify-center px-4 pb-6"
+          style={{ zIndex: 80, background: "rgba(0,0,0,0.55)" }}
+          onClick={() => { setProfile(null); setProfileLoading(false); }}>
+          <div className="w-full max-w-sm rounded-3xl p-6 flex flex-col items-center gap-4"
+            style={{ background: "var(--bg)", border: "1.5px solid var(--border)" }}
+            onClick={(e) => e.stopPropagation()}>
+            {profileLoading || !profile ? (
+              <p className="py-8 font-bold" style={{ color: "var(--text-muted)" }}>...جاري التحميل</p>
+            ) : (
+              <>
+                <div className="relative w-20 h-20 rounded-2xl flex items-center justify-center font-black text-white text-3xl"
+                  style={{ background: "linear-gradient(135deg,var(--accent-2),var(--accent-light))" }}>
+                  {profile.name.charAt(0) || "؟"}
+                  {profile.isPrivate && (
+                    <span className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full border-2 flex items-center justify-center text-[10px]"
+                      style={{ background: "#EF4444", borderColor: "var(--bg)", color: "#fff" }}>🔒</span>
+                  )}
+                </div>
+                <div className="text-center">
+                  <p className="font-black text-xl flex items-center justify-center gap-2" style={{ color: "var(--text)" }}>
+                    {profile.name || "طالب"}
+                    {profile.isPrivate && <span className="text-[12px]" style={{ color: "#EF4444" }}>● خاص</span>}
+                  </p>
+                  {profile.track && <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>{profile.track}</p>}
+                </div>
+                <div className="grid grid-cols-2 gap-3 w-full">
+                  {([
+                    { label: "🔥 الستريك", value: `${profile.streak} يوم` },
+                    { label: "⏱ دقائق التركيز", value: `${profile.focusMins}` },
+                    { label: "✅ الجلسات", value: `${profile.sessions}` },
+                    { label: "🪙 الفضّيات", value: `${profile.silver}` },
+                  ]).map((s) => (
+                    <div key={s.label} className="rounded-2xl px-3 py-3 text-center"
+                      style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                      <p className="text-[11px] font-bold" style={{ color: "var(--text-muted)" }}>{s.label}</p>
+                      <p className="font-black text-lg mt-0.5" style={{ color: "var(--accent-light)" }}>{s.value}</p>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => setProfile(null)}
+                  className="w-full py-3 rounded-2xl font-bold text-sm transition"
+                  style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                  إغلاق
+                </button>
+              </>
             )}
           </div>
         </div>
