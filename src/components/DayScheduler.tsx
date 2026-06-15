@@ -113,7 +113,7 @@ interface Props {
 
 export default function DayScheduler({ date, events, subjects, examDate, onExamDateChange, onEventsChange, onClose, prefillText, initialTab }: Props) {
   const [mounted, setMounted] = useState(false);
-  const [tab, setTab] = useState<"manual" | "ai">("manual");
+  const [tab, setTab] = useState<"manual" | "ai">(initialTab ?? "manual");
 
   // Manual
   const [addMode, setAddMode]     = useState<"study" | "busy" | null>(null);
@@ -125,7 +125,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
   const [multiDays, setMultiDays] = useState<number[]>([]);
 
   // AI
-  const [busyText, setBusyText]   = useState("");
+  const [busyText, setBusyText]   = useState(prefillText ?? "");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult]   = useState("");
   const [editText, setEditText]   = useState("");
@@ -134,11 +134,6 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
   const [scheduleStrategy, setScheduleStrategy] = useState<"mixed" | "per-track" | "time-blocks">("mixed");
 
   useEffect(() => { setMounted(true); }, []);
-
-  useEffect(() => {
-    if (prefillText) setBusyText(prefillText);
-    if (initialTab) setTab(initialTab);
-  }, [prefillText, initialTab]);
 
   const dayEvents  = getEventsForDate(date, events);
   const dateObj    = new Date(date + "T12:00:00");

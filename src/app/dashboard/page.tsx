@@ -100,14 +100,20 @@ export default function DashboardPage() {
     setSessions(s.sessionsCount);
     setTodayMins(s.todayFocusMins);
     setWeek(last7Days(s.dayMins));
+
+    /* اقرأ الخزنة والبطاقات مرة واحدة — يُستخدم للعداد والاقتراح الذكي معاً */
+    let vaultArr: { reviewCount?: number }[] = [];
+    let cardsArr: { dueDate: number }[] = [];
+    const now = Date.now();
     try {
-      const vault = JSON.parse(localStorage.getItem("darb_vault") ?? "[]");
-      setErrorsCount(Array.isArray(vault) ? vault.length : 0);
+      const v = JSON.parse(localStorage.getItem("darb_vault") ?? "[]");
+      if (Array.isArray(v)) vaultArr = v;
+      const c = JSON.parse(localStorage.getItem("darb_cards") ?? "[]");
+      if (Array.isArray(c)) cardsArr = c;
     } catch {}
-    try {
-      const cards = JSON.parse(localStorage.getItem("darb_cards") ?? "[]");
-      setDueCards(Array.isArray(cards) ? cards.filter((c: { dueDate: number }) => c.dueDate <= Date.now()).length : 0);
-    } catch {}
+    setErrorsCount(vaultArr.length);
+    const due = cardsArr.filter((c) => c.dueDate <= now).length;
+    setDueCards(due);
 
     // load today's events
     const today = new Date().toISOString().slice(0, 10);
@@ -127,21 +133,15 @@ export default function DashboardPage() {
 
     setMounted(true);
 
-    // اقتراح ذكي
-    try {
-      const vault = JSON.parse(localStorage.getItem("darb_vault") ?? "[]");
-      const unreviewedVault = Array.isArray(vault) ? vault.filter((e: { reviewCount: number }) => e.reviewCount === 0).length : 0;
-      const cardsRaw = JSON.parse(localStorage.getItem("darb_cards") ?? "[]");
-      const due = Array.isArray(cardsRaw) ? cardsRaw.filter((c: { dueDate: number }) => c.dueDate <= Date.now()).length : 0;
-      const todS = loadStats();
-      if (due > 0) {
-        setSuggestion({ text: `${due} بطاقة مراجعة مستحقة`, sub: "راجعها الحين قبل ما تنسى", href: "/review", color: "var(--success)" });
-      } else if (unreviewedVault > 0) {
-        setSuggestion({ text: `${unreviewedVault} خطأ لم تراجعه بعد`, sub: "افتح الخزنة وراجعها", href: "/vault", color: "var(--accent)" });
-      } else if (todS.todayFocusMins === 0) {
-        setSuggestion({ text: "ما بدأت اليوم بعد", sub: "جلسة أوربت تكسر الصفر", href: "/orbit", color: "var(--accent)" });
-      }
-    } catch {}
+    // اقتراح ذكي — يعتمد على البيانات المقروءة أعلاه
+    const unreviewedVault = vaultArr.filter((e) => e.reviewCount === 0).length;
+    if (due > 0) {
+      setSuggestion({ text: `${due} بطاقة مراجعة مستحقة`, sub: "راجعها الحين قبل ما تنسى", href: "/review", color: "var(--success)" });
+    } else if (unreviewedVault > 0) {
+      setSuggestion({ text: `${unreviewedVault} خطأ لم تراجعه بعد`, sub: "افتح الخزنة وراجعها", href: "/vault", color: "var(--accent)" });
+    } else if (s.todayFocusMins === 0) {
+      setSuggestion({ text: "ما بدأت اليوم بعد", sub: "جلسة أوربت تكسر الصفر", href: "/orbit", color: "var(--accent)" });
+    }
 
     setTrackExamDates(loadTrackExamDates());
     setLayout(loadDashConfig().layout);
