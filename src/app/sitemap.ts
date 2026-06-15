@@ -4,7 +4,8 @@ const BASE = "https://darb-platform.vercel.app";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
-  const routes = ["", "/pricing", "/onboarding", "/privacy"];
+  /* صفحات عامة فقط — /onboarding محمية بتسجيل الدخول فلا تُفهرس */
+  const routes = ["", "/pricing", "/privacy"];
   return routes.map((path) => ({
     url: `${BASE}${path}`,
     lastModified: now,
