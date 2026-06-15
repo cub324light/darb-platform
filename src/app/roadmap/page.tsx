@@ -7,6 +7,7 @@ import PageGuide from "@/components/PageGuide";
 import TopicExtractor from "@/components/TopicExtractor";
 import { RAKAN_SCHEDULE } from "@/lib/constants";
 import { getTrack, subjectColor, TRACKS, type Track, type TrackId } from "@/lib/tracks";
+import { fmtHour } from "@/lib/utils";
 import {
   loadUser, saveUser, loadList, saveList, loadExamDate, saveExamDate,
   loadEvents, saveEvents, loadExamFlow, saveExamFlow,
@@ -34,14 +35,6 @@ const TAHSILI_TOTALS: Record<TahsiliSubject, { hours: number; pages: string }> =
   كيمياء:   { hours: 30, pages: "180-263" },
   أحياء:    { hours: 37, pages: "266-353" },
 };
-
-function fmtHour(h: number): string {
-  if (h === 0) return "12 ص";
-  if (h < 12) return `${h} ص`;
-  if (h === 12) return "12 م";
-  if (h === 24) return "12 ص";
-  return `${h - 12} م`;
-}
 
 /* نسب التقدم — تُحسب قبل الـ render لمزامنتها مع Firestore */
 function computeProgress(

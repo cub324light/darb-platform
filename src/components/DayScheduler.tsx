@@ -2,6 +2,7 @@
 import { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import type { ScheduleEvent } from "@/lib/storage";
+import { fmtHour, normalizeDigits } from "@/lib/utils";
 
 export type { ScheduleEvent };
 
@@ -18,21 +19,6 @@ export function getEventsForDate(date: string, events: ScheduleEvent[]): Schedul
       return false;
     })
     .sort((a, b) => a.fromHour - b.fromHour);
-}
-
-function fmtHour(h: number): string {
-  if (h === 0) return "12 ص";
-  if (h < 12) return `${h} ص`;
-  if (h === 12) return "12 م";
-  if (h === 24) return "12 ص";
-  return `${h - 12} م`;
-}
-
-/* ─── تطبيع الأرقام العربية إلى غربية ─── */
-function normalizeDigits(s: string): string {
-  return s
-    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
-    .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06F0));
 }
 
 /* ─── تحويل رقم + مؤشر الفترة ─── */

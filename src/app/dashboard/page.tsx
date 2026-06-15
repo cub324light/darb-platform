@@ -5,6 +5,7 @@ import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import { getTrack, TRACKS, type TrackId } from "@/lib/tracks";
+import { fmtHour } from "@/lib/utils";
 import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, saveExamDate, loadDashConfig, saveDashConfig, loadTrackExamDates, saveTrackExamDates, DASH_SECTION_META, type DarbUser, type ScheduleEvent, type DashItem, type DashSectionId, saveEvents } from "@/lib/storage";
 import DashAI from "@/components/DashAI";
 import { syncUser } from "@/lib/firestore";
@@ -49,13 +50,7 @@ function last7Days(dayMins: Record<string, number>): { label: string; mins: numb
   return out;
 }
 
-function fmtHour(h: number): string {
-  if (h === 0) return "12 ص";
-  if (h < 12) return `${h} ص`;
-  if (h === 12) return "12 م";
-  if (h === 24) return "12 ص";
-  return `${h - 12} م`;
-}
+
 
 function computeGreeting(h: number): string {
   if (h < 5) return "وقت الذئاب";

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { loadEvents, saveEvents, type ScheduleEvent } from "@/lib/storage";
+import { normalizeDigits } from "@/lib/utils";
 
 const QUICK_PROMPTS = [
   { label: "عطني جدول جاهز", text: "عطني جدول دراسي جاهز لليوم" },
@@ -8,12 +9,6 @@ const QUICK_PROMPTS = [
   { label: "مشغول الليل", text: "من 9 م الى 12 ص مشغول، اعمل لي جدول للأوقات الفارغة" },
   { label: "جدول بدون مدرسة", text: "من 7 ص الى 2 م مشغول بالمدرسة، اعمل لي جدول بعدها" },
 ];
-
-function normalizeDigits(s: string): string {
-  return s
-    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
-    .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06F0));
-}
 
 function parseHourArabic(num: string, mins: string, period: string): number {
   const n = parseInt(num);

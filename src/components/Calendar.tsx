@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { fmtHour } from "@/lib/utils";
 
 type Mode = "gregorian" | "hijri";
 
@@ -14,13 +15,6 @@ export interface DayPeekItem { id: string; label: string; color: string; from: n
 interface CalCell { greg: Date; label: number; inMonth: boolean; }
 
 function dk(d: Date) { return d.toISOString().slice(0, 10); }
-
-function fmtHour(h: number): string {
-  if (h === 0 || h === 24) return "12 ص";
-  if (h < 12) return `${h} ص`;
-  if (h === 12) return "12 م";
-  return `${h - 12} م`;
-}
 
 function hijriOf(d: Date): { year: number; month: number; day: number } {
   try {
