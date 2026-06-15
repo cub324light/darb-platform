@@ -4,7 +4,6 @@ import { timingSafeEqual } from "crypto";
 /* firebase-admin يحتاج Node APIs — نمنع تجميعه على Edge، ونمدّد المهلة
    لأن مسح كل المستخدمين (Auth + Firestore) قد يتجاوز الافتراضي */
 export const runtime = "nodejs";
-export const maxDuration = 60;
 
 /* حماية من تخمين كلمة السر: 5 محاولات بالدقيقة لكل IP */
 const attempts = new Map<string, { count: number; reset: number }>();
@@ -73,14 +72,36 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "كلمة السر خاطئة" }, { status: 401 });
     }
 
-    /* وضع التشخيص */
+    /* وضع التشخيص — يطبع كل مرحلة على حدة ليتّضح أين يفشل بالضبط */
     if (mode === "ping") {
+      const steps: string[] = [];
       try {
+        const sa = process.env.FIREBASE_SERVICE_ACCOUNT;
+        steps.push(sa ? `① المفتاح موجود (${sa.length} حرف)` : "① المفتاح غير موجود ❌ — أضف FIREBASE_SERVICE_ACCOUNT في Vercel");
+        if (!sa) {
+          return NextResponse.json({ ok: false, msg: steps.join("\n") }, { status: 200 });
+        }
+        let parsed: Record<string, unknown>;
+        try {
+          parsed = JSON.parse(sa) as Record<string, unknown>;
+          steps.push("② صيغة JSON صحيحة ✓");
+        } catch {
+          steps.push("② JSON غير صالح ❌ — انسخ ملف الـ service account كاملاً من { إلى }");
+          return NextResponse.json({ ok: false, msg: steps.join("\n") }, { status: 200 });
+        }
+        steps.push(`③ المشروع: ${parsed.project_id ?? "؟ مفقود"}`);
+        steps.push(`④ الحساب: ${parsed.client_email ?? "؟ مفقود"}`);
+        steps.push(typeof parsed.private_key === "string" && parsed.private_key.includes("PRIVATE KEY")
+          ? "⑤ المفتاح الخاص موجود ✓"
+          : "⑤ المفتاح الخاص ناقص أو تالف ❌");
         const db = await adminDb();
-        await db.collection("users").limit(1).get();
-        return NextResponse.json({ ok: true, msg: "Firebase متصل بنجاح" });
+        steps.push("⑥ تهيئة Firebase ✓");
+        const snap = await db.collection("users").limit(1).get();
+        steps.push(`⑦ الاتصال بـ Firestore ✓ (عيّنة: ${snap.size} وثيقة)`);
+        return NextResponse.json({ ok: true, msg: steps.join("\n") });
       } catch (e) {
-        return NextResponse.json({ ok: false, msg: e instanceof Error ? e.message : String(e) }, { status: 500 });
+        steps.push(`✖ فشل: ${e instanceof Error ? e.message : String(e)}`);
+        return NextResponse.json({ ok: false, msg: steps.join("\n") }, { status: 200 });
       }
     }
 
