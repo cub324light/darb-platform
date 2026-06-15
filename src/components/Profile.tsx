@@ -332,11 +332,13 @@ export default function ProfileButton() {
 
   return (
     <>
-      {/* الزر — في يسار الهيدر */}
-      <button onClick={() => setOpen(true)} className="btn-icon" aria-label="البروفايل">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9} className="w-6 h-6">
+      {/* الزر — في يسار الهيدر، لونه أزرق ليلي أو ذهبي نهاري */}
+      <button onClick={() => setOpen(true)} aria-label="البروفايل"
+        className="w-9 h-9 rounded-xl flex items-center justify-center transition"
+        style={{ background: "color-mix(in srgb, var(--accent) 14%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
+        <svg viewBox="0 0 24 24" fill="currentColor" strokeWidth={0} className="w-5 h-5">
           <circle cx="12" cy="8" r="3.6" />
-          <path strokeLinecap="round" d="M4.5 20c1.6-3.4 4.4-5 7.5-5s5.9 1.6 7.5 5" />
+          <path d="M4.5 20c1.6-3.4 4.4-5 7.5-5s5.9 1.6 7.5 5Z" />
         </svg>
       </button>
 

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { TRACKS, TRACK_GROUPS, type TrackId } from "@/lib/tracks";
-import { saveUser, saveExamDate, saveResults } from "@/lib/storage";
+import { saveUser, saveExamDate, saveResults, saveTrackExamDates } from "@/lib/storage";
 import { registerUser } from "@/lib/firestore";
 import { currentUser, pushBackup } from "@/lib/cloud";
 import Dome from "@/components/Dome";
@@ -32,7 +32,8 @@ export default function OnboardingPage() {
   const [phone, setPhone]     = useState("");
 
   const [activeTracks, setActiveTracks] = useState<TrackId[]>([]);
-  const [examDate, setExamDate]         = useState("");
+  /* تواريخ اختبار لكل مسار على حدة */
+  const [trackDates, setTrackDates] = useState<Record<string, string>>({});
   /* نتائج اختبارات سابقة (اختياري) — تُحفظ في «نتائجي» */
   const [prevExams, setPrevExams] = useState<{ exam: string; score: string }[]>([]);
 
@@ -63,7 +64,13 @@ export default function OnboardingPage() {
       studyHours: studyHours ? parseInt(studyHours) : undefined,
       ...extras,
     });
-    if (examDate) saveExamDate(examDate);
+    /* حفظ تاريخ المسار الأساسي (للتوافق مع الكود الحالي) */
+    const primaryDate = trackDates[primaryTrack];
+    if (primaryDate) saveExamDate(primaryDate);
+    /* حفظ تواريخ كل المسارات */
+    const allDates: Record<string, string> = {};
+    for (const id of activeTracks) { if (trackDates[id]) allDates[id] = trackDates[id]; }
+    if (Object.keys(allDates).length) saveTrackExamDates(allDates);
     const validPrev = prevExams.filter((p) => p.exam.trim() || p.score.trim());
     if (validPrev.length) {
       saveResults(validPrev.map((p, i) => ({
@@ -332,23 +339,41 @@ export default function OnboardingPage() {
           </div>
         </div>
 
-        <div className="mb-7">
-          <div className="flex items-center gap-2 mb-3">
-            <p className="label">متى اختبارك؟</p>
+        {/* تواريخ الاختبار لكل مسار */}
+        <div className="mb-7 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <p className="label">متى اختباراتك؟</p>
             <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
               style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
           </div>
-          <input type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)}
-            min={new Date().toISOString().slice(0, 10)}
-            className="w-full rounded-2xl px-5 py-4 text-base text-[var(--text)] outline-none min-h-[56px]"
-            style={{ background: "var(--surface)", border: "2px solid var(--border)", colorScheme: "dark" }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
-          {examDate && (
-            <p className="text-sm mt-2 font-semibold" style={{ color: "var(--gold)" }}>
-              {Math.max(0, Math.round((new Date(examDate + "T00:00:00").getTime() - new Date(new Date().toISOString().slice(0,10) + "T00:00:00").getTime()) / 86400000))} يوم على الاختبار
-            </p>
-          )}
+          {activeTracks.map((id) => {
+            const t = TRACKS.find((tr) => tr.id === id)!;
+            const d = trackDates[id] ?? "";
+            const today = new Date().toISOString().slice(0, 10);
+            const days = d ? Math.max(0, Math.round((new Date(d + "T00:00:00").getTime() - new Date(today + "T00:00:00").getTime()) / 86400000)) : null;
+            return (
+              <div key={id} className="rounded-2xl px-4 py-3"
+                style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="flex gap-1">
+                    {t.subjects.map((s) => <span key={s.name} className="w-2 h-2 rounded-full" style={{ background: s.color }} />)}
+                  </div>
+                  <p className="font-bold text-[14px]" style={{ color: "var(--accent-light)" }}>📅 موعد اختبار {t.title}</p>
+                </div>
+                <input type="date" value={d} onChange={(e) => setTrackDates((p) => ({ ...p, [id]: e.target.value }))}
+                  min={today}
+                  className="w-full rounded-xl px-4 py-3 text-base text-[var(--text)] outline-none"
+                  style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", colorScheme: "dark" }}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
+                {days !== null && (
+                  <p className="text-sm mt-1.5 font-semibold" style={{ color: "var(--gold)" }}>
+                    {days} يوم على الاختبار
+                  </p>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         <div className="mb-7">

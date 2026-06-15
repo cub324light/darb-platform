@@ -1,7 +1,58 @@
 "use client";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, useRef, type ReactNode } from "react";
 import ProfileButton, { ThemeToggle } from "@/components/Profile";
 import SettingsButton from "@/components/SettingsPanel";
+
+/* ── ساعة صغيرة مع إعدادات 12/24 ── */
+function ClockWidget() {
+  const [time, setTime] = useState("");
+  const [fmt, setFmt] = useState<"12" | "24">(() =>
+    typeof window !== "undefined" ? (localStorage.getItem("darb_clock_fmt") as "12" | "24" ?? "12") : "12"
+  );
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const tick = () => {
+      const d = new Date();
+      setTime(d.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", hour12: fmt === "12" }));
+    };
+    tick();
+    const t = setInterval(tick, 10000);
+    return () => clearInterval(t);
+  }, [fmt]);
+
+  useEffect(() => {
+    const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
+
+  const setFormat = (f: "12" | "24") => { setFmt(f); localStorage.setItem("darb_clock_fmt", f); setOpen(false); };
+
+  return (
+    <div ref={ref} className="relative">
+      <button onClick={() => setOpen((v) => !v)}
+        className="px-3 py-1.5 rounded-xl text-[13px] font-bold tabular-nums"
+        style={{ background: "color-mix(in srgb, var(--text-muted) 10%, transparent)", color: "var(--text-dim)", border: "1px solid var(--border)" }}>
+        {time}
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1.5 z-[99] rounded-xl shadow-xl flex flex-col overflow-hidden"
+          style={{ background: "var(--surface)", border: "1.5px solid var(--border)", minWidth: "120px" }}>
+          {(["12", "24"] as const).map((f) => (
+            <button key={f} onClick={() => setFormat(f)}
+              className="px-4 py-2.5 text-[13px] font-bold text-right transition hover:brightness-110"
+              style={{ background: fmt === f ? "color-mix(in srgb, var(--accent) 12%, transparent)" : "transparent",
+                       color: fmt === f ? "var(--accent-light)" : "var(--text-dim)" }}>
+              {f === "12" ? "12 ساعة (ص/م)" : "24 ساعة"}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /* ─── القبة: سماء محتواة داخل الهيدر — توقيع درب البصري ───
    المحتوى فوقها دائماً (z-2) والزينة خلفه (z-1) داخل حدود القبة فقط،
@@ -94,7 +145,8 @@ export default function Dome({
       {/* ── المحتوى ── */}
       <div className="dome-content" style={{ padding: compact ? "calc(18px + env(safe-area-inset-top)) 18px 16px" : "calc(26px + env(safe-area-inset-top)) 18px 22px" }}>
         {!hideControls && (
-          <div className="flex justify-end gap-2 mb-3">
+          <div className="flex justify-end items-center gap-2 mb-3">
+            <ClockWidget />
             <ThemeToggle className="" />
             <ProfileButton />
             <SettingsButton />

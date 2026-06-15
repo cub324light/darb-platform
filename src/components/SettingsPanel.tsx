@@ -146,12 +146,13 @@ export default function SettingsButton() {
           </div>
           <button
             onClick={togglePrivacy}
-            className="relative w-12 h-6 rounded-full transition-colors flex-shrink-0"
-            style={{ background: isPrivate ? "var(--accent)" : "var(--border)" }}
+            dir="ltr"
+            className="relative w-12 h-6 rounded-full transition-colors duration-200 flex-shrink-0"
+            style={{ background: isPrivate ? "#EF4444" : "var(--border)" }}
           >
             <span
-              className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform"
-              style={{ transform: isPrivate ? "translateX(-1.5rem)" : "translateX(-0.125rem)" }}
+              className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
+              style={{ transform: isPrivate ? "translateX(1.5rem)" : "translateX(0.125rem)" }}
             />
           </button>
         </div>
@@ -287,6 +288,15 @@ export default function SettingsButton() {
             التخصيص من الصفحة الرئيسية مباشرة — اضغط «تخصيص»، سحب الأقسام وإعادة ترتيبها وإخفاءها.
           </p>
         </div>
+
+        {/* لوحة الإدارة — للمشرف فقط */}
+        {authUser?.email === "cublight231@gmail.com" && (
+          <a href="/admin"
+            className="w-full py-3.5 rounded-2xl text-sm font-bold transition flex items-center justify-center gap-2 mb-3"
+            style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
+            🛡 لوحة الإدارة
+          </a>
+        )}
 
         <button onClick={reset} className="w-full py-3.5 rounded-2xl text-sm font-bold transition"
           style={{ background: "transparent", border: "1px solid rgba(239,68,68,0.3)", color: "var(--danger)" }}>

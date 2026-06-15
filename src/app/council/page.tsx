@@ -3,7 +3,6 @@ import { useState, useEffect, useRef } from "react";
 import {
   collection, addDoc, onSnapshot,
   orderBy, query, limit, serverTimestamp,
-  type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { onAuth } from "@/lib/cloud";
@@ -52,6 +51,16 @@ export default function CouncilPage() {
 
   useEffect(() => onAuth((u) => setAuthUid(u?.uid ?? null)), []);
 
+  /* ─ فتح «عام» تلقائياً عند فتح الصفحة (مرة واحدة) ─ */
+  useEffect(() => {
+    const general = CHAT_GROUPS.find((g) => g.id === "general");
+    if (general) {
+      setActiveGroup(general);
+      setActiveChannel("general");
+      setIsFullscreen(true);
+    }
+  }, []);
+
   /* ─ حالة المجموعة النشطة ─ */
   const [activeGroup, setActiveGroup] = useState<ChatGroup | null>(null);
   const [activeChannel, setActiveChannel] = useState<"general" | "official">("general");
@@ -72,88 +81,70 @@ export default function CouncilPage() {
   /* ─ آخر رسالة لكل مجموعة (للمعاينة) — من الذاكرة المحلية ─ */
   const [lastMessages, setLastMessages] = useState<Record<string, { text: string; time: number } | null>>({});
 
-  /* ─ مرجع إلغاء الاشتراك في onSnapshot ─ */
-  const unsubscribeRef = useRef<Unsubscribe | null>(null);
-
   /* ─ التمرير للأسفل ─ */
   const messagesEndRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, officialMessages]);
 
-  /* ─ فتح مجموعة ─ */
-  const openGroup = (group: ChatGroup) => {
-    // ألغِ الاشتراك السابق إن وُجد
-    unsubscribeRef.current?.();
-    unsubscribeRef.current = null;
-
-    setActiveGroup(group);
-    setActiveChannel("general");
-    setIsFullscreen(true);
-    setMsgText("");
+  /* ─ اشتراك Firestore + إعلانات عند تغيّر المجموعة النشطة ─ */
+  useEffect(() => {
+    if (!activeGroup) return;
     setMessages([]);
+    setOfficialMessages([]);
     setMsgLoading(true);
 
-    // اشترك في رسائل القناة العامة من Firestore
     const q = query(
-      collection(db, "chats", group.id, "messages"),
+      collection(db, "chats", activeGroup.id, "messages"),
       orderBy("createdAt", "asc"),
       limit(100)
     );
-    unsubscribeRef.current = onSnapshot(q, (snap) => {
+    const unsub = onSnapshot(q, (snap) => {
       const msgs: ChatMessage[] = snap.docs.map((d) => {
         const data = d.data();
         const ts = data.createdAt;
         const createdAt = ts?.toMillis ? ts.toMillis() : (ts?.seconds ? ts.seconds * 1000 : Date.now());
-        return {
-          id: d.id,
-          uid: data.uid ?? "",
-          name: data.name ?? "طالب",
-          content: data.content ?? "",
-          createdAt,
-        };
+        return { id: d.id, uid: data.uid ?? "", name: data.name ?? "طالب", content: data.content ?? "", createdAt };
       });
       setMessages(msgs);
       setMsgLoading(false);
-      // حدّث آخر رسالة في القائمة
       if (msgs.length > 0) {
         const last = msgs[msgs.length - 1];
-        setLastMessages((prev) => ({
-          ...prev,
-          [group.id]: { text: last.content, time: last.createdAt },
-        }));
+        setLastMessages((prev) => ({ ...prev, [activeGroup.id]: { text: last.content, time: last.createdAt } }));
       }
     }, () => setMsgLoading(false));
 
-    // جلب الإعلانات الرسمية الخاصة بهذا القروب (+ إعلانات «الكل»)
     fetch("/api/social", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode: "getAnnouncements", groupId: group.id }),
+      body: JSON.stringify({ mode: "getAnnouncements", groupId: activeGroup.id }),
     })
       .then((r) => r.json())
       .then((d: { announcements?: { id: string; title: string; content: string; pinned?: boolean; createdAt?: { seconds: number } }[] }) => {
         if (d.announcements) {
-          setOfficialMessages(
-            d.announcements.map((a) => ({
-              id: a.id,
-              uid: "official",
-              name: "درب الرسمي",
-              content: `${a.title}\n${a.content}`,
-              createdAt: a.createdAt?.seconds ? a.createdAt.seconds * 1000 : Date.now(),
-              isOfficial: true,
-              pinned: a.pinned === true,
-            }))
-          );
+          setOfficialMessages(d.announcements.map((a) => ({
+            id: a.id, uid: "official", name: "درب الرسمي",
+            content: `${a.title}\n${a.content}`,
+            createdAt: a.createdAt?.seconds ? a.createdAt.seconds * 1000 : Date.now(),
+            isOfficial: true, pinned: a.pinned === true,
+          })));
         }
       })
       .catch(() => {});
+
+    return () => unsub();
+  }, [activeGroup]);
+
+  /* ─ فتح مجموعة ─ */
+  const openGroup = (group: ChatGroup) => {
+    setActiveGroup(group);
+    setActiveChannel("general");
+    setIsFullscreen(true);
+    setMsgText("");
   };
 
   /* ─ إغلاق المجموعة ─ */
   const closeGroup = () => {
-    unsubscribeRef.current?.();
-    unsubscribeRef.current = null;
     setActiveGroup(null);
     setIsFullscreen(false);
     setMessages([]);
@@ -174,14 +165,11 @@ export default function CouncilPage() {
         createdAt: serverTimestamp(),
       });
     } catch {
-      setMsgText(text); // أعِد النص عند الفشل
+      setMsgText(text);
     } finally {
       setSending(false);
     }
   };
-
-  /* ─ تنظيف عند مغادرة الصفحة ─ */
-  useEffect(() => () => { unsubscribeRef.current?.(); }, []);
 
   /* ─ الرسائل الحالية حسب القناة ─ */
   const displayedMessages = activeChannel === "official" ? officialMessages : messages;
