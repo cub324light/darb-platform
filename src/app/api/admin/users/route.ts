@@ -100,6 +100,15 @@ export async function POST(req: NextRequest) {
       const data = d.data();
       const uid  = d.id;
 
+      /* نسخة المستخدم الكاملة من backup (للحقول غير المرفوعة كأعمدة عليا) */
+      let prof: Record<string, unknown> = {};
+      try {
+        const raw = data.backup?.darb_user;
+        if (typeof raw === "string") prof = JSON.parse(raw) as Record<string, unknown>;
+      } catch { /* تجاهل backup تالف */ }
+      const pick = (key: string) =>
+        (data[key] ?? prof[key] ?? "") as string;
+
       /* الإيميل: من Firestore أولاً (المستخدمون الجدد)، ثم من Auth Map (لو الـ id هو Auth UID) */
       const email = data.email || authEmailMap.get(uid) || "";
 
@@ -111,19 +120,23 @@ export async function POST(req: NextRequest) {
 
       return {
         id:              uid,
-        name:            data.name      ?? "",
+        name:            data.name ?? prof.name ?? "",
         email,
-        track:           data.track     ?? "",
+        track:           data.track ?? prof.track ?? "",
         streak:          data.streak    ?? 0,
         focusMins:       data.focusMins ?? 0,
         sessions:        data.sessions  ?? 0,
         silver:          data.silver    ?? 0,
         taseesProgress:  data.taseesProgress  ?? 0,
         tadreebProgress: data.tadreebProgress ?? 0,
-        school:          data.school ?? "",
-        region:          data.region ?? "",
-        city:            data.city   ?? "",
-        phone:           data.phone  ?? "",
+        school:          pick("school"),
+        region:          pick("region"),
+        city:            pick("city"),
+        phone:           pick("phone"),
+        age:             (data.age ?? prof.age ?? "") as string | number,
+        studyLevel:      pick("studyLevel"),
+        grade:           pick("grade"),
+        studyHours:      (data.studyHours ?? prof.studyHours ?? "") as string | number,
         durationDays,
         joinedAt:  joinedMs  ? { seconds: data.joinedAt.seconds  } : null,
         lastSeen:  lastSeenMs ? { seconds: data.lastSeen.seconds } : null,

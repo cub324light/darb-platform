@@ -16,6 +16,10 @@ interface AdminUser {
   region: string;
   city: string;
   phone: string;
+  age: string | number;
+  studyLevel: string;
+  grade: string;
+  studyHours: string | number;
   durationDays: number | null;
   joinedAt: { seconds: number } | null;
   lastSeen: { seconds: number } | null;
@@ -119,6 +123,10 @@ export default function AdminPage() {
       { key: "region", label: "المنطقة" },
       { key: "city", label: "المدينة" },
       { key: "school", label: "المدرسة" },
+      { key: "age", label: "العمر" },
+      { key: "studyLevel", label: "المرحلة" },
+      { key: "grade", label: "الصف" },
+      { key: "studyHours", label: "ساعات المذاكرة" },
       { key: "streak", label: "ستريك" },
       { key: "focusMins", label: "دقائق التركيز" },
       { key: "sessions", label: "الجلسات" },
@@ -371,6 +379,10 @@ export default function AdminPage() {
                 ["المنطقة", detail.region || "—"],
                 ["المدينة", detail.city || "—"],
                 ["المدرسة", detail.school || "—"],
+                ["العمر", detail.age ? String(detail.age) : "—"],
+                ["المرحلة", detail.studyLevel || "—"],
+                ["الصف", detail.grade || "—"],
+                ["ساعات المذاكرة باليوم", detail.studyHours ? String(detail.studyHours) : "—"],
                 ["ستريك", detail.streak ? `${detail.streak} يوم` : "—"],
                 ["دقائق التركيز", fmtHours(detail.focusMins)],
                 ["الجلسات", String(detail.sessions || 0)],
