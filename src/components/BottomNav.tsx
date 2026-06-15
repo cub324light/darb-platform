@@ -3,17 +3,18 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+function calcDue(): number {
+  if (typeof window === "undefined") return 0;
+  try {
+    const cards = JSON.parse(localStorage.getItem("darb_cards") ?? "[]");
+    return Array.isArray(cards) ? cards.filter((c: { dueDate: number }) => c.dueDate <= Date.now()).length : 0;
+  } catch { return 0; }
+}
+
 function useDueCards() {
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState(calcDue);
   useEffect(() => {
-    const calc = () => {
-      try {
-        const cards = JSON.parse(localStorage.getItem("darb_cards") ?? "[]");
-        setCount(Array.isArray(cards) ? cards.filter((c: { dueDate: number }) => c.dueDate <= Date.now()).length : 0);
-      } catch {}
-    };
-    calc();
-    const t = setInterval(calc, 60000);
+    const t = setInterval(() => setCount(calcDue()), 60000);
     return () => clearInterval(t);
   }, []);
   return count;
