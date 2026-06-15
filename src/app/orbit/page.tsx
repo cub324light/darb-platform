@@ -71,7 +71,7 @@ export default function OrbitPage() {
     const s = typeof window !== "undefined" ? loadStats() : null;
     return s?.todayFocusMins ?? 0;
   });
-  const [subjects, setSubjects] = useState<{ name: string; color: string }[]>(() => {
+  const [subjects] = useState<{ name: string; color: string }[]>(() => {
     if (typeof window === "undefined") return [];
     const u = loadUser();
     const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];

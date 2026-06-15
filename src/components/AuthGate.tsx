@@ -47,10 +47,10 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     if (user && !isInitialSyncDone()) {
       initialSync().finally(() => { if (!cancelled) setSynced(true); });
-    } else if (user && isInitialSyncDone()) {
-      setSynced(true);
     } else if (!user) {
-      setSynced(false);
+      // defer to avoid synchronous setState in effect body
+      const id = setTimeout(() => { if (!cancelled) setSynced(false); }, 0);
+      return () => { cancelled = true; clearTimeout(id); };
     }
     return () => { cancelled = true; };
   }, [user]);

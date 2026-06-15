@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import type { ScheduleEvent } from "@/lib/storage";
 
@@ -112,7 +112,6 @@ interface Props {
 }
 
 export default function DayScheduler({ date, events, subjects, examDate, onExamDateChange, onEventsChange, onClose, prefillText, initialTab }: Props) {
-  const [mounted, setMounted] = useState(false);
   const [tab, setTab] = useState<"manual" | "ai">(initialTab ?? "manual");
 
   // Manual
@@ -132,8 +131,6 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
   const [showEdit, setShowEdit]   = useState(false);
   const [applyFeedback, setApplyFeedback] = useState("");
   const [scheduleStrategy, setScheduleStrategy] = useState<"mixed" | "per-track" | "time-blocks">("mixed");
-
-  useEffect(() => { setMounted(true); }, []);
 
   const dayEvents  = getEventsForDate(date, events);
   const dateObj    = new Date(date + "T12:00:00");
@@ -239,7 +236,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
     return { hours, weekly: Math.round(hours * 7 * 10) / 10, monthly: Math.round(hours * 30 * 10) / 10 };
   }, [aiResult, date, subjects]);
 
-  if (!mounted) return null;
+  if (typeof document === "undefined") return null;
 
   const modal = createPortal(
     <div className="fixed inset-0 z-[9999] flex items-end" onClick={onClose}>

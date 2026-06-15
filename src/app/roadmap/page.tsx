@@ -135,9 +135,7 @@ function NextStepOverlay({
   onResetTadreeb: () => void;
   onClose: () => void;
 }) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
-  if (!mounted) return null;
+  if (typeof document === "undefined") return null;
 
   const gradeDisplay = grade !== undefined
     ? `درجتك كانت ${grade}`

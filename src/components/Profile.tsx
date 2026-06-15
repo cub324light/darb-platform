@@ -38,7 +38,6 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
 
 export default function ProfileButton() {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<DarbUser | null>(null);
   const [editName, setEditName] = useState("");
   const [editing, setEditing] = useState(false);
@@ -60,8 +59,6 @@ export default function ProfileButton() {
   const [authBusy, setAuthBusy] = useState(false);
   const [authErr, setAuthErr] = useState("");
   const [syncMsg, setSyncMsg] = useState("");
-
-  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => onAuth(setAuthUser), []);
 
@@ -111,18 +108,21 @@ export default function ProfileButton() {
 
   useEffect(() => {
     if (!open) return;
-    const u = loadUser();
-    setUser(u);
-    setEditName(u?.name ?? "");
-    const s = loadStats();
-    setStats({
-      streak: computeStreak(s),
-      silver: s.silver,
-      hours: Math.floor(s.totalFocusMins / 60),
-      sessions: s.sessionsCount,
-    });
-    setActiveTracksState(u?.activeTracks ?? (u?.track ? [u.track] : []));
-    setResults(loadResults());
+    const id = setTimeout(() => {
+      const u = loadUser();
+      setUser(u);
+      setEditName(u?.name ?? "");
+      const s = loadStats();
+      setStats({
+        streak: computeStreak(s),
+        silver: s.silver,
+        hours: Math.floor(s.totalFocusMins / 60),
+        sessions: s.sessionsCount,
+      });
+      setActiveTracksState(u?.activeTracks ?? (u?.track ? [u.track] : []));
+      setResults(loadResults());
+    }, 0);
+    return () => clearTimeout(id);
   }, [open]);
 
   const addResult = () => {
@@ -176,7 +176,7 @@ export default function ProfileButton() {
     window.location.href = "/onboarding";
   };
 
-  const modal = open && mounted && createPortal(
+  const modal = open && typeof document !== "undefined" && createPortal(
     <div className="fixed inset-0 z-[9999] flex items-end justify-center" onClick={() => setOpen(false)}>
           <div className="absolute inset-0 bg-black/55 fade-in" />
           <div

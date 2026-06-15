@@ -70,12 +70,9 @@ export default function Calendar({
 }) {
   const [mode, setMode] = useState<Mode>("gregorian");
   const [viewDate, setViewDate] = useState(new Date());
-  const [mounted, setMounted] = useState(false);
   const [peek, setPeek] = useState<PeekState | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const todayKey = dk(new Date());
-
-  useEffect(() => { setMounted(true); }, []);
 
   /* تموضع المعاينة من زر اليوم — يشتغل للماوس واللمس */
   const peekFromEl = useCallback((btn: HTMLElement) => {
@@ -213,7 +210,7 @@ export default function Calendar({
   };
 
   /* بطاقة المعاينة العائمة */
-  const peekCard = peek && mounted ? createPortal(
+  const peekCard = peek && typeof document !== "undefined" ? createPortal(
     (() => {
       const items = getDayInfo?.(peek.key) ?? [];
       const isExam = peek.key === examDate;

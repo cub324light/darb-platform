@@ -57,33 +57,107 @@ function fmtHour(h: number): string {
   return `${h - 12} م`;
 }
 
+function computeGreeting(h: number): string {
+  if (h < 5) return "وقت الذئاب";
+  if (h < 12) return "صباح التفوق";
+  if (h < 17) return "وقت التركيز";
+  if (h < 21) return "مساء الإنجاز";
+  return "الليل للنخبة";
+}
+
 export default function DashboardPage() {
-  const [user, setUser] = useState<DarbUser | null>(null);
-  const [streak, setStreak] = useState(0);
-  const [silver, setSilver] = useState(0);
-  const [focusHours, setFocusHours] = useState(0);
-  const [sessions, setSessions] = useState(0);
-  const [errorsCount, setErrorsCount] = useState(0);
-  const [todayMins, setTodayMins] = useState(0);
-  const [time, setTime] = useState<Date | null>(null);
-  const [greeting, setGreeting] = useState("");
-  const [todayEvents, setTodayEvents] = useState<ScheduleEvent[]>([]);
-  const [examDays, setExamDays] = useState<number | null>(null);
-  const [dueCards, setDueCards] = useState(0);
-  const [week, setWeek] = useState<{ label: string; mins: number; isToday: boolean }[]>([]);
-  const [suggestion, setSuggestion] = useState<{ text: string; sub: string; href: string; color: string } | null>(null);
+  const [user] = useState<DarbUser | null>(() =>
+    typeof window !== "undefined" ? loadUser() : null
+  );
+  const [streak] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    return computeStreak(loadStats());
+  });
+  const [silver] = useState(() =>
+    typeof window !== "undefined" ? loadStats().silver : 0
+  );
+  const [focusHours] = useState(() =>
+    typeof window !== "undefined" ? Math.floor(loadStats().totalFocusMins / 60) : 0
+  );
+  const [sessions] = useState(() =>
+    typeof window !== "undefined" ? loadStats().sessionsCount : 0
+  );
+  const [todayMins] = useState(() =>
+    typeof window !== "undefined" ? loadStats().todayFocusMins : 0
+  );
+  const [week] = useState(() =>
+    typeof window !== "undefined" ? last7Days(loadStats().dayMins) : []
+  );
+  const [errorsCount] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    try {
+      const v = JSON.parse(localStorage.getItem("darb_vault") ?? "[]");
+      return Array.isArray(v) ? v.length : 0;
+    } catch { return 0; }
+  });
+  const [dueCards] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    try {
+      const c = JSON.parse(localStorage.getItem("darb_cards") ?? "[]");
+      const now = Date.now();
+      return Array.isArray(c) ? c.filter((x: { dueDate: number }) => x.dueDate <= now).length : 0;
+    } catch { return 0; }
+  });
+  const [allEvents, setAllEvents] = useState<ScheduleEvent[]>(() =>
+    typeof window !== "undefined" ? loadEvents() : []
+  );
+  const [todayEvents, setTodayEvents] = useState<ScheduleEvent[]>(() => {
+    if (typeof window === "undefined") return [];
+    const today = new Date().toISOString().slice(0, 10);
+    return getEventsForDate(today, loadEvents());
+  });
+  const [examDate, setExamDate] = useState<string | null>(() =>
+    typeof window !== "undefined" ? loadExamDate() : null
+  );
+  const [examDays] = useState<number | null>(() => {
+    if (typeof window === "undefined") return null;
+    const d = loadExamDate();
+    if (!d) return null;
+    const today = new Date().toISOString().slice(0, 10);
+    return Math.round((new Date(d + "T00:00:00").getTime() - new Date(today + "T00:00:00").getTime()) / 86400000);
+  });
+  const [suggestion] = useState<{ text: string; sub: string; href: string; color: string } | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const now = Date.now();
+      const v = JSON.parse(localStorage.getItem("darb_vault") ?? "[]");
+      const c = JSON.parse(localStorage.getItem("darb_cards") ?? "[]");
+      const vaultArr: { reviewCount?: number }[] = Array.isArray(v) ? v : [];
+      const cardsArr: { dueDate: number }[] = Array.isArray(c) ? c : [];
+      const due = cardsArr.filter((x) => x.dueDate <= now).length;
+      const unreviewed = vaultArr.filter((e) => e.reviewCount === 0).length;
+      const s = loadStats();
+      if (due > 0) return { text: `${due} بطاقة مراجعة مستحقة`, sub: "راجعها الحين قبل ما تنسى", href: "/review", color: "var(--success)" };
+      if (unreviewed > 0) return { text: `${unreviewed} خطأ لم تراجعه بعد`, sub: "افتح الخزنة وراجعها", href: "/vault", color: "var(--accent)" };
+      if (s.todayFocusMins === 0) return { text: "ما بدأت اليوم بعد", sub: "جلسة أوربت تكسر الصفر", href: "/orbit", color: "var(--accent)" };
+    } catch {}
+    return null;
+  });
+  const [trackExamDates, setTrackExamDates] = useState<Record<string, string>>(() =>
+    typeof window !== "undefined" ? loadTrackExamDates() : {}
+  );
+  const [greeting] = useState(() =>
+    typeof window !== "undefined" ? computeGreeting(new Date().getHours()) : ""
+  );
+  const [time, setTime] = useState<Date | null>(() =>
+    typeof window !== "undefined" ? new Date() : null
+  );
+
   const [schedOpen, setSchedOpen] = useState(false);
   const [schedTab, setSchedTab] = useState<"manual" | "ai">("manual");
   const [schedPrefill, setSchedPrefill] = useState("");
   const [calDate, setCalDate] = useState<string | null>(null);
-  const [allEvents, setAllEvents] = useState<ScheduleEvent[]>([]);
-  const [examDate, setExamDate] = useState<string | null>(null);
-  const [trackExamDates, setTrackExamDates] = useState<Record<string, string>>({});
   const [trackFilter, setTrackFilter] = useState<TrackId | "all">("all");
-  const [mounted, setMounted] = useState(false);
 
   /* ── تخصيص الصفحة: ترتيب وإظهار الأقسام ── */
-  const [layout, setLayout] = useState<DashItem[]>([]);
+  const [layout, setLayout] = useState<DashItem[]>(() =>
+    typeof window !== "undefined" ? loadDashConfig().layout : []
+  );
   const [editMode, setEditMode] = useState(false);
   const [dragId, setDragId] = useState<DashSectionId | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -91,83 +165,25 @@ export default function DashboardPage() {
   const lastY = useRef(0);
   const autoScroll = useRef<number | null>(null);
 
+  /* ساعة — تحديث كل ٣٠ ثانية */
   useEffect(() => {
-    setUser(loadUser());
-    const s = loadStats();
-    setStreak(computeStreak(s));
-    setSilver(s.silver);
-    setFocusHours(Math.floor(s.totalFocusMins / 60));
-    setSessions(s.sessionsCount);
-    setTodayMins(s.todayFocusMins);
-    setWeek(last7Days(s.dayMins));
-
-    /* اقرأ الخزنة والبطاقات مرة واحدة — يُستخدم للعداد والاقتراح الذكي معاً */
-    let vaultArr: { reviewCount?: number }[] = [];
-    let cardsArr: { dueDate: number }[] = [];
-    const now = Date.now();
-    try {
-      const v = JSON.parse(localStorage.getItem("darb_vault") ?? "[]");
-      if (Array.isArray(v)) vaultArr = v;
-      const c = JSON.parse(localStorage.getItem("darb_cards") ?? "[]");
-      if (Array.isArray(c)) cardsArr = c;
-    } catch {}
-    setErrorsCount(vaultArr.length);
-    const due = cardsArr.filter((c) => c.dueDate <= now).length;
-    setDueCards(due);
-
-    // load today's events
-    const today = new Date().toISOString().slice(0, 10);
-    const eventsData = loadEvents();
-    setAllEvents(eventsData);
-    setTodayEvents(getEventsForDate(today, eventsData));
-
-    // عداد أيام الاختبار
-    const examDateVal = loadExamDate();
-    setExamDate(examDateVal);
-    if (examDateVal) {
-      const diff = Math.round(
-        (new Date(examDateVal + "T00:00:00").getTime() - new Date(today + "T00:00:00").getTime()) / 86400000
-      );
-      setExamDays(diff);
-    }
-
-    setMounted(true);
-
-    // اقتراح ذكي — يعتمد على البيانات المقروءة أعلاه
-    const unreviewedVault = vaultArr.filter((e) => e.reviewCount === 0).length;
-    if (due > 0) {
-      setSuggestion({ text: `${due} بطاقة مراجعة مستحقة`, sub: "راجعها الحين قبل ما تنسى", href: "/review", color: "var(--success)" });
-    } else if (unreviewedVault > 0) {
-      setSuggestion({ text: `${unreviewedVault} خطأ لم تراجعه بعد`, sub: "افتح الخزنة وراجعها", href: "/vault", color: "var(--accent)" });
-    } else if (s.todayFocusMins === 0) {
-      setSuggestion({ text: "ما بدأت اليوم بعد", sub: "جلسة أوربت تكسر الصفر", href: "/orbit", color: "var(--accent)" });
-    }
-
-    setTrackExamDates(loadTrackExamDates());
-    setLayout(loadDashConfig().layout);
-
-    // مزامنة مع Firestore
-    const u = loadUser();
-    if (u) {
-      syncUser({
-        name: u.name,
-        track: u.track,
-        streak: computeStreak(s),
-        focusMins: s.totalFocusMins,
-        sessions: s.sessionsCount,
-        silver: s.silver,
-      });
-    }
-
-    const h = new Date().getHours();
-    if (h < 5) setGreeting("وقت الذئاب");
-    else if (h < 12) setGreeting("صباح التفوق");
-    else if (h < 17) setGreeting("وقت التركيز");
-    else if (h < 21) setGreeting("مساء الإنجاز");
-    else setGreeting("الليل للنخبة");
-    setTime(new Date());
     const t = setInterval(() => setTime(new Date()), 30000);
     return () => clearInterval(t);
+  }, []);
+
+  /* مزامنة مع Firestore عند التحميل */
+  useEffect(() => {
+    const u = loadUser();
+    if (!u) return;
+    const s = loadStats();
+    syncUser({
+      name: u.name,
+      track: u.track,
+      streak: computeStreak(s),
+      focusMins: s.totalFocusMins,
+      sessions: s.sessionsCount,
+      silver: s.silver,
+    });
   }, []);
 
   const track = getTrack(user?.track);
@@ -874,7 +890,7 @@ export default function DashboardPage() {
       <BottomNav />
 
       {/* DayScheduler Modal — اليوم (من الأزرار) */}
-      {schedOpen && mounted && (
+      {schedOpen && (
         <DayScheduler
           date={new Date().toISOString().slice(0, 10)}
           events={allEvents}
@@ -889,7 +905,7 @@ export default function DashboardPage() {
       )}
 
       {/* DayScheduler Modal — من التقويم */}
-      {calDate && mounted && (
+      {calDate && (
         <DayScheduler
           date={calDate}
           events={allEvents}

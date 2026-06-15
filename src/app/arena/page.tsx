@@ -118,17 +118,26 @@ export default function ArenaPage() {
   /* العداد الحقيقي: ينقص كل ثانية — الصفر = ضاع السؤال */
   useEffect(() => {
     if (gameState !== "playing" || answered) return;
+    const goNext = () => {
+      if (currentQ + 1 >= questions.length) {
+        setGameState("result");
+      } else {
+        setCurrentQ((p) => p + 1);
+        setAnswered(false);
+        setTimeLeft(15);
+      }
+    };
     const t = setTimeout(() => {
       if (timeLeft <= 1) {
         setTimeLeft(0);
         setAnswered(true);
-        setTimeout(nextQuestion, 1400);
+        setTimeout(goNext, 1400);
       } else {
         setTimeLeft((s) => s - 1);
       }
     }, 1000);
     return () => clearTimeout(t);
-  }, [gameState, answered, timeLeft]);
+  }, [gameState, answered, timeLeft, currentQ, questions.length]);
 
   /* المنافس يجاوب بنفسه: بعد 3-9 ثوان، يصيب 55% */
   useEffect(() => {

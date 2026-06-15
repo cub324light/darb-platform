@@ -11,13 +11,13 @@ const KEY_PREFIX = "darb_guide_";
 export default function PageGuide({ pageKey, steps }: { pageKey: string; steps: GuideStep[] }) {
   const [show, setShow] = useState(false);
   const [idx, setIdx] = useState(0);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    let id: ReturnType<typeof setTimeout>;
     try {
-      if (!localStorage.getItem(KEY_PREFIX + pageKey)) setShow(true);
+      if (!localStorage.getItem(KEY_PREFIX + pageKey)) id = setTimeout(() => setShow(true), 0);
     } catch {}
+    return () => clearTimeout(id);
   }, [pageKey]);
 
   const dismiss = () => {
@@ -30,7 +30,7 @@ export default function PageGuide({ pageKey, steps }: { pageKey: string; steps: 
     else setIdx((i) => i + 1);
   };
 
-  if (!show || !mounted || steps.length === 0) return null;
+  if (!show || typeof document === "undefined" || steps.length === 0) return null;
 
   const step = steps[idx];
   const last = idx === steps.length - 1;
