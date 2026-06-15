@@ -1,25 +1,26 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import {
+  collection, addDoc, onSnapshot,
+  orderBy, query, limit, serverTimestamp,
+  type Unsubscribe,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { onAuth } from "@/lib/cloud";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import FriendsPanel from "@/components/FriendsPanel";
-import { loadUser, loadList, saveList } from "@/lib/storage";
-import { subjectsForTracks, TRACKS, type TrackId } from "@/lib/tracks";
+import { loadUser } from "@/lib/storage";
+import type { TrackId } from "@/lib/tracks";
 
 /* ─── بيانات ─── */
-
 interface ChatMessage {
-  id: number;
-  user: string;
-  time: number;
-  content: string;
-  isOfficial?: boolean;
-}
-
-interface GroupChannel {
-  id: "general" | "official";
+  id: string;
+  uid: string;
   name: string;
-  icon: string;
+  content: string;
+  createdAt: number; // ms
+  isOfficial?: boolean;
 }
 
 interface ChatGroup {
@@ -31,26 +32,21 @@ interface ChatGroup {
 }
 
 const CHAT_GROUPS: ChatGroup[] = [
-  { id: "general",      name: "عام",         icon: "💬", description: "نقاش عام لجميع الطلاب" },
-  { id: "tahsili",      name: "تحصيلي",      icon: "📚", description: "طلاب مسار التحصيلي",          trackId: "تحصيلي" },
-  { id: "tahsili-early", name: "تحصيلي مبكر", icon: "🌱", description: "طلاب التحصيلي المبكر",        trackId: "تحصيلي مبكر" },
-  { id: "qudurat",      name: "قدرات",       icon: "💡", description: "طلاب مسار القدرات",            trackId: "قدرات" },
-  { id: "cpc",          name: "أرامكو CPC",  icon: "🏆", description: "Computer Programming Contest", trackId: "CPC" },
-  { id: "itc",          name: "ITC",         icon: "💻", description: "طلاب اختبار ITC",             trackId: "ITC" },
-  { id: "ielts",        name: "آيلتس",       icon: "🌍", description: "IELTS preparation group",      trackId: "ايلتس" },
-  { id: "step",         name: "ستيب",        icon: "📖", description: "STEP preparation group",       trackId: "ستيب" },
-  { id: "toefl",        name: "توفل",        icon: "🗽", description: "TOEFL preparation group",      trackId: "توفل" },
-  { id: "duolingo",     name: "دووليجو",     icon: "🦉", description: "Duolingo English Test",        trackId: "دوليقو" },
-];
-
-const CHANNELS: GroupChannel[] = [
-  { id: "general",  name: "عام",   icon: "💬" },
-  { id: "official", name: "رسمي",  icon: "📢" },
+  { id: "general",       name: "عام",          icon: "💬", description: "نقاش عام لجميع الطلاب" },
+  { id: "tahsili",       name: "تحصيلي",       icon: "📚", description: "طلاب مسار التحصيلي",          trackId: "تحصيلي" },
+  { id: "tahsili-early", name: "تحصيلي مبكر",  icon: "🌱", description: "طلاب التحصيلي المبكر",        trackId: "تحصيلي مبكر" },
+  { id: "qudurat",       name: "قدرات",        icon: "💡", description: "طلاب مسار القدرات",            trackId: "قدرات" },
+  { id: "cpc",           name: "أرامكو CPC",   icon: "🏆", description: "Computer Programming Contest", trackId: "CPC" },
+  { id: "itc",           name: "ITC",          icon: "💻", description: "طلاب اختبار ITC",              trackId: "ITC" },
+  { id: "ielts",         name: "آيلتس",        icon: "🌍", description: "IELTS preparation group",      trackId: "ايلتس" },
+  { id: "step",          name: "ستيب",         icon: "📖", description: "STEP preparation group",       trackId: "ستيب" },
+  { id: "toefl",         name: "توفل",         icon: "🗽", description: "TOEFL preparation group",      trackId: "توفل" },
+  { id: "duolingo",      name: "دووليجو",      icon: "🦉", description: "Duolingo English Test",        trackId: "دوليقو" },
 ];
 
 /* ─── أداة الوقت ─── */
-function timeAgo(ts: number): string {
-  const mins = Math.round((Date.now() - ts) / 60000);
+function timeAgo(ms: number): string {
+  const mins = Math.round((Date.now() - ms) / 60000);
   if (mins < 1) return "الآن";
   if (mins < 60) return `منذ ${mins} دقيقة`;
   const hours = Math.round(mins / 60);
@@ -60,63 +56,94 @@ function timeAgo(ts: number): string {
 
 /* ─── الصفحة ─── */
 export default function CouncilPage() {
-  /* ─ بيانات المستخدم ─ */
-  const [userName] = useState<string>(() => {
-    if (typeof window === "undefined") return "طالب";
-    const u = loadUser();
-    return u?.name ?? "طالب";
-  });
+  /* ─ حالة المستخدم الحالي ─ */
+  const [authUid, setAuthUid] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>("طالب");
+  const [userTrackIds, setUserTrackIds] = useState<string[]>([]);
 
-  const [userTrackIds] = useState<TrackId[]>(() => {
-    if (typeof window === "undefined") return [];
+  useEffect(() => {
     const u = loadUser();
+    setUserName(u?.name ?? "طالب");
     const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
-    return ids.length ? ids : [];
-  });
+    setUserTrackIds(ids as string[]);
+  }, []);
+
+  useEffect(() => onAuth((u) => setAuthUid(u?.uid ?? null)), []);
 
   /* ─ حالة المجموعة النشطة ─ */
   const [activeGroup, setActiveGroup] = useState<ChatGroup | null>(null);
   const [activeChannel, setActiveChannel] = useState<"general" | "official">("general");
   const [isFullscreen, setIsFullscreen] = useState(false);
-
-  /* ─ لوحة الأصدقاء ─ */
   const [showFriends, setShowFriends] = useState(false);
 
-  /* ─ حالة الرسائل ─ */
+  /* ─ رسائل عام (من Firestore) ─ */
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [msgLoading, setMsgLoading] = useState(false);
+
+  /* ─ رسائل رسمي (من API) ─ */
   const [officialMessages, setOfficialMessages] = useState<ChatMessage[]>([]);
+
+  /* ─ حقل الإدخال ─ */
   const [msgText, setMsgText] = useState("");
+  const [sending, setSending] = useState(false);
 
-  /* ─ التمرير ─ */
+  /* ─ آخر رسالة لكل مجموعة (للمعاينة) — من الذاكرة المحلية ─ */
+  const [lastMessages, setLastMessages] = useState<Record<string, { text: string; time: number } | null>>({});
+
+  /* ─ مرجع إلغاء الاشتراك في onSnapshot ─ */
+  const unsubscribeRef = useRef<Unsubscribe | null>(null);
+
+  /* ─ التمرير للأسفل ─ */
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  /* ─ آخر رسائل لكل مجموعة (للمعاينة) ─ */
-  const [lastMessages, setLastMessages] = useState<Record<string, ChatMessage | null>>({});
-
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const map: Record<string, ChatMessage | null> = {};
-    for (const g of CHAT_GROUPS) {
-      const msgs = loadList<ChatMessage>(`darb_chat_${g.id}_general`);
-      map[g.id] = msgs.length > 0 ? msgs[msgs.length - 1] : null;
-    }
-    setLastMessages(map);
-  }, []);
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, officialMessages]);
 
-  /* ─ تحميل الرسائل عند تغيير المجموعة أو القناة ─ */
-  useEffect(() => {
-    if (!activeGroup) return;
-    if (activeChannel === "general") {
-      const key = `darb_chat_${activeGroup.id}_general`;
-      setMessages(loadList<ChatMessage>(key));
-    } else {
-      setMessages(officialMessages);
-    }
-  }, [activeGroup, activeChannel, officialMessages]);
+  /* ─ فتح مجموعة ─ */
+  const openGroup = (group: ChatGroup) => {
+    // ألغِ الاشتراك السابق إن وُجد
+    unsubscribeRef.current?.();
+    unsubscribeRef.current = null;
 
-  /* ─ تحميل الإعلانات الرسمية عند فتح مجموعة ─ */
-  useEffect(() => {
-    if (!activeGroup) return;
+    setActiveGroup(group);
+    setActiveChannel("general");
+    setIsFullscreen(true);
+    setMsgText("");
+    setMessages([]);
+    setMsgLoading(true);
+
+    // اشترك في رسائل القناة العامة من Firestore
+    const q = query(
+      collection(db, "chats", group.id, "messages"),
+      orderBy("createdAt", "asc"),
+      limit(100)
+    );
+    unsubscribeRef.current = onSnapshot(q, (snap) => {
+      const msgs: ChatMessage[] = snap.docs.map((d) => {
+        const data = d.data();
+        const ts = data.createdAt;
+        const createdAt = ts?.toMillis ? ts.toMillis() : (ts?.seconds ? ts.seconds * 1000 : Date.now());
+        return {
+          id: d.id,
+          uid: data.uid ?? "",
+          name: data.name ?? "طالب",
+          content: data.content ?? "",
+          createdAt,
+        };
+      });
+      setMessages(msgs);
+      setMsgLoading(false);
+      // حدّث آخر رسالة في القائمة
+      if (msgs.length > 0) {
+        const last = msgs[msgs.length - 1];
+        setLastMessages((prev) => ({
+          ...prev,
+          [group.id]: { text: last.content, time: last.createdAt },
+        }));
+      }
+    }, () => setMsgLoading(false));
+
+    // جلب الإعلانات الرسمية
     fetch("/api/social", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -127,96 +154,88 @@ export default function CouncilPage() {
         if (d.announcements) {
           setOfficialMessages(
             d.announcements.map((a) => ({
-              id: parseInt(a.id) || a.createdAt?.seconds || Date.now(),
-              user: "درب الرسمي",
-              time: a.createdAt?.seconds ? a.createdAt.seconds * 1000 : Date.now(),
-              content: `**${a.title}**\n${a.content}`,
+              id: a.id,
+              uid: "official",
+              name: "درب الرسمي",
+              content: `${a.title}\n${a.content}`,
+              createdAt: a.createdAt?.seconds ? a.createdAt.seconds * 1000 : Date.now(),
               isOfficial: true,
             }))
           );
         }
       })
       .catch(() => {});
-  }, [activeGroup]);
-
-  /* ─ التمرير للأسفل عند وصول رسائل جديدة ─ */
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  /* ─ إرسال رسالة ─ */
-  const sendMessage = () => {
-    if (!msgText.trim() || !activeGroup) return;
-    const msg: ChatMessage = {
-      id: Date.now(),
-      user: userName,
-      time: Date.now(),
-      content: msgText.trim(),
-    };
-    const key = `darb_chat_${activeGroup.id}_general`;
-    const updated = [...messages, msg];
-    setMessages(updated);
-    saveList(key, updated);
-    setLastMessages((prev) => ({ ...prev, [activeGroup.id]: msg }));
-    setMsgText("");
-  };
-
-  /* ─ فتح مجموعة ─ */
-  const openGroup = (group: ChatGroup) => {
-    setActiveGroup(group);
-    setActiveChannel("general");
-    setIsFullscreen(true); // الدخول للمحادثة يفتح وضع التكبير تلقائياً
-    setMsgText("");
   };
 
   /* ─ إغلاق المجموعة ─ */
   const closeGroup = () => {
+    unsubscribeRef.current?.();
+    unsubscribeRef.current = null;
     setActiveGroup(null);
     setIsFullscreen(false);
+    setMessages([]);
+    setOfficialMessages([]);
   };
+
+  /* ─ إرسال رسالة ─ */
+  const sendMessage = async () => {
+    const text = msgText.trim();
+    if (!text || !activeGroup || !authUid || sending) return;
+    setSending(true);
+    setMsgText("");
+    try {
+      await addDoc(collection(db, "chats", activeGroup.id, "messages"), {
+        uid: authUid,
+        name: userName,
+        content: text,
+        createdAt: serverTimestamp(),
+      });
+    } catch {
+      setMsgText(text); // أعِد النص عند الفشل
+    } finally {
+      setSending(false);
+    }
+  };
+
+  /* ─ تنظيف عند مغادرة الصفحة ─ */
+  useEffect(() => () => { unsubscribeRef.current?.(); }, []);
+
+  /* ─ الرسائل الحالية حسب القناة ─ */
+  const displayedMessages = activeChannel === "official" ? officialMessages : messages;
 
   /* ─ ترتيب المجموعات — مجموعات المسار أولاً ─ */
   const sortedGroups = [...CHAT_GROUPS].sort((a, b) => {
-    const aInTrack = a.trackId ? (userTrackIds as string[]).includes(a.trackId) : false;
-    const bInTrack = b.trackId ? (userTrackIds as string[]).includes(b.trackId) : false;
-    if (aInTrack && !bInTrack) return -1;
-    if (!aInTrack && bInTrack) return 1;
-    return 0;
+    const aIn = a.trackId ? userTrackIds.includes(a.trackId) : false;
+    const bIn = b.trackId ? userTrackIds.includes(b.trackId) : false;
+    return aIn === bIn ? 0 : aIn ? -1 : 1;
   });
 
   /* ══════════════════════════════════════════════════
-     شاشة الدردشة الجماعية
+     شاشة المحادثة
   ══════════════════════════════════════════════════ */
   if (activeGroup) {
-    const isMyTrack = activeGroup.trackId
-      ? (userTrackIds as string[]).includes(activeGroup.trackId)
-      : false;
+    const isMyTrack = activeGroup.trackId ? userTrackIds.includes(activeGroup.trackId) : false;
+    const isGuest = !authUid;
 
     return (
       <>
         <div
           className="fixed flex flex-col"
-          style={{
-            inset: 0,
-            zIndex: isFullscreen ? 9999 : 50,
-            background: "var(--bg)",
-          }}
+          style={{ inset: 0, zIndex: isFullscreen ? 9999 : 50, background: "var(--bg)" }}
         >
           {/* ─ الرأس ─ */}
           <div
-            className="flex items-center gap-3 px-4 border-b flex-shrink-0"
+            className="flex items-center gap-3 px-4 flex-shrink-0"
             style={{
               paddingTop: "calc(12px + env(safe-area-inset-top))",
               paddingBottom: "12px",
-              borderColor: "var(--border)",
+              borderBottom: "1px solid var(--border)",
               background: "var(--bg)",
             }}
           >
-            <button
-              onClick={closeGroup}
+            <button onClick={closeGroup}
               className="flex items-center gap-1 font-bold text-sm min-h-[44px] px-1"
-              style={{ color: "var(--accent-light)" }}
-            >
+              style={{ color: "var(--accent-light)" }}>
               ← رجوع
             </button>
             <span className="text-xl">{activeGroup.icon}</span>
@@ -224,25 +243,19 @@ export default function CouncilPage() {
               {activeGroup.name}
             </p>
             {isMyTrack && (
-              <span
-                className="text-[11px] px-2 py-0.5 rounded-full font-bold"
+              <span className="text-[11px] px-2 py-0.5 rounded-full font-bold"
                 style={{
                   background: "color-mix(in srgb, var(--accent) 12%, transparent)",
                   color: "var(--accent-light)",
                   border: "1px solid var(--accent)",
-                }}
-              >
+                }}>
                 مسارك
               </span>
             )}
             <button
               onClick={() => setIsFullscreen((f) => !f)}
               className="w-9 h-9 flex items-center justify-center rounded-xl text-lg"
-              style={{
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                color: "var(--text-muted)",
-              }}
+              style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}
               aria-label={isFullscreen ? "إغلاق الشاشة الكاملة" : "شاشة كاملة"}
             >
               {isFullscreen ? "✕" : "⛶"}
@@ -250,179 +263,148 @@ export default function CouncilPage() {
           </div>
 
           {/* ─ تبويبات القنوات ─ */}
-          <div
-            className="flex gap-1.5 px-3 py-2 flex-shrink-0"
-            style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)" }}
-          >
-            <button
-              onClick={() => setActiveChannel("general")}
-              className="flex-1 rounded-xl py-2.5 font-bold text-sm transition"
-              style={
-                activeChannel === "general"
-                  ? {
-                      border: "1.5px solid var(--accent)",
-                      color: "var(--accent-light)",
-                      background: "color-mix(in srgb, var(--accent) 12%, transparent)",
-                    }
-                  : {
-                      border: "1.5px solid var(--border)",
-                      color: "var(--text-muted)",
-                      background: "transparent",
-                    }
-              }
-            >
-              💬 عام
-            </button>
-            <button
-              onClick={() => setActiveChannel("official")}
-              className="flex-1 rounded-xl py-2.5 font-bold text-sm transition"
-              style={
-                activeChannel === "official"
-                  ? {
-                      border: "1.5px solid var(--gold)",
-                      color: "var(--gold)",
-                      background: "color-mix(in srgb, var(--gold) 12%, transparent)",
-                    }
-                  : {
-                      border: "1.5px solid var(--border)",
-                      color: "var(--text-muted)",
-                      background: "transparent",
-                    }
-              }
-            >
-              📢 رسمي
-            </button>
+          <div className="flex gap-1.5 px-3 py-2 flex-shrink-0"
+            style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)" }}>
+            {(["general", "official"] as const).map((ch) => {
+              const isActive = activeChannel === ch;
+              return (
+                <button key={ch} onClick={() => setActiveChannel(ch)}
+                  className="flex-1 rounded-xl py-2.5 font-bold text-sm transition"
+                  style={isActive ? {
+                    border: `1.5px solid ${ch === "official" ? "var(--gold)" : "var(--accent)"}`,
+                    color: ch === "official" ? "var(--gold)" : "var(--accent-light)",
+                    background: `color-mix(in srgb, ${ch === "official" ? "var(--gold)" : "var(--accent)"} 12%, transparent)`,
+                  } : {
+                    border: "1.5px solid var(--border)",
+                    color: "var(--text-muted)",
+                    background: "transparent",
+                  }}>
+                  {ch === "general" ? "💬 عام" : "📢 رسمي"}
+                </button>
+              );
+            })}
           </div>
 
           {/* ─ قائمة الرسائل ─ */}
-          <div
-            className="flex-1 overflow-y-auto px-4 py-3"
-            style={{ display: "flex", flexDirection: "column", gap: "12px" }}
-          >
-            {messages.length === 0 ? (
+          <div className="flex-1 overflow-y-auto px-4 py-3" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {msgLoading && activeChannel === "general" ? (
+              <div className="flex flex-col items-center justify-center flex-1 py-16 gap-2">
+                <div className="w-8 h-8 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
+                <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>جارٍ التحميل...</p>
+              </div>
+            ) : displayedMessages.length === 0 ? (
               <div className="flex flex-col items-center justify-center flex-1 gap-2 py-16">
                 <p className="text-4xl">{activeChannel === "official" ? "📢" : "💬"}</p>
                 <p className="font-bold" style={{ color: "var(--text)" }}>
                   {activeChannel === "official" ? "لا توجد إعلانات رسمية بعد" : "ابدأ النقاش"}
                 </p>
                 {activeChannel === "general" && (
-                  <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
-                    {activeGroup.description}
-                  </p>
+                  <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>{activeGroup.description}</p>
                 )}
               </div>
             ) : (
-              messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className="flex gap-2.5"
-                  style={{
-                    flexDirection: msg.user === userName ? "row-reverse" : "row",
-                  }}
-                >
-                  <div
-                    className="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center text-sm font-black text-white"
-                    style={{
-                      background: msg.isOfficial
-                        ? "linear-gradient(135deg,var(--gold),var(--gold-light))"
-                        : "linear-gradient(135deg,var(--accent-2),var(--accent-light))",
-                    }}
-                  >
-                    {msg.isOfficial ? "📢" : msg.user.charAt(0)}
-                  </div>
-                  <div
-                    className="flex flex-col gap-0.5"
-                    style={{
-                      maxWidth: "75%",
-                      alignItems: msg.user === userName ? "flex-end" : "flex-start",
-                    }}
-                  >
-                    {msg.user !== userName && (
-                      <p
-                        className="text-[11px] font-bold"
-                        style={{ color: msg.isOfficial ? "var(--gold)" : "var(--accent-light)" }}
-                      >
-                        {msg.user}
-                      </p>
-                    )}
-                    <div
-                      className="rounded-2xl px-3 py-2.5"
+              displayedMessages.map((msg) => {
+                const isMine = msg.uid === authUid;
+                return (
+                  <div key={msg.id} className="flex gap-2.5"
+                    style={{ flexDirection: isMine ? "row-reverse" : "row" }}>
+                    {/* الأفاتار */}
+                    <div className="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center text-sm font-black text-white"
                       style={{
-                        background:
-                          msg.user === userName
+                        background: msg.isOfficial
+                          ? "linear-gradient(135deg,var(--gold),var(--gold-light))"
+                          : isMine
+                          ? "linear-gradient(135deg,var(--accent-2),var(--accent-light))"
+                          : "linear-gradient(135deg,#475569,#64748B)",
+                      }}>
+                      {msg.isOfficial ? "📢" : (msg.name?.charAt(0) || "؟")}
+                    </div>
+                    {/* الفقاعة */}
+                    <div className="flex flex-col gap-0.5"
+                      style={{ maxWidth: "75%", alignItems: isMine ? "flex-end" : "flex-start" }}>
+                      {!isMine && (
+                        <p className="text-[11px] font-bold"
+                          style={{ color: msg.isOfficial ? "var(--gold)" : "var(--accent-light)" }}>
+                          {msg.isOfficial ? "درب الرسمي" : msg.name}
+                        </p>
+                      )}
+                      <div className="rounded-2xl px-3 py-2.5"
+                        style={{
+                          background: isMine
                             ? "color-mix(in srgb, var(--accent) 15%, var(--surface))"
                             : msg.isOfficial
                             ? "color-mix(in srgb, var(--gold) 10%, var(--surface))"
                             : "var(--surface)",
-                        border: msg.isOfficial
-                          ? "1px solid color-mix(in srgb, var(--gold) 40%, var(--border))"
-                          : "1px solid var(--border)",
-                      }}
-                    >
-                      <p
-                        className="text-[14px] leading-relaxed whitespace-pre-wrap"
-                        style={{ color: "var(--text)" }}
-                      >
-                        {msg.content}
+                          border: msg.isOfficial
+                            ? "1px solid color-mix(in srgb, var(--gold) 40%, var(--border))"
+                            : "1px solid var(--border)",
+                        }}>
+                        <p className="text-[14px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>
+                          {msg.content}
+                        </p>
+                      </div>
+                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                        {timeAgo(msg.createdAt)}
                       </p>
                     </div>
-                    <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                      {timeAgo(msg.time)}
-                    </p>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* ─ حقل الإدخال (القناة العامة فقط) ─ */}
+          {/* ─ حقل الإدخال ─ */}
           {activeChannel === "general" ? (
-            <div
-              className="px-3 py-3 border-t flex gap-2 flex-shrink-0"
-              style={{
-                borderColor: "var(--border)",
-                paddingBottom: "calc(12px + env(safe-area-inset-bottom))",
-                background: "var(--bg)",
-              }}
-            >
-              <input
-                value={msgText}
-                onChange={(e) => setMsgText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                  }
-                }}
-                placeholder="اكتب رسالة..."
-                className="flex-1 rounded-2xl px-4 py-3 text-[15px] outline-none"
+            isGuest ? (
+              /* الزائر لا يستطيع الكتابة */
+              <div className="px-4 py-3 border-t text-center flex-shrink-0"
                 style={{
-                  background: "var(--surface)",
-                  border: "1.5px solid var(--border)",
-                  color: "var(--text)",
-                }}
-              />
-              <button
-                onClick={sendMessage}
-                disabled={!msgText.trim()}
-                className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white flex-shrink-0 text-lg transition"
+                  borderColor: "var(--border)",
+                  paddingBottom: "calc(12px + env(safe-area-inset-bottom))",
+                  background: "var(--bg)",
+                }}>
+                <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+                  سجّل دخولك للمشاركة في النقاش
+                </p>
+              </div>
+            ) : (
+              <div className="px-3 py-3 border-t flex gap-2 flex-shrink-0"
                 style={{
-                  background: msgText.trim() ? "var(--accent)" : "var(--border)",
-                }}
-              >
-                ↑
-              </button>
-            </div>
+                  borderColor: "var(--border)",
+                  paddingBottom: "calc(12px + env(safe-area-inset-bottom))",
+                  background: "var(--bg)",
+                }}>
+                <input
+                  value={msgText}
+                  onChange={(e) => setMsgText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+                  placeholder="اكتب رسالة..."
+                  maxLength={1000}
+                  className="flex-1 rounded-2xl px-4 py-3 text-[15px] outline-none"
+                  style={{
+                    background: "var(--surface)",
+                    border: "1.5px solid var(--border)",
+                    color: "var(--text)",
+                  }}
+                />
+                <button
+                  onClick={sendMessage}
+                  disabled={!msgText.trim() || sending}
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white flex-shrink-0 text-lg transition"
+                  style={{ background: msgText.trim() && !sending ? "var(--accent)" : "var(--border)" }}
+                >
+                  {sending ? "⋯" : "↑"}
+                </button>
+              </div>
+            )
           ) : (
-            <div
-              className="px-4 py-3 border-t text-center flex-shrink-0"
+            <div className="px-4 py-3 border-t text-center flex-shrink-0"
               style={{
                 borderColor: "var(--border)",
                 paddingBottom: "calc(12px + env(safe-area-inset-bottom))",
                 background: "var(--bg)",
-              }}
-            >
+              }}>
               <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
                 قراءة فقط — القناة الرسمية لـ {activeGroup.name}
               </p>
@@ -430,7 +412,6 @@ export default function CouncilPage() {
           )}
         </div>
 
-        {/* BottomNav مخفية في وضع الشاشة الكاملة */}
         {!isFullscreen && <BottomNav />}
       </>
     );
@@ -442,9 +423,7 @@ export default function CouncilPage() {
   return (
     <div className="min-h-dvh pb-nav">
       <Dome compact>
-        <h1 className="title-lg" style={{ color: "var(--text)" }}>
-          المجلس
-        </h1>
+        <h1 className="title-lg" style={{ color: "var(--text)" }}>المجلس</h1>
       </Dome>
 
       <div className="h-2" />
@@ -455,22 +434,16 @@ export default function CouncilPage() {
         className="flex items-center gap-3 px-5 py-4 text-right transition active:opacity-70 w-full"
         style={{ borderBottom: "1px solid var(--border)" }}
       >
-        <div
-          className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
+        <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
           style={{
             background: "color-mix(in srgb, var(--gold) 12%, var(--surface))",
             border: "1.5px solid color-mix(in srgb, var(--gold) 40%, var(--border))",
-          }}
-        >
+          }}>
           👥
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-[15px]" style={{ color: "var(--text)" }}>
-            الأصدقاء
-          </p>
-          <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>
-            ابحث عن زملائك وأضفهم
-          </p>
+          <p className="font-bold text-[15px]" style={{ color: "var(--text)" }}>الأصدقاء</p>
+          <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>ابحث عن زملائك وأضفهم</p>
         </div>
         <span className="text-[var(--text-muted)] text-lg flex-shrink-0">‹</span>
       </button>
@@ -478,10 +451,8 @@ export default function CouncilPage() {
       {/* ─ قائمة المجموعات ─ */}
       <div className="flex flex-col">
         {sortedGroups.map((group) => {
-          const isMyTrack = group.trackId
-            ? (userTrackIds as string[]).includes(group.trackId)
-            : false;
-          const lastMsg = lastMessages[group.id];
+          const isMyTrack = group.trackId ? userTrackIds.includes(group.trackId) : false;
+          const last = lastMessages[group.id];
 
           return (
             <button
@@ -495,9 +466,7 @@ export default function CouncilPage() {
                   : "transparent",
               }}
             >
-              {/* أيقونة المجموعة */}
-              <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
                 style={{
                   background: isMyTrack
                     ? "color-mix(in srgb, var(--accent) 12%, var(--surface))"
@@ -505,47 +474,30 @@ export default function CouncilPage() {
                   border: isMyTrack
                     ? "1.5px solid color-mix(in srgb, var(--accent) 40%, var(--border))"
                     : "1px solid var(--border)",
-                }}
-              >
+                }}>
                 {group.icon}
               </div>
-
-              {/* التفاصيل */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p
-                    className="font-bold text-[15px]"
-                    style={{ color: "var(--text)" }}
-                  >
-                    {group.name}
-                  </p>
+                  <p className="font-bold text-[15px]" style={{ color: "var(--text)" }}>{group.name}</p>
                   {isMyTrack && (
-                    <span
-                      className="text-[10px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0"
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0"
                       style={{
                         background: "color-mix(in srgb, var(--accent) 12%, transparent)",
                         color: "var(--accent-light)",
                         border: "1px solid color-mix(in srgb, var(--accent) 35%, transparent)",
-                      }}
-                    >
+                      }}>
                       مسارك
                     </span>
                   )}
                 </div>
-                <p
-                  className="text-[13px] truncate mt-0.5"
-                  style={{ color: "var(--text-muted)" }}
-                >
-                  {lastMsg ? lastMsg.content : group.description}
+                <p className="text-[13px] truncate mt-0.5" style={{ color: "var(--text-muted)" }}>
+                  {last ? last.text : group.description}
                 </p>
               </div>
-
-              {/* نقطة الرسائل الجديدة */}
-              {lastMsg && (
-                <div
-                  className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                  style={{ background: "var(--accent)" }}
-                />
+              {last && (
+                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                  style={{ background: "var(--accent)" }} />
               )}
             </button>
           );
