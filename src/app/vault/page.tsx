@@ -7,9 +7,10 @@ import PageGuide from "@/components/PageGuide";
 import { ERROR_CATEGORIES } from "@/lib/constants";
 import { subjectsForTracks, colorForSubject, type TrackId } from "@/lib/tracks";
 import { loadUser, loadList, saveList } from "@/lib/storage";
+import { getPlan, VAULT_FREE_LIMIT } from "@/lib/plan";
 import type { VaultError } from "@/lib/types";
 
-const PER_SUBJECT_LIMIT = 25;
+const PER_SUBJECT_LIMIT = VAULT_FREE_LIMIT;
 const VAULT_KEY = "darb_vault";
 
 export default function VaultPage() {
@@ -55,7 +56,7 @@ export default function VaultPage() {
   useEffect(() => { saveList(VAULT_KEY, errors); }, [errors]);
 
   const [now] = useState<number>(Date.now);
-  const isPlanFree = true;
+  const [isPlanFree] = useState(() => getPlan() === "free");
   const subjects = subjectList.map((s) => s.name);
   const countForSubject = (subj: string) => errors.filter((e) => e.subject === subj).length;
   /* الحد لكل مادة على حدة — كل مادة لها 25 مكاناً مستقلاً */

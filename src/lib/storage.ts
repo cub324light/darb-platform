@@ -1,5 +1,6 @@
 /* ─── تخزين حقيقي في localStorage — صفر بيانات وهمية ─── */
 import type { TrackId } from "./tracks";
+import type { PlanId } from "./types";
 
 export interface DarbUser {
   name: string;
@@ -12,6 +13,7 @@ export interface DarbUser {
   studyHours?: number;
   subjects?: string[];
   activeTracks?: TrackId[];
+  plan?: PlanId;
   school?: string;
   region?: string;
   city?: string;

@@ -66,6 +66,41 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  /* تعيين باقة لمستخدم */
+  if (mode === "setPlan") {
+    const { uid, plan } = (body ?? {}) as { uid?: string; plan?: string };
+    if (typeof uid !== "string" || !uid) {
+      return NextResponse.json({ error: "uid مفقود" }, { status: 400 });
+    }
+    if (plan !== "free" && plan !== "shaheen" && plan !== "anqa") {
+      return NextResponse.json({ error: "باقة غير صالحة" }, { status: 400 });
+    }
+    try {
+      const app = adminApp();
+      await getFirestore(app).collection("users").doc(uid).set({ plan }, { merge: true });
+      return NextResponse.json({ ok: true, uid, plan });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return NextResponse.json({ error: `تعذّر التعيين: ${msg}` }, { status: 500 });
+    }
+  }
+
+  /* إيقاف / تفعيل مستخدم */
+  if (mode === "setBlocked") {
+    const { uid, blocked } = (body ?? {}) as { uid?: string; blocked?: boolean };
+    if (typeof uid !== "string" || !uid) {
+      return NextResponse.json({ error: "uid مفقود" }, { status: 400 });
+    }
+    try {
+      const app = adminApp();
+      await getFirestore(app).collection("users").doc(uid).set({ blocked: !!blocked }, { merge: true });
+      return NextResponse.json({ ok: true, uid, blocked: !!blocked });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return NextResponse.json({ error: `تعذّر التحديث: ${msg}` }, { status: 500 });
+    }
+  }
+
   try {
     const app = adminApp();
     const db  = getFirestore(app);
@@ -118,11 +153,15 @@ export async function POST(req: NextRequest) {
       /* مدة الاستخدام: من أول تسجيل حتى الآن (بالأيام) */
       const durationDays = joinedMs ? Math.max(0, Math.floor((now - joinedMs) / 86_400_000)) : null;
 
+      const planVal = (data.plan ?? prof.plan ?? "free") as string;
+
       return {
         id:              uid,
         name:            data.name ?? prof.name ?? "",
         email,
         track:           data.track ?? prof.track ?? "",
+        plan:            planVal === "shaheen" || planVal === "anqa" ? planVal : "free",
+        blocked:         data.blocked === true,
         streak:          data.streak    ?? 0,
         focusMins:       data.focusMins ?? 0,
         sessions:        data.sessions  ?? 0,

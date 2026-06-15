@@ -49,6 +49,7 @@ export async function syncUser(data: {
   name?: string;
   track?: string;
   bird?: string;
+  plan?: string;
   streak?: number;
   focusMins?: number;
   sessions?: number;

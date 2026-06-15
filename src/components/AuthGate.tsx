@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import type { User } from "firebase/auth";
 import {
   onAuth, consumeRedirectResult, initialSync, isInitialSyncDone,
+  isAccountBlocked, signOutUser,
 } from "@/lib/cloud";
 import { loadUser } from "@/lib/storage";
 import SignInScreen from "./SignInScreen";
@@ -18,6 +19,29 @@ function Splash({ label }: { label?: string }) {
     <div className="min-h-dvh flex flex-col items-center justify-center gap-4 relative z-[1]">
       <Logo className="font-black text-5xl" style={{ letterSpacing: "-1px" }} />
       {label && <p className="text-[14px] font-semibold" style={{ color: "var(--text-muted)" }}>{label}</p>}
+    </div>
+  );
+}
+
+/* شاشة الحساب الموقوف — تُعرض عند ضبط blocked من لوحة الإدارة */
+function BlockedScreen() {
+  return (
+    <div className="min-h-dvh flex flex-col items-center justify-center gap-5 px-8 text-center relative z-[1]">
+      <div className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl"
+        style={{ background: "color-mix(in srgb, var(--danger) 12%, transparent)", border: "1.5px solid color-mix(in srgb, var(--danger) 40%, transparent)" }}>
+        ⛔
+      </div>
+      <div>
+        <p className="title-md mb-2" style={{ color: "var(--text)" }}>تم إيقاف حسابك</p>
+        <p className="text-[14px] leading-relaxed max-w-xs mx-auto" style={{ color: "var(--text-muted)" }}>
+          حسابك موقوف حالياً عن استخدام درب. لو تعتقد أنه خطأ، تواصل معنا.
+        </p>
+      </div>
+      <button onClick={() => { signOutUser().then(() => window.location.reload()); }}
+        className="px-6 py-3 rounded-2xl font-bold text-sm"
+        style={{ background: "transparent", border: "1px solid var(--border)", color: "var(--text-dim)" }}>
+        تسجيل خروج
+      </button>
     </div>
   );
 }
@@ -67,6 +91,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   if (!authResolved) return <Splash />;
   if (!user) return <SignInScreen initialError={redirectErr} />;
   if (!synced) return <Splash label="جارٍ استرجاع بياناتك..." />;
+  if (isAccountBlocked()) return <BlockedScreen />;
   if (needsOnboarding) return <Splash />;
   return <>{children}</>;
 }

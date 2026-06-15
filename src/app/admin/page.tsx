@@ -1,11 +1,15 @@
 "use client";
 import { useState } from "react";
 
+type PlanId = "free" | "shaheen" | "anqa";
+
 interface AdminUser {
   id: string;
   name: string;
   email: string;
   track: string;
+  plan: PlanId;
+  blocked: boolean;
   streak: number;
   focusMins: number;
   sessions: number;
@@ -24,6 +28,9 @@ interface AdminUser {
   joinedAt: { seconds: number } | null;
   lastSeen: { seconds: number } | null;
 }
+
+const PLAN_AR: Record<PlanId, string> = { free: "مجاني", shaheen: "شاهين", anqa: "عنقاء" };
+const PLAN_CLR: Record<PlanId, string> = { free: "#64748B", shaheen: "#2563EB", anqa: "#F59E0B" };
 
 function fmt(ts?: { seconds: number } | null): string {
   if (!ts) return "—";
@@ -113,6 +120,44 @@ export default function AdminPage() {
     finally { setPinging(false); }
   };
 
+  /* ── إجراءات المستخدم: تعيين باقة / إيقاف ── */
+  const [actionBusy, setActionBusy] = useState(false);
+  const [actionMsg, setActionMsg]   = useState("");
+
+  const callAction = async (mode: string, extra: Record<string, unknown>) => {
+    const res = await fetch("/api/admin/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: pass, mode, ...extra }),
+    });
+    return { ok: res.ok, data: (await res.json()) as Record<string, unknown> };
+  };
+
+  const applyLocal = (uid: string, patch: Partial<AdminUser>) => {
+    setUsers((prev) => prev.map((u) => (u.id === uid ? { ...u, ...patch } : u)));
+    setDetail((prev) => (prev && prev.id === uid ? { ...prev, ...patch } : prev));
+  };
+
+  const setUserPlan = async (uid: string, plan: PlanId) => {
+    setActionBusy(true); setActionMsg("");
+    try {
+      const { ok, data } = await callAction("setPlan", { uid, plan });
+      if (ok) { applyLocal(uid, { plan }); setActionMsg(`✅ تم تعيين باقة «${PLAN_AR[plan]}»`); }
+      else setActionMsg(`❌ ${data.error ?? "تعذّر التعيين"}`);
+    } catch { setActionMsg("❌ خطأ في الاتصال"); }
+    finally { setActionBusy(false); }
+  };
+
+  const toggleBlock = async (uid: string, blocked: boolean) => {
+    setActionBusy(true); setActionMsg("");
+    try {
+      const { ok, data } = await callAction("setBlocked", { uid, blocked });
+      if (ok) { applyLocal(uid, { blocked }); setActionMsg(blocked ? "🚫 تم إيقاف المستخدم" : "✅ تم تفعيل المستخدم"); }
+      else setActionMsg(`❌ ${data.error ?? "تعذّر التحديث"}`);
+    } catch { setActionMsg("❌ خطأ في الاتصال"); }
+    finally { setActionBusy(false); }
+  };
+
   /* تصدير كل المستخدمين إلى ملف CSV (يفتح في Excel) */
   const exportCsv = () => {
     const cols: { key: keyof AdminUser; label: string }[] = [
@@ -171,6 +216,7 @@ export default function AdminPage() {
 
   /* إحصاءات سريعة */
   const withEmail = users.filter((u) => u.email).length;
+  const paidCount = users.filter((u) => u.plan !== "free").length;
   const avgDuration = (() => {
     const ds = users.map((u) => u.durationDays ?? 0).filter((d) => d > 0);
     return ds.length ? Math.round(ds.reduce((a, b) => a + b, 0) / ds.length) : 0;
@@ -246,6 +292,7 @@ export default function AdminPage() {
       <div className="max-w-7xl mx-auto grid grid-cols-2 gap-3 mb-6 sm:grid-cols-4 lg:grid-cols-6">
         {[
           { label: "إجمالي المستخدمين",  val: users.length },
+          { label: "مشتركين مدفوع",       val: paidCount },
           { label: "لديهم إيميل",         val: withEmail },
           { label: "متوسط مدة الاستخدام", val: fmtDuration(avgDuration || null) },
           { label: "مسار تحصيلي",          val: users.filter((u) => u.track === "تحصيلي").length },
@@ -288,17 +335,24 @@ export default function AdminPage() {
             <div className="py-12 text-center text-[15px]" style={{ color: "var(--text-muted)" }}>لا يوجد مستخدمون</div>
           ) : filtered.map((u, i) => (
             <div key={u.id}
-              onClick={() => setDetail(u)}
+              onClick={() => { setDetail(u); setActionMsg(""); }}
               className="grid items-center px-4 py-3 text-[12px] cursor-pointer transition hover:brightness-110"
               style={{
                 gridTemplateColumns: "160px 180px 80px 70px 60px 70px 70px 70px 70px 80px 100px 100px",
                 borderTop: i > 0 ? "1px solid var(--border)" : "none",
-                background: i % 2 === 0 ? "var(--surface)" : "var(--bg)",
+                background: u.blocked ? "color-mix(in srgb, var(--danger) 7%, var(--surface))" : i % 2 === 0 ? "var(--surface)" : "var(--bg)",
+                opacity: u.blocked ? 0.75 : 1,
               }}>
 
               {/* الاسم + المعلومات الإضافية */}
               <div className="flex flex-col gap-0.5 min-w-0">
-                <span className="font-bold truncate" style={{ color: "var(--text)" }}>{u.name || "—"}</span>
+                <span className="flex items-center gap-1.5 min-w-0">
+                  {u.plan !== "free" && (
+                    <span className="flex-shrink-0" style={{ color: PLAN_CLR[u.plan] }} title={PLAN_AR[u.plan]}>✦</span>
+                  )}
+                  {u.blocked && <span className="flex-shrink-0" title="موقوف">🚫</span>}
+                  <span className="font-bold truncate" style={{ color: "var(--text)" }}>{u.name || "—"}</span>
+                </span>
                 {(u.school || u.city || u.phone) && (
                   <span className="text-[10px] truncate" style={{ color: "var(--text-muted)" }}>
                     {[u.school, u.city, u.phone].filter(Boolean).join(" · ")}
@@ -368,9 +422,54 @@ export default function AdminPage() {
           <div className="relative m-auto w-full max-w-md max-h-[88dvh] overflow-y-auto rounded-3xl p-6 flex flex-col gap-4"
             style={{ background: "var(--bg)", border: "1.5px solid var(--border)" }}>
             <div className="flex items-center justify-between">
-              <p className="font-black text-xl" style={{ color: "var(--text)" }}>{detail.name || "بدون اسم"}</p>
+              <div className="flex items-center gap-2 min-w-0">
+                <p className="font-black text-xl truncate" style={{ color: "var(--text)" }}>{detail.name || "بدون اسم"}</p>
+                {detail.blocked && (
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full flex-shrink-0"
+                    style={{ background: "color-mix(in srgb, var(--danger) 16%, transparent)", color: "var(--danger)" }}>موقوف</span>
+                )}
+              </div>
               <button onClick={() => setDetail(null)} className="text-2xl font-bold px-2" style={{ color: "var(--text-muted)" }}>×</button>
             </div>
+
+            {/* ── الإجراءات: الباقة والإيقاف ── */}
+            <div className="rounded-2xl p-4 flex flex-col gap-3"
+              style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+              <p className="text-[12px] font-black" style={{ color: "var(--text-muted)" }}>الباقة</p>
+              <div className="grid grid-cols-3 gap-2">
+                {(["free", "shaheen", "anqa"] as PlanId[]).map((p) => {
+                  const active = detail.plan === p;
+                  return (
+                    <button key={p} onClick={() => !active && !actionBusy && setUserPlan(detail.id, p)}
+                      disabled={actionBusy}
+                      className="py-2.5 rounded-xl text-[13px] font-bold transition disabled:opacity-60"
+                      style={active
+                        ? { background: PLAN_CLR[p], color: p === "anqa" ? "#1A1205" : "white", border: `1.5px solid ${PLAN_CLR[p]}` }
+                        : { background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-dim)" }}>
+                      {PLAN_AR[p]}{active ? " ✓" : ""}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <p className="text-[12px] font-black mt-1" style={{ color: "var(--text-muted)" }}>الحالة</p>
+              <button onClick={() => !actionBusy && toggleBlock(detail.id, !detail.blocked)}
+                disabled={actionBusy}
+                className="py-2.5 rounded-xl text-[14px] font-bold transition disabled:opacity-60"
+                style={detail.blocked
+                  ? { background: "color-mix(in srgb, var(--success) 12%, transparent)", border: "1.5px solid var(--success)", color: "var(--success)" }
+                  : { background: "color-mix(in srgb, var(--danger) 10%, transparent)", border: "1.5px solid var(--danger)", color: "var(--danger)" }}>
+                {detail.blocked ? "✅ إلغاء الإيقاف وتفعيل الحساب" : "🚫 إيقاف هذا المستخدم"}
+              </button>
+
+              {actionMsg && (
+                <p className="text-[13px] font-bold text-center" style={{ color: "var(--text-dim)" }}>{actionMsg}</p>
+              )}
+              <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                التغييرات تُطبَّق على جهاز المستخدم عند فتحه التطبيق في المرة القادمة.
+              </p>
+            </div>
+
             <div className="flex flex-col gap-2.5">
               {([
                 ["الإيميل", detail.email || "—"],

@@ -1,6 +1,9 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { getPlan, setPlan, PLAN_NAMES } from "@/lib/plan";
+import type { PlanId } from "@/lib/types";
 
 const COMPARE_FEATURES = [
   { label: "خزنة الأخطاء", free: "25 لكل مادة", shaheen: "غير محدودة", anqa: "غير محدودة" },
@@ -17,9 +20,34 @@ const COMPARE_FEATURES = [
 
 export default function PricingPage() {
   const [lifeTime, setLifeTime] = useState(false);
+  const router = useRouter();
+  const [current, setCurrent] = useState<PlanId>(() =>
+    typeof window !== "undefined" ? getPlan() : "free"
+  );
+  const [toast, setToast] = useState("");
+
+  /* تفعيل تجريبي فوري — بدون بوابة دفع (للتجربة ولعرض المزايا للأصدقاء) */
+  const activate = (plan: PlanId) => {
+    if (!setPlan(plan)) {
+      router.push("/onboarding"); // لا يوجد حساب بعد — أكمل التسجيل أولاً
+      return;
+    }
+    setCurrent(plan);
+    setToast(plan === "free" ? "رجعت للباقة المجانية" : `تم تفعيل باقة ${PLAN_NAMES[plan]} ✦ (تجريبي بدون دفع)`);
+    setTimeout(() => setToast(""), 2600);
+  };
 
   return (
     <div className="min-h-dvh app-col">
+      {/* إشعار التفعيل */}
+      {toast && (
+        <div className="fixed top-4 inset-x-0 z-[9999] flex justify-center px-4 pointer-events-none">
+          <div className="rounded-2xl px-5 py-3 text-sm font-bold shadow-2xl pointer-events-auto"
+            style={{ background: "var(--accent)", color: "white", boxShadow: "0 12px 40px color-mix(in srgb, var(--accent) 45%, transparent)" }}>
+            {toast}
+          </div>
+        </div>
+      )}
       {/* Nav */}
       <div className="px-5 py-4 flex items-center justify-between glass border-b border-[var(--border)]">
         <Link href="/" className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition">
@@ -73,12 +101,21 @@ export default function PricingPage() {
                   </div>
                 ))}
               </div>
-              <Link
-                href="/dashboard"
-                className="block w-full py-3 rounded-2xl font-bold text-center text-sm text-[var(--text)] glass border border-[var(--border)] hover:border-[var(--accent)]/40 transition"
-              >
-                ابدأ مجاناً
-              </Link>
+              {current === "free" ? (
+                <Link
+                  href="/dashboard"
+                  className="block w-full py-3 rounded-2xl font-bold text-center text-sm text-[var(--text)] glass border border-[var(--border)] hover:border-[var(--accent)]/40 transition"
+                >
+                  باقتك الحالية — ابدأ
+                </Link>
+              ) : (
+                <button
+                  onClick={() => activate("free")}
+                  className="block w-full py-3 rounded-2xl font-bold text-center text-sm text-[var(--text-muted)] glass border border-[var(--border)] transition"
+                >
+                  الرجوع للمجاني
+                </button>
+              )}
             </div>
           </div>
 
@@ -121,10 +158,12 @@ export default function PricingPage() {
                 ))}
               </div>
               <button
-                className="w-full py-3 rounded-2xl font-bold text-sm transition glow-blue"
-                style={{ background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}
+                onClick={() => activate("shaheen")}
+                disabled={current === "shaheen"}
+                className="w-full py-3 rounded-2xl font-bold text-sm transition glow-blue disabled:opacity-100"
+                style={{ background: current === "shaheen" ? "var(--accent)" : "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1.5px solid var(--accent)", color: current === "shaheen" ? "white" : "var(--accent-light)" }}
               >
-                اشترك في شاهين — 35 ريال
+                {current === "shaheen" ? "باقتك الحالية ✓" : "فعّل شاهين — تجربة مجانية"}
               </button>
             </div>
           </div>
@@ -190,10 +229,12 @@ export default function PricingPage() {
                 ))}
               </div>
               <button
-                className="w-full py-3 rounded-2xl font-bold text-sm transition glow-gold"
-                style={{ background: "rgba(245,158,11,0.08)", border: "1.5px solid #F59E0B", color: "#F59E0B" }}
+                onClick={() => activate("anqa")}
+                disabled={current === "anqa"}
+                className="w-full py-3 rounded-2xl font-bold text-sm transition glow-gold disabled:opacity-100"
+                style={{ background: current === "anqa" ? "#F59E0B" : "rgba(245,158,11,0.08)", border: "1.5px solid #F59E0B", color: current === "anqa" ? "#1A1205" : "#F59E0B" }}
               >
-                اشترك في عنقاء — {lifeTime ? "209 (مدى الحياة)" : "119 ريال/سنة"}
+                {current === "anqa" ? "باقتك الحالية ✓" : "فعّل عنقاء — تجربة مجانية"}
               </button>
 
               {lifeTime && (

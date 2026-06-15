@@ -9,6 +9,8 @@ import {
   type DarbUser, type Theme, type ExamResult,
 } from "@/lib/storage";
 import { syncUser } from "@/lib/firestore";
+import { getPlan, PLAN_NAMES, PLAN_COLORS } from "@/lib/plan";
+import type { PlanId } from "@/lib/types";
 import {
   onAuth, signIn, signUp, signOutUser, authErrorMsg,
   pushBackup, pullBackup,
@@ -43,6 +45,7 @@ export default function ProfileButton() {
   const [editing, setEditing] = useState(false);
   const [stats, setStats] = useState({ streak: 0, silver: 0, hours: 0, sessions: 0 });
   const [activeTracksState, setActiveTracksState] = useState<TrackId[]>([]);
+  const [planId, setPlanId] = useState<PlanId>("free");
 
   // نتائجي
   const [results, setResults] = useState<ExamResult[]>([]);
@@ -120,6 +123,7 @@ export default function ProfileButton() {
         sessions: s.sessionsCount,
       });
       setActiveTracksState(u?.activeTracks ?? (u?.track ? [u.track] : []));
+      setPlanId(getPlan());
       setResults(loadResults());
     }, 0);
     return () => clearTimeout(id);
@@ -227,6 +231,25 @@ export default function ProfileButton() {
                 )}
               </div>
             </div>
+
+            {/* الباقة الحالية */}
+            <button
+              onClick={() => { setOpen(false); window.location.href = "/pricing"; }}
+              className="w-full flex items-center gap-3 rounded-2xl px-4 py-3 mb-6 text-right transition active:scale-[0.99]"
+              style={{
+                background: `color-mix(in srgb, ${PLAN_COLORS[planId]} 10%, var(--surface2))`,
+                border: `1.5px solid color-mix(in srgb, ${PLAN_COLORS[planId]} 45%, transparent)`,
+              }}
+            >
+              <span className="text-lg">{planId === "free" ? "○" : "✦"}</span>
+              <span className="flex-1">
+                <span className="block text-[11px] font-semibold" style={{ color: "var(--text-muted)" }}>باقتك الحالية</span>
+                <span className="block font-black text-[15px]" style={{ color: PLAN_COLORS[planId] }}>{PLAN_NAMES[planId]}</span>
+              </span>
+              <span className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>
+                {planId === "free" ? "ترقية ←" : "تغيير ←"}
+              </span>
+            </button>
 
             {/* الإحصاءات الحقيقية */}
             <div className="grid grid-cols-4 gap-2 mb-6">
