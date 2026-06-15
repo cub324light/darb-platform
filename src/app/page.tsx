@@ -92,21 +92,20 @@ const PAIN = [
 
 export default function LandingPage() {
   const router = useRouter();
-  const [onboarded, setOnboarded] = useState(false);
-  const [checking, setChecking] = useState(true);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [theme, setTheme] = useState<Theme>("dark");
-  const rootRef = useReveal(!checking);
-
-  useEffect(() => {
+  const [onboarded] = useState(() => {
+    if (typeof window === "undefined") return false;
     try {
       const raw = localStorage.getItem("darb_user");
       const user = raw ? JSON.parse(raw) : null;
-      if (user?.onboarded) setOnboarded(true);
-    } catch {}
-    setTheme(loadTheme());
-    setChecking(false);
-  }, []);
+      return !!user?.onboarded;
+    } catch { return false; }
+  });
+  const [checking] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [theme, setTheme] = useState<Theme>(() =>
+    typeof window !== "undefined" ? loadTheme() : "dark"
+  );
+  const rootRef = useReveal(!checking);
 
   /* المسجّل دخوله يُوجَّه مباشرة للتطبيق */
   useEffect(() => {

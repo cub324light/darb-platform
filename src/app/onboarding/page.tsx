@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { TRACKS, TRACK_GROUPS, type TrackId } from "@/lib/tracks";
 import { saveUser, saveExamDate, saveResults } from "@/lib/storage";
@@ -20,7 +20,10 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState<0 | 1 | 2>(0);
 
-  const [name, setName]             = useState("");
+  const [name, setName] = useState(() => {
+    const dn = typeof window !== "undefined" ? currentUser()?.displayName : undefined;
+    return dn ? dn.split(" ")[0] : "";
+  });
   const [age, setAge]               = useState("");
   const [studyLevel, setStudyLevel] = useState("");
   const [grade, setGrade]           = useState("");
@@ -35,12 +38,6 @@ export default function OnboardingPage() {
   const [examDate, setExamDate]         = useState("");
   /* نتائج اختبارات سابقة (اختياري) — تُحفظ في «نتائجي» */
   const [prevExams, setPrevExams] = useState<{ exam: string; score: string }[]>([]);
-
-  /* املأ الاسم مبدئياً من حساب Google */
-  useEffect(() => {
-    const dn = currentUser()?.displayName;
-    if (dn) setName((prev) => prev || dn.split(" ")[0]);
-  }, []);
 
   const toggleTrack = (id: TrackId) => {
     setActiveTracks((prev) =>

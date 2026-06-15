@@ -13,10 +13,22 @@ const PER_SUBJECT_LIMIT = 25;
 const VAULT_KEY = "darb_vault";
 
 export default function VaultPage() {
-  const [activeIds, setActiveIds] = useState<TrackId[]>([]);
-  const [subjectList, setSubjectList] = useState<{ name: string; color: string }[]>([]);
-  const [errors, setErrors] = useState<VaultError[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const [activeIds] = useState<TrackId[]>(() => {
+    if (typeof window === "undefined") return ["تحصيلي"] as TrackId[];
+    const u = loadUser();
+    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+    return ids.length ? ids : (["تحصيلي"] as TrackId[]);
+  });
+  const [subjectList] = useState<{ name: string; color: string }[]>(() => {
+    if (typeof window === "undefined") return [];
+    const u = loadUser();
+    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
+    return subjectsForTracks(finalIds);
+  });
+  const [errors, setErrors] = useState<VaultError[]>(() =>
+    typeof window !== "undefined" ? loadList<VaultError>(VAULT_KEY) : []
+  );
   const [showAdd, setShowAdd] = useState(false);
   const [filterSubject, setFilterSubject] = useState<string>("الكل");
   const [filterCat, setFilterCat] = useState<string>("الكل");
@@ -26,30 +38,23 @@ export default function VaultPage() {
   const [undoItem, setUndoItem] = useState<VaultError | null>(null);
   const [undoTimer, setUndoTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [newQ, setNewQ] = useState("");
-  const [newSubject, setNewSubject] = useState("");
+  const [newSubject, setNewSubject] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const u = loadUser();
+    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
+    return subjectsForTracks(finalIds)[0]?.name ?? "";
+  });
   const [newCat, setNewCat] = useState<string>(ERROR_CATEGORIES[0]);
   const [newNote, setNewNote] = useState("");
   /* شرح دويرب لكل خطأ (تخزين مؤقت بالـ id) */
   const [explainById, setExplainById] = useState<Record<string, string>>({});
   const [explainLoadingId, setExplainLoadingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const u = loadUser();
-    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
-    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
-    setActiveIds(finalIds);
-    const subs = subjectsForTracks(finalIds);
-    setSubjectList(subs);
-    setNewSubject(subs[0]?.name ?? "");
-    setErrors(loadList<VaultError>(VAULT_KEY));
-    setLoaded(true);
-  }, []);
-
   /* حفظ تلقائي عند أي تغيير */
-  useEffect(() => {
-    if (loaded) saveList(VAULT_KEY, errors);
-  }, [errors, loaded]);
+  useEffect(() => { saveList(VAULT_KEY, errors); }, [errors]);
 
+  const [now] = useState<number>(Date.now);
   const isPlanFree = true;
   const subjects = subjectList.map((s) => s.name);
   const countForSubject = (subj: string) => errors.filter((e) => e.subject === subj).length;
@@ -318,7 +323,7 @@ export default function VaultPage() {
       {/* ── القائمة ── */}
       <div className="px-5 flex flex-col gap-5 rise rise-5">
 
-        {loaded && filtered.length === 0 && (
+        {filtered.length === 0 && (
           <div className="text-center py-14">
             <p className="title-md text-[var(--text)] mb-2">الخزنة فارغة</p>
             <p className="body-sm">أول ما تغلط في سؤال، احفظه هنا — عشان ما تغلط فيه مرتين.</p>
@@ -328,7 +333,7 @@ export default function VaultPage() {
         {filtered.map((error) => {
           const color = colorOf(error.subject);
           const isExpanded = expandedId === error.id;
-          const daysAgo = Math.round((Date.now() - error.createdAt) / 86400000);
+          const daysAgo = Math.round((now - error.createdAt) / 86400000);
 
           return (
             <div key={error.id}

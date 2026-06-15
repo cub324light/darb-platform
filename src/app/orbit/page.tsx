@@ -59,11 +59,32 @@ export default function OrbitPage() {
   const [showEdit, setShowEdit]           = useState(false);
   const [prevDur, setPrevDur]             = useState<{mode: DurMode; custom: number}>({mode: "50", custom: 50});
   const [secondsLeft, setSecondsLeft]     = useState(50 * 60);
-  const [sessionsToday, setSessionsToday] = useState(0);
-  const [silverTotal, setSilverTotal]     = useState(0);
-  const [totalFocusMins, setTotalFocusMins] = useState(0);
-  const [subjects, setSubjects] = useState<{ name: string; color: string }[]>([]);
-  const [subject, setSubject]   = useState<string>("");
+  const [sessionsToday, setSessionsToday] = useState(() => {
+    const s = typeof window !== "undefined" ? loadStats() : null;
+    return s?.sessionsCount ?? 0;
+  });
+  const [silverTotal, setSilverTotal] = useState(() => {
+    const s = typeof window !== "undefined" ? loadStats() : null;
+    return s?.silver ?? 0;
+  });
+  const [totalFocusMins, setTotalFocusMins] = useState(() => {
+    const s = typeof window !== "undefined" ? loadStats() : null;
+    return s?.todayFocusMins ?? 0;
+  });
+  const [subjects, setSubjects] = useState<{ name: string; color: string }[]>(() => {
+    if (typeof window === "undefined") return [];
+    const u = loadUser();
+    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
+    return subjectsForTracks(finalIds);
+  });
+  const [subject, setSubject] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    const u = loadUser();
+    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
+    return subjectsForTracks(finalIds)[0]?.name ?? "";
+  });
   const [breakTip] = useState(() => BREAK_TIPS[Math.floor(Math.random() * BREAK_TIPS.length)]);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   /* نهاية الجلسة كطابع زمني حقيقي — العدّ ما يتجمد لو راح التطبيق للخلفية */
@@ -73,19 +94,6 @@ export default function OrbitPage() {
   const breakMins = calcBreak(focusMins);
   const focusSecs = focusMins * 60;
   const breakSecs = breakMins * 60;
-
-  useEffect(() => {
-    const u = loadUser();
-    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
-    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
-    const subs = subjectsForTracks(finalIds);
-    setSubjects(subs);
-    setSubject(subs[0]?.name ?? "");
-    const s = loadStats();
-    setSilverTotal(s.silver);
-    setTotalFocusMins(s.todayFocusMins);
-    setSessionsToday(s.sessionsCount);
-  }, []);
 
   /* تحديث العداد عند تغيير المدة في وضع الانتظار */
   useEffect(() => {

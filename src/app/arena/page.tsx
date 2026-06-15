@@ -71,7 +71,11 @@ const QUESTION_BANK: Record<TrackId, { q: string; a: string; subject: string }[]
 type GameState = "lobby" | "playing" | "result";
 
 export default function ArenaPage() {
-  const [questions, setQuestions] = useState(QUESTION_BANK["تحصيلي"]);
+  const [questions, setQuestions] = useState(() => {
+    const u = typeof window !== "undefined" ? loadUser() : null;
+    const track = getTrack(u?.track);
+    return [...QUESTION_BANK[track.id]].sort(() => Math.random() - 0.5);
+  });
   const [gameState, setGameState] = useState<GameState>("lobby");
   const [currentQ, setCurrentQ] = useState(0);
   const [myScore, setMyScore] = useState(0);
@@ -80,16 +84,11 @@ export default function ArenaPage() {
   const [timeLeft, setTimeLeft] = useState(15);
   const [bot, setBot] = useState({ name: "سعود" });
   const [botFlash, setBotFlash] = useState(false);
-  const [myName, setMyName] = useState("أنت");
+  const [myName] = useState(() => {
+    const u = typeof window !== "undefined" ? loadUser() : null;
+    return u?.name ?? "أنت";
+  });
   const rewardedRef = useRef(false);
-
-  useEffect(() => {
-    const u = loadUser();
-    setMyName(u?.name ?? "أنت");
-    const track = getTrack(u?.track);
-    const qs = [...QUESTION_BANK[track.id]].sort(() => Math.random() - 0.5);
-    setQuestions(qs);
-  }, []);
 
   const startGame = () => {
     setBot({ name: BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)] });
@@ -129,7 +128,6 @@ export default function ArenaPage() {
       }
     }, 1000);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState, answered, timeLeft]);
 
   /* المنافس يجاوب بنفسه: بعد 3-9 ثوان، يصيب 55% */
@@ -144,7 +142,6 @@ export default function ArenaPage() {
       }
     }, delay);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState, currentQ, answered]);
 
   /* مكافأة الفوز — مرة وحدة لكل مباراة */

@@ -35,26 +35,24 @@ function timeAgo(ts: number): string {
 
 export default function CouncilPage() {
   const [activeTab, setActiveTab] = useState<"feed" | "clash">("feed");
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loaded, setLoaded] = useState(false);
-  const [track, setTrack] = useState<Track | null>(null);
-  const [userName, setUserName] = useState("");
+  const [posts, setPosts] = useState<Post[]>(() =>
+    typeof window !== "undefined" ? loadList<Post>(POSTS_KEY) : []
+  );
+  const [track] = useState<Track | null>(() => {
+    const u = typeof window !== "undefined" ? loadUser() : null;
+    return getTrack(u?.track);
+  });
+  const [userName] = useState(() => {
+    const u = typeof window !== "undefined" ? loadUser() : null;
+    return u?.name ?? "طالب";
+  });
   const [newPost, setNewPost] = useState("");
   const [newSubject, setNewSubject] = useState("عام");
   const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [replyText, setReplyText] = useState("");
 
-  useEffect(() => {
-    const u = loadUser();
-    setUserName(u?.name ?? "طالب");
-    const t = getTrack(u?.track);
-    setTrack(t);
-    setPosts(loadList<Post>(POSTS_KEY));
-    setLoaded(true);
-  }, []);
-
-  useEffect(() => { if (loaded) saveList(POSTS_KEY, posts); }, [posts, loaded]);
+  useEffect(() => { saveList(POSTS_KEY, posts); }, [posts]);
 
   const subjects = ["عام", ...(track?.subjects.map((s) => s.name) ?? [])];
 
@@ -159,7 +157,7 @@ export default function CouncilPage() {
           </div>
 
           {/* المنشورات */}
-          {loaded && posts.length === 0 && (
+          {posts.length === 0 && (
             <div className="text-center py-12">
               <p className="title-md text-[var(--text)] mb-2">المجلس هادئ</p>
               <p className="body-sm max-w-xs mx-auto">كن أول من يفتح النقاش — سؤال غلطت فيه، فايدة، أو تجربة مذاكرة.</p>

@@ -17,23 +17,22 @@ export default function Dome({
   compact?: boolean;
   hideControls?: boolean;
 }) {
-  const [stars, setStars] = useState<Star[]>([]);
+  const [stars] = useState<Star[]>(() =>
+    Array.from({ length: compact ? 16 : 30 }).map(() => ({
+      left: Math.random() * 100 + "%",
+      top: Math.random() * 85 + "%",
+      size: Math.random() * 1.8 + 1 + "px",
+      opacity: Math.random() * 0.5 + 0.2,
+      duration: 2 + Math.random() * 4 + "s",
+      delay: Math.random() * 4 + "s",
+    }))
+  );
   const [shootKey, setShootKey] = useState(0);
 
   useEffect(() => {
-    setStars(
-      Array.from({ length: compact ? 16 : 30 }).map(() => ({
-        left: Math.random() * 100 + "%",
-        top: Math.random() * 85 + "%",
-        size: Math.random() * 1.8 + 1 + "px",
-        opacity: Math.random() * 0.5 + 0.2,
-        duration: 2 + Math.random() * 4 + "s",
-        delay: Math.random() * 4 + "s",
-      }))
-    );
     const t = setInterval(() => setShootKey((k) => k + 1), 8000);
     return () => clearInterval(t);
-  }, [compact]);
+  }, []);
 
   return (
     <div className="dome">

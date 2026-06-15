@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { TRACKS, TRACK_GROUPS, getTrack, type TrackId } from "@/lib/tracks";
+import { TRACKS, TRACK_GROUPS, type TrackId } from "@/lib/tracks";
 import {
   loadUser, saveUser, loadStats, computeStreak,
   loadTheme, applyTheme, resetAll,
@@ -19,9 +19,9 @@ import type { FirebaseError } from "firebase/app";
 /* ─── زر البروفايل (يسار) + اللوحة المنزلقة ─── */
 
 export function ThemeToggle({ className = "" }: { className?: string }) {
-  const [theme, setTheme] = useState<Theme>("dark");
-
-  useEffect(() => { setTheme(loadTheme()); }, []);
+  const [theme, setTheme] = useState<Theme>(() =>
+    typeof window !== "undefined" ? loadTheme() : "dark"
+  );
 
   const toggle = () => {
     const next: Theme = theme === "dark" ? "light" : "dark";
@@ -160,8 +160,6 @@ export default function ProfileButton() {
     setActiveTracksState(next);
     syncUser({ track: primaryTrack });
   };
-
-  const track = getTrack(user?.track);
 
   const saveName = () => {
     if (!user || !editName.trim()) return;
