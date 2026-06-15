@@ -100,12 +100,11 @@ export default function LandingPage() {
       return !!user?.onboarded;
     } catch { return false; }
   });
-  const [checking] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [theme, setTheme] = useState<Theme>(() =>
     typeof window !== "undefined" ? loadTheme() : "dark"
   );
-  const rootRef = useReveal(!checking);
+  const rootRef = useReveal(true);
 
   /* المسجّل دخوله يُوجَّه مباشرة للتطبيق */
   useEffect(() => {
@@ -126,14 +125,6 @@ export default function LandingPage() {
     setTheme(next);
     applyTheme(next);
   };
-
-  if (checking) {
-    return (
-      <div className="min-h-dvh flex items-center justify-center">
-        <Logo className="font-black text-5xl" style={{ letterSpacing: "-1px" }} />
-      </div>
-    );
-  }
 
   const ctaHref = "/onboarding";
 
