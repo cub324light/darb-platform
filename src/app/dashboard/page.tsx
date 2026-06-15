@@ -12,6 +12,7 @@ import { syncUser } from "@/lib/firestore";
 import DayScheduler, { getEventsForDate } from "@/components/DayScheduler";
 import ExamDateButton from "@/components/ExamDateButton";
 import Calendar from "@/components/Calendar";
+import SaudiMap from "@/components/SaudiMap";
 
 const DAILY_TARGET = 200;
 
@@ -715,24 +716,7 @@ export default function DashboardPage() {
         );
 
       case "map": {
-        const REGIONS = [
-          { name: "الرياض",           cx: 178, cy: 185 },
-          { name: "مكة المكرمة",      cx: 88,  cy: 200 },
-          { name: "المدينة المنورة",   cx: 98,  cy: 142 },
-          { name: "القصيم",           cx: 153, cy: 130 },
-          { name: "المنطقة الشرقية",  cx: 238, cy: 158 },
-          { name: "عسير",             cx: 108, cy: 248 },
-          { name: "تبوك",             cx: 60,  cy: 85  },
-          { name: "حائل",             cx: 143, cy: 100 },
-          { name: "الحدود الشمالية",  cx: 153, cy: 52  },
-          { name: "جازان",            cx: 83,  cy: 278 },
-          { name: "نجران",            cx: 158, cy: 265 },
-          { name: "الباحة",           cx: 98,  cy: 230 },
-          { name: "الجوف",            cx: 103, cy: 55  },
-        ];
-
         const regionCounts = studiersData?.regions ?? {};
-        const maxCount = Math.max(1, ...Object.values(regionCounts));
 
         return (
           <section className="card">
@@ -747,47 +731,18 @@ export default function DashboardPage() {
                 </span>
               )}
             </div>
-            <div className="relative mx-auto" style={{ maxWidth: "280px" }}>
-              <svg viewBox="0 0 280 310" className="w-full" style={{ direction: "ltr" }}>
-                {/* خلفية */}
-                <rect x="0" y="0" width="280" height="310" fill="none" />
-                {REGIONS.map((r) => {
-                  const count = regionCounts[r.name] ?? 0;
-                  const intensity = count > 0 ? 0.2 + 0.8 * (count / maxCount) : 0;
-                  const fillColor = count > 0
-                    ? `color-mix(in srgb, var(--accent) ${Math.round(intensity * 80)}%, var(--surface2))`
-                    : "var(--surface2)";
-                  return (
-                    <g key={r.name}>
-                      <circle
-                        cx={r.cx} cy={r.cy} r={count > 0 ? 18 : 14}
-                        fill={fillColor}
-                        stroke={count > 0 ? "var(--accent)" : "var(--border)"}
-                        strokeWidth={count > 0 ? 1.5 : 1}
-                        opacity={count > 0 ? 1 : 0.5}
-                      />
-                      {count > 0 && (
-                        <text x={r.cx} y={r.cy + 1} textAnchor="middle" dominantBaseline="middle"
-                          fontSize="10" fontWeight="bold" fill="var(--accent-light)">
-                          {count}
-                        </text>
-                      )}
-                    </g>
-                  );
-                })}
-              </svg>
-              {/* Legend */}
-              <div className="mt-2 flex flex-wrap gap-2">
-                {REGIONS.filter((r) => (regionCounts[r.name] ?? 0) > 0).map((r) => (
-                  <span key={r.name} className="text-[11px] px-2 py-0.5 rounded-full font-medium"
-                    style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>
-                    {r.name}: {regionCounts[r.name]}
-                  </span>
-                ))}
-                {Object.keys(regionCounts).length === 0 && (
-                  <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>لا يوجد طلاب نشطون حالياً</p>
-                )}
-              </div>
+            <SaudiMap regionCounts={studiersData?.regions ?? {}} className="w-full" />
+            {/* Legend */}
+            <div className="mt-2 flex flex-wrap gap-2">
+              {Object.entries(regionCounts).filter(([, c]) => c > 0).map(([name, count]) => (
+                <span key={name} className="text-[11px] px-2 py-0.5 rounded-full font-medium"
+                  style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>
+                  {name}: {count}
+                </span>
+              ))}
+              {Object.keys(regionCounts).length === 0 && (
+                <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>لا يوجد طلاب نشطون حالياً</p>
+              )}
             </div>
           </section>
         );

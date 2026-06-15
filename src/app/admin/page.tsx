@@ -125,6 +125,13 @@ export default function AdminPage() {
   const [actionBusy, setActionBusy] = useState(false);
   const [actionMsg, setActionMsg]   = useState("");
 
+  /* ── قسم الإعلانات الرسمية ── */
+  const [announceTitle, setAnnounceTitle] = useState("");
+  const [announceContent, setAnnounceContent] = useState("");
+  const [announceBusy, setAnnounceBusy] = useState(false);
+  const [announceMsg, setAnnounceMsg] = useState("");
+  const [showAnnounce, setShowAnnounce] = useState(false);
+
   const callAction = async (mode: string, extra: Record<string, unknown>) => {
     const res = await fetch("/api/admin/users", {
       method: "POST",
@@ -170,6 +177,31 @@ export default function AdminPage() {
       } else setActionMsg(`❌ ${(data as Record<string,string>).error ?? "تعذّر الإيقاف"}`);
     } catch { setActionMsg("❌ خطأ في الاتصال"); }
     finally { setActionBusy(false); }
+  };
+
+  const postAnnouncement = async () => {
+    if (!announceTitle.trim() || !announceContent.trim()) return;
+    setAnnounceBusy(true); setAnnounceMsg("");
+    try {
+      const res = await fetch("/api/social", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "announce",
+          password: pass,
+          title: announceTitle.trim(),
+          content: announceContent.trim(),
+        }),
+      });
+      const data = await res.json() as { ok?: boolean; error?: string };
+      if (data.ok) {
+        setAnnounceMsg("✅ تم نشر الإعلان بنجاح");
+        setAnnounceTitle(""); setAnnounceContent("");
+      } else {
+        setAnnounceMsg(`❌ ${data.error ?? "تعذّر النشر"}`);
+      }
+    } catch { setAnnounceMsg("❌ خطأ في الاتصال"); }
+    finally { setAnnounceBusy(false); }
   };
 
   /* تصدير كل المستخدمين إلى ملف CSV (يفتح في Excel) */
@@ -319,6 +351,41 @@ export default function AdminPage() {
             <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{s.label}</p>
           </div>
         ))}
+      </div>
+
+      {/* قسم الإعلانات الرسمية */}
+      <div className="max-w-7xl mx-auto mb-6">
+        <button onClick={() => setShowAnnounce(v => !v)}
+          className="flex items-center gap-2 mb-3 font-black text-[15px]"
+          style={{ color: "var(--text)" }}>
+          📢 الإعلانات الرسمية
+          <span style={{ color: "var(--text-muted)" }}>{showAnnounce ? "▲" : "▼"}</span>
+        </button>
+
+        {showAnnounce && (
+          <div className="rounded-2xl p-5 flex flex-col gap-3"
+            style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+            <input value={announceTitle} onChange={e => setAnnounceTitle(e.target.value)}
+              placeholder="عنوان الإعلان..."
+              className="w-full rounded-xl px-4 py-3 text-[15px] outline-none"
+              style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
+            <textarea value={announceContent} onChange={e => setAnnounceContent(e.target.value)}
+              placeholder="محتوى الإعلان..."
+              rows={3}
+              className="w-full rounded-xl px-4 py-3 text-[15px] outline-none resize-none"
+              style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
+            <button onClick={postAnnouncement} disabled={announceBusy || !announceTitle.trim() || !announceContent.trim()}
+              className="px-6 py-3 rounded-xl font-bold text-white self-start transition"
+              style={{ background: "var(--accent)", opacity: (announceBusy || !announceTitle.trim() || !announceContent.trim()) ? 0.5 : 1 }}>
+              {announceBusy ? "جاري النشر..." : "نشر الإعلان 📢"}
+            </button>
+            {announceMsg && (
+              <p className="text-[13px] font-semibold" style={{ color: announceMsg.startsWith("✅") ? "var(--success)" : "var(--danger)" }}>
+                {announceMsg}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* الجدول */}

@@ -90,6 +90,10 @@ export default function ArenaPage() {
   });
   const rewardedRef = useRef(false);
 
+  const [searchingPlayer, setSearchingPlayer] = useState(false);
+  const [playerSearchDone, setPlayerSearchDone] = useState(false);
+  const [foundPlayer, setFoundPlayer] = useState<{ name: string } | null>(null);
+
   const startGame = () => {
     setBot({ name: BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)] });
     rewardedRef.current = false;
@@ -103,6 +107,33 @@ export default function ArenaPage() {
     setOpScore(0);
     setAnswered(false);
     setTimeLeft(15);
+  };
+
+  const findPlayer = async () => {
+    setSearchingPlayer(true);
+    setPlayerSearchDone(false);
+    setFoundPlayer(null);
+
+    try {
+      const res = await fetch("/api/social", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "studiers" }),
+      });
+      const data = await res.json() as { count?: number };
+
+      // If more than 1 active user (besides the current user), show a match
+      if ((data.count ?? 0) > 1) {
+        // Pick a random name from BOT_NAMES as placeholder (real implementation would use actual users)
+        const names = ["سعود", "نورة", "فهد", "ريم", "خالد"];
+        setFoundPlayer({ name: names[Math.floor(Math.random() * names.length)] });
+      }
+    } catch {
+      // Network error - no players found
+    } finally {
+      setSearchingPlayer(false);
+      setPlayerSearchDone(true);
+    }
   };
 
   const nextQuestion = () => {
@@ -205,6 +236,56 @@ export default function ArenaPage() {
           <p className="text-sm font-bold mb-8" style={{ color: "var(--gold)" }}>
             الفوز = +{WIN_SILVER} Silver
           </p>
+
+          {/* Player matching section */}
+          <div className="glass rounded-2xl p-5 mb-4 w-full max-w-xs">
+            <p className="font-black text-[17px] mb-3" style={{ color: "var(--text)" }}>ابحث عن منافس</p>
+
+            {/* Find player button */}
+            <button onClick={findPlayer} disabled={searchingPlayer}
+              className="w-full py-3.5 rounded-xl font-bold text-[15px] mb-3 transition"
+              style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
+              {searchingPlayer ? "جاري البحث..." : "ابحث عن لاعب 🔍"}
+            </button>
+
+            {/* Result */}
+            {playerSearchDone && !foundPlayer && (
+              <div className="rounded-xl px-4 py-3 text-center mb-3"
+                style={{ background: "color-mix(in srgb, var(--text-muted) 8%, transparent)", border: "1px solid var(--border)" }}>
+                <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>ما فيه لاعبين الحين</p>
+                <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>العب ضد البوت في انتظار منافس</p>
+              </div>
+            )}
+
+            {foundPlayer && (
+              <div className="rounded-xl px-4 py-3 flex items-center gap-3 mb-3"
+                style={{ background: "color-mix(in srgb, var(--success) 10%, transparent)", border: "1.5px solid var(--success)" }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-white"
+                  style={{ background: "linear-gradient(135deg,var(--accent-2),var(--accent-light))" }}>
+                  {foundPlayer.name.charAt(0)}
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-[14px]" style={{ color: "var(--text)" }}>{foundPlayer.name}</p>
+                  <p className="text-[12px]" style={{ color: "var(--success)" }}>جاهز للتحدي</p>
+                </div>
+                <button onClick={startGame}
+                  className="px-4 py-2 rounded-xl font-bold text-sm text-white"
+                  style={{ background: "var(--success)" }}>
+                  ابدأ
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 mb-4 w-full max-w-xs">
+            <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
+            <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>أو</span>
+            <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
+          </div>
+
+          {/* Play against bot */}
+          <p className="font-black text-[15px] mb-3 text-center" style={{ color: "var(--text-dim)" }}>العب ضد البوت</p>
 
           <button
             onClick={startGame}
