@@ -1,7 +1,17 @@
 "use client";
 import { useState } from "react";
+import { CHAT_GROUPS, groupName } from "@/lib/groups";
 
 type PlanId = "free" | "shaheen" | "anqa";
+
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  groupId: string;
+  pinned: boolean;
+  createdAt?: { seconds: number };
+}
 
 interface AdminUser {
   id: string;
@@ -107,6 +117,7 @@ export default function AdminPage() {
       if (!ok) { setError(data.error as string ?? "حدث خطأ"); return; }
       setUsers((data.users as AdminUser[]) ?? []);
       setAuthed(true);
+      loadAnnouncements();
     } catch (e) { setError(`تعذّر الوصول للخادم: ${e instanceof Error ? e.message : "تحقّق من الإنترنت"}`); }
     finally { setLoading(false); }
   };
@@ -138,9 +149,70 @@ export default function AdminPage() {
   /* ── قسم الإعلانات الرسمية ── */
   const [announceTitle, setAnnounceTitle] = useState("");
   const [announceContent, setAnnounceContent] = useState("");
+  const [announceGroup, setAnnounceGroup] = useState("all");
+  const [announcePinned, setAnnouncePinned] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [announceBusy, setAnnounceBusy] = useState(false);
   const [announceMsg, setAnnounceMsg] = useState("");
   const [showAnnounce, setShowAnnounce] = useState(true);
+  const [annList, setAnnList] = useState<Announcement[]>([]);
+
+  /* جلب الإعلانات السابقة (قراءة عامة، بلا كلمة سر) */
+  const loadAnnouncements = async () => {
+    try {
+      const res = await fetch("/api/social", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "getAnnouncements" }),
+      });
+      const data = await res.json() as { announcements?: Announcement[] };
+      setAnnList(data.announcements ?? []);
+    } catch { /* تجاهل */ }
+  };
+
+  const startEdit = (a: Announcement) => {
+    setEditingId(a.id);
+    setAnnounceTitle(a.title);
+    setAnnounceContent(a.content);
+    setAnnounceGroup(a.groupId || "all");
+    setAnnouncePinned(a.pinned);
+    setAnnounceMsg("");
+    setShowAnnounce(true);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setAnnounceTitle(""); setAnnounceContent("");
+    setAnnounceGroup("all"); setAnnouncePinned(false);
+    setAnnounceMsg("");
+  };
+
+  const togglePin = async (a: Announcement) => {
+    try {
+      const res = await fetch("/api/social", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "pinAnnouncement", password: pass, id: a.id, pinned: !a.pinned }),
+      });
+      const data = await res.json() as { ok?: boolean; error?: string };
+      if (data.ok) loadAnnouncements();
+      else setAnnounceMsg(`❌ ${data.error ?? "تعذّر التثبيت"}`);
+    } catch { setAnnounceMsg("❌ خطأ في الاتصال"); }
+  };
+
+  const deleteAnnouncement = async (a: Announcement) => {
+    if (!confirm(`حذف الإعلان «${a.title}»؟`)) return;
+    try {
+      const res = await fetch("/api/social", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "deleteAnnouncement", password: pass, id: a.id }),
+      });
+      const data = await res.json() as { ok?: boolean; error?: string };
+      if (data.ok) { if (editingId === a.id) cancelEdit(); loadAnnouncements(); }
+      else setAnnounceMsg(`❌ ${data.error ?? "تعذّر الحذف"}`);
+    } catch { setAnnounceMsg("❌ خطأ في الاتصال"); }
+  };
 
   const callAction = async (mode: string, extra: Record<string, unknown>) => {
     const res = await fetch("/api/admin/users", {
@@ -196,17 +268,29 @@ export default function AdminPage() {
       const res = await fetch("/api/social", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: JSON.stringify(editingId ? {
+          mode: "editAnnouncement",
+          password: pass,
+          id: editingId,
+          title: announceTitle.trim(),
+          content: announceContent.trim(),
+          groupId: announceGroup,
+        } : {
           mode: "announce",
           password: pass,
           title: announceTitle.trim(),
           content: announceContent.trim(),
+          groupId: announceGroup,
+          pinned: announcePinned,
         }),
       });
       const data = await res.json() as { ok?: boolean; error?: string };
       if (data.ok) {
-        setAnnounceMsg("✅ تم نشر الإعلان بنجاح");
+        setAnnounceMsg(editingId ? "✅ تم تعديل الإعلان" : "✅ تم نشر الإعلان بنجاح");
+        setEditingId(null);
         setAnnounceTitle(""); setAnnounceContent("");
+        setAnnounceGroup("all"); setAnnouncePinned(false);
+        loadAnnouncements();
       } else {
         setAnnounceMsg(`❌ ${data.error ?? "تعذّر النشر"}`);
       }
@@ -402,27 +486,107 @@ export default function AdminPage() {
         </button>
 
         {showAnnounce && (
-          <div className="rounded-2xl p-5 flex flex-col gap-3"
-            style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-            <input value={announceTitle} onChange={e => setAnnounceTitle(e.target.value)}
-              placeholder="عنوان الإعلان..."
-              className="w-full rounded-xl px-4 py-3 text-[15px] outline-none"
-              style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
-            <textarea value={announceContent} onChange={e => setAnnounceContent(e.target.value)}
-              placeholder="محتوى الإعلان..."
-              rows={3}
-              className="w-full rounded-xl px-4 py-3 text-[15px] outline-none resize-none"
-              style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
-            <button onClick={postAnnouncement} disabled={announceBusy || !announceTitle.trim() || !announceContent.trim()}
-              className="px-6 py-3 rounded-xl font-bold text-white self-start transition"
-              style={{ background: "var(--accent)", opacity: (announceBusy || !announceTitle.trim() || !announceContent.trim()) ? 0.5 : 1 }}>
-              {announceBusy ? "جاري النشر..." : "نشر الإعلان 📢"}
-            </button>
-            {announceMsg && (
-              <p className="text-[13px] font-semibold" style={{ color: announceMsg.startsWith("✅") ? "var(--success)" : "var(--danger)" }}>
-                {announceMsg}
+          <div className="flex flex-col gap-4">
+            {/* نموذج النشر / التعديل */}
+            <div className="rounded-2xl p-5 flex flex-col gap-3"
+              style={{ background: "var(--surface)", border: editingId ? "1.5px solid var(--accent)" : "1.5px solid var(--border)" }}>
+              {editingId && (
+                <p className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>✏️ تعديل إعلان</p>
+              )}
+              <input value={announceTitle} onChange={e => setAnnounceTitle(e.target.value)}
+                placeholder="عنوان الإعلان..."
+                className="w-full rounded-xl px-4 py-3 text-[15px] outline-none"
+                style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
+              <textarea value={announceContent} onChange={e => setAnnounceContent(e.target.value)}
+                placeholder="محتوى الإعلان..."
+                rows={3}
+                className="w-full rounded-xl px-4 py-3 text-[15px] outline-none resize-none"
+                style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
+
+              {/* اختيار القروب + التثبيت */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <label className="flex items-center gap-2 text-[13px]" style={{ color: "var(--text-dim)" }}>
+                  القروب:
+                  <select value={announceGroup} onChange={e => setAnnounceGroup(e.target.value)}
+                    className="rounded-xl px-3 py-2 text-[14px] outline-none"
+                    style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
+                    <option value="all">📣 الكل (يظهر بكل القروبات)</option>
+                    {CHAT_GROUPS.map(g => (
+                      <option key={g.id} value={g.id}>{g.icon} {g.name}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex items-center gap-2 text-[14px] font-semibold cursor-pointer" style={{ color: "var(--text-dim)" }}>
+                  <input type="checkbox" checked={announcePinned} onChange={e => setAnnouncePinned(e.target.checked)}
+                    style={{ width: 18, height: 18, accentColor: "var(--gold)" }} />
+                  📌 تثبيت
+                </label>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button onClick={postAnnouncement} disabled={announceBusy || !announceTitle.trim() || !announceContent.trim()}
+                  className="px-6 py-3 rounded-xl font-bold text-white transition"
+                  style={{ background: "var(--accent)", opacity: (announceBusy || !announceTitle.trim() || !announceContent.trim()) ? 0.5 : 1 }}>
+                  {announceBusy ? "جارٍ الحفظ..." : editingId ? "حفظ التعديل ✓" : "نشر الإعلان 📢"}
+                </button>
+                {editingId && (
+                  <button onClick={cancelEdit}
+                    className="px-4 py-3 rounded-xl font-bold transition"
+                    style={{ background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-dim)" }}>
+                    إلغاء
+                  </button>
+                )}
+              </div>
+              {announceMsg && (
+                <p className="text-[13px] font-semibold" style={{ color: announceMsg.startsWith("✅") ? "var(--success)" : "var(--danger)" }}>
+                  {announceMsg}
+                </p>
+              )}
+            </div>
+
+            {/* قائمة الإعلانات السابقة */}
+            <div className="flex flex-col gap-2">
+              <p className="text-[13px] font-bold" style={{ color: "var(--text-muted)" }}>
+                الإعلانات المنشورة ({annList.length})
               </p>
-            )}
+              {annList.length === 0 ? (
+                <p className="text-[13px] py-4 text-center" style={{ color: "var(--text-muted)" }}>لا توجد إعلانات بعد</p>
+              ) : annList.map(a => (
+                <div key={a.id} className="rounded-2xl p-4 flex flex-col gap-2"
+                  style={{ background: "var(--surface)", border: a.pinned ? "1.5px solid var(--gold)" : "1px solid var(--border)" }}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-[15px] flex items-center gap-1.5" style={{ color: "var(--text)" }}>
+                        {a.pinned && <span title="مثبّت">📌</span>}
+                        <span className="truncate">{a.title}</span>
+                      </p>
+                      <p className="text-[13px] mt-1 whitespace-pre-wrap" style={{ color: "var(--text-dim)" }}>{a.content}</p>
+                    </div>
+                    <span className="text-[11px] px-2 py-0.5 rounded-full font-bold flex-shrink-0"
+                      style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>
+                      {groupName(a.groupId)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button onClick={() => togglePin(a)}
+                      className="text-[12px] font-bold px-3 py-1.5 rounded-lg transition"
+                      style={{ background: "color-mix(in srgb, var(--gold) 12%, transparent)", border: "1px solid color-mix(in srgb, var(--gold) 40%, var(--border))", color: "var(--gold)" }}>
+                      {a.pinned ? "إلغاء التثبيت" : "📌 تثبيت"}
+                    </button>
+                    <button onClick={() => startEdit(a)}
+                      className="text-[12px] font-bold px-3 py-1.5 rounded-lg transition"
+                      style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--accent) 35%, var(--border))", color: "var(--accent-light)" }}>
+                      ✏️ تعديل
+                    </button>
+                    <button onClick={() => deleteAnnouncement(a)}
+                      className="text-[12px] font-bold px-3 py-1.5 rounded-lg transition"
+                      style={{ background: "color-mix(in srgb, var(--danger) 10%, transparent)", border: "1px solid var(--danger)", color: "var(--danger)" }}>
+                      🗑 حذف
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

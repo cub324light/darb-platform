@@ -12,6 +12,7 @@ import Dome from "@/components/Dome";
 import FriendsPanel from "@/components/FriendsPanel";
 import { loadUser } from "@/lib/storage";
 import type { TrackId } from "@/lib/tracks";
+import { CHAT_GROUPS, type ChatGroup } from "@/lib/groups";
 
 /* ─── بيانات ─── */
 interface ChatMessage {
@@ -21,28 +22,8 @@ interface ChatMessage {
   content: string;
   createdAt: number; // ms
   isOfficial?: boolean;
+  pinned?: boolean;
 }
-
-interface ChatGroup {
-  id: string;
-  name: string;
-  icon: string;
-  description: string;
-  trackId?: string;
-}
-
-const CHAT_GROUPS: ChatGroup[] = [
-  { id: "general",       name: "عام",          icon: "💬", description: "نقاش عام لجميع الطلاب" },
-  { id: "tahsili",       name: "تحصيلي",       icon: "📚", description: "طلاب مسار التحصيلي",          trackId: "تحصيلي" },
-  { id: "tahsili-early", name: "تحصيلي مبكر",  icon: "🌱", description: "طلاب التحصيلي المبكر",        trackId: "تحصيلي مبكر" },
-  { id: "qudurat",       name: "قدرات",        icon: "💡", description: "طلاب مسار القدرات",            trackId: "قدرات" },
-  { id: "cpc",           name: "أرامكو CPC",   icon: "🏆", description: "Computer Programming Contest", trackId: "CPC" },
-  { id: "itc",           name: "ITC",          icon: "💻", description: "طلاب اختبار ITC",              trackId: "ITC" },
-  { id: "ielts",         name: "آيلتس",        icon: "🌍", description: "IELTS preparation group",      trackId: "ايلتس" },
-  { id: "step",          name: "ستيب",         icon: "📖", description: "STEP preparation group",       trackId: "ستيب" },
-  { id: "toefl",         name: "توفل",         icon: "🗽", description: "TOEFL preparation group",      trackId: "توفل" },
-  { id: "duolingo",      name: "دووليجو",      icon: "🦉", description: "Duolingo English Test",        trackId: "دوليقو" },
-];
 
 /* ─── أداة الوقت ─── */
 function timeAgo(ms: number): string {
@@ -144,14 +125,14 @@ export default function CouncilPage() {
       }
     }, () => setMsgLoading(false));
 
-    // جلب الإعلانات الرسمية
+    // جلب الإعلانات الرسمية الخاصة بهذا القروب (+ إعلانات «الكل»)
     fetch("/api/social", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode: "getAnnouncements" }),
+      body: JSON.stringify({ mode: "getAnnouncements", groupId: group.id }),
     })
       .then((r) => r.json())
-      .then((d: { announcements?: { id: string; title: string; content: string; createdAt?: { seconds: number } }[] }) => {
+      .then((d: { announcements?: { id: string; title: string; content: string; pinned?: boolean; createdAt?: { seconds: number } }[] }) => {
         if (d.announcements) {
           setOfficialMessages(
             d.announcements.map((a) => ({
@@ -161,6 +142,7 @@ export default function CouncilPage() {
               content: `${a.title}\n${a.content}`,
               createdAt: a.createdAt?.seconds ? a.createdAt.seconds * 1000 : Date.now(),
               isOfficial: true,
+              pinned: a.pinned === true,
             }))
           );
         }
@@ -326,7 +308,7 @@ export default function CouncilPage() {
                       {!isMine && (
                         <p className="text-[11px] font-bold"
                           style={{ color: msg.isOfficial ? "var(--gold)" : "var(--accent-light)" }}>
-                          {msg.isOfficial ? "درب الرسمي" : msg.name}
+                          {msg.pinned ? "📌 " : ""}{msg.isOfficial ? "درب الرسمي" : msg.name}
                         </p>
                       )}
                       <div className="rounded-2xl px-3 py-2.5"
