@@ -237,66 +237,75 @@ function NextStepOverlay({
 
 /* ═══════════════════════════════════════════════════════ */
 export default function RoadmapPage() {
-  const [primaryTrack, setPrimaryTrack] = useState<Track | null>(null);
-  const [done, setDone]               = useState<string[]>([]);
-  const [custom, setCustom]           = useState<CustomLesson[]>([]);
-  const [loaded, setLoaded]           = useState(false);
+  const [primaryTrack, setPrimaryTrack] = useState<Track | null>(() => {
+    if (typeof window === "undefined") return null;
+    return getTrack(loadUser()?.track);
+  });
+  const [done, setDone] = useState<string[]>(() =>
+    typeof window !== "undefined" ? loadList<string>(DONE_KEY) : []
+  );
+  const [custom, setCustom] = useState<CustomLesson[]>(() =>
+    typeof window !== "undefined" ? loadList<CustomLesson>(CUSTOM_KEY) : []
+  );
 
   const [selected, setSelected]       = useState<string | null>(null);
   const [drillPhase, setDrillPhase]   = useState<"tasees" | "tadreeb">("tasees");
   const [newLesson, setNewLesson]     = useState("");
   const [newTraining, setNewTraining] = useState("");
 
-  const [examDate, setExamDate]             = useState<string | null>(null);
-  const [events, setEvents]                 = useState<ScheduleEvent[]>([]);
+  const [examDate, setExamDate] = useState<string | null>(() =>
+    typeof window !== "undefined" ? loadExamDate() : null
+  );
+  const [events, setEvents] = useState<ScheduleEvent[]>(() =>
+    typeof window !== "undefined" ? loadEvents() : []
+  );
   const [schedulerDate, setSchedulerDate]   = useState<string | null>(null);
   const [schedTab, setSchedTab]             = useState<"manual" | "ai">("manual");
 
-  const [examFlow, setExamFlow]           = useState<ExamFlow>({});
-  const [stageReviews, setStageReviews]   = useState<StageReviews>({});
+  const [examFlow, setExamFlow] = useState<ExamFlow>(() =>
+    typeof window !== "undefined" ? loadExamFlow() : {}
+  );
+  const [stageReviews, setStageReviews] = useState<StageReviews>(() =>
+    typeof window !== "undefined" ? loadStageReviews() : {}
+  );
   const [gradeInput, setGradeInput]       = useState("");
   const [showNextStep, setShowNextStep]   = useState(false);
 
-  const [tadreebItems, setTadreebItems] = useState<TrainingItem[]>([]);
-  const [tadreebDone, setTadreebDone]   = useState<string[]>([]);
-  const [tasreebatPct, setTasreebatPct] = useState(0);
-  const [trackExamDates, setTrackExamDates] = useState<Record<string, string>>({});
-  const [activeTrackIds, setActiveTrackIds] = useState<TrackId[]>([]);
-  const [testTab, setTestTab] = useState<TrackId | "all">("all");
-
-  useEffect(() => {
+  const [tadreebItems, setTadreebItems] = useState<TrainingItem[]>(() =>
+    typeof window !== "undefined" ? loadTadreebItems() : []
+  );
+  const [tadreebDone, setTadreebDone] = useState<string[]>(() =>
+    typeof window !== "undefined" ? loadTadreebDone() : []
+  );
+  const [tasreebatPct, setTasreebatPct] = useState<number>(() =>
+    typeof window !== "undefined" ? loadTasreebatPct() : 0
+  );
+  const [trackExamDates, setTrackExamDates] = useState<Record<string, string>>(() =>
+    typeof window !== "undefined" ? loadTrackExamDates() : {}
+  );
+  const [activeTrackIds, setActiveTrackIds] = useState<TrackId[]>(() => {
+    if (typeof window === "undefined") return [];
     const u = loadUser();
-    setPrimaryTrack(getTrack(u?.track));
-    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
-    setActiveTrackIds(ids);
-    // افتراضياً نعرض الاختبار الأساسي (خريطته كاملة) و«الكل» يدمج
-    if (u?.track) setTestTab(u.track as TrackId);
-    setDone(loadList<string>(DONE_KEY));
-    setCustom(loadList<CustomLesson>(CUSTOM_KEY));
-    setExamDate(loadExamDate());
-    setEvents(loadEvents());
-    setExamFlow(loadExamFlow());
-    setStageReviews(loadStageReviews());
-    setTadreebItems(loadTadreebItems());
-    setTadreebDone(loadTadreebDone());
-    setTasreebatPct(loadTasreebatPct());
-    setTrackExamDates(loadTrackExamDates());
-    setLoaded(true);
-  }, []);
+    return (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+  });
+  const [testTab, setTestTab] = useState<TrackId | "all">(() => {
+    if (typeof window === "undefined") return "all";
+    return (loadUser()?.track as TrackId) ?? "all";
+  });
 
-  useEffect(() => { if (loaded) saveList(DONE_KEY, done); }, [done, loaded]);
-  useEffect(() => { if (loaded) saveList(CUSTOM_KEY, custom); }, [custom, loaded]);
-  useEffect(() => { if (loaded) saveTadreebItems(tadreebItems); }, [tadreebItems, loaded]);
-  useEffect(() => { if (loaded) saveTadreebDone(tadreebDone); }, [tadreebDone, loaded]);
+  useEffect(() => { saveList(DONE_KEY, done); }, [done]);
+  useEffect(() => { saveList(CUSTOM_KEY, custom); }, [custom]);
+  useEffect(() => { saveTadreebItems(tadreebItems); }, [tadreebItems]);
+  useEffect(() => { saveTadreebDone(tadreebDone); }, [tadreebDone]);
 
   /* مزامنة نسب التقدم مع Firestore — تظهر في لوحة الأدمن (للمسار الأساسي) */
   const progress = primaryTrack ? computeProgress(primaryTrack, done, custom, tadreebItems, tadreebDone) : null;
   const taseesSync = progress?.taseesPct ?? -1;
   const tadreebSync = progress?.tadreebPct ?? -1;
   useEffect(() => {
-    if (!loaded || taseesSync < 0) return;
+    if (taseesSync < 0) return;
     syncUser({ taseesProgress: taseesSync, tadreebProgress: tadreebSync });
-  }, [loaded, taseesSync, tadreebSync]);
+  }, [taseesSync, tadreebSync]);
 
   if (!primaryTrack) return <div className="min-h-dvh" />;
 
