@@ -19,20 +19,40 @@ export interface BadgeDef {
   id: string;
   label: string;
   icon: string;
-  desc: string;
+  desc: string;   // كيف تحصل عليها
+  goal: number;   // الهدف المطلوب
+  unit: string;   // وحدة القياس
 }
 
 export const BADGE_DEFS: BadgeDef[] = [
-  { id: "first_session", label: "الشعلة الأولى",  icon: "🔥", desc: "أتممت أول جلسة تركيز" },
-  { id: "streak_7",      label: "أسبوع منتظم",   icon: "📅", desc: "٧ أيام ستريك متتالية" },
-  { id: "streak_30",     label: "الأسطورة",       icon: "🏆", desc: "٣٠ يوماً متتالياً" },
-  { id: "hours_10",      label: "عشر ساعات",      icon: "⏱",  desc: "١٠ ساعات تركيز" },
-  { id: "hours_50",      label: "خمسون ساعة",     icon: "💎", desc: "٥٠ ساعة تركيز" },
-  { id: "silver_100",    label: "مئوي",           icon: "🥈", desc: "١٠٠ فضة" },
-  { id: "silver_1000",   label: "ملك الفضة",      icon: "👑", desc: "١٠٠٠ فضة" },
-  { id: "vault_10",      label: "صيّاد الأخطاء",  icon: "🔍", desc: "١٠ أخطاء في الخزنة" },
-  { id: "sessions_20",   label: "مثابر",          icon: "💪", desc: "٢٠ جلسة مكتملة" },
+  { id: "first_session", label: "الشعلة الأولى",  icon: "🔥", desc: "أتمم أول جلسة تركيز",        goal: 1,    unit: "جلسة" },
+  { id: "streak_7",      label: "أسبوع منتظم",   icon: "📅", desc: "ذاكر ٧ أيام متتالية",         goal: 7,    unit: "يوم" },
+  { id: "streak_30",     label: "الأسطورة",       icon: "🏆", desc: "ذاكر ٣٠ يوماً متتالياً",      goal: 30,   unit: "يوم" },
+  { id: "hours_10",      label: "عشر ساعات",      icon: "⏱",  desc: "اجمع ١٠ ساعات تركيز",         goal: 10,   unit: "ساعة" },
+  { id: "hours_50",      label: "خمسون ساعة",     icon: "💎", desc: "اجمع ٥٠ ساعة تركيز",          goal: 50,   unit: "ساعة" },
+  { id: "silver_100",    label: "مئوي",           icon: "🥈", desc: "اجمع ١٠٠ فضة",                goal: 100,  unit: "فضة" },
+  { id: "silver_1000",   label: "ملك الفضة",      icon: "👑", desc: "اجمع ١٠٠٠ فضة",               goal: 1000, unit: "فضة" },
+  { id: "vault_10",      label: "صيّاد الأخطاء",  icon: "🔍", desc: "سجّل ١٠ أخطاء في الخزنة",     goal: 10,   unit: "خطأ" },
+  { id: "sessions_20",   label: "مثابر",          icon: "💪", desc: "أكمل ٢٠ جلسة تركيز",          goal: 20,   unit: "جلسة" },
 ];
+
+/* القيمة الحالية للطالب تجاه كل شارة (للشريط) */
+export function getBadgeCurrent(id: string, stats: DarbStats, vaultCount: number): number {
+  const streak = computeStreakDays(stats);
+  const hours = Math.floor(stats.totalFocusMins / 60);
+  switch (id) {
+    case "first_session": return Math.min(stats.sessionsCount, 1);
+    case "streak_7":
+    case "streak_30":     return streak;
+    case "hours_10":
+    case "hours_50":      return hours;
+    case "silver_100":
+    case "silver_1000":   return stats.silver;
+    case "vault_10":      return vaultCount;
+    case "sessions_20":   return stats.sessionsCount;
+    default:              return 0;
+  }
+}
 
 export function computeXP(stats: DarbStats): number {
   return (

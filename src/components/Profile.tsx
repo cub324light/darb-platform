@@ -11,7 +11,7 @@ import {
 import { syncUser } from "@/lib/firestore";
 import { getPlan, PLAN_NAMES, PLAN_COLORS } from "@/lib/plan";
 import type { PlanId } from "@/lib/types";
-import { computeXP, getLevel, getUnlockedBadgeIds, BADGE_DEFS } from "@/lib/xp";
+import { computeXP, getLevel, getUnlockedBadgeIds, getBadgeCurrent, BADGE_DEFS } from "@/lib/xp";
 
 /* ─── زر البروفايل (يسار) + اللوحة المنزلقة ─── */
 
@@ -42,6 +42,7 @@ export default function ProfileButton() {
   const [rawStats, setRawStats] = useState<DarbStats | null>(null);
   const [vaultCount, setVaultCount] = useState(0);
   const [planId, setPlanId] = useState<PlanId>("free");
+  const [openBadge, setOpenBadge] = useState<string | null>(null);
 
   // نتائجي
   const [results, setResults] = useState<ExamResult[]>([]);
@@ -202,26 +203,64 @@ export default function ProfileButton() {
             {/* الشارات */}
             {rawStats && (() => {
               const unlockedIds = new Set(getUnlockedBadgeIds(rawStats, vaultCount));
+              const active = openBadge ? BADGE_DEFS.find((b) => b.id === openBadge) : null;
+              const activeUnlocked = active ? unlockedIds.has(active.id) : false;
+              const current = active ? getBadgeCurrent(active.id, rawStats, vaultCount) : 0;
+              const pct = active ? Math.min(100, Math.round((current / active.goal) * 100)) : 0;
               return (
                 <div className="mb-6">
-                  <p className="label mb-3">شاراتك</p>
+                  <p className="label mb-1">شاراتك</p>
+                  <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>اضغط أي شارة لتعرف كيف تكسبها وكم بقي عليك</p>
                   <div className="grid grid-cols-3 gap-2">
                     {BADGE_DEFS.map((b) => {
                       const unlocked = unlockedIds.has(b.id);
+                      const isOpen = openBadge === b.id;
                       return (
-                        <div key={b.id}
-                          className="rounded-2xl p-3 flex flex-col items-center gap-1 text-center"
+                        <button key={b.id}
+                          onClick={() => setOpenBadge(isOpen ? null : b.id)}
+                          className="relative rounded-2xl p-3 flex flex-col items-center gap-1 text-center transition active:scale-[0.97]"
                           style={{
                             background: unlocked ? "color-mix(in srgb, var(--accent) 10%, var(--surface2))" : "var(--surface2)",
-                            border: `1.5px solid ${unlocked ? "color-mix(in srgb, var(--accent) 40%, transparent)" : "var(--border)"}`,
-                            opacity: unlocked ? 1 : 0.4,
+                            border: `1.5px solid ${isOpen ? "var(--accent)" : unlocked ? "color-mix(in srgb, var(--accent) 40%, transparent)" : "var(--border)"}`,
+                            opacity: unlocked ? 1 : 0.5,
                           }}>
+                          {/* علامة الاستفسار */}
+                          <span className="absolute top-1.5 left-1.5 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-black"
+                            style={{ background: "var(--border)", color: "var(--text-muted)" }}>؟</span>
                           <span className="text-2xl">{b.icon}</span>
                           <p className="text-[12px] font-bold leading-tight" style={{ color: unlocked ? "var(--text)" : "var(--text-muted)" }}>{b.label}</p>
-                        </div>
+                        </button>
                       );
                     })}
                   </div>
+
+                  {/* تفاصيل الشارة المختارة: كيف تكسبها + التقدّم */}
+                  {active && (
+                    <div className="rounded-2xl px-4 py-4 mt-3"
+                      style={{ background: "var(--surface2)", border: "1.5px solid var(--accent)" }}>
+                      <div className="flex items-center gap-3 mb-3">
+                        <span className="text-2xl">{active.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-black text-[15px]" style={{ color: "var(--text)" }}>{active.label}</p>
+                          <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>{active.desc}</p>
+                        </div>
+                        {activeUnlocked && (
+                          <span className="text-[12px] font-bold px-2 py-1 rounded-full flex-shrink-0"
+                            style={{ background: "color-mix(in srgb, var(--accent) 15%, transparent)", color: "var(--accent-light)" }}>✓ مكتملة</span>
+                        )}
+                      </div>
+                      <div className="w-full rounded-full h-2.5 overflow-hidden mb-1.5" style={{ background: "var(--border)" }}>
+                        <div className="h-full rounded-full transition-all"
+                          style={{ width: `${pct}%`, background: activeUnlocked ? "var(--gold)" : "var(--accent)" }} />
+                      </div>
+                      <p className="font-mono-nums text-[13px] font-bold" style={{ color: "var(--text-muted)" }}>
+                        {Math.min(current, active.goal).toLocaleString("ar")} / {active.goal.toLocaleString("ar")} {active.unit}
+                        {!activeUnlocked && current < active.goal && (
+                          <span> — بقي {(active.goal - current).toLocaleString("ar")} {active.unit}</span>
+                        )}
+                      </p>
+                    </div>
+                  )}
                 </div>
               );
             })()}

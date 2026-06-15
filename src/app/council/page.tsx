@@ -162,7 +162,7 @@ export default function CouncilPage() {
   const openGroup = (group: ChatGroup) => {
     setActiveGroup(group);
     setActiveChannel("general");
-    setIsFullscreen(false);
+    setIsFullscreen(true); // الدخول للمحادثة يفتح وضع التكبير تلقائياً
     setMsgText("");
   };
 

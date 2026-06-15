@@ -731,19 +731,12 @@ export default function DashboardPage() {
                 </span>
               )}
             </div>
-            <SaudiMap regionCounts={studiersData?.regions ?? {}} className="w-full" />
-            {/* Legend */}
-            <div className="mt-2 flex flex-wrap gap-2">
-              {Object.entries(regionCounts).filter(([, c]) => c > 0).map(([name, count]) => (
-                <span key={name} className="text-[11px] px-2 py-0.5 rounded-full font-medium"
-                  style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>
-                  {name}: {count}
-                </span>
-              ))}
-              {Object.keys(regionCounts).length === 0 && (
-                <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>لا يوجد طلاب نشطون حالياً</p>
-              )}
-            </div>
+            <SaudiMap regionCounts={regionCounts} className="w-full" />
+            {Object.keys(regionCounts).length === 0 && (
+              <p className="text-[13px] mt-3 text-center" style={{ color: "var(--text-muted)" }}>
+                لا يوجد طلاب نشطون حالياً
+              </p>
+            )}
           </section>
         );
       }
