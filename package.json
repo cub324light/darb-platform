@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "copy-pdf-worker": "node -e \"require('fs').copyFileSync(require.resolve('pdfjs-dist/build/pdf.worker.min.mjs'), 'public/pdf.worker.min.mjs')\"",
+    "dev": "npm run copy-pdf-worker && next dev",
+    "prebuild": "npm run copy-pdf-worker",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

@@ -34,10 +34,8 @@ async function imageToDataUrl(file: File): Promise<string> {
 
 async function pdfToImages(file: File): Promise<string[]> {
   const pdfjs = await import("pdfjs-dist");
-  pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    "pdfjs-dist/build/pdf.worker.min.mjs",
-    import.meta.url,
-  ).toString();
+  /* الـ worker مخدوم من أصل التطبيق نفسه (public/) — أوثق من حزم الـ bundler */
+  pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
   const bytes = await file.arrayBuffer();
   const pdf = await pdfjs.getDocument({ data: bytes }).promise;
   const pages = Math.min(pdf.numPages, 3);
