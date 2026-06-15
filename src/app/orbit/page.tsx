@@ -95,15 +95,12 @@ export default function OrbitPage() {
   const focusSecs = focusMins * 60;
   const breakSecs = breakMins * 60;
 
-  /* تحديث العداد عند تغيير المدة في وضع الانتظار */
-  useEffect(() => {
-    if (phase === "idle") setSecondsLeft(focusSecs);
-  }, [focusMins, phase, focusSecs]);
-
-  const totalSecs = phase === "break" ? breakSecs : focusSecs;
-  const progress  = 1 - secondsLeft / totalSecs;
-  const mins      = Math.floor(secondsLeft / 60);
-  const secs      = secondsLeft % 60;
+  /* في وضع الانتظار نعرض مدة الجلسة مباشرة — بدون state وسيط */
+  const displaySecs = phase === "idle" ? focusSecs : secondsLeft;
+  const totalSecs   = phase === "break" ? breakSecs : focusSecs;
+  const progress    = 1 - displaySecs / totalSecs;
+  const mins        = Math.floor(displaySecs / 60);
+  const secs        = displaySecs % 60;
 
   const vibrate = useCallback((pattern: number | number[]) => {
     try { navigator.vibrate?.(pattern); } catch {}
