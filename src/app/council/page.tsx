@@ -74,13 +74,14 @@ export default function CouncilPage() {
   };
 
   const toggleLike = (id: number) => {
+    const willRemove = likedPosts.has(id);
+    const delta = willRemove ? -1 : 1;
     setLikedPosts((p) => {
       const next = new Set(p);
-      const delta = next.has(id) ? -1 : 1;
-      if (next.has(id)) next.delete(id); else next.add(id);
-      setPosts((ps) => ps.map((x) => (x.id === id ? { ...x, likes: Math.max(0, x.likes + delta) } : x)));
+      if (willRemove) next.delete(id); else next.add(id);
       return next;
     });
+    setPosts((ps) => ps.map((x) => (x.id === id ? { ...x, likes: Math.max(0, x.likes + delta) } : x)));
   };
 
   const addReply = (postId: number) => {
