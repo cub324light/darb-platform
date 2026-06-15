@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import { loadUser, loadList, saveList } from "@/lib/storage";
-import { getTrack, type Track } from "@/lib/tracks";
+import { subjectsForTracks, type TrackId } from "@/lib/tracks";
 
 interface Reply {
   id: number;
@@ -38,9 +38,12 @@ export default function CouncilPage() {
   const [posts, setPosts] = useState<Post[]>(() =>
     typeof window !== "undefined" ? loadList<Post>(POSTS_KEY) : []
   );
-  const [track] = useState<Track | null>(() => {
-    const u = typeof window !== "undefined" ? loadUser() : null;
-    return getTrack(u?.track);
+  const [trackSubjects] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    const u = loadUser();
+    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
+    return subjectsForTracks(finalIds).map((s) => s.name);
   });
   const [userName] = useState(() => {
     const u = typeof window !== "undefined" ? loadUser() : null;
@@ -54,7 +57,7 @@ export default function CouncilPage() {
 
   useEffect(() => { saveList(POSTS_KEY, posts); }, [posts]);
 
-  const subjects = ["عام", ...(track?.subjects.map((s) => s.name) ?? [])];
+  const subjects = ["عام", ...trackSubjects];
 
   const publish = () => {
     if (!newPost.trim()) return;

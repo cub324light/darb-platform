@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 const COMPARE_FEATURES = [
-  { label: "خزنة الأخطاء", free: "20 سؤال", shaheen: "غير محدودة", anqa: "غير محدودة" },
+  { label: "خزنة الأخطاء", free: "25 لكل مادة", shaheen: "غير محدودة", anqa: "غير محدودة" },
   { label: "دروس التأسيس", free: "3 تجريبية", shaheen: "الكل", anqa: "الكل" },
   { label: "أوربت 50/10", free: "✓", shaheen: "✓", anqa: "✓" },
   { label: "الخريطة + الستريك", free: "✓", shaheen: "✓", anqa: "✓" },
@@ -60,7 +60,7 @@ export default function PricingPage() {
                 </div>
               </div>
               <div className="space-y-1.5 mb-4">
-                {["خزنة الأخطاء (20 سؤال)", "3 دروس تجريبية", "أوربت 50/10 كامل", "الخريطة + الستريك"].map((f) => (
+                {["خزنة الأخطاء (25 لكل مادة)", "3 دروس تجريبية", "أوربت 50/10 كامل", "الخريطة + الستريك"].map((f) => (
                   <div key={f} className="flex items-center gap-2">
                     <span className="text-[var(--success)] text-xs">✓</span>
                     <span className="text-xs text-[var(--text-dim)]">{f}</span>

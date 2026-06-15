@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
@@ -36,7 +36,7 @@ export default function VaultPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchQ, setSearchQ] = useState("");
   const [undoItem, setUndoItem] = useState<VaultError | null>(null);
-  const [undoTimer, setUndoTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [newQ, setNewQ] = useState("");
   const [newSubject, setNewSubject] = useState(() => {
     if (typeof window === "undefined") return "";
@@ -92,14 +92,13 @@ export default function VaultPage() {
     setErrors((p) => p.filter((e) => e.id !== id));
     setExpandedId(null);
     setUndoItem(item);
-    if (undoTimer) clearTimeout(undoTimer);
-    const t = setTimeout(() => { setUndoItem(null); }, 3500);
-    setUndoTimer(t);
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    undoTimerRef.current = setTimeout(() => { setUndoItem(null); }, 3500);
   };
 
   const undoDelete = () => {
     if (!undoItem) return;
-    if (undoTimer) clearTimeout(undoTimer);
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
     setErrors((p) => [undoItem, ...p]);
     setUndoItem(null);
   };
