@@ -46,8 +46,12 @@ async function pdfToImages(file: File): Promise<string[]> {
     const canvas = document.createElement("canvas");
     canvas.width = vp.width; canvas.height = vp.height;
     const ctx = canvas.getContext("2d")!;
+    /* خلفية بيضاء — PDF شفاف يطلع أسود مع JPEG */
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     await page.render({ canvas, canvasContext: ctx, viewport: vp }).promise;
-    dataUrls.push(canvas.toDataURL("image/png"));
+    /* JPEG أصغر بكثير من PNG ويكفي لقراءة النص — يتفادى حد حجم الصورة */
+    dataUrls.push(canvas.toDataURL("image/jpeg", 0.85));
   }
   return dataUrls;
 }
@@ -101,6 +105,7 @@ export default function TopicExtractor({ subject, color, onAdd }: Props) {
 
   const handleFile = async (file: File) => {
     setErr("");
+    setStage("loading"); // أظهر التحميل أثناء معالجة الملف (قد يأخذ ثوانٍ لـ PDF)
     try {
       let images: string[];
       if (file.type === "application/pdf") {
