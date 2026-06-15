@@ -60,10 +60,12 @@ export default function AdminPage() {
   const [authed, setAuthed]   = useState(false);
   const [users, setUsers]     = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError]     = useState("");
   const [search, setSearch]   = useState("");
   const [pingMsg, setPingMsg] = useState("");
   const [pinging, setPinging] = useState(false);
+  const [detail, setDetail]   = useState<AdminUser | null>(null);
 
   const callApi = async (mode?: string) => {
     const res = await fetch("/api/admin/users", {
@@ -87,6 +89,16 @@ export default function AdminPage() {
     finally { setLoading(false); }
   };
 
+  const refresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      const { ok, data } = await callApi();
+      if (ok) setUsers((data.users as AdminUser[]) ?? []);
+    } catch { /* تجاهل */ }
+    finally { setRefreshing(false); }
+  };
+
   const ping = async () => {
     if (!pass.trim() || pinging) return;
     setPinging(true); setPingMsg("");
@@ -95,6 +107,48 @@ export default function AdminPage() {
       setPingMsg(ok ? `✅ ${data.msg}` : `❌ ${data.msg ?? data.error}`);
     } catch { setPingMsg("❌ خطأ في الاتصال"); }
     finally { setPinging(false); }
+  };
+
+  /* تصدير كل المستخدمين إلى ملف CSV (يفتح في Excel) */
+  const exportCsv = () => {
+    const cols: { key: keyof AdminUser; label: string }[] = [
+      { key: "name", label: "الاسم" },
+      { key: "email", label: "الإيميل" },
+      { key: "phone", label: "الجوال" },
+      { key: "track", label: "المسار" },
+      { key: "region", label: "المنطقة" },
+      { key: "city", label: "المدينة" },
+      { key: "school", label: "المدرسة" },
+      { key: "streak", label: "ستريك" },
+      { key: "focusMins", label: "دقائق التركيز" },
+      { key: "sessions", label: "الجلسات" },
+      { key: "silver", label: "الفضة" },
+      { key: "taseesProgress", label: "نسبة التأسيس" },
+      { key: "tadreebProgress", label: "نسبة التدريب" },
+      { key: "durationDays", label: "مدة الاستخدام (أيام)" },
+    ];
+    const esc = (v: unknown) => {
+      const s = v === null || v === undefined ? "" : String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const header = cols.map((c) => c.label);
+    const rows = users.map((u) => [
+      ...cols.map((c) => esc(u[c.key])),
+      esc(fmt(u.joinedAt)),
+      esc(fmt(u.lastSeen)),
+    ]);
+    const csv = [
+      [...header, "تاريخ الدخول", "آخر نشاط"].join(","),
+      ...rows.map((r) => r.join(",")),
+    ].join("\n");
+    /* BOM لضمان قراءة العربية في Excel */
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `darb-users-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const filtered = users.filter((u) =>
@@ -160,12 +214,24 @@ export default function AdminPage() {
           <p className="title-md" style={{ color: "var(--text)" }}>لوحة الإدارة</p>
           <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>{users.length} مستخدم مسجّل</p>
         </div>
-        <input
-          value={search} onChange={(e) => setSearch(e.target.value)}
-          placeholder="ابحث باسم، إيميل، مسار، منطقة..."
-          className="rounded-2xl px-4 py-3 text-[15px] outline-none"
-          style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)", width: "260px" }}
-        />
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <input
+            value={search} onChange={(e) => setSearch(e.target.value)}
+            placeholder="ابحث باسم، إيميل، مسار، منطقة..."
+            className="rounded-2xl px-4 py-3 text-[15px] outline-none"
+            style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)", width: "240px" }}
+          />
+          <button onClick={refresh} disabled={refreshing}
+            className="rounded-2xl px-4 py-3 text-[14px] font-bold transition active:scale-[0.97]"
+            style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text-dim)", opacity: refreshing ? 0.5 : 1 }}>
+            {refreshing ? "..." : "↻ تحديث"}
+          </button>
+          <button onClick={exportCsv} disabled={!users.length}
+            className="rounded-2xl px-4 py-3 text-[14px] font-bold transition active:scale-[0.97] text-white"
+            style={{ background: "var(--accent)", opacity: users.length ? 1 : 0.5 }}>
+            ⬇ تصدير CSV
+          </button>
+        </div>
       </div>
 
       {/* الإحصائيات */}
@@ -214,7 +280,8 @@ export default function AdminPage() {
             <div className="py-12 text-center text-[15px]" style={{ color: "var(--text-muted)" }}>لا يوجد مستخدمون</div>
           ) : filtered.map((u, i) => (
             <div key={u.id}
-              className="grid items-center px-4 py-3 text-[12px]"
+              onClick={() => setDetail(u)}
+              className="grid items-center px-4 py-3 text-[12px] cursor-pointer transition hover:brightness-110"
               style={{
                 gridTemplateColumns: "160px 180px 80px 70px 60px 70px 70px 70px 70px 80px 100px 100px",
                 borderTop: i > 0 ? "1px solid var(--border)" : "none",
@@ -284,6 +351,47 @@ export default function AdminPage() {
       <p className="text-center text-[13px] mt-6" style={{ color: "var(--text-muted)" }}>
         /admin — للإدارة فقط
       </p>
+
+      {/* تفاصيل مستخدم */}
+      {detail && (
+        <div className="fixed inset-0 z-[9999] flex p-4"
+          style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+          onClick={(e) => e.target === e.currentTarget && setDetail(null)}>
+          <div className="relative m-auto w-full max-w-md max-h-[88dvh] overflow-y-auto rounded-3xl p-6 flex flex-col gap-4"
+            style={{ background: "var(--bg)", border: "1.5px solid var(--border)" }}>
+            <div className="flex items-center justify-between">
+              <p className="font-black text-xl" style={{ color: "var(--text)" }}>{detail.name || "بدون اسم"}</p>
+              <button onClick={() => setDetail(null)} className="text-2xl font-bold px-2" style={{ color: "var(--text-muted)" }}>×</button>
+            </div>
+            <div className="flex flex-col gap-2.5">
+              {([
+                ["الإيميل", detail.email || "—"],
+                ["الجوال", detail.phone || "—"],
+                ["المسار", detail.track || "—"],
+                ["المنطقة", detail.region || "—"],
+                ["المدينة", detail.city || "—"],
+                ["المدرسة", detail.school || "—"],
+                ["ستريك", detail.streak ? `${detail.streak} يوم` : "—"],
+                ["دقائق التركيز", fmtHours(detail.focusMins)],
+                ["الجلسات", String(detail.sessions || 0)],
+                ["الفضة", String(detail.silver || 0)],
+                ["نسبة التأسيس", `${detail.taseesProgress}%`],
+                ["نسبة التدريب", `${detail.tadreebProgress}%`],
+                ["مدة الاستخدام", fmtDuration(detail.durationDays)],
+                ["تاريخ التسجيل", fmt(detail.joinedAt)],
+                ["آخر نشاط", fmt(detail.lastSeen)],
+              ] as [string, string][]).map(([label, val]) => (
+                <div key={label} className="flex items-center justify-between gap-3 py-2"
+                  style={{ borderBottom: "1px solid var(--border)" }}>
+                  <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                  <span className="text-[14px] font-semibold text-left" style={{ color: "var(--text)" }} dir="auto">{val}</span>
+                </div>
+              ))}
+              <p className="text-[10px] mt-1 font-mono-nums" style={{ color: "var(--text-muted)" }}>ID: {detail.id}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

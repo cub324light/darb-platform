@@ -205,8 +205,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "أنا دويرب، محلل الجداول. أدخل جدولك وسأبني لك خطة دراسة." }, { status: 400 });
     }
   } else {
-    if (prompt && typeof prompt === "string" && isInjection(prompt)) {
-      return NextResponse.json({ error: "طلب غير صالح" }, { status: 400 });
+    /* topics: لازم صورة واحدة على الأقل أو نص ملصوق ذو معنى */
+    const hasText = !!prompt && typeof prompt === "string" && prompt.trim().length >= 3;
+    if (!images.length && !hasText) {
+      return NextResponse.json({ error: "ارفع صورة أو الصق نص الفهرس أولاً" }, { status: 400 });
+    }
+    if (prompt && typeof prompt === "string") {
+      if (prompt.length > maxPromptLen) {
+        return NextResponse.json({ error: "النص طويل جداً — اختصره" }, { status: 400 });
+      }
+      if (isInjection(prompt)) {
+        return NextResponse.json({ error: "طلب غير صالح" }, { status: 400 });
+      }
     }
   }
 
@@ -269,7 +279,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "الخادم مشغول، حاول بعد ثوانٍ" }, { status: 429 });
     }
     if (!response.ok) {
-      return NextResponse.json({ error: "خطأ في الاتصال بالخادم" }, { status: 502 });
+      /* في وضع الصور نُمرّر سبب Groq لتسهيل التشخيص (نموذج/حجم صورة) */
+      let detail = "";
+      if (useVision) {
+        try {
+          const errJson = await response.json() as { error?: { message?: string } };
+          detail = errJson?.error?.message ? ` — ${errJson.error.message}` : "";
+        } catch { /* تجاهل */ }
+      }
+      return NextResponse.json({ error: `تعذّر تحليل الصورة${detail || "، حاول بصورة أوضح"}` }, { status: 502 });
     }
 
     const data = (await response.json()) as { choices?: { message?: { content?: string } }[] };
