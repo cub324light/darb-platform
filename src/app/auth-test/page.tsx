@@ -26,7 +26,7 @@ export default function AuthTestPage() {
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [busy, setBusy] = useState(false);
-  const startRef = useRef(Date.now());
+  const startRef = useRef(0);
 
   const addLog = (s: string) => {
     const t = ((Date.now() - startRef.current) / 1000).toFixed(1);
@@ -35,6 +35,7 @@ export default function AuthTestPage() {
 
   /* فحوصات البيئة عند الفتح */
   useEffect(() => {
+    startRef.current = Date.now();
     const rows: Row[] = [];
 
     // 1) localStorage
@@ -80,16 +81,19 @@ export default function AuthTestPage() {
     // 7) المتصفح
     rows.push({ label: "المتصفح", ok: true, detail: navigator.userAgent.slice(0, 60) });
 
-    setEnv(rows);
-    addLog("بدأ الفحص");
+    /* نؤجّل أول تحديث للحالة خارج جسم الـ effect المتزامن
+       لتفادي react-hooks/set-state-in-effect (سلسلة رندرات) */
+    const raf = requestAnimationFrame(() => {
+      setEnv(rows);
+      addLog("بدأ الفحص");
+    });
 
     // راقب حالة المصادقة
     const unsub = onAuthStateChanged(auth, (u) => {
       const t = ((Date.now() - startRef.current) / 1000).toFixed(1);
       setAuthEvents((e) => [...e, `[${t}ث] onAuthStateChanged → ${u ? `مستخدم: ${u.email ?? u.uid}` : "لا أحد (null)"}`]);
     });
-    return () => unsub();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => { cancelAnimationFrame(raf); unsub(); };
   }, []);
 
   /* اختبار تثبيت كل أنواع الجلسة */
