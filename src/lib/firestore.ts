@@ -22,7 +22,8 @@ export async function registerUser(
   extras?: { school?: string; region?: string; city?: string; phone?: string },
 ) {
   try {
-    const uid = getOrCreateUid();
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
     const email = auth.currentUser?.email ?? "";
     await setDoc(doc(db, "users", uid), {
       name,
@@ -35,11 +36,11 @@ export async function registerUser(
       silver: 0,
       taseesProgress: 0,
       tadreebProgress: 0,
-      ...(email                ? { email               } : {}),
-      ...(extras?.school  ? { school:  extras.school  } : {}),
-      ...(extras?.region  ? { region:  extras.region  } : {}),
-      ...(extras?.city    ? { city:    extras.city    } : {}),
-      ...(extras?.phone   ? { phone:   extras.phone   } : {}),
+      ...(email           ? { email               } : {}),
+      ...(extras?.school  ? { school: extras.school } : {}),
+      ...(extras?.region  ? { region: extras.region } : {}),
+      ...(extras?.city    ? { city:   extras.city   } : {}),
+      ...(extras?.phone   ? { phone:  extras.phone  } : {}),
     }, { merge: true });
   } catch {}
 }
@@ -59,7 +60,8 @@ export async function syncUser(data: {
   tadreebProgress?: number;
 }) {
   try {
-    const uid = getOrCreateUid();
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
     await setDoc(doc(db, "users", uid), {
       ...data,
       lastSeen: serverTimestamp(),

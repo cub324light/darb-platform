@@ -12,7 +12,7 @@ import Logo from "./Logo";
 
 /* المسارات العامة — تُعرض بدون تسجيل دخول للطالب:
    «/» و«/privacy» تسويقية، و«/admin» له حماية كلمة سر خاصة على الخادم. */
-const PUBLIC_PATHS = ["/", "/privacy", "/admin"];
+const PUBLIC_PATHS = ["/", "/privacy", "/admin", "/auth-test"];
 
 function Splash({ label }: { label?: string }) {
   return (

@@ -5,13 +5,18 @@
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   signOut as fbSignOut,
   onAuthStateChanged,
-  sendPasswordResetEmail,
   GoogleAuthProvider,
   signInWithRedirect,
   signInWithPopup,
   getRedirectResult,
+  indexedDBLocalPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+  inMemoryPersistence,
+  setPersistence,
   type User,
 } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
@@ -19,14 +24,15 @@ import { auth, db } from "./firebase";
 import { loadUser, saveUser, loadStats, computeStreak } from "./storage";
 import { normalizePlan } from "./plan";
 
-/* المفاتيح التي تُحفظ في السحابة (كل بيانات المستخدم) */
+/* المفاتيح التي تُحفظ في السحابة (كل بيانات المستخدم)
+   ملاحظة: darb_theme متعمداً غير مدرج — الثيم خاص بكل جهاز */
 const BACKUP_KEYS = [
   "darb_user", "darb_stats", "darb_vault", "darb_cards", "darb_lessons",
   "darb_done_lessons", "darb_posts", "darb_schedule", "darb_exam_date",
   "darb_events", "darb_exam_flow", "darb_stage_reviews",
   "darb_tadreeb_items", "darb_tadreeb_done", "darb_tasreebat_pct",
   "darb_subject_exam_dates", "darb_track_exam_dates", "darb_dash_config",
-  "darb_results",
+  "darb_dash_sched_v2", "darb_results",
 ];
 
 /* علم اكتمال أول سحب — يمنع الرفع قبل استرجاع نسخة السحابة */
@@ -47,14 +53,40 @@ export function onAuth(cb: (u: User | null) => void) {
   return onAuthStateChanged(auth, cb);
 }
 
+/* ─── تثبيت الجلسة: نجرّب أكثر من نوع تخزين بالترتيب حتى ينجح أحدها.
+   لا نُفشل الدخول لو كل الأنواع رُفضت (بعض المتصفحات/الوضع الخاص تمنع
+   IndexedDB وlocalStorage) — نكمل بالذاكرة على الأقل لهذه الجلسة. */
+async function ensurePersistence(): Promise<void> {
+  const types = [
+    indexedDBLocalPersistence,
+    browserLocalPersistence,
+    browserSessionPersistence,
+    inMemoryPersistence,
+  ];
+  for (const p of types) {
+    try {
+      await setPersistence(auth, p);
+      return;
+    } catch {
+      /* جرّب النوع التالي */
+    }
+  }
+}
+
 export async function signUp(email: string, password: string) {
+  await ensurePersistence();
   const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
   return cred.user;
 }
 
 export async function signIn(email: string, password: string) {
+  await ensurePersistence();
   const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
   return cred.user;
+}
+
+export async function resetPassword(email: string) {
+  await sendPasswordResetEmail(auth, email.trim());
 }
 
 export async function signOutUser() {
@@ -67,22 +99,24 @@ export async function sendPasswordReset(email: string) {
   await sendPasswordResetEmail(auth, email);
 }
 
-/* ─── Google — popup على الويب، redirect على iOS/PWA ─── */
+/* ─── Google — popup أولاً دائماً (أكثر موثوقية ويُظهر الأخطاء فوراً)؛
+   نلجأ لـ redirect فقط لو المتصفح منع البوب-أب ─── */
 export async function signInWithGoogle() {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
-  if (isIOS || isStandalone) {
-    await signInWithRedirect(auth, provider);
-  } else {
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (e) {
-      if ((e as { code?: string })?.code === "auth/popup-blocked") {
-        await signInWithRedirect(auth, provider);
-      } else throw e;
-    }
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (e) {
+    const code = (e as { code?: string })?.code ?? "";
+    /* البوب-أب ممنوع/مُغلق (شائع في PWA على الجوال) → جرّب redirect */
+    if (
+      code === "auth/popup-blocked" ||
+      code === "auth/popup-closed-by-user" ||
+      code === "auth/cancelled-popup-request" ||
+      code === "auth/operation-not-supported-in-this-environment"
+    ) {
+      await signInWithRedirect(auth, provider);
+    } else throw e;
   }
 }
 
@@ -128,9 +162,18 @@ export function authErrorMsg(code: string): string {
 /* تُستدعى من البوابة بعد تسجيل الدخول:
    اسحب من السحابة؛ وإن لم توجد نسخة وعندك بيانات محلية ارفعها (ترحيل حساب مجهول قديم). */
 export async function initialSync(): Promise<void> {
+  /* timeout 6 ثواني — لو Firestore ما ردّ (قواعد غير منشورة مثلاً) نكمل بدونه */
+  const timeout = new Promise<void>((resolve) => setTimeout(resolve, 6000));
   try {
-    const restored = await pullBackup();
-    if (!restored && hasLocalData()) await pushBackup();
+    await Promise.race([
+      (async () => {
+        const restored = await pullBackup();
+        if (!restored && hasLocalData()) await pushBackup();
+      })(),
+      timeout,
+    ]);
+  } catch {
+    /* نكمل في كل الأحوال */
   } finally {
     initialSyncDone = true;
   }

@@ -19,29 +19,16 @@ export default async function Image() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #F5B40A 0%, #D4920A 100%)",
+          background: "linear-gradient(135deg, #2563EB 0%, #16275B 60%, #07070D 100%)",
           fontFamily: "Tajawal",
-          color: "#2563EB",
+          color: "#FFFFFF",
           direction: "rtl",
         }}
       >
-        {/* علامة الدرب: مسار يصعد نحو النجمة */}
-        <svg width="190" height="190" viewBox="0 0 512 512" style={{ marginBottom: 24 }}>
-          <path
-            d="M110 400 C 210 400 250 330 250 260 C 250 195 290 150 380 142"
-            stroke="#2563EB"
-            strokeWidth="38"
-            strokeLinecap="round"
-            fill="none"
-          />
-          <circle cx="110" cy="400" r="26" fill="#2563EB" />
-          <path d="M396 78 l17 46 46 17 -46 17 -17 46 -17 -46 -46 -17 46 -17 z" fill="#16275B" />
-        </svg>
-
-        <div style={{ fontSize: 190, fontWeight: 700, lineHeight: 1, color: "#2563EB" }}>درب</div>
+        <div style={{ fontSize: 220, fontWeight: 700, lineHeight: 1, color: "#FFFFFF" }}>درب</div>
 
         {/* الكلمات معكوسة في المصدر لأن Satori يصفّها يساراً—لتظهر "طريقك للتفوق" */}
-        <div style={{ fontSize: 50, fontWeight: 700, marginTop: 22, color: "#1E3A8A" }}>
+        <div style={{ fontSize: 50, fontWeight: 700, marginTop: 22, color: "#93B4FF" }}>
           للتفوق طريقك
         </div>
       </div>

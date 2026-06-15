@@ -2,8 +2,7 @@
 import { useEffect, useState } from "react";
 
 /* شعار "درب" — يتبع مظهر الموقع تلقائياً:
-   ليلي (مظهر داكن) → أزرق متوهّج · نهاري (مظهر فاتح) → ذهبي.
-   يقرأ data-theme مباشرةً عبر MutationObserver فلا يمكن أن ينفصل عن الثيم. */
+   ليلي (مظهر داكن) → أزرق متوهّج · نهاري (مظهر فاتح) → ذهبي. */
 export default function Logo({
   className = "",
   style = {},

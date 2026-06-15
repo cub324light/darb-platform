@@ -24,11 +24,12 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://darb-platform.vercel.app"),
   title: "درب | المنصة التي تعاملك كأخ",
   description: "منصة تعليمية سعودية لتأسيس القدرات والتحصيلي وأرامكو CPC — تمارين وخرائط دراسية وذكاء اصطناعي يساعدك تتفوق",
+  keywords: ["درب", "منصة تعليمية", "القدرات", "التحصيلي", "أرامكو", "CPC", "تأسيس", "مذاكرة", "Saudi education", "Qudurat", "Tahsili"],
   manifest: "/manifest.json",
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "درب" },
   openGraph: {
     title: "درب | طريقك للتفوق",
-    description: "تأسيس حقيقي للقدرات والتحصيلي وأرامكو CPC",
+    description: "منصة تعليمية سعودية — تأسيس حقيقي للقدرات والتحصيلي وأرامكو CPC",
     url: "https://darb-platform.vercel.app",
     siteName: "درب",
     locale: "ar_SA",
@@ -37,7 +38,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "درب | طريقك للتفوق",
-    description: "تأسيس حقيقي للقدرات والتحصيلي وأرامكو CPC",
+    description: "منصة تعليمية سعودية — تأسيس حقيقي للقدرات والتحصيلي وأرامكو CPC",
   },
 };
 

@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { TRACKS, TRACK_GROUPS, type TrackId } from "@/lib/tracks";
 import { saveUser, saveExamDate, saveResults } from "@/lib/storage";
 import { registerUser } from "@/lib/firestore";
@@ -12,12 +11,11 @@ const STUDY_LEVELS = ["ثانوي", "جامعي", "خريج", "أخرى"];
 const GRADES = ["أول ثانوي", "ثاني ثانوي", "ثالث ثانوي"];
 const MAX_TRACKS = 3;
 const SAUDI_REGIONS = [
-  "الرياض","مكة المكرمة","المدينة المنورة","القصيم","الشرقية",
-  "عسير","تبوك","حائل","الحدود الشمالية","جازان","نجران","الباحة","الجوف",
+  "الرياض", "مكة المكرمة", "المدينة المنورة", "القصيم", "المنطقة الشرقية",
+  "عسير", "تبوك", "حائل", "الحدود الشمالية", "جازان", "نجران", "الباحة", "الجوف",
 ];
 
 export default function OnboardingPage() {
-  const router = useRouter();
   const [step, setStep] = useState<0 | 1 | 2>(0);
 
   const [name, setName] = useState(() => {
@@ -28,7 +26,6 @@ export default function OnboardingPage() {
   const [studyLevel, setStudyLevel] = useState("");
   const [grade, setGrade]           = useState("");
   const [studyHours, setStudyHours] = useState("");
-
   const [school, setSchool]   = useState("");
   const [region, setRegion]   = useState("");
   const [city, setCity]       = useState("");
@@ -51,9 +48,9 @@ export default function OnboardingPage() {
     const primaryTrack = activeTracks[0];
     const extras = {
       school: school.trim() || undefined,
-      region: region || undefined,
-      city: city.trim() || undefined,
-      phone: phone.trim() || undefined,
+      region: region        || undefined,
+      city:   city.trim()   || undefined,
+      phone:  phone.trim()  || undefined,
     };
     saveUser({
       name: trimmedName,
@@ -67,7 +64,6 @@ export default function OnboardingPage() {
       ...extras,
     });
     if (examDate) saveExamDate(examDate);
-    /* احفظ النتائج السابقة (الي فيها اختبار أو درجة) في «نتائجي» */
     const validPrev = prevExams.filter((p) => p.exam.trim() || p.score.trim());
     if (validPrev.length) {
       saveResults(validPrev.map((p, i) => ({
@@ -77,8 +73,8 @@ export default function OnboardingPage() {
       })));
     }
     registerUser(trimmedName, primaryTrack, extras);
-    await pushBackup(); // احفظ إعدادك في السحابة فوراً
-    router.push("/dashboard");
+    pushBackup().catch(() => {});
+    window.location.href = "/dashboard";
   };
 
   const header = (
@@ -193,70 +189,48 @@ export default function OnboardingPage() {
             onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
         </div>
 
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <p className="label">المدرسة أو الجامعة؟</p>
-            <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-              style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
-          </div>
-          <input type="text" value={school} onChange={(e) => setSchool(e.target.value)}
-            placeholder="مثال: ثانوية الملك فهد" maxLength={60}
-            className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
-            style={{ background: "var(--surface)", border: "2px solid var(--border)" }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
-        </div>
+        {/* ─── المدرسة والموقع والجوال ─── */}
+        <div className="flex flex-col gap-4">
+          {[
+            { label: "اسم المدرسة / الجامعة", value: school, setter: setSchool, placeholder: "مثال: ثانوية الملك فهد", type: "text" as const },
+            { label: "المدينة أو المحافظة",   value: city,   setter: setCity,   placeholder: "مثال: الرياض، جدة، الدمام...", type: "text" as const },
+            { label: "رقم الجوال",             value: phone,  setter: setPhone,  placeholder: "05xxxxxxxx", type: "tel" as const },
+          ].map(({ label, value, setter, placeholder, type }) => (
+            <div key={label}>
+              <div className="flex items-center gap-2 mb-3">
+                <p className="label">{label}</p>
+                <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                  style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
+              </div>
+              <input type={type} value={value} onChange={(e) => setter(e.target.value)}
+                placeholder={placeholder}
+                className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+                style={{ background: "var(--surface)", border: "2px solid var(--border)" }}
+                onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+                onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
+            </div>
+          ))}
 
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <p className="label">المنطقة؟</p>
-            <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-              style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            {SAUDI_REGIONS.map((r) => {
-              const active = region === r;
-              return (
-                <button key={r} onClick={() => setRegion(active ? "" : r)}
-                  className="rounded-2xl py-2.5 font-semibold text-[14px] transition active:scale-[0.98]"
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <p className="label">المنطقة</p>
+              <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {SAUDI_REGIONS.map((r) => (
+                <button key={r} onClick={() => setRegion(region === r ? "" : r)}
+                  className="rounded-2xl py-2.5 px-3 font-bold text-[13px] text-right transition active:scale-[0.98]"
                   style={{
-                    background: active ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
-                    border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
-                    color: active ? "var(--accent-light)" : "var(--text)",
+                    background: region === r ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
+                    border: `2px solid ${region === r ? "var(--accent)" : "var(--border)"}`,
+                    color: region === r ? "var(--accent-light)" : "var(--text)",
                   }}>
                   {r}
                 </button>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        </div>
-
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <p className="label">المدينة أو المحافظة؟</p>
-            <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-              style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
-          </div>
-          <input type="text" value={city} onChange={(e) => setCity(e.target.value)}
-            placeholder="مثال: جدة، الدمام..." maxLength={40}
-            className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
-            style={{ background: "var(--surface)", border: "2px solid var(--border)" }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
-        </div>
-
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <p className="label">رقم الجوال؟</p>
-            <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-              style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
-          </div>
-          <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
-            placeholder="05XXXXXXXX" maxLength={15} inputMode="tel"
-            className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
-            style={{ background: "var(--surface)", border: "2px solid var(--border)" }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
         </div>
 
         <button className="btn-primary glow-blue" onClick={() => { if (name.trim()) setStep(1); }}

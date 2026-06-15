@@ -2,7 +2,7 @@
 import { useState } from "react";
 import {
   signInWithGoogle,
-  signIn, signUp, sendPasswordReset, authErrorMsg,
+  signIn, signUp, resetPassword, authErrorMsg,
 } from "@/lib/cloud";
 import Logo from "@/components/Logo";
 import type { FirebaseError } from "firebase/app";
@@ -79,7 +79,7 @@ export default function SignInScreen({
     if (!email.trim()) { setErr("اكتب الإيميل أولاً"); return; }
     setBusy("email");
     try {
-      await sendPasswordReset(email.trim());
+      await resetPassword(email.trim());
       setResetSent(true);
     } catch (e) {
       setErr(authErrorMsg((e as FirebaseError)?.code ?? ""));

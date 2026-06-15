@@ -462,14 +462,11 @@ export default function RoadmapPage() {
               <button onClick={addCustom} className="px-6 rounded-2xl font-black text-lg min-h-[54px]"
                 style={{ background: "transparent", border: `1.5px solid ${color}`, color }}>+</button>
             </div>
-            <TopicExtractor
-              subject={selected}
-              color={color}
+            <TopicExtractor subject={selected} color={color}
               onAdd={(titles) => setCustom((p) => [
                 ...p,
                 ...titles.map((t, i) => ({ id: `${Date.now()}-${i}`, subject: selected, title: t })),
-              ])}
-            />
+              ])} />
           </div>
         )}
         <div className="px-5 flex flex-col gap-3 rise rise-2">
