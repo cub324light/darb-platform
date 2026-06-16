@@ -1,10 +1,10 @@
 "use client";
 import { useEffect } from "react";
 
-/* ─── المراقبة والتحليلات ───
+/* ─── التحليلات ───
    كل خدمة تعمل فقط إذا ضُبط مفتاحها في متغيّرات البيئة (Vercel).
    بدون مفاتيح = لا شيء يُحمّل (آمن تماماً للنشر).
-   - Sentry        : NEXT_PUBLIC_SENTRY_DSN      (رصد الأخطاء)
+   ملاحظة: Sentry (رصد الأخطاء) يُدار عبر @sentry/nextjs في ملفات instrumentation.
    - MS Clarity    : NEXT_PUBLIC_CLARITY_ID      (خرائط حرارية + تسجيل الجلسات)
    - PostHog       : NEXT_PUBLIC_POSTHOG_KEY     (تحليلات المنتج)
                      NEXT_PUBLIC_POSTHOG_HOST    (اختياري، الافتراضي us.i.posthog.com)
@@ -17,25 +17,9 @@ export default function Telemetry() {
     if (started) return;
     started = true;
 
-    const sentryDsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
     const clarityId = process.env.NEXT_PUBLIC_CLARITY_ID;
     const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
     const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
-
-    /* ─ Sentry: رصد الأخطاء ─ */
-    if (sentryDsn) {
-      import("@sentry/browser")
-        .then((Sentry) => {
-          Sentry.init({
-            dsn: sentryDsn,
-            environment: process.env.NODE_ENV,
-            tracesSampleRate: 0.1,
-            replaysSessionSampleRate: 0,
-            replaysOnErrorSampleRate: 0,
-          });
-        })
-        .catch(() => {});
-    }
 
     /* ─ Microsoft Clarity: كيف يستخدم الناس الموقع ─ */
     if (clarityId && !document.getElementById("ms-clarity")) {
