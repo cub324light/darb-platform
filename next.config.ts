@@ -23,8 +23,8 @@ const nextConfig: NextConfig = {
    يعمل فقط عند ضبط SENTRY_ORG/SENTRY_PROJECT/SENTRY_AUTH_TOKEN في البيئة،
    وإلا يُبنى المشروع طبيعياً مع بقاء رصد الأخطاء وقت التشغيل فعّالاً. */
 export default withSentryConfig(nextConfig, {
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
+  org: process.env.SENTRY_ORG ?? "darb-05",
+  project: process.env.SENTRY_PROJECT ?? "javascript-nextj",
   authToken: process.env.SENTRY_AUTH_TOKEN,
   widenClientFileUpload: true,
   tunnelRoute: "/monitoring",
