@@ -1,29 +1,31 @@
 "use client";
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 /* ─── التحليلات ───
-   كل خدمة تعمل فقط إذا ضُبط مفتاحها في متغيّرات البيئة (Vercel).
-   بدون مفاتيح = لا شيء يُحمّل (آمن تماماً للنشر).
-   ملاحظة: Sentry (رصد الأخطاء) يُدار عبر @sentry/nextjs في ملفات instrumentation.
-   - MS Clarity    : NEXT_PUBLIC_CLARITY_ID      (خرائط حرارية + تسجيل الجلسات)
-   - PostHog       : NEXT_PUBLIC_POSTHOG_KEY     (تحليلات المنتج)
-                     NEXT_PUBLIC_POSTHOG_HOST    (اختياري، الافتراضي us.i.posthog.com)
+   - MS Clarity : NEXT_PUBLIC_CLARITY_ID   (خرائط حرارية + تسجيل الجلسات)
+   - PostHog    : NEXT_PUBLIC_POSTHOG_KEY  (تحليلات المنتج — منطقة EU)
+   - Sentry     : يُدار عبر @sentry/nextjs في ملفات instrumentation
 */
 
 let started = false;
+// نحتفظ بـ Promise حتى يستطيع تأثير المسار التقاط الصفحة الأولى وما بعدها
+let phReady: Promise<{ capture: (e: string) => void } | null> | null = null;
 
 export default function Telemetry() {
+  const pathname = usePathname();
+
+  /* التهيئة — مرة واحدة فقط */
   useEffect(() => {
     if (started) return;
     started = true;
 
-    // معرّف Clarity عام (يظهر في كود المتصفح) — مضبوط افتراضياً ليشتغل بلا ضبط إضافي.
+    // المعرّفات عامة (تظهر في كود المتصفح) — مضمّنة افتراضياً بلا ضبط إضافي في Vercel
     const clarityId = process.env.NEXT_PUBLIC_CLARITY_ID || "x7xp1l6g8h";
-    // مفتاح PostHog عام (phc_…، يظهر في كود المتصفح) — مشروع في منطقة EU.
     const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY || "phc_B9zkWuSUTpoQuZ4JZWyeTp3mFzDVmdYBkqPygVjJjziL";
     const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://eu.i.posthog.com";
 
-    /* ─ Microsoft Clarity: كيف يستخدم الناس الموقع ─ */
+    /* Microsoft Clarity */
     if (clarityId && !document.getElementById("ms-clarity")) {
       const s = document.createElement("script");
       s.id = "ms-clarity";
@@ -36,21 +38,27 @@ export default function Telemetry() {
       document.head.appendChild(s);
     }
 
-    /* ─ PostHog: تحليلات أعمق ─ */
+    /* PostHog — capture_pageview:false لأن تأثير pathname يتولّى تتبّع كل الصفحات */
     if (posthogKey) {
-      import("posthog-js")
+      phReady = import("posthog-js")
         .then((mod) => {
           const posthog = mod.default;
           posthog.init(posthogKey, {
             api_host: posthogHost,
             person_profiles: "identified_only",
-            capture_pageview: true,
+            capture_pageview: false,
             capture_pageleave: true,
           });
+          return posthog;
         })
-        .catch(() => {});
+        .catch(() => null);
     }
   }, []);
+
+  /* تتبّع $pageview عند كل تنقّل (بما فيه الصفحة الأولى) */
+  useEffect(() => {
+    phReady?.then((ph) => { ph?.capture("$pageview"); });
+  }, [pathname]);
 
   return null;
 }
