@@ -19,8 +19,9 @@ export default function Telemetry() {
 
     // معرّف Clarity عام (يظهر في كود المتصفح) — مضبوط افتراضياً ليشتغل بلا ضبط إضافي.
     const clarityId = process.env.NEXT_PUBLIC_CLARITY_ID || "x7xp1l6g8h";
-    const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-    const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
+    // مفتاح PostHog عام (phc_…، يظهر في كود المتصفح) — مشروع في منطقة EU.
+    const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY || "phc_B9zkWuSUTpoQuZ4JZWyeTp3mFzDVmdYBkqPygVjJjziL";
+    const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://eu.i.posthog.com";
 
     /* ─ Microsoft Clarity: كيف يستخدم الناس الموقع ─ */
     if (clarityId && !document.getElementById("ms-clarity")) {
