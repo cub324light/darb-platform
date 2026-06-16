@@ -1,6 +1,5 @@
 "use client";
 import { useEffect } from "react";
-import { usePathname } from "next/navigation";
 
 /* ─── التحليلات ───
    - MS Clarity : NEXT_PUBLIC_CLARITY_ID   (خرائط حرارية + تسجيل الجلسات)
@@ -9,12 +8,8 @@ import { usePathname } from "next/navigation";
 */
 
 let started = false;
-// نحتفظ بـ Promise حتى يستطيع تأثير المسار التقاط الصفحة الأولى وما بعدها
-let phReady: Promise<{ capture: (e: string) => void } | null> | null = null;
 
 export default function Telemetry() {
-  const pathname = usePathname();
-
   /* التهيئة — مرة واحدة فقط */
   useEffect(() => {
     if (started) return;
@@ -38,27 +33,20 @@ export default function Telemetry() {
       document.head.appendChild(s);
     }
 
-    /* PostHog — capture_pageview:false لأن تأثير pathname يتولّى تتبّع كل الصفحات */
+    /* PostHog — 'history_change' يلتقط $pageview تلقائياً عند كل تنقّل في App Router */
     if (posthogKey) {
-      phReady = import("posthog-js")
+      import("posthog-js")
         .then((mod) => {
-          const posthog = mod.default;
-          posthog.init(posthogKey, {
+          mod.default.init(posthogKey, {
             api_host: posthogHost,
             person_profiles: "identified_only",
-            capture_pageview: false,
+            capture_pageview: "history_change",
             capture_pageleave: true,
           });
-          return posthog;
         })
-        .catch(() => null);
+        .catch(() => {});
     }
   }, []);
-
-  /* تتبّع $pageview عند كل تنقّل (بما فيه الصفحة الأولى) */
-  useEffect(() => {
-    phReady?.then((ph) => { ph?.capture("$pageview"); });
-  }, [pathname]);
 
   return null;
 }
