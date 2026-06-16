@@ -7,7 +7,6 @@ interface Person {
   uid: string;
   name: string;
   track: string;
-  isPrivate?: boolean;
 }
 
 interface Profile {
@@ -168,21 +167,15 @@ export default function FriendsPanel({ onClose }: { onClose: () => void }) {
     >
       <button
         onClick={() => openProfile(p)}
-        className="relative w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-black text-white"
+        className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-black text-white"
         style={{ background: "linear-gradient(135deg,var(--accent-2),var(--accent-light))" }}
         aria-label={`بروفايل ${p.name}`}
       >
         {p.name.charAt(0) || "؟"}
-        {/* نقطة حمراء = حساب خاص */}
-        {p.isPrivate && (
-          <span className="absolute -top-1 -left-1 w-3.5 h-3.5 rounded-full border-2"
-            style={{ background: "#EF4444", borderColor: "var(--surface)" }} />
-        )}
       </button>
       <button onClick={() => openProfile(p)} className="flex-1 min-w-0 text-right">
-        <p className="font-bold text-[15px] truncate flex items-center gap-1.5" style={{ color: "var(--text)" }}>
+        <p className="font-bold text-[15px] truncate" style={{ color: "var(--text)" }}>
           {p.name || "طالب"}
-          {p.isPrivate && <span className="text-[11px] font-bold" style={{ color: "#EF4444" }}>● خاص</span>}
         </p>
         {p.track && (
           <p className="text-[12px] truncate" style={{ color: "var(--text-muted)" }}>
@@ -336,18 +329,13 @@ export default function FriendsPanel({ onClose }: { onClose: () => void }) {
               <p className="py-8 font-bold" style={{ color: "var(--text-muted)" }}>...جاري التحميل</p>
             ) : (
               <>
-                <div className="relative w-20 h-20 rounded-2xl flex items-center justify-center font-black text-white text-3xl"
+                <div className="w-20 h-20 rounded-2xl flex items-center justify-center font-black text-white text-3xl"
                   style={{ background: "linear-gradient(135deg,var(--accent-2),var(--accent-light))" }}>
                   {profile.name.charAt(0) || "؟"}
-                  {profile.isPrivate && (
-                    <span className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full border-2 flex items-center justify-center text-[10px]"
-                      style={{ background: "#EF4444", borderColor: "var(--bg)", color: "#fff" }}>🔒</span>
-                  )}
                 </div>
                 <div className="text-center">
-                  <p className="font-black text-xl flex items-center justify-center gap-2" style={{ color: "var(--text)" }}>
+                  <p className="font-black text-xl" style={{ color: "var(--text)" }}>
                     {profile.name || "طالب"}
-                    {profile.isPrivate && <span className="text-[12px]" style={{ color: "#EF4444" }}>● خاص</span>}
                   </p>
                   {profile.track && <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>{profile.track}</p>}
                 </div>

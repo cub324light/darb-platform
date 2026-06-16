@@ -224,22 +224,10 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "uid مفقود" }, { status: 400 });
       }
       const snap = await db.collection("users").doc(uid).collection("friends").get();
-      /* نثري كل صديق بحالة الخصوصية الحيّة من وثيقته (القائمة قصيرة) */
-      const friends = await Promise.all(snap.docs.map(async (d) => {
+      const friends = snap.docs.map((d) => {
         const data = d.data();
-        let isPrivate = false;
-        let name = data.name ?? "";
-        let track = data.track ?? "";
-        try {
-          const live = (await db.collection("users").doc(d.id).get()).data();
-          if (live) {
-            isPrivate = live.isPrivate === true;
-            name = live.name ?? name;
-            track = live.track ?? track;
-          }
-        } catch {}
-        return { uid: d.id, name, track, isPrivate };
-      }));
+        return { uid: d.id, name: data.name ?? "", track: data.track ?? "" };
+      });
       return NextResponse.json({ friends });
     }
 

@@ -20,7 +20,7 @@ function useDueCards() {
   return count;
 }
 
-interface NavItem { href: string; label: string; big?: boolean; icon: (a: boolean) => React.ReactNode; }
+interface NavItem { href: string; label: string; icon: (a: boolean) => React.ReactNode; }
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "الرئيسية", icon: (a: boolean) => (
@@ -33,13 +33,6 @@ const NAV_ITEMS: NavItem[] = [
       <circle cx="12" cy="13" r="8" /><path strokeLinecap="round" d="M12 9.5V13l2.5 2M10 2h4" />
     </svg>
   )},
-  /* ── المجلس: وسط + أيقونة أكبر ── */
-  { href: "/council", label: "المجلس", big: true, icon: (a: boolean) => (
-    <svg viewBox="0 0 24 24" fill={a ? "currentColor" : "none"} stroke="currentColor" strokeWidth={a ? 0 : 1.8} className="w-8 h-8">
-      <path strokeLinecap="round" strokeLinejoin="round"
-        d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-    </svg>
-  )},
   { href: "/roadmap", label: "الخريطة", icon: (a: boolean) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 20 3.5 17.5v-13L9 7m0 13 6-3m-6 3V7m6 10 5.5 2.5v-13L15 4m0 13V4M9 7l6-3" />
@@ -50,6 +43,11 @@ const NAV_ITEMS: NavItem[] = [
       <rect x="4.5" y="10" width="15" height="10.5" rx="2.5" /><path strokeLinecap="round" d="M8 10V7.5a4 4 0 0 1 8 0V10" /><circle cx="12" cy="15.2" r="1.4" fill="currentColor" stroke="none" />
     </svg>
   )},
+  { href: "/review", label: "مراجعة", icon: (a: boolean) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
+      <rect x="5" y="4" width="14" height="17" rx="2.5" /><path strokeLinecap="round" d="M9 4.5V3m6 1.5V3M9 12l2 2 4-4.5" />
+    </svg>
+  )},
 ];
 
 export default function BottomNav() {
@@ -58,12 +56,11 @@ export default function BottomNav() {
   return (
     <nav className="float-nav flex items-stretch px-2" aria-label="التنقل الرئيسي">
       {NAV_ITEMS.map((item) => {
-        const active = pathname === item.href || (item.href === "/council" && pathname.startsWith("/council"));
-        const badge = item.href === "/vault" && dueCount > 0 ? dueCount : 0;
+        const active = pathname === item.href;
+        const badge = item.href === "/review" && dueCount > 0 ? dueCount : 0;
         return (
           <Link key={item.href} href={item.href}
-            className={`float-nav-item ${active ? "active" : ""} ${item.big ? "scale-110" : ""}`}
-            style={item.big ? { marginTop: "-6px" } : undefined}>
+            className={`float-nav-item ${active ? "active" : ""}`}>
             <span className="nav-bubble relative">
               {item.icon(active)}
               {badge > 0 && (
@@ -73,7 +70,7 @@ export default function BottomNav() {
                 </span>
               )}
             </span>
-            <span className={`text-[11.5px] ${active ? "font-extrabold" : "font-semibold"} ${item.big ? "text-[12px]" : ""}`}>{item.label}</span>
+            <span className={`text-[11.5px] ${active ? "font-extrabold" : "font-semibold"}`}>{item.label}</span>
           </Link>
         );
       })}
