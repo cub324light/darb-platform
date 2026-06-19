@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { loadEvents, saveEvents, type ScheduleEvent } from "@/lib/storage";
+import { loadEvents, saveEvents, loadUser, loadExamCoord, examCoordPrompt, type ScheduleEvent } from "@/lib/storage";
 import { getEventsForDate } from "@/components/DayScheduler";
 import { normalizeDigits, fmtHour } from "@/lib/utils";
 
@@ -76,10 +76,14 @@ export default function DashAI({ subjects, onOpenScheduler }: Props) {
       const busyNote = busy.length > 0
         ? ` الأوقات المحجوزة اليوم (تجنّبها تماماً ولا تضع فيها شيئاً): ${busy.map((e) => `${fmtHour(e.fromHour)}–${fmtHour(e.toHour)}`).join("، ")}.`
         : "";
+      /* تنسيق الاختبارات المتعددة (قدرات + تحصيلي ...) */
+      const u = loadUser();
+      const activeTracks = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as string[];
+      const coordNote = examCoordPrompt(loadExamCoord(), activeTracks);
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: p + busyNote, subjects, mode: "schedule" }),
+        body: JSON.stringify({ prompt: p + busyNote + coordNote, subjects, mode: "schedule" }),
       });
       const data = await res.json() as { text?: string; error?: string };
       const raw = (data.text ?? data.error ?? "حدث خطأ").trim();

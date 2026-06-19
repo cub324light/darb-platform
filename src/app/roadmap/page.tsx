@@ -7,6 +7,7 @@ import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import TopicExtractor from "@/components/TopicExtractor";
 import LeaksPlanner from "@/components/LeaksPlanner";
+import ExamCoordPanel from "@/components/ExamCoordPanel";
 import SkillGraph from "@/components/SkillGraph";
 import { hasSkillTree } from "@/lib/globalSkills";
 import { RAKAN_SCHEDULE } from "@/lib/constants";
@@ -742,6 +743,11 @@ export default function RoadmapPage() {
           );
         })}
       </div>
+
+      {/* تنسيق الاختبارات — يظهر في «الكل» عند وجود مسارين فأكثر */}
+      {testTab === "all" && (
+        <ExamCoordPanel tracks={activeTrackIds.map((tid) => TRACKS.find((t) => t.id === tid)?.title ?? String(tid))} />
+      )}
 
       {/* خريطة المهارات — للمسارات التي لها شجرة (قدرات/تحصيلي) */}
       {hasSkillTree(track.id) && (

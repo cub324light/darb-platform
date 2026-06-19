@@ -230,7 +230,7 @@ export function resetAll() {
      "darb_posts","darb_schedule","darb_exam_date","darb_events","darb_exam_flow","darb_stage_reviews",
      "darb_tadreeb_items","darb_tadreeb_done","darb_tasreebat_pct","darb_subject_exam_dates",
      "darb_track_exam_dates","darb_results","darb_skills","darb_skill_progress",
-     "darb_session_log","darb_leaks_plan","darb_dash_config","darb_dash_sched_v2"].forEach((k) =>
+     "darb_session_log","darb_leaks_plan","darb_exam_coord","darb_dash_config","darb_dash_sched_v2"].forEach((k) =>
       localStorage.removeItem(k)
     );
     /* تعليمات أول زيارة تظهر من جديد بعد الضبط */
@@ -238,6 +238,37 @@ export function resetAll() {
       .filter((k) => k.startsWith("darb_guide_"))
       .forEach((k) => localStorage.removeItem(k));
   } catch {}
+}
+
+/* ── تنسيق الاختبارات: كيف يوزّع الطالب وقته بين مسارين أو أكثر ── */
+export type ExamCoordStrategy = "sequential" | "alternate" | "split" | "custom";
+export interface ExamCoord {
+  strategy: ExamCoordStrategy;
+  custom: string; // تعليمات حرة يكتبها الطالب (تُغذّى للمساعد الذكي)
+}
+const EXAM_COORD_KEY = "darb_exam_coord";
+export function loadExamCoord(): ExamCoord {
+  if (typeof window === "undefined") return { strategy: "sequential", custom: "" };
+  try {
+    const r = localStorage.getItem(EXAM_COORD_KEY);
+    return r ? { strategy: "sequential", custom: "", ...JSON.parse(r) } as ExamCoord : { strategy: "sequential", custom: "" };
+  } catch { return { strategy: "sequential", custom: "" }; }
+}
+export function saveExamCoord(c: ExamCoord) {
+  try { localStorage.setItem(EXAM_COORD_KEY, JSON.stringify(c)); } catch {}
+}
+
+/* جملة التوجيه التي تُرسل للمساعد الذكي حسب استراتيجية التنسيق */
+export function examCoordPrompt(c: ExamCoord, tracks: string[]): string {
+  if (tracks.length < 2) return "";
+  const t = tracks.join(" و");
+  switch (c.strategy) {
+    case "sequential": return ` الطالب عنده اختبارات: ${t}. ركّز على الاختبار الأقرب موعداً أولاً حتى ينتهي، ثم انتقل للثاني.`;
+    case "alternate":  return ` الطالب عنده اختبارات: ${t}. وزّع الأيام بالتناوب — يوم لكل مسار.`;
+    case "split":      return ` الطالب عنده اختبارات: ${t}. اقسم وقت كل يوم بين المسارين (فترة لكل واحد).`;
+    case "custom":     return c.custom.trim() ? ` الطالب عنده اختبارات: ${t}. تعليمات الطالب للتنسيق: ${c.custom.trim()}` : "";
+    default: return "";
+  }
 }
 
 /* ── نتائج اختبارات الطالب («نتائجي») — سجل يدوي يضيفه الطالب ── */
