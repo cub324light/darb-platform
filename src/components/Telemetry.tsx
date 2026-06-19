@@ -43,6 +43,8 @@ export default function Telemetry() {
             capture_pageview: "history_change",
             capture_pageleave: true,
           });
+          // نتيحه عالمياً ليقرأه نظام أعلام الميزات (src/lib/flags.ts)
+          (window as unknown as { posthog?: unknown }).posthog = mod.default;
         })
         .catch(() => {});
     }

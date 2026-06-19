@@ -8,6 +8,7 @@ import { getTrack, TRACKS, type TrackId } from "@/lib/tracks";
 import { fmtHour } from "@/lib/utils";
 import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, saveExamDate, loadDashConfig, saveDashConfig, loadTrackExamDates, saveTrackExamDates, DASH_SECTION_META, type DarbUser, type ScheduleEvent, type DashItem, type DashSectionId, saveEvents } from "@/lib/storage";
 import DashAI from "@/components/DashAI";
+import { useFlag } from "@/lib/flags";
 import { syncUser } from "@/lib/firestore";
 import DayScheduler, { getEventsForDate } from "@/components/DayScheduler";
 import ExamDateButton from "@/components/ExamDateButton";
@@ -145,6 +146,9 @@ export default function DashboardPage() {
   );
 
   const [studiersData, setStudiersData] = useState<{ count: number; regions: Record<string, number> } | null>(null);
+
+  /* علم ميزة المجلس — يُطفأ عن بُعد من لوحة PostHog عند الحاجة */
+  const councilOn = useFlag("council");
 
   /* إخفاء حكمة اليوم عند الضغط على ✕ */
   const [hideQuote, setHideQuote] = useState(() =>
@@ -672,13 +676,15 @@ export default function DashboardPage() {
       case "community":
         return (
           <section className="grid grid-cols-2 gap-2.5">
-            <Link href="/council" className="card flex items-center gap-3 active:scale-[0.97] transition"
-              style={{ minHeight: "74px", textDecoration: "none" }}>
-              <div>
-                <p className="font-extrabold text-[17px]" style={{ color: "var(--text)" }}>المجلس</p>
-                <p className="text-[17px]" style={{ color: "var(--text-muted)" }}>نقاشات الطلاب</p>
-              </div>
-            </Link>
+            {councilOn && (
+              <Link href="/council" className="card flex items-center gap-3 active:scale-[0.97] transition"
+                style={{ minHeight: "74px", textDecoration: "none" }}>
+                <div>
+                  <p className="font-extrabold text-[17px]" style={{ color: "var(--text)" }}>المجلس</p>
+                  <p className="text-[17px]" style={{ color: "var(--text-muted)" }}>نقاشات الطلاب</p>
+                </div>
+              </Link>
+            )}
             <Link href="/arena" className="card flex items-center gap-3 active:scale-[0.97] transition"
               style={{ minHeight: "74px", textDecoration: "none", borderColor: "color-mix(in srgb, var(--gold) 25%, transparent)" }}>
               <div>

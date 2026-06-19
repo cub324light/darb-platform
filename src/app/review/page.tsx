@@ -6,6 +6,7 @@ import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import Confetti from "@/components/Confetti";
 import QuizGen from "@/components/QuizGen";
+import { useFlag } from "@/lib/flags";
 import { sm2, nextReviewText } from "@/lib/sm2";
 import { subjectsForTracks, colorForSubject, type TrackId } from "@/lib/tracks";
 import { loadUser, loadList, saveList } from "@/lib/storage";
@@ -36,6 +37,7 @@ export default function ReviewPage() {
   const [cards, setCards] = useState<ReviewCard[]>(() =>
     typeof window !== "undefined" ? loadList<ReviewCard>(CARDS_KEY) : []
   );
+  const quizOn = useFlag("ai_quiz");
   const [mode, setMode] = useState<Mode>("list");
   const [sessionCards, setSessionCards] = useState<ReviewCard[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -342,7 +344,7 @@ export default function ReviewPage() {
       </div>
 
       {/* توليد أسئلة تدريب من دويرب */}
-      {subjectList.length > 0 && (
+      {quizOn && subjectList.length > 0 && (
         <div className="px-5 mb-6">
           <QuizGen subjects={subjectList} />
         </div>
