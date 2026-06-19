@@ -7,6 +7,7 @@ import Confetti from "@/components/Confetti";
 import { subjectsForTracks } from "@/lib/tracks";
 import type { TrackId } from "@/lib/tracks";
 import { loadUser, loadStats, recordSession } from "@/lib/storage";
+import { trackEvent } from "@/lib/events";
 
 type Phase = "idle" | "focus" | "break" | "done";
 type DurMode = "25" | "50" | "90" | "custom";
@@ -152,6 +153,7 @@ export default function OrbitPage() {
     setSilverTotal(s.silver);
     setTotalFocusMins(s.todayFocusMins);
     setSessionsToday((p) => p + 1);
+    trackEvent("session_completed", { focusMins, silver: SILVER_PER_SESSION });
     playBeep();
     vibrate([100, 50, 100]);
     notify("انتهت جلسة التركيز", `أحسنت! خذ راحة ${calcBreak(focusMins)} دقيقة`);

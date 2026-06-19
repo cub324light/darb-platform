@@ -9,6 +9,7 @@ import {
   overallStats, type SkillProgress, type SkillTier,
 } from "@/lib/skillProgress";
 import { loadUser, type DarbUser } from "@/lib/storage";
+import { trackEvent } from "@/lib/events";
 import type { TrackId } from "@/lib/tracks";
 
 const TIER_CONFIG: Record<SkillTier, { label: string; color: string; bg: string }> = {
@@ -105,8 +106,9 @@ export default function SkillsPage() {
   const weakIds = useMemo(() => weakestSkillIds(progress, skills.map((s) => s.id), 3), [progress, skills]);
 
   const handleRate = (skillId: string, level: "none" | "partial" | "mastered") => {
-    setSkillSelfAssessment(skillId, level);
+    const updated = setSkillSelfAssessment(skillId, level);
     setProgress(loadSkillProgress());
+    trackEvent("skill_rated", { skillId, level, masteryScore: updated.masteryScore });
   };
 
   const weakSkills = weakIds.map((id) => skills.find((s) => s.id === id)).filter(Boolean) as GlobalSkill[];

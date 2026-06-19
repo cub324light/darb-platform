@@ -4,6 +4,7 @@ import { TRACKS, TRACK_GROUPS, type TrackId } from "@/lib/tracks";
 import { saveUser, saveExamDate, saveResults, saveTrackExamDates } from "@/lib/storage";
 import { registerUser } from "@/lib/firestore";
 import { currentUser, pushBackup } from "@/lib/cloud";
+import { trackEvent } from "@/lib/events";
 import Dome from "@/components/Dome";
 import Logo from "@/components/Logo";
 
@@ -80,6 +81,7 @@ export default function OnboardingPage() {
       })));
     }
     registerUser(trimmedName, primaryTrack, extras);
+    trackEvent("onboarding_completed", { track: primaryTrack, tracks: activeTracks.length });
     pushBackup().catch(() => {});
     window.location.href = "/dashboard";
   };
