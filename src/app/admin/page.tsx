@@ -1,7 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CHAT_GROUPS, groupName } from "@/lib/groups";
 import { BorderBeam } from "@/components/ui/border-beam";
+import { authedFetch } from "@/lib/authFetch";
+import { ROLE_LABEL, ROLE_COLOR, ASSIGNABLE_ROLES, ROLE_RANK, canDo, type Role } from "@/lib/roles";
 
 type PlanId = "free" | "shaheen" | "anqa";
 
@@ -21,6 +23,7 @@ interface AdminUser {
   track: string;
   activeTracks?: string[];
   plan: PlanId;
+  role: Role;
   blocked: boolean;
   streak: number;
   focusMins: number;
@@ -148,9 +151,14 @@ export default function AdminPage() {
   const [pingMsg, setPingMsg] = useState("");
   const [pinging, setPinging] = useState(false);
   const [detail, setDetail]   = useState<AdminUser | null>(null);
+  /* دور المتصل الحالي — يحدد ما يظهر له من عمليات (RBAC) */
+  const [myRole, setMyRole]   = useState<Role>("user");
+  const [checkingRole, setCheckingRole] = useState(true);
 
+  /* authedFetch يُرفق Firebase ID Token تلقائياً → يسمح لطاقم RBAC بالدخول
+     بدون كلمة سر. المالك يقدر يستخدم كلمة السر (break-glass) أيضاً. */
   const callApi = async (mode?: string) => {
-    const res = await fetch("/api/admin/users", {
+    const res = await authedFetch("/api/admin/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password: pass, mode }),
@@ -168,19 +176,46 @@ export default function AdminPage() {
     return { ok: res.ok, data };
   };
 
+  const enter = (role: Role, list: AdminUser[]) => {
+    setMyRole(role);
+    setUsers(list);
+    setAuthed(true);
+    loadAnnouncements();
+    loadAnalytics();
+  };
+
   const login = async () => {
     if (!pass.trim() || loading) return;
     setLoading(true); setError("");
     try {
       const { ok, data } = await callApi();
       if (!ok) { setError(data.error as string ?? "حدث خطأ"); return; }
-      setUsers((data.users as AdminUser[]) ?? []);
-      setAuthed(true);
-      loadAnnouncements();
-      loadAnalytics();
+      // كلمة السر = صلاحيات المالك (break-glass)
+      enter("owner", (data.users as AdminUser[]) ?? []);
     } catch (e) { setError(`تعذّر الوصول للخادم: ${e instanceof Error ? e.message : "تحقّق من الإنترنت"}`); }
     finally { setLoading(false); }
   };
+
+  /* بوابة RBAC تلقائية: لو المستخدم مسجّل دخوله بدور طاقم (token)،
+     يدخل اللوحة مباشرة بلا كلمة سر — بصلاحيات دوره. */
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { ok, data } = await callApi("whoami");
+        if (cancelled) return;
+        const role = (ok ? (data.role as Role) : "user") ?? "user";
+        if (role !== "user" && ROLE_RANK[role] >= ROLE_RANK.moderator) {
+          // طاقم موثّق — حمّل القائمة ثم ادخل
+          const res = await callApi();
+          if (!cancelled && res.ok) enter(role, (res.data.users as AdminUser[]) ?? []);
+        }
+      } catch { /* تجاهل — تبقى شاشة كلمة السر */ }
+      finally { if (!cancelled) setCheckingRole(false); }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const refresh = async () => {
     if (refreshing) return;
@@ -341,7 +376,7 @@ export default function AdminPage() {
   };
 
   const callAction = async (mode: string, extra: Record<string, unknown>) => {
-    const res = await fetch("/api/admin/users", {
+    const res = await authedFetch("/api/admin/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password: pass, mode, ...extra }),
@@ -383,6 +418,19 @@ export default function AdminPage() {
         applyLocal(uid, { blocked: true, blockUntil });
         setActionMsg(durationHours === 0 ? "🚫 تم الإيقاف الدائم" : `🚫 موقوف لمدة ${durationHours < 24 ? `${durationHours}س` : `${Math.round(durationHours / 24)} يوم`}`);
       } else setActionMsg(`❌ ${(data as Record<string,string>).error ?? "تعذّر الإيقاف"}`);
+    } catch { setActionMsg("❌ خطأ في الاتصال"); }
+    finally { setActionBusy(false); }
+  };
+
+  /* تعيين دور لمستخدم — للمالك فقط (RBAC) */
+  const setUserRole = async (uid: string, role: Role) => {
+    setActionBusy(true); setActionMsg("");
+    try {
+      const { ok, data } = await callAction("setRole", { uid, role });
+      if (ok) {
+        applyLocal(uid, { role });
+        setActionMsg(`✅ صار الدور «${ROLE_LABEL[role]}» — يفعّل بعد تحديث جلسة المستخدم`);
+      } else setActionMsg(`❌ ${data.error ?? "تعذّر تعيين الدور"}`);
     } catch { setActionMsg("❌ خطأ في الاتصال"); }
     finally { setActionBusy(false); }
   };
@@ -526,6 +574,9 @@ export default function AdminPage() {
             درب
           </p>
           <p className="title-md text-center relative z-10" style={{ color: "var(--text)" }}>لوحة الإدارة</p>
+          <p className="text-[12px] text-center relative z-10" style={{ color: "var(--text-muted)" }}>
+            {checkingRole ? "جارٍ التحقق من صلاحياتك..." : "الطاقم يدخل تلقائياً بحسابه · أو كلمة سر المالك"}
+          </p>
           <div className="relative w-full z-10">
             <input
               type={showPass ? "text" : "password"} value={pass}
@@ -589,7 +640,13 @@ export default function AdminPage() {
       {/* الهيدر */}
       <div className="max-w-7xl mx-auto mb-6 flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <p className="title-md" style={{ color: "var(--text)" }}>لوحة الإدارة</p>
+          <div className="flex items-center gap-2">
+            <p className="title-md" style={{ color: "var(--text)" }}>لوحة الإدارة</p>
+            <span className="text-[11px] font-black px-2 py-0.5 rounded-full"
+              style={{ background: `color-mix(in srgb, ${ROLE_COLOR[myRole]} 16%, transparent)`, color: ROLE_COLOR[myRole] }}>
+              {ROLE_LABEL[myRole]}
+            </span>
+          </div>
           <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>{users.length} مستخدم مسجّل</p>
         </div>
         <div className="flex items-center gap-2.5 flex-wrap">
@@ -1024,7 +1081,43 @@ export default function AdminPage() {
               {impLoading ? "جارٍ الفتح..." : "👁 عرض كالطالب (قراءة فقط)"}
             </button>
 
-            {/* ── الإجراءات: الباقة والإيقاف ── */}
+            {/* دور المستخدم — إدارة الأدوار للمالك فقط (RBAC) */}
+            <div className="rounded-2xl p-4 flex flex-col gap-3"
+              style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+              <div className="flex items-center justify-between">
+                <p className="text-[12px] font-black" style={{ color: "var(--text-muted)" }}>الدور</p>
+                <span className="text-[11px] font-black px-2 py-0.5 rounded-full"
+                  style={{ background: `color-mix(in srgb, ${ROLE_COLOR[detail.role]} 16%, transparent)`, color: ROLE_COLOR[detail.role] }}>
+                  {ROLE_LABEL[detail.role]}
+                </span>
+              </div>
+              {canDo(myRole, "manageRoles") ? (
+                detail.role === "owner" ? (
+                  <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>حساب المالك — لا يُغيَّر دوره.</p>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    {ASSIGNABLE_ROLES.map((r) => {
+                      const active = detail.role === r;
+                      return (
+                        <button key={r} onClick={() => !active && !actionBusy && setUserRole(detail.id, r)}
+                          disabled={actionBusy}
+                          className="py-2.5 rounded-xl text-[13px] font-bold transition disabled:opacity-60"
+                          style={active
+                            ? { background: ROLE_COLOR[r], color: "white", border: `1.5px solid ${ROLE_COLOR[r]}` }
+                            : { background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-dim)" }}>
+                          {ROLE_LABEL[r]}{active ? " ✓" : ""}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )
+              ) : (
+                <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>إدارة الأدوار للمالك فقط.</p>
+              )}
+            </div>
+
+            {/* ── الإجراءات: الباقة والإيقاف (admin+) ── */}
+            {canDo(myRole, "manageUser") && (
             <div className="rounded-2xl p-4 flex flex-col gap-3"
               style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
               <p className="text-[12px] font-black" style={{ color: "var(--text-muted)" }}>الباقة</p>
@@ -1073,15 +1166,14 @@ export default function AdminPage() {
                 </button>
               </div>
 
-              {actionMsg && (
-                <p className="text-[13px] font-bold text-center" style={{ color: "var(--text-dim)" }}>{actionMsg}</p>
-              )}
               <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
                 التغييرات تُطبَّق على جهاز المستخدم عند فتحه التطبيق في المرة القادمة.
               </p>
             </div>
+            )}
 
-            {/* إعادة تعيين وحذف */}
+            {/* إعادة تعيين وحذف — admin+ */}
+            {canDo(myRole, "manageUser") && (
             <div className="rounded-2xl p-4 flex flex-col gap-3 mt-2"
               style={{ background: "color-mix(in srgb, var(--danger) 6%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--danger) 30%, var(--border))" }}>
               <p className="text-[12px] font-black" style={{ color: "var(--danger)" }}>⚠️ منطقة خطر</p>
@@ -1096,6 +1188,7 @@ export default function AdminPage() {
                   style={{ background: "color-mix(in srgb, #F59E0B 12%, transparent)", border: "1.5px solid #F59E0B", color: "#F59E0B" }}>
                   🔄 إعادة تعيين
                 </button>
+                {canDo(myRole, "deleteUser") && (
                 <button
                   onClick={() => {
                     if (!window.confirm(`حذف ${detail.name} نهائياً؟ لا يمكن التراجع!`)) return;
@@ -1106,8 +1199,13 @@ export default function AdminPage() {
                   style={{ background: "color-mix(in srgb, var(--danger) 12%, transparent)", border: "1.5px solid var(--danger)", color: "var(--danger)" }}>
                   🗑 حذف نهائي
                 </button>
+                )}
               </div>
+              {actionMsg && (
+                <p className="text-[13px] font-bold text-center" style={{ color: "var(--text-dim)" }}>{actionMsg}</p>
+              )}
             </div>
+            )}
 
             <div className="flex flex-col gap-2.5">
               {([

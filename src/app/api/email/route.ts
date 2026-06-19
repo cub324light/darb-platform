@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendEmail, sendTemplate, isEmailConfigured } from "@/lib/email";
 import { TEMPLATES, type TemplateName, type TemplateProps } from "@/lib/email/templates";
-import { checkAdminPassword } from "@/lib/server/firebaseAdmin";
+import { authorizeAdmin } from "@/lib/server/firebaseAdmin";
 
 /* Resend SDK يعمل على Node */
 export const runtime = "nodejs";
@@ -47,9 +47,9 @@ export async function POST(req: NextRequest) {
   try { body = await req.json(); }
   catch { return NextResponse.json({ ok: false, error: "طلب غير صالح" }, { status: 400 }); }
 
-  /* المصادقة بكلمة الأدمن (نفس مفتاح لوحة الإدارة) */
-  if (!checkAdminPassword(body.password)) {
-    return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 401 });
+  /* المصادقة عبر RBAC: كلمة المالك أو دور ≥ مشرف عام (admin) */
+  if (!(await authorizeAdmin(req, body, "admin"))) {
+    return NextResponse.json({ ok: false, error: "صلاحيات غير كافية" }, { status: 403 });
   }
 
   if (!body.to) {
