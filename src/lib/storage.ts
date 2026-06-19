@@ -212,7 +212,7 @@ export function resetAll() {
     ["darb_user","darb_stats","darb_vault","darb_cards","darb_lessons","darb_done_lessons",
      "darb_posts","darb_schedule","darb_exam_date","darb_events","darb_exam_flow","darb_stage_reviews",
      "darb_tadreeb_items","darb_tadreeb_done","darb_tasreebat_pct","darb_subject_exam_dates",
-     "darb_track_exam_dates","darb_results","darb_dash_config","darb_dash_sched_v2"].forEach((k) =>
+     "darb_track_exam_dates","darb_results","darb_skills","darb_dash_config","darb_dash_sched_v2"].forEach((k) =>
       localStorage.removeItem(k)
     );
     /* تعليمات أول زيارة تظهر من جديد بعد الضبط */
@@ -234,6 +234,11 @@ export interface ExamResult {
 const RESULTS_KEY = "darb_results";
 export function loadResults(): ExamResult[] { return loadList<ExamResult>(RESULTS_KEY); }
 export function saveResults(list: ExamResult[]) { saveList(RESULTS_KEY, list); }
+
+/* ── خريطة المهارات: معرّفات المهارات المُتقنة ── */
+const SKILLS_KEY = "darb_skills";
+export function loadSkills(): string[] { return loadList<string>(SKILLS_KEY); }
+export function saveSkills(ids: string[]) { saveList(SKILLS_KEY, ids); }
 
 /* ── تقدم الاختبار والدرجات ── */
 export interface ExamFlow {
