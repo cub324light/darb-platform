@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { CHAT_GROUPS, groupName } from "@/lib/groups";
+import { BorderBeam } from "@/components/ui/border-beam";
 
 type PlanId = "free" | "shaheen" | "anqa";
 
@@ -461,13 +462,15 @@ export default function AdminPage() {
   if (!authed) {
     return (
       <div className="min-h-dvh flex items-center justify-center px-6" style={{ background: "var(--bg)" }}>
-        <div className="w-full max-w-sm flex flex-col gap-4 scale-in">
-          <p className="font-black text-5xl text-center mb-1 text-[var(--accent-light)]"
+        <div className="relative w-full max-w-sm flex flex-col gap-4 scale-in rounded-3xl p-6 overflow-hidden"
+          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <BorderBeam size={200} duration={10} colorFrom="var(--accent-hi)" colorTo="var(--gold)" />
+          <p className="font-black text-5xl text-center mb-1 text-[var(--accent-light)] relative z-10"
             style={{ filter: "drop-shadow(0 0 22px color-mix(in srgb, var(--accent) 40%, transparent))" }}>
             درب
           </p>
-          <p className="title-md text-center" style={{ color: "var(--text)" }}>لوحة الإدارة</p>
-          <div className="relative w-full">
+          <p className="title-md text-center relative z-10" style={{ color: "var(--text)" }}>لوحة الإدارة</p>
+          <div className="relative w-full z-10">
             <input
               type={showPass ? "text" : "password"} value={pass}
               onChange={(e) => setPass(e.target.value)}
@@ -512,11 +515,11 @@ export default function AdminPage() {
               </p>
             </div>
           )}
-          <button onClick={login} disabled={loading} className="btn-primary" style={{ opacity: loading ? 0.5 : 1 }}>
+          <button onClick={login} disabled={loading} className="btn-primary relative z-10" style={{ opacity: loading ? 0.5 : 1 }}>
             {loading ? "جاري التحقق..." : "دخول"}
           </button>
           <button onClick={ping} disabled={pinging || !pass.trim()}
-            className="text-[14px] text-center py-2 font-semibold"
+            className="text-[14px] text-center py-2 font-semibold relative z-10"
             style={{ color: "var(--text-muted)", opacity: pass.trim() ? 1 : 0.5 }}>
             {pinging ? "يتحقق..." : "تشخيص اتصال Firebase"}
           </button>

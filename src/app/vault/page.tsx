@@ -362,8 +362,8 @@ export default function VaultPage() {
 
           return (
             <div key={error.id}
-              className="rounded-2xl overflow-hidden transition-all"
-              style={{ background: "var(--surface)", border: `1.5px solid ${isExpanded ? color + "50" : "var(--border)"}` }}>
+              className="rounded-2xl overflow-hidden transition-all glow-card-hover group"
+              style={{ background: "var(--surface)", border: `1.5px solid ${isExpanded ? color + "55" : "var(--border)"}`, boxShadow: isExpanded ? `0 0 24px ${color}14` : undefined }}>
 
               <div className="p-6 cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : error.id)}>
                 <div className="flex items-start gap-4">
