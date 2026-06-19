@@ -76,6 +76,17 @@ function fmtUsd(n: number): string {
   return n < 0.01 ? `$${n.toFixed(4)}` : `$${n.toFixed(2)}`;
 }
 
+/* ── انتحال العرض (قراءة فقط) ── */
+interface ImpView {
+  name: string; email: string;
+  user: Record<string, unknown>;
+  stats: { silver?: number; totalFocusMins?: number; sessionsCount?: number; sessionDays?: string[] };
+  vault: { question?: string; subject?: string; category?: string }[];
+  cards: unknown[];
+  lessons: { subject?: string; title?: string }[];
+  results: { exam?: string; score?: string; date?: string }[];
+}
+
 function fmt(ts?: { seconds: number } | null): string {
   if (!ts) return "—";
   return new Date(ts.seconds * 1000).toLocaleDateString("ar-SA", {
@@ -211,6 +222,34 @@ export default function AdminPage() {
     const next = !showAi;
     setShowAi(next);
     if (next && !aiLoaded) loadAiUsage();
+  };
+
+  /* ── انتحال العرض (قراءة فقط للدعم) ── */
+  const [impData, setImpData] = useState<ImpView | null>(null);
+  const [impLoading, setImpLoading] = useState(false);
+
+  const openImpersonate = async (u: AdminUser) => {
+    setImpLoading(true); setImpData(null);
+    try {
+      const { ok, data } = await callAction("getUserData", { uid: u.id });
+      if (ok) {
+        const backup = (data.backup ?? {}) as Record<string, string>;
+        function pick<T>(k: string, fb: T): T {
+          try { return backup[k] ? (JSON.parse(backup[k]) as T) : fb; } catch { return fb; }
+        }
+        setImpData({
+          name: u.name,
+          email: (data.email as string) ?? u.email,
+          user: pick("darb_user", {} as Record<string, unknown>),
+          stats: pick("darb_stats", {}),
+          vault: pick("darb_vault", []),
+          cards: pick("darb_cards", []),
+          lessons: pick("darb_lessons", []),
+          results: pick("darb_results", []),
+        });
+      } else setActionMsg(`❌ ${data.error ?? "تعذّر جلب البيانات"}`);
+    } catch { setActionMsg("❌ خطأ في الاتصال"); }
+    finally { setImpLoading(false); }
   };
 
   /* جلب الإعلانات السابقة (قراءة عامة، بلا كلمة سر) */
@@ -853,6 +892,13 @@ export default function AdminPage() {
               <button onClick={() => setDetail(null)} className="text-2xl font-bold px-2" style={{ color: "var(--text-muted)" }}>×</button>
             </div>
 
+            {/* انتحال العرض — قراءة فقط */}
+            <button onClick={() => openImpersonate(detail)} disabled={impLoading}
+              className="rounded-xl px-4 py-2.5 text-[13px] font-bold transition active:scale-[0.98]"
+              style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1.5px solid color-mix(in srgb, var(--accent) 40%, var(--border))", color: "var(--accent-light)", opacity: impLoading ? 0.5 : 1 }}>
+              {impLoading ? "جارٍ الفتح..." : "👁 عرض كالطالب (قراءة فقط)"}
+            </button>
+
             {/* ── الإجراءات: الباقة والإيقاف ── */}
             <div className="rounded-2xl p-4 flex flex-col gap-3"
               style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
@@ -940,6 +986,94 @@ export default function AdminPage() {
               ))}
               <p className="text-[10px] mt-1 font-mono-nums" style={{ color: "var(--text-muted)" }}>ID: {detail.id}</p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* انتحال العرض — نسخة الطالب كما يراها (قراءة فقط) */}
+      {impData && (
+        <div className="fixed inset-0 z-[10000] flex p-4"
+          style={{ background: "rgba(0,0,0,0.78)", backdropFilter: "blur(4px)" }}
+          onClick={(e) => e.target === e.currentTarget && setImpData(null)}>
+          <div className="relative m-auto w-full max-w-lg max-h-[90dvh] overflow-y-auto rounded-3xl p-6 flex flex-col gap-4"
+            style={{ background: "var(--bg)", border: "1.5px solid var(--accent)" }}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-[11px] font-black px-2 py-0.5 rounded-full flex-shrink-0"
+                  style={{ background: "color-mix(in srgb, var(--accent) 16%, transparent)", color: "var(--accent-light)" }}>👁 عرض كالطالب</span>
+                <p className="font-black text-lg truncate" style={{ color: "var(--text)" }}>{impData.name || "بدون اسم"}</p>
+              </div>
+              <button onClick={() => setImpData(null)} className="text-2xl font-bold px-2" style={{ color: "var(--text-muted)" }}>×</button>
+            </div>
+
+            {/* ملخّص سريع */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              {[
+                { label: "الفضة", val: String(impData.stats.silver ?? 0) },
+                { label: "ساعات التركيز", val: fmtHours(impData.stats.totalFocusMins ?? 0) },
+                { label: "الجلسات", val: String(impData.stats.sessionsCount ?? 0) },
+                { label: "أيام نشطة", val: String(impData.stats.sessionDays?.length ?? 0) },
+                { label: "أخطاء الخزنة", val: String(impData.vault.length) },
+                { label: "بطاقات المراجعة", val: String(impData.cards.length) },
+                { label: "الدروس", val: String(impData.lessons.length) },
+                { label: "النتائج", val: String(impData.results.length) },
+              ].map((s) => (
+                <div key={s.label} className="rounded-xl p-3 flex flex-col gap-0.5"
+                  style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                  <p className="font-black text-xl" style={{ color: "var(--accent-light)" }}>{s.val}</p>
+                  <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{s.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* الملف الشخصي */}
+            <div className="rounded-2xl p-4 flex flex-col gap-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+              <p className="text-[12px] font-black" style={{ color: "var(--text-muted)" }}>الملف</p>
+              {([
+                ["الإيميل", impData.email || "—"],
+                ["المسار", String(impData.user.track ?? "—")],
+                ["المسارات النشطة", Array.isArray(impData.user.activeTracks) ? (impData.user.activeTracks as string[]).join("، ") : "—"],
+                ["تاريخ الاختبار", String(impData.user.examDate ?? "—")],
+                ["المرحلة", String(impData.user.studyLevel ?? "—")],
+                ["الصف", String(impData.user.grade ?? "—")],
+              ] as [string, string][]).map(([k, v]) => (
+                <div key={k} className="flex items-center justify-between gap-3 text-[13px]">
+                  <span style={{ color: "var(--text-muted)" }}>{k}</span>
+                  <span className="font-semibold text-left" style={{ color: "var(--text)" }} dir="auto">{v}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* آخر النتائج */}
+            {impData.results.length > 0 && (
+              <div className="rounded-2xl p-4 flex flex-col gap-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                <p className="text-[12px] font-black" style={{ color: "var(--text-muted)" }}>النتائج المسجّلة</p>
+                {impData.results.slice(0, 8).map((r, i) => (
+                  <div key={i} className="flex items-center justify-between gap-3 text-[13px]">
+                    <span style={{ color: "var(--text-dim)" }}>{r.exam || "—"}{r.date ? ` · ${r.date}` : ""}</span>
+                    <span className="font-bold" style={{ color: "var(--gold)" }}>{r.score ?? "—"}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* آخر أخطاء الخزنة */}
+            {impData.vault.length > 0 && (
+              <div className="rounded-2xl p-4 flex flex-col gap-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                <p className="text-[12px] font-black" style={{ color: "var(--text-muted)" }}>آخر أخطاء الخزنة</p>
+                {impData.vault.slice(0, 8).map((v, i) => (
+                  <div key={i} className="flex items-start justify-between gap-3 text-[13px]">
+                    <span className="min-w-0 truncate" style={{ color: "var(--text-dim)" }}>{v.question || "—"}</span>
+                    <span className="flex-shrink-0 text-[11px] px-2 py-0.5 rounded-full font-bold"
+                      style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>{v.subject || "—"}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+              عرض للقراءة فقط من نسخة الطالب السحابية — لا يعدّل أي بيانات.
+            </p>
           </div>
         </div>
       )}

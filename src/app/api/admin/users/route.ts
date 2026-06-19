@@ -127,6 +127,27 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    /* انتحال العرض: جلب نسخة بيانات الطالب الكاملة (قراءة فقط للدعم) */
+    if (mode === "getUserData") {
+      const { uid } = (body ?? {}) as { uid?: string };
+      if (typeof uid !== "string" || !uid) {
+        return NextResponse.json({ error: "uid مفقود" }, { status: 400 });
+      }
+      try {
+        const db = await adminDb();
+        const doc = await db.collection("users").doc(uid).get();
+        if (!doc.exists) return NextResponse.json({ error: "المستخدم غير موجود" }, { status: 404 });
+        const data = doc.data()!;
+        return NextResponse.json({
+          backup: (data.backup ?? {}) as Record<string, string>,
+          email: (data.email ?? null) as string | null,
+        });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        return NextResponse.json({ error: `تعذّر الجلب: ${msg}` }, { status: 500 });
+      }
+    }
+
     /* تعيين باقة لمستخدم */
     if (mode === "setPlan") {
       const { uid, plan } = (body ?? {}) as { uid?: string; plan?: string };
