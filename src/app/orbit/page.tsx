@@ -458,7 +458,7 @@ export default function OrbitPage() {
           {phase === "focus" && (
             <button onClick={reset}
               className="w-full py-4 rounded-2xl font-bold text-base text-[var(--danger)] border border-[var(--danger)]/30 glass transition min-h-[54px]">
-              إيقاف (تخسر السيلفر)
+              إيقاف (تخسر الفضة)
             </button>
           )}
 

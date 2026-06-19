@@ -208,6 +208,44 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    /* حذف مستخدم (Firestore + Auth) */
+    if (mode === "deleteUser") {
+      const { uid } = (body ?? {}) as { uid?: string };
+      if (typeof uid !== "string" || !uid) {
+        return NextResponse.json({ error: "uid مفقود" }, { status: 400 });
+      }
+      try {
+        const db = await adminDb();
+        const fbAuth = await adminAuth();
+        await db.collection("users").doc(uid).delete();
+        try { await fbAuth.deleteUser(uid); } catch { /* قد لا يوجد في Auth */ }
+        return NextResponse.json({ ok: true, uid });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        return NextResponse.json({ error: `تعذّر الحذف: ${msg}` }, { status: 500 });
+      }
+    }
+
+    /* إعادة تعيين بيانات مستخدم (مسح التقدم، يبقى الحساب) */
+    if (mode === "resetUser") {
+      const { uid } = (body ?? {}) as { uid?: string };
+      if (typeof uid !== "string" || !uid) {
+        return NextResponse.json({ error: "uid مفقود" }, { status: 400 });
+      }
+      try {
+        const db = await adminDb();
+        await db.collection("users").doc(uid).set({
+          streak: 0, focusMins: 0, sessions: 0, silver: 0,
+          taseesProgress: 0, tadreebProgress: 0,
+          backup: {},
+        }, { merge: true });
+        return NextResponse.json({ ok: true, uid });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        return NextResponse.json({ error: `تعذّر الإعادة: ${msg}` }, { status: 500 });
+      }
+    }
+
     const db  = await adminDb();
     const fbAuth = await adminAuth();
 

@@ -956,6 +956,34 @@ export default function AdminPage() {
               </p>
             </div>
 
+            {/* إعادة تعيين وحذف */}
+            <div className="rounded-2xl p-4 flex flex-col gap-3 mt-2"
+              style={{ background: "color-mix(in srgb, var(--danger) 6%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--danger) 30%, var(--border))" }}>
+              <p className="text-[12px] font-black" style={{ color: "var(--danger)" }}>⚠️ منطقة خطر</p>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => {
+                    if (!window.confirm(`إعادة تعيين كل تقدم ${detail.name}؟ (الحساب يبقى)`)) return;
+                    void callAction("resetUser", { uid: detail.id });
+                  }}
+                  disabled={actionBusy}
+                  className="py-2.5 rounded-xl text-[13px] font-bold transition disabled:opacity-50"
+                  style={{ background: "color-mix(in srgb, #F59E0B 12%, transparent)", border: "1.5px solid #F59E0B", color: "#F59E0B" }}>
+                  🔄 إعادة تعيين
+                </button>
+                <button
+                  onClick={() => {
+                    if (!window.confirm(`حذف ${detail.name} نهائياً؟ لا يمكن التراجع!`)) return;
+                    void callAction("deleteUser", { uid: detail.id }).then(() => setDetail(null));
+                  }}
+                  disabled={actionBusy}
+                  className="py-2.5 rounded-xl text-[13px] font-bold transition disabled:opacity-50"
+                  style={{ background: "color-mix(in srgb, var(--danger) 12%, transparent)", border: "1.5px solid var(--danger)", color: "var(--danger)" }}>
+                  🗑 حذف نهائي
+                </button>
+              </div>
+            </div>
+
             <div className="flex flex-col gap-2.5">
               {([
                 ["الإيميل", detail.email || "—"],
