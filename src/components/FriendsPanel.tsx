@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { onAuth } from "@/lib/cloud";
+import { postSocial } from "@/lib/authFetch";
 
 /* ─── الأنواع ─── */
 interface Person {
@@ -44,11 +45,7 @@ export default function FriendsPanel({ onClose }: { onClose: () => void }) {
   /* ─ جلب قائمة الأصدقاء ─ */
   const loadFriends = useCallback(() => {
     if (!uid) return;
-    fetch("/api/social", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode: "getFriends", uid }),
-    })
+    postSocial({ mode: "getFriends" })
       .then((r) => r.json())
       .then((d: { friends?: Person[] }) => {
         if (d.friends) setFriends(d.friends);
@@ -100,11 +97,7 @@ export default function FriendsPanel({ onClose }: { onClose: () => void }) {
     if (!uid) return;
     setBusyUid(target.uid);
     try {
-      const res = await fetch("/api/social", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "addFriend", uid, targetUid: target.uid }),
-      });
+      const res = await postSocial({ mode: "addFriend", targetUid: target.uid });
       const d = await res.json();
       if (d.ok) {
         setFriends((prev) => [...prev, target]);
@@ -125,11 +118,7 @@ export default function FriendsPanel({ onClose }: { onClose: () => void }) {
     if (!uid) return;
     setBusyUid(target.uid);
     try {
-      await fetch("/api/social", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "removeFriend", uid, targetUid: target.uid }),
-      });
+      await postSocial({ mode: "removeFriend", targetUid: target.uid });
       setFriends((prev) => prev.filter((f) => f.uid !== target.uid));
     } catch {
       flash("تعذّر الحذف");

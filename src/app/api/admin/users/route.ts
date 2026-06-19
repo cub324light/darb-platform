@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { timingSafeEqual } from "crypto";
+import { checkAdminPassword } from "@/lib/server/firebaseAdmin";
 
 /* firebase-admin يحتاج Node APIs — نمنع تجميعه على Edge، ونمدّد المهلة
    لأن مسح كل المستخدمين (Auth + Firestore) قد يتجاوز الافتراضي */
@@ -17,13 +17,6 @@ function allowAttempt(ip: string): boolean {
   if (e.count >= 5) return false;
   e.count++;
   return true;
-}
-
-/* مقارنة بوقت ثابت */
-function safeEqual(a: string, b: string): boolean {
-  const ba = Buffer.from(a), bb = Buffer.from(b);
-  if (ba.length !== bb.length) return false;
-  return timingSafeEqual(ba, bb);
 }
 
 /* تهيئة firebase-admin عبر استيراد ديناميكي — أي فشل في تحميل المكتبة
@@ -67,8 +60,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null);
     const { password, mode } = (body ?? {}) as { password?: string; mode?: string };
 
-    const adminPass = process.env.ADMIN_PASS ?? "darb-admin-2026";
-    if (typeof password !== "string" || !safeEqual(password, adminPass)) {
+    if (!checkAdminPassword(password)) {
       return NextResponse.json({ error: "كلمة السر خاطئة" }, { status: 401 });
     }
 

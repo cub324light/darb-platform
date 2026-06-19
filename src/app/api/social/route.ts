@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { timingSafeEqual } from "crypto";
 import type { Timestamp } from "firebase-admin/firestore";
+import { getAdminApp, getVerifiedUid, checkAdminPassword } from "@/lib/server/firebaseAdmin";
 
 /* firebase-admin يحتاج Node APIs — نمنع تجميعه على Edge */
 export const runtime = "nodejs";
@@ -19,30 +19,6 @@ function allowAttempt(ip: string): boolean {
   return true;
 }
 
-/* مقارنة بوقت ثابت */
-function safeEqual(a: string, b: string): boolean {
-  const ba = Buffer.from(a), bb = Buffer.from(b);
-  if (ba.length !== bb.length) return false;
-  return timingSafeEqual(ba, bb);
-}
-
-/* تهيئة ديناميكية — أي فشل في تحميل firebase-admin يصبح خطأً JSON بدل انهيار 500 */
-async function adminApp() {
-  const { initializeApp, getApps, cert, applicationDefault } = await import("firebase-admin/app");
-  if (getApps().length > 0) return getApps()[0]!;
-  const sa = process.env.FIREBASE_SERVICE_ACCOUNT;
-  if (sa) {
-    let parsed: object;
-    try { parsed = JSON.parse(sa); }
-    catch { throw new Error("FIREBASE_SERVICE_ACCOUNT ليس JSON صالحاً — تأكد من النسخ الكامل"); }
-    return initializeApp({ credential: cert(parsed as Parameters<typeof cert>[0]) });
-  }
-  if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-    return initializeApp({ credential: applicationDefault(), projectId: "my-education-platform-a160e" });
-  }
-  throw new Error("FIREBASE_SERVICE_ACCOUNT غير مضبوط — أضفه في إعدادات Vercel ثم أعد النشر");
-}
-
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   if (!allowAttempt(ip)) {
@@ -57,7 +33,7 @@ export async function POST(req: NextRequest) {
   const { mode } = (body ?? {}) as { mode?: string };
 
   try {
-    const app = await adminApp();
+    const app = await getAdminApp();
     const { getFirestore, FieldValue, Timestamp } = await import("firebase-admin/firestore");
     const db = getFirestore(app);
 
@@ -99,11 +75,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ count: snap.size, regions });
     }
 
-    /* -------- presence: تحديث آخر ظهور -------- */
+    /* -------- presence: تحديث آخر ظهور (هوية موثّقة) -------- */
     if (mode === "presence") {
-      const { uid } = body as { uid?: string };
-      if (!uid || typeof uid !== "string") {
-        return NextResponse.json({ error: "uid مفقود" }, { status: 400 });
+      const uid = await getVerifiedUid(req);
+      if (!uid) {
+        return NextResponse.json({ error: "يجب تسجيل الدخول" }, { status: 401 });
       }
       await db.collection("users").doc(uid).set(
         { lastSeen: FieldValue.serverTimestamp() },
@@ -146,8 +122,7 @@ export async function POST(req: NextRequest) {
       const { password, title, content, groupId, pinned } = body as {
         password?: string; title?: string; content?: string; groupId?: string; pinned?: boolean;
       };
-      const adminPass = process.env.ADMIN_PASS ?? "darb-admin-2026";
-      if (typeof password !== "string" || !safeEqual(password, adminPass)) {
+      if (!checkAdminPassword(password)) {
         return NextResponse.json({ error: "كلمة السر خاطئة" }, { status: 401 });
       }
       if (!title || typeof title !== "string" || !title.trim()) {
@@ -171,8 +146,7 @@ export async function POST(req: NextRequest) {
       const { password, id, title, content, groupId } = body as {
         password?: string; id?: string; title?: string; content?: string; groupId?: string;
       };
-      const adminPass = process.env.ADMIN_PASS ?? "darb-admin-2026";
-      if (typeof password !== "string" || !safeEqual(password, adminPass)) {
+      if (!checkAdminPassword(password)) {
         return NextResponse.json({ error: "كلمة السر خاطئة" }, { status: 401 });
       }
       if (!id || typeof id !== "string") {
@@ -192,8 +166,7 @@ export async function POST(req: NextRequest) {
     /* -------- pinAnnouncement: تثبيت / إلغاء تثبيت (للمشرف فقط) -------- */
     if (mode === "pinAnnouncement") {
       const { password, id, pinned } = body as { password?: string; id?: string; pinned?: boolean };
-      const adminPass = process.env.ADMIN_PASS ?? "darb-admin-2026";
-      if (typeof password !== "string" || !safeEqual(password, adminPass)) {
+      if (!checkAdminPassword(password)) {
         return NextResponse.json({ error: "كلمة السر خاطئة" }, { status: 401 });
       }
       if (!id || typeof id !== "string") {
@@ -206,8 +179,7 @@ export async function POST(req: NextRequest) {
     /* -------- deleteAnnouncement: حذف إعلان (للمشرف فقط) -------- */
     if (mode === "deleteAnnouncement") {
       const { password, id } = body as { password?: string; id?: string };
-      const adminPass = process.env.ADMIN_PASS ?? "darb-admin-2026";
-      if (typeof password !== "string" || !safeEqual(password, adminPass)) {
+      if (!checkAdminPassword(password)) {
         return NextResponse.json({ error: "كلمة السر خاطئة" }, { status: 401 });
       }
       if (!id || typeof id !== "string") {
@@ -217,11 +189,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    /* -------- getFriends: جلب قائمة الأصدقاء -------- */
+    /* -------- getFriends: جلب قائمة الأصدقاء (هوية موثّقة) -------- */
     if (mode === "getFriends") {
-      const { uid } = body as { uid?: string };
-      if (!uid || typeof uid !== "string") {
-        return NextResponse.json({ error: "uid مفقود" }, { status: 400 });
+      const uid = await getVerifiedUid(req);
+      if (!uid) {
+        return NextResponse.json({ error: "يجب تسجيل الدخول" }, { status: 401 });
       }
       const snap = await db.collection("users").doc(uid).collection("friends").get();
       const friends = snap.docs.map((d) => {
@@ -258,12 +230,13 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    /* -------- addFriend: إضافة صديق -------- */
+    /* -------- addFriend: إضافة صديق (هوية موثّقة) -------- */
     if (mode === "addFriend") {
-      const { uid, targetUid } = body as { uid?: string; targetUid?: string };
-      if (!uid || typeof uid !== "string") {
-        return NextResponse.json({ error: "uid مفقود" }, { status: 400 });
+      const uid = await getVerifiedUid(req);
+      if (!uid) {
+        return NextResponse.json({ error: "يجب تسجيل الدخول" }, { status: 401 });
       }
+      const { targetUid } = body as { targetUid?: string };
       if (!targetUid || typeof targetUid !== "string") {
         return NextResponse.json({ error: "targetUid مفقود" }, { status: 400 });
       }
@@ -281,12 +254,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, name: targetName });
     }
 
-    /* -------- removeFriend: حذف صديق -------- */
+    /* -------- removeFriend: حذف صديق (هوية موثّقة) -------- */
     if (mode === "removeFriend") {
-      const { uid, targetUid } = body as { uid?: string; targetUid?: string };
-      if (!uid || typeof uid !== "string") {
-        return NextResponse.json({ error: "uid مفقود" }, { status: 400 });
+      const uid = await getVerifiedUid(req);
+      if (!uid) {
+        return NextResponse.json({ error: "يجب تسجيل الدخول" }, { status: 401 });
       }
+      const { targetUid } = body as { targetUid?: string };
       if (!targetUid || typeof targetUid !== "string") {
         return NextResponse.json({ error: "targetUid مفقود" }, { status: 400 });
       }

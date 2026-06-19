@@ -10,7 +10,9 @@ import type { EmailTemplate } from "./types";
 // import { layout, heading, paragraph, button } from "./layout";
 
 /* خريطة القوالب: المفتاح → نوع خصائصه.
-   أضِف سطراً هنا لكل قالب جديد ليصبح type-safe في sendTemplate. */
+   أضِف سطراً هنا لكل قالب جديد ليصبح type-safe في sendTemplate.
+   فارغة عمداً الآن (البنية جاهزة للتوسعة). */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TemplateProps {
   // welcome:        { name: string };
   // passwordReset:  { name: string; resetUrl: string };

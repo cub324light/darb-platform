@@ -5,6 +5,7 @@ import Dome from "@/components/Dome";
 import Confetti from "@/components/Confetti";
 import { loadUser, addSilver } from "@/lib/storage";
 import { currentUser } from "@/lib/cloud";
+import { postSocial } from "@/lib/authFetch";
 import { getTrack, type TrackId } from "@/lib/tracks";
 
 /* المنافس التدريبي: اسم + طير عشوائي، يجاوب بنفسه */
@@ -129,11 +130,7 @@ export default function ArenaPage() {
 
       // 1) جرّب مطابقة صديق حقيقي من قائمة الأصدقاء
       if (uid) {
-        const fr = await fetch("/api/social", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mode: "getFriends", uid }),
-        });
+        const fr = await postSocial({ mode: "getFriends" });
         const frData = await fr.json() as { friends?: { name: string }[] };
         const friends = (frData.friends ?? []).filter((f) => f.name?.trim());
         if (friends.length > 0) {

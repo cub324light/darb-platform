@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { timingSafeEqual } from "crypto";
 import { sendEmail, sendTemplate, isEmailConfigured } from "@/lib/email";
 import { TEMPLATES, type TemplateName, type TemplateProps } from "@/lib/email/templates";
+import { checkAdminPassword } from "@/lib/server/firebaseAdmin";
 
 /* Resend SDK يعمل على Node */
 export const runtime = "nodejs";
@@ -18,12 +18,6 @@ function allowAttempt(ip: string): boolean {
   if (e.count >= 10) return false;
   e.count++;
   return true;
-}
-
-function safeEqual(a: string, b: string): boolean {
-  const ba = Buffer.from(a), bb = Buffer.from(b);
-  if (ba.length !== bb.length) return false;
-  return timingSafeEqual(ba, bb);
 }
 
 /* جسم الطلب: إمّا قالب نوعي، أو بريد خام — كلاهما يتطلب كلمة الأدمن */
@@ -54,8 +48,7 @@ export async function POST(req: NextRequest) {
   catch { return NextResponse.json({ ok: false, error: "طلب غير صالح" }, { status: 400 }); }
 
   /* المصادقة بكلمة الأدمن (نفس مفتاح لوحة الإدارة) */
-  const adminPass = process.env.ADMIN_PASS ?? "darb-admin-2026";
-  if (typeof body.password !== "string" || !safeEqual(body.password, adminPass)) {
+  if (!checkAdminPassword(body.password)) {
     return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 401 });
   }
 

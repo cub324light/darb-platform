@@ -8,17 +8,7 @@
      byModel: { <safeKey>: { label, requests, promptTokens, completionTokens } } }
 */
 
-/* تهيئة firebase-admin كسولة (نفس نمط مسار الأدمن) */
-async function adminDb() {
-  const { initializeApp, getApps, cert } = await import("firebase-admin/app");
-  const sa = process.env.FIREBASE_SERVICE_ACCOUNT;
-  if (!sa) return null; // بدون مفتاح لا تسجيل (آمن)
-  const app = getApps().length
-    ? getApps()[0]!
-    : initializeApp({ credential: cert(JSON.parse(sa) as Parameters<typeof cert>[0]) });
-  const { getFirestore } = await import("firebase-admin/firestore");
-  return getFirestore(app);
-}
+import { getAdminDbOptional } from "@/lib/server/firebaseAdmin";
 
 const dayKey = () => new Date().toISOString().slice(0, 10);
 const safeKey = (model: string) => model.replace(/[^a-zA-Z0-9]/g, "_");
@@ -31,7 +21,7 @@ export async function recordAiUsage(
   try {
     const p = Math.max(0, Math.floor(promptTokens) || 0);
     const c = Math.max(0, Math.floor(completionTokens) || 0);
-    const db = await adminDb();
+    const db = await getAdminDbOptional();
     if (!db) return;
 
     const { FieldValue } = await import("firebase-admin/firestore");
