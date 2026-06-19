@@ -34,7 +34,16 @@ export interface DarbStats {
 const USER_KEY = "darb_user";
 const STATS_KEY = "darb_stats";
 
-const todayKey = () => new Date().toISOString().slice(0, 10);
+/* مفتاح اليوم بالتوقيت المحلي للجهاز (لا UTC) — حتى لا تُصفَّر إحصائيات
+   «اليوم» عند منتصف ليل غرينتش (٣ فجراً بتوقيت السعودية) فتختفي قبل أوانها.
+   يبدأ اليوم وينتهي مع منتصف ليل الطالب الفعلي. */
+export const localDayKey = (d: Date = new Date()): string => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+const todayKey = () => localDayKey();
 
 /* ── المستخدم ── */
 export function loadUser(): DarbUser | null {
@@ -142,7 +151,7 @@ export function computeStreak(stats: DarbStats): number {
   const days = new Set(stats.sessionDays);
   if (days.size === 0) return 0;
   const d = new Date();
-  const key = (dt: Date) => dt.toISOString().slice(0, 10);
+  const key = (dt: Date) => localDayKey(dt);
   // لو ما فيه جلسة اليوم، نبدأ العد من أمس
   if (!days.has(key(d))) d.setDate(d.getDate() - 1);
   let streak = 0;

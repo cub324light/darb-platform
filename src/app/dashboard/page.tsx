@@ -6,7 +6,7 @@ import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import { getTrack, TRACKS, type TrackId } from "@/lib/tracks";
 import { fmtHour } from "@/lib/utils";
-import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, saveExamDate, loadDashConfig, saveDashConfig, loadTrackExamDates, saveTrackExamDates, DASH_SECTION_META, type DarbUser, type ScheduleEvent, type DashItem, type DashSectionId, saveEvents } from "@/lib/storage";
+import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, saveExamDate, loadDashConfig, saveDashConfig, loadTrackExamDates, saveTrackExamDates, DASH_SECTION_META, localDayKey, type DarbUser, type ScheduleEvent, type DashItem, type DashSectionId, saveEvents } from "@/lib/storage";
 import DashAI from "@/components/DashAI";
 import { useFlag } from "@/lib/flags";
 import { syncUser } from "@/lib/firestore";
@@ -44,7 +44,7 @@ function last7Days(dayMins: Record<string, number>): { label: string; mins: numb
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
-    const key = d.toISOString().slice(0, 10);
+    const key = localDayKey(d);
     out.push({
       label: d.toLocaleDateString("ar-SA", { weekday: "narrow" }),
       mins: dayMins?.[key] ?? 0,

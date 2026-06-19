@@ -387,6 +387,33 @@ export default function AdminPage() {
     finally { setActionBusy(false); }
   };
 
+  /* إعادة تعيين تقدّم المستخدم — يبقى الحساب، تُصفَّر الأرقام محلياً فوراً */
+  const resetUserData = async (uid: string) => {
+    setActionBusy(true); setActionMsg("");
+    try {
+      const { ok, data } = await callAction("resetUser", { uid });
+      if (ok) {
+        applyLocal(uid, { streak: 0, focusMins: 0, sessions: 0, silver: 0, taseesProgress: 0, tadreebProgress: 0 });
+        setActionMsg("✅ تم إعادة تعيين تقدّم المستخدم");
+      } else setActionMsg(`❌ ${data.error ?? "تعذّر الإعادة"}`);
+    } catch { setActionMsg("❌ خطأ في الاتصال"); }
+    finally { setActionBusy(false); }
+  };
+
+  /* حذف المستخدم نهائياً — يُزال من القائمة وتُغلق البطاقة عند النجاح */
+  const deleteUserAccount = async (uid: string) => {
+    setActionBusy(true); setActionMsg("");
+    try {
+      const { ok, data } = await callAction("deleteUser", { uid });
+      if (ok) {
+        setUsers((prev) => prev.filter((u) => u.id !== uid));
+        setDetail(null);
+        setActionMsg("✅ تم حذف المستخدم نهائياً");
+      } else setActionMsg(`❌ ${data.error ?? "تعذّر الحذف"}`);
+    } catch { setActionMsg("❌ خطأ في الاتصال"); }
+    finally { setActionBusy(false); }
+  };
+
   const postAnnouncement = async () => {
     if (!announceTitle.trim() || !announceContent.trim()) return;
     setAnnounceBusy(true); setAnnounceMsg("");
@@ -1062,7 +1089,7 @@ export default function AdminPage() {
                 <button
                   onClick={() => {
                     if (!window.confirm(`إعادة تعيين كل تقدم ${detail.name}؟ (الحساب يبقى)`)) return;
-                    void callAction("resetUser", { uid: detail.id });
+                    void resetUserData(detail.id);
                   }}
                   disabled={actionBusy}
                   className="py-2.5 rounded-xl text-[13px] font-bold transition disabled:opacity-50"
@@ -1072,7 +1099,7 @@ export default function AdminPage() {
                 <button
                   onClick={() => {
                     if (!window.confirm(`حذف ${detail.name} نهائياً؟ لا يمكن التراجع!`)) return;
-                    void callAction("deleteUser", { uid: detail.id }).then(() => setDetail(null));
+                    void deleteUserAccount(detail.id);
                   }}
                   disabled={actionBusy}
                   className="py-2.5 rounded-xl text-[13px] font-bold transition disabled:opacity-50"
