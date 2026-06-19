@@ -718,3 +718,97 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
 :root:not([data-theme="light"]) .dome-day,   [data-theme="dark"] .dome-day   { opacity: 0; }
 [data-theme="light"] .dome-night { opacity: 0; }
 [data-theme="light"] .dome-day   { opacity: 1; }
+
+/* ═══════ Magic UI / Aceternity — إضافات ═══════ */
+
+/* تدرج متحرك للعناوين */
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* شهاب: خط يمشي باتجاه مائل */
+@keyframes meteor {
+  0%   { transform: rotate(-35deg) translateX(0); opacity: 1; }
+  70%  { opacity: 0.7; }
+  100% { transform: rotate(-35deg) translateX(700px); opacity: 0; }
+}
+.animate-meteor {
+  animation: meteor linear infinite;
+}
+
+/* حزام الحافة */
+@keyframes border-beam {
+  100% { offset-distance: 100%; }
+}
+.animate-border-beam {
+  animation: border-beam calc(var(--duration, 15) * 1s) infinite linear;
+}
+
+/* زر shimmer */
+@keyframes shimmer-slide {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: var(--accent);
+  color: white;
+  font-weight: 800;
+  border-radius: 16px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.btn-shimmer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 30%,
+    rgba(255,255,255,0.18) 50%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-slide 2.2s linear infinite;
+}
+.btn-shimmer:hover  { transform: translateY(-2px); box-shadow: 0 8px 32px color-mix(in srgb, var(--accent) 45%, transparent); }
+.btn-shimmer:active { transform: scale(0.97); }
+
+/* بطاقة توهج عند hover */
+.glow-card-hover {
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+.glow-card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* نبضة خلفية للهيرو */
+@keyframes heroPulse {
+  0%,100% { opacity: 0.35; transform: scale(1); }
+  50%     { opacity: 0.55; transform: scale(1.06); }
+}
+.hero-pulse { animation: heroPulse 6s ease-in-out infinite; }
+
+/* تعريج ناعم للكروت الإحصائية */
+@keyframes statFloat {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-5px); }
+}
+
+/* حركة صعود للبطاقات عند ظهورها */
+@keyframes cardReveal {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.card-reveal { animation: cardReveal 0.5s cubic-bezier(.16,.84,.44,1) both; }
+.card-reveal-d1 { animation-delay: 0.05s; }
+.card-reveal-d2 { animation-delay: 0.12s; }
+.card-reveal-d3 { animation-delay: 0.19s; }
+.card-reveal-d4 { animation-delay: 0.26s; }
+.card-reveal-d5 { animation-delay: 0.33s; }
+.card-reveal-d6 { animation-delay: 0.40s; }

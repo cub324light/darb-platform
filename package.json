@@ -14,14 +14,17 @@
     "@sentry/nextjs": "^10.58.0",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
+    "clsx": "^2.1.1",
     "firebase": "^12.14.0",
     "firebase-admin": "^14.0.0",
+    "motion": "^12.40.0",
     "next": "16.2.4",
     "pdfjs-dist": "^4.10.38",
     "posthog-js": "^1.386.8",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "resend": "^6.14.0"
+    "resend": "^6.14.0",
+    "tailwind-merge": "^3.6.0"
   },
   "overrides": {
     "jose": "^5.9.6"

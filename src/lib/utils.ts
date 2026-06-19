@@ -1,3 +1,10 @@
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
 export function fmtHour(h: number): string {
   if (h === 0 || h === 24) return "12 ص";
   if (h < 12) return `${h} ص`;

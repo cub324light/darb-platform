@@ -6,6 +6,10 @@ import { TRACKS } from "@/lib/tracks";
 import Logo from "@/components/Logo";
 import { loadTheme, applyTheme, type Theme } from "@/lib/storage";
 import { onAuth } from "@/lib/cloud";
+import { Sparkles } from "@/components/ui/sparkles";
+import { Meteors } from "@/components/ui/meteors";
+import { AnimatedGradientText } from "@/components/ui/animated-gradient-text";
+import { BorderBeam } from "@/components/ui/border-beam";
 
 function useReveal(active: boolean) {
   const ref = useRef<HTMLDivElement>(null);
@@ -16,7 +20,6 @@ function useReveal(active: boolean) {
     const els = root.querySelectorAll(".reveal");
     const showAll = () => els.forEach((el) => el.classList.add("visible"));
 
-    /* لو المتصفح ما يدعم IntersectionObserver، أظهر كل شيء فوراً */
     if (typeof IntersectionObserver === "undefined") { showAll(); return; }
 
     const io = new IntersectionObserver(
@@ -24,9 +27,6 @@ function useReveal(active: boolean) {
       { threshold: 0.05 }
     );
     els.forEach((el) => io.observe(el));
-
-    /* أمان: لو لأي سبب ما اشتغل المراقب (قسم أسفل الصفحة لا يُكشف)،
-       أظهر العناصر المتبقية بعد مهلة قصيرة حتى يبقى زر الدخول ظاهراً دائماً */
     const fallback = setTimeout(showAll, 1600);
     return () => { io.disconnect(); clearTimeout(fallback); };
   }, [active]);
@@ -34,48 +34,12 @@ function useReveal(active: boolean) {
 }
 
 const FEATURES = [
-  {
-    icon: "⏱",
-    title: "أوربت",
-    tag: "تركيز",
-    desc: "تايمر 50 دقيقة تركيز + 10 راحة. كل جلسة تنتهي تكسب فضة وتبني ستريكك.",
-    color: "#2563EB",
-  },
-  {
-    icon: "🗃",
-    title: "خزنة الأخطاء",
-    tag: "مراجعة",
-    desc: "أي سؤال تغلط فيه احفظه. ما يطلع إلا لو راجعته — النظام يتابع عدد المراجعات لكل خطأ.",
-    color: "#F59E0B",
-  },
-  {
-    icon: "🧠",
-    title: "بنك المراجعة",
-    tag: "تكرار متباعد",
-    desc: "بطاقات سؤال/جواب بخوارزمية Ebbinghaus العلمية. النظام يحسب متى تحتاج كل بطاقة بالضبط.",
-    color: "#10B981",
-  },
-  {
-    icon: "🤖",
-    title: "المساعد الذكي",
-    tag: "AI",
-    desc: "أعطه مشاغيلك ويبني جدول يومك. يعرف مسارك ومواده ويوزع وقتك بذكاء.",
-    color: "#8B5CF6",
-  },
-  {
-    icon: "🗺",
-    title: "خريطة المسار",
-    tag: "تقدم",
-    desc: "كل درس من تأسيس لتدريب لتسريبات — مرتّب ومقفول حتى تكمل ما قبله. تقدمك يحفظ تلقائياً.",
-    color: "#06B6D4",
-  },
-  {
-    icon: "⚔",
-    title: "الأرينا",
-    tag: "تحدي",
-    desc: "1v1 ضد منافس يجاوب بنفسه. أسئلة حقيقية من مسارك، 15 ثانية للسؤال. الفوز = فضة.",
-    color: "#EF4444",
-  },
+  { icon: "⏱", title: "أوربت", tag: "تركيز", desc: "تايمر 50 دقيقة تركيز + 10 راحة. كل جلسة تنتهي تكسب فضة وتبني ستريكك.", color: "#2563EB" },
+  { icon: "🗃", title: "خزنة الأخطاء", tag: "مراجعة", desc: "أي سؤال تغلط فيه احفظه. ما يطلع إلا لو راجعته — النظام يتابع عدد المراجعات.", color: "#F59E0B" },
+  { icon: "🧠", title: "بنك المراجعة", tag: "تكرار متباعد", desc: "بطاقات سؤال/جواب بخوارزمية Ebbinghaus. النظام يحسب متى تحتاج كل بطاقة بالضبط.", color: "#10B981" },
+  { icon: "🤖", title: "المساعد الذكي", tag: "AI", desc: "أعطه مشاغيلك ويبني جدول يومك. يعرف مسارك ومواده ويوزع وقتك بذكاء.", color: "#8B5CF6" },
+  { icon: "🗺", title: "خريطة المسار", tag: "تقدم", desc: "كل درس من تأسيس لتدريب لتسريبات — مرتّب ومقفول حتى تكمل ما قبله.", color: "#06B6D4" },
+  { icon: "⚔", title: "الأرينا", tag: "تحدي", desc: "1v1 ضد منافس يجاوب بنفسه. أسئلة حقيقية من مسارك، 15 ثانية للسؤال. الفوز = فضة.", color: "#EF4444" },
 ];
 
 const STEPS = [
@@ -90,14 +54,20 @@ const PAIN = [
   { q: "ما تعرف وين غلطاتك؟", a: "خزنة الأخطاء تحفظ كل سؤال غلطت فيه وتذكّرك تراجعه." },
 ];
 
+const STATS = [
+  { n: "8", l: "مسارات" },
+  { n: "6", l: "أدوات" },
+  { n: "AI", l: "جدول ذكي" },
+  { n: "∞", l: "مجاني" },
+];
+
 export default function LandingPage() {
   const router = useRouter();
   const [onboarded] = useState(() => {
     if (typeof window === "undefined") return false;
     try {
       const raw = localStorage.getItem("darb_user");
-      const user = raw ? JSON.parse(raw) : null;
-      return !!user?.onboarded;
+      return !!(raw ? JSON.parse(raw)?.onboarded : false);
     } catch { return false; }
   });
   const [menuOpen, setMenuOpen] = useState(false);
@@ -106,7 +76,6 @@ export default function LandingPage() {
   );
   const rootRef = useReveal(true);
 
-  /* المسجّل دخوله يُوجَّه مباشرة للتطبيق */
   useEffect(() => {
     const unsub = onAuth((u) => {
       if (!u) return;
@@ -131,26 +100,21 @@ export default function LandingPage() {
   return (
     <div ref={rootRef} className="relative z-[1]">
 
-      {/* ── ناف بار: درب يمين + ثلاث نقاط يسار ── */}
+      {/* ── ناف بار ── */}
       <nav className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-5 py-3.5"
-        style={{ background: "color-mix(in srgb, var(--bg) 90%, transparent)", backdropFilter: "blur(14px)", borderBottom: "1px solid var(--border)" }}>
+        style={{ background: "color-mix(in srgb, var(--bg) 88%, transparent)", backdropFilter: "blur(20px)", borderBottom: "1px solid var(--border)" }}>
         <Logo className="font-black text-2xl" style={{ letterSpacing: "-0.5px" }} />
         <div className="flex items-center gap-2">
-          {/* تبديل المظهر: ليلي/نهاري — يغيّر الموقع ولون شعار درب */}
-          <button
-            onClick={toggleTheme}
+          <button onClick={toggleTheme}
             className="w-10 h-10 rounded-xl flex items-center justify-center text-lg transition active:scale-90"
             style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
-            aria-label="تبديل المظهر ليلي/نهاري"
-          >
+            aria-label="تبديل المظهر">
             {theme === "dark" ? "☀️" : "🌙"}
           </button>
-          <button
-            onClick={() => setMenuOpen(true)}
+          <button onClick={() => setMenuOpen(true)}
             className="w-10 h-10 rounded-xl flex flex-col items-center justify-center gap-[5px]"
             style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
-            aria-label="القائمة"
-          >
+            aria-label="القائمة">
             <span className="w-4 h-[2.5px] rounded-full" style={{ background: "var(--text-dim)" }} />
             <span className="w-4 h-[2.5px] rounded-full" style={{ background: "var(--text-dim)" }} />
             <span className="w-4 h-[2.5px] rounded-full" style={{ background: "var(--text-dim)" }} />
@@ -158,35 +122,25 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* ── نافذة القائمة ── */}
+      {/* ── القائمة ── */}
       {menuOpen && (
         <div className="fixed inset-0 z-[9999] flex items-end justify-center" onClick={() => setMenuOpen(false)}>
           <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.5)" }} />
-          <div
-            className="relative w-full max-w-lg rounded-t-3xl p-6 pb-10 slide-up"
+          <div className="relative w-full max-w-lg rounded-t-3xl p-6 pb-10 slide-up"
             style={{ background: "var(--surface)", border: "1px solid var(--border)", borderBottom: "none" }}
-            onClick={(e) => e.stopPropagation()}
-          >
+            onClick={(e) => e.stopPropagation()}>
             <div className="w-10 h-1.5 rounded-full mx-auto mb-6" style={{ background: "var(--border)" }} />
             <div className="flex flex-col gap-2">
               {onboarded && (
                 <Link href="/dashboard" onClick={() => setMenuOpen(false)}
                   className="flex items-center justify-between px-5 py-4 rounded-2xl font-bold text-base"
                   style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)", textDecoration: "none" }}>
-                  <span>ادخل للتطبيق</span>
-                  <span>←</span>
+                  <span>ادخل للتطبيق</span><span>←</span>
                 </Link>
               )}
-              {[
-                { label: "الأدوات", id: "features" },
-                { label: "المسارات", id: "tracks" },
-                { label: "كيف تبدأ", id: "steps" },
-              ].map((item) => (
+              {[{ label: "الأدوات", id: "features" }, { label: "المسارات", id: "tracks" }, { label: "كيف تبدأ", id: "steps" }].map((item) => (
                 <button key={item.id}
-                  onClick={() => {
-                    setMenuOpen(false);
-                    document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth" });
-                  }}
+                  onClick={() => { setMenuOpen(false); document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth" }); }}
                   className="flex items-center justify-between px-5 py-4 rounded-2xl font-bold text-base text-right"
                   style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>
                   <span>{item.label}</span>
@@ -201,43 +155,66 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════ */}
       {/* ═══ الهيرو ═══ */}
       {/* ══════════════════════════════════════════ */}
-      <section className="min-h-dvh flex flex-col items-center justify-center px-5 text-center pt-20 pb-12 max-w-2xl mx-auto">
+      <section className="relative min-h-dvh flex flex-col items-center justify-center px-5 text-center pt-20 pb-12 max-w-2xl mx-auto overflow-hidden">
 
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-7 text-sm font-bold"
-          style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--accent) 25%, transparent)", color: "var(--accent-light)" }}>
+        {/* خلفية جسيمات */}
+        <Sparkles count={28} color="var(--accent-hi)" />
+        <Meteors number={8} />
+
+        {/* دائرة توهج خلفية */}
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full hero-pulse pointer-events-none"
+          style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--accent) 12%, transparent) 0%, transparent 70%)", filter: "blur(40px)" }} />
+
+        {/* شارة */}
+        <div className="relative inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-7 text-sm font-bold"
+          style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--accent) 28%, transparent)", color: "var(--accent-light)" }}>
+          <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "var(--success)" }} />
           مجاني تماماً · صُنع في السعودية
         </div>
 
-        <h1 className="font-black leading-tight mb-5"
-          style={{
-            fontSize: "clamp(2.2rem, 8vw, 3.6rem)",
-            letterSpacing: "-1px",
-            background: "linear-gradient(145deg, var(--text) 40%, var(--accent-light) 75%, var(--accent-hi))",
-            WebkitBackgroundClip: "text",
-            backgroundClip: "text",
-            color: "transparent",
+        {/* العنوان الرئيسي */}
+        <h1 className="font-black leading-tight mb-5 relative z-10"
+          style={{ fontSize: "clamp(2.2rem, 8vw, 3.6rem)", letterSpacing: "-1px" }}>
+          <span style={{
+            background: "linear-gradient(145deg, var(--text) 30%, var(--accent-light) 65%, var(--accent-hi))",
+            WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent",
           }}>
-          منصة التحضير الذكية<br />للطلاب
+            منصة التحضير الذكية
+          </span>
+          <br />
+          <AnimatedGradientText>للطلاب</AnimatedGradientText>
         </h1>
 
-        <p className="text-lg leading-relaxed max-w-md mb-8" style={{ color: "var(--text-dim)" }}>
+        <p className="text-lg leading-relaxed max-w-md mb-8 relative z-10" style={{ color: "var(--text-dim)" }}>
           تأسيس حقيقي للتحصيلي والقدرات وأرامكو CPC وايلتس وستيب وتوفل ودوليقو.
-          خطة واضحة، جدول ذكي، ومتابعة لحظة بلحظة — بدون أرقام وهمية.
+          خطة واضحة، جدول ذكي، ومتابعة لحظة بلحظة.
         </p>
 
-        <div className="flex flex-wrap justify-center gap-3">
-          {[
-            { n: "8", l: "مسارات" },
-            { n: "6", l: "أدوات" },
-            { n: "AI", l: "جدول ذكي" },
-            { n: "∞", l: "مجاني" },
-          ].map((s) => (
-            <div key={s.l} className="flex flex-col items-center px-5 py-3 rounded-2xl"
-              style={{ background: "var(--surface)", border: "1.5px solid var(--border)", minWidth: "72px" }}>
+        {/* إحصاءات */}
+        <div className="flex flex-wrap justify-center gap-3 mb-10 relative z-10">
+          {STATS.map((s, i) => (
+            <div key={s.l}
+              className="flex flex-col items-center px-5 py-3 rounded-2xl card-reveal"
+              style={{
+                animationDelay: `${i * 80}ms`,
+                background: "var(--surface)",
+                border: "1.5px solid var(--border)",
+                minWidth: "72px",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+              }}>
               <span className="font-black text-2xl font-mono-nums" style={{ color: "var(--accent-light)" }}>{s.n}</span>
               <span className="text-xs font-semibold mt-0.5" style={{ color: "var(--text-muted)" }}>{s.l}</span>
             </div>
           ))}
+        </div>
+
+        {/* زر الدخول الرئيسي */}
+        <div className="relative z-10">
+          <Link href={ctaHref}
+            className="btn-shimmer inline-flex items-center gap-3 px-10 py-4 text-lg font-black"
+            style={{ textDecoration: "none", minWidth: "220px", justifyContent: "center" }}>
+            ابدأ مجاناً ←
+          </Link>
         </div>
 
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 scroll-hint">
@@ -257,15 +234,23 @@ export default function LandingPage() {
         </div>
         <div className="flex flex-col gap-3">
           {PAIN.map((p, i) => (
-            <div key={i} className={`reveal reveal-d${i + 1} rounded-2xl p-5 flex items-start gap-4`}
-              style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+            <div key={i}
+              className={`reveal reveal-d${i + 1} rounded-2xl p-5 flex items-start gap-4 glow-card-hover`}
+              style={{
+                background: "var(--surface)",
+                border: "1.5px solid color-mix(in srgb, #EF4444 20%, var(--border))",
+                boxShadow: "0 2px 12px rgba(0,0,0,0.1)",
+              }}>
               <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-black"
                 style={{ background: "color-mix(in srgb, #EF4444 12%, transparent)", color: "#EF4444", border: "1px solid color-mix(in srgb, #EF4444 25%, transparent)" }}>
                 ✕
               </div>
               <div>
                 <p className="font-black text-base mb-1" style={{ color: "var(--text)" }}>{p.q}</p>
-                <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>درب يحل هذا: {p.a}</p>
+                <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                  <span style={{ color: "var(--success)", fontWeight: 700 }}>درب يحل هذا: </span>
+                  {p.a}
+                </p>
               </div>
             </div>
           ))}
@@ -278,31 +263,41 @@ export default function LandingPage() {
       <section id="features" className="px-5 py-16 max-w-2xl mx-auto">
         <div className="reveal text-center mb-8">
           <p className="eyebrow mb-2" style={{ color: "var(--accent-light)" }}>أدواتك</p>
-          <h2 className="font-black text-2xl" style={{ color: "var(--text)" }}>٦ أدوات تحصّلها بمكان واحد</h2>
+          <h2 className="font-black text-2xl" style={{ color: "var(--text)" }}>
+            <AnimatedGradientText>٦ أدوات</AnimatedGradientText>
+            {" "}تحصّلها بمكان واحد
+          </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {FEATURES.map((f, i) => (
             <div key={f.title}
-              className={`reveal reveal-d${(i % 3) + 1} rounded-2xl p-5`}
+              className={`reveal reveal-d${(i % 3) + 1} rounded-2xl p-5 glow-card-hover group relative overflow-hidden`}
               style={{
                 background: "var(--surface)",
-                border: `1.5px solid ${f.color}30`,
-                boxShadow: `0 0 22px ${f.color}0D`,
+                border: `1.5px solid color-mix(in srgb, ${f.color} 22%, var(--border))`,
+                boxShadow: `0 2px 12px rgba(0,0,0,0.1)`,
               }}>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-                  style={{ background: `${f.color}15`, border: `1px solid ${f.color}25` }}>
+              {/* subtle gradient bg on hover */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl"
+                style={{ background: `radial-gradient(300px at 0% 0%, color-mix(in srgb, ${f.color} 8%, transparent), transparent)` }} />
+              <div className="flex items-center gap-3 mb-3 relative z-10">
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+                  style={{
+                    background: `color-mix(in srgb, ${f.color} 14%, transparent)`,
+                    border: `1.5px solid color-mix(in srgb, ${f.color} 28%, transparent)`,
+                    boxShadow: `0 0 12px color-mix(in srgb, ${f.color} 20%, transparent)`,
+                  }}>
                   {f.icon}
                 </div>
                 <div className="flex items-center gap-2">
                   <p className="font-black text-base" style={{ color: f.color }}>{f.title}</p>
                   <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
-                    style={{ background: `${f.color}15`, color: f.color }}>
+                    style={{ background: `color-mix(in srgb, ${f.color} 14%, transparent)`, color: f.color }}>
                     {f.tag}
                   </span>
                 </div>
               </div>
-              <p className="text-sm leading-relaxed" style={{ color: "var(--text-dim)" }}>{f.desc}</p>
+              <p className="text-sm leading-relaxed relative z-10" style={{ color: "var(--text-dim)" }}>{f.desc}</p>
             </div>
           ))}
         </div>
@@ -318,10 +313,19 @@ export default function LandingPage() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-5">
           {TRACKS.map((t, i) => (
-            <div key={t.id} className={`reveal reveal-d${(i % 3) + 1} rounded-2xl p-4`}
-              style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+            <div key={t.id}
+              className={`reveal reveal-d${(i % 3) + 1} rounded-2xl p-4 glow-card-hover group relative overflow-hidden`}
+              style={{
+                background: "var(--surface)",
+                border: `1.5px solid color-mix(in srgb, ${t.color} 18%, var(--border))`,
+              }}>
+              <div className="absolute top-0 left-0 w-full h-0.5 rounded-t-2xl"
+                style={{ background: `linear-gradient(90deg, ${t.color}, transparent)` }} />
               <div className="flex items-center gap-2 mb-1.5">
-                <span className="text-xl">{t.icon}</span>
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center"
+                  style={{ background: `color-mix(in srgb, ${t.color} 14%, transparent)` }}>
+                  <span className="text-sm">{t.icon}</span>
+                </div>
                 <p className="font-black text-sm leading-tight" style={{ color: "var(--text)" }}>{t.title}</p>
               </div>
               <p className="text-xs leading-snug" style={{ color: "var(--text-muted)" }}>{t.sub}</p>
@@ -329,7 +333,7 @@ export default function LandingPage() {
           ))}
         </div>
         <p className="reveal text-center text-sm leading-relaxed" style={{ color: "var(--text-dim)" }}>
-          كل مسار بخريطة كاملة من التأسيس إلى التسريبات، مع نقاط مراجعة كل ربع حتى ما تنسى.
+          كل مسار بخريطة كاملة من التأسيس إلى التسريبات، مع نقاط مراجعة كل ربع.
         </p>
       </section>
 
@@ -343,10 +347,16 @@ export default function LandingPage() {
         </div>
         <div className="flex flex-col gap-3">
           {STEPS.map((s, i) => (
-            <div key={i} className={`reveal reveal-d${i + 1} rounded-2xl p-5 flex items-start gap-4`}
+            <div key={i}
+              className={`reveal reveal-d${i + 1} rounded-2xl p-5 flex items-start gap-4 glow-card-hover`}
               style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
               <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl flex-shrink-0"
-                style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)", border: "1.5px solid color-mix(in srgb, var(--accent) 25%, transparent)" }}>
+                style={{
+                  background: "color-mix(in srgb, var(--accent) 12%, transparent)",
+                  color: "var(--accent-light)",
+                  border: "1.5px solid color-mix(in srgb, var(--accent) 28%, transparent)",
+                  boxShadow: "0 0 16px color-mix(in srgb, var(--accent) 18%, transparent)",
+                }}>
                 {s.n}
               </div>
               <div>
@@ -362,21 +372,24 @@ export default function LandingPage() {
       {/* ═══ CTA الختام ═══ */}
       {/* ══════════════════════════════════════════ */}
       <section className="px-5 py-16 pb-24 max-w-lg mx-auto text-center">
-        <div className="reveal rounded-3xl p-8"
+        <div className="reveal relative rounded-3xl p-8 overflow-hidden"
           style={{
             background: "linear-gradient(145deg, color-mix(in srgb, var(--accent) 8%, transparent), var(--surface))",
             border: "1.5px solid color-mix(in srgb, var(--accent) 22%, transparent)",
           }}>
-          <h2 className="font-black text-2xl mb-3" style={{ color: "var(--text)" }}>جاهز تبدأ دربك؟</h2>
-          <p className="text-base mb-7 leading-relaxed" style={{ color: "var(--text-dim)" }}>
+          <BorderBeam size={250} duration={12} colorFrom="var(--accent-hi)" colorTo="var(--gold)" />
+          <Sparkles count={10} color="var(--accent-hi)" />
+
+          <h2 className="font-black text-2xl mb-3 relative z-10" style={{ color: "var(--text)" }}>جاهز تبدأ دربك؟</h2>
+          <p className="text-base mb-7 leading-relaxed relative z-10" style={{ color: "var(--text-dim)" }}>
             أقل من دقيقة وأنت بداخل — ادخل بحساب Google واختر مسارك.
           </p>
           <Link href={ctaHref}
-            className="btn-primary glow-blue inline-flex items-center px-12 text-lg"
-            style={{ textDecoration: "none", minHeight: "56px" }}>
+            className="btn-shimmer inline-flex items-center gap-3 px-12 py-4 text-lg font-black relative z-10"
+            style={{ textDecoration: "none", minWidth: "220px", justifyContent: "center" }}>
             سجّل الآن ←
           </Link>
-          <p className="text-xs mt-6" style={{ color: "var(--text-muted)" }}>صُنع في السعودية · مجاني بالكامل</p>
+          <p className="text-xs mt-6 relative z-10" style={{ color: "var(--text-muted)" }}>صُنع في السعودية · مجاني بالكامل</p>
         </div>
         <Link href="/privacy" className="inline-block mt-8 text-xs" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
           سياسة الخصوصية

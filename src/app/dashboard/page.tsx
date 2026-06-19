@@ -14,6 +14,8 @@ import DayScheduler, { getEventsForDate } from "@/components/DayScheduler";
 import ExamDateButton from "@/components/ExamDateButton";
 import Calendar from "@/components/Calendar";
 import SaudiMap from "@/components/SaudiMap";
+import { NumberTicker } from "@/components/ui/number-ticker";
+import { BorderBeam } from "@/components/ui/border-beam";
 
 const DAILY_TARGET = 200;
 
@@ -461,7 +463,8 @@ export default function DashboardPage() {
         const nearest = allDays[0] ?? null;
 
         return (
-          <section className="card">
+          <section className="card relative overflow-hidden">
+            <BorderBeam size={180} duration={14} colorFrom="var(--accent-hi)" colorTo="var(--gold)" delay={2} />
             <div className="flex items-center justify-between mb-3">
               <p className="title-md" style={{ color: "var(--text)" }}>يومك</p>
               <p className="num-hero text-[17px]" style={{ color: "var(--text-dim)" }}>
@@ -647,13 +650,23 @@ export default function DashboardPage() {
             <p className="eyebrow mb-2.5 px-1">إحصائياتك</p>
             <div className="grid grid-cols-3 gap-2.5">
               {[
-                { val: focusVal,    unit: focusUnit,    color: "var(--accent-light)" },
-                { val: sessions,    unit: "جلسة أوربت", color: "var(--success)" },
-                { val: errorsCount, unit: "خطأ بالخزنة", color: "var(--danger)" },
+                { num: focusMinsTotal < 60 ? focusMinsTotal : parseFloat((focusMinsTotal / 60).toFixed(1)), isFloat: focusMinsTotal >= 60 && focusMinsTotal % 60 !== 0, unit: focusUnit, color: "var(--accent-light)", glowColor: "#2563EB" },
+                { num: sessions,    isFloat: false, unit: "جلسة أوربت", color: "var(--success)",      glowColor: "#10B981" },
+                { num: errorsCount, isFloat: false, unit: "خطأ بالخزنة", color: "var(--danger)",      glowColor: "#F87171" },
               ].map((s) => (
-                <div key={s.unit} className="card text-center" style={{ padding: "18px 8px" }}>
-                  <p className="num-hero text-[34px] leading-none" style={{ color: s.color }}>{s.val}</p>
-                  <p className="text-[17px] font-semibold mt-2 whitespace-nowrap" style={{ color: "var(--text-muted)" }}>{s.unit}</p>
+                <div key={s.unit} className="relative card text-center overflow-hidden glow-card-hover"
+                  style={{
+                    padding: "18px 8px",
+                    border: `1px solid color-mix(in srgb, ${s.glowColor} 18%, var(--ring))`,
+                  }}>
+                  <div className="absolute inset-0 opacity-[0.04] pointer-events-none"
+                    style={{ background: `radial-gradient(circle at 50% 50%, ${s.glowColor}, transparent 70%)` }} />
+                  <p className="num-hero text-[34px] leading-none relative z-10" style={{ color: s.color }}>
+                    {s.num > 0
+                      ? <NumberTicker value={s.num} decimalPlaces={s.isFloat ? 1 : 0} className="num-hero text-[34px] leading-none" style={{ color: s.color }} />
+                      : "0"}
+                  </p>
+                  <p className="text-[15px] font-semibold mt-2 whitespace-nowrap relative z-10" style={{ color: "var(--text-muted)" }}>{s.unit}</p>
                 </div>
               ))}
             </div>
@@ -667,9 +680,11 @@ export default function DashboardPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
               {TOOLS.map((a) => (
                 <Link key={a.href} href={a.href}
-                  className="card flex items-center gap-3.5 transition active:scale-[0.96]"
+                  className="relative card flex items-center gap-3.5 transition active:scale-[0.96] overflow-hidden group glow-card-hover"
                   style={{ padding: "16px", minHeight: "82px", textDecoration: "none" }}>
-                  <div className="min-w-0">
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none"
+                    style={{ background: "radial-gradient(180px at 20% 50%, color-mix(in srgb, var(--accent) 8%, transparent), transparent)" }} />
+                  <div className="min-w-0 relative z-10">
                     <p className="font-extrabold text-[15.5px] leading-tight" style={{ color: "var(--text)" }}>{a.label}</p>
                     <p className="text-[12.5px] mt-1" style={{ color: "var(--text-muted)" }}>{a.desc}</p>
                   </div>
@@ -797,7 +812,9 @@ export default function DashboardPage() {
 
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-1.5">
-            <span className="font-mono-nums font-black text-3xl leading-none" style={{ color: "var(--gold-light)" }}>{silver}</span>
+            {silver > 0
+              ? <NumberTicker value={silver} className="font-mono-nums font-black text-3xl leading-none" style={{ color: "var(--gold-light)" }} />
+              : <span className="font-mono-nums font-black text-3xl leading-none" style={{ color: "var(--gold-light)" }}>0</span>}
             <span className="text-sm font-bold" style={{ color: "var(--gold)" }}>فضة</span>
           </div>
           <div className="flex items-center gap-2">
