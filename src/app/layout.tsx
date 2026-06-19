@@ -6,6 +6,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import CloudSync from "@/components/CloudSync";
 import AuthGate from "@/components/AuthGate";
 import Telemetry from "@/components/Telemetry";
+import PageViewTracker from "@/components/PageViewTracker";
 
 /* الخطوط تُستضاف ذاتياً عبر next/font — صفر طلبات خارجية، بلا انزياح، وتحميل أسرع بكثير */
 const cairo = Cairo({
@@ -77,6 +78,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthGate>{children}</AuthGate>
         <CloudSync />
         <Telemetry />
+        <PageViewTracker />
         <Analytics />
         <SpeedInsights />
       </body>

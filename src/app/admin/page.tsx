@@ -45,6 +45,19 @@ interface AdminUser {
 const PLAN_AR: Record<PlanId, string> = { free: "مجاني", shaheen: "شاهين", anqa: "عنقاء" };
 const PLAN_CLR: Record<PlanId, string> = { free: "#64748B", shaheen: "#2563EB", anqa: "#F59E0B" };
 
+/* ── نظرة عامة (تحليلات اليوم) ── */
+interface AnalyticsData {
+  visitorsToday: number;
+  registeredToday: number;
+  conversion: number;
+  avgSessionMins: number;
+  aiUsersToday: number;
+  topPages: { path: string; count: number }[];
+  totalUsers: number;
+  activeToday: number;
+  eventsScanned: number;
+}
+
 /* ── تكلفة الذكاء الاصطناعي ── */
 interface AiModelUsage { label?: string; requests?: number; promptTokens?: number; completionTokens?: number }
 interface AiUsageDay {
@@ -164,6 +177,7 @@ export default function AdminPage() {
       setUsers((data.users as AdminUser[]) ?? []);
       setAuthed(true);
       loadAnnouncements();
+      loadAnalytics();
     } catch (e) { setError(`تعذّر الوصول للخادم: ${e instanceof Error ? e.message : "تحقّق من الإنترنت"}`); }
     finally { setLoading(false); }
   };
@@ -202,6 +216,21 @@ export default function AdminPage() {
   const [announceMsg, setAnnounceMsg] = useState("");
   const [showAnnounce, setShowAnnounce] = useState(true);
   const [annList, setAnnList] = useState<Announcement[]>([]);
+
+  /* ── نظرة عامة (تحليلات اليوم) ── */
+  const [stats, setStats] = useState<AnalyticsData | null>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [statsErr, setStatsErr] = useState("");
+
+  const loadAnalytics = async () => {
+    setStatsLoading(true); setStatsErr("");
+    try {
+      const { ok, data } = await callApi("analytics");
+      if (ok) setStats((data.analytics as AnalyticsData) ?? null);
+      else setStatsErr((data.error as string) ?? "تعذّر الجلب");
+    } catch { setStatsErr("خطأ في الاتصال"); }
+    finally { setStatsLoading(false); }
+  };
 
   /* ── تكلفة الذكاء الاصطناعي ── */
   const [aiDays, setAiDays] = useState<AiUsageDay[]>([]);
@@ -686,6 +715,71 @@ export default function AdminPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* نظرة عامة — تحليلات اليوم */}
+      <div className="max-w-7xl mx-auto mb-6">
+        <div className="flex items-center gap-3 mb-3">
+          <p className="font-black text-[15px]" style={{ color: "var(--text)" }}>📊 نظرة عامة — اليوم</p>
+          <button onClick={loadAnalytics} disabled={statsLoading}
+            className="rounded-lg px-2.5 py-1 text-[12px] font-bold"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-dim)", opacity: statsLoading ? 0.5 : 1 }}>
+            {statsLoading ? "..." : "↻ تحديث"}
+          </button>
+        </div>
+
+        {statsErr && <p className="text-[13px] font-semibold mb-3" style={{ color: "var(--danger)" }}>❌ {statsErr}</p>}
+
+        {stats && (
+          <div className="flex flex-col gap-3">
+            {/* بطاقات المقاييس الستة */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {[
+                { label: "زوار اليوم",          val: String(stats.visitorsToday),     color: "var(--accent-light)" },
+                { label: "مسجّلون اليوم",        val: String(stats.registeredToday),   color: "#10B981" },
+                { label: "نسبة التحويل",         val: `${stats.conversion}%`,          color: "var(--gold)" },
+                { label: "متوسط مدة الجلسة",     val: `${stats.avgSessionMins} د`,     color: "#8B5CF6" },
+                { label: "مستخدمو الذكاء اليوم", val: String(stats.aiUsersToday),      color: "#06B6D4" },
+                { label: "نشطون اليوم",          val: String(stats.activeToday),       color: "#F59E0B" },
+              ].map((s) => (
+                <div key={s.label} className="rounded-2xl p-4 flex flex-col gap-1"
+                  style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                  <p className="font-black text-2xl font-mono-nums" style={{ color: s.color }}>{s.val}</p>
+                  <p className="text-[12px] leading-tight" style={{ color: "var(--text-muted)" }}>{s.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* أكثر الصفحات زيارة */}
+            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+              <div className="px-4 py-2.5 flex items-center justify-between"
+                style={{ background: "var(--surface2)" }}>
+                <span className="text-[13px] font-bold" style={{ color: "var(--text)" }}>أكثر الصفحات زيارة اليوم</span>
+                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{stats.totalUsers} مستخدم إجمالاً</span>
+              </div>
+              {stats.topPages.length === 0 ? (
+                <p className="text-[13px] px-4 py-4 text-center" style={{ color: "var(--text-muted)" }}>
+                  لا توجد زيارات مسجّلة اليوم بعد — يبدأ العدّ مع زيارات الصفحات.
+                </p>
+              ) : (() => {
+                const maxCount = Math.max(...stats.topPages.map((p) => p.count), 1);
+                return stats.topPages.map((p, i) => (
+                  <div key={p.path} className="flex items-center gap-3 px-4 py-2.5"
+                    style={{ borderTop: i > 0 ? "1px solid var(--border)" : "none", background: i % 2 === 0 ? "var(--surface)" : "var(--bg)" }}>
+                    <span className="font-mono-nums text-[13px] flex-1 truncate" style={{ color: "var(--text-dim)" }} dir="ltr">{p.path}</span>
+                    <div className="w-28 h-1.5 rounded-full overflow-hidden flex-shrink-0" style={{ background: "var(--border)" }}>
+                      <div className="h-full rounded-full" style={{ width: `${Math.round((p.count / maxCount) * 100)}%`, background: "var(--accent)" }} />
+                    </div>
+                    <span className="font-mono-nums text-[13px] font-bold w-10 text-left flex-shrink-0" style={{ color: "var(--accent-light)" }}>{p.count}</span>
+                  </div>
+                ));
+              })()}
+            </div>
+            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+              زوار اليوم = أجهزة فريدة سجّلت زيارة · نسبة التحويل = المسجّلون ÷ الزوار · متوسط المدة من جلسات أوربت المكتملة · بتوقيت UTC.
+            </p>
           </div>
         )}
       </div>

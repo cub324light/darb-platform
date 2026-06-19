@@ -10,7 +10,7 @@ const ALLOWED = new Set([
   "user_registered", "onboarding_completed", "session_started", "session_completed",
   "exam_started", "exam_completed", "question_answered", "skill_rated", "skill_improved",
   "lesson_completed", "card_reviewed", "vault_error_added", "file_uploaded",
-  "ai_plan_generated", "ai_explain_requested", "ai_quiz_generated",
+  "ai_plan_generated", "ai_explain_requested", "ai_quiz_generated", "page_view",
 ]);
 
 /* حد إساءة: 60 حدث بالدقيقة لكل IP (الأحداث متكررة بطبيعتها) */

@@ -119,6 +119,83 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    /* نظرة عامة — تحليلات اليوم من مجموعتي events + users */
+    if (mode === "analytics") {
+      try {
+        const db = await adminDb();
+        const { Timestamp } = await import("firebase-admin/firestore");
+
+        /* بداية اليوم بتوقيت UTC — يطابق طريقة بقية المنصة في حساب «اليوم» */
+        const startOfDay = new Date();
+        startOfDay.setUTCHours(0, 0, 0, 0);
+        const todayTs = Timestamp.fromMillis(startOfDay.getTime());
+
+        /* عدّ مجمّع — أرخص من جلب كل الوثائق */
+        const [totalSnap, regSnap, activeSnap] = await Promise.all([
+          db.collection("users").count().get(),
+          db.collection("users").where("joinedAt", ">=", todayTs).count().get(),
+          db.collection("users").where("lastSeen", ">=", todayTs).count().get(),
+        ]);
+        const totalUsers      = totalSnap.data().count;
+        const registeredToday = regSnap.data().count;
+        const activeToday      = activeSnap.data().count;
+
+        /* أحداث اليوم — للزوار والصفحات ومدة الجلسة ومستخدمي الذكاء */
+        const evSnap = await db.collection("events")
+          .where("ts", ">=", todayTs)
+          .limit(8000)
+          .get();
+
+        const visitors = new Set<string>();
+        const pageCounts: Record<string, number> = {};
+        const aiUsers = new Set<string>();
+        let durSum = 0, durCount = 0;
+
+        for (const d of evSnap.docs) {
+          const e = d.data();
+          const name = e.name as string;
+          const props = (e.props ?? {}) as Record<string, unknown>;
+          const uid = (e.uid ?? null) as string | null;
+
+          if (name === "page_view") {
+            const vid = (props.visitorId as string) || uid || "";
+            if (vid) visitors.add(vid);
+            const path = (props.path as string) || "/";
+            pageCounts[path] = (pageCounts[path] ?? 0) + 1;
+          } else if (name === "session_completed") {
+            const m = Number(props.focusMins);
+            if (Number.isFinite(m) && m > 0) { durSum += m; durCount++; }
+          } else if (name === "ai_plan_generated" || name === "ai_explain_requested" || name === "ai_quiz_generated") {
+            if (uid) aiUsers.add(uid);
+          }
+        }
+
+        const visitorsToday = visitors.size;
+        const topPages = Object.entries(pageCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 8)
+          .map(([path, count]) => ({ path, count }));
+        const avgSessionMins = durCount > 0 ? Math.round(durSum / durCount) : 0;
+        const aiUsersToday   = aiUsers.size;
+        /* نسبة التحويل: المسجلون اليوم ÷ الزوار اليوم */
+        const conversion = visitorsToday > 0
+          ? Math.min(100, Math.round((registeredToday / visitorsToday) * 100))
+          : 0;
+
+        return NextResponse.json({
+          analytics: {
+            visitorsToday, registeredToday, conversion,
+            avgSessionMins, aiUsersToday, topPages,
+            totalUsers, activeToday,
+            eventsScanned: evSnap.size,
+          },
+        });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        return NextResponse.json({ error: `تعذّر جلب التحليلات: ${msg}` }, { status: 500 });
+      }
+    }
+
     /* انتحال العرض: جلب نسخة بيانات الطالب الكاملة (قراءة فقط للدعم) */
     if (mode === "getUserData") {
       const { uid } = (body ?? {}) as { uid?: string };
