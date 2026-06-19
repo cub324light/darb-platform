@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import Confetti from "@/components/Confetti";
@@ -231,9 +232,16 @@ export default function ArenaPage() {
     return (
       <div className="min-h-dvh flex flex-col pb-nav relative z-[1]">
         <Dome compact>
-          <div className="flex items-center justify-between">
-            <h1 className="title-lg" style={{ color: "var(--text)" }}>الأرينا</h1>
-            <span className="dome-chip text-[17px] font-bold" style={{ color: "var(--gold-light)" }}>1v1</span>
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard" className="rounded-full p-1.5 transition active:scale-95" style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)" }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-white">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 18l6-6-6-6" />
+              </svg>
+            </Link>
+            <div className="flex items-center justify-between flex-1">
+              <h1 className="title-lg" style={{ color: "var(--text)" }}>الأرينا</h1>
+              <span className="dome-chip text-[17px] font-bold" style={{ color: "var(--gold-light)" }}>1v1</span>
+            </div>
           </div>
         </Dome>
 
@@ -260,7 +268,7 @@ export default function ArenaPage() {
             أسئلة سريعة من مسارك ضد منافس يجاوب بنفسه — اسبقه قبل ما ياخذ النقطة.
           </p>
           <p className="text-sm font-bold mb-8" style={{ color: "var(--gold)" }}>
-            الفوز = +{WIN_SILVER} Silver
+            الفوز = +{WIN_SILVER} فضة
           </p>
 
           {/* Player matching section */}
@@ -344,7 +352,7 @@ export default function ArenaPage() {
             {won ? "فزت!" : draw ? "تعادل!" : "المرة القادمة!"}
           </h2>
           {won && (
-            <p className="font-black text-lg mb-4" style={{ color: "var(--gold)" }}>+{WIN_SILVER} Silver</p>
+            <p className="font-black text-lg mb-4" style={{ color: "var(--gold)" }}>+{WIN_SILVER} فضة</p>
           )}
           {!won && <div className="mb-4" />}
           <div className="flex justify-center gap-8 mb-6">

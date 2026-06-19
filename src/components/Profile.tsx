@@ -269,7 +269,7 @@ export default function ProfileButton() {
             <div className="grid grid-cols-4 gap-2 mb-6">
               {[
                 { val: stats.streak,   label: "ستريك",  icon: "🔥" },
-                { val: stats.silver,   label: "Silver",  icon: "" },
+                { val: stats.silver,   label: "فضة",  icon: "" },
                 { val: stats.hours,    label: "ساعة",    icon: "" },
                 { val: stats.sessions, label: "جلسة",    icon: "" },
               ].map((s) => (
@@ -334,12 +334,13 @@ export default function ProfileButton() {
     <>
       {/* الزر — في يسار الهيدر، لونه أزرق ليلي أو ذهبي نهاري */}
       <button onClick={() => setOpen(true)} aria-label="البروفايل"
-        className="w-9 h-9 rounded-xl flex items-center justify-center transition"
+        className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 transition active:scale-95"
         style={{ background: "color-mix(in srgb, var(--accent) 14%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
-        <svg viewBox="0 0 24 24" fill="currentColor" strokeWidth={0} className="w-5 h-5">
-          <circle cx="12" cy="8" r="3.6" />
-          <path d="M4.5 20c1.6-3.4 4.4-5 7.5-5s5.9 1.6 7.5 5Z" />
-        </svg>
+        <div className="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black text-white flex-shrink-0"
+          style={{ background: "linear-gradient(135deg, var(--accent-2), var(--accent-light))" }}>
+          {(user?.name ?? "د").charAt(0)}
+        </div>
+        <span className="text-[12px] font-bold max-w-[60px] truncate">{user?.name ?? "بروفايل"}</span>
       </button>
 
       {modal}

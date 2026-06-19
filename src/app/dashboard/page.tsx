@@ -771,7 +771,7 @@ export default function DashboardPage() {
     <div className="page">
 
       <PageGuide pageKey="dashboard" steps={[
-        { title: "أهلاً بك في درب", desc: "هذي صفحتك الرئيسية — تشوف فيها تقدم يومك، الستريك، وSilver اللي جمعته من جلسات التركيز." },
+        { title: "أهلاً بك في درب", desc: "هذي صفحتك الرئيسية — تشوف فيها تقدم يومك، الستريك، والفضة اللي جمعتها من جلسات التركيز." },
         { title: "يومك بنظرة وحدة", desc: "شريط التقدم يوضح كم ذاكرت اليوم من هدفك، وجدول اليوم يعرض المواعيد اللي بنيتها مع المساعد الذكي." },
         { title: "رتّبها على ذوقك", desc: "اضغط «تخصيص» فوق — تقدر تسحب الأقسام وترتّبها، تخفيها بزر ✕، وترجّعها من «إضافة قسم» تحت." },
       ]} />
@@ -792,7 +792,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-1.5">
             <span className="font-mono-nums font-black text-3xl leading-none" style={{ color: "var(--gold-light)" }}>{silver}</span>
-            <span className="text-sm font-bold" style={{ color: "var(--gold)" }}>Silver</span>
+            <span className="text-sm font-bold" style={{ color: "var(--gold)" }}>فضة</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="dome-chip">
