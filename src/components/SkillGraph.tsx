@@ -1,25 +1,34 @@
 "use client";
 import { useMemo, useState } from "react";
 import {
-  graphForTrack, skillStatus, skillDepth,
-  type Skill, type NodeStatus,
-} from "@/lib/skillGraph";
-import { loadSkills, saveSkills } from "@/lib/storage";
+  skillsForTrack, skillNodeStatus, skillDepth,
+  MASTERY_THRESHOLD, type GlobalSkill, type NodeStatus,
+} from "@/lib/globalSkills";
+import { loadSkillProgress, setSkillSelfAssessment } from "@/lib/skillProgress";
 
 /* خريطة المهارات: شجرة تفاعلية للمسار — يتقدّم الطالب بإتقان المهارات بالترتيب. */
 export default function SkillGraph({ track }: { track: string | undefined | null }) {
-  const skills = useMemo(() => graphForTrack(track), [track]);
-  const [mastered, setMastered] = useState<Set<string>>(() => new Set(loadSkills()));
+  const skills = useMemo(() => skillsForTrack(track ?? ""), [track]);
+  const [progress, setProgress] = useState(() => loadSkillProgress());
+
+  const mastered = useMemo<Set<string>>(
+    () => new Set(
+      Object.entries(progress)
+        .filter(([, p]) => p.masteryScore >= MASTERY_THRESHOLD)
+        .map(([id]) => id)
+    ),
+    [progress]
+  );
 
   const byId = useMemo(() => new Map(skills.map((s) => [s.id, s])), [skills]);
 
   /* الأقسام بالترتيب مع ترتيب كل قسم حسب العمق */
   const sections = useMemo(() => {
-    const map = new Map<string, Skill[]>();
+    const map = new Map<string, GlobalSkill[]>();
     for (const s of skills) {
-      const arr = map.get(s.section) ?? [];
+      const arr = map.get(s.domain) ?? [];
       arr.push(s);
-      map.set(s.section, arr);
+      map.set(s.domain, arr);
     }
     for (const arr of map.values()) {
       arr.sort((a, b) => skillDepth(a, byId) - skillDepth(b, byId));
@@ -38,29 +47,26 @@ export default function SkillGraph({ track }: { track: string | undefined | null
   const masteredCount = skills.filter((s) => mastered.has(s.id)).length;
   const pct = Math.round((masteredCount / skills.length) * 100);
 
-  const toggle = (skill: Skill, status: NodeStatus) => {
+  const toggle = (skill: GlobalSkill, status: NodeStatus) => {
     if (status === "locked") return;
-    setMastered((prev) => {
-      const next = new Set(prev);
-      if (next.has(skill.id)) {
-        // إلغاء الإتقان يلغي تلقائياً ما يعتمد عليه (يبقى الرسم متّسقاً)
-        next.delete(skill.id);
-        let changed = true;
-        while (changed) {
-          changed = false;
-          for (const s of skills) {
-            if (next.has(s.id) && !s.prereqs.every((p) => next.has(p))) {
-              next.delete(s.id);
-              changed = true;
-            }
+    if (status === "mastered") {
+      // إلغاء الإتقان يلغي تلقائياً كل المهارات التي تعتمد عليه
+      const toReset = new Set([skill.id]);
+      let changed = true;
+      while (changed) {
+        changed = false;
+        for (const s of skills) {
+          if (!toReset.has(s.id) && (s.prereqs ?? []).some((p) => toReset.has(p))) {
+            toReset.add(s.id);
+            changed = true;
           }
         }
-      } else {
-        next.add(skill.id);
       }
-      saveSkills([...next]);
-      return next;
-    });
+      for (const id of toReset) setSkillSelfAssessment(id, "none");
+    } else {
+      setSkillSelfAssessment(skill.id, "mastered");
+    }
+    setProgress(loadSkillProgress());
   };
 
   const statusStyle: Record<NodeStatus, React.CSSProperties> = {
@@ -86,8 +92,8 @@ export default function SkillGraph({ track }: { track: string | undefined | null
           <p className="text-[13px] font-black" style={{ color: "var(--accent-light)" }}>{section}</p>
           <div className="flex flex-wrap gap-2">
             {list.map((s) => {
-              const status = skillStatus(s, mastered);
-              const prereqNames = s.prereqs
+              const status = skillNodeStatus(s, mastered);
+              const prereqNames = (s.prereqs ?? [])
                 .map((p) => byId.get(p)?.name)
                 .filter(Boolean)
                 .join("، ");

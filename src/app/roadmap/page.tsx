@@ -7,7 +7,7 @@ import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import TopicExtractor from "@/components/TopicExtractor";
 import SkillGraph from "@/components/SkillGraph";
-import { graphForTrack } from "@/lib/skillGraph";
+import { hasSkillTree } from "@/lib/globalSkills";
 import { RAKAN_SCHEDULE } from "@/lib/constants";
 import { getTrack, subjectColor, TRACKS, type Track, type TrackId } from "@/lib/tracks";
 import { fmtHour } from "@/lib/utils";
@@ -736,7 +736,7 @@ export default function RoadmapPage() {
       </div>
 
       {/* خريطة المهارات — للمسارات التي لها شجرة (قدرات/تحصيلي) */}
-      {graphForTrack(track.id).length > 0 && (
+      {hasSkillTree(track.id) && (
         <div className="px-5 mb-4">
           <details className="rounded-2xl p-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
             <summary className="cursor-pointer font-black text-[15px] flex items-center gap-2" style={{ color: "var(--text)" }}>
