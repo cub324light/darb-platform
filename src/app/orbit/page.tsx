@@ -320,7 +320,7 @@ export default function OrbitPage() {
     : `جلسة منجزة! +${lastEarned} فضة`;
 
   return (
-    <div className="min-h-dvh flex flex-col pb-nav relative z-[1]">
+    <div className="min-h-dvh flex flex-col pb-nav relative z-[1] page-enter">
 
       {phase === "done" && <Confetti />}
 

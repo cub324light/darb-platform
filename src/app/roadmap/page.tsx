@@ -700,7 +700,7 @@ export default function RoadmapPage() {
 
   /* ══ الصفحة الرئيسية ══ */
   return (
-    <div className="min-h-dvh pb-nav relative z-[1]">
+    <div className="min-h-dvh pb-nav relative z-[1] page-enter">
       <PageGuide pageKey="roadmap" steps={[
         { title: "خريطة طريقك", desc: "رحلتك ثلاث مراحل: تأسيس (تتعلم الأساسيات) ← تدريب (تحل تجميعات) ← تسريبات (محاكاة الاختبار الحقيقي)." },
         { title: "علّم اللي خلصته", desc: "اضغط على أي درس بعد ما تخلصه وبتشوف نسبة تقدمك ترتفع. كل ربع تكمله يطلع لك تنبيه مراجعة." },

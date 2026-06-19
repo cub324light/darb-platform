@@ -117,7 +117,7 @@ export const TRACKS: Track[] = [
 export const TRACK_GROUPS: { label: string; ids: TrackId[] }[] = [
   { label: "الثانوية",      ids: ["تحصيلي", "تحصيلي مبكر"] },
   { label: "الإنجليزي",    ids: ["ايلتس", "ستيب", "توفل", "دوليقو"] },
-  { label: "بعد الثانوية", ids: ["قدرات", "CPC", "ITC"] },
+  { label: "اختبارات القبول", ids: ["قدرات", "CPC", "ITC"] },
 ];
 
 /* ── المواد الكاملة مع التجميع والمختبِر ── */
@@ -148,7 +148,7 @@ export const SUBJECT_GROUPS: { label: string; subjects: SubjectInfo[] }[] = [
     ],
   },
   {
-    label: "بعد الثانوية",
+    label: "اختبارات القبول",
     subjects: [
       { name: "لفظي",    color: "#8B5CF6", testedBy: ["القدرات"] },
       { name: "كمي",     color: "#10B981", testedBy: ["القدرات"] },
