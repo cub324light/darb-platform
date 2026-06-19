@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { TRACKS, TRACK_GROUPS, type TrackId } from "@/lib/tracks";
+import { TRACKS, TRACK_GROUPS, scoreRangeForTitle, validateScore, type TrackId } from "@/lib/tracks";
 import { saveUser, saveExamDate, saveResults, saveTrackExamDates } from "@/lib/storage";
 import { registerUser } from "@/lib/firestore";
 import { currentUser, pushBackup } from "@/lib/cloud";
@@ -37,6 +37,7 @@ export default function OnboardingPage() {
   const [trackDates, setTrackDates] = useState<Record<string, string>>({});
   /* نتائج اختبارات سابقة (اختياري) — تُحفظ في «نتائجي» */
   const [prevExams, setPrevExams] = useState<{ exam: string; score: string }[]>([]);
+  const [prevErr, setPrevErr] = useState("");
 
   const toggleTrack = (id: TrackId) => {
     setActiveTracks((prev) =>
@@ -46,6 +47,13 @@ export default function OnboardingPage() {
 
   const finish = async () => {
     if (!activeTracks.length) return;
+    /* تحقق من درجات النتائج السابقة حسب سُلّم كل اختبار قبل المتابعة */
+    for (const p of prevExams) {
+      if (!p.exam.trim()) continue;
+      const err = validateScore(p.exam, p.score);
+      if (err) { setPrevErr(`${p.exam}: ${err}`); return; }
+    }
+    setPrevErr("");
     const trimmedName = name.trim();
     const primaryTrack = activeTracks[0];
     const extras = {
@@ -72,13 +80,17 @@ export default function OnboardingPage() {
     const allDates: Record<string, string> = {};
     for (const id of activeTracks) { if (trackDates[id]) allDates[id] = trackDates[id]; }
     if (Object.keys(allDates).length) saveTrackExamDates(allDates);
-    const validPrev = prevExams.filter((p) => p.exam.trim() || p.score.trim());
+    const validPrev = prevExams.filter((p) => p.exam.trim());
     if (validPrev.length) {
-      saveResults(validPrev.map((p, i) => ({
-        id: `${Date.now()}-${i}`,
-        exam: p.exam.trim() || primaryTrack,
-        score: p.score.trim() || undefined,
-      })));
+      saveResults(validPrev.map((p, i) => {
+        // اختبار بلا درجة (CPC/ITC) → لا نحفظ درجة
+        const noScore = scoreRangeForTitle(p.exam) === null;
+        return {
+          id: `${Date.now()}-${i}`,
+          exam: p.exam.trim(),
+          score: noScore ? undefined : (p.score.trim() || undefined),
+        };
+      }));
     }
     registerUser(trimmedName, primaryTrack, extras);
     trackEvent("onboarding_completed", { track: primaryTrack, tracks: activeTracks.length });
@@ -385,29 +397,46 @@ export default function OnboardingPage() {
               style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
           </div>
           <div className="flex flex-col gap-2.5">
-            {prevExams.map((p, i) => (
-              <div key={i} className="flex gap-2">
-                <input value={p.exam}
-                  onChange={(e) => setPrevExams((prev) => prev.map((x, j) => j === i ? { ...x, exam: e.target.value } : x))}
-                  placeholder="الاختبار (مثال: قدرات)" maxLength={30}
-                  className="flex-1 min-w-0 rounded-2xl px-4 py-3 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
-                  style={{ background: "var(--surface)", border: "2px solid var(--border)" }} />
-                <input value={p.score} inputMode="decimal"
-                  onChange={(e) => setPrevExams((prev) => prev.map((x, j) => j === i ? { ...x, score: e.target.value } : x))}
-                  placeholder="الدرجة" maxLength={6}
-                  className="w-20 rounded-2xl px-3 py-3 text-base text-center text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
-                  style={{ background: "var(--surface)", border: "2px solid var(--border)" }} />
-                <button onClick={() => setPrevExams((prev) => prev.filter((_, j) => j !== i))}
-                  className="px-3 rounded-2xl font-bold text-[var(--text-muted)]"
-                  style={{ background: "var(--surface)", border: "2px solid var(--border)" }}>✕</button>
-              </div>
-            ))}
+            {prevExams.map((p, i) => {
+              const range = p.exam ? scoreRangeForTitle(p.exam) : undefined;
+              const noScore = range === null;
+              return (
+                <div key={i} className="flex flex-col gap-1.5">
+                  <div className="flex gap-2">
+                    <select value={p.exam}
+                      onChange={(e) => setPrevExams((prev) => prev.map((x, j) => j === i ? { exam: e.target.value, score: "" } : x))}
+                      className="flex-1 min-w-0 rounded-2xl px-4 py-3 text-base text-[var(--text)] outline-none"
+                      style={{ background: "var(--surface)", border: "2px solid var(--border)" }}>
+                      <option value="">اختر الاختبار</option>
+                      {TRACKS.map((t) => (
+                        <option key={t.id} value={t.title}>{t.title}</option>
+                      ))}
+                    </select>
+                    <input value={p.score} inputMode="decimal" disabled={noScore}
+                      onChange={(e) => { setPrevErr(""); setPrevExams((prev) => prev.map((x, j) => j === i ? { ...x, score: e.target.value } : x)); }}
+                      placeholder={noScore ? "بلا درجة" : "الدرجة"} maxLength={6}
+                      className="w-24 rounded-2xl px-3 py-3 text-base text-center text-[var(--text)] placeholder-[var(--text-muted)] outline-none disabled:opacity-40"
+                      style={{ background: "var(--surface)", border: "2px solid var(--border)" }} />
+                    <button onClick={() => setPrevExams((prev) => prev.filter((_, j) => j !== i))}
+                      className="px-3 rounded-2xl font-bold text-[var(--text-muted)]"
+                      style={{ background: "var(--surface)", border: "2px solid var(--border)" }}>✕</button>
+                  </div>
+                  {p.exam && range && (
+                    <p className="text-xs px-1" style={{ color: "var(--text-muted)" }}>الدرجة: {range.hint}</p>
+                  )}
+                  {noScore && (
+                    <p className="text-xs px-1" style={{ color: "var(--text-muted)" }}>هذا الاختبار ما له درجة رقمية.</p>
+                  )}
+                </div>
+              );
+            })}
             <button onClick={() => setPrevExams((prev) => [...prev, { exam: "", score: "" }])}
               className="rounded-2xl py-3 font-bold text-[15px]"
               style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid color-mix(in srgb, var(--accent) 30%, transparent)", color: "var(--accent-light)" }}>
               + أضف نتيجة سابقة
             </button>
           </div>
+          {prevErr && <p className="text-xs mt-2 font-bold" style={{ color: "var(--danger)" }}>{prevErr}</p>}
           <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>تنحفظ في «نتائجي» وتقدر تعدّلها بعدين.</p>
         </div>
 

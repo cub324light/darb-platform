@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { TRACKS } from "@/lib/tracks";
+import { TRACKS, scoreRangeForTitle, validateScore } from "@/lib/tracks";
 import {
   loadUser, saveUser, loadStats, computeStreak,
   loadTheme, applyTheme,
@@ -49,6 +49,10 @@ export default function ProfileButton() {
   const [resExam, setResExam]   = useState("");
   const [resScore, setResScore] = useState("");
   const [resDate, setResDate]   = useState("");
+  const [resErr, setResErr]     = useState("");
+  // نطاق درجة الاختبار المختار: undefined=غير معروف · null=بلا درجة · كائن=نطاق
+  const resRange = resExam ? scoreRangeForTitle(resExam) : undefined;
+  const examHasNoScore = resRange === null;
 
   useEffect(() => {
     if (!open) return;
@@ -81,12 +85,15 @@ export default function ProfileButton() {
   const addResult = () => {
     const exam = resExam.trim();
     if (!exam) return;
+    // تحقق من الدرجة حسب سُلّم الاختبار (CPC/ITC بلا درجة، آيلتس ١-٩، إلخ)
+    const err = validateScore(exam, resScore);
+    if (err) { setResErr(err); return; }
     const next: ExamResult[] = [
-      { id: `${Date.now()}`, exam, score: resScore.trim() || undefined, date: resDate || undefined },
+      { id: `${Date.now()}`, exam, score: examHasNoScore ? undefined : (resScore.trim() || undefined), date: resDate || undefined },
       ...results,
     ];
     setResults(next); saveResults(next);
-    setResExam(""); setResScore(""); setResDate("");
+    setResExam(""); setResScore(""); setResDate(""); setResErr("");
   };
 
   const deleteResult = (id: string) => {
@@ -302,20 +309,30 @@ export default function ProfileButton() {
                 </div>
               )}
               <div className="flex gap-2 mb-2">
-                <input list="darb-exam-options" value={resExam} onChange={(e) => setResExam(e.target.value)}
-                  placeholder="الاختبار" maxLength={30}
-                  className="flex-1 min-w-0 rounded-2xl px-4 py-3 text-[15px] text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
-                  style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
-                <datalist id="darb-exam-options">
+                <select value={resExam} onChange={(e) => { setResExam(e.target.value); setResScore(""); setResErr(""); }}
+                  className="flex-1 min-w-0 rounded-2xl px-4 py-3 text-[15px] text-[var(--text)] outline-none"
+                  style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }}>
+                  <option value="">اختر الاختبار</option>
                   {TRACKS.map((t) => (
-                    <option key={t.id} value={t.title} />
+                    <option key={t.id} value={t.title}>{t.title}</option>
                   ))}
-                </datalist>
-                <input value={resScore} inputMode="decimal" onChange={(e) => setResScore(e.target.value)}
-                  placeholder="الدرجة" maxLength={6}
-                  className="w-20 rounded-2xl px-3 py-3 text-[15px] text-center text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+                </select>
+                <input value={resScore} inputMode="decimal"
+                  onChange={(e) => { setResScore(e.target.value); setResErr(""); }}
+                  disabled={examHasNoScore}
+                  placeholder={examHasNoScore ? "بلا درجة" : "الدرجة"} maxLength={6}
+                  className="w-24 rounded-2xl px-3 py-3 text-[15px] text-center text-[var(--text)] placeholder-[var(--text-muted)] outline-none disabled:opacity-40"
                   style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
               </div>
+              {resExam && resRange && (
+                <p className="text-[12px] mb-2 px-1" style={{ color: "var(--text-muted)" }}>الدرجة: {resRange.hint}</p>
+              )}
+              {examHasNoScore && (
+                <p className="text-[12px] mb-2 px-1" style={{ color: "var(--text-muted)" }}>هذا الاختبار برنامج قبول/تدريب — ما له درجة رقمية.</p>
+              )}
+              {resErr && (
+                <p className="text-[12px] mb-2 px-1 font-bold" style={{ color: "var(--danger)" }}>{resErr}</p>
+              )}
               <div className="flex gap-2">
                 <input type="date" value={resDate} onChange={(e) => setResDate(e.target.value)}
                   className="flex-1 rounded-2xl px-4 py-3 text-[15px] text-[var(--text)] outline-none"

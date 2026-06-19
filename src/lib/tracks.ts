@@ -115,9 +115,9 @@ export const TRACKS: Track[] = [
 
 /* ── تجميع المسارات حسب المرحلة ── */
 export const TRACK_GROUPS: { label: string; ids: TrackId[] }[] = [
-  { label: "الثانوية",      ids: ["تحصيلي", "تحصيلي مبكر"] },
+  { label: "الثانوية",      ids: ["تحصيلي", "تحصيلي مبكر", "قدرات"] },
   { label: "الإنجليزي",    ids: ["ايلتس", "ستيب", "توفل", "دوليقو"] },
-  { label: "اختبارات القبول", ids: ["قدرات", "CPC", "ITC"] },
+  { label: "اختبارات القبول", ids: ["CPC", "ITC"] },
 ];
 
 /* ── المواد الكاملة مع التجميع والمختبِر ── */
@@ -198,3 +198,67 @@ export function resolveSubjects(names: string[]): { name: string; color: string 
   const all = SUBJECT_GROUPS.flatMap((g) => g.subjects);
   return names.map((n) => all.find((s) => s.name === n) ?? { name: n, color: TRACK_BLUE });
 }
+
+/* ─── نطاقات درجات الاختبارات («نتائجي») ───
+   كل اختبار له سُلّم درجات مختلف — نتحقق منه قبل الحفظ.
+   null = لا توجد درجة رقمية لهذا الاختبار (يُرفض إدخال درجة).
+
+   المصادر (سلالم رسمية):
+   - القدرات (GAT/قياس): من ١ إلى ١٠٠
+   - التحصيلي (SAAT/قياس): من ١ إلى ١٠٠
+   - ستيب STEP (كفايات الإنجليزية/قياس): من ١ إلى ١٠٠
+   - آيلتس IELTS: من ١ إلى ٩ (بخطوات ٠٫٥)
+   - توفل TOEFL iBT: من ٠ إلى ١٢٠
+   - دوليجو Duolingo English Test: من ١٠ إلى ١٦٠ (بخطوات ٥)
+   - أرامكو CPC و ITC: برامج قبول/تدريب بلا درجة رقمية موحّدة → تُرفض */
+export interface ScoreRange { min: number; max: number; step: number; hint: string; }
+
+export const EXAM_SCORE: Record<TrackId, ScoreRange | null> = {
+  "قدرات":        { min: 1, max: 100, step: 1,   hint: "من ١ إلى ١٠٠" },
+  "تحصيلي":       { min: 1, max: 100, step: 1,   hint: "من ١ إلى ١٠٠" },
+  "تحصيلي مبكر":  { min: 1, max: 100, step: 1,   hint: "من ١ إلى ١٠٠" },
+  "ستيب":         { min: 1, max: 100, step: 1,   hint: "من ١ إلى ١٠٠" },
+  "ايلتس":        { min: 1, max: 9,   step: 0.5, hint: "من ١ إلى ٩ (بخطوات ٠٫٥)" },
+  "توفل":         { min: 0, max: 120, step: 1,   hint: "من ٠ إلى ١٢٠" },
+  "دوليقو":       { min: 10, max: 160, step: 5,  hint: "من ١٠ إلى ١٦٠" },
+  "CPC":          null,
+  "ITC":          null,
+};
+
+/* مسار من عنوانه المعروض (للربط بين «نتائجي» والمسارات) */
+export function trackByTitle(title: string): Track | undefined {
+  const t = title.trim();
+  return TRACKS.find((tr) => tr.title === t || tr.id === t);
+}
+
+/* نطاق درجة اختبار من عنوانه — undefined لو غير معروف، null لو بلا درجة */
+export function scoreRangeForTitle(title: string): ScoreRange | null | undefined {
+  const tr = trackByTitle(title);
+  if (!tr) return undefined;
+  return EXAM_SCORE[tr.id];
+}
+
+/* التحقق من درجة اختبار: يعيد رسالة خطأ عربية أو null لو صالحة.
+   - اختبار بلا درجة (CPC/ITC) + إدخال درجة → خطأ
+   - درجة خارج النطاق أو ليست رقماً → خطأ */
+export function validateScore(title: string, scoreRaw: string): string | null {
+  const score = scoreRaw.trim();
+  const range = scoreRangeForTitle(title);
+
+  // اختبار غير معروف على المنصة — نسمح بأي درجة (نص حر احتياطي)
+  if (range === undefined) return null;
+
+  // اختبار بلا درجة رقمية
+  if (range === null) {
+    return score ? "هذا الاختبار ما له درجة رقمية — اتركها فارغة" : null;
+  }
+
+  // درجة اختيارية: فارغة = مقبولة
+  if (!score) return null;
+
+  const n = Number(score.replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660)));
+  if (!Number.isFinite(n)) return "الدرجة لازم تكون رقماً";
+  if (n < range.min || n > range.max) return `الدرجة لازم تكون ${range.hint}`;
+  return null;
+}
+
