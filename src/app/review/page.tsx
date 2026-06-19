@@ -6,6 +6,7 @@ import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import Confetti from "@/components/Confetti";
 import QuizGen from "@/components/QuizGen";
+import { BorderBeam } from "@/components/ui/border-beam";
 import { useFlag } from "@/lib/flags";
 import { sm2, nextReviewText } from "@/lib/sm2";
 import { subjectsForTracks, colorForSubject, type TrackId } from "@/lib/tracks";
@@ -118,7 +119,9 @@ export default function ReviewPage() {
       return (
         <div className="min-h-dvh flex flex-col items-center justify-center px-6 pb-nav relative z-[1]">
           {great && <Confetti count={24} />}
-          <div className="text-center">
+          <div className="relative text-center rounded-3xl p-8 overflow-hidden"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)", maxWidth: "340px", width: "100%" }}>
+            {great && <BorderBeam size={180} duration={8} colorFrom="#10B981" colorTo="var(--accent-hi)" />}
             {/* دائرة الدقة */}
             <div className="relative inline-flex mb-5">
               <svg width="96" height="96" viewBox="0 0 96 96" className="-rotate-90">
@@ -134,17 +137,16 @@ export default function ReviewPage() {
                 <span className="font-mono-nums font-black text-2xl text-[var(--text)]">{accuracy}%</span>
               </span>
             </div>
-            <h2 className="font-black text-3xl text-[var(--text)] mb-2">
+            <h2 className="font-black text-3xl text-[var(--text)] mb-2 relative z-10">
               {great ? "ممتاز!" : accuracy >= 50 ? "كويس!" : "تحتاج تراجع أكثر"}
             </h2>
-            <p className="text-base text-[var(--text-muted)] mb-1">
+            <p className="text-base text-[var(--text-muted)] mb-1 relative z-10">
               {correctCount} صح من {reviewed} بطاقة
             </p>
-            <p className="text-sm text-[var(--success)] mb-10">المراجعة القادمة محسوبة تلقائياً</p>
+            <p className="text-sm text-[var(--success)] mb-6 relative z-10">المراجعة القادمة محسوبة تلقائياً</p>
             <button
               onClick={() => setMode("list")}
-              className="w-full max-w-xs py-5 rounded-2xl font-black text-lg min-h-[60px] glow-blue"
-              style={{ background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}
+              className="btn-shimmer w-full py-4 rounded-2xl font-black text-lg min-h-[54px] relative z-10"
             >
               العودة للقائمة
             </button>

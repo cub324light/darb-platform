@@ -13,6 +13,9 @@ import { hasSkillTree } from "@/lib/globalSkills";
 import { RAKAN_SCHEDULE } from "@/lib/constants";
 import { getTrack, subjectColor, TRACKS, type Track, type TrackId } from "@/lib/tracks";
 import { fmtHour } from "@/lib/utils";
+import { NumberTicker } from "@/components/ui/number-ticker";
+import { Sparkles } from "@/components/ui/sparkles";
+import { BorderBeam } from "@/components/ui/border-beam";
 import {
   loadUser, saveUser, loadList, saveList, loadExamDate, saveExamDate, loadStats,
   loadEvents, saveEvents, loadExamFlow, saveExamFlow,
@@ -167,7 +170,8 @@ function NextStepOverlay({
       <div className="px-5 py-5 flex flex-col gap-6 pb-24">
         {/* احتفال الإكمال — وسام فضي لامع + إحصائيات الرحلة */}
         <div className="flex flex-col items-center text-center gap-4 pt-2">
-          <div className="silver-medal w-28 h-28 rounded-full flex flex-col items-center justify-center">
+          <div className="relative silver-medal w-28 h-28 rounded-full flex flex-col items-center justify-center">
+            <Sparkles count={12} color="#FCD34D" />
             <span className="text-[34px] leading-none">🏅</span>
             <span className="text-[11px] font-black mt-0.5" style={{ color: "#5A6270" }}>أنجزت</span>
           </div>
@@ -177,14 +181,21 @@ function NextStepOverlay({
           </div>
           <div className="grid grid-cols-3 gap-2.5 w-full">
             {[
-              { val: stats.days,     label: "يوم مذاكرة" },
-              { val: stats.hours,    label: "ساعة تركيز" },
-              { val: stats.sessions, label: "جلسة أوربت" },
+              { val: stats.days,     label: "يوم مذاكرة",  isNum: typeof stats.days === "number", color: "var(--accent-light)", glow: "#2563EB" },
+              { val: stats.hours,    label: "ساعة تركيز",  isNum: false, color: "var(--gold)", glow: "#F5B40A" },
+              { val: stats.sessions, label: "جلسة أوربت",  isNum: typeof stats.sessions === "number", color: "var(--success)", glow: "#10B981" },
             ].map((s) => (
-              <div key={s.label} className="rounded-2xl p-3 flex flex-col gap-0.5"
-                style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-                <span className="font-mono-nums font-black text-2xl" style={{ color: "var(--accent-light)" }}>{s.val}</span>
-                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{s.label}</span>
+              <div key={s.label} className="relative rounded-2xl p-3 flex flex-col gap-0.5 overflow-hidden"
+                style={{
+                  background: `color-mix(in srgb, ${s.glow} 7%, var(--surface))`,
+                  border: `1px solid color-mix(in srgb, ${s.glow} 20%, var(--border))`,
+                }}>
+                <span className="font-mono-nums font-black text-2xl relative z-10" style={{ color: s.color }}>
+                  {s.isNum && typeof s.val === "number" && s.val > 0
+                    ? <NumberTicker value={s.val} style={{ color: s.color }} />
+                    : s.val}
+                </span>
+                <span className="text-[11px] relative z-10" style={{ color: "var(--text-muted)" }}>{s.label}</span>
               </div>
             ))}
           </div>
