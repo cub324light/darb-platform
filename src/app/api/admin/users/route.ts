@@ -1,5 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkAdminPassword } from "@/lib/server/firebaseAdmin";
+import { checkAdminPassword, authorizeAdmin, getVerifiedRole, isOwnerEmail } from "@/lib/server/firebaseAdmin";
+import { ACTION_MIN_ROLE, ASSIGNABLE_ROLES, isRole, type AdminAction, type Role } from "@/lib/roles";
+
+/* ربط كل وضع بأقل صلاحية مطلوبة (مصدر القرار في lib/roles) */
+const ACTION_BY_MODE: Record<string, AdminAction> = {
+  ping:           "view",
+  analytics:      "view",
+  aiUsage:        "view",
+  getUserData:    "view",
+  setPlan:        "manageUser",
+  setBlocked:     "manageUser",
+  setBlockedUntil:"manageUser",
+  resetUser:      "manageUser",
+  deleteUser:     "deleteUser",
+  setRole:        "manageRoles",
+};
 
 /* firebase-admin يحتاج Node APIs — نمنع تجميعه على Edge، ونمدّد المهلة
    لأن مسح كل المستخدمين (Auth + Firestore) قد يتجاوز الافتراضي */
@@ -58,10 +73,49 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json().catch(() => null);
-    const { password, mode } = (body ?? {}) as { password?: string; mode?: string };
+    const { mode } = (body ?? {}) as { password?: string; mode?: string };
 
-    if (!checkAdminPassword(password)) {
-      return NextResponse.json({ error: "كلمة السر خاطئة" }, { status: 401 });
+    /* whoami: يرجع دور المتصل (لأي مستخدم) — تستخدمه الواجهة لبوابة الدخول */
+    if (mode === "whoami") {
+      if (checkAdminPassword((body as { password?: unknown })?.password)) {
+        return NextResponse.json({ role: "owner", email: null, via: "password" });
+      }
+      const who = await getVerifiedRole(req);
+      return NextResponse.json({ role: who?.role ?? "user", email: who?.email ?? null, via: "token" });
+    }
+
+    /* بوابة RBAC: لكل وضع حد أدنى من الدور — يُصرَّح بكلمة المالك أو بدور كافٍ */
+    const action: AdminAction = ACTION_BY_MODE[mode ?? "__list__"] ?? "view";
+    const caller = await authorizeAdmin(req, (body ?? {}) as { password?: unknown }, ACTION_MIN_ROLE[action]);
+    if (!caller) {
+      return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
+    }
+
+    /* إدارة الأدوار — للمالك فقط (مضمون عبر البوابة: manageRoles = owner) */
+    if (mode === "setRole") {
+      const { uid, role } = (body ?? {}) as { uid?: string; role?: string };
+      if (typeof uid !== "string" || !uid) {
+        return NextResponse.json({ error: "uid مفقود" }, { status: 400 });
+      }
+      if (!isRole(role) || !ASSIGNABLE_ROLES.includes(role as Role)) {
+        return NextResponse.json({ error: "دور غير صالح" }, { status: 400 });
+      }
+      try {
+        const fbAuth = await adminAuth();
+        const target = await fbAuth.getUser(uid).catch(() => null);
+        if (target && isOwnerEmail(target.email)) {
+          return NextResponse.json({ error: "لا يمكن تغيير دور المالك" }, { status: 400 });
+        }
+        // custom claim هو مصدر الحقيقة الأمني (يُقرأ في القواعد والخادم)
+        await fbAuth.setCustomUserClaims(uid, { role });
+        // مرآة في Firestore للعرض/الفلترة فقط
+        const db = await adminDb();
+        await db.collection("users").doc(uid).set({ role }, { merge: true });
+        return NextResponse.json({ ok: true, uid, role });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        return NextResponse.json({ error: `تعذّر تعيين الدور: ${msg}` }, { status: 500 });
+      }
     }
 
     /* وضع التشخيص — يطبع كل مرحلة على حدة ليتّضح أين يفشل بالضبط */
@@ -294,6 +348,11 @@ export async function POST(req: NextRequest) {
       try {
         const db = await adminDb();
         const fbAuth = await adminAuth();
+        // حماية: لا يُحذف حساب المالك أبداً
+        const target = await fbAuth.getUser(uid).catch(() => null);
+        if (target && isOwnerEmail(target.email)) {
+          return NextResponse.json({ error: "لا يمكن حذف حساب المالك" }, { status: 400 });
+        }
         await db.collection("users").doc(uid).delete();
         try { await fbAuth.deleteUser(uid); } catch { /* قد لا يوجد في Auth */ }
         return NextResponse.json({ ok: true, uid });
@@ -385,6 +444,7 @@ export async function POST(req: NextRequest) {
         track:           data.track ?? prof.track ?? "",
         activeTracks,
         plan:            planVal === "shaheen" || planVal === "anqa" ? planVal : "free",
+        role:            isOwnerEmail(email) ? "owner" : (isRole(data.role) ? data.role : "user"),
         blocked:         data.blocked === true,
         streak:          data.streak    ?? 0,
         focusMins:       data.focusMins ?? 0,

@@ -2,30 +2,56 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Each user can read/write only their own document
+    // ───── RBAC helpers ─────
+    // الدور مصدره custom claims (يضبطها الخادم عبر Admin SDK).
+    // المالك يُعرَّف بالإيميل (bootstrap) فلا يُحبَس خارجاً أبداً.
+    function signedIn() { return request.auth != null; }
+    function roleClaim() { return request.auth.token.role; }
+    function isOwner() {
+      return signedIn() && (
+        request.auth.token.email == 'cublight231@gmail.com' ||
+        roleClaim() == 'owner'
+      );
+    }
+    function isAdmin() { return signedIn() && (isOwner() || roleClaim() == 'admin'); }
+    function isStaff() { return signedIn() && (isAdmin() || roleClaim() == 'moderator'); }
+
+    // Each user can read/write only their own document — أو الطاقم يقرأ أي مستخدم.
+    // حقل الدور «role» لا يُكتب من العميل أبداً (يُضبط عبر Admin SDK فقط).
     match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read: if signedIn() && (request.auth.uid == uid || isStaff());
+
+      allow create: if request.auth.uid == uid
+        && !('role' in request.resource.data);
+
+      allow update: if request.auth.uid == uid
+        && ( !('role' in request.resource.data)
+             || request.resource.data.role == resource.data.role );
+
+      allow delete: if false; // الحذف عبر الخادم فقط (Admin SDK)
 
       // Friends subcollection
       match /friends/{fid} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+        allow read, write: if signedIn() && request.auth.uid == uid;
       }
     }
 
     // Official announcements: signed-in users read; writes only from server (Admin SDK)
     match /announcements/{id} {
-      allow read: if request.auth != null;
+      allow read: if signedIn();
       allow write: if false;
     }
 
-    // Council chat messages: signed-in users read and post their own messages
+    // Council chat messages: signed-in users read and post their own messages;
+    // الطاقم يقدر يحذف أي رسالة (إشراف).
     match /chats/{groupId}/messages/{msgId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null
+      allow read: if signedIn();
+      allow create: if signedIn()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.content is string
         && request.resource.data.content.size() > 0
         && request.resource.data.content.size() <= 1000;
+      allow delete: if isStaff();
     }
 
     // Everything else: denied

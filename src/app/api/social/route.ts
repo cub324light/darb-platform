@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { Timestamp } from "firebase-admin/firestore";
-import { getAdminApp, getVerifiedUid, checkAdminPassword } from "@/lib/server/firebaseAdmin";
+import { getAdminApp, getVerifiedUid, authorizeAdmin } from "@/lib/server/firebaseAdmin";
 
 /* firebase-admin يحتاج Node APIs — نمنع تجميعه على Edge */
 export const runtime = "nodejs";
@@ -119,11 +119,11 @@ export async function POST(req: NextRequest) {
 
     /* -------- announce: نشر إعلان (للمشرف فقط) -------- */
     if (mode === "announce") {
-      const { password, title, content, groupId, pinned } = body as {
-        password?: string; title?: string; content?: string; groupId?: string; pinned?: boolean;
+      const { title, content, groupId, pinned } = body as {
+        title?: string; content?: string; groupId?: string; pinned?: boolean;
       };
-      if (!checkAdminPassword(password)) {
-        return NextResponse.json({ error: "كلمة السر خاطئة" }, { status: 401 });
+      if (!(await authorizeAdmin(req, body as { password?: unknown }, "admin"))) {
+        return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
       }
       if (!title || typeof title !== "string" || !title.trim()) {
         return NextResponse.json({ error: "العنوان مفقود" }, { status: 400 });
@@ -143,11 +143,11 @@ export async function POST(req: NextRequest) {
 
     /* -------- editAnnouncement: تعديل إعلان (للمشرف فقط) -------- */
     if (mode === "editAnnouncement") {
-      const { password, id, title, content, groupId } = body as {
-        password?: string; id?: string; title?: string; content?: string; groupId?: string;
+      const { id, title, content, groupId } = body as {
+        id?: string; title?: string; content?: string; groupId?: string;
       };
-      if (!checkAdminPassword(password)) {
-        return NextResponse.json({ error: "كلمة السر خاطئة" }, { status: 401 });
+      if (!(await authorizeAdmin(req, body as { password?: unknown }, "admin"))) {
+        return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
       }
       if (!id || typeof id !== "string") {
         return NextResponse.json({ error: "معرّف الإعلان مفقود" }, { status: 400 });
@@ -165,9 +165,9 @@ export async function POST(req: NextRequest) {
 
     /* -------- pinAnnouncement: تثبيت / إلغاء تثبيت (للمشرف فقط) -------- */
     if (mode === "pinAnnouncement") {
-      const { password, id, pinned } = body as { password?: string; id?: string; pinned?: boolean };
-      if (!checkAdminPassword(password)) {
-        return NextResponse.json({ error: "كلمة السر خاطئة" }, { status: 401 });
+      const { id, pinned } = body as { id?: string; pinned?: boolean };
+      if (!(await authorizeAdmin(req, body as { password?: unknown }, "admin"))) {
+        return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
       }
       if (!id || typeof id !== "string") {
         return NextResponse.json({ error: "معرّف الإعلان مفقود" }, { status: 400 });
@@ -178,9 +178,9 @@ export async function POST(req: NextRequest) {
 
     /* -------- deleteAnnouncement: حذف إعلان (للمشرف فقط) -------- */
     if (mode === "deleteAnnouncement") {
-      const { password, id } = body as { password?: string; id?: string };
-      if (!checkAdminPassword(password)) {
-        return NextResponse.json({ error: "كلمة السر خاطئة" }, { status: 401 });
+      const { id } = body as { id?: string };
+      if (!(await authorizeAdmin(req, body as { password?: unknown }, "admin"))) {
+        return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
       }
       if (!id || typeof id !== "string") {
         return NextResponse.json({ error: "معرّف الإعلان مفقود" }, { status: 400 });

@@ -78,3 +78,56 @@ export function checkAdminPassword(provided: unknown): boolean {
   if (a.length !== b.length) return false;
   return timingSafeEqual(a, b);
 }
+
+/* ─── RBAC: الأدوار والصلاحيات (خادمي) ─── */
+import { type Role, isRole, atLeast } from "@/lib/roles";
+
+/* إيميلات المالك (bootstrap) — المالك يُعرَّف بإيميله فلا يُحبَس خارجاً أبداً،
+   ويقدر يبني بقية النظام. يُضبط عبر OWNER_EMAIL (مفصول بفواصل) أو الافتراضي. */
+const OWNER_EMAILS = (process.env.OWNER_EMAIL ?? "cublight231@gmail.com")
+  .split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+
+export function isOwnerEmail(email?: string | null): boolean {
+  return !!email && OWNER_EMAILS.includes(email.toLowerCase());
+}
+
+export interface Caller { uid: string; email: string | null; role: Role; }
+
+/* يتحقق من ID Token ويرجع دور المتصل.
+   الأولوية: إيميل المالك > custom claim. لا نثق بأي مرآة في Firestore
+   للترقية (لمنع رفع الصلاحيات الذاتي) — المرآة للعرض فقط. */
+export async function getVerifiedRole(req: Request): Promise<Caller | null> {
+  const header = req.headers.get("authorization") ?? req.headers.get("Authorization");
+  if (!header || !header.startsWith("Bearer ")) return null;
+  const token = header.slice(7).trim();
+  if (!token) return null;
+  try {
+    const app = await getAdminApp();
+    const { getAuth } = await import("firebase-admin/auth");
+    const decoded = await getAuth(app).verifyIdToken(token);
+    const email = decoded.email ?? null;
+    if (isOwnerEmail(email)) return { uid: decoded.uid, email, role: "owner" };
+    const claim = (decoded as Record<string, unknown>).role;
+    const role: Role = isRole(claim) ? claim : "user";
+    return { uid: decoded.uid, email, role };
+  } catch {
+    return null;
+  }
+}
+
+/* بوابة موحّدة لعمليات الإدارة. يُصرَّح بأحد طريقين:
+   ① كلمة الأدمن (ADMIN_PASS) → تُعامَل كـ«المالك» (break-glass للمالك).
+   ② ID Token بدور ≥ الحد المطلوب (RBAC للطاقم).
+   تُعيد المتصل المُصرَّح له، أو null. */
+export async function authorizeAdmin(
+  req: Request,
+  body: { password?: unknown },
+  min: Role,
+): Promise<Caller | null> {
+  if (checkAdminPassword(body?.password)) {
+    return { uid: "__owner_pass__", email: null, role: "owner" };
+  }
+  const who = await getVerifiedRole(req);
+  if (who && atLeast(who.role, min)) return who;
+  return null;
+}
