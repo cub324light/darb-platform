@@ -490,6 +490,34 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 .fade-in { animation: fadeIn 0.4s ease forwards; }
 
+/* وسام الفضة اللامع — يظهر عند إكمال اختبار */
+@keyframes silverShine {
+  0%   { background-position: -120% 0; }
+  100% { background-position: 220% 0; }
+}
+@keyframes silverPop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  60%  { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.silver-medal {
+  position: relative;
+  background: linear-gradient(135deg, #E8EAED 0%, #B8BCC4 28%, #FAFBFC 50%, #9AA0AB 72%, #D7DBE0 100%);
+  box-shadow: 0 6px 24px rgba(150,160,175,0.45), inset 0 2px 6px rgba(255,255,255,0.7), inset 0 -3px 8px rgba(120,130,145,0.5);
+  animation: silverPop 0.6s cubic-bezier(.22,.68,0,1.3) both;
+  overflow: hidden;
+}
+.silver-medal::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.85) 50%, transparent 65%);
+  background-size: 220% 100%;
+  animation: silverShine 2.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .silver-medal { animation: none; }
+  .silver-medal::after { animation: none; }
+}
+
 /* دخول الصفحة — انتقال ناعم عند التنقل (أوربت ↔ الخريطة وغيرها) */
 @keyframes pageEnter {
   from { opacity: 0; transform: translateY(8px) scale(0.992); }

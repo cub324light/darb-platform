@@ -14,7 +14,7 @@ import { RAKAN_SCHEDULE } from "@/lib/constants";
 import { getTrack, subjectColor, TRACKS, type Track, type TrackId } from "@/lib/tracks";
 import { fmtHour } from "@/lib/utils";
 import {
-  loadUser, saveUser, loadList, saveList, loadExamDate, saveExamDate,
+  loadUser, saveUser, loadList, saveList, loadExamDate, saveExamDate, loadStats,
   loadEvents, saveEvents, loadExamFlow, saveExamFlow,
   loadStageReviews, saveStageReviews,
   loadTadreebItems, saveTadreebItems, loadTadreebDone, saveTadreebDone,
@@ -124,10 +124,12 @@ function PhaseSection({ title, num, pct, complete, unlocked, color, accentText, 
 
 /* ─── NextStepOverlay ─── */
 function NextStepOverlay({
-  grade, skipped, currentPlan, canDismiss,
+  grade, skipped, currentPlan, canDismiss, examTitle, stats,
   onPick, onResetTasees, onResetTadreeb, onClose,
 }: {
   grade?: number; skipped: boolean; currentPlan?: string; canDismiss: boolean;
+  examTitle: string;
+  stats: { days: number; hours: string; sessions: number };
   onPick: (plan: string) => void;
   onResetTasees: () => void;
   onResetTadreeb: () => void;
@@ -163,6 +165,31 @@ function NextStepOverlay({
       </div>
 
       <div className="px-5 py-5 flex flex-col gap-6 pb-24">
+        {/* احتفال الإكمال — وسام فضي لامع + إحصائيات الرحلة */}
+        <div className="flex flex-col items-center text-center gap-4 pt-2">
+          <div className="silver-medal w-28 h-28 rounded-full flex flex-col items-center justify-center">
+            <span className="text-[34px] leading-none">🏅</span>
+            <span className="text-[11px] font-black mt-0.5" style={{ color: "#5A6270" }}>أنجزت</span>
+          </div>
+          <div>
+            <p className="title-lg" style={{ color: "var(--text)" }}>مبروك! أكملت {examTitle}</p>
+            <p className="text-[14px] mt-1" style={{ color: "var(--text-muted)" }}>وسام الفضة من نصيبك — رحلة تستاهل الفخر</p>
+          </div>
+          <div className="grid grid-cols-3 gap-2.5 w-full">
+            {[
+              { val: stats.days,     label: "يوم مذاكرة" },
+              { val: stats.hours,    label: "ساعة تركيز" },
+              { val: stats.sessions, label: "جلسة أوربت" },
+            ].map((s) => (
+              <div key={s.label} className="rounded-2xl p-3 flex flex-col gap-0.5"
+                style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                <span className="font-mono-nums font-black text-2xl" style={{ color: "var(--accent-light)" }}>{s.val}</span>
+                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{s.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Grade chip */}
         {gradeDisplay && (
           <div className="rounded-2xl px-4 py-3 flex items-center gap-2"
@@ -1134,6 +1161,12 @@ export default function RoadmapPage() {
           skipped={skipped}
           currentPlan={examFlow.plan}
           canDismiss={!!examFlow.plan}
+          examTitle={primaryTrack?.title ?? "الاختبار"}
+          stats={(() => {
+            const s = loadStats();
+            const h = s.totalFocusMins < 60 ? `${s.totalFocusMins}د` : (s.totalFocusMins / 60).toFixed(1).replace(/\.0$/, "");
+            return { days: s.sessionDays.length, hours: h, sessions: s.sessionsCount };
+          })()}
           onPick={(plan) => {
             updFlow({ plan });
             switchTrack(plan);
