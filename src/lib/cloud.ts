@@ -32,7 +32,7 @@ const BACKUP_KEYS = [
   "darb_events", "darb_exam_flow", "darb_stage_reviews",
   "darb_tadreeb_items", "darb_tadreeb_done", "darb_tasreebat_pct",
   "darb_subject_exam_dates", "darb_track_exam_dates", "darb_dash_config",
-  "darb_dash_sched_v2", "darb_results", "darb_skills",
+  "darb_dash_sched_v2", "darb_results", "darb_skills", "darb_skill_progress",
 ];
 
 /* علم اكتمال أول سحب — يمنع الرفع قبل استرجاع نسخة السحابة */

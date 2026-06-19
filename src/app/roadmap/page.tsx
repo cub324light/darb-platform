@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
@@ -747,6 +748,23 @@ export default function RoadmapPage() {
           </details>
         </div>
       )}
+
+      {/* بطاقة خريطة المهارات الشاملة */}
+      <div className="px-5 mb-4">
+        <Link href="/skills" className="flex items-center justify-between rounded-2xl px-4 py-3 transition active:scale-[0.98]"
+          style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid var(--accent)" }}>
+          <div className="flex items-center gap-2.5">
+            <span className="text-[20px]">🧠</span>
+            <div>
+              <p className="text-[14px] font-black" style={{ color: "var(--accent-light)" }}>خريطة مهاراتي الشاملة</p>
+              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>قيّم مستواك في كل مهارة وتتبّع تقدمك</p>
+            </div>
+          </div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 shrink-0" style={{ color: "var(--accent)" }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </Link>
+      </div>
 
       {/* ══ الاختبارات: «الكل» = إحصائيات كل المواد مدمجة · أو اختبار واحد ══ */}
       {testTab === "all" ? (
