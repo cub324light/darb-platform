@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import { loadEvents, saveEvents, type ScheduleEvent } from "@/lib/storage";
-import { normalizeDigits } from "@/lib/utils";
+import { getEventsForDate } from "@/components/DayScheduler";
+import { normalizeDigits, fmtHour } from "@/lib/utils";
 
 const QUICK_PROMPTS = [
   { label: "عطني جدول جاهز", text: "عطني جدول دراسي جاهز لليوم" },
@@ -70,10 +71,15 @@ export default function DashAI({ subjects, onOpenScheduler }: Props) {
     setApplied(false);
     setParsedCount(0);
     try {
+      /* مرّر الأوقات المحجوزة مسبقاً (من خطط سابقة) ليتفادى الذكاء التعارض */
+      const busy = getEventsForDate(today, loadEvents());
+      const busyNote = busy.length > 0
+        ? ` الأوقات المحجوزة اليوم (تجنّبها تماماً ولا تضع فيها شيئاً): ${busy.map((e) => `${fmtHour(e.fromHour)}–${fmtHour(e.toHour)}`).join("، ")}.`
+        : "";
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: p, subjects, mode: "schedule" }),
+        body: JSON.stringify({ prompt: p + busyNote, subjects, mode: "schedule" }),
       });
       const data = await res.json() as { text?: string; error?: string };
       const raw = (data.text ?? data.error ?? "حدث خطأ").trim();
@@ -91,7 +97,14 @@ export default function DashAI({ subjects, onOpenScheduler }: Props) {
     const parsed = parseSchedule(response, today, subjects.map((s) => ({ name: s })));
     if (parsed.length === 0) return;
     const existing = loadEvents();
-    saveEvents([...existing, ...parsed]);
+    /* لا نضيف حدثاً يتعارض مع حدث موجود اليوم (يمنع تداخل خطة القدرات مع التحصيلي) */
+    const todayBusy = getEventsForDate(today, existing);
+    const nonConflicting = parsed.filter(
+      (e) => !todayBusy.some((b) => e.fromHour < b.toHour && b.fromHour < e.toHour)
+    );
+    if (nonConflicting.length === 0) { setApplied(true); setParsedCount(0); return; }
+    saveEvents([...existing, ...nonConflicting]);
+    setParsedCount(nonConflicting.length);
     setApplied(true);
   };
 
@@ -157,8 +170,11 @@ export default function DashAI({ subjects, onOpenScheduler }: Props) {
             </button>
           )}
           {applied && (
-            <p className="text-center text-[14px] font-bold py-1.5" style={{ color: "var(--success)" }}>
-              ✓ أُضيف {parsedCount} حدث لجدولك اليوم
+            <p className="text-center text-[14px] font-bold py-1.5"
+              style={{ color: parsedCount > 0 ? "var(--success)" : "var(--text-muted)" }}>
+              {parsedCount > 0
+                ? `✓ أُضيف ${parsedCount} حدث لجدولك اليوم`
+                : "كل الأوقات المقترحة متعارضة مع جدولك الحالي"}
             </p>
           )}
         </div>
