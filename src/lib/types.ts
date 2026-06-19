@@ -1,5 +1,7 @@
 export type PlanId = "free" | "shaheen" | "anqa";
 
+export type VaultDifficulty = "سهل" | "متوسط" | "صعب";
+
 export interface VaultError {
   id: string;
   question: string;
@@ -8,6 +10,7 @@ export interface VaultError {
   note: string;
   createdAt: number;
   reviewCount: number;
+  difficulty?: VaultDifficulty; // صعوبة الخطأ — تُرتّب «الأهم» حسبها
 }
 
 export interface ReviewCard {

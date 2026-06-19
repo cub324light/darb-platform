@@ -8,7 +8,7 @@ import { ERROR_CATEGORIES } from "@/lib/constants";
 import { subjectsForTracks, colorForSubject, type TrackId } from "@/lib/tracks";
 import { loadUser, loadList, saveList } from "@/lib/storage";
 import { getPlan, VAULT_FREE_LIMIT } from "@/lib/plan";
-import type { VaultError } from "@/lib/types";
+import type { VaultError, VaultDifficulty } from "@/lib/types";
 
 const PER_SUBJECT_LIMIT = VAULT_FREE_LIMIT;
 const VAULT_KEY = "darb_vault";
@@ -47,6 +47,7 @@ export default function VaultPage() {
     return subjectsForTracks(finalIds)[0]?.name ?? "";
   });
   const [newCat, setNewCat] = useState<string>(ERROR_CATEGORIES[0]);
+  const [newDiff, setNewDiff] = useState<VaultDifficulty>("متوسط");
   const [newNote, setNewNote] = useState("");
   /* شرح دويرب لكل خطأ (تخزين مؤقت بالـ id) */
   const [explainById, setExplainById] = useState<Record<string, string>>({});
@@ -72,10 +73,13 @@ export default function VaultPage() {
       }
       return true;
     })
-    .sort((a, b) => sortBy === "priority"
-      ? a.reviewCount - b.reviewCount
-      : b.createdAt - a.createdAt
-    );
+    .sort((a, b) => {
+      if (sortBy !== "priority") return b.createdAt - a.createdAt;
+      /* الأهم: الأصعب أولاً، ثم الأقل مراجعةً */
+      const rank: Record<string, number> = { "صعب": 3, "متوسط": 2, "سهل": 1 };
+      const dr = (rank[b.difficulty ?? "متوسط"] ?? 2) - (rank[a.difficulty ?? "متوسط"] ?? 2);
+      return dr !== 0 ? dr : a.reviewCount - b.reviewCount;
+    });
 
   const addError = () => {
     if (!newQ.trim() || atLimit) return;
@@ -83,8 +87,9 @@ export default function VaultPage() {
       id: Date.now().toString(), question: newQ.trim(),
       subject: newSubject, category: newCat,
       note: newNote.trim(), createdAt: Date.now(), reviewCount: 0,
+      difficulty: newDiff,
     }, ...p]);
-    setNewQ(""); setNewNote(""); setShowAdd(false);
+    setNewQ(""); setNewNote(""); setNewDiff("متوسط"); setShowAdd(false);
   };
 
   const deleteError = (id: string) => {
@@ -287,6 +292,26 @@ export default function VaultPage() {
                 className="rounded-2xl px-4 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none min-h-[52px]"
                 style={{ background: "var(--surface2)", border: "1px solid var(--border)" }} />
 
+              {/* صعوبة الخطأ — تُرتّب «الأهم» حسبها */}
+              <div className="flex flex-col gap-1.5">
+                <span className="text-sm text-[var(--text-muted)] px-1">صعوبة الخطأ</span>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["سهل", "متوسط", "صعب"] as VaultDifficulty[]).map((d) => {
+                    const active = newDiff === d;
+                    const clr = d === "سهل" ? "#10B981" : d === "متوسط" ? "#F59E0B" : "#EF4444";
+                    return (
+                      <button key={d} onClick={() => setNewDiff(d)} type="button"
+                        className="py-2.5 rounded-xl font-bold text-[14px] transition active:scale-95"
+                        style={active
+                          ? { background: `color-mix(in srgb, ${clr} 16%, transparent)`, border: `1.5px solid ${clr}`, color: clr }
+                          : { background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                        {d}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* عدّاد أخطاء المادة المختارة — كل مادة لها ٢٥ */}
               <div className="flex items-center justify-between px-1">
                 <span className="text-sm text-[var(--text-muted)]">أخطاء {newSubject}</span>
@@ -357,6 +382,12 @@ export default function VaultPage() {
                           style={{ background: "var(--surface2)", color: "var(--text-dim)", border: "1px solid var(--border)" }}>
                           {error.category}
                         </span>
+                        {error.difficulty && (
+                          <span className="text-sm font-bold px-3 py-1.5 rounded-full"
+                            style={(() => { const clr = error.difficulty === "سهل" ? "#10B981" : error.difficulty === "متوسط" ? "#F59E0B" : "#EF4444"; return { background: `color-mix(in srgb, ${clr} 14%, transparent)`, color: clr }; })()}>
+                            {error.difficulty}
+                          </span>
+                        )}
                         {error.reviewCount > 0 && (
                           <span className="text-sm text-[var(--success)] font-bold">✓ راجعته {error.reviewCount}×</span>
                         )}
