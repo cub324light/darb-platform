@@ -6,6 +6,7 @@ import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import TopicExtractor from "@/components/TopicExtractor";
+import LeaksPlanner from "@/components/LeaksPlanner";
 import SkillGraph from "@/components/SkillGraph";
 import { hasSkillTree } from "@/lib/globalSkills";
 import { RAKAN_SCHEDULE } from "@/lib/constants";
@@ -936,6 +937,11 @@ export default function RoadmapPage() {
         complete={displayTasreebatPct === 100}
         unlocked={tasreebatUnlocked} color="var(--gold)" accentText="var(--gold-light)"
         lockedMsg="يُفتح بعد إكمال التدريب 100%">
+
+        {/* مخطّط التسريبات: ملف PDF ← صفحات/يوم */}
+        {!examPast && (
+          <LeaksPlanner color="var(--gold)" daysLeft={examDate ? daysLeftOf(examDate) : null} />
+        )}
 
         {/* تتبع الأوراق */}
         {!examPast && (
