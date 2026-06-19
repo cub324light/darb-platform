@@ -7,6 +7,8 @@ import Confetti from "@/components/Confetti";
 import { subjectsForTracks } from "@/lib/tracks";
 import type { TrackId } from "@/lib/tracks";
 import { loadUser, loadStats, recordSession, loadSessionLog, type SessionLogEntry } from "@/lib/storage";
+import { Sparkles } from "@/components/ui/sparkles";
+import { BorderBeam } from "@/components/ui/border-beam";
 import { trackEvent } from "@/lib/events";
 
 type Phase = "idle" | "focus" | "break" | "done";
@@ -572,9 +574,9 @@ export default function OrbitPage() {
           {phase === "idle" && (
             <div className="flex flex-col items-center gap-2">
               <button onClick={() => { setShowEdit(false); startFocus(); }}
-                className="w-full py-5 rounded-2xl font-black text-xl transition glow-blue min-h-[60px]"
-                style={{ background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
-                ابدأ الجلسة
+                className="btn-shimmer w-full py-5 rounded-2xl font-black text-xl min-h-[60px]"
+                style={{ fontSize: "20px" }}>
+                ابدأ الجلسة ←
               </button>
               <p className="text-xs text-[var(--text-muted)]">أو اضغط المسافة</p>
             </div>
@@ -616,9 +618,11 @@ export default function OrbitPage() {
 
           {phase === "done" && (
             <div className="space-y-2">
-              <div className="glass rounded-2xl p-4 text-center">
-                <p className="text-xl font-black text-[var(--gold)]">+{lastEarned} فضة</p>
-                <p className="text-xs text-[var(--text-muted)] mt-1">
+              <div className="relative glass rounded-2xl p-4 text-center overflow-hidden">
+                <BorderBeam size={180} duration={8} colorFrom="var(--gold)" colorTo="var(--accent-hi)" />
+                <Sparkles count={14} color="var(--gold)" />
+                <p className="text-xl font-black relative z-10" style={{ color: "var(--gold)", textShadow: "0 0 20px rgba(245,158,11,0.4)" }}>+{lastEarned} فضة</p>
+                <p className="text-xs text-[var(--text-muted)] mt-1 relative z-10">
                   {focusMins} دقيقة{lastEarned > focusMins ? " + 10 مكافأة أول جلسة" : ""} · جلسة {sessionsToday} اليوم
                 </p>
               </div>
@@ -638,22 +642,18 @@ export default function OrbitPage() {
       {/* شريط الإحصاءات */}
       <div className="px-5 pb-4 rise rise-4">
         <div className="rounded-2xl p-5 grid grid-cols-3 text-center gap-3"
-          style={{
-            background: "var(--surface)",
-            border: "1px solid var(--border)",
-          }}>
-          <div>
-            <p className="font-mono-nums font-black text-3xl text-[var(--accent-light)]">{sessionsToday}</p>
-            <p className="text-sm text-[var(--text-muted)] mt-1">جلسات اليوم</p>
-          </div>
-          <div>
-            <p className="font-mono-nums font-black text-3xl text-[var(--gold)]">{totalFocusMins}</p>
-            <p className="text-sm text-[var(--text-muted)] mt-1">دقيقة اليوم</p>
-          </div>
-          <div>
-            <p className="font-mono-nums font-black text-3xl text-[var(--success)]">{silverTotal}</p>
-            <p className="text-sm text-[var(--text-muted)] mt-1">فضة</p>
-          </div>
+          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          {[
+            { val: sessionsToday, label: "جلسات اليوم", color: "var(--accent-light)", glow: "#2563EB" },
+            { val: totalFocusMins, label: "دقيقة اليوم", color: "var(--gold)", glow: "#F5B40A" },
+            { val: silverTotal, label: "فضة", color: "var(--success)", glow: "#10B981" },
+          ].map((s) => (
+            <div key={s.label} className="relative rounded-xl py-2 overflow-hidden"
+              style={{ background: `color-mix(in srgb, ${s.glow} 5%, transparent)` }}>
+              <p className="font-mono-nums font-black text-3xl" style={{ color: s.color }}>{s.val}</p>
+              <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>{s.label}</p>
+            </div>
+          ))}
         </div>
       </div>
 
