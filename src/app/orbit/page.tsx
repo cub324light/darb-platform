@@ -6,7 +6,7 @@ import PageGuide from "@/components/PageGuide";
 import Confetti from "@/components/Confetti";
 import { subjectsForTracks } from "@/lib/tracks";
 import type { TrackId } from "@/lib/tracks";
-import { loadUser, loadStats, recordSession } from "@/lib/storage";
+import { loadUser, loadStats, recordSession, loadSessionLog, type SessionLogEntry } from "@/lib/storage";
 import { trackEvent } from "@/lib/events";
 
 type Phase = "idle" | "focus" | "break" | "done";
@@ -100,9 +100,28 @@ export default function OrbitPage() {
     try { localStorage.setItem("darb_hide_tips", "1"); } catch {}
     setHideTip(true);
   };
+  const [paused, setPaused] = useState(false);
+  /* إبقاء الجلسة شغّالة عند الخروج من الصفحة (إعداد افتراضي مفعّل) */
+  const [keepRunning, setKeepRunning] = useState(() =>
+    typeof window === "undefined" ? true : localStorage.getItem("darb_orbit_keep") !== "0"
+  );
+  const [showSettings, setShowSettings] = useState(false);
+  const [showLog, setShowLog] = useState(false);
+  const [sessionLog, setSessionLog] = useState<SessionLogEntry[]>(() =>
+    typeof window !== "undefined" ? loadSessionLog() : []
+  );
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   /* نهاية الجلسة كطابع زمني حقيقي — العدّ ما يتجمد لو راح التطبيق للخلفية */
   const endAtRef = useRef(0);
+
+  const toggleKeepRunning = () => {
+    setKeepRunning((v) => {
+      const next = !v;
+      try { localStorage.setItem("darb_orbit_keep", next ? "1" : "0"); } catch {}
+      if (!next) { try { localStorage.removeItem("darb_orbit_session"); } catch {} }
+      return next;
+    });
+  };
 
   const focusMins = durMode === "25" ? 25 : durMode === "50" ? 50 : durMode === "90" ? 90 : customMins;
   const breakMins = calcBreak(focusMins);
@@ -155,10 +174,11 @@ export default function OrbitPage() {
   const startBreak = useCallback(() => {
     endAtRef.current = Date.now() + breakSecs * 1000;
     setPhase("break"); setSecondsLeft(breakSecs);
-    const s = recordSession(focusMins, SILVER_PER_SESSION);
+    const s = recordSession(focusMins, SILVER_PER_SESSION, subject);
     setSilverTotal(s.silver);
     setTotalFocusMins(s.todayFocusMins);
     setSessionsToday((p) => p + 1);
+    setSessionLog(loadSessionLog());
     trackEvent("session_completed", { focusMins, silver: SILVER_PER_SESSION });
     playBeep();
     vibrate([100, 50, 100]);
@@ -172,12 +192,61 @@ export default function OrbitPage() {
   }, [playBeep, notify, vibrate]);
 
   const reset = useCallback(() => {
-    setPhase("idle"); setSecondsLeft(focusSecs);
+    setPhase("idle"); setSecondsLeft(focusSecs); setPaused(false);
     if (intervalRef.current) clearInterval(intervalRef.current);
+    try { localStorage.removeItem("darb_orbit_session"); } catch {}
   }, [focusSecs]);
+
+  const togglePause = useCallback(() => {
+    if (phase !== "focus" && phase !== "break") return;
+    setPaused((p) => {
+      if (p) endAtRef.current = Date.now() + secondsLeft * 1000; // استئناف
+      return !p;
+    });
+  }, [phase, secondsLeft]);
+
+  /* استرجاع جلسة جارية عند العودة للصفحة (لو الإعداد مفعّل) */
+  useEffect(() => {
+    if (!keepRunning) return;
+    try {
+      const raw = localStorage.getItem("darb_orbit_session");
+      if (!raw) return;
+      const s = JSON.parse(raw) as { phase: Phase; endAt: number; subject: string; durMode: DurMode; customMins: number; paused: boolean; secondsLeft: number };
+      if (s.phase !== "focus" && s.phase !== "break") return;
+      setDurMode(s.durMode); setCustomMins(s.customMins); setCustomInput(String(s.customMins));
+      if (s.subject) setSubject(s.subject);
+      if (s.paused) {
+        setPaused(true); setSecondsLeft(s.secondsLeft); endAtRef.current = Date.now() + s.secondsLeft * 1000;
+      } else {
+        const remaining = Math.max(0, Math.ceil((s.endAt - Date.now()) / 1000));
+        if (remaining <= 0) return; // انتهت أثناء الغياب — نتركها للبداية النظيفة
+        endAtRef.current = s.endAt; setSecondsLeft(remaining);
+      }
+      setPhase(s.phase);
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /* حفظ الجلسة الجارية باستمرار (للاستمرار عبر التنقل) */
+  useEffect(() => {
+    if (!keepRunning) return;
+    try {
+      if (phase === "focus" || phase === "break") {
+        localStorage.setItem("darb_orbit_session", JSON.stringify({
+          phase, endAt: endAtRef.current, subject, durMode, customMins, paused, secondsLeft,
+        }));
+      } else {
+        localStorage.removeItem("darb_orbit_session");
+      }
+    } catch {}
+  }, [phase, subject, durMode, customMins, paused, secondsLeft, keepRunning]);
 
   useEffect(() => {
     if (phase !== "focus" && phase !== "break") {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      return;
+    }
+    if (paused) {
       if (intervalRef.current) clearInterval(intervalRef.current);
       return;
     }
@@ -200,7 +269,7 @@ export default function OrbitPage() {
       if (intervalRef.current) clearInterval(intervalRef.current);
       document.removeEventListener("visibilitychange", onVis);
     };
-  }, [phase, startBreak, finishBreak]);
+  }, [phase, paused, startBreak, finishBreak]);
 
   /* اختصارات لوحة المفاتيح: مسافة = بدء/إيقاف | Escape = إعادة تعيين */
   useEffect(() => {
@@ -267,12 +336,66 @@ export default function OrbitPage() {
       <Dome compact>
         <div className="flex items-center justify-between">
           <h1 className="title-lg" style={{ color: "var(--text)" }}>أوربت {focusMins}/{breakMins}</h1>
-          <div className="dome-chip">
-            <span className="num-hero text-base" style={{ color: "var(--text)" }}>{silverTotal}</span>
+          <div className="flex items-center gap-2">
+            <button onClick={() => { setShowLog((v) => !v); setShowSettings(false); }} aria-label="سجل الجلسات"
+              className="dome-chip" style={{ color: "var(--text)" }}>📋</button>
+            <button onClick={() => { setShowSettings((v) => !v); setShowLog(false); }} aria-label="إعدادات أوربت"
+              className="dome-chip" style={{ color: "var(--text)" }}>⚙️</button>
+            <div className="dome-chip">
+              <span className="num-hero text-base" style={{ color: "var(--text)" }}>{silverTotal}</span>
+            </div>
           </div>
         </div>
       </Dome>
       <div className="h-4" />
+
+      {/* إعدادات أوربت */}
+      {showSettings && (
+        <div className="px-5 mb-4 rise rise-1">
+          <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+            <p className="font-black text-base text-[var(--text)]">إعدادات أوربت</p>
+            <button onClick={toggleKeepRunning}
+              className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-right transition active:scale-[0.99]"
+              style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-[14px] text-[var(--text)]">إبقاء الجلسة شغّالة عند الخروج</p>
+                <p className="text-[12px] text-[var(--text-muted)] mt-0.5">لو طلعت للخريطة أو صفحة ثانية تكمل الجلسة من حيث وقفت</p>
+              </div>
+              <span className="w-12 h-7 rounded-full flex items-center transition flex-shrink-0 px-0.5"
+                style={{ background: keepRunning ? "var(--accent)" : "var(--border)", justifyContent: keepRunning ? "flex-start" : "flex-end" }}>
+                <span className="w-6 h-6 rounded-full bg-white" />
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* سجل الجلسات */}
+      {showLog && (
+        <div className="px-5 mb-4 rise rise-1">
+          <div className="rounded-2xl p-4 flex flex-col gap-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+            <p className="font-black text-base text-[var(--text)] mb-1">سجل الجلسات ({sessionLog.length})</p>
+            {sessionLog.length === 0 ? (
+              <p className="text-[13px] text-[var(--text-muted)] py-4 text-center">ما فيه جلسات بعد — أنجز جلستك الأولى</p>
+            ) : (
+              <div className="flex flex-col gap-1.5 max-h-[320px] overflow-y-auto">
+                {sessionLog.map((e) => {
+                  const d = new Date(e.ts);
+                  const when = d.toLocaleString("ar-SA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: true });
+                  return (
+                    <div key={e.id} className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5"
+                      style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                      <span className="font-bold text-[13px] text-[var(--text)] truncate">{e.subject}</span>
+                      <span className="text-[12px] text-[var(--text-muted)] flex-shrink-0">{when}</span>
+                      <span className="font-mono-nums font-bold text-[13px] flex-shrink-0" style={{ color: "var(--accent-light)" }}>{e.focusMins}د</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* اختيار المادة */}
       {phase === "idle" && subjects.length > 0 && (
@@ -456,10 +579,20 @@ export default function OrbitPage() {
           )}
 
           {phase === "focus" && (
-            <button onClick={reset}
-              className="w-full py-4 rounded-2xl font-bold text-base text-[var(--danger)] border border-[var(--danger)]/30 glass transition min-h-[54px]">
-              إيقاف (تخسر الفضة)
-            </button>
+            <div className="flex flex-col gap-2">
+              <button onClick={togglePause}
+                className="w-full py-4 rounded-2xl font-black text-base transition min-h-[54px]"
+                style={{ background: "color-mix(in srgb, var(--gold) 10%, transparent)", border: "1.5px solid var(--gold)", color: "var(--gold)" }}>
+                {paused ? "▶ استئناف" : "⏸ إيقاف مؤقت"}
+              </button>
+              {paused && (
+                <p className="text-xs text-center text-[var(--text-muted)]">الجلسة موقوفة مؤقتاً — لا تُحتسب الفضة حتى تكملها</p>
+              )}
+              <button onClick={reset}
+                className="w-full py-4 rounded-2xl font-bold text-base text-[var(--danger)] border border-[var(--danger)]/30 glass transition min-h-[54px]">
+                إنهاء (تخسر الفضة)
+              </button>
+            </div>
           )}
 
           {phase === "break" && (

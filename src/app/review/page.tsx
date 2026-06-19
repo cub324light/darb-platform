@@ -240,13 +240,13 @@ export default function ReviewPage() {
     <div className="min-h-dvh pb-nav relative z-[1]">
       <PageGuide pageKey="review" steps={[
         { title: "بنك المراجعة", desc: "هنا تحفظ المعلومات اللي تبي ترسخ — قوانين، تعاريف، معادلات — على شكل بطاقات سؤال وجواب." },
-        { title: "النظام يحسب عنك", desc: "نستخدم خوارزمية SM-2 العلمية: كل ما قيّمت بطاقة (سهلة أو صعبة)، النظام يحدد متى تراجعها المرة الجاية بالضبط." },
+        { title: "النظام يحسب عنك", desc: "نستخدم نظام التكرار المتباعد العلمي: كل ما قيّمت بطاقة (سهلة أو صعبة)، النظام يحدد متى تراجعها المرة الجاية بالضبط." },
         { title: "راجع المستحق فقط", desc: "ما تحتاج تراجع كل شيء كل يوم — بس البطاقات اللي عليها علامة (مستحق الآن). خمس دقائق يومياً تكفي." },
       ]} />
       <Dome compact>
         <div className="flex items-center justify-between">
           <h1 className="title-lg" style={{ color: "var(--text)" }}>بنك المراجعة</h1>
-          <span className="dome-chip text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>SM-2</span>
+          <span className="dome-chip text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>تكرار متباعد</span>
         </div>
       </Dome>
       <div className="h-5" />

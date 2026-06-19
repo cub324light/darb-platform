@@ -544,13 +544,20 @@ export default function RoadmapPage() {
             </div>
           </div>
         </div>
-        <div className="px-5 mb-6 flex gap-2.5">
-          <input value={newTraining} onChange={(e) => setNewTraining(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addTraining()}
-            placeholder={`تمرين جديد في ${selected}...`}
-            className="flex-1 min-w-0 rounded-2xl px-4 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none min-h-[54px]"
-            style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }} />
-          <button onClick={addTraining} className="px-6 rounded-2xl font-black text-lg min-h-[54px]"
-            style={{ background: "transparent", border: `1.5px solid ${color}`, color }}>+</button>
+        <div className="px-5 mb-6 flex flex-col gap-3">
+          <div className="flex gap-2.5">
+            <input value={newTraining} onChange={(e) => setNewTraining(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addTraining()}
+              placeholder={`تمرين جديد في ${selected}...`}
+              className="flex-1 min-w-0 rounded-2xl px-4 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none min-h-[54px]"
+              style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }} />
+            <button onClick={addTraining} className="px-6 rounded-2xl font-black text-lg min-h-[54px]"
+              style={{ background: "transparent", border: `1.5px solid ${color}`, color }}>+</button>
+          </div>
+          <TopicExtractor subject={selected} color={color}
+            onAdd={(titles) => setTadreebItems((p) => [
+              ...p,
+              ...titles.map((t, i) => ({ id: `${Date.now()}-${i}-${Math.random().toString(36).slice(2)}`, subject: selected, title: t })),
+            ])} />
         </div>
         <div className="px-5 flex flex-col gap-3 rise rise-2">
           {items.length === 0 && (

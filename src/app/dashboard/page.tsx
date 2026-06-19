@@ -213,7 +213,7 @@ export default function DashboardPage() {
   const TOOLS = [
     { href: "/orbit",  label: "أوربت",   desc: "جلسة 50/10" },
     { href: "/vault",  label: "الخزنة",  desc: `${errorsCount} خطأ محفوظ` },
-    { href: "/review", label: "المراجعة", desc: "نظام SM-2" },
+    { href: "/review", label: "المراجعة", desc: "تكرار متباعد" },
     { href: "/roadmap",label: "الخريطة", desc: "تقدمك بالدروس" },
   ];
 

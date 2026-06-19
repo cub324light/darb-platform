@@ -84,8 +84,24 @@ function saveStats(s: DarbStats) {
   } catch {}
 }
 
+/* ── سجل الجلسات: كل جلسة Orbit منجزة (المادة، المدة، الوقت) ── */
+export interface SessionLogEntry {
+  id: string;
+  subject: string;
+  focusMins: number;
+  ts: number;       // وقت الإنجاز (ms)
+}
+const SESSION_LOG_KEY = "darb_session_log";
+export function loadSessionLog(): SessionLogEntry[] { return loadList<SessionLogEntry>(SESSION_LOG_KEY); }
+export function addSessionLog(subject: string, focusMins: number): void {
+  const list = loadSessionLog();
+  list.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), subject, focusMins, ts: Date.now() });
+  // نحتفظ بآخر 200 جلسة
+  saveList(SESSION_LOG_KEY, list.slice(0, 200));
+}
+
 /* تُستدعى عند إكمال جلسة Orbit كاملة */
-export function recordSession(focusMins: number, silverEarned: number): DarbStats {
+export function recordSession(focusMins: number, silverEarned: number, subject?: string): DarbStats {
   const s = loadStats();
   const day = todayKey();
   s.silver += silverEarned;
@@ -99,6 +115,7 @@ export function recordSession(focusMins: number, silverEarned: number): DarbStat
   const keys = Object.keys(s.dayMins).sort();
   if (keys.length > 60) keys.slice(0, keys.length - 60).forEach((k) => delete s.dayMins[k]);
   saveStats(s);
+  addSessionLog(subject ?? "—", focusMins);
   return s;
 }
 
@@ -213,7 +230,7 @@ export function resetAll() {
      "darb_posts","darb_schedule","darb_exam_date","darb_events","darb_exam_flow","darb_stage_reviews",
      "darb_tadreeb_items","darb_tadreeb_done","darb_tasreebat_pct","darb_subject_exam_dates",
      "darb_track_exam_dates","darb_results","darb_skills","darb_skill_progress",
-     "darb_dash_config","darb_dash_sched_v2"].forEach((k) =>
+     "darb_session_log","darb_dash_config","darb_dash_sched_v2"].forEach((k) =>
       localStorage.removeItem(k)
     );
     /* تعليمات أول زيارة تظهر من جديد بعد الضبط */

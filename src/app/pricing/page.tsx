@@ -10,7 +10,7 @@ const COMPARE_FEATURES = [
   { label: "دروس التأسيس", free: "3 تجريبية", shaheen: "الكل", anqa: "الكل" },
   { label: "أوربت 50/10", free: "✓", shaheen: "✓", anqa: "✓" },
   { label: "الخريطة + الستريك", free: "✓", shaheen: "✓", anqa: "✓" },
-  { label: "بنك المراجعة SM-2", free: "—", shaheen: "✓", anqa: "✓" },
+  { label: "بنك المراجعة بالتكرار المتباعد", free: "—", shaheen: "✓", anqa: "✓" },
   { label: "المجلس (مشاركة)", free: "قراءة فقط", shaheen: "✓", anqa: "✓" },
   { label: "الأرينا 1v1", free: "—", shaheen: "✓", anqa: "✓" },
   { label: "شهادة الانضباط", free: "—", shaheen: "—", anqa: "✓" },
@@ -94,7 +94,7 @@ export default function PricingPage() {
                     <span className="text-xs text-[var(--text-dim)]">{f}</span>
                   </div>
                 ))}
-                {["خزنة غير محدودة", "بنك SM-2", "المجلس (مشاركة)"].map((f) => (
+                {["خزنة غير محدودة", "بنك التكرار المتباعد", "المجلس (مشاركة)"].map((f) => (
                   <div key={f} className="flex items-center gap-2 opacity-40">
                     <span className="text-xs">—</span>
                     <span className="text-xs text-[var(--text-muted)] line-through">{f}</span>
@@ -146,7 +146,7 @@ export default function PricingPage() {
                 {[
                   "خزنة الأخطاء غير محدودة",
                   "كل دروس التأسيس",
-                  "بنك المراجعة الذكية SM-2",
+                  "بنك المراجعة الذكية بالتكرار المتباعد",
                   "المجلس (مشاركة كاملة)",
                   "الأرينا 1v1",
                   "5 طيور للاختيار",
