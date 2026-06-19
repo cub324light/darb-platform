@@ -671,6 +671,11 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
 
+/* أثناء تبديل الثيم: نُلغي كل الانتقالات ليصير التبديل فورياً بلا لاق */
+.theme-switching, .theme-switching *, .theme-switching *::before, .theme-switching *::after {
+  transition: none !important;
+}
+
 /* تبديل زينة القبة حسب الثيم */
 .dome-night, .dome-day { position: absolute; inset: 0; transition: opacity 0.5s ease; }
 :root:not([data-theme="light"]) .dome-night, [data-theme="dark"] .dome-night { opacity: 1; }

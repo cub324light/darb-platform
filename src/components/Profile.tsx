@@ -270,7 +270,9 @@ export default function ProfileButton() {
               {[
                 { val: stats.streak,   label: "ستريك",  icon: "🔥" },
                 { val: stats.silver,   label: "فضة",  icon: "" },
-                { val: stats.hours,    label: "ساعة",    icon: "" },
+                (rawStats?.totalFocusMins ?? 0) < 60
+                  ? { val: String(rawStats?.totalFocusMins ?? 0), label: "دقيقة", icon: "" }
+                  : { val: ((rawStats?.totalFocusMins ?? 0) / 60).toFixed(1).replace(/\.0$/, ""), label: "ساعة", icon: "" },
                 { val: stats.sessions, label: "جلسة",    icon: "" },
               ].map((s) => (
                 <div key={s.label} className="rounded-2xl p-3 text-center" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>

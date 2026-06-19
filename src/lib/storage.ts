@@ -179,7 +179,10 @@ export function loadTheme(): Theme {
 }
 
 export function applyTheme(theme: Theme) {
-  document.documentElement.setAttribute("data-theme", theme);
+  const root = document.documentElement;
+  /* نوقف الانتقالات لحظة التبديل ليصير فورياً بلا لاق (cross-fade بطيء) */
+  root.classList.add("theme-switching");
+  root.setAttribute("data-theme", theme);
   // لون شريط المتصفح على الجوال يتبع الثيم
   document
     .querySelector('meta[name="theme-color"]')
@@ -187,6 +190,10 @@ export function applyTheme(theme: Theme) {
   try {
     localStorage.setItem("darb_theme", theme);
   } catch {}
+  /* نعيد تفعيل الانتقالات بعد إطار رسم واحد */
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => root.classList.remove("theme-switching"));
+  });
 }
 
 /* ── تاريخ الاختبار ── */
@@ -422,7 +429,7 @@ export const DASH_SECTION_META: Record<DashSectionId, { label: string; desc: str
   ai:          { label: "دويرب",        desc: "مساعدك الذكي للجداول والنصائح" },
   weekly:      { label: "أسبوعك",       desc: "رسم دقائق التركيز اليومية" },
   quote:       { label: "اقتباس اليوم", desc: "جملة تحفيزية تتغيّر يومياً" },
-  stats:       { label: "إحصاءاتك",     desc: "ساعات التركيز والجلسات والأخطاء" },
+  stats:       { label: "إحصائياتك",     desc: "ساعات التركيز والجلسات والأخطاء" },
   tools:       { label: "الأدوات",      desc: "أوربت، الخزنة، المراجعة، الخريطة" },
   community:   { label: "المجتمع",      desc: "المجلس والأرينا" },
   certificate: { label: "الشهادة",      desc: "شهادة الانضباط والترقية" },

@@ -73,9 +73,15 @@ export default function DashboardPage() {
   const [silver] = useState(() =>
     typeof window !== "undefined" ? loadStats().silver : 0
   );
-  const [focusHours] = useState(() =>
-    typeof window !== "undefined" ? Math.floor(loadStats().totalFocusMins / 60) : 0
+  const [focusMinsTotal] = useState(() =>
+    typeof window !== "undefined" ? loadStats().totalFocusMins : 0
   );
+  /* عرض دقيق لا يُهدر الدقائق: < ساعة → بالدقائق · غير ذلك → ساعات بكسر النصف */
+  const focusVal = focusMinsTotal < 60
+    ? String(focusMinsTotal)
+    : (focusMinsTotal / 60).toFixed(1).replace(/\.0$/, "");
+  const focusUnit = focusMinsTotal < 60 ? "دقيقة تركيز" : "ساعة تركيز";
+  const focusHours = Math.floor(focusMinsTotal / 60);
   const [sessions] = useState(() =>
     typeof window !== "undefined" ? loadStats().sessionsCount : 0
   );
@@ -638,10 +644,10 @@ export default function DashboardPage() {
       case "stats":
         return (
           <section>
-            <p className="eyebrow mb-2.5 px-1">إحصاءاتك</p>
+            <p className="eyebrow mb-2.5 px-1">إحصائياتك</p>
             <div className="grid grid-cols-3 gap-2.5">
               {[
-                { val: focusHours,  unit: "ساعة تركيز", color: "var(--accent-light)" },
+                { val: focusVal,    unit: focusUnit,    color: "var(--accent-light)" },
                 { val: sessions,    unit: "جلسة أوربت", color: "var(--success)" },
                 { val: errorsCount, unit: "خطأ بالخزنة", color: "var(--danger)" },
               ].map((s) => (
