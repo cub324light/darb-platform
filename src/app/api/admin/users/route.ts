@@ -105,6 +105,28 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    /* تكلفة الذكاء الاصطناعي — آخر 30 يوماً من مجموعة ai_usage */
+    if (mode === "aiUsage") {
+      try {
+        const db = await adminDb();
+        const snap = await db.collection("ai_usage").orderBy("date", "desc").limit(30).get();
+        const days = snap.docs.map((d) => {
+          const x = d.data();
+          return {
+            date: (x.date as string) ?? d.id,
+            requests: Number(x.requests ?? 0),
+            promptTokens: Number(x.promptTokens ?? 0),
+            completionTokens: Number(x.completionTokens ?? 0),
+            byModel: (x.byModel ?? {}) as Record<string, { label?: string; requests?: number; promptTokens?: number; completionTokens?: number }>,
+          };
+        });
+        return NextResponse.json({ days });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        return NextResponse.json({ error: `تعذّر جلب الاستهلاك: ${msg}` }, { status: 500 });
+      }
+    }
+
     /* تعيين باقة لمستخدم */
     if (mode === "setPlan") {
       const { uid, plan } = (body ?? {}) as { uid?: string; plan?: string };

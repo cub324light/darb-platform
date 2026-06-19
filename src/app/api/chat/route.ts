@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { recordAiUsage } from "@/lib/aiUsage";
+
+/* firebase-admin (تسجيل الاستهلاك) يحتاج Node APIs */
+export const runtime = "nodejs";
 
 /* rate limit بسيط في الذاكرة — يمنع الطلبات المتكررة من نفس الـ IP */
 const rateLimitMap = new Map<string, { count: number; reset: number }>();
@@ -292,12 +296,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `تعذّر تحليل الصورة${detail || "، حاول بصورة أوضح"}` }, { status: 502 });
     }
 
-    const data = (await response.json()) as { choices?: { message?: { content?: string } }[] };
+    const data = (await response.json()) as {
+      choices?: { message?: { content?: string } }[];
+      usage?: { prompt_tokens?: number; completion_tokens?: number };
+    };
     const text = data.choices?.[0]?.message?.content;
 
     if (!text) {
       return NextResponse.json({ error: "لم يرجع رد، حاول مرة ثانية" }, { status: 502 });
     }
+
+    /* تسجيل استهلاك التوكنز للوحة تكلفة الذكاء (لا يُفشل الرد إن فشل) */
+    await recordAiUsage(model, data.usage?.prompt_tokens ?? 0, data.usage?.completion_tokens ?? 0);
 
     return NextResponse.json({ text });
   } catch {

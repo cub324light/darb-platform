@@ -43,6 +43,39 @@ interface AdminUser {
 const PLAN_AR: Record<PlanId, string> = { free: "مجاني", shaheen: "شاهين", anqa: "عنقاء" };
 const PLAN_CLR: Record<PlanId, string> = { free: "#64748B", shaheen: "#2563EB", anqa: "#F59E0B" };
 
+/* ── تكلفة الذكاء الاصطناعي ── */
+interface AiModelUsage { label?: string; requests?: number; promptTokens?: number; completionTokens?: number }
+interface AiUsageDay {
+  date: string; requests: number; promptTokens: number; completionTokens: number;
+  byModel: Record<string, AiModelUsage>;
+}
+
+/* تسعير Groq التقريبي — دولار لكل مليون توكن (إدخال/إخراج). قد يتغيّر من Groq. */
+const AI_PRICING: { match: string; in: number; out: number }[] = [
+  { match: "llama-4-scout", in: 0.11, out: 0.34 },
+  { match: "llama-3.3-70b", in: 0.59, out: 0.79 },
+];
+const AI_PRICING_DEFAULT = { in: 0.5, out: 0.8 };
+function modelPrice(label: string) {
+  return AI_PRICING.find((p) => label.includes(p.match)) ?? AI_PRICING_DEFAULT;
+}
+function dayCostUsd(byModel: Record<string, AiModelUsage>): number {
+  let usd = 0;
+  for (const m of Object.values(byModel)) {
+    const pr = modelPrice(m.label ?? "");
+    usd += ((m.promptTokens ?? 0) / 1e6) * pr.in + ((m.completionTokens ?? 0) / 1e6) * pr.out;
+  }
+  return usd;
+}
+function fmtTokens(n: number): string {
+  if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`;
+  if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`;
+  return String(n);
+}
+function fmtUsd(n: number): string {
+  return n < 0.01 ? `$${n.toFixed(4)}` : `$${n.toFixed(2)}`;
+}
+
 function fmt(ts?: { seconds: number } | null): string {
   if (!ts) return "—";
   return new Date(ts.seconds * 1000).toLocaleDateString("ar-SA", {
@@ -156,6 +189,29 @@ export default function AdminPage() {
   const [announceMsg, setAnnounceMsg] = useState("");
   const [showAnnounce, setShowAnnounce] = useState(true);
   const [annList, setAnnList] = useState<Announcement[]>([]);
+
+  /* ── تكلفة الذكاء الاصطناعي ── */
+  const [aiDays, setAiDays] = useState<AiUsageDay[]>([]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [showAi, setShowAi] = useState(false);
+  const [aiErr, setAiErr] = useState("");
+  const [aiLoaded, setAiLoaded] = useState(false);
+
+  const loadAiUsage = async () => {
+    setAiLoading(true); setAiErr("");
+    try {
+      const { ok, data } = await callApi("aiUsage");
+      if (ok) { setAiDays((data.days as AiUsageDay[]) ?? []); setAiLoaded(true); }
+      else setAiErr((data.error as string) ?? "تعذّر الجلب");
+    } catch { setAiErr("خطأ في الاتصال"); }
+    finally { setAiLoading(false); }
+  };
+
+  const toggleAi = () => {
+    const next = !showAi;
+    setShowAi(next);
+    if (next && !aiLoaded) loadAiUsage();
+  };
 
   /* جلب الإعلانات السابقة (قراءة عامة، بلا كلمة سر) */
   const loadAnnouncements = async () => {
@@ -587,6 +643,87 @@ export default function AdminPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* تكلفة الذكاء الاصطناعي */}
+      <div className="max-w-7xl mx-auto mb-6">
+        <button onClick={toggleAi}
+          className="flex items-center gap-2 mb-3 font-black text-[15px]"
+          style={{ color: "var(--text)" }}>
+          🤖 تكلفة الذكاء الاصطناعي
+          <span style={{ color: "var(--text-muted)" }}>{showAi ? "▲" : "▼"}</span>
+        </button>
+
+        {showAi && (
+          <div className="flex flex-col gap-4">
+            {aiLoading && <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>جارٍ الجلب...</p>}
+            {aiErr && <p className="text-[13px] font-semibold" style={{ color: "var(--danger)" }}>❌ {aiErr}</p>}
+
+            {aiLoaded && !aiErr && (() => {
+              const t = aiDays.reduce(
+                (a, d) => ({
+                  requests: a.requests + d.requests,
+                  prompt: a.prompt + d.promptTokens,
+                  completion: a.completion + d.completionTokens,
+                  usd: a.usd + dayCostUsd(d.byModel),
+                }),
+                { requests: 0, prompt: 0, completion: 0, usd: 0 },
+              );
+              if (aiDays.length === 0) {
+                return <p className="text-[13px] py-4 text-center" style={{ color: "var(--text-muted)" }}>لا يوجد استهلاك مسجّل بعد — استخدم دويرب ثم حدّث.</p>;
+              }
+              return (
+                <>
+                  {/* الإجماليات */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                      { label: `التكلفة (آخر ${aiDays.length} يوم)`, val: fmtUsd(t.usd), gold: true },
+                      { label: "إجمالي الطلبات", val: String(t.requests) },
+                      { label: "توكنز الإدخال", val: fmtTokens(t.prompt) },
+                      { label: "توكنز الإخراج", val: fmtTokens(t.completion) },
+                    ].map((s) => (
+                      <div key={s.label} className="rounded-2xl p-4 flex flex-col gap-1"
+                        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                        <p className="font-black text-2xl" style={{ color: s.gold ? "var(--gold)" : "var(--accent-light)" }}>{s.val}</p>
+                        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{s.label}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* تفصيل يومي */}
+                  <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+                    <div className="grid text-[12px] font-bold px-4 py-2.5"
+                      style={{ gridTemplateColumns: "100px 80px 90px 90px 90px", background: "var(--surface2)", color: "var(--text-muted)" }}>
+                      <span>اليوم</span>
+                      <span className="text-center">طلبات</span>
+                      <span className="text-center">إدخال</span>
+                      <span className="text-center">إخراج</span>
+                      <span className="text-center">تكلفة</span>
+                    </div>
+                    {aiDays.map((d, i) => (
+                      <div key={d.date} className="grid items-center px-4 py-2.5 text-[12px]"
+                        style={{ gridTemplateColumns: "100px 80px 90px 90px 90px", borderTop: i > 0 ? "1px solid var(--border)" : "none", background: i % 2 === 0 ? "var(--surface)" : "var(--bg)" }}>
+                        <span className="font-mono-nums" style={{ color: "var(--text-dim)" }}>{d.date}</span>
+                        <span className="text-center" style={{ color: "var(--text-dim)" }}>{d.requests}</span>
+                        <span className="text-center" style={{ color: "var(--text-muted)" }}>{fmtTokens(d.promptTokens)}</span>
+                        <span className="text-center" style={{ color: "var(--text-muted)" }}>{fmtTokens(d.completionTokens)}</span>
+                        <span className="text-center font-bold" style={{ color: "var(--gold)" }}>{fmtUsd(dayCostUsd(d.byModel))}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                    التكلفة تقديرية حسب تسعير Groq المعلن (قد يتغيّر). يشمل دويرب: الجداول، الشرح، الأسئلة، استخراج المواضيع.
+                  </p>
+                  <button onClick={loadAiUsage} disabled={aiLoading}
+                    className="self-start rounded-xl px-4 py-2 text-[13px] font-bold"
+                    style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text-dim)", opacity: aiLoading ? 0.5 : 1 }}>
+                    ↻ تحديث
+                  </button>
+                </>
+              );
+            })()}
           </div>
         )}
       </div>
