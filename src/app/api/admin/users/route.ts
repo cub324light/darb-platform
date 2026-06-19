@@ -297,12 +297,16 @@ export async function POST(req: NextRequest) {
       const durationDays = joinedMs ? Math.max(0, Math.floor((now - joinedMs) / 86_400_000)) : null;
 
       const planVal = (data.plan ?? prof.plan ?? "free") as string;
+      const activeTracks = Array.isArray(prof.activeTracks)
+        ? (prof.activeTracks as string[])
+        : ((data.track || prof.track) ? [String(data.track ?? prof.track)] : []);
 
       return {
         id:              uid,
         name:            data.name ?? prof.name ?? "",
         email,
         track:           data.track ?? prof.track ?? "",
+        activeTracks,
         plan:            planVal === "shaheen" || planVal === "anqa" ? planVal : "free",
         blocked:         data.blocked === true,
         streak:          data.streak    ?? 0,

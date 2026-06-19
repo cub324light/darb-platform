@@ -18,6 +18,7 @@ interface AdminUser {
   name: string;
   email: string;
   track: string;
+  activeTracks?: string[];
   plan: PlanId;
   blocked: boolean;
   streak: number;
@@ -988,7 +989,8 @@ export default function AdminPage() {
               {([
                 ["الإيميل", detail.email || "—"],
                 ["الجوال", detail.phone || "—"],
-                ["المسار", detail.track || "—"],
+                ["المسار الأساسي", detail.track || "—"],
+                ["كل المسارات", detail.activeTracks?.length ? detail.activeTracks.join("، ") : (detail.track || "—")],
                 ["المنطقة", detail.region || "—"],
                 ["المدينة", detail.city || "—"],
                 ["المدرسة", detail.school || "—"],
