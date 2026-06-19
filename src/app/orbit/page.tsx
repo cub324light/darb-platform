@@ -27,7 +27,7 @@ const SUBJECT_GLOWS: Record<string, string> = {
   "قواعد":   "rgba(59,130,246,0.10)",
 };
 
-const SILVER_PER_SESSION = 10;
+/* النقاط: فضة لكل دقيقة تركيز + 10 مكافأة لأول جلسة في اليوم */
 
 const BREAK_TIPS = [
   "قم امش — ولو دقيقتين، جسمك يشكرك",
@@ -101,6 +101,7 @@ export default function OrbitPage() {
     setHideTip(true);
   };
   const [paused, setPaused] = useState(false);
+  const [lastEarned, setLastEarned] = useState(0);
   /* إبقاء الجلسة شغّالة عند الخروج من الصفحة (إعداد افتراضي مفعّل) */
   const [keepRunning, setKeepRunning] = useState(() =>
     typeof window === "undefined" ? true : localStorage.getItem("darb_orbit_keep") !== "0"
@@ -174,12 +175,13 @@ export default function OrbitPage() {
   const startBreak = useCallback(() => {
     endAtRef.current = Date.now() + breakSecs * 1000;
     setPhase("break"); setSecondsLeft(breakSecs);
-    const s = recordSession(focusMins, SILVER_PER_SESSION, subject);
+    const s = recordSession(focusMins, subject);
     setSilverTotal(s.silver);
+    setLastEarned(s.earned);
     setTotalFocusMins(s.todayFocusMins);
     setSessionsToday((p) => p + 1);
     setSessionLog(loadSessionLog());
-    trackEvent("session_completed", { focusMins, silver: SILVER_PER_SESSION });
+    trackEvent("session_completed", { focusMins, silver: s.earned });
     playBeep();
     vibrate([100, 50, 100]);
     notify("انتهت جلسة التركيز", `أحسنت! خذ راحة ${arabicMins(calcBreak(focusMins))}`);
@@ -315,7 +317,7 @@ export default function OrbitPage() {
     phase === "idle"  ? "خل الجوال يستنى. درب يستنى نتائجك."
     : phase === "focus" ? `${arabicMins(focusMins)} — لا تكسرها.`
     : phase === "break" ? `${arabicMins(breakMins)} راحة — حرك جسمك.`
-    : `جلسة منجزة! +${SILVER_PER_SESSION} فضة`;
+    : `جلسة منجزة! +${lastEarned} فضة`;
 
   return (
     <div className="min-h-dvh flex flex-col pb-nav relative z-[1]">
@@ -325,7 +327,7 @@ export default function OrbitPage() {
       <PageGuide pageKey="orbit" steps={[
         { title: "أوربت — تايمر التركيز", desc: "اختر المادة اللي بتذاكرها، واضغط ابدأ الجلسة. النظام الافتراضي: 50 دقيقة تركيز + 10 راحة." },
         { title: "الراحة تجي تلقائياً", desc: "أول ما تخلص جلسة التركيز يبدأ وقت الراحة بنفسه، ويوصلك تنبيه حتى لو كنت بتطبيق ثاني." },
-        { title: "كل جلسة تحسب لك", desc: "تكسب 10 فضة لكل جلسة، وتزيد دقائق يومك وستريكك. لو وقفت الجلسة بالنص تخسر الفضة — لا تكسرها." },
+        { title: "كل دقيقة تحسب لك", desc: "تكسب فضة لكل دقيقة تركيز، وأول جلسة في اليوم تعطيك 10 فضة مكافأة. لو وقفت الجلسة بالنص تخسر الفضة — لا تكسرها." },
       ]} />
 
       <div className="fixed inset-0 pointer-events-none transition-all duration-1000"
@@ -615,8 +617,10 @@ export default function OrbitPage() {
           {phase === "done" && (
             <div className="space-y-2">
               <div className="glass rounded-2xl p-4 text-center">
-                <p className="text-xl font-black text-[var(--gold)]">+{SILVER_PER_SESSION} فضة</p>
-                <p className="text-xs text-[var(--text-muted)] mt-1">جلسة {sessionsToday} اليوم</p>
+                <p className="text-xl font-black text-[var(--gold)]">+{lastEarned} فضة</p>
+                <p className="text-xs text-[var(--text-muted)] mt-1">
+                  {focusMins} دقيقة{lastEarned > focusMins ? " + 10 مكافأة أول جلسة" : ""} · جلسة {sessionsToday} اليوم
+                </p>
               </div>
               <button onClick={startFocus}
                 className="w-full py-5 rounded-2xl font-black text-lg transition glow-blue min-h-[60px]"

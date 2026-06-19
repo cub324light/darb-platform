@@ -28,6 +28,7 @@ export interface DarbStats {
   todayFocusMins: number;
   todayKey: string;
   dayMins: Record<string, number>; // دقائق التركيز لكل يوم — للرسم الأسبوعي
+  lastBonusDay?: string; // آخر يوم أُعطيت فيه مكافأة بدء أوربت اليومية
 }
 
 const USER_KEY = "darb_user";
@@ -100,11 +101,20 @@ export function addSessionLog(subject: string, focusMins: number): void {
   saveList(SESSION_LOG_KEY, list.slice(0, 200));
 }
 
-/* تُستدعى عند إكمال جلسة Orbit كاملة */
-export function recordSession(focusMins: number, silverEarned: number, subject?: string): DarbStats {
+/* مكافأة بدء أوربت اليومية (مرة واحدة بأول جلسة في اليوم) */
+export const DAILY_ORBIT_BONUS = 10;
+
+/* تُستدعى عند إكمال جلسة Orbit كاملة.
+   النقاط = فضة لكل دقيقة تركيز + مكافأة 10 لأول جلسة في اليوم فقط.
+   نُعيد الإحصاءات مع earned (الفضة المكتسبة في هذه الجلسة للعرض). */
+export function recordSession(focusMins: number, subject?: string): DarbStats & { earned: number } {
   const s = loadStats();
   const day = todayKey();
-  s.silver += silverEarned;
+  const firstToday = s.lastBonusDay !== day;
+  const bonus = firstToday ? DAILY_ORBIT_BONUS : 0;
+  const earned = focusMins + bonus;
+  if (firstToday) s.lastBonusDay = day;
+  s.silver += earned;
   s.totalFocusMins += focusMins;
   s.todayFocusMins += focusMins;
   s.todayKey = day;
@@ -116,7 +126,7 @@ export function recordSession(focusMins: number, silverEarned: number, subject?:
   if (keys.length > 60) keys.slice(0, keys.length - 60).forEach((k) => delete s.dayMins[k]);
   saveStats(s);
   addSessionLog(subject ?? "—", focusMins);
-  return s;
+  return { ...s, earned };
 }
 
 /* سيلفر إضافي (الأرينا وغيرها) */
