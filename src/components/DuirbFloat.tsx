@@ -54,21 +54,24 @@ export default function DuirbFloat() {
 
   return (
     <>
-      {/* الزر العائم — بارز مع حلقة نبض تجذب الانتباه */}
+      {/* الزر العائم — دائري صغير وشفاف بلون الصفحة، لا يحجب المحتوى */}
       <button
         onClick={() => { setView("menu"); setOpen(true); }}
         aria-label="افتح دويرب — مساعدك الذكي"
-        className="duirb-fab fixed z-[9970] flex items-center gap-2 rounded-full px-5 py-3.5 font-black text-[16px] transition-transform active:scale-95"
+        className="duirb-fab fixed z-[9970] flex items-center justify-center rounded-full transition-transform active:scale-95"
         style={{
           bottom: "calc(env(safe-area-inset-bottom, 0px) + 84px)",
           left: "16px",
-          background: "linear-gradient(135deg, var(--accent), var(--accent-hi))",
-          color: "#fff",
-          boxShadow: "0 6px 28px color-mix(in srgb, var(--accent) 55%, transparent)",
+          width: "52px",
+          height: "52px",
+          background: "color-mix(in srgb, var(--accent) 28%, transparent)",
+          color: "var(--accent-light)",
+          border: "1.5px solid color-mix(in srgb, var(--accent) 45%, transparent)",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          boxShadow: "0 4px 16px color-mix(in srgb, var(--accent) 28%, transparent)",
         }}>
-        <span className="duirb-fab-ping" aria-hidden="true" />
-        <span className="text-[20px] relative">🤖</span>
-        <span className="relative">اسأل دويرب</span>
+        <span className="text-[24px] relative leading-none">🤖</span>
       </button>
 
       {open && createPortal(modal, document.body)}

@@ -11,7 +11,6 @@ import { sm2, nextReviewText } from "@/lib/sm2";
 import { subjectsForTracks, colorForSubject, type TrackId } from "@/lib/tracks";
 import { loadUser, loadList, saveList } from "@/lib/storage";
 import type { ReviewCard, SM2Grade } from "@/lib/types";
-import ImproveTabs from "@/components/ImproveTabs";
 
 const CARDS_KEY = "darb_cards";
 const PER_SUBJECT_LIMIT = 100;
@@ -247,12 +246,11 @@ export default function ReviewPage() {
       ]} />
       <Dome compact>
         <div className="flex items-center justify-between">
-          <h1 className="title-lg" style={{ color: "var(--text)" }}>التحسين</h1>
+          <h1 className="title-lg" style={{ color: "var(--text)" }}>بطاقاتي</h1>
           <span className="dome-chip text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>تكرار متباعد</span>
         </div>
       </Dome>
-      <ImproveTabs />
-      <div className="h-1" />
+      <div className="h-5" />
 
       {/* الإحصاءات */}
       <div className="px-5 mb-6 rise rise-1">

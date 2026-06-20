@@ -55,10 +55,9 @@ const PAIN = [
 ];
 
 const STATS = [
-  { n: "8", l: "مسارات" },
-  { n: "6", l: "أدوات" },
-  { n: "AI", l: "جدول ذكي" },
-  { n: "∞", l: "مجاني" },
+  { n: "8", l: "مسارات", c: "#3B82F6" },
+  { n: "6", l: "أدوات", c: "#8B5CF6" },
+  { n: "AI", l: "جدول ذكي", c: "#10B981" },
 ];
 
 export default function LandingPage() {
@@ -197,13 +196,13 @@ export default function LandingPage() {
               className="flex flex-col items-center px-5 py-3 rounded-2xl card-reveal"
               style={{
                 animationDelay: `${i * 80}ms`,
-                background: "var(--surface)",
-                border: "1.5px solid var(--border)",
-                minWidth: "72px",
-                boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+                background: `color-mix(in srgb, ${s.c} 12%, var(--surface))`,
+                border: `1.5px solid ${s.c}`,
+                minWidth: "80px",
+                boxShadow: `0 4px 18px color-mix(in srgb, ${s.c} 35%, transparent)`,
               }}>
-              <span className="font-black text-2xl font-mono-nums" style={{ color: "var(--accent-light)" }}>{s.n}</span>
-              <span className="text-xs font-semibold mt-0.5" style={{ color: "var(--text-muted)" }}>{s.l}</span>
+              <span className="font-black text-2xl font-mono-nums" style={{ color: s.c }}>{s.n}</span>
+              <span className="text-xs font-bold mt-0.5" style={{ color: "var(--text)" }}>{s.l}</span>
             </div>
           ))}
         </div>

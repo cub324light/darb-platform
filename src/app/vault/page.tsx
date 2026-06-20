@@ -9,7 +9,6 @@ import { subjectsForTracks, colorForSubject, type TrackId } from "@/lib/tracks";
 import { loadUser, loadList, saveList } from "@/lib/storage";
 import { getPlan, VAULT_FREE_LIMIT } from "@/lib/plan";
 import type { VaultError, VaultDifficulty } from "@/lib/types";
-import ImproveTabs from "@/components/ImproveTabs";
 
 const PER_SUBJECT_LIMIT = VAULT_FREE_LIMIT;
 const VAULT_KEY = "darb_vault";
@@ -146,7 +145,7 @@ export default function VaultPage() {
 
       <Dome compact>
         <div className="flex items-center justify-between">
-          <h1 className="title-lg" style={{ color: "var(--text)" }}>التحسين</h1>
+          <h1 className="title-lg" style={{ color: "var(--text)" }}>أخطائي</h1>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSortBy((s) => s === "recent" ? "priority" : "recent")}
@@ -161,8 +160,7 @@ export default function VaultPage() {
           </div>
         </div>
       </Dome>
-      <ImproveTabs />
-      <div className="h-1" />
+      <div className="h-5" />
 
       {/* ── شريط البحث ── */}
       <div className="px-5 mb-5 rise rise-1">

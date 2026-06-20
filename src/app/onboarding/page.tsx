@@ -135,8 +135,6 @@ export default function OnboardingPage() {
         <div>
           <div className="flex items-center gap-2 mb-3">
             <p className="label">عمرك؟</p>
-            <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-              style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
           </div>
           <input type="number" value={age} onChange={(e) => setAge(e.target.value)}
             placeholder="مثال: 18" min={13} max={60}
@@ -149,8 +147,6 @@ export default function OnboardingPage() {
         <div>
           <div className="flex items-center gap-2 mb-3">
             <p className="label">مرحلتك الدراسية؟</p>
-            <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-              style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
           </div>
           <div className="grid grid-cols-2 gap-2.5">
             {STUDY_LEVELS.map((lvl) => {
@@ -174,8 +170,6 @@ export default function OnboardingPage() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <p className="label">أي صف؟</p>
-              <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-                style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
             </div>
             <div className="grid grid-cols-3 gap-2">
               {GRADES.map((g) => {
@@ -199,8 +193,6 @@ export default function OnboardingPage() {
         <div>
           <div className="flex items-center gap-2 mb-3">
             <p className="label">كم ساعة تقدر تذاكر باليوم؟</p>
-            <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-              style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
           </div>
           <input type="number" value={studyHours} onChange={(e) => setStudyHours(e.target.value)}
             placeholder="مثال: 3" min={1} max={16}
@@ -220,8 +212,6 @@ export default function OnboardingPage() {
             <div key={label}>
               <div className="flex items-center gap-2 mb-3">
                 <p className="label">{label}</p>
-                <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-                  style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
               </div>
               <input type={type} value={value} onChange={(e) => setter(e.target.value)}
                 placeholder={placeholder}
@@ -235,8 +225,6 @@ export default function OnboardingPage() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <p className="label">المنطقة</p>
-              <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-                style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
             </div>
             <div className="grid grid-cols-2 gap-2">
               {SAUDI_REGIONS.map((r) => (
@@ -357,8 +345,6 @@ export default function OnboardingPage() {
         <div className="mb-7 flex flex-col gap-3">
           <div className="flex items-center gap-2">
             <p className="label">متى اختباراتك؟</p>
-            <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-              style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
           </div>
           {activeTracks.map((id) => {
             const t = TRACKS.find((tr) => tr.id === id)!;
@@ -393,8 +379,6 @@ export default function OnboardingPage() {
         <div className="mb-7">
           <div className="flex items-center gap-2 mb-3">
             <p className="label">اختبرت من قبل؟</p>
-            <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-              style={{ background: "color-mix(in srgb, var(--text-muted) 15%, transparent)", color: "var(--text-muted)" }}>اختياري</span>
           </div>
           <div className="flex flex-col gap-2.5">
             {prevExams.map((p, i) => {

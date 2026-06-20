@@ -774,7 +774,21 @@ export default function RoadmapPage() {
           </span>
         </div>
       </Dome>
-      <div className="h-5" />
+      <div className="h-4" />
+
+      {/* خطتي — وجهة التخطيط الموحّدة */}
+      <div className="px-5 mb-4">
+        <Link href="/plan"
+          className="w-full rounded-2xl py-3.5 px-4 flex items-center gap-3 transition active:scale-[0.98]"
+          style={{ background: "linear-gradient(135deg, var(--accent), var(--accent-hi))", color: "#fff", textDecoration: "none" }}>
+          <span className="text-[20px]">🗓️</span>
+          <span className="flex-1 text-right">
+            <span className="block text-[16px] font-black">خطتي</span>
+            <span className="block text-[12px] opacity-90">جدول اليوم والأسبوع وتخطيط دويرب</span>
+          </span>
+          <span className="text-[18px] font-black">←</span>
+        </Link>
+      </div>
 
       {/* فلتر الاختبارات — [الكل] + كل اختبار */}
       <div className="px-5 mb-4 flex flex-wrap gap-2">
