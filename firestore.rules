@@ -17,16 +17,26 @@ service cloud.firestore {
     function isStaff() { return signedIn() && (isAdmin() || roleClaim() == 'moderator'); }
 
     // Each user can read/write only their own document — أو الطاقم يقرأ أي مستخدم.
-    // حقل الدور «role» لا يُكتب من العميل أبداً (يُضبط عبر Admin SDK فقط).
+    // الحقول الإدارية (role/plan/blocked/blockUntil) لا تُكتب من العميل أبداً —
+    // تُضبط عبر Admin SDK فقط (يتجاوز هذه القواعد). يمنع رفع الباقة ذاتياً أو فكّ الحظر.
     match /users/{uid} {
       allow read: if signedIn() && (request.auth.uid == uid || isStaff());
 
       allow create: if request.auth.uid == uid
-        && !('role' in request.resource.data);
+        && !('role' in request.resource.data)
+        && !('plan' in request.resource.data)
+        && !('blocked' in request.resource.data)
+        && !('blockUntil' in request.resource.data);
 
       allow update: if request.auth.uid == uid
         && ( !('role' in request.resource.data)
-             || request.resource.data.role == resource.data.role );
+             || request.resource.data.role == resource.data.role )
+        && ( !('plan' in request.resource.data)
+             || request.resource.data.plan == resource.data.plan )
+        && ( !('blocked' in request.resource.data)
+             || request.resource.data.blocked == resource.data.blocked )
+        && ( !('blockUntil' in request.resource.data)
+             || request.resource.data.blockUntil == resource.data.blockUntil );
 
       allow delete: if false; // الحذف عبر الخادم فقط (Admin SDK)
 

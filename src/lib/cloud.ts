@@ -199,14 +199,15 @@ export async function pushBackup(): Promise<boolean> {
     const backup = collectBackup();
     const usr = loadUser();
     const st = loadStats();
-    // حقول منظّمة للوحة الأدمن + النسخة الكاملة للاسترجاع
+    // حقول منظّمة للوحة الأدمن + النسخة الكاملة للاسترجاع.
+    // ملاحظة أمنية: «plan/blocked/blockUntil» لا تُكتب من هنا إطلاقاً — يضبطها
+    // الأدمن عبر Admin SDK فقط، وقواعد Firestore تمنع كتابتها من العميل.
     await setDoc(
       doc(db, "users", u.uid),
       {
         email: u.email ?? null,
         name: usr?.name ?? null,
         track: usr?.track ?? null,
-        plan: normalizePlan(usr?.plan),
         streak: computeStreak(st),
         focusMins: st.totalFocusMins,
         sessions: st.sessionsCount,
@@ -244,9 +245,10 @@ export async function pullBackup(): Promise<boolean> {
       }
     }
 
-    /* الباقة من السحابة هي المرجع — تُطبَّق بعد استرجاع النسخة لتتجاوز ما بداخلها
-       (يضمن وصول الباقة الممنوحة من الأدمن إلى الجهاز) */
-    if (cloudPlan) {
+    /* الباقة من الحقل العلوي (يضبطه الأدمن عبر Admin SDK) هي المرجع الوحيد —
+       تُطبَّق دائماً بعد استرجاع النسخة لتتجاوز أي قيمة داخل backup، فلا يمكن
+       تزوير الباقة محلياً ومزامنتها. الغياب = «free». */
+    {
       const local = loadUser();
       if (local) saveUser({ ...local, plan: normalizePlan(cloudPlan) });
     }
