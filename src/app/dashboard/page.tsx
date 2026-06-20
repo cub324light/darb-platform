@@ -513,6 +513,21 @@ export default function DashboardPage() {
               </p>
             </div>
 
+            {/* إحصاءات الاستعداد — سطر واحد */}
+            <div className="flex gap-2 mb-3">
+              {[
+                { val: streak,   label: "ستريك",   color: streak > 0 ? "var(--gold)" : "var(--text-dim)" },
+                { val: todayMins, label: "د اليوم", color: todayMins > 0 ? "var(--success)" : "var(--text-dim)" },
+                { val: dueCards,  label: "مستحقة",  color: dueCards > 0 ? "#EF4444" : "var(--text-dim)" },
+              ].map((s) => (
+                <div key={s.label} className="flex-1 rounded-xl py-2 text-center"
+                  style={{ background: "var(--surface2)" }}>
+                  <p className="font-mono-nums font-black text-xl leading-tight" style={{ color: s.color }}>{s.val}</p>
+                  <p className="text-[10px] font-bold mt-0.5" style={{ color: "var(--text-muted)" }}>{s.label}</p>
+                </div>
+              ))}
+            </div>
+
             {/* تقدّم اليوم */}
             <div className="h-2.5 rounded-full overflow-hidden mb-2.5" style={{ background: "var(--surface2)" }}>
               <div className="h-full rounded-full transition-all duration-700"
