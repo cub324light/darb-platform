@@ -9,6 +9,8 @@ import {
   planToCalEvents,
   CALENDAR_PROVIDERS,
   UPCOMING_PROVIDERS,
+  addToGoogleCalendar,
+  isGoogleCalendarConfigured,
   type CalEvent,
 } from "@/lib/calendar";
 
@@ -25,6 +27,8 @@ export default function CalendarExport({
   const [open, setOpen] = useState(false);
   const [days, setDays] = useState(7);
   const [done, setDone] = useState("");
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const calEvents: CalEvent[] = useMemo(
     () => planToCalEvents(events, { days }),
@@ -42,6 +46,33 @@ export default function CalendarExport({
           : "افتح النافذة وأكّد الإضافة";
       setDone(note);
     });
+  };
+
+  /* المرحلة ٢: ربط Google ودفع الأحداث مباشرة عبر OAuth */
+  const syncGoogle = async () => {
+    if (calEvents.length === 0 || syncing) return;
+    setSyncMsg(null);
+    if (!isGoogleCalendarConfigured()) {
+      setSyncMsg({ ok: false, text: "الربط المباشر غير مُفعّل بعد — استخدم Google Calendar أو تنزيل ICS" });
+      return;
+    }
+    setSyncing(true);
+    try {
+      const { ok, fail } = await addToGoogleCalendar(calEvents);
+      setSyncMsg(ok > 0
+        ? { ok: true, text: `أُضيفت ${ok} جلسة لتقويم Google${fail ? ` (تعذّرت ${fail})` : ""}` }
+        : { ok: false, text: "تعذّرت الإضافة — تأكد من السماح بالصلاحية وحاول ثانية" });
+    } catch (e) {
+      const m = e instanceof Error ? e.message : "";
+      setSyncMsg({
+        ok: false,
+        text: m === "config" ? "الربط المباشر غير مُفعّل بعد"
+          : m === "denied" ? "رُفض الإذن — لازم تسمح بصلاحية التقويم"
+          : "تعذّر الاتصال بـ Google — حاول ثانية",
+      });
+    } finally {
+      setSyncing(false);
+    }
   };
 
   const hasStudy = useMemo(
@@ -82,6 +113,35 @@ export default function CalendarExport({
         <div className="rounded-2xl px-4 py-3 text-center" style={{ background: "var(--surface2)" }}>
           <span className="text-[22px] font-black" style={{ color }}>{calEvents.length}</span>
           <span className="text-[14px] font-bold mr-2" style={{ color: "var(--text-muted)" }}>جلسة سيتم تصديرها</span>
+        </div>
+
+        {/* المرحلة ٢: ربط Google مباشر */}
+        <button onClick={syncGoogle} disabled={calEvents.length === 0 || syncing}
+          className="w-full rounded-2xl py-4 px-4 font-black text-[16px] flex items-center gap-3 transition active:scale-[0.98]"
+          style={{ background: color, color: "#fff", opacity: calEvents.length === 0 ? 0.4 : 1 }}>
+          {syncing ? (
+            <span className="inline-block w-5 h-5 rounded-full border-2 border-white/40 border-t-white animate-spin mx-auto" />
+          ) : (
+            <>
+              <span className="text-[20px]">🔗</span>
+              <span className="flex-1 text-right">ربط Google وإضافة مباشرة</span>
+              <span>←</span>
+            </>
+          )}
+        </button>
+        {syncMsg && (
+          <div className="rounded-2xl px-4 py-3"
+            style={{ background: syncMsg.ok ? color + "18" : "rgba(239,68,68,0.12)", border: `1px solid ${syncMsg.ok ? color + "44" : "#EF4444"}` }}>
+            <p className="text-[14px] text-center font-bold" style={{ color: syncMsg.ok ? "var(--text)" : "#EF4444" }}>
+              {syncMsg.ok ? "✓ " : ""}{syncMsg.text}
+            </p>
+          </div>
+        )}
+
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
+          <span className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>أو صدّر يدوياً</span>
+          <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
         </div>
 
         {/* المزوّدون */}

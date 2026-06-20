@@ -89,6 +89,6 @@ export const CALENDAR_PROVIDERS: CalendarProvider[] = [
 
 /* مزوّدو المراحل القادمة — معطّلون الآن، يظهرون كـ«قريباً» (إثبات قابلية التوسّع) */
 export const UPCOMING_PROVIDERS: Pick<CalendarProvider, "id" | "label" | "icon">[] = [
-  { id: "google-oauth", label: "ربط Google مباشرة", icon: "🔗" },
+  { id: "outlook-graph", label: "ربط Outlook مباشرة", icon: "🔗" },
   { id: "notion", label: "Notion Calendar", icon: "🗒️" },
 ];
