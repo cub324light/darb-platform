@@ -877,7 +877,7 @@ export default function DashboardPage() {
       ]} />
 
       {/* ═══ القبة ═══ */}
-      <Dome compact hideProfile>
+      <Dome compact>
         {/* اسم الترحيب = زر البروفايل (واضح كزر) */}
         <div className="text-right mb-3">
           <p className="title-lg flex items-center gap-2.5 justify-end" style={{ color: "var(--text)" }}>

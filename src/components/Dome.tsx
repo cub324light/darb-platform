@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, type ReactNode } from "react";
-import ProfileButton, { ThemeToggle } from "@/components/Profile";
+import { ThemeToggle } from "@/components/Profile";
 import SettingsButton from "@/components/SettingsPanel";
 
 /* ── ساعة صغيرة — ضغطة واحدة تبدّل بين 12 و24 ── */
@@ -46,12 +46,10 @@ export default function Dome({
   children,
   compact = false,
   hideControls = false,
-  hideProfile = false,
 }: {
   children: ReactNode;
   compact?: boolean;
   hideControls?: boolean;
-  hideProfile?: boolean;
 }) {
   const [stars] = useState<Star[]>(() =>
     Array.from({ length: compact ? 16 : 30 }).map(() => ({
@@ -132,9 +130,8 @@ export default function Dome({
           <div className="flex justify-between items-center gap-2 mb-3">
             {/* يمين: الساعة بارزة */}
             <ClockWidget />
-            {/* يسار: الإعدادات والثيم (والبروفايل إن لم يُخفَ) */}
+            {/* يسار: الإعدادات والثيم — البروفايل يُفتح من اسم الترحيب في الرئيسية */}
             <div className="flex items-center gap-2">
-              {!hideProfile && <ProfileButton />}
               <ThemeToggle className="" />
               <SettingsButton />
             </div>
