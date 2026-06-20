@@ -4,8 +4,8 @@ import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import Confetti from "@/components/Confetti";
-import { subjectsForTracks } from "@/lib/tracks";
-import type { TrackId } from "@/lib/tracks";
+import { subjectsForTracks, getTrack } from "@/lib/tracks";
+import type { TrackId, Track } from "@/lib/tracks";
 import { loadUser, loadStats, recordSession, loadSessionLog, type SessionLogEntry } from "@/lib/storage";
 import { Sparkles } from "@/components/ui/sparkles";
 import { BorderBeam } from "@/components/ui/border-beam";
@@ -93,6 +93,20 @@ export default function OrbitPage() {
     const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
     const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
     return subjectsForTracks(finalIds)[0]?.name ?? "";
+  });
+  /* اختيار المادة بخطوتين: الاختبار (المسار) أولاً ثم المادة منه */
+  const [activeTracks] = useState<Track[]>(() => {
+    if (typeof window === "undefined") return [];
+    const u = loadUser();
+    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
+    return finalIds.map((id) => getTrack(id));
+  });
+  const [selTrackId, setSelTrackId] = useState<TrackId>(() => {
+    if (typeof window === "undefined") return "تحصيلي" as TrackId;
+    const u = loadUser();
+    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+    return (ids[0] ?? "تحصيلي") as TrackId;
   });
   /* مادة محدّدة مسبقاً عبر ?subject= (من بانر «جدول اليوم» في الخريطة) */
   useEffect(() => {
@@ -345,89 +359,57 @@ export default function OrbitPage() {
           : `radial-gradient(ellipse 65% 45% at 50% 45%, ${strokeColor === "var(--accent)" ? "rgba(37,99,235,0.14)" : "rgba(245,158,11,0.12)"} 0%, transparent 70%)` }} />
 
       <Dome compact>
-        <div className="flex items-center justify-between">
-          <h1 className="title-lg" style={{ color: "var(--text)" }}>أوربت {focusMins}/{breakMins}</h1>
-          <div className="flex items-center gap-2">
-            <button onClick={() => { setShowLog((v) => !v); setShowSettings(false); }} aria-label="سجل الجلسات"
-              className="dome-chip" style={{ color: "var(--text)" }}>📋</button>
-            <button onClick={() => { setShowSettings((v) => !v); setShowLog(false); }} aria-label="إعدادات أوربت"
-              className="dome-chip" style={{ color: "var(--text)" }}>⚙️</button>
-            <div className="dome-chip">
-              <span className="num-hero text-base" style={{ color: "var(--text)" }}>{silverTotal}</span>
-            </div>
-          </div>
-        </div>
+        <h1 className="title-lg" style={{ color: "var(--text)" }}>أوربت {focusMins}/{breakMins}</h1>
       </Dome>
       <div className="h-4" />
 
-      {/* إعدادات أوربت */}
-      {showSettings && (
-        <div className="px-5 mb-4 rise rise-1">
-          <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-            <p className="font-black text-base text-[var(--text)]">إعدادات أوربت</p>
-            <button onClick={toggleKeepRunning}
-              className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-right transition active:scale-[0.99]"
-              style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-[14px] text-[var(--text)]">إبقاء الجلسة شغّالة عند الخروج</p>
-                <p className="text-[12px] text-[var(--text-muted)] mt-0.5">لو طلعت للخريطة أو صفحة ثانية تكمل الجلسة من حيث وقفت</p>
-              </div>
-              <span className="w-12 h-7 rounded-full flex items-center transition flex-shrink-0 px-0.5"
-                style={{ background: keepRunning ? "var(--accent)" : "var(--border)", justifyContent: keepRunning ? "flex-start" : "flex-end" }}>
-                <span className="w-6 h-6 rounded-full bg-white" />
-              </span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* سجل الجلسات */}
-      {showLog && (
-        <div className="px-5 mb-4 rise rise-1">
-          <div className="rounded-2xl p-4 flex flex-col gap-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-            <p className="font-black text-base text-[var(--text)] mb-1">سجل الجلسات ({sessionLog.length})</p>
-            {sessionLog.length === 0 ? (
-              <p className="text-[13px] text-[var(--text-muted)] py-4 text-center">ما فيه جلسات بعد — أنجز جلستك الأولى</p>
-            ) : (
-              <div className="flex flex-col gap-1.5 max-h-[320px] overflow-y-auto">
-                {sessionLog.map((e) => {
-                  const d = new Date(e.ts);
-                  const when = d.toLocaleString("ar-SA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: true });
-                  return (
-                    <div key={e.id} className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5"
-                      style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-                      <span className="font-bold text-[13px] text-[var(--text)] truncate">{e.subject}</span>
-                      <span className="text-[12px] text-[var(--text-muted)] flex-shrink-0">{when}</span>
-                      <span className="font-mono-nums font-bold text-[13px] flex-shrink-0" style={{ color: "var(--accent-light)" }}>{e.focusMins}د</span>
-                    </div>
-                  );
-                })}
-              </div>
+      {/* اختيار المادة بخطوتين: الاختبار ثم المادة منه */}
+      {phase === "idle" && activeTracks.length > 0 && (() => {
+        const selTrack = activeTracks.find((t) => t.id === selTrackId) ?? activeTracks[0];
+        const trackSubjects = selTrack?.subjects ?? [];
+        return (
+          <div className="px-5 mb-4 rise rise-1">
+            {/* خطوة ١: الاختبار — تظهر فقط لو عنده أكثر من اختبار */}
+            {activeTracks.length > 1 && (
+              <>
+                <p className="text-sm font-bold text-[var(--text-muted)] mb-2">اختبارك:</p>
+                <div className="flex gap-2 flex-wrap mb-4">
+                  {activeTracks.map((t) => {
+                    const active = selTrack?.id === t.id;
+                    return (
+                      <button key={t.id}
+                        onClick={() => { setSelTrackId(t.id); setSubject(t.subjects[0]?.name ?? ""); }}
+                        className="px-4 py-2.5 rounded-xl text-[14px] font-bold transition flex items-center gap-2 min-h-[44px]"
+                        style={active
+                          ? { background: t.color, color: "#fff", border: `1.5px solid ${t.color}` }
+                          : { background: "var(--surface)", border: `1.5px solid ${t.color}55`, color: t.color }}>
+                        <span className="w-2 h-2 rounded-full" style={{ background: active ? "#fff" : t.color }} />
+                        {t.title}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
             )}
+            {/* خطوة ٢: المادة من هذا الاختبار */}
+            <p className="text-sm font-bold text-[var(--text-muted)] mb-2">المادة التي تذاكرها:</p>
+            <div className="flex gap-2.5 flex-wrap">
+              {trackSubjects.map((s) => {
+                const active = subject === s.name;
+                return (
+                  <button key={s.name} onClick={() => setSubject(s.name)}
+                    className="px-5 py-3 rounded-2xl text-base font-bold transition min-h-[48px]"
+                    style={active
+                      ? { background: "var(--surface)", border: `2px solid ${s.color}`, boxShadow: `0 0 12px ${s.color}40`, color: s.color }
+                      : { background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text-dim)" }}>
+                    {s.name}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
-
-      {/* اختيار المادة */}
-      {phase === "idle" && subjects.length > 0 && (
-        <div className="px-5 mb-4 rise rise-1">
-          <p className="text-sm font-bold text-[var(--text-muted)] mb-3">المادة التي تذاكرها:</p>
-          <div className="flex gap-2.5 flex-wrap">
-            {subjects.map((s) => {
-              const active = subject === s.name;
-              return (
-                <button key={s.name} onClick={() => setSubject(s.name)}
-                  className="px-5 py-3 rounded-2xl text-base font-bold transition min-h-[48px]"
-                  style={active
-                    ? { background: "var(--surface)", border: `2px solid ${s.color}`, boxShadow: `0 0 12px ${s.color}40`, color: s.color }
-                    : { background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text-dim)" }}>
-                  {s.name}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* دائرة المؤقت + الملصقات الجانبية */}
       <div className="flex-1 flex flex-col items-center justify-center px-3 rise rise-3">
@@ -662,6 +644,69 @@ export default function OrbitPage() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* السجل والإعدادات — أسفل الصفحة بعيداً عن إعدادات التطبيق فوق */}
+      <div className="px-5 pb-4">
+        <div className="flex gap-2">
+          <button onClick={() => { setShowLog((v) => !v); setShowSettings(false); }}
+            className="flex-1 py-3 rounded-2xl font-bold text-[15px] flex items-center justify-center gap-2 transition active:scale-[0.98]"
+            style={showLog
+              ? { background: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }
+              : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}>
+            📋 سجل الجلسات
+          </button>
+          <button onClick={() => { setShowSettings((v) => !v); setShowLog(false); }}
+            className="flex-1 py-3 rounded-2xl font-bold text-[15px] flex items-center justify-center gap-2 transition active:scale-[0.98]"
+            style={showSettings
+              ? { background: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }
+              : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}>
+            ⚙️ إعدادات أوربت
+          </button>
+        </div>
+
+        {/* إعدادات أوربت */}
+        {showSettings && (
+          <div className="mt-3 rounded-2xl p-4 flex flex-col gap-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+            <button onClick={toggleKeepRunning}
+              className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-right transition active:scale-[0.99]"
+              style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-[14px] text-[var(--text)]">إبقاء الجلسة شغّالة عند الخروج</p>
+                <p className="text-[12px] text-[var(--text-muted)] mt-0.5">لو طلعت للخريطة أو صفحة ثانية تكمل الجلسة من حيث وقفت</p>
+              </div>
+              <span className="w-12 h-7 rounded-full flex items-center transition flex-shrink-0 px-0.5"
+                style={{ background: keepRunning ? "var(--accent)" : "var(--border)", justifyContent: keepRunning ? "flex-start" : "flex-end" }}>
+                <span className="w-6 h-6 rounded-full bg-white" />
+              </span>
+            </button>
+          </div>
+        )}
+
+        {/* سجل الجلسات */}
+        {showLog && (
+          <div className="mt-3 rounded-2xl p-4 flex flex-col gap-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+            <p className="font-black text-base text-[var(--text)] mb-1">سجل الجلسات ({sessionLog.length})</p>
+            {sessionLog.length === 0 ? (
+              <p className="text-[13px] text-[var(--text-muted)] py-4 text-center">ما فيه جلسات بعد — أنجز جلستك الأولى</p>
+            ) : (
+              <div className="flex flex-col gap-1.5 max-h-[320px] overflow-y-auto">
+                {sessionLog.map((e) => {
+                  const d = new Date(e.ts);
+                  const when = d.toLocaleString("ar-SA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: true });
+                  return (
+                    <div key={e.id} className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5"
+                      style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                      <span className="font-bold text-[13px] text-[var(--text)] truncate">{e.subject}</span>
+                      <span className="text-[12px] text-[var(--text-muted)] flex-shrink-0">{when}</span>
+                      <span className="font-mono-nums font-bold text-[13px] flex-shrink-0" style={{ color: "var(--accent-light)" }}>{e.focusMins}د</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <BottomNav />
