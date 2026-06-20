@@ -10,15 +10,25 @@ import DuirbHub from "@/components/DuirbHub";
 
 const HIDDEN_ON = ["/onboarding", "/admin", "/pricing", "/privacy", "/parent"];
 
+type DuirbTab = "schedule" | "file" | "quiz";
+
 export default function DuirbFloat() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [openTab, setOpenTab] = useState<DuirbTab>("schedule");
 
-  /* يفتح دويرب عند وصول حدث darb:openDuirb (من أي مكان في التطبيق) */
+  /* يفتح دويرب على تبويب الجدول */
   useEffect(() => {
-    const handler = () => setOpen(true);
+    const handler = () => { setOpenTab("schedule"); setOpen(true); };
     window.addEventListener("darb:openDuirb", handler);
     return () => window.removeEventListener("darb:openDuirb", handler);
+  }, []);
+
+  /* يفتح دويرب على تبويب تحليل الملف */
+  useEffect(() => {
+    const handler = () => { setOpenTab("file"); setOpen(true); };
+    window.addEventListener("darb:openDuirbFile", handler);
+    return () => window.removeEventListener("darb:openDuirbFile", handler);
   }, []);
 
   if (HIDDEN_ON.some((p) => pathname.startsWith(p))) return null;
@@ -36,7 +46,7 @@ export default function DuirbFloat() {
         <p className="title-lg flex-1 text-right" style={{ color: "var(--text)" }}>دويرب</p>
       </div>
       <div className="px-4 py-4 pb-28 max-w-lg w-full mx-auto">
-        <DuirbHub />
+        <DuirbHub defaultTab={openTab} />
       </div>
     </div>
   );

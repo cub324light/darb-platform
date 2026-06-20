@@ -226,6 +226,25 @@ export default function DashboardPage() {
   );
   const todayPct = Math.min(100, Math.round((todayMins / DAILY_TARGET) * 100));
 
+  /* أقرب موعد اختبار من كل المسارات — للرسالة التحفيزية في القبة */
+  const nearestExamDay = (() => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const candidates: number[] = [];
+    if (examDays !== null && examDays >= 0) candidates.push(examDays);
+    for (const tid of activeTrackIds) {
+      const d = trackExamDates[tid];
+      if (!d) continue;
+      const diff = Math.round((new Date(d + "T00:00:00").getTime() - new Date(todayStr + "T00:00:00").getTime()) / 86400000);
+      if (diff >= 0) candidates.push(diff);
+    }
+    return candidates.length > 0 ? Math.min(...candidates) : null;
+  })();
+  const heroMsg = nearestExamDay !== null
+    ? `باقي ${nearestExamDay} يوم على اختبارك`
+    : todayPct >= 100
+    ? `أكملت هدف اليوم ✓`
+    : `أكمل ${Math.max(1, DAILY_TARGET - todayMins)} دقيقة اليوم للوصول لهدفك`;
+
   const TOOLS = [
     { href: "/orbit",  label: "أوربت",   desc: "جلسة 50/10" },
     { href: "/vault",  label: "أخطائي",   desc: `${errorsCount} خطأ محفوظ` },
@@ -687,20 +706,27 @@ export default function DashboardPage() {
       case "tools":
         return (
           <section>
-            <p className="eyebrow mb-2.5 px-1">الأدوات</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-              {TOOLS.map((a) => (
-                <Link key={a.href} href={a.href}
-                  className="relative card flex items-center gap-3.5 transition active:scale-[0.96] overflow-hidden group glow-card-hover"
-                  style={{ padding: "16px", minHeight: "82px", textDecoration: "none" }}>
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none"
-                    style={{ background: "radial-gradient(180px at 20% 50%, color-mix(in srgb, var(--accent) 8%, transparent), transparent)" }} />
-                  <div className="min-w-0 relative z-10">
-                    <p className="font-extrabold text-[15.5px] leading-tight" style={{ color: "var(--text)" }}>{a.label}</p>
-                    <p className="text-[12.5px] mt-1" style={{ color: "var(--text-muted)" }}>{a.desc}</p>
-                  </div>
-                </Link>
-              ))}
+            <p className="eyebrow mb-2.5 px-1">أسرع وصول</p>
+            <div className="grid grid-cols-2 gap-2.5">
+              {([
+                { icon: "⏱️", label: "ابدأ جلسة",  href: "/orbit", event: null },
+                { icon: "🤖", label: "خطة ذكية",   href: null,    event: "darb:openDuirb" },
+                { icon: "📄", label: "حلل ملف",    href: null,    event: "darb:openDuirbFile" },
+                { icon: "⚠️", label: "أضف خطأ",   href: "/vault", event: null },
+              ] as { icon: string; label: string; href: string | null; event: string | null }[]).map((a) => {
+                const cls = "card flex flex-col items-center justify-center py-5 gap-2 text-center transition active:scale-[0.96] glow-card-hover w-full";
+                const inner = (
+                  <>
+                    <span className="text-[30px] leading-none">{a.icon}</span>
+                    <p className="font-extrabold text-[15px]" style={{ color: "var(--text)" }}>{a.label}</p>
+                  </>
+                );
+                return a.href ? (
+                  <Link key={a.label} href={a.href} className={cls} style={{ textDecoration: "none", minHeight: "100px" }}>{inner}</Link>
+                ) : (
+                  <button key={a.label} onClick={() => window.dispatchEvent(new CustomEvent(a.event!))} className={cls} style={{ minHeight: "100px" }}>{inner}</button>
+                );
+              })}
             </div>
           </section>
         );
@@ -817,6 +843,9 @@ export default function DashboardPage() {
             </p>
             <p className="text-[17px] font-semibold text-right" style={{ color: "var(--text-muted)" }}>
               {greeting}
+            </p>
+            <p className="text-[13px] font-bold text-right mt-1" style={{ color: "var(--accent-light)" }}>
+              {heroMsg}
             </p>
           </div>
         </div>

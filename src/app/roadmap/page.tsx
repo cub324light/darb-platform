@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
@@ -16,6 +16,7 @@ import { fmtHour } from "@/lib/utils";
 import { NumberTicker } from "@/components/ui/number-ticker";
 import { Sparkles } from "@/components/ui/sparkles";
 import { BorderBeam } from "@/components/ui/border-beam";
+import Confetti from "@/components/Confetti";
 import {
   loadUser, saveUser, loadList, saveList, loadExamDate, saveExamDate, loadStats,
   loadEvents, saveEvents, loadExamFlow, saveExamFlow,
@@ -307,6 +308,8 @@ export default function RoadmapPage() {
   );
   const [gradeInput, setGradeInput]       = useState("");
   const [showNextStep, setShowNextStep]   = useState(false);
+  const [showConfetti, setShowConfetti]   = useState(false);
+  const celebratedRef = useRef<Set<string>>(new Set());
 
   const [tadreebItems, setTadreebItems] = useState<TrainingItem[]>(() =>
     typeof window !== "undefined" ? loadTadreebItems() : []
@@ -392,6 +395,21 @@ export default function RoadmapPage() {
 
   /* المرحلة التالية — تطلع أوتوماتيك لما يدخل الدرجة أو يتجاوزها */
   const shouldAutoOpenNextStep = examPast && gradeOrSkipped && !examFlow.plan;
+
+  /* احتفال لمرة واحدة عند إكمال مرحلة */
+  useEffect(() => {
+    const celebrate = (key: string) => {
+      if (celebratedRef.current.has(key)) return;
+      try { if (localStorage.getItem(key)) return; } catch { return; }
+      celebratedRef.current.add(key);
+      try { localStorage.setItem(key, "1"); } catch {}
+      setShowConfetti(true);
+      const t = setTimeout(() => setShowConfetti(false), 4000);
+      return () => clearTimeout(t);
+    };
+    if (taseesComplete) celebrate("darb_tasees_celebrated");
+    if (tadreebComplete) celebrate("darb_tadreeb_celebrated");
+  }, [taseesComplete, tadreebComplete]);
 
   /* ─── Actions ─── */
   const updFlow = (patch: Partial<ExamFlow>) => {
@@ -742,6 +760,7 @@ export default function RoadmapPage() {
   /* ══ الصفحة الرئيسية ══ */
   return (
     <div className="min-h-dvh pb-nav relative z-[1] page-enter">
+      {showConfetti && <Confetti count={36} />}
       <PageGuide pageKey="roadmap" steps={[
         { title: "خريطة طريقك", desc: "رحلتك ثلاث مراحل: تأسيس (تتعلم الأساسيات) ← تدريب (تحل تجميعات) ← تسريبات (محاكاة الاختبار الحقيقي)." },
         { title: "علّم اللي خلصته", desc: "اضغط على أي درس بعد ما تخلصه وبتشوف نسبة تقدمك ترتفع. كل ربع تكمله يطلع لك تنبيه مراجعة." },

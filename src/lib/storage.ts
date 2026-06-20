@@ -439,17 +439,17 @@ export const DASH_SECTION_META: Record<DashSectionId, { label: string; desc: str
   weekly:      { label: "أسبوعك",       desc: "رسم دقائق التركيز اليومية" },
   quote:       { label: "اقتباس اليوم", desc: "جملة تحفيزية تتغيّر يومياً" },
   stats:       { label: "إحصائياتك",     desc: "ساعات التركيز والجلسات والأخطاء" },
-  tools:       { label: "الأدوات",      desc: "أوربت، الخزنة، المراجعة، الخريطة" },
+  tools:       { label: "أسرع وصول",   desc: "اختصارات: جلسة أوربت، خطة ذكية، تحليل ملف، إضافة خطأ" },
   community:   { label: "المجتمع",      desc: "المجلس والأرينا" },
   certificate: { label: "الشهادة",      desc: "شهادة الانضباط والترقية" },
   studiers:    { label: "كم يذاكر الآن",   desc: "عدد الطلاب النشطين على المنصة الآن" },
   map:         { label: "خريطة السعودية",   desc: "توزيع الطلاب على مناطق المملكة" },
 };
 
-/* جدول اليوم ثاني عنصر تلقائياً */
+/* يومك أولاً — ترتيب الأقسام حسب الأولوية */
 const DASH_DEFAULT_ORDER: DashSectionId[] = [
-  "track", "schedule", "today", "ai", "weekly",
-  "quote", "stats", "tools", "community", "certificate",
+  "today", "ai", "schedule", "track", "weekly",
+  "stats", "tools", "quote", "community", "certificate",
   "studiers", "map",
 ];
 
@@ -460,6 +460,7 @@ function defaultLayout(): DashItem[] {
 
 const DASH_CONFIG_KEY = "darb_dash_config";
 const DASH_SCHED2_KEY = "darb_dash_sched_v2"; // علم ترحيل لمرة واحدة
+const DASH_TODAY_FIRST_KEY = "darb_dash_today_first_v1"; // ترحيل: يومك أولاً + دويرب ثانياً
 
 /* ترحيل لمرة واحدة: انقل «جدول اليوم» ليصير ثاني عنصر — يُحترم تخصيص المستخدم بعدها */
 function migrateScheduleSecond(layout: DashItem[]): DashItem[] {
@@ -479,11 +480,27 @@ function migrateScheduleSecond(layout: DashItem[]): DashItem[] {
   }
 }
 
+/* ترحيل لمرة واحدة: ضع «يومك» أولاً و«دويرب» ثانياً */
+function migrateTodayFirst(layout: DashItem[]): DashItem[] {
+  try {
+    if (localStorage.getItem(DASH_TODAY_FIRST_KEY)) return layout;
+    localStorage.setItem(DASH_TODAY_FIRST_KEY, "1");
+    const todayItem = layout.find((l) => l.id === "today");
+    const aiItem    = layout.find((l) => l.id === "ai");
+    const rest      = layout.filter((l) => l.id !== "today" && l.id !== "ai");
+    const out       = [...(todayItem ? [todayItem] : []), ...(aiItem ? [aiItem] : []), ...rest];
+    localStorage.setItem(DASH_CONFIG_KEY, JSON.stringify({ layout: out }));
+    return out;
+  } catch {
+    return layout;
+  }
+}
+
 export function loadDashConfig(): DashConfig {
   if (typeof window === "undefined") return { layout: defaultLayout() };
   try {
     const raw = localStorage.getItem(DASH_CONFIG_KEY);
-    if (!raw) return { layout: migrateScheduleSecond(defaultLayout()) };
+    if (!raw) return { layout: migrateTodayFirst(migrateScheduleSecond(defaultLayout())) };
     const parsed = JSON.parse(raw);
 
     // الصيغة الجديدة: { layout: [...] } — نُكمل أي قسم ناقص ونُسقط المجهول
@@ -497,7 +514,7 @@ export function loadDashConfig(): DashConfig {
         ...known,
         ...DASH_DEFAULT_ORDER.filter((id) => !seen.has(id)).map((id) => ({ id, visible: !hiddenByDefault.has(id) })),
       ];
-      return { layout: migrateScheduleSecond(merged) };
+      return { layout: migrateTodayFirst(migrateScheduleSecond(merged)) };
     }
 
     // ترحيل من الصيغة القديمة: { showStats, showWeekly, showSchedule, showTools, showAI }
@@ -508,7 +525,7 @@ export function loadDashConfig(): DashConfig {
       tools: parsed.showTools,
       ai: parsed.showAI,
     };
-    return { layout: migrateScheduleSecond(DASH_DEFAULT_ORDER.map((id) => ({ id, visible: oldVis[id] ?? true }))) };
+    return { layout: migrateTodayFirst(migrateScheduleSecond(DASH_DEFAULT_ORDER.map((id) => ({ id, visible: oldVis[id] ?? true })))) };
   } catch {
     return { layout: defaultLayout() };
   }

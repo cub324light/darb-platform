@@ -32,6 +32,7 @@ export default function FileAnalyzer({
   const [progress, setProgress] = useState("");
   const [err, setErr] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const reset = () => {
     setStage("input"); setFile(null); setResult(null); setProgress(""); setErr("");
@@ -71,19 +72,45 @@ export default function FileAnalyzer({
         return;
       }
 
-      /* ٣) التحليل عبر دويرب */
-      setProgress("دويرب يحلّل المحتوى...");
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, pages, fileName: file.name, subjects }),
-      });
-      const data = (await res.json()) as Partial<Analysis> & { error?: string };
-      if (!res.ok || !data.summary) {
-        setErr(data.error ?? "تعذّر التحليل — حاول مرة ثانية");
-        setStage("input");
-        return;
+      /* ٣) التحليل عبر دويرب — رسائل متغيرة تعطي إحساساً بالتقدم */
+      const ANALYSIS_STAGES = [
+        "دويرب يقرأ المحتوى...",
+        "دويرب يستخرج المعلومات...",
+        "دويرب يحلّل الأجزاء...",
+        "دويرب يجمع النتائج...",
+        "دويرب يُنهي التحليل...",
+      ];
+      let stageIdx = 0;
+      setProgress(ANALYSIS_STAGES[0]);
+      progressTimerRef.current = setInterval(() => {
+        stageIdx = Math.min(stageIdx + 1, ANALYSIS_STAGES.length - 1);
+        setProgress(ANALYSIS_STAGES[stageIdx]);
+      }, 3500);
+
+      const clearTimer = () => {
+        if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
+      };
+
+      let data: Partial<Analysis> & { error?: string };
+      try {
+        const res = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, pages, fileName: file.name, subjects }),
+        });
+        clearTimer();
+        data = (await res.json()) as Partial<Analysis> & { error?: string };
+        if (!res.ok || !data.summary) {
+          setErr(data.error ?? "تعذّر التحليل — حاول مرة ثانية");
+          setStage("input");
+          return;
+        }
+      } catch {
+        clearTimer();
+        throw new Error("fetch_failed");
       }
+
+      setProgress("اكتمل ✓");
       setResult({
         pages: data.pages ?? pages,
         summary: data.summary ?? "",
@@ -94,6 +121,7 @@ export default function FileAnalyzer({
       });
       setStage("result");
     } catch {
+      if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
       setErr("صار خطأ أثناء المعالجة — تأكد من الملف وحاول مرة ثانية");
       setStage("input");
     }
