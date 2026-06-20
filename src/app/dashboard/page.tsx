@@ -583,39 +583,79 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between mb-3">
                 <p className="title-md" style={{ color: "var(--text)" }}>جدول اليوم</p>
               </div>
-              {todayEvents.length === 0 ? (
-                <div className="flex items-center justify-center gap-2 rounded-2xl py-5"
-                  style={{ background: "var(--surface2)", border: "1.5px dashed var(--border)", minHeight: "64px" }}>
-                  <span className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>
-                    لا يوجد جدول اليوم — اضغط «خطة ذكية» تحت
-                  </span>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {[...todayEvents].sort((a, b) => a.fromHour - b.fromHour).map((ev) => (
-                    <div key={ev.id} className="flex items-center gap-3 py-2.5 border-b border-[var(--border)] last:border-0">
-                      <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                        style={{ background: ev.type === "study" ? "var(--accent-light)" : "var(--danger)" }} />
-                      <span className="text-[17px] font-semibold flex-1" style={{ color: "var(--text)" }}>
-                        {ev.type === "study" ? (ev.subject ?? "") : (ev.label ?? "")}
+              {(() => {
+                const study = [...todayEvents].filter((e) => e.type === "study").sort((a, b) => a.fromHour - b.fromHour);
+                if (study.length === 0) {
+                  return (
+                    <div className="flex items-center justify-center gap-2 rounded-2xl py-5"
+                      style={{ background: "var(--surface2)", border: "1.5px dashed var(--border)", minHeight: "64px" }}>
+                      <span className="text-[15px] font-bold" style={{ color: "var(--text-muted)" }}>
+                        لا يوجد جدول اليوم — اضغط «مساعد دويرب» تحت
                       </span>
-                      <span className="text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>
-                        {fmtHour(ev.fromHour)} → {fmtHour(ev.toHour)}
-                      </span>
-                      <button
-                        onClick={() => {
-                          const updated = allEvents.filter((e) => e.id !== ev.id);
-                          setAllEvents(updated);
-                          saveEvents(updated);
-                          const tod = new Date().toISOString().slice(0, 10);
-                          setTodayEvents(getEventsForDate(tod, updated));
-                        }}
-                        className="text-[var(--danger)] text-base px-2 min-h-[44px] flex-shrink-0"
-                        aria-label="حذف">✕</button>
                     </div>
-                  ))}
-                </div>
-              )}
+                  );
+                }
+                const now = time ?? new Date();
+                const nowH = now.getHours() + now.getMinutes() / 60;
+                const current = study.find((e) => nowH >= e.fromHour && nowH < e.toHour);
+                const next = study.find((e) => e.fromHour > nowH);
+                const colorOf = (subj?: string) => allSubjects.find((s) => s.name === subj)?.color ?? "var(--accent-light)";
+                const subj = current?.subject ?? next?.subject;
+                const c = colorOf(subj);
+                return (
+                  <>
+                    {/* بانر «الآن/القادمة» — يبدأ أوربت بالمادة تلقائياً */}
+                    {(current || next) ? (
+                      <div className="rounded-2xl px-4 py-3 mb-3 flex items-center gap-3"
+                        style={{ background: `color-mix(in srgb, ${c} 12%, var(--surface2))`, border: `1px solid ${c}44` }}>
+                        <span className="text-[20px]">{current ? "▶️" : "⏭️"}</span>
+                        <div className="flex-1 text-right min-w-0">
+                          {current ? (
+                            <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>الآن — حتى {fmtHour(current.toHour)}</p>
+                          ) : next ? (() => {
+                            const m = Math.max(1, Math.round((next.fromHour - nowH) * 60));
+                            const when = m >= 60 ? `بعد ${Math.floor(m / 60)} ساعة${m % 60 ? ` و${m % 60} د` : ""}` : `بعد ${m} دقيقة`;
+                            return <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>القادمة {when} — {fmtHour(next.fromHour)}</p>;
+                          })() : null}
+                          <p className="text-[16px] font-black truncate" style={{ color: c }}>{subj ?? "مذاكرة"}</p>
+                        </div>
+                        <Link href={`/orbit?subject=${encodeURIComponent(subj ?? "")}`}
+                          className="text-[13px] font-black px-3 py-2 rounded-xl flex-shrink-0"
+                          style={{ background: c, color: "#fff", textDecoration: "none" }}>
+                          ابدأ ←
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl px-4 py-3 mb-3 text-center"
+                        style={{ background: "color-mix(in srgb, var(--success) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--success) 30%, transparent)" }}>
+                        <p className="text-[15px] font-black" style={{ color: "var(--success)" }}>خلّصت جلسات اليوم 🎉</p>
+                      </div>
+                    )}
+
+                    {/* الخط الزمني */}
+                    <div className="rounded-2xl overflow-hidden" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                      {study.map((ev, i) => {
+                        const isNow = current?.id === ev.id;
+                        const isPast = ev.toHour <= nowH;
+                        const ec = colorOf(ev.subject);
+                        return (
+                          <div key={ev.id}
+                            className={`flex items-center gap-3 px-4 py-3 ${i < study.length - 1 ? "border-b" : ""}`}
+                            style={{ borderColor: "var(--border)", background: isNow ? `color-mix(in srgb, ${ec} 10%, transparent)` : "transparent", opacity: isPast ? 0.5 : 1 }}>
+                            <div className="flex flex-col items-center w-14 flex-shrink-0">
+                              <span className="text-[13px] font-black" style={{ color: isNow ? ec : "var(--text)" }}>{fmtHour(ev.fromHour)}</span>
+                              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{fmtHour(ev.toHour)}</span>
+                            </div>
+                            <div className="w-1.5 self-stretch rounded-full flex-shrink-0" style={{ background: ec }} />
+                            <span className="flex-1 text-[15px] font-bold" style={{ color: "var(--text)" }}>{ev.subject ?? "مذاكرة"}</span>
+                            {isNow && <span className="text-[11px] font-black px-2 py-0.5 rounded-lg" style={{ background: ec, color: "#fff" }}>الآن</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                );
+              })()}
               <div className="flex gap-2 mt-3">
                 <button onClick={() => { setSchedOpen(true); setSchedTab("manual"); }}
                   className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
