@@ -7,7 +7,6 @@ import PageGuide from "@/components/PageGuide";
 import { getTrack, TRACKS, type TrackId } from "@/lib/tracks";
 import { fmtHour } from "@/lib/utils";
 import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, saveExamDate, loadDashConfig, saveDashConfig, loadTrackExamDates, saveTrackExamDates, DASH_SECTION_META, localDayKey, type DarbUser, type ScheduleEvent, type DashItem, type DashSectionId, saveEvents } from "@/lib/storage";
-import DuirbHub from "@/components/DuirbHub";
 import CalendarExport from "@/components/CalendarExport";
 import { useFlag } from "@/lib/flags";
 import { syncUser } from "@/lib/firestore";
@@ -533,7 +532,7 @@ export default function DashboardPage() {
             </Link>
             {!hasTodaySchedule && (
               <button
-                onClick={() => window.dispatchEvent(new CustomEvent("darb:openDuirb"))}
+                onClick={() => { setSchedTab("ai"); setSchedPrefill(""); setSchedOpen(true); }}
                 className="w-full mt-2 py-2.5 rounded-2xl font-bold text-[15px] transition active:scale-[0.98]"
                 style={{ background: "transparent", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
                 🤖 أو ابنِ خطة اليوم مع دويرب
@@ -623,10 +622,22 @@ export default function DashboardPage() {
 
       case "ai":
         return (
-          <DuirbHub
-            subjects={allSubjects}
-            onOpenScheduler={(tab, prefill) => { setSchedTab(tab); setSchedPrefill(prefill ?? ""); setSchedOpen(true); }}
-          />
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent("darb:openDuirb"))}
+            className="card w-full flex items-center gap-3.5 text-right transition active:scale-[0.98] glow-card-hover"
+            style={{ border: "1px solid color-mix(in srgb, var(--accent) 30%, var(--ring))" }}>
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-[26px] flex-shrink-0"
+              style={{ background: "color-mix(in srgb, var(--accent) 14%, transparent)" }}>
+              🤖
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-extrabold text-[16px]" style={{ color: "var(--text)" }}>دويرب — مساعدك الذكي</p>
+              <p className="text-[13px] leading-snug" style={{ color: "var(--text-muted)" }}>
+                خطط، تحليل ملفات، أسئلة، شرح أخطاء، واستخراج مواضيع — كله في مكان واحد
+              </p>
+            </div>
+            <span className="text-[18px] font-black flex-shrink-0" style={{ color: "var(--accent-light)" }}>←</span>
+          </button>
         );
 
       case "weekly":

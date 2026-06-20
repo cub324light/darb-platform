@@ -198,7 +198,7 @@ export default function CalendarExport({
         style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
         <p className="text-[13px] text-center" style={{ color: "var(--text-muted)" }}>لا توجد خطة حالياً</p>
         <button
-          onClick={() => window.dispatchEvent(new CustomEvent("darb:openDuirb"))}
+          onClick={() => window.dispatchEvent(new CustomEvent("darb:openDuirb", { detail: { tab: "schedule" } }))}
           className="w-full rounded-2xl py-2.5 font-bold text-[14px] transition active:scale-[0.98] flex items-center justify-center gap-2"
           style={{
             background: "color-mix(in srgb, var(--accent) 12%, transparent)",

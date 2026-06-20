@@ -1,32 +1,33 @@
 "use client";
-/* ─── زر دويرب العائم الثابت ───
-   يظهر في كل الصفحات (Dashboard / Roadmap / Vault / Review).
-   يفتح DuirbHub داخل modal كامل الشاشة.
-   لا يظهر في الـ onboarding وصفحة admin. */
+/* ─── زر دويرب العائم — محور المنصة ───
+   يظهر في كل الصفحات ويفتح DuirbHub (الوجهة الموحّدة لكل ذكاء).
+   اختصارات سياقية تفتحه على قدرة محددة عبر darb:openDuirb { detail:{ tab } }. */
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { createPortal } from "react-dom";
-import DuirbHub from "@/components/DuirbHub";
+import DuirbHub, { type DuirbView } from "@/components/DuirbHub";
 
 const HIDDEN_ON = ["/onboarding", "/admin", "/pricing", "/privacy", "/parent"];
-
-type DuirbTab = "schedule" | "file" | "quiz";
 
 export default function DuirbFloat() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [openTab, setOpenTab] = useState<DuirbTab>("schedule");
+  const [view, setView] = useState<DuirbView>("menu");
 
-  /* يفتح دويرب على تبويب الجدول */
+  /* فتح دويرب — مع دعم قدرة محددة عبر detail.tab (وإلا القائمة الرئيسية) */
   useEffect(() => {
-    const handler = () => { setOpenTab("schedule"); setOpen(true); };
+    const handler = (e: Event) => {
+      const tab = (e as CustomEvent).detail?.tab as DuirbView | undefined;
+      setView(tab ?? "menu");
+      setOpen(true);
+    };
     window.addEventListener("darb:openDuirb", handler);
     return () => window.removeEventListener("darb:openDuirb", handler);
   }, []);
 
-  /* يفتح دويرب على تبويب تحليل الملف */
+  /* اختصار قديم: فتح على تبويب تحليل الملف */
   useEffect(() => {
-    const handler = () => { setOpenTab("file"); setOpen(true); };
+    const handler = () => { setView("file"); setOpen(true); };
     window.addEventListener("darb:openDuirbFile", handler);
     return () => window.removeEventListener("darb:openDuirbFile", handler);
   }, []);
@@ -46,27 +47,28 @@ export default function DuirbFloat() {
         <p className="title-lg flex-1 text-right" style={{ color: "var(--text)" }}>دويرب</p>
       </div>
       <div className="px-4 py-4 pb-28 max-w-lg w-full mx-auto">
-        <DuirbHub defaultTab={openTab} />
+        <DuirbHub defaultView={view} />
       </div>
     </div>
   );
 
   return (
     <>
-      {/* الزر العائم */}
+      {/* الزر العائم — بارز مع حلقة نبض تجذب الانتباه */}
       <button
-        onClick={() => setOpen(true)}
-        aria-label="فتح دويرب"
-        className="fixed z-[9970] flex items-center gap-2 rounded-full px-4 py-3 font-black text-[15px] shadow-2xl transition-transform active:scale-95"
+        onClick={() => { setView("menu"); setOpen(true); }}
+        aria-label="افتح دويرب — مساعدك الذكي"
+        className="duirb-fab fixed z-[9970] flex items-center gap-2 rounded-full px-5 py-3.5 font-black text-[16px] transition-transform active:scale-95"
         style={{
-          bottom: "calc(env(safe-area-inset-bottom, 0px) + 80px)",
+          bottom: "calc(env(safe-area-inset-bottom, 0px) + 84px)",
           left: "16px",
-          background: "var(--accent)",
+          background: "linear-gradient(135deg, var(--accent), var(--accent-hi))",
           color: "#fff",
-          boxShadow: "0 4px 24px color-mix(in srgb, var(--accent) 45%, transparent)",
+          boxShadow: "0 6px 28px color-mix(in srgb, var(--accent) 55%, transparent)",
         }}>
-        <span className="text-[18px]">🤖</span>
-        <span>دويرب</span>
+        <span className="duirb-fab-ping" aria-hidden="true" />
+        <span className="text-[20px] relative">🤖</span>
+        <span className="relative">اسأل دويرب</span>
       </button>
 
       {open && createPortal(modal, document.body)}

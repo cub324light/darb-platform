@@ -5,7 +5,6 @@ import BottomNav from "@/components/BottomNav";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import Confetti from "@/components/Confetti";
-import QuizGen from "@/components/QuizGen";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { useFlag } from "@/lib/flags";
 import { sm2, nextReviewText } from "@/lib/sm2";
@@ -345,10 +344,25 @@ export default function ReviewPage() {
         )}
       </div>
 
-      {/* توليد أسئلة تدريب من دويرب */}
+      {/* توليد أسئلة تدريب — عبر دويرب الموحّد */}
       {quizOn && subjectList.length > 0 && (
         <div className="px-5 mb-6">
-          <QuizGen subjects={subjectList} />
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent("darb:openDuirb", { detail: { tab: "quiz" } }))}
+            className="card w-full flex items-center gap-3.5 text-right transition active:scale-[0.98] glow-card-hover"
+            style={{ border: "1px solid color-mix(in srgb, var(--accent) 30%, var(--ring))" }}>
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-[26px] flex-shrink-0"
+              style={{ background: "color-mix(in srgb, var(--accent) 14%, transparent)" }}>
+              ❓
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-extrabold text-[16px]" style={{ color: "var(--text)" }}>أسئلة تدريب من دويرب</p>
+              <p className="text-[13px] leading-snug" style={{ color: "var(--text-muted)" }}>
+                خلّ دويرب يولّد لك أسئلة في مادتك للتمرين
+              </p>
+            </div>
+            <span className="text-[18px] font-black flex-shrink-0" style={{ color: "var(--accent-light)" }}>←</span>
+          </button>
         </div>
       )}
 
