@@ -591,7 +591,7 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
-                  {todayEvents.map((ev) => (
+                  {[...todayEvents].sort((a, b) => a.fromHour - b.fromHour).map((ev) => (
                     <div key={ev.id} className="flex items-center gap-3 py-2.5 border-b border-[var(--border)] last:border-0">
                       <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                         style={{ background: ev.type === "study" ? "var(--accent-light)" : "var(--danger)" }} />

@@ -8,7 +8,7 @@ import { ERROR_CATEGORIES } from "@/lib/constants";
 import { subjectsForTracks, colorForSubject, type TrackId } from "@/lib/tracks";
 import { loadUser, loadList, saveList } from "@/lib/storage";
 import { getPlan, VAULT_FREE_LIMIT } from "@/lib/plan";
-import type { VaultError, VaultDifficulty } from "@/lib/types";
+import type { VaultError, VaultDifficulty, ReviewCard } from "@/lib/types";
 
 const PER_SUBJECT_LIMIT = VAULT_FREE_LIMIT;
 const VAULT_KEY = "darb_vault";
@@ -52,6 +52,36 @@ export default function VaultPage() {
   /* شرح دويرب لكل خطأ (تخزين مؤقت بالـ id) */
   const [explainById, setExplainById] = useState<Record<string, string>>({});
   const [explainLoadingId, setExplainLoadingId] = useState<string | null>(null);
+
+  /* ── الربط مع بطاقاتي: نمنع تكرار نفس السؤال في القائمتين ──
+     نحفظ نصوص أسئلة البطاقات الموجودة، ونحوّل أي خطأ لبطاقة بضغطة. */
+  const CARDS_KEY = "darb_cards";
+  const [cardQuestions, setCardQuestions] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try { return new Set(loadList<ReviewCard>(CARDS_KEY).map((c) => c.question.trim())); }
+    catch { return new Set(); }
+  });
+  const [cardMsg, setCardMsg] = useState<string | null>(null);
+
+  const convertToCard = (error: VaultError) => {
+    const q = error.question.trim();
+    if (cardQuestions.has(q)) {
+      setCardMsg("موجودة في بطاقاتي مسبقاً ✓");
+      setTimeout(() => setCardMsg(null), 2200);
+      return;
+    }
+    const answer = (explainById[error.id] || error.note || "اكتب الإجابة الصحيحة هنا").trim();
+    const cards = loadList<ReviewCard>(CARDS_KEY);
+    cards.unshift({
+      id: Date.now().toString(), question: q, answer, subject: error.subject,
+      interval: 1, repetitions: 0, easeFactor: 2.5,
+      dueDate: Date.now(), createdAt: Date.now(),
+    } as ReviewCard);
+    saveList(CARDS_KEY, cards);
+    setCardQuestions((p) => new Set(p).add(q));
+    setCardMsg("أُضيفت إلى بطاقاتي ✓");
+    setTimeout(() => setCardMsg(null), 2200);
+  };
 
   /* حفظ تلقائي عند أي تغيير */
   useEffect(() => { saveList(VAULT_KEY, errors); }, [errors]);
@@ -368,7 +398,7 @@ export default function VaultPage() {
 
           return (
             <div key={error.id}
-              className="rounded-2xl overflow-hidden transition-all glow-card-hover group"
+              className="rounded-2xl overflow-hidden transition-[border-color,box-shadow] duration-200 glow-card-hover group"
               style={{ background: "var(--surface)", border: `1.5px solid ${isExpanded ? color + "55" : "var(--border)"}`, boxShadow: isExpanded ? `0 0 24px ${color}14` : undefined }}>
 
               <div className="p-6 cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : error.id)}>
@@ -461,6 +491,20 @@ export default function VaultPage() {
                       </button>
                     )}
 
+                    {/* تحويل لبطاقة مراجعة — يمنع التكرار إذا كانت موجودة */}
+                    {cardQuestions.has(error.question.trim()) ? (
+                      <div className="w-full py-3 rounded-2xl text-[14px] font-bold text-center flex items-center justify-center gap-2"
+                        style={{ background: "color-mix(in srgb, var(--success) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--success) 30%, transparent)", color: "var(--success)" }}>
+                        ✓ موجودة في بطاقاتي — راجِعها هناك
+                      </div>
+                    ) : (
+                      <button onClick={() => convertToCard(error)}
+                        className="w-full py-3.5 rounded-2xl text-base font-bold transition min-h-[52px] flex items-center justify-center gap-2"
+                        style={{ background: "color-mix(in srgb, var(--gold) 10%, transparent)", border: "1.5px solid color-mix(in srgb, var(--gold) 35%, transparent)", color: "var(--gold)" }}>
+                        📇 حوّلها لبطاقة مراجعة
+                      </button>
+                    )}
+
                     <div className="grid grid-cols-2 gap-3">
                       <button onClick={() => setErrors((p) => p.map((e) => e.id === error.id ? { ...e, reviewCount: e.reviewCount + 1 } : e))}
                         className="py-4 rounded-2xl text-base font-black transition min-h-[56px]"
@@ -483,6 +527,14 @@ export default function VaultPage() {
 
       <div className="h-6" />
       <BottomNav />
+
+      {/* ── تنبيه تحويل البطاقة ── */}
+      {cardMsg && (
+        <div className="fixed bottom-32 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl shadow-xl text-sm font-bold"
+          style={{ background: "var(--surface)", border: "1.5px solid color-mix(in srgb, var(--gold) 40%, transparent)", color: "var(--text)" }}>
+          {cardMsg}
+        </div>
+      )}
 
       {/* ── تنبيه التراجع عن الحذف ── */}
       {undoItem && (
