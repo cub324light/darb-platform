@@ -878,27 +878,25 @@ export default function DashboardPage() {
 
       {/* ═══ القبة ═══ */}
       <Dome compact>
-        {/* اسم الترحيب = زر البروفايل (واضح كزر) */}
+        {/* «أهلاً، محمد» كله زرٌ واحد للبروفايل — على اليمين */}
         <div className="text-right mb-3">
-          <p className="title-lg flex items-center gap-2.5 justify-end" style={{ color: "var(--text)" }}>
-            <button
-              onClick={() => window.dispatchEvent(new CustomEvent("darb:openProfile"))}
-              className="inline-flex items-center gap-2 rounded-2xl px-3 py-1.5 transition active:scale-95"
-              style={{
-                background: "color-mix(in srgb, var(--accent) 16%, transparent)",
-                border: "1.5px solid var(--accent)",
-                color: "var(--accent-light)",
-              }}
-              aria-label="افتح البروفايل">
-              <span className="w-7 h-7 rounded-xl flex items-center justify-center text-[15px] font-black text-white flex-shrink-0"
-                style={{ background: "linear-gradient(135deg, var(--accent-2), var(--accent-light))" }}>
-                {(user?.name ?? "د").charAt(0)}
-              </span>
-              {user ? user.name : <span className="skeleton" style={{ width: "70px", height: "1em", verticalAlign: "middle" }} />}
-            </button>
-            <span>أهلاً،</span>
-          </p>
-          <p className="text-[15px] font-semibold mt-1" style={{ color: "var(--text-muted)" }}>
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent("darb:openProfile"))}
+            className="inline-flex items-center gap-2.5 rounded-2xl px-3.5 py-2 transition active:scale-95"
+            style={{
+              background: "color-mix(in srgb, var(--accent) 16%, transparent)",
+              border: "1.5px solid var(--accent)",
+            }}
+            aria-label="افتح البروفايل">
+            <span className="w-8 h-8 rounded-xl flex items-center justify-center text-[16px] font-black text-white flex-shrink-0"
+              style={{ background: "linear-gradient(135deg, var(--accent-2), var(--accent-light))" }}>
+              {(user?.name ?? "د").charAt(0)}
+            </span>
+            <span className="title-lg" style={{ color: "var(--accent-light)" }}>
+              أهلاً، {user ? user.name : <span className="skeleton" style={{ width: "70px", height: "1em", verticalAlign: "middle" }} />}
+            </span>
+          </button>
+          <p className="text-[15px] font-semibold mt-1.5" style={{ color: "var(--text-muted)" }}>
             {greeting}
           </p>
         </div>
