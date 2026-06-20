@@ -123,7 +123,7 @@ export default function SkillsPage() {
             </svg>
           </Link>
           <div>
-            <h1 className="text-[20px] font-black text-white">خريطة مهاراتي</h1>
+            <h1 className="text-[20px] font-black text-white">خريطة المهارات</h1>
             <p className="text-[12px] text-white/70">{activeIds.join(" · ")}</p>
           </div>
         </div>

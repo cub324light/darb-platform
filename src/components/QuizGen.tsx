@@ -104,7 +104,7 @@ export default function QuizGen({ subjects }: Props) {
           {loading ? (
             <span className="inline-block w-4 h-4 rounded-full border-2 animate-spin align-middle"
               style={{ borderColor: "white", borderTopColor: "transparent" }} />
-          ) : "ولّد"}
+          ) : "دويرب: ولّد"}
         </button>
       </div>
 

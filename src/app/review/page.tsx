@@ -241,13 +241,13 @@ export default function ReviewPage() {
   return (
     <div className="min-h-dvh pb-nav relative z-[1]">
       <PageGuide pageKey="review" steps={[
-        { title: "بنك المراجعة", desc: "هنا تحفظ المعلومات اللي تبي ترسخ — قوانين، تعاريف، معادلات — على شكل بطاقات سؤال وجواب." },
+        { title: "بطاقاتي", desc: "هنا تحفظ المعلومات اللي تبي ترسخ — قوانين، تعاريف، معادلات — على شكل بطاقات سؤال وجواب. أخطاءك من (أخطائي) ممكن تحولها لبطاقات." },
         { title: "النظام يحسب عنك", desc: "نستخدم نظام التكرار المتباعد العلمي: كل ما قيّمت بطاقة (سهلة أو صعبة)، النظام يحدد متى تراجعها المرة الجاية بالضبط." },
         { title: "راجع المستحق فقط", desc: "ما تحتاج تراجع كل شيء كل يوم — بس البطاقات اللي عليها علامة (مستحق الآن). خمس دقائق يومياً تكفي." },
       ]} />
       <Dome compact>
         <div className="flex items-center justify-between">
-          <h1 className="title-lg" style={{ color: "var(--text)" }}>بنك المراجعة</h1>
+          <h1 className="title-lg" style={{ color: "var(--text)" }}>بطاقاتي</h1>
           <span className="dome-chip text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>تكرار متباعد</span>
         </div>
       </Dome>
@@ -400,8 +400,13 @@ export default function ReviewPage() {
 
       {cards.length === 0 && (
         <div className="text-center py-12 px-6">
-          <p className="text-xl font-black text-[var(--text)] mb-2">بنك المراجعة فاضي</p>
-          <p className="text-base text-[var(--text-muted)]">أضف أول بطاقة، والنظام يحسب لك متى تراجعها تلقائياً.</p>
+          <p className="text-xl font-black text-[var(--text)] mb-2">ما في بطاقات بعد</p>
+          <p className="text-base text-[var(--text-muted)] mb-3">أضف بطاقة سؤال+جواب، والنظام يذكّرك بها في الوقت الصح تلقائياً.</p>
+          <a href="/vault"
+            className="inline-block px-5 py-2.5 rounded-2xl text-[14px] font-bold no-underline transition active:scale-[0.98]"
+            style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1.5px solid color-mix(in srgb, var(--accent) 30%, transparent)", color: "var(--accent-light)" }}>
+            أو احفظ خطأً في أخطائي أولاً →
+          </a>
         </div>
       )}
 

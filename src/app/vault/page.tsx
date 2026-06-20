@@ -138,14 +138,14 @@ export default function VaultPage() {
     <div className="page">
 
       <PageGuide pageKey="vault" steps={[
-        { title: "خزنة الأخطاء", desc: "أي سؤال تغلط فيه — احفظه هنا فوراً مع سبب الغلط. الطالب اللي يراجع أخطاءه ما يكررها." },
+        { title: "أخطائي", desc: "أي سؤال تغلط فيه — احفظه هنا فوراً. الهدف: تراجع كل خطأ مرتين قبل الاختبار حتى ما يتكرر." },
         { title: "صنّف وفلتر", desc: "كل خطأ له مادة وتصنيف (فهم، حفظ، سرعة...). الفلاتر فوق تساعدك تركز على نوع معين قبل الاختبار." },
         { title: "راجعها بانتظام", desc: "افتح أي خطأ واضغط (راجعته) كل ما رجعت له. زر الترتيب فوق يعرض لك الأقل مراجعة أولاً." },
       ]} />
 
       <Dome compact>
         <div className="flex items-center justify-between">
-          <h1 className="title-lg" style={{ color: "var(--text)" }}>خزنة الأخطاء</h1>
+          <h1 className="title-lg" style={{ color: "var(--text)" }}>أخطائي</h1>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSortBy((s) => s === "recent" ? "priority" : "recent")}
@@ -267,7 +267,7 @@ export default function VaultPage() {
           ) : (
             <div className="rounded-2xl p-5 flex flex-col gap-4"
               style={{ background: "var(--surface)", border: "1.5px solid rgba(245,158,11,0.35)" }}>
-              <p className="font-bold text-base text-[var(--gold)]">خطأ جديد في الخزنة</p>
+              <p className="font-bold text-base text-[var(--gold)]">خطأ جديد في أخطائي</p>
 
               <textarea value={newQ} onChange={(e) => setNewQ(e.target.value)} rows={3}
                 placeholder="السؤال أو المفهوم الذي أخطأت فيه..."
@@ -349,9 +349,15 @@ export default function VaultPage() {
       <div className="px-5 flex flex-col gap-5 rise rise-5">
 
         {filtered.length === 0 && (
-          <div className="text-center py-14">
-            <p className="title-md text-[var(--text)] mb-2">الخزنة فارغة</p>
-            <p className="body-sm">أول ما تغلط في سؤال، احفظه هنا — عشان ما تغلط فيه مرتين.</p>
+          <div className="text-center py-14 px-4">
+            <p className="title-md text-[var(--text)] mb-2">ما في أخطاء بعد</p>
+            <p className="body-sm mb-1">هنا تحفظ أي سؤال تغلط فيه — مع سبب الغلط.</p>
+            <p className="body-sm mb-4">دويرب يقدر يشرح لك كل خطأ بالضبط فين غلطت.</p>
+            <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+              أو راجع{" "}
+              <a href="/review" className="font-bold underline" style={{ color: "var(--accent-light)" }}>بطاقاتي</a>
+              {" "}إذا تبي تمرن على المعلومات
+            </p>
           </div>
         )}
 
@@ -409,7 +415,7 @@ export default function VaultPage() {
                         {explainLoadingId === error.id ? (
                           <span className="inline-block w-3 h-3 rounded-full border-2 animate-spin"
                             style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }} />
-                        ) : "🤖 شرح الخطأ"}
+                        ) : "دويرب: شرح الخطأ 🤖"}
                       </button>
                     )}
                   </div>
@@ -451,7 +457,7 @@ export default function VaultPage() {
                         {explainLoadingId === error.id ? (
                           <span className="inline-block w-4 h-4 rounded-full border-2 animate-spin"
                             style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }} />
-                        ) : "اشرح لي 🤖"}
+                        ) : "دويرب: اشرح هذا الخطأ 🤖"}
                       </button>
                     )}
 

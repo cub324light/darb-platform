@@ -76,6 +76,13 @@ export default function DashboardPage() {
   const [silver] = useState(() =>
     typeof window !== "undefined" ? loadStats().silver : 0
   );
+  const [statsTipSeen, setStatsTipSeen] = useState(() => {
+    try { return !!localStorage.getItem("darb_stats_tip"); } catch { return true; }
+  });
+  const dismissStatsTip = () => {
+    setStatsTipSeen(true);
+    try { localStorage.setItem("darb_stats_tip", "1"); } catch { /* */ }
+  };
   const [focusMinsTotal] = useState(() =>
     typeof window !== "undefined" ? loadStats().totalFocusMins : 0
   );
@@ -139,7 +146,7 @@ export default function DashboardPage() {
       const unreviewed = vaultArr.filter((e) => e.reviewCount === 0).length;
       const s = loadStats();
       if (due > 0) return { text: `${due} بطاقة مراجعة مستحقة`, sub: "راجعها الحين قبل ما تنسى", href: "/review", color: "var(--success)" };
-      if (unreviewed > 0) return { text: `${unreviewed} خطأ لم تراجعه بعد`, sub: "افتح الخزنة وراجعها", href: "/vault", color: "var(--accent)" };
+      if (unreviewed > 0) return { text: `${unreviewed} خطأ لم تراجعه بعد`, sub: "افتح أخطائي وراجعها", href: "/vault", color: "var(--accent)" };
       if (s.todayFocusMins === 0) return { text: "ما بدأت اليوم بعد", sub: "جلسة أوربت تكسر الصفر", href: "/orbit", color: "var(--accent)" };
     } catch {}
     return null;
@@ -221,9 +228,9 @@ export default function DashboardPage() {
 
   const TOOLS = [
     { href: "/orbit",  label: "أوربت",   desc: "جلسة 50/10" },
-    { href: "/vault",  label: "الخزنة",  desc: `${errorsCount} خطأ محفوظ` },
-    { href: "/review", label: "المراجعة", desc: "تكرار متباعد" },
-    { href: "/roadmap",label: "الخريطة", desc: "تقدمك بالدروس" },
+    { href: "/vault",  label: "أخطائي",   desc: `${errorsCount} خطأ محفوظ` },
+    { href: "/review", label: "بطاقاتي",  desc: "تكرار متباعد" },
+    { href: "/roadmap",label: "مساري",    desc: "تقدمك بالدروس" },
   ];
 
   /* ── منطق التخصيص: إخفاء/إظهار وإعادة الترتيب بالسحب ── */
@@ -656,7 +663,7 @@ export default function DashboardPage() {
               {[
                 { num: focusMinsTotal < 60 ? focusMinsTotal : parseFloat((focusMinsTotal / 60).toFixed(1)), isFloat: focusMinsTotal >= 60 && focusMinsTotal % 60 !== 0, unit: focusUnit, color: "var(--accent-light)", glowColor: "#2563EB" },
                 { num: sessions,    isFloat: false, unit: "جلسة أوربت", color: "var(--success)",      glowColor: "#10B981" },
-                { num: errorsCount, isFloat: false, unit: "خطأ بالخزنة", color: "var(--danger)",      glowColor: "#F87171" },
+                { num: errorsCount, isFloat: false, unit: "خطأ في أخطائي", color: "var(--danger)",      glowColor: "#F87171" },
               ].map((s) => (
                 <div key={s.unit} className="relative card text-center overflow-hidden glow-card-hover"
                   style={{
@@ -833,6 +840,29 @@ export default function DashboardPage() {
           </div>
         </div>
       </Dome>
+
+      {/* ── تلميح الفضة والستريك (أول زيارة) ── */}
+      {!statsTipSeen && (
+        <div className="mx-5 mt-3 rounded-2xl px-4 py-3 flex items-start gap-3"
+          style={{ background: "color-mix(in srgb, var(--gold) 8%, var(--surface))", border: "1px solid color-mix(in srgb, var(--gold) 25%, transparent)" }}>
+          <div className="flex-1 flex flex-col gap-1">
+            <p className="text-[13px] font-bold" style={{ color: "var(--gold-light)" }}>🪙 الفضة — ماذا تعني؟</p>
+            <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+              الفضة تمثل دقائق التركيز والإنجاز داخل المنصة — كل دقيقة في أوربت = فضة.
+            </p>
+            <p className="text-[13px] font-bold mt-1" style={{ color: "var(--gold-light)" }}>🔥 الستريك — كيف يعمل؟</p>
+            <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+              يزيد: كل يوم تنهي فيه جلسة تركيز واحدة على الأقل.{"\n"}
+              ينقطع: إذا مرّ يوم كامل بدون جلسة.{"\n"}
+              يتحدث: بعد منتصف الليل.
+            </p>
+          </div>
+          <button onClick={dismissStatsTip}
+            className="text-[17px] flex-shrink-0 mt-0.5 leading-none"
+            style={{ color: "var(--text-muted)" }}
+            aria-label="أغلق">✕</button>
+        </div>
+      )}
 
       {/* ═══ المحتوى ═══ */}
       <div className="page-content mt-4">

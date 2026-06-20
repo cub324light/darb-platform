@@ -106,7 +106,10 @@ function PhaseSection({ title, num, pct, complete, unlocked, color, accentText, 
             : { background: "var(--surface2)", color: "var(--text-muted)", border: "1.5px solid var(--border)" }}>
           {complete ? "✓" : num}
         </div>
-        <p className="font-black text-base flex-1" style={{ color: unlocked ? "var(--text)" : "var(--text-muted)" }}>{title}</p>
+        <div className="flex flex-col flex-1">
+          <span className="text-[11px] font-semibold" style={{ color: "var(--text-muted)" }}>المرحلة {num} من ٣</span>
+          <p className="font-black text-base leading-tight" style={{ color: unlocked ? "var(--text)" : "var(--text-muted)" }}>{title}</p>
+        </div>
         <span className="font-mono-nums font-black text-[17px]" style={{ color: unlocked ? accentText : "var(--text-muted)" }}>
           {unlocked ? `${pct}%` : "—"}
         </span>
@@ -260,7 +263,7 @@ function NextStepOverlay({
         </div>
 
         <p className="text-[17px] text-center" style={{ color: "var(--text-muted)" }}>
-          القرار يُحفظ ويمكنك تغييره في أي وقت من خريطة الطريق
+          القرار يُحفظ ويمكنك تغييره في أي وقت من مساري
         </p>
       </div>
     </div>
@@ -746,7 +749,7 @@ export default function RoadmapPage() {
       ]} />
       <Dome compact>
         <div className="flex items-center justify-between">
-          <h1 className="title-lg" style={{ color: "var(--text)" }}>خريطة الطريق</h1>
+          <h1 className="title-lg" style={{ color: "var(--text)" }}>مساري</h1>
           <span className="dome-chip text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>
             {testTab === "all" ? "كل الاختبارات" : `${track.icon} ${track.title}`}
           </span>
