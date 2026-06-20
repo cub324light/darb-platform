@@ -17,6 +17,7 @@
     "clsx": "^2.1.1",
     "firebase": "^12.14.0",
     "firebase-admin": "^14.0.0",
+    "mammoth": "^1.12.0",
     "motion": "^12.40.0",
     "next": "16.2.4",
     "pdfjs-dist": "^4.10.38",
