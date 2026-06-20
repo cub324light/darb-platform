@@ -396,6 +396,22 @@ export default function VaultPage() {
                         {daysAgo === 0 ? "اليوم" : `قبل ${daysAgo} يوم`}
                       </span>
                     </div>
+                    {!isExpanded && !explainById[error.id] && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setExpandedId(error.id); explainError(error); }}
+                        disabled={explainLoadingId === error.id}
+                        className="mt-3 w-full py-2 rounded-xl text-[12px] font-bold transition flex items-center justify-center gap-1.5"
+                        style={{
+                          background: "color-mix(in srgb, var(--accent) 8%, transparent)",
+                          border: "1px solid color-mix(in srgb, var(--accent) 20%, transparent)",
+                          color: "var(--accent-light)",
+                        }}>
+                        {explainLoadingId === error.id ? (
+                          <span className="inline-block w-3 h-3 rounded-full border-2 animate-spin"
+                            style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }} />
+                        ) : "🤖 شرح الخطأ"}
+                      </button>
+                    )}
                   </div>
 
                   <span className="text-[var(--text-muted)] text-sm mt-1">{isExpanded ? "▲" : "▼"}</span>

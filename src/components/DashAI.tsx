@@ -174,12 +174,34 @@ export default function DashAI({ subjects, onOpenScheduler }: Props) {
             </button>
           )}
           {applied && (
-            <p className="text-center text-[14px] font-bold py-1.5"
-              style={{ color: parsedCount > 0 ? "var(--success)" : "var(--text-muted)" }}>
-              {parsedCount > 0
-                ? `✓ أُضيف ${parsedCount} حدث لجدولك اليوم`
-                : "كل الأوقات المقترحة متعارضة مع جدولك الحالي"}
-            </p>
+            parsedCount > 0 ? (
+              <div className="rounded-2xl p-4 flex flex-col gap-2.5 mt-2"
+                style={{
+                  background: "color-mix(in srgb, var(--success) 8%, var(--surface2))",
+                  border: "1px solid color-mix(in srgb, var(--success) 25%, transparent)",
+                }}>
+                <p className="text-center text-[14px] font-black" style={{ color: "var(--success)" }}>
+                  ✅ تم إنشاء الخطة — {parsedCount} جلسة أُضيفت
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => window.dispatchEvent(new CustomEvent("darb:openCalendar"))}
+                    className="py-2.5 rounded-2xl text-[13px] font-bold transition active:scale-[0.97] flex items-center justify-center gap-1.5"
+                    style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
+                    🗓️ أضف للتقويم
+                  </button>
+                  <a href="/orbit"
+                    className="py-2.5 rounded-2xl text-[13px] font-bold transition active:scale-[0.97] flex items-center justify-center gap-1.5 no-underline"
+                    style={{ background: "var(--accent)", color: "#fff" }}>
+                    ⏱️ ابدأ جلسة
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <p className="text-center text-[14px] font-bold py-1.5" style={{ color: "var(--text-muted)" }}>
+                كل الأوقات المقترحة متعارضة مع جدولك الحالي
+              </p>
+            )
           )}
         </div>
       )}

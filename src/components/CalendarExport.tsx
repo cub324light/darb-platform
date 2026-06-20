@@ -2,7 +2,7 @@
 /* ─── تصدير خطة المذاكرة إلى التقويم ───
    يحوّل أحداث الجدول إلى أحداث تقويم (كل جلسة حدث مستقل) ويعرض مزوّدين:
    Google / Apple / Outlook + تنزيل ICS. معماريّة قابلة للتوسّع (providers.ts). */
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import type { ScheduleEvent } from "@/lib/storage";
 import {
@@ -79,6 +79,13 @@ export default function CalendarExport({
     () => events.some((e) => e.type === "study"),
     [events],
   );
+
+  /* يفتح الـmodal عند وصول حدث darb:openCalendar (من شاشة نجاح دويرب) */
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener("darb:openCalendar", handler);
+    return () => window.removeEventListener("darb:openCalendar", handler);
+  }, []);
 
   const overlay = (
     <div className="fixed inset-0 z-[9990] flex flex-col overflow-y-auto" style={{ background: "var(--bg)" }}>
@@ -185,7 +192,25 @@ export default function CalendarExport({
     </div>
   );
 
-  if (!hasStudy) return null;
+  if (!hasStudy) {
+    return (
+      <div className="rounded-2xl p-4 flex flex-col gap-2.5"
+        style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+        <p className="text-[13px] text-center" style={{ color: "var(--text-muted)" }}>لا توجد خطة حالياً</p>
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent("darb:openDuirb"))}
+          className="w-full rounded-2xl py-2.5 font-bold text-[14px] transition active:scale-[0.98] flex items-center justify-center gap-2"
+          style={{
+            background: "color-mix(in srgb, var(--accent) 12%, transparent)",
+            border: "1.5px solid color-mix(in srgb, var(--accent) 30%, transparent)",
+            color: "var(--accent-light)",
+          }}>
+          <span>🤖</span>
+          <span>إنشاء خطة مع دويرب</span>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <>
