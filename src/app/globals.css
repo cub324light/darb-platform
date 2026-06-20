@@ -129,6 +129,31 @@ h1, h2, h3, h4, .title-xl, .title-lg, .title-md {
 .dome-content { position: relative; z-index: 2; }
 .dome-decor { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
 
+/* لمسات صفحة الهبوط على رأس كل صفحة: هالة توهّج نابضة + عناوين متدرّجة */
+.dome-glow {
+  position: absolute;
+  top: -22%; left: 50%;
+  width: 360px; height: 360px;
+  transform: translateX(-50%);
+  border-radius: 9999px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 16%, transparent) 0%, transparent 70%);
+  filter: blur(38px);
+  animation: domeGlowPulse 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes domeGlowPulse {
+  0%, 100% { opacity: 0.45; transform: translateX(-50%) scale(1); }
+  50%      { opacity: 0.9;  transform: translateX(-50%) scale(1.14); }
+}
+@media (prefers-reduced-motion: reduce) { .dome-glow { animation: none; } }
+
+.grad-title {
+  background: linear-gradient(135deg, var(--text) 22%, var(--accent-light) 64%, var(--accent-hi));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+}
+
 .dome-night, .dome-day { position: absolute; inset: 0; transition: opacity 0.4s ease; }
 :root:not([data-theme="light"]) .dome-night { opacity: 1; }
 :root:not([data-theme="light"]) .dome-day   { opacity: 0; visibility: hidden; }

@@ -130,7 +130,7 @@ export default function PlanPage() {
 
       <Dome compact>
         <div className="flex items-center justify-between">
-          <h1 className="title-lg" style={{ color: "var(--text)" }}>خطتي</h1>
+          <h1 className="title-lg grad-title">خطتي</h1>
           {nearestExam !== null && (
             <div className="dome-chip flex items-center gap-1.5">
               <span className="num-hero text-base" style={{ color: urgentColor }}>{nearestExam.days}</span>

@@ -2,6 +2,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { ThemeToggle } from "@/components/Profile";
 import SettingsButton from "@/components/SettingsPanel";
+import { Sparkles } from "@/components/ui/sparkles";
+import { Meteors } from "@/components/ui/meteors";
 
 /* ── ساعة صغيرة — ضغطة واحدة تبدّل بين 12 و24 ── */
 function ClockWidget() {
@@ -122,6 +124,11 @@ export default function Dome({
             ))}
           </svg>
         </div>
+
+        {/* لمسات صفحة الهبوط: توهّج نابض + جسيمات + شُهب على رأس كل صفحة */}
+        <div className="dome-glow" />
+        <Sparkles count={compact ? 16 : 24} color="var(--accent-hi)" />
+        <Meteors number={compact ? 5 : 8} />
       </div>
 
       {/* ── المحتوى ── */}

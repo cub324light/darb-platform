@@ -810,7 +810,7 @@ export default function RoadmapPage() {
       ]} />
       <Dome compact>
         <div className="flex items-center justify-between">
-          <h1 className="title-lg" style={{ color: "var(--text)" }}>مساري</h1>
+          <h1 className="title-lg grad-title">مساري</h1>
           <span className="dome-chip text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>
             {testTab === "all" ? "كل الاختبارات" : `${track.icon} ${track.title}`}
           </span>

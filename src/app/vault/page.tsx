@@ -175,7 +175,7 @@ export default function VaultPage() {
 
       <Dome compact>
         <div className="flex items-center justify-between">
-          <h1 className="title-lg" style={{ color: "var(--text)" }}>أخطائي</h1>
+          <h1 className="title-lg grad-title">أخطائي</h1>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSortBy((s) => s === "recent" ? "priority" : "recent")}
