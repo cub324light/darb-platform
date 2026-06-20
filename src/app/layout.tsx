@@ -49,8 +49,11 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // نسمح بالتكبير لإتاحة الوصول (Accessibility) — منعُ التكبير يُسقِط درجة Lighthouse
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#07070D" },
+    { media: "(prefers-color-scheme: light)", color: "#F8F4EC" },
+  ],
 };
 
 /* يضبط الثيم ولون شريط المتصفح قبل أول رسم — بدون وميض */
