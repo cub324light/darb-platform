@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { CHAT_GROUPS, groupName } from "@/lib/groups";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { authedFetch } from "@/lib/authFetch";
+import { onAuth } from "@/lib/cloud";
 import { ROLE_LABEL, ROLE_COLOR, ASSIGNABLE_ROLES, ROLE_RANK, canDo, type Role } from "@/lib/roles";
 
 type PlanId = "free" | "shaheen" | "anqa";
@@ -197,23 +198,23 @@ export default function AdminPage() {
   };
 
   /* بوابة RBAC تلقائية: لو المستخدم مسجّل دخوله بدور طاقم (token)،
-     يدخل اللوحة مباشرة بلا كلمة سر — بصلاحيات دوره. */
+     يدخل اللوحة مباشرة بلا كلمة سر — بصلاحيات دوره. ننتظر استقرار
+     حالة Firebase Auth (onAuth) حتى يصل التوكن قبل التحقق. */
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
+    let done = false;
+    const unsub = onAuth(async () => {
+      if (done) return;
       try {
         const { ok, data } = await callApi("whoami");
-        if (cancelled) return;
         const role = (ok ? (data.role as Role) : "user") ?? "user";
         if (role !== "user" && ROLE_RANK[role] >= ROLE_RANK.moderator) {
-          // طاقم موثّق — حمّل القائمة ثم ادخل
           const res = await callApi();
-          if (!cancelled && res.ok) enter(role, (res.data.users as AdminUser[]) ?? []);
+          if (!done && res.ok) { done = true; enter(role, (res.data.users as AdminUser[]) ?? []); }
         }
       } catch { /* تجاهل — تبقى شاشة كلمة السر */ }
-      finally { if (!cancelled) setCheckingRole(false); }
-    })();
-    return () => { cancelled = true; };
+      finally { setCheckingRole(false); }
+    });
+    return () => unsub();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
