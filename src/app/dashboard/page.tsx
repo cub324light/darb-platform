@@ -226,31 +226,61 @@ export default function DashboardPage() {
   );
   const todayPct = Math.min(100, Math.round((todayMins / DAILY_TARGET) * 100));
 
-  /* أقرب موعد اختبار من كل المسارات — للرسالة التحفيزية في القبة */
-  const nearestExamDay = (() => {
+  /* أقرب موعد اختبار من كل المسارات — يُعرض مرة واحدة فقط (في القبة كبطل) */
+  const nearestExam = (() => {
     const todayStr = new Date().toISOString().slice(0, 10);
-    const candidates: number[] = [];
-    if (examDays !== null && examDays >= 0) candidates.push(examDays);
+    const cands: { days: number; label: string; color: string }[] = [];
+    if (examDays !== null && examDays >= 0) cands.push({ days: examDays, label: "", color: "var(--gold)" });
     for (const tid of activeTrackIds) {
       const d = trackExamDates[tid];
       if (!d) continue;
       const diff = Math.round((new Date(d + "T00:00:00").getTime() - new Date(todayStr + "T00:00:00").getTime()) / 86400000);
-      if (diff >= 0) candidates.push(diff);
+      if (diff < 0) continue;
+      const t = TRACKS.find((tr) => tr.id === tid);
+      cands.push({ days: diff, label: t?.title ?? "", color: t?.color ?? "var(--accent)" });
     }
-    return candidates.length > 0 ? Math.min(...candidates) : null;
+    cands.sort((a, b) => a.days - b.days);
+    return cands[0] ?? null;
   })();
-  const heroMsg = nearestExamDay !== null
-    ? `باقي ${nearestExamDay} يوم على اختبارك`
+  /* لون الإلحاح حسب قرب الموعد */
+  const examUrgentColor = nearestExam === null ? "var(--accent-light)"
+    : nearestExam.days <= 1 ? "#EF4444"
+    : nearestExam.days <= 7 ? "#F97316"
+    : nearestExam.color;
+  const heroMsg = nearestExam !== null
+    ? (nearestExam.days === 0 ? `اختبار${nearestExam.label ? " " + nearestExam.label : "ك"} اليوم — بالتوفيق!`
+      : nearestExam.days === 1 ? `اختبار${nearestExam.label ? " " + nearestExam.label : "ك"} بكرة — راجع ونم بدري`
+      : `باقي ${nearestExam.days} يوم على ${nearestExam.label || "اختبارك"}`)
     : todayPct >= 100
     ? `أكملت هدف اليوم ✓`
     : `أكمل ${Math.max(1, DAILY_TARGET - todayMins)} دقيقة اليوم للوصول لهدفك`;
 
-  const TOOLS = [
-    { href: "/orbit",  label: "أوربت",   desc: "جلسة 50/10" },
-    { href: "/vault",  label: "أخطائي",   desc: `${errorsCount} خطأ محفوظ` },
-    { href: "/review", label: "بطاقاتي",  desc: "تكرار متباعد" },
-    { href: "/roadmap",label: "مساري",    desc: "تقدمك بالدروس" },
-  ];
+  /* مادة الجلسة القادمة من جدول اليوم — لتلميح زر البطل */
+  const nextStudySubject = (() => {
+    const hourNow = (time ?? new Date()).getHours();
+    const studies = todayEvents.filter((e) => e.type === "study" && e.subject);
+    if (studies.length === 0) return null;
+    const upcoming = studies.find((e) => e.fromHour >= hourNow) ?? studies[0];
+    return upcoming.subject ?? null;
+  })();
+  const hasTodaySchedule = todayEvents.some((e) => e.type === "study");
+
+  /* نداء واحد ذكي — يجمع تنبيهات (ستريك بخطر/مراجعة مستحقة/خطأ غير مراجَع) في الأعلى أولوية فقط */
+  const topNudge: { text: string; sub: string; href: string; color: string } | null = (() => {
+    const hourNow = (time ?? new Date()).getHours();
+    if (streak > 0 && todayMins === 0 && hourNow >= 17)
+      return { text: `ستريك ${streak} يوم بخطر 🔥`, sub: "جلسة وحدة قبل منتصف الليل تنقذه", href: "/orbit", color: "#EF4444" };
+    if (dueCards > 0)
+      return { text: `${dueCards} بطاقة مراجعة مستحقة اليوم`, sub: "راجعها الحين — قبل ما تنسى", href: "/review", color: "var(--success)" };
+    if (suggestion) return suggestion;
+    return null;
+  })();
+
+  /* عناوين مجموعات الأقسام — تظهر فوق أول قسم في كل مجموعة (الترتيب الافتراضي) */
+  const GROUP_LABEL: Partial<Record<DashSectionId, string>> = {
+    schedule: "تقدّمي وتفاصيلي",
+    quote: "مجتمع وإضافات",
+  };
 
   /* ── منطق التخصيص: إخفاء/إظهار وإعادة الترتيب بالسحب ── */
   const persist = (next: DashItem[]) => { setLayout(next); saveDashConfig({ layout: next }); };
@@ -474,21 +504,6 @@ export default function DashboardPage() {
       }
 
       case "today": {
-        /* أقرب موعد اختبار من كل المسارات أو التاريخ الفردي */
-        const todayForToday = new Date().toISOString().slice(0, 10);
-        const allDays = [
-          ...(examDate ? [{ d: examDays, label: "", color: "var(--gold)", tid: null }] : []),
-          ...activeTrackIds.map((tid) => {
-            const examD = trackExamDates[tid];
-            if (!examD) return null;
-            const d2 = Math.round((new Date(examD + "T00:00:00").getTime() - new Date(todayForToday + "T00:00:00").getTime()) / 86400000);
-            const t = TRACKS.find((tr) => tr.id === tid);
-            return { d: d2, label: t?.title ?? "", color: t?.color ?? "var(--accent)", tid };
-          }).filter(Boolean),
-        ].filter((x) => x !== null && x!.d !== null && x!.d! >= 0) as { d: number; label: string; color: string; tid: string | null }[];
-        allDays.sort((a, b) => a.d - b.d);
-        const nearest = allDays[0] ?? null;
-
         return (
           <section className="card relative overflow-hidden">
             <BorderBeam size={180} duration={14} colorFrom="var(--accent-hi)" colorTo="var(--gold)" delay={2} />
@@ -498,22 +513,8 @@ export default function DashboardPage() {
                 {time ? time.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", hour12: true }) : "--:--"}
               </p>
             </div>
-            {nearest && (
-              <div className="rounded-xl px-3.5 py-2.5 mb-3 text-center"
-                style={{
-                  background: `color-mix(in srgb, ${nearest.d <= 1 ? "#EF4444" : nearest.d <= 7 ? "#F97316" : nearest.color} 10%, transparent)`,
-                  border: `1px solid color-mix(in srgb, ${nearest.d <= 1 ? "#EF4444" : nearest.d <= 7 ? "#F97316" : nearest.color} 30%, transparent)`,
-                }}>
-                <span className="text-[15px] font-bold"
-                  style={{ color: nearest.d <= 1 ? "#EF4444" : nearest.d <= 7 ? "#F97316" : nearest.color }}>
-                  {nearest.label ? `${nearest.label} — ` : ""}
-                  {nearest.d === 0 ? "اختبارك اليوم — بالتوفيق!"
-                    : nearest.d === 1 ? "اختبارك بكرة — راجع ونم بدري"
-                    : nearest.d <= 7 ? `${nearest.d} أيام على الاختبار — شدّ الحزام`
-                    : `باقي ${nearest.d} يوم على الاختبار`}
-                </span>
-              </div>
-            )}
+
+            {/* تقدّم اليوم */}
             <div className="h-2.5 rounded-full overflow-hidden mb-2.5" style={{ background: "var(--surface2)" }}>
               <div className="h-full rounded-full transition-all duration-700"
                 style={{ width: `${todayPct}%`, background: "linear-gradient(90deg, var(--accent-2), var(--accent-hi))" }} />
@@ -521,11 +522,23 @@ export default function DashboardPage() {
             <p className="body-sm mb-4">
               {todayMins === 0
                 ? "ما بدأت اليوم — جلسة وحدة تكسر الصفر."
+                : todayPct >= 100
+                ? `أنجزت ${todayMins} دقيقة — تجاوزت هدف اليوم 🎯`
                 : `${todayMins} دقيقة من هدف ${DAILY_TARGET} دقيقة.`}
             </p>
-            <Link href="/orbit" className="btn-primary block text-center" style={{ textDecoration: "none" }}>
-              ابدأ جلسة أوربت
+
+            {/* الإجراء الواحد — ابدأ جلسة (يلمّح لمادة الجدول إن وُجدت) */}
+            <Link href="/orbit" className="btn-primary block text-center text-[18px]" style={{ textDecoration: "none" }}>
+              {nextStudySubject ? `▶ ابدأ: ${nextStudySubject}` : "▶ ابدأ جلسة الآن"}
             </Link>
+            {!hasTodaySchedule && (
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("darb:openDuirb"))}
+                className="w-full mt-2 py-2.5 rounded-2xl font-bold text-[15px] transition active:scale-[0.98]"
+                style={{ background: "transparent", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
+                🤖 أو ابنِ خطة اليوم مع دويرب
+              </button>
+            )}
           </section>
         );
       }
@@ -706,25 +719,27 @@ export default function DashboardPage() {
       case "tools":
         return (
           <section>
-            <p className="eyebrow mb-2.5 px-1">أسرع وصول</p>
+            <p className="eyebrow mb-2.5 px-1">أدوات درب</p>
             <div className="grid grid-cols-2 gap-2.5">
               {([
-                { icon: "⏱️", label: "ابدأ جلسة",  href: "/orbit", event: null },
-                { icon: "🤖", label: "خطة ذكية",   href: null,    event: "darb:openDuirb" },
-                { icon: "📄", label: "حلل ملف",    href: null,    event: "darb:openDuirbFile" },
-                { icon: "⚠️", label: "أضف خطأ",   href: "/vault", event: null },
-              ] as { icon: string; label: string; href: string | null; event: string | null }[]).map((a) => {
-                const cls = "card flex flex-col items-center justify-center py-5 gap-2 text-center transition active:scale-[0.96] glow-card-hover w-full";
+                { icon: "🤖", label: "دويرب",          desc: "خطط ذكية وتحليل ملفاتك", href: null,      event: "darb:openDuirb", accent: "var(--accent)" },
+                { icon: "⏱️", label: "أوربت",          desc: "جلسات تركيز ٥٠/١٠",      href: "/orbit",  event: null,             accent: "var(--accent-hi)" },
+                { icon: "⚠️", label: "أخطائي وبطاقاتي", desc: "تعلّم من غلطك وراجعه",   href: "/vault",  event: null,             accent: "var(--danger)" },
+                { icon: "🗺️", label: "مساري",          desc: "تقدّمك في المنهج",       href: "/roadmap", event: null,            accent: "var(--gold)" },
+              ] as { icon: string; label: string; desc: string; href: string | null; event: string | null; accent: string }[]).map((a) => {
+                const cls = "card flex flex-col items-start py-4 px-4 gap-1.5 text-right transition active:scale-[0.97] glow-card-hover w-full";
+                const style = { minHeight: "108px", border: `1px solid color-mix(in srgb, ${a.accent} 22%, var(--ring))` };
                 const inner = (
                   <>
-                    <span className="text-[30px] leading-none">{a.icon}</span>
-                    <p className="font-extrabold text-[15px]" style={{ color: "var(--text)" }}>{a.label}</p>
+                    <span className="text-[26px] leading-none">{a.icon}</span>
+                    <p className="font-extrabold text-[16px] mt-0.5" style={{ color: "var(--text)" }}>{a.label}</p>
+                    <p className="text-[12.5px] leading-snug" style={{ color: "var(--text-muted)" }}>{a.desc}</p>
                   </>
                 );
                 return a.href ? (
-                  <Link key={a.label} href={a.href} className={cls} style={{ textDecoration: "none", minHeight: "100px" }}>{inner}</Link>
+                  <Link key={a.label} href={a.href} className={cls} style={{ ...style, textDecoration: "none" }}>{inner}</Link>
                 ) : (
-                  <button key={a.label} onClick={() => window.dispatchEvent(new CustomEvent(a.event!))} className={cls} style={{ minHeight: "100px" }}>{inner}</button>
+                  <button key={a.label} onClick={() => window.dispatchEvent(new CustomEvent(a.event!))} className={cls} style={style}>{inner}</button>
                 );
               })}
             </div>
@@ -836,18 +851,29 @@ export default function DashboardPage() {
 
       {/* ═══ القبة ═══ */}
       <Dome compact>
-        <div className="flex items-start justify-between mb-2">
-          <div>
-            <p className="title-lg text-right mb-1" style={{ color: "var(--text)" }}>
-              أهلاً، {user ? user.name : <span className="skeleton" style={{ width: "90px", height: "1em", verticalAlign: "middle" }} />}
-            </p>
-            <p className="text-[17px] font-semibold text-right" style={{ color: "var(--text-muted)" }}>
-              {greeting}
-            </p>
-            <p className="text-[13px] font-bold text-right mt-1" style={{ color: "var(--accent-light)" }}>
-              {heroMsg}
-            </p>
-          </div>
+        <p className="title-lg text-right" style={{ color: "var(--text)" }}>
+          أهلاً، {user ? user.name : <span className="skeleton" style={{ width: "90px", height: "1em", verticalAlign: "middle" }} />}
+        </p>
+        <p className="text-[15px] font-semibold text-right mb-3" style={{ color: "var(--text-muted)" }}>
+          {greeting}
+        </p>
+
+        {/* ── البطل: عدّاد الاختبار الأقرب — يُعرض هنا مرة واحدة فقط ── */}
+        <div className="rounded-2xl px-4 py-3 mb-3 text-right"
+          style={{
+            background: `color-mix(in srgb, ${examUrgentColor} 12%, transparent)`,
+            border: `1px solid color-mix(in srgb, ${examUrgentColor} 30%, transparent)`,
+          }}>
+          {nearestExam !== null && nearestExam.days > 1 ? (
+            <div className="flex items-baseline justify-end gap-2">
+              <span className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>
+                يوم على {nearestExam.label || "اختبارك"}
+              </span>
+              <span className="num-hero text-[30px] leading-none" style={{ color: examUrgentColor }}>{nearestExam.days}</span>
+            </div>
+          ) : (
+            <p className="text-[16px] font-black" style={{ color: examUrgentColor }}>{heroMsg}</p>
+          )}
         </div>
 
         <div className="flex items-center justify-between">
@@ -896,71 +922,41 @@ export default function DashboardPage() {
       {/* ═══ المحتوى ═══ */}
       <div className="page-content mt-4">
 
-        {/* تنبيهات ثابتة (لا تُرتّب) */}
-        {!editMode && streak > 0 && todayMins === 0 && (time?.getHours() ?? 0) >= 17 && (
-          <Link href="/orbit" className="rise block rounded-2xl px-4 py-3.5 transition active:scale-[0.98]"
+        {/* خطوتك التالية — نداء واحد ذكي (أعلى أولوية فقط) */}
+        {!editMode && topNudge && (
+          <Link href={topNudge.href} className="rise block rounded-2xl px-4 py-3.5 transition active:scale-[0.98]"
             style={{
-              background: "color-mix(in srgb, #EF4444 9%, transparent)",
-              border: "1px solid color-mix(in srgb, #EF4444 28%, transparent)",
-              textDecoration: "none",
-            }}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[15px] font-black" style={{ color: "#EF4444" }}>ستريك {streak} يوم بخطر 🔥</p>
-                <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>جلسة وحدة قبل منتصف الليل تنقذه</p>
-              </div>
-              <span className="text-lg font-black" style={{ color: "#EF4444" }}>←</span>
-            </div>
-          </Link>
-        )}
-
-        {!editMode && suggestion && (
-          <Link href={suggestion.href} className="rise block rounded-2xl px-4 py-3.5 transition active:scale-[0.98]"
-            style={{
-              background: `color-mix(in srgb, ${suggestion.color} 9%, transparent)`,
-              border: `1px solid color-mix(in srgb, ${suggestion.color} 28%, transparent)`,
+              background: `color-mix(in srgb, ${topNudge.color} 9%, transparent)`,
+              border: `1px solid color-mix(in srgb, ${topNudge.color} 28%, transparent)`,
               textDecoration: "none",
             }}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-[13px] font-bold mb-0.5" style={{ color: "var(--text-muted)" }}>خطوتك التالية</p>
-                <p className="text-[15px] font-black" style={{ color: suggestion.color }}>{suggestion.text}</p>
-                <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>{suggestion.sub}</p>
+                <p className="text-[15px] font-black" style={{ color: topNudge.color }}>{topNudge.text}</p>
+                <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>{topNudge.sub}</p>
               </div>
-              <span className="text-lg font-black" style={{ color: suggestion.color }}>←</span>
+              <span className="text-lg font-black" style={{ color: topNudge.color }}>←</span>
             </div>
           </Link>
         )}
 
-        {!editMode && dueCards > 0 && (
-          <Link href="/review" className="rise block rounded-2xl px-4 py-3.5 transition active:scale-[0.98]"
-            style={{
-              background: "color-mix(in srgb, var(--success) 8%, transparent)",
-              border: "1px solid color-mix(in srgb, var(--success) 25%, transparent)",
-              textDecoration: "none",
-            }}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[15px] font-black" style={{ color: "var(--success)" }}>{dueCards} بطاقة مراجعة مستحقة اليوم</p>
-                <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>راجعها الحين — قبل ما تنسى</p>
-              </div>
-              <span className="text-lg font-black" style={{ color: "var(--success)" }}>←</span>
-            </div>
-          </Link>
-        )}
-
-        {/* شريط التخصيص */}
-        <div className="flex justify-between items-center">
+        {/* شريط التخصيص — واضح: من ما عجبه الترتيب يغيّره */}
+        <div className="flex justify-between items-center gap-3">
           {editMode ? (
             <p className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>
               اسحب ⠿ للترتيب · اضغط ✕ للإخفاء
             </p>
-          ) : <span />}
+          ) : (
+            <p className="text-[13px] font-semibold" style={{ color: "var(--text-muted)" }}>
+              ما عجبك الترتيب؟ رتّب صفحتك على ذوقك
+            </p>
+          )}
           <button onClick={() => { if (editMode) saveDashConfig({ layout }); setEditMode((v) => !v); }}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] font-bold transition active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[14px] font-bold transition active:scale-95 flex-shrink-0"
             style={editMode
               ? { background: "var(--accent)", color: "white", border: "none" }
-              : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+              : { background: "color-mix(in srgb, var(--accent) 12%, var(--surface2))", color: "var(--accent-light)", border: "1px solid color-mix(in srgb, var(--accent) 30%, transparent)" }}>
             <span>{editMode ? "✓" : "⚙"}</span>
             <span>{editMode ? "تم" : "تخصيص"}</span>
           </button>
@@ -968,8 +964,17 @@ export default function DashboardPage() {
 
         {/* الأقسام القابلة للترتيب */}
         {visibleItems.map((item) => (
+          <div key={`wrap-${item.id}`} className="contents">
+          {/* عنوان مجموعة — يظهر فوق أول قسم في المجموعة (خارج وضع التخصيص) */}
+          {!editMode && GROUP_LABEL[item.id] && (
+            <div className="flex items-center gap-3 pt-2 pb-0.5">
+              <span className="text-[12px] font-bold whitespace-nowrap" style={{ color: "var(--text-muted)" }}>
+                {GROUP_LABEL[item.id]}
+              </span>
+              <span className="flex-1 h-px" style={{ background: "var(--border)" }} />
+            </div>
+          )}
           <div
-            key={item.id}
             ref={(el) => { itemRefs.current[item.id] = el; }}
             className={`relative ${dragId === item.id ? "z-50" : ""}`}
             style={
@@ -1034,6 +1039,7 @@ export default function DashboardPage() {
                 </button>
               </>
             )}
+          </div>
           </div>
         ))}
 

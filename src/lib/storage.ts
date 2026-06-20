@@ -446,10 +446,13 @@ export const DASH_SECTION_META: Record<DashSectionId, { label: string; desc: str
   map:         { label: "خريطة السعودية",   desc: "توزيع الطلاب على مناطق المملكة" },
 };
 
-/* يومك أولاً — ترتيب الأقسام حسب الأولوية */
+/* الانطباع الأول — ترتيب الأقسام حسب رحلة المستخدم الجديد:
+   ١) يومك (البطل: تقدّم + إجراء واحد)  ٢) أدوات درب (اكتشاف الميزات)
+   ٣) التقدّم (الجدول/دويرب/أسبوعي/إحصائيات/مسارات)  ٤) مجتمع وإضافات */
 const DASH_DEFAULT_ORDER: DashSectionId[] = [
-  "today", "ai", "schedule", "track", "weekly",
-  "stats", "tools", "quote", "community", "certificate",
+  "today", "tools",
+  "schedule", "ai", "weekly", "stats", "track",
+  "quote", "community", "certificate",
   "studiers", "map",
 ];
 
@@ -461,6 +464,7 @@ function defaultLayout(): DashItem[] {
 const DASH_CONFIG_KEY = "darb_dash_config";
 const DASH_SCHED2_KEY = "darb_dash_sched_v2"; // علم ترحيل لمرة واحدة
 const DASH_TODAY_FIRST_KEY = "darb_dash_today_first_v1"; // ترحيل: يومك أولاً + دويرب ثانياً
+const DASH_HERO_V2_KEY = "darb_dash_hero_v2"; // ترحيل: ترتيب «الانطباع الأول» الجديد
 
 /* ترحيل لمرة واحدة: انقل «جدول اليوم» ليصير ثاني عنصر — يُحترم تخصيص المستخدم بعدها */
 function migrateScheduleSecond(layout: DashItem[]): DashItem[] {
@@ -496,11 +500,30 @@ function migrateTodayFirst(layout: DashItem[]): DashItem[] {
   }
 }
 
+/* ترحيل لمرة واحدة: أعد ترتيب الأقسام إلى ترتيب «الانطباع الأول» الجديد —
+   نحافظ على إظهار/إخفاء كل قسم كما خصّصه المستخدم، ونغيّر الترتيب فقط. */
+function migrateHeroOrder(layout: DashItem[]): DashItem[] {
+  try {
+    if (localStorage.getItem(DASH_HERO_V2_KEY)) return layout;
+    localStorage.setItem(DASH_HERO_V2_KEY, "1");
+    const visById = new Map(layout.map((l) => [l.id, l.visible]));
+    const hiddenByDefault = new Set<DashSectionId>(["studiers", "map"]);
+    const out: DashItem[] = DASH_DEFAULT_ORDER.map((id) => ({
+      id,
+      visible: visById.has(id) ? visById.get(id)! : !hiddenByDefault.has(id),
+    }));
+    localStorage.setItem(DASH_CONFIG_KEY, JSON.stringify({ layout: out }));
+    return out;
+  } catch {
+    return layout;
+  }
+}
+
 export function loadDashConfig(): DashConfig {
   if (typeof window === "undefined") return { layout: defaultLayout() };
   try {
     const raw = localStorage.getItem(DASH_CONFIG_KEY);
-    if (!raw) return { layout: migrateTodayFirst(migrateScheduleSecond(defaultLayout())) };
+    if (!raw) return { layout: migrateHeroOrder(migrateTodayFirst(migrateScheduleSecond(defaultLayout()))) };
     const parsed = JSON.parse(raw);
 
     // الصيغة الجديدة: { layout: [...] } — نُكمل أي قسم ناقص ونُسقط المجهول
@@ -514,7 +537,7 @@ export function loadDashConfig(): DashConfig {
         ...known,
         ...DASH_DEFAULT_ORDER.filter((id) => !seen.has(id)).map((id) => ({ id, visible: !hiddenByDefault.has(id) })),
       ];
-      return { layout: migrateTodayFirst(migrateScheduleSecond(merged)) };
+      return { layout: migrateHeroOrder(migrateTodayFirst(migrateScheduleSecond(merged))) };
     }
 
     // ترحيل من الصيغة القديمة: { showStats, showWeekly, showSchedule, showTools, showAI }
@@ -525,7 +548,7 @@ export function loadDashConfig(): DashConfig {
       tools: parsed.showTools,
       ai: parsed.showAI,
     };
-    return { layout: migrateTodayFirst(migrateScheduleSecond(DASH_DEFAULT_ORDER.map((id) => ({ id, visible: oldVis[id] ?? true })))) };
+    return { layout: migrateHeroOrder(migrateTodayFirst(migrateScheduleSecond(DASH_DEFAULT_ORDER.map((id) => ({ id, visible: oldVis[id] ?? true }))))) };
   } catch {
     return { layout: defaultLayout() };
   }
