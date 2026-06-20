@@ -7,6 +7,8 @@ import CloudSync from "@/components/CloudSync";
 import AuthGate from "@/components/AuthGate";
 import Telemetry from "@/components/Telemetry";
 import PageViewTracker from "@/components/PageViewTracker";
+import DuirbFloat from "@/components/DuirbFloat";
+import DuirbTour from "@/components/DuirbTour";
 
 /* الخطوط تُستضاف ذاتياً عبر next/font — صفر طلبات خارجية، بلا انزياح، وتحميل أسرع بكثير */
 const cairo = Cairo({
@@ -79,6 +81,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <CloudSync />
         <Telemetry />
         <PageViewTracker />
+        <DuirbFloat />
+        <DuirbTour />
         <Analytics />
         <SpeedInsights />
       </body>

@@ -7,8 +7,7 @@ import PageGuide from "@/components/PageGuide";
 import { getTrack, TRACKS, type TrackId } from "@/lib/tracks";
 import { fmtHour } from "@/lib/utils";
 import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, saveExamDate, loadDashConfig, saveDashConfig, loadTrackExamDates, saveTrackExamDates, DASH_SECTION_META, localDayKey, type DarbUser, type ScheduleEvent, type DashItem, type DashSectionId, saveEvents } from "@/lib/storage";
-import DashAI from "@/components/DashAI";
-import FileAnalyzer from "@/components/FileAnalyzer";
+import DuirbHub from "@/components/DuirbHub";
 import CalendarExport from "@/components/CalendarExport";
 import { useFlag } from "@/lib/flags";
 import { syncUser } from "@/lib/firestore";
@@ -585,13 +584,10 @@ export default function DashboardPage() {
 
       case "ai":
         return (
-          <div className="flex flex-col gap-3">
-            <DashAI
-              subjects={allSubjects.map((s) => s.name)}
-              onOpenScheduler={(tab, prefill) => { setSchedTab(tab); setSchedPrefill(prefill ?? ""); setSchedOpen(true); }}
-            />
-            <FileAnalyzer subjects={allSubjects.map((s) => s.name)} />
-          </div>
+          <DuirbHub
+            subjects={allSubjects}
+            onOpenScheduler={(tab, prefill) => { setSchedTab(tab); setSchedPrefill(prefill ?? ""); setSchedOpen(true); }}
+          />
         );
 
       case "weekly":
