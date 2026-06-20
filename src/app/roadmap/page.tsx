@@ -8,8 +8,6 @@ import PageGuide from "@/components/PageGuide";
 import TopicExtractor from "@/components/TopicExtractor";
 import LeaksPlanner from "@/components/LeaksPlanner";
 import ExamCoordPanel from "@/components/ExamCoordPanel";
-import SkillGraph from "@/components/SkillGraph";
-import { hasSkillTree } from "@/lib/globalSkills";
 import { RAKAN_SCHEDULE } from "@/lib/constants";
 import { getTrack, subjectColor, TRACKS, type Track, type TrackId } from "@/lib/tracks";
 import { fmtHour } from "@/lib/utils";
@@ -93,38 +91,69 @@ function ReviewBanner({ label, onDismiss }: { label: string; onDismiss: () => vo
 }
 
 /* ─── PhaseSection ─── */
-function PhaseSection({ title, num, pct, complete, unlocked, color, accentText, lockedMsg, children }: {
+function PhaseSection({ title, num, pct, complete, unlocked, color, accentText, lockedMsg, open, onToggle, children }: {
   title: string; num: number; pct: number; complete: boolean;
   unlocked: boolean; color: string; accentText: string;
-  lockedMsg?: string; children?: ReactNode;
+  lockedMsg?: string; open?: boolean; onToggle?: () => void; children?: ReactNode;
 }) {
+  /* مقفلة → شريط رفيع فقط */
+  if (!unlocked) {
+    return (
+      <div className="px-5 mb-3">
+        <div className="flex items-center gap-3 rounded-2xl px-4 py-3"
+          style={{ background: "var(--surface)", border: "1.5px dashed var(--border)" }}>
+          <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs flex-shrink-0"
+            style={{ background: "var(--surface2)", color: "var(--text-muted)", border: "1.5px solid var(--border)" }}>🔒</div>
+          <div className="flex-1 min-w-0">
+            <span className="text-[11px] font-semibold" style={{ color: "var(--text-muted)" }}>المرحلة {num} من ٣</span>
+            <p className="font-black text-[15px] leading-tight" style={{ color: "var(--text-muted)" }}>{title}</p>
+          </div>
+          {lockedMsg && <span className="text-[12px] font-bold text-left" style={{ color: "var(--text-muted)" }}>{lockedMsg}</span>}
+        </div>
+      </div>
+    );
+  }
+
+  /* مكتملة ومطويّة → عنوان صغير قابل للفتح */
+  if (complete && !open) {
+    return (
+      <div className="px-5 mb-3">
+        <button onClick={onToggle}
+          className="w-full flex items-center gap-3 rounded-2xl px-4 py-3 transition active:scale-[0.99]"
+          style={{ background: "color-mix(in srgb, #10B981 8%, var(--surface))", border: "1.5px solid color-mix(in srgb, #10B981 30%, transparent)" }}>
+          <div className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-black flex-shrink-0"
+            style={{ background: "#10B981", color: "white" }}>✓</div>
+          <div className="flex-1 min-w-0 text-right">
+            <span className="text-[11px] font-semibold" style={{ color: "var(--text-muted)" }}>المرحلة {num} من ٣</span>
+            <p className="font-black text-[15px] leading-tight" style={{ color: "var(--text)" }}>{title} — مكتمل</p>
+          </div>
+          <span className="text-[13px] font-black flex-shrink-0" style={{ color: "#10B981" }}>عرض ▾</span>
+        </button>
+      </div>
+    );
+  }
+
+  /* مفتوحة (الجارية أو مكتملة فُتحت يدوياً) */
   return (
     <div className="px-5 mb-5">
-      <div className="flex items-center gap-3 mb-2.5">
+      <button onClick={complete ? onToggle : undefined} disabled={!complete}
+        className="w-full flex items-center gap-3 mb-2.5 text-right">
         <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black flex-shrink-0"
-          style={complete ? { background: "#10B981", color: "white" }
-            : unlocked ? { background: color, color: "white" }
-            : { background: "var(--surface2)", color: "var(--text-muted)", border: "1.5px solid var(--border)" }}>
+          style={complete ? { background: "#10B981", color: "white" } : { background: color, color: "white" }}>
           {complete ? "✓" : num}
         </div>
-        <div className="flex flex-col flex-1">
+        <div className="flex flex-col flex-1 min-w-0">
           <span className="text-[11px] font-semibold" style={{ color: "var(--text-muted)" }}>المرحلة {num} من ٣</span>
-          <p className="font-black text-base leading-tight" style={{ color: unlocked ? "var(--text)" : "var(--text-muted)" }}>{title}</p>
+          <p className="font-black text-base leading-tight" style={{ color: "var(--text)" }}>{title}</p>
         </div>
-        <span className="font-mono-nums font-black text-[17px]" style={{ color: unlocked ? accentText : "var(--text-muted)" }}>
-          {unlocked ? `${pct}%` : "—"}
-        </span>
-      </div>
+        <span className="font-mono-nums font-black text-[17px] flex-shrink-0" style={{ color: accentText }}>{pct}%</span>
+        {complete && <span className="text-[13px] font-black flex-shrink-0" style={{ color: "#10B981" }}>▴</span>}
+      </button>
       <div className="h-2.5 bg-[var(--border)] rounded-full overflow-hidden mb-3">
         <div className="h-full rounded-full transition-all duration-700"
-          style={{ width: (unlocked ? pct : 0) + "%", background: color }} />
+          style={{ width: pct + "%", background: color }} />
       </div>
-      {!unlocked ? (
-        <div className="rounded-2xl py-5 flex items-center justify-center"
-          style={{ background: "var(--surface)", border: "1.5px dashed var(--border)" }}>
-          <span className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>{lockedMsg}</span>
-        </div>
-      ) : <div>{children}</div>}
+      <div>{children}</div>
     </div>
   );
 }
@@ -392,6 +421,19 @@ export default function RoadmapPage() {
   const gradeOrSkipped = hasGrade || skipped;
 
   const displayTasreebatPct = examPast && hasGrade ? 100 : tasreebatPct;
+
+  /* ── المرحلة الجارية فقط مفتوحة ──
+     النشطة = أول مرحلة مفتوحة وغير مكتملة. المكتملة تنطوي (يمكن فتحها يدوياً)،
+     والمقفلة تظهر شريطاً رفيعاً. يبسّط الخريطة فلا تتكدّس المراحل. */
+  const activePhase = !taseesComplete ? 1 : !tadreebComplete ? 2 : 3;
+  const [openCompleted, setOpenCompleted] = useState<Set<number>>(new Set());
+  const togglePhase = (n: number) =>
+    setOpenCompleted((prev) => {
+      const next = new Set(prev);
+      if (next.has(n)) next.delete(n); else next.add(n);
+      return next;
+    });
+  const isPhaseOpen = (n: number) => n === activePhase || openCompleted.has(n);
 
   /* المرحلة التالية — تطلع أوتوماتيك لما يدخل الدرجة أو يتجاوزها */
   const shouldAutoOpenNextStep = examPast && gradeOrSkipped && !examFlow.plan;
@@ -823,20 +865,6 @@ export default function RoadmapPage() {
         <ExamCoordPanel tracks={activeTrackIds.map((tid) => TRACKS.find((t) => t.id === tid)?.title ?? String(tid))} />
       )}
 
-      {/* خريطة المهارات — للمسارات التي لها شجرة (قدرات/تحصيلي) */}
-      {hasSkillTree(track.id) && (
-        <div className="px-5 mb-4">
-          <details className="rounded-2xl p-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-            <summary className="cursor-pointer font-black text-[15px] flex items-center gap-2" style={{ color: "var(--text)" }}>
-              🧭 خريطة المهارات
-            </summary>
-            <div className="mt-4">
-              <SkillGraph track={track.id} />
-            </div>
-          </details>
-        </div>
-      )}
-
       {/* بطاقة خريطة المهارات الشاملة */}
       <div className="px-5 mb-4">
         <Link href="/skills" className="flex items-center justify-between rounded-2xl px-4 py-3 transition active:scale-[0.98]"
@@ -920,7 +948,8 @@ export default function RoadmapPage() {
       {testTab !== "all" && (<>
       {/* ══ التأسيس ══ */}
       <PhaseSection title="التأسيس" num={1} pct={taseesPct} complete={taseesComplete}
-        unlocked={true} color="var(--accent)" accentText="var(--accent-light)">
+        unlocked={true} color="var(--accent)" accentText="var(--accent-light)"
+        open={isPhaseOpen(1)} onToggle={() => togglePhase(1)}>
         {TASEES_CHECKPOINTS.map((cp) =>
           taseesPct >= cp.pct && !stageReviews[cp.key]
             ? <ReviewBanner key={cp.key} label={cp.label} onDismiss={() => updReviews({ [cp.key]: true })} />
@@ -964,7 +993,8 @@ export default function RoadmapPage() {
       {/* ══ التدريب ══ */}
       <PhaseSection title="التدريب" num={2} pct={tadreebPct} complete={tadreebComplete}
         unlocked={tadreebUnlocked} color="#8B5CF6" accentText="#A78BFA"
-        lockedMsg="يُفتح بعد إكمال التأسيس 100%">
+        lockedMsg="يُفتح بعد إكمال التأسيس 100%"
+        open={isPhaseOpen(2)} onToggle={() => togglePhase(2)}>
         {TADREEB_CHECKPOINTS.map((cp) =>
           tadreebPct >= cp.pct && !stageReviews[cp.key]
             ? <ReviewBanner key={cp.key} label={cp.label} onDismiss={() => updReviews({ [cp.key]: true })} />
@@ -1016,7 +1046,8 @@ export default function RoadmapPage() {
       <PhaseSection title="التسريبات" num={3} pct={displayTasreebatPct}
         complete={displayTasreebatPct === 100}
         unlocked={tasreebatUnlocked} color="var(--gold)" accentText="var(--gold-light)"
-        lockedMsg="يُفتح بعد إكمال التدريب 100%">
+        lockedMsg="يُفتح بعد إكمال التدريب 100%"
+        open={isPhaseOpen(3)} onToggle={() => togglePhase(3)}>
 
         {/* مخطّط التسريبات: ملف PDF ← صفحات/يوم */}
         {!examPast && (
@@ -1186,30 +1217,23 @@ export default function RoadmapPage() {
                 );
               })()}
 
+              {/* التفاصيل تظهر بالتعديل فقط — هنا ملخّص بسيط لا يزحم الطالب */}
               {todayEvents.length === 0 ? (
                 <div className="flex items-center justify-center gap-2 rounded-2xl py-5"
-                  style={{ background: "var(--surface2)", border: "1.5px dashed var(--border)", minHeight: "64px" }}>
-                  <span className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>
+                  style={{ background: "var(--surface2)", border: "1.5px dashed var(--border)", minHeight: "56px" }}>
+                  <span className="text-[15px] font-bold" style={{ color: "var(--text-muted)" }}>
                     لا يوجد جدول اليوم — اضغط «مساعد دويرب» تحت
                   </span>
                 </div>
               ) : (
-                <div className="flex flex-col gap-2">
-                  {todayEvents.map((ev) => (
-                    <div key={ev.id} className="flex items-center gap-3 py-2.5 border-b border-[var(--border)] last:border-0">
-                      <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                        style={{ background: ev.type === "study" ? "var(--accent-light)" : "var(--danger)" }} />
-                      <span className="text-[17px] font-semibold flex-1" style={{ color: "var(--text)" }}>
-                        {ev.type === "study" ? (ev.subject ?? "") : (ev.label ?? "")}
-                      </span>
-                      <span className="text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>
-                        {fmtHour(ev.fromHour)} → {fmtHour(ev.toHour)}
-                      </span>
-                      <button onClick={() => { const updated = events.filter((e) => e.id !== ev.id); setEvents(updated); saveEvents(updated); }}
-                        className="text-[var(--danger)] text-base px-2 min-h-[44px] flex-shrink-0" aria-label="حذف">✕</button>
-                    </div>
-                  ))}
-                </div>
+                <button onClick={() => { setSchedTab("manual"); setSchedulerDate(todayStr); }}
+                  className="w-full flex items-center justify-between gap-2 rounded-2xl px-4 py-3 transition active:scale-[0.99]"
+                  style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                  <span className="text-[14px] font-bold" style={{ color: "var(--text)" }}>
+                    {todayEvents.filter((e) => e.type === "study").length} جلسة اليوم
+                  </span>
+                  <span className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>عرض وتعديل ←</span>
+                </button>
               )}
               <div className="flex gap-2 mt-3">
                 <button onClick={() => { setSchedTab("manual"); setSchedulerDate(todayStr); }}

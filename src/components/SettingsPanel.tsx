@@ -134,11 +134,11 @@ export default function SettingsButton() {
 
         <p className="title-md mb-5" style={{ color: "var(--text)" }}>الإعدادات</p>
 
-        {/* الخصوصية */}
+        {/* الخصوصية — زر بسيط يصير أحمر للخاص (بلا أنميشن منزلق) */}
         <p className="label mb-3">الخصوصية</p>
         <div className="rounded-2xl px-4 py-4 mb-6 flex items-center justify-between gap-3"
           style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-          <div>
+          <div className="min-w-0">
             <p className="font-bold text-[15px]" style={{ color: "var(--text)" }}>بروفايل خاص</p>
             <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
               {isPrivate ? "لا يظهر للآخرين عند البحث" : "يمكن للآخرين رؤية بروفايلك"}
@@ -146,14 +146,11 @@ export default function SettingsButton() {
           </div>
           <button
             onClick={togglePrivacy}
-            dir="ltr"
-            className="relative w-12 h-6 rounded-full transition-colors duration-200 flex-shrink-0"
-            style={{ background: isPrivate ? "#EF4444" : "var(--border)" }}
-          >
-            <span
-              className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
-              style={{ transform: isPrivate ? "translateX(1.5rem)" : "translateX(0.125rem)" }}
-            />
+            className="px-4 py-2.5 rounded-xl font-black text-[14px] flex-shrink-0 transition active:scale-95"
+            style={isPrivate
+              ? { background: "#EF4444", color: "#fff", border: "1.5px solid #EF4444" }
+              : { background: "transparent", color: "var(--text-muted)", border: "1.5px solid var(--border)" }}>
+            {isPrivate ? "خاص ●" : "عام"}
           </button>
         </div>
 
