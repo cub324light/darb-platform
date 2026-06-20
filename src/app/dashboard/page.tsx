@@ -16,6 +16,7 @@ import Calendar from "@/components/Calendar";
 import SaudiMap from "@/components/SaudiMap";
 import { NumberTicker } from "@/components/ui/number-ticker";
 import { BorderBeam } from "@/components/ui/border-beam";
+import ProfileButton from "@/components/Profile";
 
 const DAILY_TARGET = 200;
 
@@ -251,8 +252,8 @@ export default function DashboardPage() {
       : nearestExam.days === 1 ? `اختبار${nearestExam.label ? " " + nearestExam.label : "ك"} بكرة — راجع ونم بدري`
       : `باقي ${nearestExam.days} يوم على ${nearestExam.label || "اختبارك"}`)
     : todayPct >= 100
-    ? `أكملت هدف اليوم ✓`
-    : `أكمل ${Math.max(1, DAILY_TARGET - todayMins)} دقيقة اليوم للوصول لهدفك`;
+    ? `أكملت هدف المذاكرة اليومي (${DAILY_TARGET} دقيقة) ✓`
+    : `هدف اليوم ${DAILY_TARGET} دقيقة مذاكرة — باقي ${Math.max(1, DAILY_TARGET - todayMins)} دقيقة`;
 
   /* مادة الجلسة القادمة من جدول اليوم — لتلميح زر البطل */
   const nextStudySubject = (() => {
@@ -876,13 +877,20 @@ export default function DashboardPage() {
       ]} />
 
       {/* ═══ القبة ═══ */}
-      <Dome compact>
-        <p className="title-lg text-right" style={{ color: "var(--text)" }}>
-          أهلاً، {user ? user.name : <span className="skeleton" style={{ width: "90px", height: "1em", verticalAlign: "middle" }} />}
-        </p>
-        <p className="text-[15px] font-semibold text-right mb-3" style={{ color: "var(--text-muted)" }}>
-          {greeting}
-        </p>
+      <Dome compact hideProfile>
+        {/* اسم الترحيب = زر البروفايل */}
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent("darb:openProfile"))}
+          className="w-full text-right transition active:scale-[0.99]"
+          aria-label="افتح البروفايل">
+          <p className="title-lg" style={{ color: "var(--text)" }}>
+            أهلاً، {user ? user.name : <span className="skeleton" style={{ width: "90px", height: "1em", verticalAlign: "middle" }} />}
+            <span className="text-[16px] mr-1.5" style={{ color: "var(--text-muted)" }}>⌄</span>
+          </p>
+          <p className="text-[15px] font-semibold mb-3" style={{ color: "var(--text-muted)" }}>
+            {greeting}
+          </p>
+        </button>
 
         {/* ── البطل: عدّاد الاختبار الأقرب — يُعرض هنا مرة واحدة فقط ── */}
         <div className="rounded-2xl px-4 py-3 mb-3 text-right"
@@ -902,25 +910,24 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-baseline gap-1.5">
-            {silver > 0
-              ? <NumberTicker value={silver} className="font-mono-nums font-black text-3xl leading-none" style={{ color: "var(--gold-light)" }} />
-              : <span className="font-mono-nums font-black text-3xl leading-none" style={{ color: "var(--gold-light)" }}>0</span>}
-            <span className="text-sm font-bold" style={{ color: "var(--gold)" }}>فضة</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="dome-chip">
-              <span className={`text-sm ${streak > 0 ? "streak-fire" : "opacity-40"}`}>🔥</span>
-              <span className="font-mono-nums font-bold text-sm" style={{ color: "var(--gold-light)" }}>{streak}</span>
+        {/* ثلاث دوائر متساوية: الفضة · الستريك · اليوم */}
+        <div className="grid grid-cols-3 gap-2.5">
+          {[
+            { icon: "🪙", val: silver, label: "فضة", color: "var(--gold-light)", fire: false },
+            { icon: "🔥", val: streak, label: "ستريك", color: streak > 0 ? "var(--gold)" : "var(--text-muted)", fire: streak > 0 },
+            { icon: "📈", val: `${todayPct}%`, label: "اليوم", color: "var(--accent-light)", fire: false },
+          ].map((s) => (
+            <div key={s.label} className="rounded-2xl py-3 flex flex-col items-center justify-center gap-0.5"
+              style={{ background: "color-mix(in srgb, var(--surface) 70%, transparent)", border: "1px solid var(--border)" }}>
+              <span className={`text-[18px] leading-none ${s.fire ? "streak-fire" : ""}`}>{s.icon}</span>
+              <span className="font-mono-nums font-black text-[22px] leading-none mt-1" style={{ color: s.color }}>{s.val}</span>
+              <span className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>{s.label}</span>
             </div>
-            <div className="dome-chip">
-              <span className="text-[17px] font-semibold" style={{ color: "var(--text-dim)" }}>اليوم</span>
-              <span className="font-mono-nums font-bold text-sm" style={{ color: "var(--text)" }}>{todayPct}%</span>
-            </div>
-          </div>
+          ))}
         </div>
       </Dome>
+      {/* لوحة البروفايل (تُفتح من اسم الترحيب) */}
+      <ProfileButton asTrigger={false} />
 
       {/* ── تلميح الفضة والستريك (أول زيارة) ── */}
       {!statsTipSeen && (

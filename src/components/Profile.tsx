@@ -33,7 +33,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
   );
 }
 
-export default function ProfileButton() {
+export default function ProfileButton({ asTrigger = true }: { asTrigger?: boolean }) {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<DarbUser | null>(null);
   const [editName, setEditName] = useState("");
@@ -53,6 +53,13 @@ export default function ProfileButton() {
   // نطاق درجة الاختبار المختار: undefined=غير معروف · null=بلا درجة · كائن=نطاق
   const resRange = resExam ? scoreRangeForTitle(resExam) : undefined;
   const examHasNoScore = resRange === null;
+
+  /* فتح البروفايل عن بُعد — يستخدمه اسم الترحيب في الرئيسية */
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener("darb:openProfile", handler);
+    return () => window.removeEventListener("darb:openProfile", handler);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -348,6 +355,9 @@ export default function ProfileButton() {
     </div>,
     document.body
   );
+
+  /* وضع بلا زر — اللوحة فقط (تُفتح عبر darb:openProfile من اسم الترحيب) */
+  if (!asTrigger) return <>{modal}</>;
 
   return (
     <>

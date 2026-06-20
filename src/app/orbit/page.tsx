@@ -94,6 +94,13 @@ export default function OrbitPage() {
     const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
     return subjectsForTracks(finalIds)[0]?.name ?? "";
   });
+  /* مادة محدّدة مسبقاً عبر ?subject= (من بانر «جدول اليوم» في الخريطة) */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const s = new URLSearchParams(window.location.search).get("subject");
+    if (s && subjects.some((x) => x.name === s)) setSubject(s);
+  }, [subjects]);
+
   const [breakTip] = useState(() => BREAK_TIPS[Math.floor(Math.random() * BREAK_TIPS.length)]);
   const [hideTip, setHideTip] = useState(() =>
     typeof window !== "undefined" && localStorage.getItem("darb_hide_tips") === "1"

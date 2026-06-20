@@ -1142,6 +1142,50 @@ export default function RoadmapPage() {
               <div className="flex items-center justify-between mb-3">
                 <p className="title-md" style={{ color: "var(--text)" }}>جدول اليوم</p>
               </div>
+
+              {/* بانر «الآن/القادمة» — يبيّن وقتك الحالي وكم باقٍ ويبدأ أوربت بالمادة تلقائياً */}
+              {(() => {
+                const study = todayEvents.filter((e) => e.type === "study").sort((a, b) => a.fromHour - b.fromHour);
+                if (study.length === 0) return null;
+                const now = new Date();
+                const nowH = now.getHours() + now.getMinutes() / 60;
+                const current = study.find((e) => nowH >= e.fromHour && nowH < e.toHour);
+                const next = study.find((e) => e.fromHour > nowH);
+                if (!current && !next) {
+                  return (
+                    <div className="rounded-2xl px-4 py-3 mb-3 text-center"
+                      style={{ background: "color-mix(in srgb, var(--success) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--success) 30%, transparent)" }}>
+                      <p className="text-[15px] font-black" style={{ color: "var(--success)" }}>خلّصت جدول اليوم 🎉</p>
+                    </div>
+                  );
+                }
+                const subj = current?.subject ?? next?.subject;
+                const c = subj ? subjectColor(track, subj) : "var(--accent-light)";
+                let line1 = "";
+                if (current) {
+                  line1 = `الآن — حتى ${fmtHour(current.toHour)}`;
+                } else if (next) {
+                  const m = Math.max(1, Math.round((next.fromHour - nowH) * 60));
+                  const when = m >= 60 ? `بعد ${Math.floor(m / 60)} ساعة${m % 60 ? ` و${m % 60} د` : ""}` : `بعد ${m} دقيقة`;
+                  line1 = `القادمة ${when} — ${fmtHour(next.fromHour)}`;
+                }
+                return (
+                  <div className="rounded-2xl px-4 py-3 mb-3 flex items-center gap-3"
+                    style={{ background: `color-mix(in srgb, ${c} 12%, var(--surface2))`, border: `1px solid ${c}44` }}>
+                    <span className="text-[22px]">{current ? "▶️" : "⏭️"}</span>
+                    <div className="flex-1 text-right min-w-0">
+                      <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>{line1}</p>
+                      <p className="text-[16px] font-black truncate" style={{ color: c }}>{subj ?? "مذاكرة"}</p>
+                    </div>
+                    <Link href={`/orbit?subject=${encodeURIComponent(subj ?? "")}`}
+                      className="text-[13px] font-black px-3 py-2 rounded-xl flex-shrink-0"
+                      style={{ background: c, color: "#fff", textDecoration: "none" }}>
+                      ابدأ أوربت ←
+                    </Link>
+                  </div>
+                );
+              })()}
+
               {todayEvents.length === 0 ? (
                 <div className="flex items-center justify-center gap-2 rounded-2xl py-5"
                   style={{ background: "var(--surface2)", border: "1.5px dashed var(--border)", minHeight: "64px" }}>

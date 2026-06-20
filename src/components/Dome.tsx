@@ -28,13 +28,10 @@ function ClockWidget() {
 
   return (
     <button onClick={toggle}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-bold tabular-nums transition active:scale-95"
-      style={{ background: "color-mix(in srgb, var(--text-muted) 10%, transparent)", color: "var(--text-dim)", border: "1px solid var(--border)" }}>
-      <span>{time}</span>
-      <span className="text-[10px] font-black px-1 py-0.5 rounded-md"
-        style={{ background: "color-mix(in srgb, var(--accent) 16%, transparent)", color: "var(--accent-light)" }}>
-        {fmt}
-      </span>
+      className="flex items-center justify-center px-3.5 py-2 rounded-xl text-[16px] font-black tabular-nums transition active:scale-95"
+      style={{ background: "color-mix(in srgb, var(--text-muted) 10%, transparent)", color: "var(--text)", border: "1px solid var(--border)" }}
+      aria-label="الساعة — اضغط لتبديل 12/24">
+      {time}
     </button>
   );
 }
@@ -49,10 +46,12 @@ export default function Dome({
   children,
   compact = false,
   hideControls = false,
+  hideProfile = false,
 }: {
   children: ReactNode;
   compact?: boolean;
   hideControls?: boolean;
+  hideProfile?: boolean;
 }) {
   const [stars] = useState<Star[]>(() =>
     Array.from({ length: compact ? 16 : 30 }).map(() => ({
@@ -130,11 +129,15 @@ export default function Dome({
       {/* ── المحتوى ── */}
       <div className="dome-content" style={{ padding: compact ? "calc(18px + env(safe-area-inset-top)) 18px 16px" : "calc(26px + env(safe-area-inset-top)) 18px 22px" }}>
         {!hideControls && (
-          <div className="flex justify-end items-center gap-2 mb-3">
+          <div className="flex justify-between items-center gap-2 mb-3">
+            {/* يمين: الساعة بارزة */}
             <ClockWidget />
-            <ThemeToggle className="" />
-            <ProfileButton />
-            <SettingsButton />
+            {/* يسار: الإعدادات والثيم (والبروفايل إن لم يُخفَ) */}
+            <div className="flex items-center gap-2">
+              {!hideProfile && <ProfileButton />}
+              <ThemeToggle className="" />
+              <SettingsButton />
+            </div>
           </div>
         )}
         {children}

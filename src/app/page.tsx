@@ -321,13 +321,15 @@ export default function LandingPage() {
               <div className="absolute top-0 left-0 w-full h-0.5 rounded-t-2xl"
                 style={{ background: `linear-gradient(90deg, ${t.color}, transparent)` }} />
               <div className="flex items-center gap-2 mb-1.5">
-                <div className="w-6 h-6 rounded-lg flex items-center justify-center"
-                  style={{ background: `color-mix(in srgb, ${t.color} 14%, transparent)` }}>
-                  <span className="text-sm">{t.icon}</span>
-                </div>
+                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: t.color }} />
                 <p className="font-black text-sm leading-tight" style={{ color: "var(--text)" }}>{t.title}</p>
               </div>
-              <p className="text-xs leading-snug" style={{ color: "var(--text-muted)" }}>{t.sub}</p>
+              <p className="text-xs leading-snug mb-2" style={{ color: "var(--text-muted)" }}>{t.sub}</p>
+              <div className="flex gap-1 flex-wrap">
+                {t.subjects.map((s) => (
+                  <span key={s.name} className="w-2 h-2 rounded-full" style={{ background: s.color }} />
+                ))}
+              </div>
             </div>
           ))}
         </div>
