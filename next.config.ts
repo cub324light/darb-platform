@@ -23,9 +23,9 @@ const CSP = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ["firebase-admin"],
-  experimental: {
-    optimizePackageImports: ["firebase", "motion", "@sentry/nextjs"],
-  },
+  /* ملاحظة: لا تضع "firebase" في optimizePackageImports — يكسر تسجيل خدمات
+     Firebase المعيارية ويسبب «Service firestore is not available» وقت
+     prerender لـ /_not-found. */
   async headers() {
     return [
       {
