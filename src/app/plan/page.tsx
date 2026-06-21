@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
+import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import CalendarExport from "@/components/CalendarExport";
@@ -334,6 +335,7 @@ export default function PlanPage() {
       </div>
 
       <div className="h-6" />
+      <PageFooter />
       <BottomNav />
     </div>
   );

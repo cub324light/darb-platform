@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
+import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
 import Confetti from "@/components/Confetti";
 import { loadUser, addSilver } from "@/lib/storage";
@@ -461,6 +462,7 @@ export default function ArenaPage() {
         </div>
       </div>
 
+      <PageFooter />
       <BottomNav />
     </div>
   );

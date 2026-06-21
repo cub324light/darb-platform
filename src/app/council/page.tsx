@@ -8,6 +8,7 @@ import {
 import { db } from "@/lib/firebase";
 import { onAuth } from "@/lib/cloud";
 import BottomNav from "@/components/BottomNav";
+import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
 import FriendsPanel from "@/components/FriendsPanel";
 import { loadUser } from "@/lib/storage";
@@ -505,6 +506,7 @@ export default function CouncilPage() {
 
       {showFriends && <FriendsPanel onClose={() => setShowFriends(false)} />}
 
+      <PageFooter />
       <BottomNav />
     </div>
   );

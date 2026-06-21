@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import BottomNav from "@/components/BottomNav";
+import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import Confetti from "@/components/Confetti";
@@ -709,6 +710,7 @@ export default function OrbitPage() {
         )}
       </div>
 
+      <PageFooter />
       <BottomNav />
     </div>
   );

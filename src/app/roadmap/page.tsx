@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
+import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import TopicExtractor from "@/components/TopicExtractor";
@@ -1254,6 +1255,7 @@ export default function RoadmapPage() {
       </div>
 
       <div className="h-6" />
+      <PageFooter />
       <BottomNav />
 
       {/* DayScheduler */}

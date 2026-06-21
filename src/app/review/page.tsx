@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
+import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import Confetti from "@/components/Confetti";
@@ -441,6 +442,7 @@ export default function ReviewPage() {
         </div>
       </div>
 
+      <PageFooter />
       <BottomNav />
     </div>
   );

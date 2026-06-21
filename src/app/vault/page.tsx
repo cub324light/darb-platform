@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
+import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import { ERROR_CATEGORIES } from "@/lib/constants";
@@ -526,6 +527,7 @@ export default function VaultPage() {
       </div>
 
       <div className="h-6" />
+      <PageFooter />
       <BottomNav />
 
       {/* ── تنبيه تحويل البطاقة ── */}
