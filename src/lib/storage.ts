@@ -29,6 +29,9 @@ export interface DarbStats {
   todayKey: string;
   dayMins: Record<string, number>; // دقائق التركيز لكل يوم — للرسم الأسبوعي
   lastBonusDay?: string; // آخر يوم أُعطيت فيه مكافأة بدء أوربت اليومية
+  analyzedCount?: number; // عدد الملفات التي حُلِّلت بالذكاء
+  plansCount?: number;    // عدد خطط دويرب المطبَّقة على الجدول
+  joinedAt?: string;      // أول يوم استُخدمت فيه المنصة "YYYY-MM-DD"
 }
 
 const USER_KEY = "darb_user";
@@ -136,6 +139,30 @@ export function recordSession(focusMins: number, subject?: string): DarbStats & 
   saveStats(s);
   addSessionLog(subject ?? "—", focusMins);
   return { ...s, earned };
+}
+
+/* عدّاد الملفات المحللة — يُستدعى عند نجاح تحليل ملف */
+export function recordFileAnalyzed(): void {
+  const s = loadStats();
+  s.analyzedCount = (s.analyzedCount ?? 0) + 1;
+  saveStats(s);
+}
+
+/* عدّاد خطط دويرب — يُستدعى عند تطبيق خطة على الجدول */
+export function recordPlanCreated(): void {
+  const s = loadStats();
+  s.plansCount = (s.plansCount ?? 0) + 1;
+  saveStats(s);
+}
+
+/* تاريخ الانضمام: يُثبَّت أول مرة (أقدم يوم جلسة إن وُجد، وإلا اليوم) ويُحفظ ويتزامن */
+export function ensureJoinDate(): string {
+  const s = loadStats();
+  if (s.joinedAt) return s.joinedAt;
+  const earliest = s.sessionDays.length ? [...s.sessionDays].sort()[0] : todayKey();
+  s.joinedAt = earliest;
+  saveStats(s);
+  return earliest;
 }
 
 /* سيلفر إضافي (الأرينا وغيرها) */

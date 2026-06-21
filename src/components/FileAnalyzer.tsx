@@ -8,6 +8,7 @@ import { createPortal } from "react-dom";
 import { ref, uploadBytes, getStorage } from "firebase/storage";
 import { auth, app } from "@/lib/firebase";
 import { extractFileText, detectKind } from "@/lib/fileText";
+import { recordFileAnalyzed } from "@/lib/storage";
 
 /* تهيئة Storage هنا فقط (هذا المكوّن محمّل ديناميكياً) — يُبعِد حزمة Storage
    عن حزمة كل صفحة، ولا تُحمَّل إلا عند فتح «حلّل ملف». */
@@ -115,6 +116,7 @@ export default function FileAnalyzer({
       }
 
       setProgress("اكتمل ✓");
+      recordFileAnalyzed();
       setResult({
         pages: data.pages ?? pages,
         summary: data.summary ?? "",

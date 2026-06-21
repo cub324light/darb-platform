@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { loadEvents, saveEvents, loadUser, loadExamCoord, examCoordPrompt, type ScheduleEvent } from "@/lib/storage";
+import { loadEvents, saveEvents, loadUser, loadExamCoord, examCoordPrompt, recordPlanCreated, type ScheduleEvent } from "@/lib/storage";
 import { getEventsForDate } from "@/components/DayScheduler";
 import { normalizeDigits, fmtHour } from "@/lib/utils";
 
@@ -108,6 +108,7 @@ export default function DashAI({ subjects, onOpenScheduler }: Props) {
     );
     if (nonConflicting.length === 0) { setApplied(true); setParsedCount(0); return; }
     saveEvents([...existing, ...nonConflicting]);
+    recordPlanCreated();
     setParsedCount(nonConflicting.length);
     setApplied(true);
   };

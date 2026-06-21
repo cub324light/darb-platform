@@ -18,7 +18,6 @@ const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
 import SaudiMap from "@/components/SaudiMap";
 import { NumberTicker } from "@/components/ui/number-ticker";
 import { BorderBeam } from "@/components/ui/border-beam";
-import ProfileButton from "@/components/Profile";
 import WeeklyReport from "@/components/WeeklyReport";
 
 const DAILY_TARGET = 200;
@@ -938,9 +937,9 @@ export default function DashboardPage() {
       <Dome compact>
         {/* «أهلاً، محمد» كله زرٌ واحد للبروفايل — على اليمين */}
         <div className="text-right mb-3">
-          <button
-            onClick={() => window.dispatchEvent(new CustomEvent("darb:openProfile"))}
-            className="inline-flex items-center gap-2.5 rounded-2xl px-3.5 py-2 transition active:scale-95"
+          <Link
+            href="/profile"
+            className="inline-flex items-center gap-2.5 rounded-2xl px-3.5 py-2 transition active:scale-95 no-underline"
             style={{
               background: "color-mix(in srgb, var(--accent) 16%, transparent)",
               border: "1.5px solid var(--accent)",
@@ -953,7 +952,7 @@ export default function DashboardPage() {
             <span className="title-lg" style={{ color: "var(--accent-light)" }}>
               أهلاً، {user ? user.name : <span className="skeleton" style={{ width: "70px", height: "1em", verticalAlign: "middle" }} />}
             </span>
-          </button>
+          </Link>
           <p className="text-[15px] font-semibold mt-1.5" style={{ color: "var(--text-muted)" }}>
             {greeting}
           </p>
@@ -993,8 +992,6 @@ export default function DashboardPage() {
           ))}
         </div>
       </Dome>
-      {/* لوحة البروفايل (تُفتح من اسم الترحيب) */}
-      <ProfileButton asTrigger={false} />
 
       {/* ── تلميح الفضة والستريك (أول زيارة) ── */}
       {!statsTipSeen && (
