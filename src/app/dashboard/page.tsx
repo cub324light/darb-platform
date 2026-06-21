@@ -799,6 +799,7 @@ export default function DashboardPage() {
                 { icon: "⏱️", label: "أوربت",          desc: "جلسات تركيز ٥٠/١٠",      href: "/orbit",  event: null,             accent: "var(--accent-hi)" },
                 { icon: "⚠️", label: "أخطائي وبطاقاتي", desc: "تعلّم من غلطك وراجعه",   href: "/vault",  event: null,             accent: "var(--danger)" },
                 { icon: "🗺️", label: "مساري",          desc: "تقدّمك في المنهج",       href: "/roadmap", event: null,            accent: "var(--gold)" },
+                { icon: "🎯", label: "التحديات",        desc: "أكمل واكسب فضة",         href: "/challenges", event: null,         accent: "var(--gold-light)" },
               ] as { icon: string; label: string; desc: string; href: string | null; event: string | null; accent: string }[]).map((a) => {
                 const cls = "card flex flex-col items-start py-4 px-4 gap-1.5 text-right transition active:scale-[0.97] glow-card-hover w-full";
                 const style = { minHeight: "108px", border: `1px solid color-mix(in srgb, ${a.accent} 22%, var(--ring))` };
