@@ -1,6 +1,7 @@
 "use client";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db, auth } from "./firebase";
+import { stripContact } from "./contactFilter";
 
 /* UID المستخدم — يُفضّل Firebase Auth UID لربط البريد الإلكتروني، بديله localStorage */
 export function getOrCreateUid(): string {
@@ -26,7 +27,7 @@ export async function registerUser(
     if (!uid) return;
     const email = auth.currentUser?.email ?? "";
     await setDoc(doc(db, "users", uid), {
-      name,
+      name: stripContact(name) || name,
       track,
       joinedAt: serverTimestamp(),
       lastSeen: serverTimestamp(),
@@ -62,8 +63,12 @@ export async function syncUser(data: {
   try {
     const uid = auth.currentUser?.uid;
     if (!uid) return;
+    /* الاسم مرئيّ للآخرين — ننظّفه من وسائل التواصل قبل الحفظ */
+    const safe = typeof data.name === "string"
+      ? { ...data, name: stripContact(data.name) || data.name }
+      : data;
     await setDoc(doc(db, "users", uid), {
-      ...data,
+      ...safe,
       lastSeen: serverTimestamp(),
     }, { merge: true });
   } catch {}

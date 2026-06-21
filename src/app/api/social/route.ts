@@ -63,8 +63,11 @@ export async function POST(req: NextRequest) {
     /* -------- studiers: عدد المتواجدين حالياً -------- */
     if (mode === "studiers") {
       const tenMinutesAgo = Timestamp.fromMillis(Date.now() - 10 * 60 * 1000);
+      /* .select(region): نجلب حقل المنطقة فقط بدل وثيقة المستخدم الكاملة
+         (تحوي نسخة localStorage كاملة) — يقلّص حجم القراءة بشكل كبير */
       const snap = await db.collection("users")
         .where("lastSeen", ">=", tenMinutesAgo)
+        .select("region")
         .get();
       const regions: Record<string, number> = {};
       for (const d of snap.docs) {
@@ -203,8 +206,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ friends });
     }
 
-    /* -------- getProfile: بروفايل صديق + إحصاءاته -------- */
+    /* -------- getProfile: بروفايل صديق + إحصاءاته (هوية موثّقة + احترام الخصوصية) -------- */
     if (mode === "getProfile") {
+      const uid = await getVerifiedUid(req);
+      if (!uid) {
+        return NextResponse.json({ error: "يجب تسجيل الدخول" }, { status: 401 });
+      }
       const { targetUid } = body as { targetUid?: string };
       if (!targetUid || typeof targetUid !== "string") {
         return NextResponse.json({ error: "targetUid مفقود" }, { status: 400 });
@@ -214,6 +221,13 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "الحساب غير موجود" }, { status: 404 });
       }
       const data = doc.data()!;
+      /* البروفايل الخاص لا يُكشف إلا لصاحبه أو لصديق مؤكَّد */
+      if (data.isPrivate === true && targetUid !== uid) {
+        const friend = await db.collection("users").doc(uid).collection("friends").doc(targetUid).get();
+        if (!friend.exists) {
+          return NextResponse.json({ error: "هذا الحساب خاص" }, { status: 403 });
+        }
+      }
       const lastSeen = data.lastSeen as Timestamp | undefined;
       return NextResponse.json({
         profile: {

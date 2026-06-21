@@ -54,13 +54,16 @@ service cloud.firestore {
 
     // Council chat messages: signed-in users read and post their own messages;
     // الطاقم يقدر يحذف أي رسالة (إشراف).
+    // منع مشاركة وسائل التواصل على الخادم (دفاع متعدّد الطبقات مع فلتر العميل):
+    // يرفض الروابط، البريد/المعرّفات (@)، والأرقام الطويلة (هواتف). (?s) ليشمل الأسطر.
     match /chats/{groupId}/messages/{msgId} {
       allow read: if signedIn();
       allow create: if signedIn()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.content is string
         && request.resource.data.content.size() > 0
-        && request.resource.data.content.size() <= 1000;
+        && request.resource.data.content.size() <= 1000
+        && !request.resource.data.content.matches('(?s).*(https?://|www[.]|[@]|[0-9]{7,}).*');
       allow delete: if isStaff();
     }
 

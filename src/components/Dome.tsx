@@ -70,6 +70,18 @@ export default function Dome({
     return () => clearInterval(t);
   }, []);
 
+  /* احترام تفضيل تقليل الحركة + توفير المعالج/البطارية على الأجهزة الضعيفة:
+     لا نشغّل الجسيمات/الشُهب إن طلب المستخدم تقليل الحركة */
+  const [reduceMotion, setReduceMotion] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduceMotion(mq.matches);
+    const h = () => setReduceMotion(mq.matches);
+    mq.addEventListener?.("change", h);
+    return () => mq.removeEventListener?.("change", h);
+  }, []);
+
   return (
     <div className="dome">
       {/* ── الزينة (خلف المحتوى، داخل القبة فقط) ── */}
@@ -125,10 +137,11 @@ export default function Dome({
           </svg>
         </div>
 
-        {/* لمسات صفحة الهبوط: توهّج نابض + جسيمات + شُهب على رأس كل صفحة */}
+        {/* لمسات صفحة الهبوط: توهّج نابض + جسيمات + شُهب على رأس كل صفحة
+            (تُعطَّل عند تفضيل تقليل الحركة لتوفير الأداء/البطارية) */}
         <div className="dome-glow" />
-        <Sparkles count={compact ? 16 : 24} color="var(--accent-hi)" />
-        <Meteors number={compact ? 5 : 8} />
+        {!reduceMotion && <Sparkles count={compact ? 16 : 24} color="var(--accent-hi)" />}
+        {!reduceMotion && <Meteors number={compact ? 5 : 8} />}
       </div>
 
       {/* ── المحتوى ── */}

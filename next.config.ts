@@ -1,9 +1,31 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
+/* سياسة أمان المحتوى (CSP) — تسمح بمصادر درب المعروفة فقط (Firebase/Google،
+   PostHog، Clarity، Vercel) وتمنع غيرها. Sentry يمرّ عبر /monitoring (self).
+   'unsafe-inline'/'unsafe-eval' لازمة لـ Next/Firebase/pdf.js. عدّل بحذر. */
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.posthog.com https://*.clarity.ms https://va.vercel-scripts.com https://apis.google.com https://*.google.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  "connect-src 'self' https://*.googleapis.com https://*.google.com https://*.gstatic.com https://*.firebaseio.com wss://*.firebaseio.com https://*.storage.googleapis.com https://*.posthog.com https://*.clarity.ms https://*.bing.com https://*.vercel-insights.com https://*.vercel-scripts.com",
+  "frame-src 'self' https://*.firebaseapp.com https://*.google.com https://accounts.google.com",
+  "worker-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  "upgrade-insecure-requests",
+].join("; ");
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ["firebase-admin"],
+  experimental: {
+    optimizePackageImports: ["firebase", "motion", "@sentry/nextjs"],
+  },
   async headers() {
     return [
       {
@@ -13,6 +35,8 @@ const nextConfig: NextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+          { key: "Content-Security-Policy", value: CSP },
         ],
       },
     ];

@@ -13,6 +13,8 @@ import FriendsPanel from "@/components/FriendsPanel";
 import { loadUser } from "@/lib/storage";
 import type { TrackId } from "@/lib/tracks";
 import { CHAT_GROUPS, type ChatGroup } from "@/lib/groups";
+import { detectContact } from "@/lib/contactFilter";
+import { trackEvent } from "@/lib/events";
 
 /* ─── بيانات ─── */
 interface ChatMessage {
@@ -68,6 +70,7 @@ export default function CouncilPage() {
   /* ─ حقل الإدخال ─ */
   const [msgText, setMsgText] = useState("");
   const [sending, setSending] = useState(false);
+  const [sendWarn, setSendWarn] = useState<string | null>(null);
 
   /* ─ آخر رسالة لكل مجموعة (للمعاينة) — من الذاكرة المحلية ─ */
   const [lastMessages, setLastMessages] = useState<Record<string, { text: string; time: number } | null>>({});
@@ -152,6 +155,14 @@ export default function CouncilPage() {
   const sendMessage = async () => {
     const text = msgText.trim();
     if (!text || !activeGroup || !authUid || sending) return;
+    /* منع مشاركة وسائل التواصل — مع تسجيل المخالفة للمراقبة */
+    const violation = detectContact(text);
+    if (violation) {
+      setSendWarn(`ممنوع مشاركة ${violation} في المجلس`);
+      trackEvent("council_contact_blocked", { reason: violation, group: activeGroup.id });
+      return;
+    }
+    setSendWarn(null);
     setSending(true);
     setMsgText("");
     try {
@@ -388,15 +399,22 @@ export default function CouncilPage() {
                 </p>
               </div>
             ) : (
-              <div className="px-3 py-3 border-t flex gap-2 flex-shrink-0"
+              <div className="px-3 py-3 border-t flex flex-col gap-2 flex-shrink-0"
                 style={{
                   borderColor: "var(--border)",
                   paddingBottom: "calc(12px + env(safe-area-inset-bottom))",
                   background: "var(--bg)",
                 }}>
+                {sendWarn && (
+                  <div className="rounded-xl px-3 py-2 text-[12px] font-bold text-center"
+                    style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.4)", color: "#EF4444" }}>
+                    🚫 {sendWarn} — حفاظاً على أمان الجميع
+                  </div>
+                )}
+                <div className="flex gap-2">
                 <input
                   value={msgText}
-                  onChange={(e) => setMsgText(e.target.value)}
+                  onChange={(e) => { setMsgText(e.target.value); if (sendWarn) setSendWarn(null); }}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
                   placeholder="اكتب رسالة..."
                   maxLength={1000}
@@ -415,6 +433,7 @@ export default function CouncilPage() {
                 >
                   {sending ? "⋯" : "↑"}
                 </button>
+                </div>
               </div>
             )
           ) : (
