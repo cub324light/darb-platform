@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
 import {
   collection, addDoc, onSnapshot,
   orderBy, query, limit, serverTimestamp,
@@ -10,6 +9,7 @@ import { onAuth } from "@/lib/cloud";
 import BottomNav from "@/components/BottomNav";
 import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
+import BackButton from "@/components/BackButton";
 import FriendsPanel from "@/components/FriendsPanel";
 import { loadUser } from "@/lib/storage";
 import type { TrackId } from "@/lib/tracks";
@@ -463,11 +463,7 @@ export default function CouncilPage() {
     <div className="min-h-dvh pb-nav">
       <Dome compact>
         <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="rounded-full p-1.5 transition active:scale-95" style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)" }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-white">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 18l6-6-6-6" />
-            </svg>
-          </Link>
+          <BackButton />
           <h1 className="title-lg grad-title">المجلس</h1>
         </div>
       </Dome>

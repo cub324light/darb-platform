@@ -6,9 +6,6 @@ import BottomNav from "@/components/BottomNav";
 import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
-import TopicExtractor from "@/components/TopicExtractor";
-import LeaksPlanner from "@/components/LeaksPlanner";
-import ExamCoordPanel from "@/components/ExamCoordPanel";
 import { RAKAN_SCHEDULE } from "@/lib/constants";
 import { getTrack, subjectColor, TRACKS, type Track, type TrackId } from "@/lib/tracks";
 import { fmtHour } from "@/lib/utils";
@@ -28,6 +25,9 @@ import {
 import { syncUser } from "@/lib/firestore";
 import dynamic from "next/dynamic";
 const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
+const TopicExtractor = dynamic(() => import("@/components/TopicExtractor"), { ssr: false });
+const LeaksPlanner = dynamic(() => import("@/components/LeaksPlanner"), { ssr: false });
+const ExamCoordPanel = dynamic(() => import("@/components/ExamCoordPanel"), { ssr: false });
 import DayScheduler, { getEventsForDate } from "@/components/DayScheduler";
 import ExamDateButton from "@/components/ExamDateButton";
 

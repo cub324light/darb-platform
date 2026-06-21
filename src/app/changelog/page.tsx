@@ -1,6 +1,6 @@
 "use client";
-import Link from "next/link";
 import Dome from "@/components/Dome";
+import BackButton from "@/components/BackButton";
 import BottomNav from "@/components/BottomNav";
 import { CHANGELOG, CHANGE_META } from "@/lib/changelog";
 
@@ -15,12 +15,7 @@ export default function ChangelogPage() {
     <div className="min-h-dvh pb-nav">
       <Dome compact>
         <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="rounded-full p-1.5 transition active:scale-95"
-            style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)" }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-white">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 18l6-6-6-6" />
-            </svg>
-          </Link>
+          <BackButton />
           <h1 className="title-lg grad-title">آخر التحديثات</h1>
         </div>
       </Dome>
