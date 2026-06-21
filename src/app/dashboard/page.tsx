@@ -839,6 +839,13 @@ export default function DashboardPage() {
                 <p className="text-[17px]" style={{ color: "var(--text-muted)" }}>تحدي 1v1</p>
               </div>
             </Link>
+            <Link href="/leaderboard" className="card flex items-center gap-3 active:scale-[0.97] transition"
+              style={{ minHeight: "74px", textDecoration: "none", borderColor: "color-mix(in srgb, var(--gold) 25%, transparent)" }}>
+              <div>
+                <p className="font-extrabold text-[17px]" style={{ color: "var(--gold)" }}>لوحة الشرف</p>
+                <p className="text-[17px]" style={{ color: "var(--text-muted)" }}>المتصدّرون</p>
+              </div>
+            </Link>
           </section>
         );
 

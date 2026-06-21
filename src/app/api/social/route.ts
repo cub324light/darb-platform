@@ -282,6 +282,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
+    /* -------- leaderboard: لوحة الشرف (هوية موثّقة، تحترم الخصوصية) -------- */
+    if (mode === "leaderboard") {
+      const uid = await getVerifiedUid(req);
+      if (!uid) {
+        return NextResponse.json({ error: "يجب تسجيل الدخول" }, { status: 401 });
+      }
+      /* نجلب أكثر من المطلوب ثم نُقصي الخاص ونأخذ العشرين الأوائل.
+         .select يتجنّب جلب حقل backup الضخم. */
+      const topBy = async (field: "focusMins" | "streak") => {
+        const snap = await db.collection("users")
+          .orderBy(field, "desc")
+          .limit(60)
+          .select("name", "track", "streak", "focusMins", "isPrivate")
+          .get();
+        return snap.docs
+          .map((d) => {
+            const x = d.data();
+            return { uid: d.id, name: (x.name as string) ?? "طالب", track: (x.track as string) ?? "", value: Number(x[field] ?? 0), isPrivate: x.isPrivate === true };
+          })
+          .filter((u) => !u.isPrivate && u.value > 0)
+          .slice(0, 20)
+          .map(({ uid: id, name, track, value }) => ({ uid: id, name, track, value }));
+      };
+      const [topHours, topStreak] = await Promise.all([topBy("focusMins"), topBy("streak")]);
+      return NextResponse.json({ topHours, topStreak });
+    }
+
     /* -------- submitFeedback: ملاحظة/اقتراح/مشكلة (هوية موثّقة) -------- */
     if (mode === "submitFeedback") {
       const uid = await getVerifiedUid(req);
