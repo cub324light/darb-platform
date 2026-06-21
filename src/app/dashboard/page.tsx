@@ -18,6 +18,7 @@ import SaudiMap from "@/components/SaudiMap";
 import { NumberTicker } from "@/components/ui/number-ticker";
 import { BorderBeam } from "@/components/ui/border-beam";
 import ProfileButton from "@/components/Profile";
+import WeeklyReport from "@/components/WeeklyReport";
 
 const DAILY_TARGET = 200;
 
@@ -699,6 +700,7 @@ export default function DashboardPage() {
 
       case "weekly":
         return (
+          <div className="flex flex-col gap-4">
           <section className="card">
             <div className="flex items-center justify-between mb-4">
               <p className="title-md" style={{ color: "var(--text)" }}>أسبوعك</p>
@@ -734,6 +736,8 @@ export default function DashboardPage() {
               })}
             </div>
           </section>
+          <WeeklyReport />
+          </div>
         );
 
       case "quote":

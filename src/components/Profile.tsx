@@ -12,6 +12,7 @@ import { syncUser } from "@/lib/firestore";
 import { getPlan, PLAN_NAMES, PLAN_COLORS } from "@/lib/plan";
 import type { PlanId } from "@/lib/types";
 import { computeXP, getLevel, getUnlockedBadgeIds, getBadgeCurrent, BADGE_DEFS } from "@/lib/xp";
+import WeeklyReport from "@/components/WeeklyReport";
 
 /* ─── زر البروفايل (يسار) + اللوحة المنزلقة ─── */
 
@@ -295,6 +296,11 @@ export default function ProfileButton({ asTrigger = true }: { asTrigger?: boolea
                   <p className="text-[17px] text-[var(--text-muted)] font-semibold">{s.label}</p>
                 </div>
               ))}
+            </div>
+
+            {/* التقرير الأسبوعي */}
+            <div className="mb-6">
+              <WeeklyReport />
             </div>
 
             {/* نتائجي — سجل نتائج الاختبارات */}
