@@ -282,6 +282,58 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
+    /* -------- submitFeedback: ملاحظة/اقتراح/مشكلة (هوية موثّقة) -------- */
+    if (mode === "submitFeedback") {
+      const uid = await getVerifiedUid(req);
+      if (!uid) {
+        return NextResponse.json({ error: "يجب تسجيل الدخول" }, { status: 401 });
+      }
+      const { kind, text, name, page } = body as { kind?: string; text?: string; name?: string; page?: string };
+      const KINDS = ["feature", "bug", "opinion"];
+      if (!kind || !KINDS.includes(kind)) {
+        return NextResponse.json({ error: "نوع غير صالح" }, { status: 400 });
+      }
+      if (!text || typeof text !== "string" || text.trim().length < 3) {
+        return NextResponse.json({ error: "اكتب ملاحظتك أولاً" }, { status: 400 });
+      }
+      await db.collection("feedback").add({
+        uid,
+        name: typeof name === "string" ? name.slice(0, 40) : "",
+        kind,
+        text: text.trim().slice(0, 2000),
+        page: typeof page === "string" ? page.slice(0, 80) : "",
+        status: "new",
+        createdAt: FieldValue.serverTimestamp(),
+      });
+      return NextResponse.json({ ok: true });
+    }
+
+    /* -------- getFeedback: قائمة الملاحظات (للطاقم فقط) -------- */
+    if (mode === "getFeedback") {
+      if (!(await authorizeAdmin(req, body as { password?: unknown }, "moderator"))) {
+        return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
+      }
+      const snap = await db.collection("feedback")
+        .orderBy("createdAt", "desc")
+        .limit(200)
+        .get();
+      const items = snap.docs.map((d) => {
+        const data = d.data();
+        const createdAt = data.createdAt as Timestamp | undefined;
+        return {
+          id: d.id,
+          uid: data.uid ?? "",
+          name: data.name ?? "",
+          kind: data.kind ?? "opinion",
+          text: data.text ?? "",
+          page: data.page ?? "",
+          status: data.status ?? "new",
+          createdAt: createdAt ? createdAt.toMillis() : null,
+        };
+      });
+      return NextResponse.json({ items });
+    }
+
     return NextResponse.json({ error: "mode غير مدعوم" }, { status: 400 });
 
   } catch (e) {

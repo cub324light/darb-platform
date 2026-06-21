@@ -253,6 +253,25 @@ export default function AdminPage() {
   const [showAnnounce, setShowAnnounce] = useState(true);
   const [annList, setAnnList] = useState<Announcement[]>([]);
 
+  /* ── ملاحظات المستخدمين ── */
+  type Feedback = { id: string; uid: string; name: string; kind: string; text: string; page: string; status: string; createdAt: number | null };
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [fbList, setFbList] = useState<Feedback[]>([]);
+  const [fbBusy, setFbBusy] = useState(false);
+  const loadFeedback = async () => {
+    setFbBusy(true);
+    try {
+      const res = await authedFetch("/api/social", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "getFeedback", password: pass }),
+      });
+      const data = (await res.json()) as { items?: Feedback[] };
+      setFbList(data.items ?? []);
+    } catch { /* تجاهل */ }
+    finally { setFbBusy(false); }
+  };
+
   /* ── نظرة عامة (تحليلات اليوم) ── */
   const [stats, setStats] = useState<AnalyticsData | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
@@ -687,6 +706,49 @@ export default function AdminPage() {
             <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{s.label}</p>
           </div>
         ))}
+      </div>
+
+      {/* قسم ملاحظات المستخدمين */}
+      <div className="max-w-7xl mx-auto mb-6">
+        <button onClick={() => { const n = !showFeedback; setShowFeedback(n); if (n && fbList.length === 0) loadFeedback(); }}
+          className="flex items-center gap-2 mb-3 font-black text-[15px]"
+          style={{ color: "var(--text)" }}>
+          💬 ملاحظات المستخدمين
+          <span style={{ color: "var(--text-muted)" }}>{showFeedback ? "▲" : "▼"}</span>
+        </button>
+        {showFeedback && (
+          <div className="flex flex-col gap-3">
+            <button onClick={loadFeedback} disabled={fbBusy}
+              className="self-start px-4 py-2 rounded-xl text-[13px] font-bold"
+              style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
+              {fbBusy ? "جارٍ التحديث..." : "🔄 تحديث"}
+            </button>
+            {fbList.length === 0 ? (
+              <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>{fbBusy ? "جارٍ التحميل..." : "ما فيه ملاحظات بعد."}</p>
+            ) : fbList.map((f) => {
+              const k = f.kind === "feature" ? { icon: "💡", label: "اقتراح", color: "#10B981" }
+                : f.kind === "bug" ? { icon: "🐞", label: "مشكلة", color: "#EF4444" }
+                : { icon: "💬", label: "رأي", color: "#2563EB" };
+              return (
+                <div key={f.id} className="rounded-2xl p-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <span className="text-[11px] font-black px-2 py-0.5 rounded-md"
+                      style={{ background: `color-mix(in srgb, ${k.color} 14%, transparent)`, color: k.color, border: `1px solid ${k.color}55` }}>
+                      {k.icon} {k.label}
+                    </span>
+                    <span className="font-bold text-[13px]" style={{ color: "var(--text)" }}>{f.name || "طالب"}</span>
+                    {f.page && <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{f.page}</span>}
+                    <span className="text-[11px] mr-auto" style={{ color: "var(--text-muted)" }}>
+                      {f.createdAt ? new Date(f.createdAt).toLocaleString("ar-SA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
+                    </span>
+                  </div>
+                  <p className="text-[14px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{f.text}</p>
+                  <p className="text-[10px] mt-2" style={{ color: "var(--text-muted)" }}>uid: {f.uid}</p>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* قسم الإعلانات الرسمية */}

@@ -10,6 +10,7 @@ import {
 } from "@/lib/cloud";
 import type { User } from "firebase/auth";
 import type { FirebaseError } from "firebase/app";
+import FeedbackButton from "@/components/FeedbackButton";
 
 export default function SettingsButton() {
   const [open, setOpen] = useState(false);
@@ -284,6 +285,18 @@ export default function SettingsButton() {
           <p className="text-[14px] font-semibold leading-relaxed" style={{ color: "var(--text-muted)" }}>
             التخصيص من الصفحة الرئيسية مباشرة — اضغط «تخصيص»، سحب الأقسام وإعادة ترتيبها وإخفاءها.
           </p>
+        </div>
+
+        {/* ملاحظات وتحديثات */}
+        <p className="label mb-3">ملاحظات وتحديثات</p>
+        <div className="flex flex-col gap-2 mb-6">
+          <FeedbackButton className="w-full py-3.5 rounded-2xl text-sm font-bold transition flex items-center justify-center gap-2"
+            style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }} />
+          <a href="/changelog"
+            className="w-full py-3.5 rounded-2xl text-sm font-bold transition flex items-center justify-center gap-2"
+            style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>
+            ✨ آخر التحديثات
+          </a>
         </div>
 
         {/* لوحة الإدارة — للمشرف فقط */}
