@@ -348,11 +348,15 @@ export default function DashboardPage() {
 
   useEffect(() => () => { if (autoScroll.current) window.clearInterval(autoScroll.current); }, []);
 
-  /* جلب بيانات الطلاب النشطين عند ظهور قسم studiers أو map */
+  /* جلب بيانات الطلاب النشطين مرة واحدة عند ظهور قسم studiers أو map —
+     محميّ بمرجع حتى لا يتكرر الطلب عند كل تغيّر للترتيب (سحب/تخصيص). */
+  const studiersFetchedRef = useRef(false);
   useEffect(() => {
+    if (studiersFetchedRef.current) return;
     const hasStudiers = layout.some((l) => l.id === "studiers" && l.visible);
     const hasMap = layout.some((l) => l.id === "map" && l.visible);
     if (!hasStudiers && !hasMap) return;
+    studiersFetchedRef.current = true;
     fetch("/api/social", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

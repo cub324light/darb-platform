@@ -13,7 +13,6 @@ import { RAKAN_SCHEDULE } from "@/lib/constants";
 import { getTrack, subjectColor, TRACKS, type Track, type TrackId } from "@/lib/tracks";
 import { fmtHour } from "@/lib/utils";
 import { NumberTicker } from "@/components/ui/number-ticker";
-import { Sparkles } from "@/components/ui/sparkles";
 import { BorderBeam } from "@/components/ui/border-beam";
 import Confetti from "@/components/Confetti";
 import {
@@ -206,7 +205,6 @@ function NextStepOverlay({
         {/* احتفال الإكمال — وسام فضي لامع + إحصائيات الرحلة */}
         <div className="flex flex-col items-center text-center gap-4 pt-2">
           <div className="relative silver-medal w-28 h-28 rounded-full flex flex-col items-center justify-center">
-            <Sparkles count={12} color="#FCD34D" />
             <span className="text-[34px] leading-none">🏅</span>
             <span className="text-[11px] font-black mt-0.5" style={{ color: "#5A6270" }}>أنجزت</span>
           </div>

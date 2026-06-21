@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useRef } from "react";
-import { useInView, useMotionValue, useSpring } from "motion/react";
 import { cn } from "@/lib/utils";
 
 interface NumberTickerProps {
@@ -12,6 +11,8 @@ interface NumberTickerProps {
   style?: React.CSSProperties;
 }
 
+/* عدّاد خفيف بـ requestAnimationFrame — بلا مكتبة motion، يكتب على textContent
+   مباشرةً (لا إعادة رسم React لكل إطار)، ويحترم تقليل الحركة. */
 export function NumberTicker({
   value,
   direction = "up",
@@ -21,35 +22,46 @@ export function NumberTicker({
   style,
 }: NumberTickerProps) {
   const ref = useRef<HTMLSpanElement>(null);
-  const motionValue = useMotionValue(direction === "down" ? value : 0);
-  const springValue = useSpring(motionValue, { damping: 60, stiffness: 100 });
-  const isInView = useInView(ref, { once: true, margin: "0px" });
 
   useEffect(() => {
-    if (isInView) {
-      const timer = setTimeout(() => {
-        motionValue.set(direction === "down" ? 0 : value);
-      }, delay * 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [motionValue, isInView, delay, value, direction]);
+    const el = ref.current;
+    if (!el) return;
+    const fmt = (n: number) =>
+      new Intl.NumberFormat("ar-SA", {
+        minimumFractionDigits: decimalPlaces,
+        maximumFractionDigits: decimalPlaces,
+      }).format(Number(n.toFixed(decimalPlaces)));
 
-  useEffect(() => {
-    return springValue.on("change", (latest) => {
-      if (ref.current) {
-        ref.current.textContent = Intl.NumberFormat("ar-SA", {
-          minimumFractionDigits: decimalPlaces,
-          maximumFractionDigits: decimalPlaces,
-        }).format(Number(latest.toFixed(decimalPlaces)));
+    const from = direction === "down" ? value : 0;
+    const to = direction === "down" ? 0 : value;
+
+    const reduce = typeof window !== "undefined"
+      && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) { el.textContent = fmt(to); return; }
+
+    el.textContent = fmt(from);
+    let raf = 0;
+    let startTs = 0;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const DURATION = 900;
+    const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+    const step = (ts: number) => {
+      if (!startTs) startTs = ts;
+      const p = Math.min((ts - startTs) / DURATION, 1);
+      el.textContent = fmt(from + (to - from) * ease(p));
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+
+    const io = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting) {
+        io.disconnect();
+        timer = setTimeout(() => { raf = requestAnimationFrame(step); }, delay * 1000);
       }
-    });
-  }, [springValue, decimalPlaces]);
+    }, { threshold: 0 });
+    io.observe(el);
 
-  return (
-    <span
-      className={cn("inline-block tabular-nums", className)}
-      style={style}
-      ref={ref}
-    />
-  );
+    return () => { io.disconnect(); cancelAnimationFrame(raf); if (timer) clearTimeout(timer); };
+  }, [value, direction, delay, decimalPlaces]);
+
+  return <span ref={ref} className={cn("inline-block tabular-nums", className)} style={style} />;
 }

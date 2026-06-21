@@ -1,7 +1,8 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import { getStorage } from "firebase/storage";
+/* ملاحظة: لا نهيّئ Firebase Storage هنا — يُحمَّل عند الحاجة فقط داخل
+   FileAnalyzer (المُحمَّل ديناميكياً)، فلا تدخل حزمة Storage في حزمة كل صفحة. */
 
 const firebaseConfig = {
   apiKey: "AIzaSyA3a9L85rqBiT0Hi2eCuScJWyoCsMRWSOo",
@@ -15,4 +16,3 @@ const firebaseConfig = {
 export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 export const db = getFirestore(app);
 export const auth = getAuth(app);
-export const storage = getStorage(app);

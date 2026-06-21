@@ -5,9 +5,13 @@
    الملفات الكبيرة تُقسَّم وتُحلَّل وتُجمَّع داخل الخادم. */
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ref, uploadBytes } from "firebase/storage";
-import { storage, auth } from "@/lib/firebase";
+import { ref, uploadBytes, getStorage } from "firebase/storage";
+import { auth, app } from "@/lib/firebase";
 import { extractFileText, detectKind } from "@/lib/fileText";
+
+/* تهيئة Storage هنا فقط (هذا المكوّن محمّل ديناميكياً) — يُبعِد حزمة Storage
+   عن حزمة كل صفحة، ولا تُحمَّل إلا عند فتح «حلّل ملف». */
+const storage = getStorage(app);
 
 type Stage = "input" | "loading" | "result";
 

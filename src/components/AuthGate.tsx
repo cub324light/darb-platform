@@ -104,10 +104,15 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     if (needsOnboarding) router.replace("/onboarding");
   }, [needsOnboarding, router]);
 
+  /* بيانات محلية جاهزة من جلسة سابقة (نفس الجهاز) — نعرض التطبيق فوراً
+     والمزامنة تكمل في الخلفية (stale-while-revalidate)، فلا شاشة تحميل
+     لكل العائدين. ننتظر السحابة فقط لو ما فيه نسخة محلية (جهاز جديد). */
+  const hasLocal = typeof window !== "undefined" && !!loadUser()?.onboarded;
+
   if (isPublic) return <>{children}</>;
   if (!authResolved) return <Splash />;
   if (!authed) return <SignInScreen initialError={redirectErr} onGuest={enterGuestMode} />;
-  if (!synced && !guestMode) return <Splash label="جارٍ استرجاع بياناتك..." />;
+  if (!synced && !guestMode && !hasLocal) return <Splash label="جارٍ استرجاع بياناتك..." />;
   if (isAccountBlocked()) return <BlockedScreen />;
   if (needsOnboarding) return <Splash />;
   return <>{children}</>;

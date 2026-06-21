@@ -2,7 +2,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { ThemeToggle } from "@/components/Profile";
 import SettingsButton from "@/components/SettingsPanel";
-import { Sparkles } from "@/components/ui/sparkles";
 import { Meteors } from "@/components/ui/meteors";
 
 /* ── ساعة صغيرة — ضغطة واحدة تبدّل بين 12 و24 ── */
@@ -137,11 +136,10 @@ export default function Dome({
           </svg>
         </div>
 
-        {/* لمسات صفحة الهبوط: توهّج نابض + جسيمات + شُهب على رأس كل صفحة
-            (تُعطَّل عند تفضيل تقليل الحركة لتوفير الأداء/البطارية) */}
+        {/* توهّج + شُهب خفيفة (CSS فقط — بلا motion) على رأس كل صفحة.
+            تُعطَّل عند تفضيل تقليل الحركة لتوفير الأداء/البطارية. */}
         <div className="dome-glow" />
-        {!reduceMotion && <Sparkles count={compact ? 16 : 24} color="var(--accent-hi)" />}
-        {!reduceMotion && <Meteors number={compact ? 5 : 8} />}
+        {!reduceMotion && <Meteors number={compact ? 4 : 6} />}
       </div>
 
       {/* ── المحتوى ── */}

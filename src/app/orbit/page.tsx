@@ -8,7 +8,6 @@ import Confetti from "@/components/Confetti";
 import { subjectsForTracks, getTrack } from "@/lib/tracks";
 import type { TrackId, Track } from "@/lib/tracks";
 import { loadUser, loadStats, recordSession, loadSessionLog, type SessionLogEntry } from "@/lib/storage";
-import { Sparkles } from "@/components/ui/sparkles";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { trackEvent } from "@/lib/events";
 
@@ -610,7 +609,6 @@ export default function OrbitPage() {
             <div className="space-y-2">
               <div className="relative glass rounded-2xl p-4 text-center overflow-hidden">
                 <BorderBeam size={180} duration={8} colorFrom="var(--gold)" colorTo="var(--accent-hi)" />
-                <Sparkles count={14} color="var(--gold)" />
                 <p className="text-xl font-black relative z-10" style={{ color: "var(--gold)", textShadow: "0 0 20px rgba(245,158,11,0.4)" }}>+{lastEarned} فضة</p>
                 <p className="text-xs text-[var(--text-muted)] mt-1 relative z-10">
                   {focusMins} دقيقة{lastEarned > focusMins ? " + 10 مكافأة أول جلسة" : ""} · جلسة {sessionsToday} اليوم
