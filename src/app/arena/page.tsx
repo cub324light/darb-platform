@@ -239,7 +239,7 @@ export default function ArenaPage() {
               </svg>
             </Link>
             <div className="flex items-center justify-between flex-1">
-              <h1 className="title-lg" style={{ color: "var(--text)" }}>الأرينا</h1>
+              <h1 className="title-lg grad-title">الأرينا</h1>
               <span className="dome-chip text-[17px] font-bold" style={{ color: "var(--gold-light)" }}>1v1</span>
             </div>
           </div>

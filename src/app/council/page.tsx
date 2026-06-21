@@ -52,10 +52,8 @@ export default function CouncilPage() {
 
   useEffect(() => onAuth((u) => setAuthUid(u?.uid ?? null)), []);
 
-  /* ─ حالة المجموعة النشطة — «عام» مفتوح وملء الشاشة تلقائياً عند الدخول ─ */
-  const [activeGroup, setActiveGroup] = useState<ChatGroup | null>(
-    () => CHAT_GROUPS.find((g) => g.id === "general") ?? null
-  );
+  /* ─ حالة المجموعة النشطة — تبدأ بالقائمة (لا ندخل «العام» تلقائياً) ─ */
+  const [activeGroup, setActiveGroup] = useState<ChatGroup | null>(null);
   const [activeChannel, setActiveChannel] = useState<"general" | "official">("general");
   const [isFullscreen, setIsFullscreen] = useState(true);
   const [showFriends, setShowFriends] = useState(false);
@@ -173,12 +171,63 @@ export default function CouncilPage() {
   /* ─ الرسائل الحالية حسب القناة ─ */
   const displayedMessages = activeChannel === "official" ? officialMessages : messages;
 
-  /* ─ ترتيب المجموعات — مجموعات المسار أولاً ─ */
-  const sortedGroups = [...CHAT_GROUPS].sort((a, b) => {
-    const aIn = a.trackId ? userTrackIds.includes(a.trackId) : false;
-    const bIn = b.trackId ? userTrackIds.includes(b.trackId) : false;
-    return aIn === bIn ? 0 : aIn ? -1 : 1;
-  });
+  /* ─ ترتيب القائمة: «العام» أولاً، ثم الأصدقاء، ثم مجموعات مسارك، ثم الباقي ─ */
+  const generalGroup = CHAT_GROUPS.find((g) => g.id === "general") ?? null;
+  const restGroups = CHAT_GROUPS
+    .filter((g) => g.id !== "general")
+    .sort((a, b) => {
+      const aIn = a.trackId ? userTrackIds.includes(a.trackId) : false;
+      const bIn = b.trackId ? userTrackIds.includes(b.trackId) : false;
+      return aIn === bIn ? 0 : aIn ? -1 : 1;
+    });
+
+  /* ─ زر مجموعة واحد (يُعاد استخدامه للعام وللباقي) ─ */
+  const renderGroup = (group: ChatGroup) => {
+    const isMyTrack = group.trackId ? userTrackIds.includes(group.trackId) : false;
+    const isGeneral = group.id === "general";
+    const last = lastMessages[group.id];
+    const highlight = isGeneral || isMyTrack;
+    return (
+      <button
+        key={group.id}
+        onClick={() => openGroup(group)}
+        className="flex items-center gap-3 px-5 py-4 text-right transition active:opacity-70 w-full"
+        style={{
+          borderBottom: "1px solid var(--border)",
+          background: highlight ? "color-mix(in srgb, var(--accent) 4%, transparent)" : "transparent",
+        }}
+      >
+        <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
+          style={{
+            background: highlight ? "color-mix(in srgb, var(--accent) 12%, var(--surface))" : "var(--surface)",
+            border: highlight
+              ? "1.5px solid color-mix(in srgb, var(--accent) 40%, var(--border))"
+              : "1px solid var(--border)",
+          }}>
+          {group.icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="font-bold text-[15px]" style={{ color: "var(--text)" }}>{group.name}</p>
+            {isMyTrack && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0"
+                style={{
+                  background: "color-mix(in srgb, var(--accent) 12%, transparent)",
+                  color: "var(--accent-light)",
+                  border: "1px solid color-mix(in srgb, var(--accent) 35%, transparent)",
+                }}>
+                مسارك
+              </span>
+            )}
+          </div>
+          <p className="text-[13px] truncate mt-0.5" style={{ color: "var(--text-muted)" }}>
+            {last ? last.text : group.description}
+          </p>
+        </div>
+        {last && <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: "var(--accent)" }} />}
+      </button>
+    );
+  };
 
   /* ══════════════════════════════════════════════════
      شاشة المحادثة
@@ -399,13 +448,18 @@ export default function CouncilPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 18l6-6-6-6" />
             </svg>
           </Link>
-          <h1 className="title-lg" style={{ color: "var(--text)" }}>المجلس</h1>
+          <h1 className="title-lg grad-title">المجلس</h1>
         </div>
       </Dome>
 
       <div className="h-2" />
 
-      {/* ─ مدخل الأصدقاء ─ */}
+      {/* ١) العام أولاً */}
+      <div className="flex flex-col">
+        {generalGroup && renderGroup(generalGroup)}
+      </div>
+
+      {/* ٢) مدخل الأصدقاء */}
       <button
         onClick={() => setShowFriends(true)}
         className="flex items-center gap-3 px-5 py-4 text-right transition active:opacity-70 w-full"
@@ -425,60 +479,9 @@ export default function CouncilPage() {
         <span className="text-[var(--text-muted)] text-lg flex-shrink-0">‹</span>
       </button>
 
-      {/* ─ قائمة المجموعات ─ */}
+      {/* ٣) مجموعات مسارك ثم ٤) الباقي */}
       <div className="flex flex-col">
-        {sortedGroups.map((group) => {
-          const isMyTrack = group.trackId ? userTrackIds.includes(group.trackId) : false;
-          const last = lastMessages[group.id];
-
-          return (
-            <button
-              key={group.id}
-              onClick={() => openGroup(group)}
-              className="flex items-center gap-3 px-5 py-4 text-right transition active:opacity-70 w-full"
-              style={{
-                borderBottom: "1px solid var(--border)",
-                background: isMyTrack
-                  ? "color-mix(in srgb, var(--accent) 4%, transparent)"
-                  : "transparent",
-              }}
-            >
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
-                style={{
-                  background: isMyTrack
-                    ? "color-mix(in srgb, var(--accent) 12%, var(--surface))"
-                    : "var(--surface)",
-                  border: isMyTrack
-                    ? "1.5px solid color-mix(in srgb, var(--accent) 40%, var(--border))"
-                    : "1px solid var(--border)",
-                }}>
-                {group.icon}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-bold text-[15px]" style={{ color: "var(--text)" }}>{group.name}</p>
-                  {isMyTrack && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0"
-                      style={{
-                        background: "color-mix(in srgb, var(--accent) 12%, transparent)",
-                        color: "var(--accent-light)",
-                        border: "1px solid color-mix(in srgb, var(--accent) 35%, transparent)",
-                      }}>
-                      مسارك
-                    </span>
-                  )}
-                </div>
-                <p className="text-[13px] truncate mt-0.5" style={{ color: "var(--text-muted)" }}>
-                  {last ? last.text : group.description}
-                </p>
-              </div>
-              {last && (
-                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                  style={{ background: "var(--accent)" }} />
-              )}
-            </button>
-          );
-        })}
+        {restGroups.map((group) => renderGroup(group))}
       </div>
 
       {showFriends && <FriendsPanel onClose={() => setShowFriends(false)} />}

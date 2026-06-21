@@ -538,7 +538,7 @@ export default function RoadmapPage() {
         <Dome compact>
           <div className="flex items-center justify-between">
             <button onClick={() => setSelected(null)} className="dome-chip text-[17px] font-bold" style={{ color: "var(--text)" }}>← رجوع</button>
-            <h1 className="title-lg" style={{ color: "var(--text)" }}>{selected}</h1>
+            <h1 className="title-lg grad-title">{selected}</h1>
             <span className="dome-chip num-hero text-[17px]" style={{ color: "var(--text)" }}>{dc}/{lessons.length}</span>
           </div>
         </Dome>
@@ -631,7 +631,7 @@ export default function RoadmapPage() {
         <Dome compact>
           <div className="flex items-center justify-between">
             <button onClick={() => setSelected(null)} className="dome-chip text-[17px] font-bold" style={{ color: "var(--text)" }}>← رجوع</button>
-            <h1 className="title-lg" style={{ color: "var(--text)" }}>{selected}</h1>
+            <h1 className="title-lg grad-title">{selected}</h1>
             <span className="dome-chip num-hero text-[17px]" style={{ color: "var(--text)" }}>{dc}/{items.length}</span>
           </div>
         </Dome>
