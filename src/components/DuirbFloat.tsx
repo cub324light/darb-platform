@@ -5,7 +5,18 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { createPortal } from "react-dom";
-import DuirbHub, { type DuirbView } from "@/components/DuirbHub";
+import dynamic from "next/dynamic";
+import { type DuirbView } from "@/components/DuirbHub";
+
+/* تحميل دويرب عند فتحه فقط — يبعد قدراته الخمس (وStorage) عن حزمة كل صفحة */
+const DuirbHub = dynamic(() => import("@/components/DuirbHub"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center py-16">
+      <span className="inline-block w-6 h-6 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
+    </div>
+  ),
+});
 
 const HIDDEN_ON = ["/onboarding", "/admin", "/pricing", "/privacy", "/parent"];
 

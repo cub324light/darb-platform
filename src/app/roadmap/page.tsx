@@ -26,7 +26,8 @@ import {
   type ScheduleEvent, type ExamFlow, type StageReviews, type TrainingItem,
 } from "@/lib/storage";
 import { syncUser } from "@/lib/firestore";
-import Calendar from "@/components/Calendar";
+import dynamic from "next/dynamic";
+const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
 import DayScheduler, { getEventsForDate } from "@/components/DayScheduler";
 import ExamDateButton from "@/components/ExamDateButton";
 
