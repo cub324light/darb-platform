@@ -361,6 +361,59 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ items });
     }
 
+    /* -------- getReferral: كود الإحالة + العدد + المكافأة المعلّقة (هوية موثّقة) -------- */
+    if (mode === "getReferral") {
+      const uid = await getVerifiedUid(req);
+      if (!uid) return NextResponse.json({ error: "يجب تسجيل الدخول" }, { status: 401 });
+      const snap = await db.collection("users").doc(uid).get();
+      const x = snap.data() ?? {};
+      return NextResponse.json({
+        code: uid,
+        count: Number(x.referralCount ?? 0),
+        pendingReward: Number(x.pendingRefReward ?? 0),
+      });
+    }
+
+    /* -------- redeemReferral: استبدال كود إحالة (مرة واحدة، لا إحالة ذاتية) -------- */
+    if (mode === "redeemReferral") {
+      const uid = await getVerifiedUid(req);
+      if (!uid) return NextResponse.json({ error: "يجب تسجيل الدخول" }, { status: 401 });
+      const { code } = body as { code?: string };
+      if (typeof code !== "string" || code.length < 6 || code.length > 128 || code === uid) {
+        return NextResponse.json({ ok: false, error: "كود غير صالح" });
+      }
+      const REWARD = 50; // فضة لكلٍّ من المُحيل والمُحال
+      const meRef = db.collection("users").doc(uid);
+      const refRef = db.collection("users").doc(code);
+      const result = await db.runTransaction(async (tx) => {
+        const [meSnap, refSnap] = await Promise.all([tx.get(meRef), tx.get(refRef)]);
+        if (!refSnap.exists) return { ok: false as const };
+        const me = meSnap.data() ?? {};
+        if (me.referredBy) return { ok: false as const }; // استُبدلت سابقاً
+        tx.set(meRef, { referredBy: code }, { merge: true });
+        tx.set(refRef, {
+          referralCount: FieldValue.increment(1),
+          pendingRefReward: FieldValue.increment(REWARD),
+        }, { merge: true });
+        return { ok: true as const, reward: REWARD };
+      });
+      return NextResponse.json(result);
+    }
+
+    /* -------- claimRefReward: استلام مكافآت الإحالة المتراكمة (هوية موثّقة) -------- */
+    if (mode === "claimRefReward") {
+      const uid = await getVerifiedUid(req);
+      if (!uid) return NextResponse.json({ error: "يجب تسجيل الدخول" }, { status: 401 });
+      const meRef = db.collection("users").doc(uid);
+      const claimed = await db.runTransaction(async (tx) => {
+        const snap = await tx.get(meRef);
+        const amt = Number((snap.data() ?? {}).pendingRefReward ?? 0);
+        if (amt > 0) tx.set(meRef, { pendingRefReward: 0 }, { merge: true });
+        return amt;
+      });
+      return NextResponse.json({ claimed });
+    }
+
     return NextResponse.json({ error: "mode غير مدعوم" }, { status: 400 });
 
   } catch (e) {

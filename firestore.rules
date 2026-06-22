@@ -26,7 +26,10 @@ service cloud.firestore {
         && !('role' in request.resource.data)
         && !('plan' in request.resource.data)
         && !('blocked' in request.resource.data)
-        && !('blockUntil' in request.resource.data);
+        && !('blockUntil' in request.resource.data)
+        && !('referredBy' in request.resource.data)
+        && !('referralCount' in request.resource.data)
+        && !('pendingRefReward' in request.resource.data);
 
       allow update: if request.auth.uid == uid
         && ( !('role' in request.resource.data)
@@ -36,7 +39,14 @@ service cloud.firestore {
         && ( !('blocked' in request.resource.data)
              || request.resource.data.blocked == resource.data.blocked )
         && ( !('blockUntil' in request.resource.data)
-             || request.resource.data.blockUntil == resource.data.blockUntil );
+             || request.resource.data.blockUntil == resource.data.blockUntil )
+        // حقول الإحالة تُضبط عبر الخادم فقط (Admin SDK) — يمنع تضخيم العدّ/المكافأة ذاتياً
+        && ( !('referredBy' in request.resource.data)
+             || request.resource.data.referredBy == resource.data.get('referredBy', null) )
+        && ( !('referralCount' in request.resource.data)
+             || request.resource.data.referralCount == resource.data.get('referralCount', 0) )
+        && ( !('pendingRefReward' in request.resource.data)
+             || request.resource.data.pendingRefReward == resource.data.get('pendingRefReward', 0) );
 
       allow delete: if false; // الحذف عبر الخادم فقط (Admin SDK)
 

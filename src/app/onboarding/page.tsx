@@ -5,6 +5,7 @@ import { saveUser, saveExamDate, saveResults, saveTrackExamDates } from "@/lib/s
 import { registerUser } from "@/lib/firestore";
 import { currentUser, pushBackup } from "@/lib/cloud";
 import { trackEvent } from "@/lib/events";
+import { redeemPendingRef } from "@/lib/referral";
 import Dome from "@/components/Dome";
 import Logo from "@/components/Logo";
 
@@ -95,6 +96,8 @@ export default function OnboardingPage() {
     registerUser(trimmedName, primaryTrack, extras);
     trackEvent("onboarding_completed", { track: primaryTrack, tracks: activeTracks.length });
     pushBackup().catch(() => {});
+    /* استبدل كود الإحالة إن وُجد — يمنح الطالب المُحال فضته فوراً */
+    await redeemPendingRef().catch(() => 0);
     window.location.href = "/dashboard";
   };
 

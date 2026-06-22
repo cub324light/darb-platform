@@ -6,6 +6,7 @@ import { TRACKS } from "@/lib/tracks";
 import Logo from "@/components/Logo";
 import { loadTheme, applyTheme, type Theme } from "@/lib/storage";
 import { onAuth } from "@/lib/cloud";
+import { capturePendingRef } from "@/lib/referral";
 import { Sparkles } from "@/components/ui/sparkles";
 import { Meteors } from "@/components/ui/meteors";
 import { AnimatedGradientText } from "@/components/ui/animated-gradient-text";
@@ -74,6 +75,9 @@ export default function LandingPage() {
     typeof window !== "undefined" ? loadTheme() : "dark"
   );
   const rootRef = useReveal(true);
+
+  /* التقط كود الإحالة من ?ref= عند الوصول لصفحة الهبوط (قبل التسجيل) */
+  useEffect(() => { capturePendingRef(); }, []);
 
   useEffect(() => {
     const unsub = onAuth((u) => {
