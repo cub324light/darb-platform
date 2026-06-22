@@ -8,6 +8,8 @@ import {
   onAuth, signIn, signUp, signOutUser, authErrorMsg,
   pushBackup, pullBackup,
 } from "@/lib/cloud";
+import { authedFetch } from "@/lib/authFetch";
+import { exportData } from "@/lib/dataExport";
 import type { User } from "firebase/auth";
 import type { FirebaseError } from "firebase/app";
 
@@ -111,6 +113,31 @@ export default function SettingsButton() {
     if (!confirm("متأكد؟ راح ينمسح كل شيء وتبدأ من الصفر.")) return;
     resetAll();
     window.location.href = "/onboarding";
+  };
+
+  const [deleting, setDeleting] = useState(false);
+  const deleteAccount = async () => {
+    if (!confirm("هذا يحذف حسابك وكل بياناتك نهائياً — الجلسات والخطط والأخطاء والتقدّم. لا يمكن التراجع. متأكد؟")) return;
+    if (!confirm("تأكيد أخير: سيُحذف كل شيء ولا يمكن استرجاعه. احذف الحساب؟")) return;
+    setDeleting(true);
+    try {
+      if (authUser) {
+        const res = await authedFetch("/api/account", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "delete" }),
+        });
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) { alert(d.error ?? "تعذّر حذف الحساب"); setDeleting(false); return; }
+        await signOutUser().catch(() => {});
+      }
+      resetAll();
+      try { localStorage.removeItem("darb_guest_mode"); } catch {}
+      window.location.href = "/";
+    } catch {
+      alert("تعذّر الاتصال — حاول لاحقاً");
+      setDeleting(false);
+    }
   };
 
   const modal = open && typeof document !== "undefined" && createPortal(
@@ -295,10 +322,27 @@ export default function SettingsButton() {
           </a>
         )}
 
-        <button onClick={reset} className="w-full py-3.5 rounded-2xl text-sm font-bold transition"
+        {/* بياناتك وحسابك */}
+        <p className="label mb-3">بياناتك وحسابك</p>
+        <button onClick={exportData}
+          className="w-full py-3.5 rounded-2xl text-sm font-bold transition flex items-center justify-center gap-2 mb-3"
+          style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>
+          ⬇️ تصدير بياناتي (JSON)
+        </button>
+
+        <button onClick={reset} className="w-full py-3.5 rounded-2xl text-sm font-bold transition mb-3"
           style={{ background: "transparent", border: "1px solid rgba(239,68,68,0.3)", color: "var(--danger)" }}>
           إعادة الضبط من الصفر
         </button>
+
+        <button onClick={deleteAccount} disabled={deleting}
+          className="w-full py-3.5 rounded-2xl text-sm font-black transition disabled:opacity-50"
+          style={{ background: "#EF4444", border: "1.5px solid #EF4444", color: "#fff" }}>
+          {deleting ? "جارٍ الحذف…" : "حذف الحساب نهائياً"}
+        </button>
+        <p className="text-[12px] mt-2 px-1" style={{ color: "var(--text-muted)" }}>
+          «إعادة الضبط» تمسح بيانات هذا الجهاز فقط. «حذف الحساب» يمسح حسابك السحابي وكل بياناتك نهائياً.
+        </p>
       </div>
     </div>,
     document.body
