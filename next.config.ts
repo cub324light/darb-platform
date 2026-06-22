@@ -53,4 +53,7 @@ export default withSentryConfig(nextConfig, {
   widenClientFileUpload: true,
   tunnelRoute: "/monitoring",
   silent: !process.env.CI,
+  /* يحذف عبارات تسجيل التشخيص (logger.*) من حزمة العميل عبر tree-shaking —
+     يقلّص بقايا Sentry المدموجة في الحزمة المشتركة دون التأثير على رصد الأخطاء. */
+  disableLogger: true,
 });

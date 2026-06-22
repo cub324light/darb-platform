@@ -5,14 +5,17 @@ const DSN =
   process.env.NEXT_PUBLIC_SENTRY_DSN ??
   "https://f97a2a109fcba8ff3a77160abcbb8e86@o4511574471475200.ingest.de.sentry.io/4511574564143184";
 
-/* أزلنا Session Replay (rrweb) سابقاً، والآن أزلنا تتبّع الأداء (Tracing)
-   و enableLogs — كلاهما يجرّ browserTracingIntegration الثقيل إلى حزمة كل صفحة.
-   تتبّع الأداء يغطّيه Vercel SpeedInsights، وتسجيل الجلسات يغطّيه Clarity،
-   والتحليلات PostHog. يبقى رصد الأخطاء (الأهم) فعّالاً بأخف حزمة ممكنة. */
+/* رصد الأخطاء فقط، بأخفّ حزمة ممكنة:
+   - أزلنا Session Replay (rrweb) وتتبّع الأداء (browserTracingIntegration)
+     و enableLogs — كلها تجرّ تكاملات ثقيلة إلى حزمة كل صفحة.
+   - integrations: [] مع غياب tracesSampleRate ⇒ يحذف البنّاء (tree-shaking)
+     كل آلية التتبّع، فتبقى نواة Sentry وحدها (~18KB gz) — وهي الأصغر الممكن.
+   ملاحظة: التحميل الكسول (dynamic import) جُرِّب وأُلغي لأنه يستورد فضاء
+   @sentry/nextjs كاملاً (168KB gz) دون tree-shaking، فيزيد إجمالي البايتات.
+   تتبّع الأداء يغطّيه Vercel SpeedInsights، والجلسات Clarity، والتحليلات PostHog. */
 Sentry.init({
   dsn: DSN,
   sendDefaultPii: true,
-  /* بلا tracesSampleRate ⇒ لا يُحمَّل تكامل التتبّع. رصد الأخطاء فقط. */
   integrations: [],
 });
 

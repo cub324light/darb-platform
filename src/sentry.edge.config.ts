@@ -5,9 +5,8 @@ const DSN =
   process.env.NEXT_PUBLIC_SENTRY_DSN ??
   "https://f97a2a109fcba8ff3a77160abcbb8e86@o4511574471475200.ingest.de.sentry.io/4511574564143184";
 
+/* رصد الأخطاء فقط — بلا تتبّع أداء ولا سجلّات (يقلّل حِمل المراقبة على الحافة) */
 Sentry.init({
   dsn: DSN,
   sendDefaultPii: true,
-  tracesSampleRate: process.env.NODE_ENV === "development" ? 1.0 : 0.1,
-  enableLogs: true,
 });
