@@ -110,7 +110,15 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   const hasLocal = typeof window !== "undefined" && !!loadUser()?.onboarded;
 
   if (isPublic) return <>{children}</>;
-  if (!authResolved) return <Splash />;
+  /* عائد بجلسة سابقة على نفس الجهاز: اعرض التطبيق فوراً من بياناته المحلية بينما
+     يُحمَّل Firebase وتُحَلّ المصادقة في الخلفية. هذا يزيل «تجمّد الدخول» الذي كان
+     سببه انتظار تحميل حزمة Firebase وتهيئتها على المسار الحرج قبل أول رسم.
+     لا يكشف هذا أي بيانات جديدة: المحتوى محليّ على جهاز الطالب نفسه، وقراءات
+     Firestore تبقى تتطلب رمز مصادقة. لو تبيّن لاحقاً أنه غير مسجّل تظهر شاشة الدخول. */
+  if (!authResolved) {
+    if (hasLocal && !guestMode) return <>{children}</>;
+    return <Splash />;
+  }
   if (!authed) return <SignInScreen initialError={redirectErr} onGuest={enterGuestMode} />;
   if (!synced && !guestMode && !hasLocal) return <Splash label="جارٍ استرجاع بياناتك..." />;
   if (isAccountBlocked()) return <BlockedScreen />;

@@ -264,7 +264,11 @@ export default function OrbitPage() {
         localStorage.removeItem("darb_orbit_session");
       }
     } catch {}
-  }, [phase, subject, durMode, customMins, paused, secondsLeft, keepRunning]);
+    /* لا نُدرج secondsLeft في التبعيات: كان يكتب في localStorage كل ثانية أثناء
+       الجلسة (يجمّد الواجهة). نحفظ endAt المطلق ونعيد حساب الثواني عند الاسترجاع؛
+       وعند الإيقاف المؤقّت يلتقط هذا الحفظ قيمة الثواني المجمّدة الصحيحة. */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, subject, durMode, customMins, paused, keepRunning]);
 
   useEffect(() => {
     if (phase !== "focus" && phase !== "break") {
@@ -278,7 +282,9 @@ export default function OrbitPage() {
     let fired = false;
     const tick = () => {
       const remaining = Math.max(0, Math.ceil((endAtRef.current - Date.now()) / 1000));
-      setSecondsLeft(remaining);
+      /* نُحدّث فقط عند تغيّر الثانية المعروضة — React يتجاوز إعادة الرسم للقيمة
+         نفسها، فلا re-render مرتين بالثانية بلا داعٍ. */
+      setSecondsLeft((prev) => (prev === remaining ? prev : remaining));
       if (remaining <= 0 && !fired) {
         fired = true;
         if (intervalRef.current) clearInterval(intervalRef.current);

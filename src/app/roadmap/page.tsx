@@ -698,7 +698,14 @@ export default function RoadmapPage() {
     Math.round((new Date(d + "T00:00:00").getTime() - new Date(todayStr + "T00:00:00").getTime()) / 86400000);
 
   /* تقدم مادة داخل اختبار: تأسيس + تدريب */
+  /* ذاكرة مؤقّتة على مستوى الرسم الواحد: statsForSubject يُستدعى ٤–٥ مرات لكل
+     مادة في عرض «الكل» (شريط التقدم + البطاقات + المتوسط). الكاش يجمعها في حساب
+     واحد لكل (مسار،مادة) دون إضافة أي hook (يُبنى من جديد كل رسم فيعكس الحالة). */
+  const statsCache = new Map<string, { done: number; total: number; pct: number }>();
   const statsForSubject = (tr: Track, subj: string) => {
+    const ck = `${tr.id}::${subj}`;
+    const cached = statsCache.get(ck);
+    if (cached) return cached;
     const isT = tr.id === "تحصيلي" || tr.id === "تحصيلي مبكر";
     const lessonKeys = (isT && subj in RAKAN_SCHEDULE)
       ? RAKAN_SCHEDULE[subj as TahsiliSubject].map((l) => `${subj}-${l.lesson}`)
@@ -707,7 +714,9 @@ export default function RoadmapPage() {
     const total = lessonKeys.length + training.length;
     const done = lessonKeys.filter((k) => doneSet.has(k)).length
       + training.filter((t) => tadreebDoneSet.has(t.id)).length;
-    return { done, total, pct: total === 0 ? 0 : Math.round((done / total) * 100) };
+    const result = { done, total, pct: total === 0 ? 0 : Math.round((done / total) * 100) };
+    statsCache.set(ck, result);
+    return result;
   };
 
   const examLabel = (dl: number | null) =>
