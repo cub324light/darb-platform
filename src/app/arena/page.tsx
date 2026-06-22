@@ -6,7 +6,7 @@ import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
 import Confetti from "@/components/Confetti";
 import { loadUser, addSilver } from "@/lib/storage";
-import { currentUser } from "@/lib/cloud";
+/* currentUser مُستورَد ديناميكياً أسفل */
 import { postSocial } from "@/lib/authFetch";
 import { getTrack, type TrackId } from "@/lib/tracks";
 
@@ -128,6 +128,7 @@ export default function ArenaPage() {
     setFoundPlayer(null);
 
     try {
+      const { currentUser } = await import("@/lib/cloud");
       const uid = currentUser()?.uid;
 
       // 1) جرّب مطابقة صديق حقيقي من قائمة الأصدقاء

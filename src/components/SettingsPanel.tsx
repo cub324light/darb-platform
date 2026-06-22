@@ -3,15 +3,12 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { TRACKS, TRACK_GROUPS, type TrackId } from "@/lib/tracks";
 import { loadUser, saveUser, resetAll } from "@/lib/storage";
-import { syncUser } from "@/lib/firestore";
-import {
-  onAuth, signIn, signUp, signOutUser, authErrorMsg,
-  pushBackup, pullBackup,
-} from "@/lib/cloud";
-import { authedFetch } from "@/lib/authFetch";
 import { exportData } from "@/lib/dataExport";
 import type { User } from "firebase/auth";
 import type { FirebaseError } from "firebase/app";
+
+/* لا نستورد من cloud.ts أو firestore.ts هنا — تُحمَّل ديناميكياً عند الحاجة فقط
+   حتى لا يدخل Firebase في حزمة كل صفحة عبر سلسلة: SettingsPanel ← Dome ← كل صفحة */
 
 export default function SettingsButton() {
   const [open, setOpen] = useState(false);
@@ -29,7 +26,14 @@ export default function SettingsButton() {
   const [authErr, setAuthErr] = useState("");
   const [syncMsg, setSyncMsg] = useState("");
 
-  useEffect(() => onAuth(setAuthUser), []);
+  /* راقب حالة المصادقة — ديناميكي لأن SettingsPanel مستورد في Dome الموجود بكل صفحة */
+  useEffect(() => {
+    let unsub: (() => void) | undefined;
+    import("@/lib/cloud").then(({ onAuth }) => {
+      unsub = onAuth(setAuthUser);
+    });
+    return () => { unsub?.(); };
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -56,7 +60,7 @@ export default function SettingsButton() {
     saveUser(updated);
     setUser(updated);
     setActiveTracksState(next);
-    syncUser({ track: primaryTrack });
+    import("@/lib/firestore").then(({ syncUser }) => { syncUser({ track: primaryTrack }); });
   };
 
   const togglePrivacy = () => {
@@ -65,7 +69,7 @@ export default function SettingsButton() {
     setIsPrivate(next);
     const updated = { ...user, isPrivate: next } as typeof user & { isPrivate: boolean };
     saveUser(updated as typeof user);
-    syncUser({ isPrivate: next });
+    import("@/lib/firestore").then(({ syncUser }) => { syncUser({ isPrivate: next }); });
   };
 
   const submitAuth = async () => {
@@ -76,6 +80,7 @@ export default function SettingsButton() {
     }
     setAuthBusy(true);
     try {
+      const { signIn, signUp, pushBackup, pullBackup, authErrorMsg } = await import("@/lib/cloud");
       if (authMode === "signup") {
         await signUp(authEmail, authPass);
         await pushBackup();
@@ -91,6 +96,7 @@ export default function SettingsButton() {
       }
       setAuthPass("");
     } catch (e) {
+      const { authErrorMsg } = await import("@/lib/cloud");
       setAuthErr(authErrorMsg((e as FirebaseError)?.code ?? ""));
     } finally {
       setAuthBusy(false);
@@ -99,11 +105,13 @@ export default function SettingsButton() {
 
   const manualSync = async () => {
     setSyncMsg("جارٍ الحفظ…");
+    const { pushBackup } = await import("@/lib/cloud");
     const ok = await pushBackup();
     setSyncMsg(ok ? "تم الحفظ في السحابة ✓" : "تعذّر الحفظ — تأكد من الاتصال");
   };
 
   const doSignOut = async () => {
+    const { pushBackup, signOutUser } = await import("@/lib/cloud");
     await pushBackup();
     await signOutUser();
     setSyncMsg("");
@@ -122,6 +130,7 @@ export default function SettingsButton() {
     setDeleting(true);
     try {
       if (authUser) {
+        const { authedFetch } = await import("@/lib/authFetch");
         const res = await authedFetch("/api/account", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -129,6 +138,7 @@ export default function SettingsButton() {
         });
         const d = await res.json().catch(() => ({}));
         if (!res.ok) { alert(d.error ?? "تعذّر حذف الحساب"); setDeleting(false); return; }
+        const { signOutUser } = await import("@/lib/cloud");
         await signOutUser().catch(() => {});
       }
       resetAll();
@@ -161,7 +171,7 @@ export default function SettingsButton() {
 
         <p className="title-md mb-5" style={{ color: "var(--text)" }}>الإعدادات</p>
 
-        {/* الخصوصية — زر بسيط يصير أحمر للخاص (بلا أنميشن منزلق) */}
+        {/* الخصوصية */}
         <p className="label mb-3">الخصوصية</p>
         <div className="rounded-2xl px-4 py-4 mb-6 flex items-center justify-between gap-3"
           style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>

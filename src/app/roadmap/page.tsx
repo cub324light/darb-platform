@@ -22,7 +22,7 @@ import {
   loadResults, saveResults,
   type ScheduleEvent, type ExamFlow, type StageReviews, type TrainingItem,
 } from "@/lib/storage";
-import { syncUser } from "@/lib/firestore";
+/* syncUser مُستورَد ديناميكياً أسفل — يُبعد Firebase عن حزمة الخريطة المبدئية */
 import dynamic from "next/dynamic";
 const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
 const TopicExtractor = dynamic(() => import("@/components/TopicExtractor"), { ssr: false });
@@ -373,7 +373,7 @@ export default function RoadmapPage() {
   const tadreebSync = progress?.tadreebPct ?? -1;
   useEffect(() => {
     if (taseesSync < 0) return;
-    syncUser({ taseesProgress: taseesSync, tadreebProgress: tadreebSync });
+    import("@/lib/firestore").then(({ syncUser }) => { syncUser({ taseesProgress: taseesSync, tadreebProgress: tadreebSync }); });
   }, [taseesSync, tadreebSync]);
 
   if (!primaryTrack) return <div className="min-h-dvh" />;
@@ -482,7 +482,7 @@ export default function RoadmapPage() {
     setPrimaryTrack(getTrack(newTrackId));
     setActiveTrackIds((prev) => (prev.includes(newTrackId) ? prev : [newTrackId, ...prev]));
     setTestTab(newTrackId);
-    syncUser({ track: newTrackId, taseesProgress: 0, tadreebProgress: 0 });
+    import("@/lib/firestore").then(({ syncUser }) => { syncUser({ track: newTrackId, taseesProgress: 0, tadreebProgress: 0 }); });
 
     // إعادة ضبط كل تقدم الخريطة للمسار الجديد
     const fresh: string[] = [];

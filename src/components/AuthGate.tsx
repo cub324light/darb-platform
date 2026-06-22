@@ -2,17 +2,18 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { User } from "firebase/auth";
-import {
-  onAuth, consumeRedirectResult, initialSync, isInitialSyncDone,
-  isAccountBlocked, signOutUser,
-} from "@/lib/cloud";
+import dynamic from "next/dynamic";
+import { isInitialSyncDone, isAccountBlocked } from "@/lib/cloudFlags";
 import { loadUser } from "@/lib/storage";
-import SignInScreen from "./SignInScreen";
 import Logo from "./Logo";
 
 /* المسارات العامة — تُعرض بدون تسجيل دخول للطالب:
    «/» و«/privacy» تسويقية، و«/admin» له حماية كلمة سر خاصة على الخادم. */
 const PUBLIC_PATHS = ["/", "/privacy", "/admin"];
+
+/* تحميل SignInScreen ديناميكياً — يُبعدها وما تستورده من Firebase عن الحزمة المبدئية.
+   المستخدمون العائدون لا يحتاجون شاشة الدخول على الإطلاق. */
+const SignInScreen = dynamic(() => import("./SignInScreen"), { ssr: false });
 
 function Splash({ label }: { label?: string }) {
   return (
@@ -37,7 +38,12 @@ function BlockedScreen() {
           حسابك موقوف حالياً عن استخدام درب. لو تعتقد أنه خطأ، تواصل معنا.
         </p>
       </div>
-      <button onClick={() => { signOutUser().then(() => window.location.reload()); }}
+      <button
+        onClick={() => {
+          import("@/lib/cloud").then(({ signOutUser }) =>
+            signOutUser().then(() => window.location.reload())
+          );
+        }}
         className="px-6 py-3 rounded-2xl font-bold text-sm"
         style={{ background: "transparent", border: "1px solid var(--border)", color: "var(--text-dim)" }}>
         تسجيل خروج
@@ -47,7 +53,9 @@ function BlockedScreen() {
 }
 
 /* بوابة المصادقة: الدخول إجباري لكل المسارات عدا العامة.
-   تكمل دخول redirect، تراقب الحالة، وتنفّذ المزامنة الأولية مرة واحدة. */
+   تكمل دخول redirect، تراقب الحالة، وتنفّذ المزامنة الأولية مرة واحدة.
+   Firebase تُحمَّل ديناميكياً بعد أول render — المستخدم العائد يرى المحتوى فوراً
+   بينما تُحَلّ المصادقة في الخلفية (stale-while-revalidate). */
 export default function AuthGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -69,26 +77,37 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
   /* أكمل تسجيل الدخول القادم عبر redirect (Google) */
   useEffect(() => {
-    consumeRedirectResult().then((e) => { if (e) setRedirectErr(e); });
+    import("@/lib/cloud").then(({ consumeRedirectResult }) => {
+      consumeRedirectResult().then((e) => { if (e) setRedirectErr(e); });
+    });
   }, []);
 
   /* راقب حالة المصادقة — عند الدخول بحساب حقيقي نلغي وضع الزائر */
-  useEffect(() => onAuth((u) => {
-    setUser(u);
-    setAuthResolved(true);
-    if (u) {
-      try { localStorage.removeItem("darb_guest_mode"); } catch {}
-      setGuestMode(false);
-    }
-  }), []);
+  useEffect(() => {
+    let unsub: (() => void) | undefined;
+    import("@/lib/cloud").then(({ onAuth }) => {
+      unsub = onAuth((u) => {
+        setUser(u);
+        setAuthResolved(true);
+        if (u) {
+          try { localStorage.removeItem("darb_guest_mode"); } catch {}
+          setGuestMode(false);
+        }
+      });
+    });
+    return () => { unsub?.(); };
+  }, []);
 
   /* المزامنة الأولية بعد ثبوت تسجيل الدخول */
   useEffect(() => {
     let cancelled = false;
     if (user && !isInitialSyncDone()) {
-      initialSync().finally(() => { if (!cancelled) setSynced(true); });
+      import("@/lib/cloud").then(({ initialSync }) => {
+        if (!cancelled) {
+          initialSync().finally(() => { if (!cancelled) setSynced(true); });
+        }
+      });
     } else if (!user) {
-      // defer to avoid synchronous setState in effect body
       const id = setTimeout(() => { if (!cancelled) setSynced(false); }, 0);
       return () => { cancelled = true; clearTimeout(id); };
     }
@@ -111,10 +130,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (isPublic) return <>{children}</>;
   /* عائد بجلسة سابقة على نفس الجهاز: اعرض التطبيق فوراً من بياناته المحلية بينما
-     يُحمَّل Firebase وتُحَلّ المصادقة في الخلفية. هذا يزيل «تجمّد الدخول» الذي كان
-     سببه انتظار تحميل حزمة Firebase وتهيئتها على المسار الحرج قبل أول رسم.
-     لا يكشف هذا أي بيانات جديدة: المحتوى محليّ على جهاز الطالب نفسه، وقراءات
-     Firestore تبقى تتطلب رمز مصادقة. لو تبيّن لاحقاً أنه غير مسجّل تظهر شاشة الدخول. */
+     يُحمَّل Firebase وتُحَلّ المصادقة في الخلفية. */
   if (!authResolved) {
     if (hasLocal && !guestMode) return <>{children}</>;
     return <Splash />;

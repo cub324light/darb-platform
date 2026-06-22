@@ -1,9 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TRACKS, TRACK_GROUPS, scoreRangeForTitle, validateScore, type TrackId } from "@/lib/tracks";
 import { saveUser, saveExamDate, saveResults, saveTrackExamDates } from "@/lib/storage";
-import { registerUser } from "@/lib/firestore";
-import { currentUser, pushBackup } from "@/lib/cloud";
+/* registerUser, pushBackup, currentUser مُستورَدة ديناميكياً أسفل */
 import { trackEvent } from "@/lib/events";
 import { redeemPendingRef } from "@/lib/referral";
 import Dome from "@/components/Dome";
@@ -20,10 +19,14 @@ const SAUDI_REGIONS = [
 export default function OnboardingPage() {
   const [step, setStep] = useState<0 | 1 | 2>(0);
 
-  const [name, setName] = useState(() => {
-    const dn = typeof window !== "undefined" ? currentUser()?.displayName : undefined;
-    return dn ? dn.split(" ")[0] : "";
-  });
+  const [name, setName] = useState("");
+  /* لو المستخدم دخل بـ Google، اقترح اسمه بعد تحميل Firebase */
+  useEffect(() => {
+    import("@/lib/cloud").then(({ currentUser }) => {
+      const dn = currentUser()?.displayName;
+      if (dn) setName((prev) => prev || dn.split(" ")[0]);
+    });
+  }, []);
   const [age, setAge]               = useState("");
   const [studyLevel, setStudyLevel] = useState("");
   const [grade, setGrade]           = useState("");
@@ -93,9 +96,9 @@ export default function OnboardingPage() {
         };
       }));
     }
-    registerUser(trimmedName, primaryTrack, extras);
+    import("@/lib/firestore").then(({ registerUser }) => { registerUser(trimmedName, primaryTrack, extras); });
     trackEvent("onboarding_completed", { track: primaryTrack, tracks: activeTracks.length });
-    pushBackup().catch(() => {});
+    import("@/lib/cloud").then(({ pushBackup }) => { pushBackup().catch(() => {}); });
     /* استبدل كود الإحالة إن وُجد — يمنح الطالب المُحال فضته فوراً */
     await redeemPendingRef().catch(() => 0);
     window.location.href = "/dashboard";

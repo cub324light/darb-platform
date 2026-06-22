@@ -23,6 +23,12 @@ import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import { loadUser, saveUser, loadStats, computeStreak } from "./storage";
 import { normalizePlan } from "./plan";
+import {
+  markInitialSyncDone, resetInitialSyncDone,
+  markAccountBlocked,
+} from "./cloudFlags";
+
+export { isInitialSyncDone, isAccountBlocked } from "./cloudFlags";
 
 /* المفاتيح التي تُحفظ في السحابة (كل بيانات المستخدم)
    ملاحظة: darb_theme متعمداً غير مدرج — الثيم خاص بكل جهاز */
@@ -36,14 +42,8 @@ const BACKUP_KEYS = [
   "darb_session_log", "darb_leaks_plan", "darb_exam_coord",
 ];
 
-/* علم اكتمال أول سحب — يمنع الرفع قبل استرجاع نسخة السحابة */
-let initialSyncDone = false;
-export function isInitialSyncDone(): boolean { return initialSyncDone; }
-
-/* حالة إيقاف الحساب — تُضبط من لوحة الإدارة (top-level field).
-   العميل يقرأها فقط ولا يكتبها، فلا يستطيع فكّ الإيقاف عن نفسه. */
-let accountBlocked = false;
-export function isAccountBlocked(): boolean { return accountBlocked; }
+/* أعلام المزامنة والحظر مُعرَّفة في cloudFlags.ts (بلا Firebase)
+   ومُعاد تصديرها أعلاه — نحدّثها هنا عبر setters فقط. */
 
 /* ─── المصادقة ─── */
 export function currentUser(): User | null {
@@ -92,8 +92,8 @@ export async function resetPassword(email: string) {
 
 export async function signOutUser() {
   await fbSignOut(auth);
-  initialSyncDone = false;
-  accountBlocked = false;
+  resetInitialSyncDone();
+  markAccountBlocked(false);
 }
 
 export async function sendPasswordReset(email: string) {
@@ -176,7 +176,7 @@ export async function initialSync(): Promise<void> {
   } catch {
     /* نكمل في كل الأحوال */
   } finally {
-    initialSyncDone = true;
+    markInitialSyncDone();
   }
 }
 
@@ -234,7 +234,7 @@ export async function pullBackup(): Promise<boolean> {
     const data = snap.data();
 
     /* حالة الإيقاف والباقة محفوظتان كحقول عُليا يضبطها الأدمن — تُقرأ دائماً */
-    accountBlocked = data.blocked === true;
+    markAccountBlocked(data.blocked === true);
     const cloudPlan = data.plan as string | undefined;
 
     const backup = data.backup as Record<string, string> | undefined;

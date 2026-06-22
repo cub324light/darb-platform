@@ -10,7 +10,7 @@ import { fmtHour } from "@/lib/utils";
 import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, saveExamDate, loadDashConfig, saveDashConfig, loadTrackExamDates, saveTrackExamDates, DASH_SECTION_META, localDayKey, type DarbUser, type ScheduleEvent, type DashItem, type DashSectionId, saveEvents } from "@/lib/storage";
 import CalendarExport from "@/components/CalendarExport";
 import { useFlag } from "@/lib/flags";
-import { syncUser } from "@/lib/firestore";
+/* syncUser مُستورَد ديناميكياً أسفل — يُبعد Firebase عن حزمة الداشبورد المبدئية */
 import DayScheduler, { getEventsForDate } from "@/components/DayScheduler";
 import ExamDateButton from "@/components/ExamDateButton";
 import dynamic from "next/dynamic";
@@ -205,13 +205,15 @@ export default function DashboardPage() {
     const u = loadUser();
     if (!u) return;
     const s = loadStats();
-    syncUser({
-      name: u.name,
-      track: u.track,
-      streak: computeStreak(s),
-      focusMins: s.totalFocusMins,
-      sessions: s.sessionsCount,
-      silver: s.silver,
+    import("@/lib/firestore").then(({ syncUser }) => {
+      syncUser({
+        name: u.name,
+        track: u.track,
+        streak: computeStreak(s),
+        focusMins: s.totalFocusMins,
+        sessions: s.sessionsCount,
+        silver: s.silver,
+      });
     });
   }, []);
 

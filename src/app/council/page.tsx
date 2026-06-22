@@ -5,7 +5,7 @@ import {
   orderBy, query, limit, serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { onAuth } from "@/lib/cloud";
+/* onAuth مُستورَد ديناميكياً أسفل */
 import BottomNav from "@/components/BottomNav";
 import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
@@ -53,7 +53,11 @@ export default function CouncilPage() {
     return ids as string[];
   });
 
-  useEffect(() => onAuth((u) => setAuthUid(u?.uid ?? null)), []);
+  useEffect(() => {
+    let unsub: (() => void) | undefined;
+    import("@/lib/cloud").then(({ onAuth }) => { unsub = onAuth((u) => setAuthUid(u?.uid ?? null)); });
+    return () => { unsub?.(); };
+  }, []);
 
   /* ─ حالة المجموعة النشطة — تبدأ بالقائمة (لا ندخل «العام» تلقائياً) ─ */
   const [activeGroup, setActiveGroup] = useState<ChatGroup | null>(null);

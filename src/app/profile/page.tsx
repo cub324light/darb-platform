@@ -12,7 +12,7 @@ import {
   loadResults, saveResults, loadSessionLog,
   type DarbUser, type DarbStats, type ExamResult,
 } from "@/lib/storage";
-import { syncUser } from "@/lib/firestore";
+/* syncUser مُستورَد ديناميكياً أسفل */
 import { getTrack, TRACKS, scoreRangeForTitle, validateScore, type TrackId } from "@/lib/tracks";
 import { getPlan, PLAN_NAMES, PLAN_COLORS } from "@/lib/plan";
 import type { PlanId } from "@/lib/types";
@@ -20,7 +20,7 @@ import { computeXP, getLevel, getUnlockedBadgeIds, getBadgeCurrent, BADGE_DEFS }
 import { computeWeeklyReport, fmtMins } from "@/lib/weeklyReport";
 import { loadSkillProgress, overallStats } from "@/lib/skillProgress";
 import { skillsForTracks, SKILL_BY_ID } from "@/lib/globalSkills";
-import { onAuth } from "@/lib/cloud";
+/* onAuth مُستورَد ديناميكياً أسفل */
 import { postSocial } from "@/lib/authFetch";
 import { getReferral, claimRefReward, referralLink, REFERRAL_REWARD, type ReferralInfo } from "@/lib/referral";
 
@@ -139,7 +139,11 @@ export default function ProfilePage() {
   }, []);
 
   /* ── معرّف المستخدم → عدد الأصدقاء + الترتيب ── */
-  useEffect(() => onAuth((u) => setUid(u?.uid ?? null)), []);
+  useEffect(() => {
+    let unsub: (() => void) | undefined;
+    import("@/lib/cloud").then(({ onAuth }) => { unsub = onAuth((u) => setUid(u?.uid ?? null)); });
+    return () => { unsub?.(); };
+  }, []);
   useEffect(() => {
     if (!uid) return;
     let alive = true;
@@ -182,7 +186,7 @@ export default function ProfilePage() {
     if (!user || !editName.trim()) return;
     const next = { ...user, name: editName.trim() };
     saveUser(next); setUser(next); setEditing(false);
-    syncUser({ name: next.name });
+    import("@/lib/firestore").then(({ syncUser }) => { syncUser({ name: next.name }); });
   };
   const togglePrivacy = () => {
     if (!user) return;
@@ -190,7 +194,7 @@ export default function ProfilePage() {
     setIsPrivate(next);
     const updated = { ...user, isPrivate: next } as DarbUser & { isPrivate: boolean };
     saveUser(updated as DarbUser);
-    syncUser({ isPrivate: next });
+    import("@/lib/firestore").then(({ syncUser }) => { syncUser({ isPrivate: next }); });
   };
   const addResult = () => {
     const exam = resExam.trim();

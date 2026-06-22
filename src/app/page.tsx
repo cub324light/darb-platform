@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { TRACKS } from "@/lib/tracks";
 import Logo from "@/components/Logo";
 import { loadTheme, applyTheme, type Theme } from "@/lib/storage";
-import { onAuth } from "@/lib/cloud";
 import { capturePendingRef } from "@/lib/referral";
 import { Sparkles } from "@/components/ui/sparkles";
 import { Meteors } from "@/components/ui/meteors";
@@ -80,16 +79,20 @@ export default function LandingPage() {
   useEffect(() => { capturePendingRef(); }, []);
 
   useEffect(() => {
-    const unsub = onAuth((u) => {
-      if (!u) return;
-      let isOnboarded = false;
-      try {
-        const raw = localStorage.getItem("darb_user");
-        isOnboarded = !!(raw ? JSON.parse(raw)?.onboarded : false);
-      } catch {}
-      router.replace(isOnboarded ? "/dashboard" : "/onboarding");
+    let unsub: (() => void) | undefined;
+    /* ديناميكي — يُؤخِّر تحميل firebase عن المسار الحرج لصفحة الهبوط */
+    import("@/lib/cloud").then(({ onAuth }) => {
+      unsub = onAuth((u) => {
+        if (!u) return;
+        let isOnboarded = false;
+        try {
+          const raw = localStorage.getItem("darb_user");
+          isOnboarded = !!(raw ? JSON.parse(raw)?.onboarded : false);
+        } catch {}
+        router.replace(isOnboarded ? "/dashboard" : "/onboarding");
+      });
     });
-    return unsub;
+    return () => { unsub?.(); };
   }, [router]);
 
   const toggleTheme = () => {

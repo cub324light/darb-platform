@@ -2,7 +2,6 @@
    الباقة تُحفظ على المستخدم محلياً وتتزامن سحابياً (top-level field)
    حتى تستطيع لوحة الإدارة قراءتها ومنحها. */
 import { loadUser, saveUser } from "./storage";
-import { syncUser } from "./firestore";
 import type { PlanId } from "./types";
 
 export const PLAN_NAMES: Record<PlanId, string> = {
@@ -40,6 +39,8 @@ export function setPlan(plan: PlanId): boolean {
   const u = loadUser();
   if (!u) return false;
   saveUser({ ...u, plan });
-  syncUser({ plan });
+  /* ديناميكي — firestore.ts (وبالتالي firebase) لا تدخل حزمة الصفحات التي تستورد plan.ts
+     للتحقق من الباقة فقط (getPlan/isPaid). المزامنة fire-and-forget. */
+  import("./firestore").then(({ syncUser }) => { syncUser({ plan }); }).catch(() => {});
   return true;
 }
