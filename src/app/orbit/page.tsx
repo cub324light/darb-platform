@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, useSyncExternalStore } from "react";
 import BottomNav from "@/components/BottomNav";
 import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
@@ -59,6 +59,123 @@ function arabicMins(n: number): string {
   return `${n} دقيقة`;
 }
 
+/* ─── متجر الثواني (Timer Store) ───
+   الثواني المتبقية تتغيّر كل ثانية. لو حفظناها في حالة الصفحة (useState) فإن
+   الصفحة كاملة (٧٠٠+ سطر: BottomNav, Dome, الأزرار، الإحصاءات...) تُعيد الرسم
+   كل ثانية أثناء الجلسة. بدلاً من ذلك نضعها في متجر خارجي خفيف؛ المكوّنات التي
+   تعرض العدّاد فقط (الدائرة، عنوان التبويب، عدّاد الراحة) تشترك فيه وتُعيد رسم
+   نفسها وحدها — أما صفحة أوربت فلا تُعيد الرسم إطلاقاً مع كل ثانية. */
+type TimerStore = {
+  get: () => number;
+  set: (v: number) => void;
+  subscribe: (l: () => void) => () => void;
+};
+
+function useTimerStore(initial: number): TimerStore {
+  const ref = useRef<{ value: number; listeners: Set<() => void> } | null>(null);
+  if (ref.current === null) ref.current = { value: initial, listeners: new Set() };
+  return useMemo<TimerStore>(() => ({
+    get: () => ref.current!.value,
+    set: (v: number) => {
+      const s = ref.current!;
+      if (s.value === v) return; // لا إشعار إن لم تتغيّر الثانية
+      s.value = v;
+      s.listeners.forEach((l) => l());
+    },
+    subscribe: (l: () => void) => {
+      ref.current!.listeners.add(l);
+      return () => { ref.current!.listeners.delete(l); };
+    },
+  }), []);
+}
+
+function useTimerValue(store: TimerStore): number {
+  return useSyncExternalStore(store.subscribe, store.get, store.get);
+}
+
+/* الدائرة + الرقم المركزي — المكوّن الوحيد الذي يُعيد الرسم كل ثانية أثناء الجلسة */
+function OrbitDial({
+  store, phase, focusMins, focusSecs, totalSecs, strokeColor, currentColor, subject, radius, circumference,
+}: {
+  store: TimerStore; phase: Phase; focusMins: number; focusSecs: number; totalSecs: number;
+  strokeColor: string; currentColor: string; subject: string; radius: number; circumference: number;
+}) {
+  const live = useTimerValue(store);
+  const displaySecs = phase === "idle" ? focusSecs : live;
+  const progress = 1 - displaySecs / totalSecs;
+  const mins = Math.floor(displaySecs / 60);
+  const secs = displaySecs % 60;
+  const dashOffset = circumference * (1 - progress);
+  return (
+    <div className="relative flex-shrink-0"
+      style={phase === "focus" ? { filter: `drop-shadow(0 0 14px ${currentColor}40)` } : undefined}>
+      <svg width="220" height="220" className="-rotate-90">
+        <circle cx="110" cy="110" r={radius} fill="none" stroke="var(--border)" strokeWidth="6" />
+        <circle
+          cx="110" cy="110" r={radius} fill="none"
+          stroke={strokeColor} strokeWidth="6" strokeLinecap="round"
+          strokeDasharray={circumference} strokeDashoffset={dashOffset}
+          style={{ transition: "stroke-dashoffset 1s linear, stroke 0.5s ease" }}
+          className={phase === "focus" ? "orbit-active" : ""}
+        />
+      </svg>
+
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        {phase === "idle" ? (
+          <div className="text-center">
+            <p className="text-5xl font-black font-mono-nums text-[var(--text)]">
+              {String(focusMins).padStart(2, "0")}:00
+            </p>
+            <p className="text-sm text-[var(--text-muted)] mt-1">تركيز</p>
+          </div>
+        ) : phase === "done" ? (
+          <p className="text-sm font-bold text-[var(--success)]">منجز!</p>
+        ) : (
+          <div className="text-center">
+            <p className="text-5xl font-black font-mono-nums" style={{ color: strokeColor }}>
+              {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
+            </p>
+            <p className="text-sm mt-1" style={{ color: strokeColor }}>
+              {phase === "focus" ? "تركيز" : "راحة"}
+            </p>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">{subject}</p>
+          </div>
+        )}
+      </div>
+
+      {phase === "focus" && (
+        <div className="absolute inset-0 rounded-full pointer-events-none"
+          style={{ boxShadow: `0 0 40px color-mix(in srgb, var(--accent) 20%, transparent)`, borderRadius: "50%" }} />
+      )}
+    </div>
+  );
+}
+
+/* عنوان التبويب يعرض العدّاد — يشترك في المتجر فلا يُعيد رسم الصفحة */
+function TimerTitle({ store, phase }: { store: TimerStore; phase: Phase }) {
+  const live = useTimerValue(store);
+  useEffect(() => {
+    const base = "درب | المنصة التي تعاملك كأخ";
+    if (phase === "focus" || phase === "break") {
+      const m = Math.floor(live / 60);
+      const s = live % 60;
+      document.title = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")} ${phase === "focus" ? "تركيز" : "راحة"} — درب`;
+    } else {
+      document.title = base;
+    }
+    return () => { document.title = base; };
+  }, [phase, live]);
+  return null;
+}
+
+/* نص عدّاد الراحة "بعد mm:ss" — يشترك في المتجر وحده */
+function LiveCountdown({ store }: { store: TimerStore }) {
+  const live = useTimerValue(store);
+  const m = Math.floor(live / 60);
+  const s = live % 60;
+  return <>{m}:{String(s).padStart(2, "0")}</>;
+}
+
 export default function OrbitPage() {
   const [phase, setPhase]           = useState<Phase>("idle");
   const [durMode, setDurMode]       = useState<DurMode>("50");
@@ -67,7 +184,8 @@ export default function OrbitPage() {
   const [customInput, setCustomInput]     = useState("50");
   const [showEdit, setShowEdit]           = useState(false);
   const [prevDur, setPrevDur]             = useState<{mode: DurMode; custom: number}>({mode: "50", custom: 50});
-  const [secondsLeft, setSecondsLeft]     = useState(50 * 60);
+  /* الثواني المتبقية في متجر خارجي — لا تُعيد رسم الصفحة (انظر useTimerStore) */
+  const timer = useTimerStore(50 * 60);
   const [sessionsToday, setSessionsToday] = useState(() => {
     const s = typeof window !== "undefined" ? loadStats() : null;
     return s?.sessionsCount ?? 0;
@@ -152,12 +270,8 @@ export default function OrbitPage() {
   const focusSecs = focusMins * 60;
   const breakSecs = breakMins * 60;
 
-  /* في وضع الانتظار نعرض مدة الجلسة مباشرة — بدون state وسيط */
-  const displaySecs = phase === "idle" ? focusSecs : secondsLeft;
-  const totalSecs   = phase === "break" ? breakSecs : focusSecs;
-  const progress    = 1 - displaySecs / totalSecs;
-  const mins        = Math.floor(displaySecs / 60);
-  const secs        = displaySecs % 60;
+  /* المدة الكلية للقوس: راحة في طور الراحة، وإلا مدة التركيز */
+  const totalSecs = phase === "break" ? breakSecs : focusSecs;
 
   const vibrate = useCallback((pattern: number | number[]) => {
     try { navigator.vibrate?.(pattern); } catch {}
@@ -192,12 +306,12 @@ export default function OrbitPage() {
       }
     } catch {}
     endAtRef.current = Date.now() + focusSecs * 1000;
-    setPhase("focus"); setSecondsLeft(focusSecs);
-  }, [focusSecs]);
+    setPhase("focus"); timer.set(focusSecs);
+  }, [focusSecs, timer]);
 
   const startBreak = useCallback(() => {
     endAtRef.current = Date.now() + breakSecs * 1000;
-    setPhase("break"); setSecondsLeft(breakSecs);
+    setPhase("break"); timer.set(breakSecs);
     const s = recordSession(focusMins, subject);
     setSilverTotal(s.silver);
     setLastEarned(s.earned);
@@ -208,7 +322,7 @@ export default function OrbitPage() {
     playBeep();
     vibrate([100, 50, 100]);
     notify("انتهت جلسة التركيز", `أحسنت! خذ راحة ${arabicMins(calcBreak(focusMins))}`);
-  }, [focusMins, breakSecs, playBeep, notify, vibrate]);
+  }, [focusMins, breakSecs, subject, timer, playBeep, notify, vibrate]);
 
   const finishBreak = useCallback(() => {
     setPhase("done"); playBeep();
@@ -217,18 +331,18 @@ export default function OrbitPage() {
   }, [playBeep, notify, vibrate]);
 
   const reset = useCallback(() => {
-    setPhase("idle"); setSecondsLeft(focusSecs); setPaused(false);
+    setPhase("idle"); timer.set(focusSecs); setPaused(false);
     if (intervalRef.current) clearInterval(intervalRef.current);
     try { localStorage.removeItem("darb_orbit_session"); } catch {}
-  }, [focusSecs]);
+  }, [focusSecs, timer]);
 
   const togglePause = useCallback(() => {
     if (phase !== "focus" && phase !== "break") return;
     setPaused((p) => {
-      if (p) endAtRef.current = Date.now() + secondsLeft * 1000; // استئناف
+      if (p) endAtRef.current = Date.now() + timer.get() * 1000; // استئناف من القيمة المجمّدة
       return !p;
     });
-  }, [phase, secondsLeft]);
+  }, [phase, timer]);
 
   /* استرجاع جلسة جارية عند العودة للصفحة (لو الإعداد مفعّل) */
   useEffect(() => {
@@ -241,11 +355,11 @@ export default function OrbitPage() {
       setDurMode(s.durMode); setCustomMins(s.customMins); setCustomInput(String(s.customMins));
       if (s.subject) setSubject(s.subject);
       if (s.paused) {
-        setPaused(true); setSecondsLeft(s.secondsLeft); endAtRef.current = Date.now() + s.secondsLeft * 1000;
+        setPaused(true); timer.set(s.secondsLeft); endAtRef.current = Date.now() + s.secondsLeft * 1000;
       } else {
         const remaining = Math.max(0, Math.ceil((s.endAt - Date.now()) / 1000));
         if (remaining <= 0) return; // انتهت أثناء الغياب — نتركها للبداية النظيفة
-        endAtRef.current = s.endAt; setSecondsLeft(remaining);
+        endAtRef.current = s.endAt; timer.set(remaining);
       }
       setPhase(s.phase);
     } catch {}
@@ -258,15 +372,15 @@ export default function OrbitPage() {
     try {
       if (phase === "focus" || phase === "break") {
         localStorage.setItem("darb_orbit_session", JSON.stringify({
-          phase, endAt: endAtRef.current, subject, durMode, customMins, paused, secondsLeft,
+          phase, endAt: endAtRef.current, subject, durMode, customMins, paused, secondsLeft: timer.get(),
         }));
       } else {
         localStorage.removeItem("darb_orbit_session");
       }
     } catch {}
-    /* لا نُدرج secondsLeft في التبعيات: كان يكتب في localStorage كل ثانية أثناء
-       الجلسة (يجمّد الواجهة). نحفظ endAt المطلق ونعيد حساب الثواني عند الاسترجاع؛
-       وعند الإيقاف المؤقّت يلتقط هذا الحفظ قيمة الثواني المجمّدة الصحيحة. */
+    /* لا نُدرج الثواني في التبعيات: المتجر يتغيّر كل ثانية ولا يُشغّل هذا الأثر.
+       نحفظ endAt المطلق ونعيد حساب الثواني عند الاسترجاع؛ وعند الإيقاف المؤقّت
+       يلتقط هذا الحفظ قيمة الثواني المجمّدة الصحيحة من المتجر (timer.get). */
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, subject, durMode, customMins, paused, keepRunning]);
 
@@ -282,9 +396,9 @@ export default function OrbitPage() {
     let fired = false;
     const tick = () => {
       const remaining = Math.max(0, Math.ceil((endAtRef.current - Date.now()) / 1000));
-      /* نُحدّث فقط عند تغيّر الثانية المعروضة — React يتجاوز إعادة الرسم للقيمة
-         نفسها، فلا re-render مرتين بالثانية بلا داعٍ. */
-      setSecondsLeft((prev) => (prev === remaining ? prev : remaining));
+      /* نُحدّث المتجر فقط — يُعيد رسم العدّاد وحده دون الصفحة. المتجر يتجاهل
+         التحديث إن لم تتغيّر الثانية (set يقارن قبل الإشعار). */
+      timer.set(remaining);
       if (remaining <= 0 && !fired) {
         fired = true;
         if (intervalRef.current) clearInterval(intervalRef.current);
@@ -300,7 +414,7 @@ export default function OrbitPage() {
       if (intervalRef.current) clearInterval(intervalRef.current);
       document.removeEventListener("visibilitychange", onVis);
     };
-  }, [phase, paused, startBreak, finishBreak]);
+  }, [phase, paused, timer, startBreak, finishBreak]);
 
   /* اختصارات لوحة المفاتيح: مسافة = بدء/إيقاف | Escape = إعادة تعيين */
   useEffect(() => {
@@ -318,17 +432,6 @@ export default function OrbitPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [phase, startFocus, reset]);
 
-  /* عنوان التبويب يعرض العدّاد أثناء الجلسة */
-  useEffect(() => {
-    const base = "درب | المنصة التي تعاملك كأخ";
-    if (phase === "focus" || phase === "break") {
-      document.title = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")} ${phase === "focus" ? "تركيز" : "راحة"} — درب`;
-    } else {
-      document.title = base;
-    }
-    return () => { document.title = base; };
-  }, [phase, mins, secs]);
-
   /* تقييس المدة المخصصة: مضاعف 5 بين 5 و 360 */
   const applyCustom = (val: number) => {
     const clamped = Math.max(5, Math.min(360, Math.round(val / 5) * 5));
@@ -339,7 +442,6 @@ export default function OrbitPage() {
   const currentColor = subjects.find(s => s.name === subject)?.color ?? "var(--accent)";
   const radius       = 95;
   const circumference = 2 * Math.PI * radius;
-  const dashOffset    = circumference * (1 - progress);
   const strokeColor   = phase === "break" ? "#F59E0B" : currentColor;
 
   const statusMsg =
@@ -350,6 +452,9 @@ export default function OrbitPage() {
 
   return (
     <div className="min-h-dvh flex flex-col pb-nav relative z-[1] page-enter">
+
+      {/* عنوان التبويب الحيّ — يشترك في متجر العدّاد ولا يُعيد رسم الصفحة */}
+      <TimerTitle store={timer} phase={phase} />
 
       {phase === "done" && <Confetti />}
 
@@ -421,48 +526,19 @@ export default function OrbitPage() {
       <div className="flex-1 flex flex-col items-center justify-center px-3 rise rise-3">
         <div className="flex items-center justify-center gap-3 w-full mb-6">
 
-          {/* الدائرة */}
-          <div className="relative flex-shrink-0"
-            style={phase === "focus" ? { filter: `drop-shadow(0 0 14px ${currentColor}40)` } : undefined}>
-            <svg width="220" height="220" className="-rotate-90">
-              <circle cx="110" cy="110" r={radius} fill="none" stroke="var(--border)" strokeWidth="6" />
-              <circle
-                cx="110" cy="110" r={radius} fill="none"
-                stroke={strokeColor} strokeWidth="6" strokeLinecap="round"
-                strokeDasharray={circumference} strokeDashoffset={dashOffset}
-                style={{ transition: "stroke-dashoffset 1s linear, stroke 0.5s ease" }}
-                className={phase === "focus" ? "orbit-active" : ""}
-              />
-            </svg>
-
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              {phase === "idle" ? (
-                <div className="text-center">
-                  <p className="text-5xl font-black font-mono-nums text-[var(--text)]">
-                    {String(focusMins).padStart(2, "0")}:00
-                  </p>
-                  <p className="text-sm text-[var(--text-muted)] mt-1">تركيز</p>
-                </div>
-              ) : phase === "done" ? (
-                <p className="text-sm font-bold text-[var(--success)]">منجز!</p>
-              ) : (
-                <div className="text-center">
-                  <p className="text-5xl font-black font-mono-nums" style={{ color: strokeColor }}>
-                    {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
-                  </p>
-                  <p className="text-sm mt-1" style={{ color: strokeColor }}>
-                    {phase === "focus" ? "تركيز" : "راحة"}
-                  </p>
-                  <p className="text-xs text-[var(--text-muted)] mt-0.5">{subject}</p>
-                </div>
-              )}
-            </div>
-
-            {phase === "focus" && (
-              <div className="absolute inset-0 rounded-full pointer-events-none"
-                style={{ boxShadow: `0 0 40px color-mix(in srgb, var(--accent) 20%, transparent)`, borderRadius: "50%" }} />
-            )}
-          </div>
+          {/* الدائرة — مكوّن يشترك في المتجر ويُعيد رسم نفسه فقط كل ثانية */}
+          <OrbitDial
+            store={timer}
+            phase={phase}
+            focusMins={focusMins}
+            focusSecs={focusSecs}
+            totalSecs={totalSecs}
+            strokeColor={strokeColor}
+            currentColor={currentColor}
+            subject={subject}
+            radius={radius}
+            circumference={circumference}
+          />
 
         </div>
 
@@ -607,7 +683,7 @@ export default function OrbitPage() {
                   <p className="text-sm text-[var(--text-dim)] leading-relaxed px-6">{breakTip}</p>
                 </div>
               )}
-              <p className="text-xs text-[var(--text-muted)]">الجلسة القادمة تبدأ تلقائياً بعد {mins}:{String(secs).padStart(2, "0")}</p>
+              <p className="text-xs text-[var(--text-muted)]">الجلسة القادمة تبدأ تلقائياً بعد <LiveCountdown store={timer} /></p>
             </div>
           )}
 
