@@ -16,9 +16,9 @@ export default async function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #2563EB 0%, #16275B 60%, #07070D 100%)",
+          background: "linear-gradient(135deg, #F5B40A 0%, #D4920A 100%)",
           fontFamily: "Tajawal",
-          color: "#FFFFFF",
+          color: "#2563EB",
           fontWeight: 700,
           fontSize: 250,
         }}
