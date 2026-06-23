@@ -15,6 +15,7 @@ import { loadUser } from "@/lib/storage";
 import type { TrackId } from "@/lib/tracks";
 import { CHAT_GROUPS, type ChatGroup } from "@/lib/groups";
 import { detectContact } from "@/lib/contactFilter";
+import { detectProfanity, detectSensitive } from "@/lib/moderation";
 import { trackEvent } from "@/lib/events";
 import { EmailVerifyNotice } from "@/components/EmailVerify";
 
@@ -252,6 +253,14 @@ export default function CouncilPage() {
       trackEvent("council_contact_blocked", { reason: violation, group: activeGroup.id });
       return;
     }
+    /* ألفاظ مسيئة — حظر فوري */
+    if (detectProfanity(text)) {
+      setSendWarn("🚫 رسالتك تحتوي ألفاظاً غير لائقة");
+      trackEvent("council_profanity_blocked", { group: activeGroup.id });
+      return;
+    }
+    /* محتوى حسّاس (سياسي/متطرّف) — يُنشَر لكنه يُرفع تلقائياً للمراجعة */
+    const sensitiveHit = detectSensitive(text);
     setSendWarn(null);
     setSending(true);
     setMsgText("");
@@ -270,6 +279,21 @@ export default function CouncilPage() {
       await batch.commit();
       lastSentRef.current = Date.now();
       bumpDailyCount();
+      /* رفع تلقائي لطابور المراجعة عند رصد محتوى حسّاس (لا يحظر النشر) */
+      if (sensitiveHit) {
+        addDoc(collection(db, "reports"), {
+          messageId: msgRef.id,
+          groupId: activeGroup.id,
+          reportedUid: authUid,
+          reportedName: userName,
+          content: text.slice(0, 1000),
+          reason: "sensitive",
+          note: `تلقائي: ${sensitiveHit}`,
+          reporterUid: authUid,
+          status: "pending",
+          createdAt: serverTimestamp(),
+        }).catch(() => {});
+      }
     } catch {
       setMsgText(text);
       setSendWarn("تعذّر الإرسال — حاول بعد لحظات");

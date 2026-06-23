@@ -13,11 +13,16 @@ const PATTERNS: { re: RegExp; reason: string }[] = [
   { re: /(?:سناب|سناب|واتس|واتساب|انستا|إنستا|تيليجرام|تلجرام|تيك ?توك|ديسكورد)/, reason: "منصة تواصل" },
 ];
 
-/** يرجع سبب المخالفة (نوع وسيلة التواصل) أو null إن كان النص نظيفاً */
+/** يرجع سبب المخالفة (نوع وسيلة التواصل) أو null إن كان النص نظيفاً.
+   نفحص النص كما هو + نسخة منزوعة الفواصل لكشف التحايل بتفريق الحروف/الأرقام
+   («س ن ا ب»، «0 5 0 ...»، «w.h.a.t.s»). */
 export function detectContact(text: string): string | null {
   if (!text) return null;
+  const variants = [text, text.replace(/[\s._\-]/g, "")];
   for (const { re, reason } of PATTERNS) {
-    if (re.test(text)) return reason;
+    for (const v of variants) {
+      if (re.test(v)) return reason;
+    }
   }
   return null;
 }

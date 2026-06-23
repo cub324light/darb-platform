@@ -181,12 +181,18 @@ export async function POST(req: NextRequest) {
         }
 
         const status = action === "dismiss" ? "dismissed" : "resolved";
-        await repRef.set({
-          status,
-          resolution: action,
-          resolvedBy: caller.email ?? caller.uid,
-          resolvedAt: new Date().toISOString(),
-        }, { merge: true });
+        const by = caller.email ?? caller.uid;
+        const at = new Date().toISOString();
+        await repRef.set({ status, resolution: action, resolvedBy: by, resolvedAt: at }, { merge: true });
+
+        /* سجلّ إجراءات الإشراف — تدقيق: مَن فعل ماذا ومتى (لا يُفشل الرد إن تعذّر) */
+        await db.collection("mod_actions").add({
+          action, reportId,
+          targetUid: (rep.reportedUid as string) ?? null,
+          messageId: (rep.messageId as string) ?? null,
+          reason: (rep.reason as string) ?? null,
+          by, at,
+        }).catch(() => {});
 
         return NextResponse.json({ ok: true, reportId, status, action });
       } catch (e) {

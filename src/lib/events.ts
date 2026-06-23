@@ -32,6 +32,7 @@ export type EventName =
   | "ai_quiz_generated"
   | "council_contact_blocked"
   | "council_message_reported"
+  | "council_profanity_blocked"
   | "page_view";
 
 export type EventProps = Record<string, string | number | boolean | null>;

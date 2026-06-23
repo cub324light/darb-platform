@@ -300,7 +300,7 @@ export default function AdminPage() {
   };
   const REASON_AR: Record<string, string> = {
     spam: "إزعاج / تكرار", harassment: "تنمّر / مضايقة", offensive: "ألفاظ مسيئة",
-    contact: "مشاركة تواصل", other: "أخرى",
+    contact: "مشاركة تواصل", sensitive: "محتوى حسّاس (تلقائي)", other: "أخرى",
   };
 
   /* ── نظرة عامة (تحليلات اليوم) ── */

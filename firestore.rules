@@ -102,6 +102,12 @@ service cloud.firestore {
       allow read, update, delete: if isStaff();
     }
 
+    // سجلّ إجراءات الإشراف (تدقيق): الطاقم يقرأ؛ الكتابة من الخادم فقط (Admin SDK).
+    match /mod_actions/{id} {
+      allow read: if isStaff();
+      allow write: if false;
+    }
+
     // Everything else: denied
     match /{document=**} {
       allow read, write: if false;
