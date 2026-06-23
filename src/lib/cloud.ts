@@ -41,7 +41,7 @@ const BACKUP_KEYS = [
   "darb_subject_exam_dates", "darb_track_exam_dates", "darb_dash_config",
   "darb_dash_sched_v2", "darb_results", "darb_skills", "darb_skill_progress",
   "darb_session_log", "darb_leaks_plan", "darb_exam_coord",
-  "darb_prefs", "darb_goals",
+  "darb_prefs", "darb_goals", "darb_daily", "darb_retention",
 ];
 
 /* أعلام المزامنة والحظر مُعرَّفة في cloudFlags.ts (بلا Firebase)

@@ -16,6 +16,7 @@ import DayScheduler, { getEventsForDate } from "@/components/DayScheduler";
 import ExamDateButton from "@/components/ExamDateButton";
 import dynamic from "next/dynamic";
 const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
+const RetentionHost = dynamic(() => import("@/components/retention/RetentionHost"), { ssr: false });
 import SaudiMap from "@/components/SaudiMap";
 import { NumberTicker } from "@/components/ui/number-ticker";
 import { BorderBeam } from "@/components/ui/border-beam";
@@ -916,6 +917,9 @@ export default function DashboardPage() {
         { title: "يومك بنظرة وحدة", desc: "شريط التقدم يوضح كم ذاكرت اليوم من هدفك، وجدول اليوم يعرض المواعيد اللي بنيتها مع المساعد الذكي." },
         { title: "رتّبها على ذوقك", desc: "اضغط «تخصيص» فوق — تقدر تسحب الأقسام وترتّبها، تخفيها بزر ✕، وترجّعها من «إضافة قسم» تحت." },
       ]} />
+
+      {/* نقاط العودة اليومية — تسجيل اليوم/تقرير أسبوعي/استعادة ستريك/معالم/ترحيب */}
+      <RetentionHost />
 
       {/* ═══ القبة ═══ */}
       <Dome compact>
