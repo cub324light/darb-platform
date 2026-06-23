@@ -596,8 +596,10 @@ export default function CouncilPage() {
         {/* ─ نافذة الإبلاغ ─ */}
         {reportTarget && (
           <div className="fixed inset-0 flex items-end sm:items-center justify-center p-4"
+            role="dialog" aria-modal="true" aria-label="الإبلاغ عن رسالة"
             style={{ zIndex: 10000, background: "rgba(0,0,0,0.6)" }}
-            onClick={() => !reportBusy && setReportTarget(null)}>
+            onClick={() => !reportBusy && setReportTarget(null)}
+            onKeyDown={(e) => { if (e.key === "Escape" && !reportBusy) setReportTarget(null); }}>
             <div className="w-full max-w-sm rounded-2xl p-5 flex flex-col gap-3"
               style={{ background: "var(--bg)", border: "1.5px solid var(--border)" }}
               onClick={(e) => e.stopPropagation()}>

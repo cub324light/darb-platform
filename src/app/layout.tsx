@@ -80,7 +80,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
-        <AuthGate>{children}</AuthGate>
+        <a href="#darb-main" className="skip-link">تخطى للمحتوى</a>
+        <div id="darb-main" tabIndex={-1} style={{ outline: "none" }}>
+          <AuthGate>{children}</AuthGate>
+        </div>
         <CloudSync />
         <Telemetry />
         <PageViewTracker />

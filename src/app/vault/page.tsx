@@ -211,6 +211,7 @@ export default function VaultPage() {
           {searchQ && (
             <button
               onClick={() => setSearchQ("")}
+              aria-label="مسح البحث"
               className="absolute left-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-sm"
               style={{ background: "var(--surface2)", color: "var(--text-muted)" }}
             >×</button>

@@ -196,7 +196,7 @@ export default function TopicExtractor({
                     style={{ background: "var(--surface2)", color: "var(--text)" }}>
                     <span className="truncate">{f.name}</span>
                     <button onClick={() => setFiles((p) => p.filter((_, j) => j !== i))}
-                      className="text-[var(--text-muted)] px-2">✕</button>
+                      aria-label="حذف الملف" className="text-[var(--text-muted)] px-2">✕</button>
                   </div>
                 ))}
               </div>

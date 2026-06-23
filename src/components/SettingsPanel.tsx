@@ -152,7 +152,10 @@ export default function SettingsButton() {
   };
 
   const modal = open && typeof document !== "undefined" && createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-end justify-center" onClick={() => setOpen(false)}>
+    <div className="fixed inset-0 z-[9999] flex items-end justify-center"
+      role="dialog" aria-modal="true" aria-label="الإعدادات"
+      onClick={() => setOpen(false)}
+      onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}>
       <div className="absolute inset-0 bg-black/55 fade-in" />
       <div
         className="relative w-full max-w-lg rounded-t-3xl p-6 pb-10 slide-up"
