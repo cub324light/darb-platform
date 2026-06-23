@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { loadEvents, saveEvents, loadUser, loadExamCoord, examCoordPrompt, recordPlanCreated, type ScheduleEvent } from "@/lib/storage";
+import { loadEvents, saveEvents, loadUser, loadExamCoord, examCoordPrompt, recordPlanCreated, recordAIChat, type ScheduleEvent } from "@/lib/storage";
 import { getEventsForDate } from "@/components/DayScheduler";
 import { normalizeDigits, fmtHour } from "@/lib/utils";
 
@@ -88,6 +88,7 @@ export default function DashAI({ subjects, onOpenScheduler }: Props) {
       const data = await res.json() as { text?: string; error?: string };
       const raw = (data.text ?? data.error ?? "حدث خطأ").trim();
       setResponse(raw);
+      if (!data.error) recordAIChat(); // عدّاد محادثات دويرب — عند ردٍّ ناجح فقط
       const parsed = parseSchedule(raw, today, subjects.map((s) => ({ name: s })));
       setParsedCount(parsed.length);
     } catch {

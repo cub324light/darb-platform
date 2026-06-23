@@ -18,6 +18,8 @@ export interface DarbUser {
   region?: string;
   city?: string;
   phone?: string;
+  bio?: string;        // سيرة قصيرة اختيارية (≤ ١٦٠ حرف)
+  avatar?: string;     // معرّف أفاتار جاهز (وإلا صورة Google أو أول حرف)
 }
 
 export interface DarbStats {
@@ -31,6 +33,8 @@ export interface DarbStats {
   lastBonusDay?: string; // آخر يوم أُعطيت فيه مكافأة بدء أوربت اليومية
   analyzedCount?: number; // عدد الملفات التي حُلِّلت بالذكاء
   plansCount?: number;    // عدد خطط دويرب المطبَّقة على الجدول
+  aiChats?: number;       // عدد محادثات دويرب (المساعد الذكي)
+  quizCount?: number;     // عدد الاختبارات/الأسئلة المولّدة بالذكاء
   trackProgress?: number; // أقصى نسبة مئوية مكتملة من مسار التأسيس أو التدريب
   joinedAt?: string;      // أول يوم استُخدمت فيه المنصة "YYYY-MM-DD"
 }
@@ -146,6 +150,20 @@ export function recordSession(focusMins: number, subject?: string): DarbStats & 
 export function recordFileAnalyzed(): void {
   const s = loadStats();
   s.analyzedCount = (s.analyzedCount ?? 0) + 1;
+  saveStats(s);
+}
+
+/* عدّاد محادثات دويرب — يُستدعى عند بدء محادثة جديدة مع المساعد الذكي */
+export function recordAIChat(): void {
+  const s = loadStats();
+  s.aiChats = (s.aiChats ?? 0) + 1;
+  saveStats(s);
+}
+
+/* عدّاد الاختبارات المولّدة — يُستدعى عند توليد أسئلة/اختبار بالذكاء */
+export function recordQuiz(): void {
+  const s = loadStats();
+  s.quizCount = (s.quizCount ?? 0) + 1;
   saveStats(s);
 }
 
@@ -291,7 +309,8 @@ export function resetAll() {
      "darb_posts","darb_schedule","darb_exam_date","darb_events","darb_exam_flow","darb_stage_reviews",
      "darb_tadreeb_items","darb_tadreeb_done","darb_tasreebat_pct","darb_subject_exam_dates",
      "darb_track_exam_dates","darb_results","darb_skills","darb_skill_progress",
-     "darb_session_log","darb_leaks_plan","darb_exam_coord","darb_dash_config","darb_dash_sched_v2"].forEach((k) =>
+     "darb_session_log","darb_leaks_plan","darb_exam_coord","darb_dash_config","darb_dash_sched_v2",
+     "darb_prefs","darb_goals"].forEach((k) =>
       localStorage.removeItem(k)
     );
     /* تعليمات أول زيارة تظهر من جديد بعد الضبط */
@@ -344,6 +363,56 @@ export interface ExamResult {
 const RESULTS_KEY = "darb_results";
 export function loadResults(): ExamResult[] { return loadList<ExamResult>(RESULTS_KEY); }
 export function saveResults(list: ExamResult[]) { saveList(RESULTS_KEY, list); }
+
+/* ── تفضيلات التعلّم — كيف يحب الطالب يذاكر (كلها اختيارية) ── */
+export type StudyTime    = "فجر" | "صباح" | "ظهر" | "مساء" | "ليل";
+export type SessionLen   = 25 | 45 | 60 | 90;
+export type LearningStyle = "فيديو" | "قراءة" | "أسئلة" | "شرح ذكي" | "خرائط ذهنية";
+export type StudyDevice  = "جوال" | "تابلت" | "لابتوب" | "مكتبي";
+export type StudyFormat  = "ورقي" | "رقمي" | "الاثنان";
+
+export interface DarbPrefs {
+  studyTime?: StudyTime;
+  sessionLen?: SessionLen;
+  learningStyle?: LearningStyle[]; // متعدّد الاختيار
+  device?: StudyDevice;
+  format?: StudyFormat;
+}
+
+const PREFS_KEY = "darb_prefs";
+export function loadPrefs(): DarbPrefs {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(PREFS_KEY);
+    return raw ? (JSON.parse(raw) as DarbPrefs) : {};
+  } catch { return {}; }
+}
+export function savePrefs(p: DarbPrefs) {
+  try { localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch {}
+}
+
+/* ── الأهداف الأكاديمية — درجات مستهدفة + الجامعة/التخصص (كلها اختيارية) ── */
+export interface DarbGoals {
+  quduratTarget?: number;
+  tahsiliTarget?: number;
+  stepTarget?: number;
+  cpcTarget?: number;
+  itcTarget?: number;
+  university?: string;
+  major?: string;
+}
+
+const GOALS_KEY = "darb_goals";
+export function loadGoals(): DarbGoals {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(GOALS_KEY);
+    return raw ? (JSON.parse(raw) as DarbGoals) : {};
+  } catch { return {}; }
+}
+export function saveGoals(g: DarbGoals) {
+  try { localStorage.setItem(GOALS_KEY, JSON.stringify(g)); } catch {}
+}
 
 /* ── خريطة المهارات: معرّفات المهارات المُتقنة ── */
 const SKILLS_KEY = "darb_skills";
