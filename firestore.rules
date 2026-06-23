@@ -62,18 +62,31 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // وثيقة المهلة لكل مستخدم — تُكتب مع كل رسالة لفرض المهلة على الخادم.
+    // يقرؤها/يكتبها صاحبها فقط؛ تُفحص في قاعدة إنشاء الرسالة عبر get/getAfter.
+    match /rate/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
     // Council chat messages: signed-in users read and post their own messages;
     // الطاقم يقدر يحذف أي رسالة (إشراف).
-    // منع مشاركة وسائل التواصل على الخادم (دفاع متعدّد الطبقات مع فلتر العميل):
-    // يرفض الروابط، البريد/المعرّفات (@)، والأرقام الطويلة (هواتف). (?s) ليشمل الأسطر.
+    // الشروط على الخادم (دفاع متعدّد الطبقات مع فلتر العميل):
+    //  • البريد موثّق (email_verified) — يطابق بوابة العميل.
+    //  • منع وسائل التواصل: روابط، بريد/معرّفات (@)، أرقام طويلة (هواتف). (?s) ليشمل الأسطر.
+    //  • مهلة بين الرسائل: تُحدَّث rate/{uid} إلى request.time في نفس الدفعة،
+    //    وتُرفض الرسالة إن كانت آخر رسالة أحدث من ٤ ثوانٍ.
     match /chats/{groupId}/messages/{msgId} {
       allow read: if signedIn();
       allow create: if signedIn()
+        && request.auth.token.email_verified == true
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.content is string
         && request.resource.data.content.size() > 0
         && request.resource.data.content.size() <= 1000
-        && !request.resource.data.content.matches('(?s).*(https?://|www[.]|[@]|[0-9]{7,}).*');
+        && !request.resource.data.content.matches('(?s).*(https?://|www[.]|[@]|[0-9]{7,}).*')
+        && getAfter(/databases/$(database)/documents/rate/$(request.auth.uid)).data.lastPostAt == request.time
+        && ( !exists(/databases/$(database)/documents/rate/$(request.auth.uid))
+             || get(/databases/$(database)/documents/rate/$(request.auth.uid)).data.lastPostAt < request.time - duration.value(4, 's') );
       allow delete: if isStaff();
     }
 

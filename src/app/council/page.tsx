@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import {
-  collection, addDoc, onSnapshot,
+  collection, doc, writeBatch, onSnapshot,
   orderBy, query, limit, serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -27,6 +27,19 @@ interface ChatMessage {
   createdAt: number; // ms
   isOfficial?: boolean;
   pinned?: boolean;
+}
+
+/* ─── حدود الإرسال (منع الإغراق) ───
+   مهلة بين الرسائل + سقف يومي. الفرض النهائي على الخادم في firestore.rules
+   (وثيقة rate/{uid} تُحدَّث مع كل رسالة وتُفحص قبل قبول التالية). */
+const SEND_COOLDOWN_MS = 4000;
+const DAILY_LIMIT = 80;
+function dailyKey(): string { return `darb_council_count_${new Date().toISOString().slice(0, 10)}`; }
+function getDailyCount(): number {
+  try { return parseInt(localStorage.getItem(dailyKey()) ?? "0", 10) || 0; } catch { return 0; }
+}
+function bumpDailyCount(): void {
+  try { localStorage.setItem(dailyKey(), String(getDailyCount() + 1)); } catch { /* تجاهل */ }
 }
 
 /* ─── أداة الوقت ─── */
@@ -83,6 +96,9 @@ export default function CouncilPage() {
 
   /* ─ آخر رسالة لكل مجموعة (للمعاينة) — من الذاكرة المحلية ─ */
   const [lastMessages, setLastMessages] = useState<Record<string, { text: string; time: number } | null>>({});
+
+  /* ─ مهلة الإرسال (آخر وقت إرسال ناجح) ─ */
+  const lastSentRef = useRef(0);
 
   /* ─ التمرير للأسفل ─ */
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -166,13 +182,25 @@ export default function CouncilPage() {
     if (!text || !activeGroup || !authUid || sending) return;
     /* توثيق البريد إلزامي للمشاركة — حساب Google موثّق تلقائياً */
     if (!emailVerified) {
-      setSendWarn("وثّق بريدك أولاً للمشاركة في المجلس");
+      setSendWarn("✉️ وثّق بريدك أولاً للمشاركة في المجلس");
+      return;
+    }
+    /* مهلة بين الرسائل — تمنع الإغراق السريع */
+    const now = Date.now();
+    if (now - lastSentRef.current < SEND_COOLDOWN_MS) {
+      const wait = Math.ceil((SEND_COOLDOWN_MS - (now - lastSentRef.current)) / 1000);
+      setSendWarn(`⏳ تمهّل ${wait} ثانية بين الرسائل`);
+      return;
+    }
+    /* سقف يومي — يمنع الإزعاج المستمر */
+    if (getDailyCount() >= DAILY_LIMIT) {
+      setSendWarn("📨 وصلت حدّك اليومي من الرسائل — عُد غداً");
       return;
     }
     /* منع مشاركة وسائل التواصل — مع تسجيل المخالفة للمراقبة */
     const violation = detectContact(text);
     if (violation) {
-      setSendWarn(`ممنوع مشاركة ${violation} في المجلس`);
+      setSendWarn(`🚫 ممنوع مشاركة ${violation} — حفاظاً على أمان الجميع`);
       trackEvent("council_contact_blocked", { reason: violation, group: activeGroup.id });
       return;
     }
@@ -180,14 +208,23 @@ export default function CouncilPage() {
     setSending(true);
     setMsgText("");
     try {
-      await addDoc(collection(db, "chats", activeGroup.id, "messages"), {
+      /* كتابة مجمّعة: الرسالة + تحديث وثيقة المهلة (rate/{uid}) معاً —
+         قواعد Firestore تفحص rate/{uid} لفرض المهلة على الخادم. */
+      const batch = writeBatch(db);
+      const msgRef = doc(collection(db, "chats", activeGroup.id, "messages"));
+      batch.set(msgRef, {
         uid: authUid,
         name: userName,
         content: text,
         createdAt: serverTimestamp(),
       });
+      batch.set(doc(db, "rate", authUid), { lastPostAt: serverTimestamp() });
+      await batch.commit();
+      lastSentRef.current = Date.now();
+      bumpDailyCount();
     } catch {
       setMsgText(text);
+      setSendWarn("تعذّر الإرسال — حاول بعد لحظات");
     } finally {
       setSending(false);
     }
@@ -432,7 +469,7 @@ export default function CouncilPage() {
                 {sendWarn && (
                   <div className="rounded-xl px-3 py-2 text-[12px] font-bold text-center"
                     style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.4)", color: "#EF4444" }}>
-                    🚫 {sendWarn} — حفاظاً على أمان الجميع
+                    {sendWarn}
                   </div>
                 )}
                 <div className="flex gap-2">
