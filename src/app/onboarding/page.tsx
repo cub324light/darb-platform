@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { TRACKS, TRACK_GROUPS, scoreRangeForTitle, validateScore, type TrackId } from "@/lib/tracks";
-import { saveUser, saveExamDate, saveResults, saveTrackExamDates } from "@/lib/storage";
+import { saveUser, saveExamDate, saveResults, saveTrackExamDates, loadPrefs, savePrefs, type SessionLen, type StudyTime } from "@/lib/storage";
 /* registerUser, pushBackup, currentUser مُستورَدة ديناميكياً أسفل */
 import { trackEvent } from "@/lib/events";
 import { redeemPendingRef } from "@/lib/referral";
@@ -31,6 +31,8 @@ export default function OnboardingPage() {
   const [studyLevel, setStudyLevel] = useState("");
   const [grade, setGrade]           = useState("");
   const [studyHours, setStudyHours] = useState("");
+  const [sessionLen, setSessionLen] = useState<SessionLen | 0>(0);
+  const [preferredTime, setPreferredTime] = useState<StudyTime | "">("");
   const [school, setSchool]   = useState("");
   const [region, setRegion]   = useState("");
   const [city, setCity]       = useState("");
@@ -95,6 +97,9 @@ export default function OnboardingPage() {
           score: noScore ? undefined : (p.score.trim() || undefined),
         };
       }));
+    }
+    if (sessionLen || preferredTime) {
+      savePrefs({ ...loadPrefs(), ...(sessionLen ? { sessionLen } : {}), ...(preferredTime ? { studyTime: preferredTime } : {}) });
     }
     import("@/lib/firestore").then(({ registerUser }) => { registerUser(trimmedName, primaryTrack, extras); });
     trackEvent("onboarding_completed", { track: primaryTrack, tracks: activeTracks.length });
@@ -206,6 +211,50 @@ export default function OnboardingPage() {
             style={{ background: "var(--surface)", border: "2px solid var(--border)" }}
             onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
             onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
+        </div>
+
+        <div>
+          <p className="label mb-3">مدة جلسة التركيز؟</p>
+          <div className="grid grid-cols-4 gap-2">
+            {([25, 45, 60, 90] as const).map((len) => {
+              const active = sessionLen === len;
+              const labels: Record<number, string> = { 25: "25 د", 45: "45 د", 60: "ساعة", 90: "90 د" };
+              return (
+                <button key={len} onClick={() => setSessionLen(active ? 0 : len)}
+                  className="rounded-2xl py-3 font-bold text-[15px] transition active:scale-[0.98]"
+                  style={{
+                    background: active ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
+                    border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
+                    color: active ? "var(--accent-light)" : "var(--text)",
+                  }}>
+                  {labels[len]}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-xs mt-1.5 px-1" style={{ color: "var(--text-muted)" }}>
+            الراحة: 25→5 | 45→10 | ساعة→12 | 90→18 دقيقة
+          </p>
+        </div>
+
+        <div>
+          <p className="label mb-3">وقت مذاكرتك المفضّل؟</p>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+            {(["فجر", "صباح", "ظهر", "مساء", "ليل"] as const).map((t) => {
+              const active = preferredTime === t;
+              return (
+                <button key={t} onClick={() => setPreferredTime(active ? "" : t)}
+                  className="rounded-2xl py-3 font-bold text-[15px] transition active:scale-[0.98]"
+                  style={{
+                    background: active ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
+                    border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
+                    color: active ? "var(--accent-light)" : "var(--text)",
+                  }}>
+                  {t}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* ─── المدرسة والموقع والجوال ─── */}

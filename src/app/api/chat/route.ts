@@ -22,7 +22,15 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
-function buildSchedulePrompt(subjects: string[]): string {
+function sessionIntervalRule(len?: number): string {
+  if (len === 25) return "25 دقيقة تركيز + 5 راحة (بومودورو قصير)";
+  if (len === 45) return "45 دقيقة تركيز + 10 راحة";
+  if (len === 60) return "60 دقيقة تركيز + 12 راحة";
+  if (len === 90) return "90 دقيقة تركيز + 18 راحة (جلسة عميقة)";
+  return "50 دقيقة تركيز + 10 راحة";
+}
+
+function buildSchedulePrompt(subjects: string[], sessionLen?: number): string {
   const subjectRule = subjects.length > 0
     ? `مواد الطالب (إلزامية — استخدم هذه الأسماء حرفياً ولا تخترع مواد أخرى):
 ${subjects.map((s) => `- ${s}`).join("\n")}`
@@ -64,7 +72,7 @@ ${subjectRule}
 من 9 ص إلى 10 ص — راحة
 - الأرقام إنجليزية (1 إلى 12)، ويُسمح بالنصف ساعة (مثل 1:30 إلى 2:30) — لا داعي لتقريبها لساعة كاملة
 - استخدم ص للصباح وم للمساء فقط — لا تستخدم ظ أبداً
-- استخدم نظام Orbit: 50 دقيقة تركيز + 10 راحة (الفترات تكون ساعة أو نصف ساعة حسب المتاح)، وأضف فترات راحة واقعية بين المواد
+- استخدم نظام Orbit: ${sessionIntervalRule(sessionLen)} (الفترات تكون ساعة أو نصف ساعة حسب المتاح)، وأضف فترات راحة واقعية بين المواد
 - وزّع المذاكرة بشكل واقعي يراعي عدد الساعات المتاحة ومستوى الطالب إن ذُكر، ورتّب المواد حسب الأولوية والصعوبة بالتساوي
 - لا تضف شرحاً أو ترحيباً أو أي نص خارج أسطر الفترات`;
 }
@@ -331,7 +339,7 @@ export async function POST(req: NextRequest) {
       case "topics":
         return { system: buildTopicsPrompt(subjects), maxTokens: 700, temperature: 0.3, personalize: false };
       default: // "schedule"
-        return { system: buildSchedulePrompt(subjects), maxTokens: 800, temperature: 0.3, personalize: true };
+        return { system: buildSchedulePrompt(subjects, profile?.sessionLen ?? undefined), maxTokens: 800, temperature: 0.3, personalize: true };
     }
   })();
 
