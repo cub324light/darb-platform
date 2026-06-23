@@ -7,6 +7,7 @@ import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import { getTrack, TRACKS, type TrackId } from "@/lib/tracks";
 import { fmtHour } from "@/lib/utils";
+import { quoteOfToday } from "@/lib/quotes";
 import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, saveExamDate, loadDashConfig, saveDashConfig, loadTrackExamDates, saveTrackExamDates, DASH_SECTION_META, localDayKey, type DarbUser, type ScheduleEvent, type DashItem, type DashSectionId, saveEvents } from "@/lib/storage";
 import CalendarExport from "@/components/CalendarExport";
 import { useFlag } from "@/lib/flags";
@@ -21,25 +22,6 @@ import { BorderBeam } from "@/components/ui/border-beam";
 import WeeklyReport from "@/components/WeeklyReport";
 
 const DAILY_TARGET = 200;
-
-/* اقتباس اليوم — يتغير بتاريخ اليوم */
-const QUOTES = [
-  "الدرجة العالية ما تجي صدفة — تجي من جلسات صغيرة متراكمة.",
-  "اللي يذاكر ساعة كل يوم، يسبق اللي يذاكر عشر ساعات ليلة الاختبار.",
-  "ما فيه طالب فاشل، فيه طالب ما لقى طريقته. أنت لقيتها.",
-  "خل الجوال يستنى. مستقبلك ما يستنى.",
-  "كل سؤال تغلط فيه اليوم، درجة تكسبها يوم الاختبار.",
-  "الستريك مب رقم — هو دليل أنك صادق مع نفسك.",
-  "الفرق بين الحلم والهدف؟ جدول.",
-  "ذاكر وأنت متعب، ترتاح وأنت ناجح.",
-  "اللي زرعته اليوم، تحصده في القاعة.",
-  "أنت أقرب من أمس، وأبعد ما تكون عن البداية.",
-];
-function quoteOfToday(): string {
-  const d = new Date();
-  const dayOfYear = Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 0).getTime()) / 86400000);
-  return QUOTES[dayOfYear % QUOTES.length];
-}
 
 /* آخر 7 أيام للرسم */
 function last7Days(dayMins: Record<string, number>): { label: string; mins: number; isToday: boolean }[] {
