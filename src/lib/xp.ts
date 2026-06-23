@@ -34,6 +34,9 @@ export const BADGE_DEFS: BadgeDef[] = [
   { id: "silver_1000",   label: "ملك الفضة",      icon: "👑", desc: "اجمع ١٠٠٠ فضة",               goal: 1000, unit: "فضة" },
   { id: "vault_10",      label: "صيّاد الأخطاء",  icon: "🔍", desc: "سجّل ١٠ أخطاء في الخزنة",     goal: 10,   unit: "خطأ" },
   { id: "sessions_20",   label: "مثابر",          icon: "💪", desc: "أكمل ٢٠ جلسة تركيز",          goal: 20,   unit: "جلسة" },
+  { id: "first_plan",    label: "أول خطة",        icon: "📋", desc: "طبّق خطة دويرب على جدولك",      goal: 1,    unit: "خطة" },
+  { id: "hours_100",     label: "مئة ساعة",       icon: "🏅", desc: "اجمع ١٠٠ ساعة تركيز",          goal: 100,  unit: "ساعة" },
+  { id: "track_complete",label: "أتممت المسار",   icon: "🎓", desc: "أكمل ٨٠٪ من مسارك",            goal: 80,   unit: "٪" },
 ];
 
 /* القيمة الحالية للطالب تجاه كل شارة (للشريط) */
@@ -45,11 +48,14 @@ export function getBadgeCurrent(id: string, stats: DarbStats, vaultCount: number
     case "streak_7":
     case "streak_30":     return streak;
     case "hours_10":
-    case "hours_50":      return hours;
+    case "hours_50":
+    case "hours_100":     return hours;
     case "silver_100":
     case "silver_1000":   return stats.silver;
     case "vault_10":      return vaultCount;
     case "sessions_20":   return stats.sessionsCount;
+    case "first_plan":    return Math.min(stats.plansCount ?? 0, 1);
+    case "track_complete":return stats.trackProgress ?? 0;
     default:              return 0;
   }
 }
@@ -96,5 +102,8 @@ export function getUnlockedBadgeIds(stats: DarbStats, vaultCount: number): strin
   if (stats.silver >= 1000)             ids.push("silver_1000");
   if (vaultCount >= 10)                 ids.push("vault_10");
   if (stats.sessionsCount >= 20)        ids.push("sessions_20");
+  if ((stats.plansCount ?? 0) >= 1)    ids.push("first_plan");
+  if (stats.totalFocusMins >= 6000)    ids.push("hours_100");
+  if ((stats.trackProgress ?? 0) >= 80) ids.push("track_complete");
   return ids;
 }

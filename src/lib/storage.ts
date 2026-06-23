@@ -31,6 +31,7 @@ export interface DarbStats {
   lastBonusDay?: string; // آخر يوم أُعطيت فيه مكافأة بدء أوربت اليومية
   analyzedCount?: number; // عدد الملفات التي حُلِّلت بالذكاء
   plansCount?: number;    // عدد خطط دويرب المطبَّقة على الجدول
+  trackProgress?: number; // أقصى نسبة مئوية مكتملة من مسار التأسيس أو التدريب
   joinedAt?: string;      // أول يوم استُخدمت فيه المنصة "YYYY-MM-DD"
 }
 
@@ -145,6 +146,13 @@ export function recordSession(focusMins: number, subject?: string): DarbStats & 
 export function recordFileAnalyzed(): void {
   const s = loadStats();
   s.analyzedCount = (s.analyzedCount ?? 0) + 1;
+  saveStats(s);
+}
+
+/* نسبة إتمام المسار — تُحدَّث من صفحة الخريطة عند تغيّر التقدم */
+export function recordTrackProgress(pct: number): void {
+  const s = loadStats();
+  s.trackProgress = Math.max(s.trackProgress ?? 0, Math.round(pct));
   saveStats(s);
 }
 

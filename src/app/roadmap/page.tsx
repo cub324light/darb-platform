@@ -19,7 +19,7 @@ import {
   loadTadreebItems, saveTadreebItems, loadTadreebDone, saveTadreebDone,
   loadTasreebatPct, saveTasreebatPct,
   loadTrackExamDates, saveTrackExamDates,
-  loadResults, saveResults,
+  loadResults, saveResults, recordTrackProgress,
   type ScheduleEvent, type ExamFlow, type StageReviews, type TrainingItem,
 } from "@/lib/storage";
 /* syncUser مُستورَد ديناميكياً أسفل — يُبعد Firebase عن حزمة الخريطة المبدئية */
@@ -374,6 +374,7 @@ export default function RoadmapPage() {
   useEffect(() => {
     if (taseesSync < 0) return;
     import("@/lib/firestore").then(({ syncUser }) => { syncUser({ taseesProgress: taseesSync, tadreebProgress: tadreebSync }); });
+    recordTrackProgress(Math.max(taseesSync, tadreebSync));
   }, [taseesSync, tadreebSync]);
 
   if (!primaryTrack) return <div className="min-h-dvh" />;
