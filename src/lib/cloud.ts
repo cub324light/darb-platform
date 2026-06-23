@@ -6,6 +6,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
+  sendEmailVerification,
   signOut as fbSignOut,
   onAuthStateChanged,
   GoogleAuthProvider,
@@ -77,7 +78,34 @@ async function ensurePersistence(): Promise<void> {
 export async function signUp(email: string, password: string) {
   await ensurePersistence();
   const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
+  /* أرسل رابط التوثيق فوراً — لا نُفشل التسجيل إن تعذّر الإرسال (شبكة/حد إرسال) */
+  try { await sendEmailVerification(cred.user); } catch { /* تجاهل */ }
   return cred.user;
+}
+
+/* إعادة إرسال رابط توثيق البريد للمستخدم الحالي */
+export async function resendVerification(): Promise<void> {
+  const u = auth.currentUser;
+  if (u && !u.emailVerified) await sendEmailVerification(u);
+}
+
+/* هل البريد موثّق؟ حسابات Google موثّقة تلقائياً (emailVerified === true). */
+export function isEmailVerified(): boolean {
+  return auth.currentUser?.emailVerified ?? false;
+}
+
+/* يحتاج توثيقاً: مسجّل دخول لكن بريده غير موثّق (دخول بالإيميل قبل الضغط على الرابط). */
+export function needsEmailVerification(): boolean {
+  const u = auth.currentUser;
+  return !!u && !u.emailVerified;
+}
+
+/* يعيد تحميل بيانات المستخدم من الخادم (بعد ضغطه رابط التوثيق) ويرجع حالة التوثيق. */
+export async function reloadVerification(): Promise<boolean> {
+  const u = auth.currentUser;
+  if (!u) return false;
+  try { await u.reload(); } catch { /* تجاهل */ }
+  return auth.currentUser?.emailVerified ?? false;
 }
 
 export async function signIn(email: string, password: string) {

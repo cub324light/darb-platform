@@ -16,6 +16,7 @@ import type { TrackId } from "@/lib/tracks";
 import { CHAT_GROUPS, type ChatGroup } from "@/lib/groups";
 import { detectContact } from "@/lib/contactFilter";
 import { trackEvent } from "@/lib/events";
+import { EmailVerifyNotice } from "@/components/EmailVerify";
 
 /* ─── بيانات ─── */
 interface ChatMessage {
@@ -42,6 +43,7 @@ function timeAgo(ms: number): string {
 export default function CouncilPage() {
   /* ─ حالة المستخدم الحالي ─ */
   const [authUid, setAuthUid] = useState<string | null>(null);
+  const [emailVerified, setEmailVerified] = useState(false);
   const [userName] = useState<string>(() => {
     if (typeof window === "undefined") return "طالب";
     return loadUser()?.name ?? "طالب";
@@ -55,7 +57,9 @@ export default function CouncilPage() {
 
   useEffect(() => {
     let unsub: (() => void) | undefined;
-    import("@/lib/cloud").then(({ onAuth }) => { unsub = onAuth((u) => setAuthUid(u?.uid ?? null)); });
+    import("@/lib/cloud").then(({ onAuth }) => {
+      unsub = onAuth((u) => { setAuthUid(u?.uid ?? null); setEmailVerified(u?.emailVerified ?? false); });
+    });
     return () => { unsub?.(); };
   }, []);
 
@@ -160,6 +164,11 @@ export default function CouncilPage() {
   const sendMessage = async () => {
     const text = msgText.trim();
     if (!text || !activeGroup || !authUid || sending) return;
+    /* توثيق البريد إلزامي للمشاركة — حساب Google موثّق تلقائياً */
+    if (!emailVerified) {
+      setSendWarn("وثّق بريدك أولاً للمشاركة في المجلس");
+      return;
+    }
     /* منع مشاركة وسائل التواصل — مع تسجيل المخالفة للمراقبة */
     const violation = detectContact(text);
     if (violation) {
@@ -402,6 +411,16 @@ export default function CouncilPage() {
                 <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
                   سجّل دخولك للمشاركة في النقاش
                 </p>
+              </div>
+            ) : !emailVerified ? (
+              /* مسجّل دخوله ببريد غير موثّق — يوثّق قبل الكتابة */
+              <div className="px-3 py-3 border-t flex-shrink-0"
+                style={{
+                  borderColor: "var(--border)",
+                  paddingBottom: "calc(12px + env(safe-area-inset-bottom))",
+                  background: "var(--bg)",
+                }}>
+                <EmailVerifyNotice message="وثّق بريدك للمشاركة في المجلس" />
               </div>
             ) : (
               <div className="px-3 py-3 border-t flex flex-col gap-2 flex-shrink-0"

@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { TRACKS, TRACK_GROUPS, type TrackId } from "@/lib/tracks";
 import { loadUser, saveUser, resetAll } from "@/lib/storage";
 import { exportData } from "@/lib/dataExport";
+import { EmailVerifyNotice } from "@/components/EmailVerify";
 import type { User } from "firebase/auth";
 import type { FirebaseError } from "firebase/app";
 
@@ -203,6 +204,14 @@ export default function SettingsButton() {
               <p className="text-[13px] text-[var(--text-muted)] mb-3">
                 {authUser.email ? `${authUser.email} · ` : ""}بياناتك محفوظة وتتزامن تلقائياً
               </p>
+              {/* حالة توثيق البريد — Google موثّق تلقائياً */}
+              {authUser.emailVerified ? (
+                <p className="text-[12px] font-bold mb-3" style={{ color: "var(--success)" }}>✓ بريدك موثّق</p>
+              ) : (
+                <div className="mb-3">
+                  <EmailVerifyNotice message="بريدك غير موثّق — وثّقه للمشاركة في المجتمع" />
+                </div>
+              )}
               <div className="flex gap-2">
                 <button onClick={manualSync} className="flex-1 py-2.5 rounded-xl text-sm font-bold"
                   style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
