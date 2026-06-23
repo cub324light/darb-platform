@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
 import { recordQuiz } from "@/lib/storage";
+import { buildDuwairbProfile } from "@/lib/duwairb";
+import { trackEvent } from "@/lib/events";
 
 interface QA { q: string; a: string }
 
@@ -53,6 +55,7 @@ export default function QuizGen({ subjects }: Props) {
     setRaw("");
     setRevealed(new Set());
     try {
+      const { profile, personalized } = buildDuwairbProfile();
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -60,13 +63,14 @@ export default function QuizGen({ subjects }: Props) {
           prompt: `ولّد أسئلة تدريب في مادة ${subject}`,
           subjects: [subject],
           mode: "questions",
+          profile,
         }),
       });
       const data = (await res.json()) as { text?: string; error?: string };
       if (data.error && !data.text) { setErr(data.error); return; }
       const text = (data.text ?? "").trim();
       const parsed = parseQuestions(text);
-      if (parsed.length > 0) { setQuestions(parsed); recordQuiz(); }
+      if (parsed.length > 0) { setQuestions(parsed); recordQuiz(); trackEvent("ai_quiz_generated", { subject, personalized }); }
       else setRaw(text || "لم يرجع رد، حاول مرة ثانية");
     } catch {
       setErr("تعذّر الاتصال — حاول مرة ثانية");
@@ -115,6 +119,12 @@ export default function QuizGen({ subjects }: Props) {
 
       {questions.length > 0 && (
         <div className="mt-3 flex flex-col gap-2.5">
+          {/* الخطوة التالية: احفظ ما أخطأت فيه في الخزنة */}
+          <a href="/vault"
+            className="py-2.5 rounded-2xl text-[13px] font-bold transition active:scale-[0.98] flex items-center justify-center gap-1.5 no-underline"
+            style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
+            🔖 أخطأت في سؤال؟ احفظه في خزنة الأخطاء
+          </a>
           {questions.map((qa, i) => (
             <div key={i} className="rounded-2xl px-4 py-3.5"
               style={{ background: "var(--surface2)", border: `1px solid ${color}33` }}>

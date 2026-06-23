@@ -30,6 +30,8 @@ export type EventName =
   | "ai_plan_generated"
   | "ai_explain_requested"
   | "ai_quiz_generated"
+  | "ai_progress_analyzed"
+  | "duwairb_opened"
   | "council_contact_blocked"
   | "council_message_reported"
   | "council_profanity_blocked"

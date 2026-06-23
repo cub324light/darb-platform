@@ -3,6 +3,8 @@ import { useState } from "react";
 import { loadEvents, saveEvents, loadUser, loadExamCoord, examCoordPrompt, recordPlanCreated, recordAIChat, type ScheduleEvent } from "@/lib/storage";
 import { getEventsForDate } from "@/components/DayScheduler";
 import { normalizeDigits, fmtHour } from "@/lib/utils";
+import { buildDuwairbProfile } from "@/lib/duwairb";
+import { trackEvent } from "@/lib/events";
 
 const QUICK_PROMPTS = [
   { label: "عطني جدول جاهز", text: "عطني جدول دراسي جاهز لليوم" },
@@ -80,15 +82,16 @@ export default function DashAI({ subjects, onOpenScheduler }: Props) {
       const u = loadUser();
       const activeTracks = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as string[];
       const coordNote = examCoordPrompt(loadExamCoord(), activeTracks);
+      const { profile, personalized } = buildDuwairbProfile();
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: p + busyNote + coordNote, subjects, mode: "schedule" }),
+        body: JSON.stringify({ prompt: p + busyNote + coordNote, subjects, mode: "schedule", profile }),
       });
       const data = await res.json() as { text?: string; error?: string };
       const raw = (data.text ?? data.error ?? "حدث خطأ").trim();
       setResponse(raw);
-      if (!data.error) recordAIChat(); // عدّاد محادثات دويرب — عند ردٍّ ناجح فقط
+      if (!data.error) { recordAIChat(); trackEvent("ai_plan_generated", { personalized }); }
       const parsed = parseSchedule(raw, today, subjects.map((s) => ({ name: s })));
       setParsedCount(parsed.length);
     } catch {

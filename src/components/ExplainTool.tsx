@@ -3,6 +3,8 @@
    يلصق الطالب سؤالاً غلطه أو مفهوماً محيّراً، ودويرب يشرح المفهوم الصحيح
    وأين يقع الخطأ الشائع ونصيحة لتفاديه (mode:"explain"). */
 import { useState } from "react";
+import { buildDuwairbProfile } from "@/lib/duwairb";
+import { trackEvent } from "@/lib/events";
 
 interface Props {
   subjects: string[];
@@ -22,6 +24,7 @@ export default function ExplainTool({ subjects }: Props) {
     setErr("");
     setResponse("");
     try {
+      const { profile, personalized } = buildDuwairbProfile();
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -29,11 +32,13 @@ export default function ExplainTool({ subjects }: Props) {
           prompt: subject ? `المادة: ${subject}\nالسؤال أو الخطأ: ${p}` : p,
           subjects: subject ? [subject] : subjects,
           mode: "explain",
+          profile,
         }),
       });
       const data = (await res.json()) as { text?: string; error?: string };
       if (data.error && !data.text) { setErr(data.error); return; }
       setResponse((data.text ?? "لم يرجع رد، حاول مرة ثانية").trim());
+      trackEvent("ai_explain_requested", { personalized });
     } catch {
       setErr("تعذّر الاتصال — حاول مرة ثانية");
     } finally {
@@ -79,10 +84,19 @@ export default function ExplainTool({ subjects }: Props) {
       )}
 
       {response && !loading && (
-        <div className="mt-3 rounded-2xl px-4 py-3.5"
-          style={{ background: "color-mix(in srgb, var(--accent) 6%, var(--surface2))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
-          <p className="text-[14px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{response}</p>
-        </div>
+        <>
+          <div className="mt-3 rounded-2xl px-4 py-3.5"
+            style={{ background: "color-mix(in srgb, var(--accent) 6%, var(--surface2))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
+            <p className="text-[14px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{response}</p>
+          </div>
+          {/* الخطوة التالية: ثبّت الفهم بأسئلة على نفس المادة */}
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent("darb:openDuirb", { detail: { tab: "quiz" } }))}
+            className="w-full mt-2 py-2.5 rounded-2xl text-[13px] font-bold transition active:scale-[0.98] flex items-center justify-center gap-1.5"
+            style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
+            ❓ ثبّت فهمك — ولّد أسئلة على {subject || "هذه المادة"}
+          </button>
+        </>
       )}
     </div>
   );

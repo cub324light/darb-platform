@@ -7,18 +7,21 @@ import DashAI from "@/components/DashAI";
 import FileAnalyzer from "@/components/FileAnalyzer";
 import QuizGen from "@/components/QuizGen";
 import ExplainTool from "@/components/ExplainTool";
+import ProgressTool from "@/components/ProgressTool";
 import TopicsTool from "@/components/TopicsTool";
 import { loadUser } from "@/lib/storage";
 import { subjectsForTracks, type TrackId } from "@/lib/tracks";
+import { buildDuwairbProfile } from "@/lib/duwairb";
 
-export type DuirbView = "menu" | "schedule" | "file" | "quiz" | "explain" | "topics";
+export type DuirbView = "menu" | "schedule" | "progress" | "file" | "quiz" | "explain" | "topics";
 type DuirbTab = Exclude<DuirbView, "menu">;
 
 const TABS: { id: DuirbTab; icon: string; label: string }[] = [
   { id: "schedule", icon: "📅", label: "خطّط" },
-  { id: "file",     icon: "📄", label: "ملف" },
+  { id: "progress", icon: "🎯", label: "تقدّمي" },
   { id: "quiz",     icon: "❓", label: "أسئلة" },
-  { id: "explain",  icon: "💡", label: "اشرح" },
+  { id: "explain",  icon: "📚", label: "اشرح" },
+  { id: "file",     icon: "📄", label: "ملف" },
   { id: "topics",   icon: "🗺️", label: "مواضيع" },
 ];
 
@@ -44,10 +47,13 @@ export default function DuirbHub({ subjects: propSubjects, defaultView = "schedu
   const subjectNames = subjects.map((s) => s.name);
   const accent = "var(--accent)";
 
+  /* جملة هدف الطالب — تجعل التخصيص مرئياً في رأس الهَب */
+  const goalLine = useMemo(() => buildDuwairbProfile().goalLine, []);
+
   return (
     <section className="card">
       {/* رأس دويرب */}
-      <div className="flex items-center gap-2.5 mb-4">
+      <div className="flex items-center gap-2.5 mb-1">
         <div className="w-8 h-8 rounded-xl flex items-center justify-center text-[18px] flex-shrink-0"
           style={{ background: "color-mix(in srgb, var(--accent) 15%, transparent)" }}>
           🤖
@@ -58,17 +64,21 @@ export default function DuirbHub({ subjects: propSubjects, defaultView = "schedu
           مساعدك الذكي
         </span>
       </div>
+      {goalLine && (
+        <p className="text-[12px] font-bold mb-4 mr-10" style={{ color: "var(--accent-light)" }}>🎯 {goalLine} — دويرب يخصّص لك كل شيء حسب هدفك</p>
+      )}
+      {!goalLine && <div className="mb-4" />}
 
-      {/* صف التبويبات — خمس قدرات فوق */}
-      <div className="grid grid-cols-5 gap-1 mb-4 p-1 rounded-2xl" style={{ background: "var(--surface2)" }}>
+      {/* صف التبويبات — ست قدرات في صفّين */}
+      <div className="grid grid-cols-3 gap-1.5 mb-4 p-1.5 rounded-2xl" style={{ background: "var(--surface2)" }}>
         {TABS.map((t) => (
-          <button key={t.id} onClick={() => setTab(t.id)}
-            className="rounded-xl py-2 flex flex-col items-center justify-center gap-0.5 transition-all"
+          <button key={t.id} onClick={() => setTab(t.id)} aria-pressed={tab === t.id}
+            className="rounded-xl py-2.5 flex flex-col items-center justify-center gap-0.5 transition-all"
             style={tab === t.id
               ? { background: accent, color: "#fff", boxShadow: `0 2px 8px color-mix(in srgb, ${accent} 30%, transparent)` }
               : { background: "transparent", color: "var(--text-muted)" }}>
-            <span className="text-[16px] leading-none">{t.icon}</span>
-            <span className="text-[11px] font-bold">{t.label}</span>
+            <span className="text-[18px] leading-none" aria-hidden="true">{t.icon}</span>
+            <span className="text-[11.5px] font-bold">{t.label}</span>
           </button>
         ))}
       </div>
@@ -76,6 +86,7 @@ export default function DuirbHub({ subjects: propSubjects, defaultView = "schedu
       {/* محتوى التبويب المختار */}
       <div>
         {tab === "schedule" && <DashAI subjects={subjectNames} onOpenScheduler={onOpenScheduler} />}
+        {tab === "progress" && <ProgressTool subjects={subjectNames} />}
         {tab === "file"     && <FileAnalyzer subjects={subjectNames} />}
         {tab === "quiz"     && <QuizGen subjects={subjects} />}
         {tab === "explain"  && <ExplainTool subjects={subjectNames} />}

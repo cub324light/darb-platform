@@ -11,6 +11,7 @@ const ALLOWED = new Set([
   "exam_started", "exam_completed", "question_answered", "skill_rated", "skill_improved",
   "lesson_completed", "card_reviewed", "vault_error_added", "file_uploaded",
   "ai_plan_generated", "ai_explain_requested", "ai_quiz_generated", "page_view",
+  "duwairb_opened", "ai_progress_analyzed",
 ]);
 
 /* حد إساءة: 60 حدث بالدقيقة لكل IP (الأحداث متكررة بطبيعتها) */

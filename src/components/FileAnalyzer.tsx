@@ -242,6 +242,14 @@ export default function FileAnalyzer({
               </div>
             )}
 
+            {/* الخطوة التالية: درّب نفسك على ما حلّلته */}
+            <button
+              onClick={() => { close(); window.dispatchEvent(new CustomEvent("darb:openDuirb", { detail: { tab: "quiz" } })); }}
+              className="w-full rounded-2xl py-3.5 font-black text-[15px] transition active:scale-[0.98] flex items-center justify-center gap-1.5"
+              style={{ background: color, color: "#fff" }}>
+              ❓ درّب نفسك — ولّد أسئلة على هذا
+            </button>
+
             <button onClick={reset}
               className="w-full rounded-2xl py-4 font-black text-[16px] transition active:scale-[0.98]"
               style={{ background: "var(--surface)", border: `1.5px solid ${color}`, color }}>
