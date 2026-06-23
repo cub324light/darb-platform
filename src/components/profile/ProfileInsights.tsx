@@ -66,8 +66,10 @@ function ProfileInsightsBase({ data }: { data: InsightsData }) {
       {/* الجاهزية المقدّرة — الأبرز */}
       <div className="rounded-2xl px-4 py-4 mb-3" style={{ background: "var(--surface2)", border: `1.5px solid ${READINESS_COLOR[data.readiness.label]}` }}>
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[13px] font-bold" style={{ color: "var(--text)" }}>🚀 الجاهزية المقدّرة</span>
-          <span className="text-[12px] font-black px-2 py-0.5 rounded-full" style={{ background: `color-mix(in srgb, ${READINESS_COLOR[data.readiness.label]} 18%, transparent)`, color: READINESS_COLOR[data.readiness.label] }}>
+          <span className="text-[13px] font-bold" style={{ color: "var(--text)" }}>
+            <span aria-hidden="true">🚀 </span>الجاهزية المقدّرة
+          </span>
+          <span aria-live="polite" className="text-[12px] font-black px-2 py-0.5 rounded-full" style={{ background: `color-mix(in srgb, ${READINESS_COLOR[data.readiness.label]} 18%, transparent)`, color: READINESS_COLOR[data.readiness.label] }}>
             {data.readiness.label}
           </span>
         </div>
@@ -77,8 +79,9 @@ function ProfileInsightsBase({ data }: { data: InsightsData }) {
             <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>· باقٍ {data.daysLeft.toLocaleString("ar")} يوم للاختبار</span>
           )}
         </div>
-        <div className="w-full rounded-full h-2 overflow-hidden" style={{ background: "var(--border)" }}>
-          <div className="h-full rounded-full transition-all" style={{ width: `${data.readiness.pct}%`, background: READINESS_COLOR[data.readiness.label] }} />
+        <div className="w-full rounded-full h-2 overflow-hidden" style={{ background: "var(--border)" }}
+          role="progressbar" aria-label="الجاهزية المقدّرة" aria-valuenow={data.readiness.pct} aria-valuemin={0} aria-valuemax={100}>
+          <div className="h-full rounded-full transition-all duration-700" style={{ width: `${data.readiness.pct}%`, background: READINESS_COLOR[data.readiness.label] }} />
         </div>
         <p className="text-[10.5px] mt-1.5" style={{ color: "var(--text-muted)" }}>مؤشّر إرشادي = تقدّم المسار + إتقان المهارات + الانتظام</p>
       </div>

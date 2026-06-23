@@ -63,15 +63,15 @@ function ProfileStatsBase({ data }: { data: StatsData }) {
     <div className="flex flex-col gap-5">
       <div>
         <p className="label mb-3">إحصائياتك</p>
-        <div className="grid grid-cols-3 gap-2.5">
+        <ul className="grid grid-cols-3 gap-2.5 list-none m-0 p-0" aria-label="إحصائياتك الكاملة">
           {tiles.map((s) => (
-            <div key={s.label} className="rounded-2xl p-3 text-center" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-              <p className="text-base leading-none mb-1">{s.icon}</p>
+            <li key={s.label} className="rounded-2xl p-3 text-center" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+              <p className="text-base leading-none mb-1" aria-hidden="true">{s.icon}</p>
               <p className="font-mono-nums font-black text-lg text-[var(--text)] leading-none">{s.val}</p>
               <p className="text-[11.5px] text-[var(--text-muted)] font-semibold mt-1">{s.label}</p>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
 
       {/* إتقان المهارات */}
@@ -81,8 +81,9 @@ function ProfileStatsBase({ data }: { data: StatsData }) {
             <span className="text-[13px] font-bold" style={{ color: "var(--text)" }}>🧠 متوسط إتقان المهارات</span>
             <span className="font-mono-nums font-black text-[15px]" style={{ color: "var(--accent-light)" }}>{data.skillAvg}%</span>
           </div>
-          <div className="w-full rounded-full h-2.5 overflow-hidden" style={{ background: "var(--border)" }}>
-            <div className="h-full rounded-full transition-all" style={{ width: `${data.skillAvg}%`, background: "var(--accent)" }} />
+          <div className="w-full rounded-full h-2.5 overflow-hidden" style={{ background: "var(--border)" }}
+            role="progressbar" aria-label="متوسط إتقان المهارات" aria-valuenow={data.skillAvg} aria-valuemin={0} aria-valuemax={100}>
+            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${data.skillAvg}%`, background: "var(--accent)" }} />
           </div>
         </div>
       )}

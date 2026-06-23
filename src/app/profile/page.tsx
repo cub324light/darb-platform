@@ -212,7 +212,8 @@ export default function ProfilePage() {
         <ProfileTabs active={tab} onChange={setTab} />
 
         {tab === "overview" && (
-          <div className="flex flex-col gap-5">
+          <div id="profile-panel-overview" role="tabpanel" aria-labelledby="profile-tab-overview"
+            className="flex flex-col gap-5 profile-tab-panel">
             <ProfileMotivation quote={quoteOfToday()} weekly={weekly} level={level} nextBadge={nextBadge} />
             <ProfileInsights data={insights} />
             <ProfileSocial />
@@ -220,19 +221,29 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {tab === "stats" && <ProfileStats data={statsData} />}
+        {tab === "stats" && (
+          <div id="profile-panel-stats" role="tabpanel" aria-labelledby="profile-tab-stats" className="profile-tab-panel">
+            <ProfileStats data={statsData} />
+          </div>
+        )}
 
         {tab === "goals" && (
-          <ProfileGoals goals={goals} onGoalsChange={updateGoals}
-            results={results} onAddResult={addResult} onDeleteResult={deleteResult} />
+          <div id="profile-panel-goals" role="tabpanel" aria-labelledby="profile-tab-goals" className="profile-tab-panel">
+            <ProfileGoals goals={goals} onGoalsChange={updateGoals}
+              results={results} onAddResult={addResult} onDeleteResult={deleteResult} />
+          </div>
         )}
 
         {tab === "prefs" && (
-          <ProfilePreferences prefs={prefs} onPrefsChange={updatePrefs} isPrivate={isPrivate} onTogglePrivacy={togglePrivacy} />
+          <div id="profile-panel-prefs" role="tabpanel" aria-labelledby="profile-tab-prefs" className="profile-tab-panel">
+            <ProfilePreferences prefs={prefs} onPrefsChange={updatePrefs} isPrivate={isPrivate} onTogglePrivacy={togglePrivacy} />
+          </div>
         )}
 
         {tab === "achievements" && (
-          <ProfileAchievements unlockedIds={unlockedIds} stats={stats} vaultCount={vaultCount} />
+          <div id="profile-panel-achievements" role="tabpanel" aria-labelledby="profile-tab-achievements" className="profile-tab-panel">
+            <ProfileAchievements unlockedIds={unlockedIds} stats={stats} vaultCount={vaultCount} />
+          </div>
         )}
       </div>
 

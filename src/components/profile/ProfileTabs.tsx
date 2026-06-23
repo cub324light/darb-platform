@@ -22,7 +22,8 @@ function ProfileTabsBase({ active, onChange }: { active: ProfileTab; onChange: (
         {PROFILE_TABS.map((t) => {
           const on = t.id === active;
           return (
-            <button key={t.id} role="tab" aria-selected={on}
+            <button key={t.id} id={`profile-tab-${t.id}`} role="tab" aria-selected={on}
+              aria-controls={`profile-panel-${t.id}`}
               onClick={() => onChange(t.id)}
               className="flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-bold transition active:scale-95 flex-shrink-0"
               style={{
@@ -30,7 +31,7 @@ function ProfileTabsBase({ active, onChange }: { active: ProfileTab; onChange: (
                 color: on ? "#fff" : "var(--text-muted)",
                 border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}`,
               }}>
-              <span className="text-[13px]" aria-hidden>{t.icon}</span>
+              <span className="text-[13px]" aria-hidden="true">{t.icon}</span>
               {t.label}
             </button>
           );

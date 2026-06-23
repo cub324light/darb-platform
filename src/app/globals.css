@@ -139,6 +139,32 @@ h1, h2, h3, h4, .title-xl, .title-lg, .title-md {
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
+/* ═══ انيميشن محتوى التبويبات ═══ */
+@keyframes profileTabIn {
+  from { opacity: 0; transform: translateY(7px); }
+}
+.profile-tab-panel {
+  animation: profileTabIn 0.18s ease both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .profile-tab-panel { animation: none; }
+}
+
+/* توهّج شارة مكتملة */
+@keyframes badgePulse {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--gold) 55%, transparent); }
+  65%  { box-shadow: 0 0 0 7px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+.badge-glow { animation: badgePulse 1.6s ease 0.4s 2 both; }
+@media (prefers-reduced-motion: reduce) {
+  .badge-glow { animation: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 55%, transparent); }
+}
+
+/* تصحيح لون نافذة الإدخال (تاريخ) حسب الثيم */
+[data-theme="dark"]  input[type="date"] { color-scheme: dark; }
+[data-theme="light"] input[type="date"] { color-scheme: light; }
+
 /* ═══════ قبة السماء — محتواة داخل الهيدر فقط ═══════ */
 .dome {
   position: relative;

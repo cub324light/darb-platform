@@ -152,12 +152,13 @@ function ProfileHeaderBase({ user, track, level, xp, streak, joinLabel, planId, 
       <div className="mt-4">
         <div className="flex items-center justify-between mb-1.5">
           <span className="font-black text-[14px] flex items-center gap-1.5" style={{ color: level.color }}>
-            <span className="text-lg">{level.icon}</span> {level.name}
+            <span className="text-lg" aria-hidden="true">{level.icon}</span> {level.name}
           </span>
           <span className="font-mono-nums text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>{xp.toLocaleString("ar")} XP</span>
         </div>
-        <div className="w-full rounded-full h-2 overflow-hidden" style={{ background: "var(--border)" }}>
-          <div className="h-full rounded-full transition-all" style={{ width: `${level.progress}%`, background: level.color }} />
+        <div className="w-full rounded-full h-2 overflow-hidden" style={{ background: "var(--border)" }}
+          role="progressbar" aria-label="تقدّم المستوى" aria-valuenow={level.progress} aria-valuemin={0} aria-valuemax={100}>
+          <div className="h-full rounded-full transition-all duration-700" style={{ width: `${level.progress}%`, background: level.color }} />
         </div>
         {level.next && (
           <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>

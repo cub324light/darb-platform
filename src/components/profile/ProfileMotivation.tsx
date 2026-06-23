@@ -15,10 +15,11 @@ interface Props {
 
 const WEEKLY_GOAL_DAYS = 5;
 
-function MiniBar({ pct, color }: { pct: number; color: string }) {
+function MiniBar({ pct, color, label }: { pct: number; color: string; label: string }) {
   return (
-    <div className="w-full rounded-full h-2 overflow-hidden" style={{ background: "var(--border)" }}>
-      <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, pct)}%`, background: color }} />
+    <div className="w-full rounded-full h-2 overflow-hidden" style={{ background: "var(--border)" }}
+      role="progressbar" aria-label={label} aria-valuenow={Math.min(100, pct)} aria-valuemin={0} aria-valuemax={100}>
+      <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.min(100, pct)}%`, background: color }} />
     </div>
   );
 }
@@ -43,7 +44,7 @@ function ProfileMotivationBase({ quote, weekly, level, nextBadge }: Props) {
             {activeDays.toLocaleString("ar")} / {WEEKLY_GOAL_DAYS.toLocaleString("ar")} أيام
           </span>
         </div>
-        <MiniBar pct={weekPct} color="var(--success)" />
+        <MiniBar pct={weekPct} color="var(--success)" label="هدف الأسبوع" />
         <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
           {activeDays >= WEEKLY_GOAL_DAYS ? "أنجزت هدف الأسبوع! 🎉" : `بقي ${(WEEKLY_GOAL_DAYS - activeDays).toLocaleString("ar")} يوم نشط لإكمال هدفك`}
         </p>
@@ -58,7 +59,7 @@ function ProfileMotivationBase({ quote, weekly, level, nextBadge }: Props) {
             </span>
             <span className="font-mono-nums text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>{nextBadge.pct}%</span>
           </div>
-          <MiniBar pct={nextBadge.pct} color="var(--gold)" />
+          <MiniBar pct={nextBadge.pct} color="var(--gold)" label={`تقدّم شارة ${nextBadge.label}`} />
           <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
             بقي {(nextBadge.goal - nextBadge.current).toLocaleString("ar")} {nextBadge.unit}
           </p>
@@ -74,7 +75,7 @@ function ProfileMotivationBase({ quote, weekly, level, nextBadge }: Props) {
             </span>
             <span className="font-mono-nums text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>{level.progress}%</span>
           </div>
-          <MiniBar pct={level.progress} color={level.color} />
+          <MiniBar pct={level.progress} color={level.color} label={`تقدّم للمستوى ${level.next?.name ?? ""}`} />
         </div>
       )}
     </div>

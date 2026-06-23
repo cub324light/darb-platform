@@ -124,7 +124,8 @@ function ProfileGoalsBase({ goals, onGoalsChange, results, onAddResult, onDelete
         {resErr && (<p className="text-[12px] mb-2 px-1 font-bold" style={{ color: "var(--danger)" }}>{resErr}</p>)}
         <div className="flex gap-2">
           <input type="date" value={resDate} onChange={(e) => setResDate(e.target.value)}
-            className="flex-1 rounded-2xl px-4 py-3 text-[15px] text-[var(--text)] outline-none" style={{ ...innerStyle, colorScheme: "dark" }} />
+            aria-label="تاريخ الاختبار"
+            className="flex-1 rounded-2xl px-4 py-3 text-[15px] text-[var(--text)] outline-none" style={innerStyle} />
           <button onClick={addResult} disabled={!resExam.trim()} className="px-5 rounded-2xl font-black text-[15px]"
             style={{ background: resExam.trim() ? "var(--accent)" : "var(--surface2)", color: resExam.trim() ? "white" : "var(--text-muted)" }}>أضف</button>
         </div>

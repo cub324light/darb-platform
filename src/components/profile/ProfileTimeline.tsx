@@ -18,7 +18,7 @@ function ProfileTimelineBase({ items }: { items: JourneyItem[] }) {
   if (items.length === 0) {
     return (
       <div className="rounded-2xl p-6 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-        <div className="text-4xl mb-2">🗺️</div>
+        <div className="text-4xl mb-2" aria-hidden="true">🗺️</div>
         <p className="font-black text-[16px] mb-1" style={{ color: "var(--text)" }}>رحلتك تبدأ الآن</p>
         <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
           كل جلسة وخطة وإنجاز يُسجَّل هنا كمحطة في رحلتك. أول خطوة تصنع الفرق.
@@ -31,21 +31,34 @@ function ProfileTimelineBase({ items }: { items: JourneyItem[] }) {
     <div>
       <p className="label mb-3">رحلتك</p>
       <div className="rounded-2xl p-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-        <div className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-0 list-none m-0 p-0" aria-label="سجل الأنشطة">
           {items.map((t, i) => (
-            <div key={i} className="flex items-start gap-3">
-              <span className="w-8 h-8 rounded-xl flex items-center justify-center text-base flex-shrink-0"
+            <li key={i} className="relative flex items-start gap-3 pb-3"
+              style={{ paddingBottom: i < items.length - 1 ? "12px" : "0" }}>
+              {/* خط الوصل بين المحطات */}
+              {i < items.length - 1 && (
+                <div className="absolute top-8 w-px" aria-hidden="true"
+                  style={{
+                    right: "15px",
+                    bottom: 0,
+                    background: t.milestone
+                      ? "color-mix(in srgb, var(--gold) 30%, var(--border))"
+                      : "var(--border)",
+                  }} />
+              )}
+              <span className="relative z-10 w-8 h-8 rounded-xl flex items-center justify-center text-base flex-shrink-0"
+                aria-hidden="true"
                 style={{
                   background: t.milestone ? "color-mix(in srgb, var(--gold) 18%, transparent)" : "color-mix(in srgb, var(--accent) 10%, transparent)",
-                  border: t.milestone ? "1px solid color-mix(in srgb, var(--gold) 40%, transparent)" : "none",
+                  border: t.milestone ? "1px solid color-mix(in srgb, var(--gold) 45%, transparent)" : "1px solid var(--border)",
                 }}>{t.icon}</span>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 pt-0.5">
                 <p className="text-[14px] leading-snug" style={{ color: "var(--text)", fontWeight: t.milestone ? 800 : 400 }}>{t.text}</p>
-                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{relDay(t.ts)}</p>
+                <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>{relDay(t.ts)}</p>
               </div>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     </div>
   );
