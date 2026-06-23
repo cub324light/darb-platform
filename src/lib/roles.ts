@@ -53,6 +53,7 @@ export const ASSIGNABLE_ROLES: Role[] = ["admin", "moderator", "user"];
 /* الحد الأدنى من الدور لكل عملية إدارية — مصدر واحد للقرار */
 export type AdminAction =
   | "view"        // قراءة اللوحة والتحليلات
+  | "moderate"    // إشراف خفيف: مراجعة البلاغات وحذف الرسائل
   | "manageUser"  // تغيير الباقة/الإيقاف/إعادة التعيين
   | "deleteUser"  // حذف نهائي
   | "announce"    // نشر/تعديل/حذف الإعلانات
@@ -60,6 +61,7 @@ export type AdminAction =
 
 export const ACTION_MIN_ROLE: Record<AdminAction, Role> = {
   view:        "moderator",
+  moderate:    "moderator",
   manageUser:  "admin",
   deleteUser:  "admin",
   announce:    "admin",

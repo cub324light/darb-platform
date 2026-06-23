@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkAdminPassword, authorizeAdmin, getVerifiedRole, isOwnerEmail } from "@/lib/server/firebaseAdmin";
-import { ACTION_MIN_ROLE, ASSIGNABLE_ROLES, isRole, type AdminAction, type Role } from "@/lib/roles";
+import { ACTION_MIN_ROLE, ASSIGNABLE_ROLES, isRole, atLeast, type AdminAction, type Role } from "@/lib/roles";
 
 /* ربط كل وضع بأقل صلاحية مطلوبة (مصدر القرار في lib/roles) */
 const ACTION_BY_MODE: Record<string, AdminAction> = {
@@ -14,6 +14,8 @@ const ACTION_BY_MODE: Record<string, AdminAction> = {
   resetUser:      "manageUser",
   deleteUser:     "deleteUser",
   setRole:        "manageRoles",
+  reports:        "view",
+  resolveReport:  "moderate",
 };
 
 /* firebase-admin يحتاج Node APIs — نمنع تجميعه على Edge، ونمدّد المهلة
@@ -115,6 +117,81 @@ export async function POST(req: NextRequest) {
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         return NextResponse.json({ error: `تعذّر تعيين الدور: ${msg}` }, { status: 500 });
+      }
+    }
+
+    /* قائمة بلاغات المجلس المعلّقة (للطاقم: مشرف فأعلى) */
+    if (mode === "reports") {
+      try {
+        const db = await adminDb();
+        const snap = await db.collection("reports").where("status", "==", "pending").limit(100).get();
+        const reports = snap.docs.map((d) => {
+          const x = d.data();
+          const ts = x.createdAt;
+          return {
+            id:           d.id,
+            messageId:    (x.messageId as string) ?? "",
+            groupId:      (x.groupId as string) ?? "",
+            reportedUid:  (x.reportedUid as string) ?? "",
+            reportedName: (x.reportedName as string) ?? "",
+            content:      (x.content as string) ?? "",
+            reason:       (x.reason as string) ?? "",
+            note:         (x.note as string) ?? "",
+            reporterUid:  (x.reporterUid as string) ?? "",
+            createdAt:    ts?.seconds ? ts.seconds * 1000 : null,
+          };
+        });
+        /* الأحدث أولاً — في الذاكرة لتفادي فهرس مركّب */
+        reports.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+        return NextResponse.json({ reports });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        return NextResponse.json({ error: `تعذّر جلب البلاغات: ${msg}` }, { status: 500 });
+      }
+    }
+
+    /* معالجة بلاغ: تجاهل / حذف الرسالة / حظر صاحبها */
+    if (mode === "resolveReport") {
+      const { reportId, action } = (body ?? {}) as { reportId?: string; action?: string };
+      if (typeof reportId !== "string" || !reportId) {
+        return NextResponse.json({ error: "reportId مفقود" }, { status: 400 });
+      }
+      if (action !== "dismiss" && action !== "delete" && action !== "block") {
+        return NextResponse.json({ error: "إجراء غير صالح" }, { status: 400 });
+      }
+      try {
+        const db = await adminDb();
+        const repRef = db.collection("reports").doc(reportId);
+        const repSnap = await repRef.get();
+        if (!repSnap.exists) return NextResponse.json({ error: "البلاغ غير موجود" }, { status: 404 });
+        const rep = repSnap.data()!;
+
+        if (action === "delete") {
+          const gid = rep.groupId as string; const mid = rep.messageId as string;
+          if (gid && mid) {
+            await db.collection("chats").doc(gid).collection("messages").doc(mid).delete().catch(() => {});
+          }
+        } else if (action === "block") {
+          /* الحظر عملية إدارية — يتطلب مشرفاً عاماً فأعلى */
+          if (!atLeast(caller.role, "admin")) {
+            return NextResponse.json({ error: "الحظر يتطلب صلاحية مشرف عام" }, { status: 403 });
+          }
+          const ruid = rep.reportedUid as string;
+          if (ruid) await db.collection("users").doc(ruid).set({ blocked: true }, { merge: true });
+        }
+
+        const status = action === "dismiss" ? "dismissed" : "resolved";
+        await repRef.set({
+          status,
+          resolution: action,
+          resolvedBy: caller.email ?? caller.uid,
+          resolvedAt: new Date().toISOString(),
+        }, { merge: true });
+
+        return NextResponse.json({ ok: true, reportId, status, action });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        return NextResponse.json({ error: `تعذّر تنفيذ الإجراء: ${msg}` }, { status: 500 });
       }
     }
 

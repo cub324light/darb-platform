@@ -90,6 +90,18 @@ service cloud.firestore {
       allow delete: if isStaff();
     }
 
+    // بلاغات المجلس: أي مستخدم مسجّل يُنشئ بلاغاً عن رسالة (لا يقرأ بلاغات غيره)؛
+    // الطاقم يقرأ ويُحدّث/يحذف (مراجعة وإغلاق). الحالة تبدأ "pending" فقط.
+    match /reports/{id} {
+      allow create: if signedIn()
+        && request.resource.data.reporterUid == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.reason is string
+        && request.resource.data.content is string
+        && request.resource.data.content.size() <= 1000;
+      allow read, update, delete: if isStaff();
+    }
+
     // Everything else: denied
     match /{document=**} {
       allow read, write: if false;

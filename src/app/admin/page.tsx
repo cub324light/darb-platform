@@ -272,6 +272,37 @@ export default function AdminPage() {
     finally { setFbBusy(false); }
   };
 
+  /* ── بلاغات المجلس ── */
+  type Report = {
+    id: string; messageId: string; groupId: string; reportedUid: string;
+    reportedName: string; content: string; reason: string; note: string;
+    reporterUid: string; createdAt: number | null;
+  };
+  const [showReports, setShowReports] = useState(false);
+  const [reportsList, setReportsList] = useState<Report[]>([]);
+  const [reportsBusy, setReportsBusy] = useState(false);
+  const loadReports = async () => {
+    setReportsBusy(true);
+    try {
+      const { ok, data } = await callApi("reports");
+      if (ok) setReportsList((data.reports as Report[]) ?? []);
+    } catch { /* تجاهل */ }
+    finally { setReportsBusy(false); }
+  };
+  const resolveReport = async (reportId: string, action: "dismiss" | "delete" | "block") => {
+    setReportsBusy(true);
+    try {
+      const { ok, data } = await callAction("resolveReport", { reportId, action });
+      if (ok) setReportsList((prev) => prev.filter((r) => r.id !== reportId));
+      else alert((data.error as string) ?? "تعذّر تنفيذ الإجراء");
+    } catch { /* تجاهل */ }
+    finally { setReportsBusy(false); }
+  };
+  const REASON_AR: Record<string, string> = {
+    spam: "إزعاج / تكرار", harassment: "تنمّر / مضايقة", offensive: "ألفاظ مسيئة",
+    contact: "مشاركة تواصل", other: "أخرى",
+  };
+
   /* ── نظرة عامة (تحليلات اليوم) ── */
   const [stats, setStats] = useState<AnalyticsData | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
@@ -706,6 +737,70 @@ export default function AdminPage() {
             <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{s.label}</p>
           </div>
         ))}
+      </div>
+
+      {/* قسم بلاغات المجلس */}
+      <div className="max-w-7xl mx-auto mb-6">
+        <button onClick={() => { const n = !showReports; setShowReports(n); if (n && reportsList.length === 0) loadReports(); }}
+          className="flex items-center gap-2 mb-3 font-black text-[15px]"
+          style={{ color: "var(--text)" }}>
+          ⚐ بلاغات المجلس
+          {reportsList.length > 0 && (
+            <span className="text-[11px] font-black px-2 py-0.5 rounded-full"
+              style={{ background: "color-mix(in srgb, var(--danger) 16%, transparent)", color: "var(--danger)", border: "1px solid var(--danger)" }}>
+              {reportsList.length}
+            </span>
+          )}
+          <span style={{ color: "var(--text-muted)" }}>{showReports ? "▲" : "▼"}</span>
+        </button>
+        {showReports && (
+          <div className="flex flex-col gap-3">
+            <button onClick={loadReports} disabled={reportsBusy}
+              className="self-start px-4 py-2 rounded-xl text-[13px] font-bold"
+              style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
+              {reportsBusy ? "جارٍ التحديث..." : "🔄 تحديث"}
+            </button>
+            {reportsList.length === 0 ? (
+              <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>{reportsBusy ? "جارٍ التحميل..." : "ما فيه بلاغات معلّقة 🎉"}</p>
+            ) : reportsList.map((r) => (
+              <div key={r.id} className="rounded-2xl p-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <span className="text-[11px] font-black px-2 py-0.5 rounded-md"
+                    style={{ background: "color-mix(in srgb, var(--danger) 14%, transparent)", color: "var(--danger)", border: "1px solid color-mix(in srgb, var(--danger) 40%, transparent)" }}>
+                    {REASON_AR[r.reason] ?? r.reason}
+                  </span>
+                  <span className="font-bold text-[13px]" style={{ color: "var(--text)" }}>{r.reportedName || "طالب"}</span>
+                  <span className="text-[11px] mr-auto" style={{ color: "var(--text-muted)" }}>
+                    {r.createdAt ? new Date(r.createdAt).toLocaleString("ar-SA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
+                  </span>
+                </div>
+                <p className="text-[14px] leading-relaxed whitespace-pre-wrap rounded-xl px-3 py-2 mb-2"
+                  style={{ color: "var(--text)", background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                  {r.content || "—"}
+                </p>
+                {r.note && <p className="text-[12px] mb-2" style={{ color: "var(--text-muted)" }}>ملاحظة المبلّغ: {r.note}</p>}
+                <p className="text-[10px] mb-3" style={{ color: "var(--text-muted)" }}>uid: {r.reportedUid}</p>
+                <div className="flex gap-2 flex-wrap">
+                  <button onClick={() => resolveReport(r.id, "delete")} disabled={reportsBusy}
+                    className="px-3 py-2 rounded-xl text-[13px] font-bold"
+                    style={{ background: "color-mix(in srgb, var(--danger) 12%, transparent)", border: "1.5px solid var(--danger)", color: "var(--danger)" }}>
+                    🗑 احذف الرسالة
+                  </button>
+                  <button onClick={() => resolveReport(r.id, "block")} disabled={reportsBusy}
+                    className="px-3 py-2 rounded-xl text-[13px] font-bold"
+                    style={{ background: "color-mix(in srgb, #B45309 12%, transparent)", border: "1.5px solid #B45309", color: "#B45309" }}>
+                    🚫 احظر المستخدم
+                  </button>
+                  <button onClick={() => resolveReport(r.id, "dismiss")} disabled={reportsBusy}
+                    className="px-3 py-2 rounded-xl text-[13px] font-bold"
+                    style={{ background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                    تجاهل
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* قسم ملاحظات المستخدمين */}

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import {
-  collection, doc, writeBatch, onSnapshot,
+  collection, doc, writeBatch, addDoc, onSnapshot,
   orderBy, query, limit, serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -41,6 +41,15 @@ function getDailyCount(): number {
 function bumpDailyCount(): void {
   try { localStorage.setItem(dailyKey(), String(getDailyCount() + 1)); } catch { /* تجاهل */ }
 }
+
+/* ─── أسباب الإبلاغ عن رسالة ─── */
+const REPORT_REASONS = [
+  { id: "spam",       label: "إزعاج / تكرار" },
+  { id: "harassment", label: "تنمّر / مضايقة" },
+  { id: "offensive",  label: "ألفاظ مسيئة" },
+  { id: "contact",    label: "مشاركة وسائل تواصل" },
+  { id: "other",      label: "أخرى" },
+] as const;
 
 /* ─── أداة الوقت ─── */
 function timeAgo(ms: number): string {
@@ -99,6 +108,45 @@ export default function CouncilPage() {
 
   /* ─ مهلة الإرسال (آخر وقت إرسال ناجح) ─ */
   const lastSentRef = useRef(0);
+
+  /* ─ الإبلاغ عن رسالة ─ */
+  const [reportTarget, setReportTarget] = useState<ChatMessage | null>(null);
+  const [reportReason, setReportReason] = useState<string>("spam");
+  const [reportNote, setReportNote] = useState("");
+  const [reportBusy, setReportBusy] = useState(false);
+  const [reportDone, setReportDone] = useState(false);
+
+  const openReport = (msg: ChatMessage) => {
+    setReportTarget(msg);
+    setReportReason("spam");
+    setReportNote("");
+    setReportDone(false);
+    setReportBusy(false);
+  };
+
+  const submitReport = async () => {
+    if (!reportTarget || !authUid || reportBusy) return;
+    setReportBusy(true);
+    try {
+      await addDoc(collection(db, "reports"), {
+        messageId: reportTarget.id,
+        groupId: activeGroup?.id ?? "",
+        reportedUid: reportTarget.uid,
+        reportedName: reportTarget.name,
+        content: reportTarget.content.slice(0, 1000),
+        reason: reportReason,
+        note: reportNote.trim().slice(0, 300),
+        reporterUid: authUid,
+        status: "pending",
+        createdAt: serverTimestamp(),
+      });
+      setReportDone(true);
+      trackEvent("council_message_reported", { reason: reportReason });
+      setTimeout(() => { setReportTarget(null); setReportDone(false); }, 1300);
+    } catch {
+      setReportBusy(false);
+    }
+  };
 
   /* ─ التمرير للأسفل ─ */
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -424,9 +472,19 @@ export default function CouncilPage() {
                           {msg.content}
                         </p>
                       </div>
-                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                        {timeAgo(msg.createdAt)}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                          {timeAgo(msg.createdAt)}
+                        </p>
+                        {!isMine && !msg.isOfficial && authUid && (
+                          <button onClick={() => openReport(msg)}
+                            className="text-[11px] transition active:opacity-60"
+                            style={{ color: "var(--text-muted)" }}
+                            aria-label="إبلاغ عن هذه الرسالة">
+                            ⚐ إبلاغ
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -510,6 +568,63 @@ export default function CouncilPage() {
             </div>
           )}
         </div>
+
+        {/* ─ نافذة الإبلاغ ─ */}
+        {reportTarget && (
+          <div className="fixed inset-0 flex items-end sm:items-center justify-center p-4"
+            style={{ zIndex: 10000, background: "rgba(0,0,0,0.6)" }}
+            onClick={() => !reportBusy && setReportTarget(null)}>
+            <div className="w-full max-w-sm rounded-2xl p-5 flex flex-col gap-3"
+              style={{ background: "var(--bg)", border: "1.5px solid var(--border)" }}
+              onClick={(e) => e.stopPropagation()}>
+              {reportDone ? (
+                <p className="text-center font-bold py-4" style={{ color: "var(--success)" }}>
+                  ✓ تم الإبلاغ — شكراً، سيراجعه المشرفون
+                </p>
+              ) : (
+                <>
+                  <p className="font-black text-[16px]" style={{ color: "var(--text)" }}>الإبلاغ عن رسالة</p>
+                  <div className="rounded-xl px-3 py-2 text-[13px] line-clamp-3"
+                    style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                    {reportTarget.content}
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    {REPORT_REASONS.map((r) => (
+                      <button key={r.id} onClick={() => setReportReason(r.id)}
+                        className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-right transition"
+                        style={{
+                          background: reportReason === r.id ? "color-mix(in srgb, var(--accent) 12%, transparent)" : "var(--surface)",
+                          border: `1.5px solid ${reportReason === r.id ? "var(--accent)" : "var(--border)"}`,
+                        }}>
+                        <span className="w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center"
+                          style={{ border: `2px solid ${reportReason === r.id ? "var(--accent)" : "var(--border)"}` }}>
+                          {reportReason === r.id && <span className="w-2 h-2 rounded-full" style={{ background: "var(--accent)" }} />}
+                        </span>
+                        <span className="text-[14px] font-bold" style={{ color: "var(--text)" }}>{r.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <input value={reportNote} onChange={(e) => setReportNote(e.target.value)}
+                    placeholder="ملاحظة (اختياري)" maxLength={300}
+                    className="w-full rounded-xl px-3 py-2.5 text-[14px] outline-none"
+                    style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
+                  <div className="flex gap-2 mt-1">
+                    <button onClick={() => setReportTarget(null)} disabled={reportBusy}
+                      className="px-4 py-2.5 rounded-xl text-[14px] font-bold"
+                      style={{ background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                      إلغاء
+                    </button>
+                    <button onClick={submitReport} disabled={reportBusy}
+                      className="flex-1 py-2.5 rounded-xl text-[14px] font-black text-white transition active:scale-[0.98]"
+                      style={{ background: "var(--danger)", opacity: reportBusy ? 0.6 : 1 }}>
+                      {reportBusy ? "..." : "إرسال البلاغ"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         {!isFullscreen && <BottomNav />}
       </>
