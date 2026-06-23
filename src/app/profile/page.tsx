@@ -148,16 +148,23 @@ export default function ProfilePage() {
   }, [stats, streak, vaultCount, flashcards, skill.avg, weekly]);
 
   const journey = useMemo<JourneyItem[]>(() => {
-    const items: JourneyItem[] = [
+    // المعالم دائمة — لا تُحذف بالتقطيع
+    const milestones: JourneyItem[] = [];
+    if (joinDate) milestones.push({ ts: new Date(joinDate + "T12:00:00").getTime(), icon: "🌟", text: "انضممت إلى درب", milestone: true });
+    if (log.length) milestones.push({ ts: Math.min(...log.map((e) => e.ts)), icon: "🔥", text: "أول جلسة تركيز", milestone: true });
+
+    const regular: JourneyItem[] = [
       ...log.map((e) => ({ ts: e.ts, icon: "⏱", text: `أكملت جلسة ${e.subject} · ${e.focusMins.toLocaleString("ar")} دقيقة` })),
       ...results.filter((r) => r.date).map((r) => ({
         ts: new Date(r.date + "T12:00:00").getTime(), icon: "📊",
         text: `أضفت نتيجة ${r.exam}${r.score ? ` · ${r.score}` : ""}`,
       })),
-    ];
-    if (joinDate) items.push({ ts: new Date(joinDate + "T12:00:00").getTime(), icon: "🌟", text: "انضممت إلى درب", milestone: true });
-    if (log.length) items.push({ ts: Math.min(...log.map((e) => e.ts)), icon: "🔥", text: "أول جلسة تركيز", milestone: true });
-    return items.sort((a, b) => b.ts - a.ts).slice(0, 10);
+    ].sort((a, b) => b.ts - a.ts).slice(0, 7);
+
+    // دمج: المعالم أولاً (بلا تكرار)، ثم النشاط الأخير
+    const milestoneTs = new Set(milestones.map((m) => m.ts));
+    const merged = [...milestones, ...regular.filter((r) => !milestoneTs.has(r.ts))];
+    return merged.sort((a, b) => b.ts - a.ts);
   }, [log, results, joinDate]);
 
   /* ── أفعال التحرير ── */

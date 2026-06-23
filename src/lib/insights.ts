@@ -76,9 +76,10 @@ export function monthlyDelta(stats: DarbStats): { mins: number; prevMins: number
   const sum = (keys: string[]) => keys.reduce((n, k) => n + (dayMins[k] ?? 0), 0);
   const mins = sum(dayKeysBack(0, 30));
   const prevMins = sum(dayKeysBack(30, 30));
-  const deltaPct = prevMins > 0
-    ? Math.round(((mins - prevMins) / prevMins) * 100)
-    : (mins > 0 ? 100 : null);
+  // لا نعرض تغييراً إن لم يكن هناك قاعدة كافية (أقل من ساعة في الشهر السابق)
+  const deltaPct = prevMins >= 60
+    ? Math.max(-200, Math.min(200, Math.round(((mins - prevMins) / prevMins) * 100)))
+    : null;
   return { mins, prevMins, deltaPct };
 }
 
