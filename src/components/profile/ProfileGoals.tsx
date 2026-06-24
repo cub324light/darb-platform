@@ -23,10 +23,6 @@ const TARGETS: { key: keyof DarbGoals; label: string; max: number }[] = [
 const innerStyle = { background: "var(--surface2)", border: "1.5px solid var(--border)" };
 
 function ProfileGoalsBase({ goals, onGoalsChange, results, onAddResult, onDeleteResult }: Props) {
-  // أهداف الدرجات (نص محلي لكل حقل لتجربة إدخال سلسة)
-  const [uni, setUni] = useState(goals.university ?? "");
-  const [major, setMajor] = useState(goals.major ?? "");
-
   // نموذج إضافة نتيجة
   const [resExam, setResExam] = useState("");
   const [resScore, setResScore] = useState("");
@@ -66,22 +62,6 @@ function ProfileGoalsBase({ goals, onGoalsChange, results, onAddResult, onDelete
                 style={{ background: "var(--surface)", border: "1px solid var(--border)" }} />
             </div>
           ))}
-        </div>
-      </div>
-
-      {/* الجامعة والتخصص */}
-      <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-        <div>
-          <p className="text-[12px] font-bold mb-1.5" style={{ color: "var(--text-muted)" }}>🎓 الجامعة المرغوبة</p>
-          <input value={uni} onChange={(e) => setUni(e.target.value)} onBlur={() => onGoalsChange({ university: uni.trim() || undefined })}
-            placeholder="مثال: جامعة الملك سعود" maxLength={60}
-            className="w-full rounded-xl px-3 py-2.5 text-[14px] text-[var(--text)] outline-none" style={innerStyle} />
-        </div>
-        <div>
-          <p className="text-[12px] font-bold mb-1.5" style={{ color: "var(--text-muted)" }}>📚 التخصص المرغوب</p>
-          <input value={major} onChange={(e) => setMajor(e.target.value)} onBlur={() => onGoalsChange({ major: major.trim() || undefined })}
-            placeholder="مثال: هندسة حاسب" maxLength={60}
-            className="w-full rounded-xl px-3 py-2.5 text-[14px] text-[var(--text)] outline-none" style={innerStyle} />
         </div>
       </div>
 

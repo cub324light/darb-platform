@@ -451,8 +451,10 @@ export interface DarbGoals {
   stepTarget?: number;
   cpcTarget?: number;
   itcTarget?: number;
-  university?: string;
-  major?: string;
+  university?: string;      // الاسم المحلول (SSoT لدويرب) — قد يكون نصاً حراً عند «أخرى»
+  major?: string;           // اسم التخصص المحلول
+  universityId?: string;    // معرّف منظَّم من قائمة الجامعات (أو «other»)
+  majorId?: string;         // معرّف منظَّم من قائمة التخصصات (أو «other»)
 }
 
 const GOALS_KEY = "darb_goals";

@@ -270,6 +270,7 @@ function sanitizeProfile(raw: unknown): DuwairbProfile | null {
     currentScores,
     attemptCount: cleanNum(r.attemptCount, 0, 50),
     trackType: cleanStr(r.trackType, 20),
+    majorRequirements: cleanStr(r.majorRequirements, 120),
   };
   // أعِد null إن لم يبقَ شيء مفيد
   return Object.values(p).some((v) => v != null) ? p : null;

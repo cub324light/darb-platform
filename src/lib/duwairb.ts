@@ -13,6 +13,7 @@ import { loadSkillProgress, overallStats } from "./skillProgress";
 import { skillsForTracks, SKILL_BY_ID } from "./globalSkills";
 import { estimateReadiness, daysUntil } from "./insights";
 import { getTrack, type TrackId } from "./tracks";
+import { findMajor, requirementsText } from "./university";
 
 /* ── القدرات الخمس الأساسية + المواضيع ── */
 export type DuwairbTab = "schedule" | "progress" | "quiz" | "explain" | "file" | "topics";
@@ -38,6 +39,7 @@ export interface DuwairbProfile {
   currentScores?: Record<string, number>; // أعلى درجة لكل اختبار (من نتائج الطالب)
   attemptCount?: number;                  // مجموع المحاولات السابقة (خبرة)
   trackType?: string;                     // نوع المسار الجامعي: صحي/هندسي/حاسب/إداري/عام
+  majorRequirements?: string;             // متطلبات التخصص المستهدف الإرشادية (نص)
 }
 
 /* قاعدة فترة التركيز/الراحة حسب تفضيل الطالب — مصدر واحد يستعمله
@@ -102,6 +104,12 @@ export function buildDuwairbProfile(): { profile: DuwairbProfile; goalLine: stri
     : undefined;
   const attemptCount = Object.values(scoreMap).reduce((s, v) => s + v.attempts, 0) || undefined;
 
+  /* متطلبات التخصص المستهدف الإرشادية (من مصدر الجامعات الواحد) */
+  const major = findMajor(goals.majorId);
+  const majorRequirements = major && requirementsText(major.requirements)
+    ? requirementsText(major.requirements)
+    : undefined;
+
   const profile: DuwairbProfile = {
     name: u.name || undefined,
     exams: exams.length ? exams : undefined,
@@ -120,6 +128,7 @@ export function buildDuwairbProfile(): { profile: DuwairbProfile; goalLine: stri
     currentScores,
     attemptCount,
     trackType: u.trackType || undefined,
+    majorRequirements,
   };
 
   /* جملة الهدف للواجهة — أولوية للاختبار صاحب الهدف الأقرب موعداً */
@@ -129,7 +138,7 @@ export function buildDuwairbProfile(): { profile: DuwairbProfile; goalLine: stri
     profile.exams?.some((e) => e.target != null) ||
     profile.university || profile.major || profile.studyHours ||
     profile.preferredTime || profile.learningStyles || profile.strongest ||
-    profile.trackType || profile.currentScores,
+    profile.trackType || profile.currentScores || profile.majorRequirements,
   );
 
   return { profile, goalLine, personalized };
@@ -167,6 +176,9 @@ export function formatProfileBlock(p: DuwairbProfile): string {
   }
   if (p.university || p.major) {
     lines.push(`- الوجهة الجامعية: ${[p.major, p.university].filter(Boolean).join(" — ")}`);
+  }
+  if (p.majorRequirements) {
+    lines.push(`- متطلبات هذا التخصص الإرشادية: ${p.majorRequirements} (اربط توصياتك بها صراحةً، مثل «بما أن ${p.major ?? "تخصصك"} يتطلب قدرات مرتفع، ركّز على...»)`);
   }
   if (p.grade) lines.push(`- الصف: ${p.grade}`);
   if (p.studyHours != null) lines.push(`- ساعات المذاكرة المتاحة يومياً: ${p.studyHours}`);

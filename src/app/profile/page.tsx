@@ -39,6 +39,8 @@ import dynamic from "next/dynamic";
 const CoachReportView = dynamic(() => import("@/components/CoachReportView"), { ssr: false });
 const CalendarSettings = dynamic(() => import("@/components/CalendarSettings"), { ssr: false });
 const GoalRealityCard = dynamic(() => import("@/components/GoalRealityCard"), { ssr: false });
+const UniversityFuture = dynamic(() => import("@/components/UniversityFuture"), { ssr: false });
+const UniversityFutureCard = dynamic(() => import("@/components/UniversityFutureCard"), { ssr: false });
 
 function fmtJoin(d: string): string {
   try { return "انضم " + new Date(d + "T12:00:00").toLocaleDateString("ar-SA", { year: "numeric", month: "long" }); }
@@ -226,6 +228,7 @@ export default function ProfilePage() {
           <div id="profile-panel-overview" role="tabpanel" aria-labelledby="profile-tab-overview"
             className="flex flex-col gap-5 profile-tab-panel">
             <ProfileMotivation quote={quoteOfToday()} weekly={weekly} level={level} nextBadge={nextBadge} />
+            <UniversityFutureCard onOpenTab={() => setTab("future")} />
             <ProfileInsights data={insights} />
             <ProfileSocial />
             <ProfileTimeline items={journey} />
@@ -243,6 +246,12 @@ export default function ProfilePage() {
             <GoalRealityCard />
             <ProfileGoals goals={goals} onGoalsChange={updateGoals}
               results={results} onAddResult={addResult} onDeleteResult={deleteResult} />
+          </div>
+        )}
+
+        {tab === "future" && (
+          <div id="profile-panel-future" role="tabpanel" aria-labelledby="profile-tab-future" className="profile-tab-panel">
+            <UniversityFuture />
           </div>
         )}
 

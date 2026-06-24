@@ -3,11 +3,12 @@
    مُحسَّب بالكامل من البيانات المحلية — لا طلب شبكة.
    يُعرض من ملف الطالب (تبويب مدرّبي) ومن لوحة التحكم. */
 import { useMemo } from "react";
-import { loadStats, loadSessionLog, loadPrefs } from "@/lib/storage";
+import { loadStats, loadSessionLog, loadPrefs, loadGoals, currentScoreMap } from "@/lib/storage";
 import { computeWeeklyReport, fmtMins } from "@/lib/weeklyReport";
 import { buildDuwairbProfile } from "@/lib/duwairb";
 import { computeDuwairbScore, detectMissedOpportunities } from "@/lib/coachScore";
-import { activeDaysWithin } from "@/lib/insights";
+import { getStrategy } from "@/lib/strategy";
+import { findMajor, findUniversity, universityReadiness } from "@/lib/university";
 import StrategyBanner from "@/components/StrategyBanner";
 import { trackEvent } from "@/lib/events";
 import { useEffect } from "react";
@@ -45,7 +46,31 @@ export default function CoachReportView() {
       })(),
     });
 
-    return { stats, weekly, profile, goalLine, readinessPct, score, weekHours, opps, prefs };
+    /* مؤشر الوصول الجامعي — نفس محرّك القسم المستقل (مصدر واحد) */
+    const goals = loadGoals();
+    const major = findMajor(goals.majorId);
+    const uni = findUniversity(goals.universityId);
+    let uniReadiness: ReturnType<typeof universityReadiness> | null = null;
+    let uniLabel: string | null = null;
+    if (major || uni || goals.major) {
+      const strategy = getStrategy();
+      const scoreMap = currentScoreMap();
+      const scoreOf = (...keys: string[]) => {
+        for (const k of keys) { for (const mk of Object.keys(scoreMap)) { if (mk.includes(k)) return scoreMap[mk].score; } }
+        return null;
+      };
+      uniReadiness = universityReadiness({
+        requirements: major?.requirements,
+        readinessPct: strategy.readinessPct,
+        quduratScore: scoreOf("قدرات"),
+        tahsiliScore: scoreOf("تحصيلي"),
+        stepScore: scoreOf("STEP", "ستيب"),
+        weeklyHours: strategy.weeklyHoursTotal,
+      });
+      uniLabel = [major?.name ?? goals.major, uni?.id === "other" ? goals.university : uni?.name].filter(Boolean).join(" — ") || null;
+    }
+
+    return { stats, weekly, profile, goalLine, readinessPct, score, weekHours, opps, prefs, uniReadiness, uniLabel };
   }, []);
 
   /* قياس المشاهدة */
@@ -53,7 +78,7 @@ export default function CoachReportView() {
     trackEvent("coach_report_viewed");
   }, []);
 
-  const { weekly, score, weekHours, opps, goalLine, readinessPct } = data;
+  const { weekly, score, weekHours, opps, goalLine, readinessPct, uniReadiness, uniLabel } = data;
 
   const deltaSign = (weekly.deltaPct ?? 0) >= 0 ? "↑" : "↓";
   const deltaAbs = Math.abs(weekly.deltaPct ?? 0);
@@ -85,6 +110,21 @@ export default function CoachReportView() {
 
       {/* الاستراتيجية الموحّدة — نفس قرار الخطة والخريطة ودويرب */}
       <StrategyBanner />
+
+      {/* مؤشر الوصول الجامعي — نفس محرّك «مستقبلي الجامعي» */}
+      {uniReadiness && uniReadiness.hasData && (
+        <div className="rounded-3xl p-4 flex items-center gap-3"
+          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <span className="text-[24px]">{uniReadiness.icon}</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>🎓 مؤشر الوصول الجامعي{uniLabel ? ` — ${uniLabel}` : ""}</p>
+            <p className="text-[15px] font-black"
+              style={{ color: uniReadiness.icon === "🟢" ? "var(--success)" : uniReadiness.icon === "🟡" ? "var(--gold)" : "var(--danger)" }}>
+              {uniReadiness.level} ({ar(uniReadiness.score)}٪)
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* شبكة الإحصائيات */}
       <div className="grid grid-cols-2 gap-2.5">
