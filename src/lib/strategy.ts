@@ -8,16 +8,17 @@
 
    getStrategy() (عميل فقط) يجمع المدخلات من التخزين الموجود — لا تخزين مكرّر:
    يعيد استخدام buildDuwairbProfile (الجاهزية/الهدف/الأقوى/الأحوج) + التفضيلات. */
-import { loadPrefs, type DarbPrefs } from "./storage";
+import { loadPrefs, loadCalendarConfig, loadTrackExamDates, type DarbPrefs } from "./storage";
 import { buildDuwairbProfile, sessionIntervalRule, type DuwairbProfile } from "./duwairb";
 import { loadUser } from "./storage";
 import { subjectsForTracks, type TrackId } from "./tracks";
+import { resolveCalendar, calendarSignals, type CalendarSignals, type CalendarConfig } from "./academicCalendar";
 
 /* ── أنواع القرار ── */
 export type StudyIntensity = "light" | "moderate" | "intensive";
 export type SubjectAllocation = "single" | "parallel" | "rotating";
 export type ReviewFrequency = "daily" | "everyOtherDay" | "twiceWeek" | "weekly";
-export type CalendarStatus = "دراسة" | "إجازة" | "اختبارات";
+export type CalendarStatus = "دراسة" | "إجازة" | "اختبارات" | "اختبارات مدرسية";
 export type AllocationPref = "auto" | SubjectAllocation;
 
 export interface SubjectWeeklyHours { name: string; hoursPerWeek: number; }
@@ -36,6 +37,10 @@ export interface StudyStrategy {
   transitionRule: string;
   calendarStatus: CalendarStatus;
   daysToExam: number | null;
+  weeksToExam: number | null;
+  onVacation: boolean;
+  inSchoolFinals: boolean;
+  schoolFinalsNote?: string;       // إرشاد عند فترة الاختبارات المدرسية
   targetScore: number | null;
   readinessPct: number | null;
   weakest?: string;
@@ -58,6 +63,9 @@ export interface StrategyInputs {
   studyDaysPerWeek?: number | null;
   vacationMode?: boolean;
   allocationOverride?: AllocationPref;
+  /* إشارات التقويم الدراسي (تُحقن من academicCalendar — عميل وخادم) */
+  onVacation?: boolean;
+  inSchoolFinals?: boolean;
 }
 
 /* تفضيلات التخطيط القابلة للضبط — تُخزَّن في DarbPrefs */
@@ -101,16 +109,17 @@ const TRANSITION_RULE: Record<SubjectAllocation, string> = {
 export function buildStrategy(inp: StrategyInputs): StudyStrategy {
   const subjects = inp.subjects.filter(Boolean);
   const daysToExam = inp.daysToExam ?? null;
+  const weeksToExam = daysToExam != null ? Math.ceil(daysToExam / 7) : null;
   const readinessPct = inp.readinessPct ?? null;
   const targetScore = inp.targetScore ?? null;
   const studyHours = inp.studyHours ?? null;
-  const vacation = inp.vacationMode === true;
+  /* إجازة = تفضيل يدوي أو إجازة فعلية في التقويم */
+  const vacation = inp.vacationMode === true || inp.onVacation === true;
+  const schoolFinals = inp.inSchoolFinals === true;
+  /* اختبار قياس وشيك يتجاوز تخفيف الاختبارات المدرسية */
+  const qiyasImminent = daysToExam != null && daysToExam <= 14;
 
   const studyDaysPerWeek = clamp(Math.round(inp.studyDaysPerWeek ?? (vacation ? 6 : 5)), 1, 7);
-
-  /* حالة التقويم الأكاديمي: إجازة (تفضيل) ← اختبارات (قرب الموعد) ← دراسة */
-  const calendarStatus: CalendarStatus =
-    vacation ? "إجازة" : (daysToExam != null && daysToExam <= 14 ? "اختبارات" : "دراسة");
 
   /* ١) الكثافة — مزيج إلحاح الموعد + عجز الجاهزية + الطاقة المتاحة */
   let score = 0;
@@ -128,7 +137,16 @@ export function buildStrategy(inp: StrategyInputs): StudyStrategy {
   if (vacation) score += 1;
 
   let intensity: StudyIntensity = score >= 4 ? "intensive" : score >= 2 ? "moderate" : "light";
-  if (daysToExam != null && daysToExam <= 7) intensity = "intensive"; // الاختبار وشيك — لا تهاون
+  /* (٣) قاعدة التقويم: أقل من ٣٠ يوماً على الاختبار ⇒ مكثّفة تلقائياً */
+  if (daysToExam != null && daysToExam <= 30) intensity = "intensive";
+  /* (٤) فترة اختبارات مدرسية بلا اختبار قياس وشيك ⇒ خفِّف على قياس */
+  if (schoolFinals && !qiyasImminent && intensity === "intensive") intensity = "moderate";
+
+  /* حالة التقويم: اختبارات مدرسية ← اختبار قياس قريب ← إجازة ← دراسة */
+  const calendarStatus: CalendarStatus =
+    schoolFinals && !qiyasImminent ? "اختبارات مدرسية" :
+    (daysToExam != null && daysToExam <= 14 ? "اختبارات" :
+    (vacation ? "إجازة" : "دراسة"));
 
   /* ٢) توزيع المواد */
   let allocation: SubjectAllocation;
@@ -146,7 +164,12 @@ export function buildStrategy(inp: StrategyInputs): StudyStrategy {
   }
 
   /* ٣) ساعات أسبوعية إجمالية وتوزيعها على المواد (الأحوج يأخذ أكثر) */
-  const perDay = studyHours ?? (intensity === "intensive" ? 4 : intensity === "moderate" ? 2.5 : 1.5);
+  const basePerDay = studyHours ?? (intensity === "intensive" ? 4 : intensity === "moderate" ? 2.5 : 1.5);
+  /* (٢) في الإجازة: ارفع الساعات المقترحة تلقائياً (+٣٠٪)
+     (٤) في الاختبارات المدرسية بلا قياس وشيك: خفّض ساعات قياس (لصالح المدرسة) */
+  const vacationBoost = vacation ? 1.3 : 1;
+  const schoolFinalsCut = schoolFinals && !qiyasImminent ? 0.55 : 1;
+  const perDay = basePerDay * vacationBoost * schoolFinalsCut;
   const weeklyHoursTotal = Math.round(perDay * studyDaysPerWeek);
   const weightFor = (name: string) =>
     name === inp.weakest ? 1.6 : name === inp.strongest ? 0.8 : 1.0;
@@ -168,12 +191,20 @@ export function buildStrategy(inp: StrategyInputs): StudyStrategy {
   /* ٦) قاعدة الانتقال */
   const transitionRule = TRANSITION_RULE[allocation];
 
-  /* مبرّر شفّاف يربط القرار بالمدخلات */
+  /* إرشاد فترة الاختبارات المدرسية */
+  const schoolFinalsNote = schoolFinals && !qiyasImminent
+    ? "أنت في فترة اختباراتك المدرسية — قدّمها الآن وخفّفنا تركيز قياس مؤقتاً، ونعود للإيقاع الكامل بعدها."
+    : schoolFinals && qiyasImminent
+    ? "لديك اختبارات مدرسية واختبار قياس قريب معاً — وازِن بينهما وأعطِ الأقرب موعداً الأولوية."
+    : undefined;
+
+  /* مبرّر شفّاف يربط القرار بالمدخلات والتقويم */
   const bits: string[] = [];
-  if (daysToExam != null) bits.push(`${daysToExam} يوماً للاختبار`);
+  if (daysToExam != null) bits.push(`${weeksToExam} أسبوع للاختبار`);
   if (readinessPct != null) bits.push(`جاهزية ${readinessPct}٪`);
   if (studyHours != null) bits.push(`${studyHours} ساعات يومياً`);
-  if (vacation) bits.push("وضع الإجازة");
+  if (vacation) bits.push("إجازة (ساعات أعلى)");
+  if (schoolFinals) bits.push("اختبارات مدرسية");
   const rationale = bits.length
     ? `بُنيت على: ${bits.join("، ")}.`
     : "ابدأ بإيقاع خفيف حتى نتعرّف على بياناتك ونرفع التوصية.";
@@ -181,7 +212,8 @@ export function buildStrategy(inp: StrategyInputs): StudyStrategy {
   return {
     intensity, allocation, weeklyHoursTotal, perSubject, reviewFrequency, session,
     studyDaysPerWeek, preferredTime: inp.preferredTime, transitionRule, calendarStatus,
-    daysToExam, targetScore, readinessPct, weakest: inp.weakest, strongest: inp.strongest,
+    daysToExam, weeksToExam, onVacation: vacation, inSchoolFinals: schoolFinals, schoolFinalsNote,
+    targetScore, readinessPct, weakest: inp.weakest, strongest: inp.strongest,
     rationale,
     labels: {
       intensity: INTENSITY_LABEL[intensity],
@@ -208,11 +240,14 @@ export function strategyFromProfile(
   profile: DuwairbProfile,
   planning: PlanningPrefs | undefined,
   subjects: string[],
+  calendar?: CalendarSignals,
 ): StudyStrategy {
   const exam = nearestExam(profile);
+  /* موعد الطالب المسجّل له الأولوية؛ وإلا نافذة التقويم التقديرية */
+  const daysToExam = exam?.days ?? calendar?.daysToNextExam ?? null;
   return buildStrategy({
     targetScore: exam?.target ?? null,
-    daysToExam: exam?.days ?? null,
+    daysToExam,
     readinessPct: profile.readinessPct ?? null,
     studyHours: profile.studyHours ?? null,
     preferredTime: profile.preferredTime,
@@ -223,7 +258,20 @@ export function strategyFromProfile(
     studyDaysPerWeek: planning?.studyDays ?? null,
     vacationMode: planning?.vacationMode,
     allocationOverride: planning?.subjectFocus,
+    onVacation: calendar?.onVacation,
+    inSchoolFinals: calendar?.inSchoolFinals,
   });
+}
+
+/* ── يقرأ تقويم الطالب من التخزين ويُرجع اللقطة الكاملة (للواجهة) ── */
+export function currentCalendarSnapshot() {
+  const cfg = loadCalendarConfig<CalendarConfig>();
+  return resolveCalendar(new Date(), { examDates: loadTrackExamDates(), config: cfg });
+}
+
+/* ── يقرأ تقويم الطالب من التخزين ويُرجع إشارات الاستراتيجية ── */
+export function currentCalendarSignals(): CalendarSignals {
+  return calendarSignals(currentCalendarSnapshot());
 }
 
 /* ── المُجمِّع العميلي: مصدر الحقيقة الواحد للواجهة ── */
@@ -237,6 +285,7 @@ export function getStrategy(): StudyStrategy {
     profile,
     { studyDays: prefs.studyDays, vacationMode: prefs.vacationMode, subjectFocus: prefs.subjectFocus },
     subjects,
+    currentCalendarSignals(),
   );
 }
 
@@ -252,6 +301,9 @@ export function formatStrategyBlock(s: StudyStrategy): string {
     ? s.perSubject.map((x) => `${x.name} ${x.hoursPerWeek}`).join("، ")
     : "—";
   const lines = [
+    `- الوضع الدراسي الآن: ${s.calendarStatus}${s.onVacation ? " (إجازة — ساعات أعلى)" : ""}`,
+    s.inSchoolFinals ? `- اختبارات مدرسية حالياً: نعم — قدّم المدرسة` : "",
+    s.weeksToExam != null ? `- المتبقّي لأقرب اختبار: ${s.weeksToExam} أسبوع تقريباً` : "",
     `- الكثافة: ${s.labels.intensity}`,
     `- توزيع المواد: ${s.labels.allocation}`,
     `- إجمالي الساعات الأسبوعية: ${s.weeklyHoursTotal} ساعة على ${s.studyDaysPerWeek} أيام`,
@@ -259,6 +311,7 @@ export function formatStrategyBlock(s: StudyStrategy): string {
     `- بنية الجلسة: ${s.session.label}`,
     `- تكرار المراجعة: ${s.labels.review}`,
     `- قاعدة الانتقال: ${s.transitionRule}`,
+    s.schoolFinalsNote ? `- ملاحظة: ${s.schoolFinalsNote}` : "",
     s.preferredTime ? `- وقت المذاكرة المفضّل: ${s.preferredTime}` : "",
   ].filter(Boolean);
   return `استراتيجية المذاكرة المعتمدة لهذا الطالب (هي مصدر القرار الموحّد — التزم بها حرفياً ولا تقترح كثافة أو توزيعاً مختلفاً):

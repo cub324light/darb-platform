@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { recordAiUsage } from "@/lib/aiUsage";
 import { formatProfileBlock, sessionIntervalRule, type DuwairbProfile, type DuwairbExam } from "@/lib/duwairb";
 import { strategyFromProfile, formatStrategyBlock, type PlanningPrefs, type AllocationPref } from "@/lib/strategy";
+import type { CalendarSignals } from "@/lib/academicCalendar";
 
 /* firebase-admin (تسجيل الاستهلاك) يحتاج Node APIs */
 export const runtime = "nodejs";
@@ -275,6 +276,19 @@ function sanitizePlanning(raw: unknown): PlanningPrefs | undefined {
   return Object.keys(out).length ? out : undefined;
 }
 
+/* تنقية إشارات التقويم القادمة من العميل — قيم بسيطة فقط */
+function sanitizeCalendar(raw: unknown): CalendarSignals | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const r = raw as Record<string, unknown>;
+  const out: CalendarSignals = {};
+  if (typeof r.onVacation === "boolean") out.onVacation = r.onVacation;
+  if (typeof r.inSchoolFinals === "boolean") out.inSchoolFinals = r.inSchoolFinals;
+  if (typeof r.daysToNextExam === "number" && Number.isFinite(r.daysToNextExam)) {
+    out.daysToNextExam = Math.max(0, Math.min(2000, Math.round(r.daysToNextExam)));
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
 export async function POST(req: NextRequest) {
   /* التحقق من Content-Type */
   if (!req.headers.get("content-type")?.includes("application/json")) {
@@ -290,8 +304,8 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "طلب غير صالح" }, { status: 400 });
 
-  const { prompt, subjects: rawSubjects, mode, images: rawImages, profile: rawProfile, planning: rawPlanning } = body as {
-    prompt?: string; subjects?: unknown; mode?: string; images?: unknown; profile?: unknown; planning?: unknown;
+  const { prompt, subjects: rawSubjects, mode, images: rawImages, profile: rawProfile, planning: rawPlanning, calendar: rawCalendar } = body as {
+    prompt?: string; subjects?: unknown; mode?: string; images?: unknown; profile?: unknown; planning?: unknown; calendar?: unknown;
   };
 
   /* ملف الطالب للتخصيص — اختياري، يُنظَّف بصرامة (allow-list) */
@@ -299,6 +313,9 @@ export async function POST(req: NextRequest) {
 
   /* تفضيلات التخطيط — ثلاث قيم بسيطة تُغذّي محرّك الاستراتيجية */
   const planning = sanitizePlanning(rawPlanning);
+
+  /* إشارات التقويم الدراسي — يحلّها العميل ويرسلها (آمنة، قيم بسيطة) */
+  const calendar = sanitizeCalendar(rawCalendar);
 
   /* مواد الطالب — اختيارية، مع تحقق صارم */
   const subjects: string[] = Array.isArray(rawSubjects)
@@ -375,7 +392,7 @@ export async function POST(req: NextRequest) {
      تُبنى من نفس الملف والتفضيلات التي يستعملها العميل ⇒ نفس التوجيه في كل مكان. */
   const STRATEGY_MODES = new Set(["schedule", "study", "progress", undefined]);
   const strategyBlock = personalize && profile && STRATEGY_MODES.has(mode)
-    ? formatStrategyBlock(strategyFromProfile(profile, planning, subjects))
+    ? formatStrategyBlock(strategyFromProfile(profile, planning, subjects, calendar))
     : "";
 
   const system = [baseSystem, profileBlock, strategyBlock].filter(Boolean).join("\n\n");

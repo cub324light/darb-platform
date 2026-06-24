@@ -52,6 +52,7 @@ export default function StrategyBanner({ defaultExpanded = false, title = "اس�
           `📅 ${ar(s.weeklyHoursTotal)} ساعة/أسبوع`,
           ...(s.preferredTime ? [`🌙 ${s.preferredTime}`] : []),
           `🗓️ ${s.calendarStatus}`,
+          ...(s.weeksToExam != null ? [`⏳ ${ar(s.weeksToExam)} أسبوع للاختبار`] : []),
         ].map((chip) => (
           <span key={chip} className="text-[11.5px] font-bold px-2.5 py-1 rounded-full"
             style={{ background: "var(--surface2)", color: "var(--text-muted)" }}>
@@ -65,6 +66,14 @@ export default function StrategyBanner({ defaultExpanded = false, title = "اس�
         <div className="flex flex-col gap-3 pt-1">
           {/* المبرّر */}
           <p className="text-[12px] font-semibold" style={{ color: "var(--text-muted)" }}>{s.rationale}</p>
+
+          {/* ملاحظة فترة الاختبارات المدرسية */}
+          {s.schoolFinalsNote && (
+            <p className="text-[12px] font-bold rounded-xl px-3 py-2"
+              style={{ background: "color-mix(in srgb, var(--danger) 8%, transparent)", color: "var(--danger)" }}>
+              📝 {s.schoolFinalsNote}
+            </p>
+          )}
 
           {/* ساعات كل مادة */}
           {s.perSubject.length > 0 && (

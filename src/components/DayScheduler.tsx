@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import type { ScheduleEvent } from "@/lib/storage";
 import { fmtHour, normalizeDigits } from "@/lib/utils";
 import { buildDuwairbProfile } from "@/lib/duwairb";
-import { strategyFromProfile, loadPlanningPrefs } from "@/lib/strategy";
+import { strategyFromProfile, loadPlanningPrefs, currentCalendarSignals } from "@/lib/strategy";
 
 export type { ScheduleEvent };
 
@@ -154,7 +154,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
     try {
       const { profile } = buildDuwairbProfile();
       const planning = planningOverride ?? loadPlanningPrefs();
-      const res  = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt, subjects: subjects.map((s) => s.name), mode: "schedule", profile, planning }) });
+      const res  = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt, subjects: subjects.map((s) => s.name), mode: "schedule", profile, planning, calendar: currentCalendarSignals() }) });
       const data = await res.json();
       const raw = (data.text ?? data.error ?? "حدث خطأ في الاستجابة").replace(/\n{3,}/g, "\n\n").trim();
       const parsed = parseAISchedule(raw, date, subjects);
@@ -190,8 +190,9 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
     const basePlanning = loadPlanningPrefs();
     const planning = { ...basePlanning, subjectFocus: subjectFocus === "auto" ? basePlanning.subjectFocus : subjectFocus } as ReturnType<typeof loadPlanningPrefs>;
     const { profile } = buildDuwairbProfile();
-    const strat = strategyFromProfile(profile, planning, subjects.map((s) => s.name));
-    const strategyCtx = `\nالاستراتيجية المعتمدة: ${strat.labels.allocation} — ${strat.transitionRule} الكثافة ${strat.labels.intensity}، المراجعة ${strat.labels.review}.`;
+    const strat = strategyFromProfile(profile, planning, subjects.map((s) => s.name), currentCalendarSignals());
+    const calNote = strat.inSchoolFinals ? " (فترة اختبارات مدرسية — خفّف قياس)" : strat.onVacation ? " (إجازة — ساعات أعلى)" : "";
+    const strategyCtx = `\nالاستراتيجية المعتمدة: ${strat.labels.allocation} — ${strat.transitionRule} الكثافة ${strat.labels.intensity}، المراجعة ${strat.labels.review}.${calNote}`;
     const timeCtx = strat.preferredTime ? `\nوقت المذاكرة المفضّل: ${strat.preferredTime} — اجعل معظم الجلسات ضمنه ما أمكن.` : "";
     callAI(`أنت مساعد جدول دراسي. اليوم: ${arabicDate}.${examCtx}${strategyCtx}${timeCtx}
 المواد: ${subjectsList}.

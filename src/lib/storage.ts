@@ -20,6 +20,7 @@ export interface DarbUser {
   phone?: string;
   bio?: string;        // سيرة قصيرة اختيارية (≤ ١٦٠ حرف)
   avatar?: string;     // معرّف أفاتار جاهز (وإلا صورة Google أو أول حرف)
+  graduationYear?: number; // سنة التخرج المتوقعة (لمواءمة التقويم الدراسي)
 }
 
 export interface DarbStats {
@@ -320,7 +321,7 @@ export function resetAll() {
      "darb_tadreeb_items","darb_tadreeb_done","darb_tasreebat_pct","darb_subject_exam_dates",
      "darb_track_exam_dates","darb_results","darb_skills","darb_skill_progress",
      "darb_session_log","darb_leaks_plan","darb_exam_coord","darb_dash_config","darb_dash_sched_v2",
-     "darb_prefs","darb_goals","darb_daily","darb_retention","darb_coach_memory"].forEach((k) =>
+     "darb_prefs","darb_goals","darb_daily","darb_retention","darb_coach_memory","darb_calendar"].forEach((k) =>
       localStorage.removeItem(k)
     );
     /* تعليمات أول زيارة تظهر من جديد بعد الضبط */
@@ -403,6 +404,19 @@ export function loadPrefs(): DarbPrefs {
 }
 export function savePrefs(p: DarbPrefs) {
   try { localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch {}
+}
+
+/* ── تفضيلات التقويم الدراسي (تجاوزات اختيارية فوق التقويم الرسمي) ── */
+const CALENDAR_KEY = "darb_calendar";
+export function loadCalendarConfig<T = Record<string, unknown>>(): T {
+  if (typeof window === "undefined") return {} as T;
+  try {
+    const raw = localStorage.getItem(CALENDAR_KEY);
+    return raw ? (JSON.parse(raw) as T) : ({} as T);
+  } catch { return {} as T; }
+}
+export function saveCalendarConfig(c: unknown) {
+  try { localStorage.setItem(CALENDAR_KEY, JSON.stringify(c)); } catch {}
 }
 
 /* ── الأهداف الأكاديمية — درجات مستهدفة + الجامعة/التخصص (كلها اختيارية) ── */

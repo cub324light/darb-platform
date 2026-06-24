@@ -37,6 +37,7 @@ import ProfilePreferences from "@/components/profile/ProfilePreferences";
 import ProfileAchievements from "@/components/profile/ProfileAchievements";
 import dynamic from "next/dynamic";
 const CoachReportView = dynamic(() => import("@/components/CoachReportView"), { ssr: false });
+const CalendarSettings = dynamic(() => import("@/components/CalendarSettings"), { ssr: false });
 
 function fmtJoin(d: string): string {
   try { return "انضم " + new Date(d + "T12:00:00").toLocaleDateString("ar-SA", { year: "numeric", month: "long" }); }
@@ -244,8 +245,9 @@ export default function ProfilePage() {
         )}
 
         {tab === "prefs" && (
-          <div id="profile-panel-prefs" role="tabpanel" aria-labelledby="profile-tab-prefs" className="profile-tab-panel">
+          <div id="profile-panel-prefs" role="tabpanel" aria-labelledby="profile-tab-prefs" className="profile-tab-panel flex flex-col gap-5">
             <ProfilePreferences prefs={prefs} onPrefsChange={updatePrefs} isPrivate={isPrivate} onTogglePrivacy={togglePrivacy} />
+            <CalendarSettings />
           </div>
         )}
 
