@@ -9,6 +9,7 @@ import PageFooter from "@/components/PageFooter";
 import {
   loadUser, saveUser, loadStats, computeStreak, ensureJoinDate,
   loadResults, saveResults, loadSessionLog, loadPrefs, savePrefs, loadGoals, saveGoals,
+  showsUniversityUI,
   type DarbUser, type DarbStats, type ExamResult, type DarbPrefs, type DarbGoals,
 } from "@/lib/storage";
 import { getTrack, type TrackId } from "@/lib/tracks";
@@ -110,6 +111,7 @@ export default function ProfilePage() {
   }, []);
 
   /* ── مشتقّات مذكَّرة (memoized) ── */
+  const showUni = useMemo(() => showsUniversityUI(user), [user]);
   const xp = useMemo(() => (stats ? computeXP(stats) : 0), [stats]);
   const level = useMemo(() => getLevel(xp), [xp]);
   const streak = useMemo(() => (stats ? computeStreak(stats) : 0), [stats]);
@@ -223,13 +225,13 @@ export default function ProfilePage() {
           onUserChange={updateUser}
         />
 
-        <ProfileTabs active={tab} onChange={setTab} />
+        <ProfileTabs active={tab} onChange={setTab} showUniversity={showUni} />
 
         {tab === "overview" && (
           <div id="profile-panel-overview" role="tabpanel" aria-labelledby="profile-tab-overview"
             className="flex flex-col gap-5 profile-tab-panel">
             <ProfileMotivation quote={quoteOfToday()} weekly={weekly} level={level} nextBadge={nextBadge} />
-            <UniversityFutureCard onOpenTab={() => setTab("future")} />
+            {showUni && <UniversityFutureCard onOpenTab={() => setTab("future")} />}
             <ProfileInsights data={insights} />
             <ProfileSocial />
             <ProfileTimeline items={journey} />
@@ -251,7 +253,7 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {tab === "future" && (
+        {tab === "future" && showUni && (
           <div id="profile-panel-future" role="tabpanel" aria-labelledby="profile-tab-future" className="profile-tab-panel">
             <UniversityFuture />
           </div>

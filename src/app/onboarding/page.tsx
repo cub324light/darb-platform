@@ -56,6 +56,8 @@ export default function OnboardingPage() {
   );
   const [prevErr, setPrevErr] = useState("");
 
+  const [gapYear, setGapYear] = useState<"" | "yes" | "no">(""); // خريج: إعادة الاختبارات؟
+
   /* ── الهدف + إضافات ── */
   const [goal, setGoal] = useState<StudyGoalType | "">("");
   const [studyHours, setStudyHours] = useState("");
@@ -65,8 +67,10 @@ export default function OnboardingPage() {
   const [city, setCity] = useState("");
   const [phone, setPhone] = useState("");
 
-  /* المسارات المُفعّلة تلقائياً من الحالة + الصف + الهدف */
-  const computedTracks = basicTracksFor({ status: status || undefined, grade, goal: goal || undefined });
+  /* المسارات المُفعّلة تلقائياً من الحالة + الصف + الهدف + سنة الاستدراك */
+  const computedTracks = basicTracksFor({
+    status: status || undefined, grade, goal: goal || undefined, gapYear: gapYear === "yes",
+  });
 
   const pickUni = (id: string) => {
     const u = findUniversity(id);
@@ -126,6 +130,7 @@ export default function OnboardingPage() {
       gradStage: status === "خريج" && gradStage ? gradStage : undefined,
       universityYear: status === "جامعي" && universityYear ? universityYear : undefined,
       goal: goal || undefined,
+      gapYear: status === "خريج" ? gapYear === "yes" : undefined,
       studyHours: studyHours ? parseInt(studyHours) : undefined,
       trackType: resolvedTrackType,
       ...extras,
@@ -306,9 +311,10 @@ export default function OnboardingPage() {
   /* ════════ الخطوة 1 — تفاصيل المرحلة ════════ */
   if (step === 1) {
     const canProceed =
-      status === "ثانوي" ? !!grade :
-      status === "خريج"  ? !!gradStage :
-      true; // جامعي: الجامعة/التخصص اختيارية
+      status === "ثانوي" ? (!!grade && !!trackType) :
+      status === "خريج"  ? (!!gradStage && !!gapYear) :
+      status === "جامعي" ? (!!universityId && !!majorId && !!universityYear) :
+      false;
 
     return (
       <div className="min-h-dvh flex flex-col app-col">
@@ -388,8 +394,28 @@ export default function OnboardingPage() {
                 </div>
               </div>
               <div>
+                <p className="label mb-1">تنوي تعيد القدرات أو التحصيلي؟</p>
+                <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>إذا خلّصت اختباراتك وبتركّز على القبول، اختر «خلصتها»</p>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button onClick={() => setGapYear(gapYear === "yes" ? "" : "yes")}
+                    className="rounded-2xl py-3.5 px-3 font-bold text-[14px] transition active:scale-[0.98] text-center leading-snug"
+                    style={chipStyle(gapYear === "yes")}>
+                    نعم، سنة استدراك 📈
+                  </button>
+                  <button onClick={() => setGapYear(gapYear === "no" ? "" : "no")}
+                    className="rounded-2xl py-3.5 px-3 font-bold text-[14px] transition active:scale-[0.98] text-center leading-snug"
+                    style={chipStyle(gapYear === "no")}>
+                    لا، خلّصتها 🎓
+                  </button>
+                </div>
+              </div>
+              <div>
                 <p className="label mb-1">نتائجك السابقة؟</p>
-                <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>نستخدمها لحساب جاهزيتك وتخصيص خطتك — اختياري</p>
+                <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>
+                  {gapYear === "no"
+                    ? "ندخلها لحساب نسبتك الموزونة ومقارنة الجامعات — مهمة لخطة القبول"
+                    : "نستخدمها لحساب جاهزيتك وتخصيص خطتك"}
+                </p>
                 <div className="flex flex-col gap-2.5">
                   {PREV_EXAMS.map((exam) => {
                     const r = prevResults[exam];
@@ -505,9 +531,9 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* ساعات المذاكرة (اختياري) */}
+        {/* ساعات المذاكرة (إلزامي — يقود حساب الخطة والجدول) */}
         <div>
-          <p className="label mb-3">كم ساعة تقدر تذاكر باليوم؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+          <p className="label mb-3">كم ساعة تقدر تذاكر باليوم؟</p>
           <input type="number" value={studyHours} onChange={(e) => setStudyHours(e.target.value)}
             placeholder="مثال: 3" min={1} max={16}
             className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
@@ -540,7 +566,8 @@ export default function OnboardingPage() {
         </div>
 
         <button className="btn-primary glow-blue" onClick={finish}
-          disabled={!goal} style={{ opacity: goal ? 1 : 0.4 }}>
+          disabled={!goal || !studyHours || needsUniPicker}
+          style={{ opacity: goal && studyHours && !needsUniPicker ? 1 : 0.4 }}>
           يلا نبدأ ←
         </button>
         <button onClick={() => setStep(1)} className="text-[15px] font-semibold w-full text-center py-1"

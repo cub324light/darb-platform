@@ -251,7 +251,7 @@ export const goalLabel = (id?: StudyGoalType): string | undefined =>
 
 /* يحدّد المسارات النشطة تلقائياً من الحالة التعليمية + الصف + الهدف.
    نقيّة وحتمية — تُستعمل في التسجيل وعند تغيير الهدف لاحقاً. */
-export function basicTracksFor(opts: { status?: string; grade?: string; goal?: StudyGoalType }): TrackId[] {
+export function basicTracksFor(opts: { status?: string; grade?: string; goal?: StudyGoalType; gapYear?: boolean }): TrackId[] {
   const early = opts.grade === "أول ثانوي" || opts.grade === "ثاني ثانوي";
   const tahsiliTrack: TrackId = early ? "تحصيلي مبكر" : "تحصيلي";
 
@@ -267,10 +267,21 @@ export function basicTracksFor(opts: { status?: string; grade?: string; goal?: S
     return primary ? [primary] : ["قدرات"];
   }
 
-  /* ثانوي/خريج: نشّط اختبارات قياس الأساسية المناسبة للمرحلة */
-  const core: TrackId[] = opts.status === "خريج"
-    ? ["قدرات", "تحصيلي"]
-    : ["قدرات", tahsiliTrack];
+  /* الخريج: أنهى القدرات/التحصيلي — لا نعيد تفعيل حزمة التحضير إلا إذا اختار
+     سنة استدراك (gapYear) لإعادة الاختبار. بدون استدراك: نفعّل فقط المسار
+     الذي يخدم هدفه (إن كان رفع درجة)، وإلا اختبار أساسي واحد ليعمل التطبيق. */
+  if (opts.status === "خريج") {
+    if (opts.gapYear) {
+      const core: TrackId[] = ["قدرات", "تحصيلي"];
+      if (opts.goal === "step") core.unshift("ستيب");
+      const ordered = primary ? [primary, ...core] : core;
+      return dedupe(ordered).slice(0, MAX_BASIC_TRACKS);
+    }
+    return primary ? [primary] : ["قدرات"];
+  }
+
+  /* ثانوي: نشّط اختبارات قياس الأساسية المناسبة للمرحلة */
+  const core: TrackId[] = ["قدرات", tahsiliTrack];
   if (opts.goal === "step") core.unshift("ستيب");
   const ordered = primary ? [primary, ...core] : core;
   return dedupe(ordered).slice(0, MAX_BASIC_TRACKS);

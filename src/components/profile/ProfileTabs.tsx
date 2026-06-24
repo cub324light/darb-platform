@@ -15,13 +15,15 @@ export const PROFILE_TABS: { id: ProfileTab; label: string; icon: string }[] = [
   { id: "achievements", label: "الإنجازات",  icon: "🏅" },
 ];
 
-function ProfileTabsBase({ active, onChange }: { active: ProfileTab; onChange: (t: ProfileTab) => void }) {
+function ProfileTabsBase({ active, onChange, showUniversity = true }: { active: ProfileTab; onChange: (t: ProfileTab) => void; showUniversity?: boolean }) {
+  /* تبويب «مستقبلي الجامعي» يظهر فقط للمؤهَّلين (ثالث ثانوي/خريج) */
+  const tabs = showUniversity ? PROFILE_TABS : PROFILE_TABS.filter((t) => t.id !== "future");
   return (
     <div className="sticky top-0 z-30 -mx-5 px-5 py-2.5 mb-1"
       style={{ background: "var(--glass-bg)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: "1px solid var(--border)" }}>
       <div role="tablist" aria-label="أقسام الملف الشخصي"
         className="flex gap-1.5 overflow-x-auto no-scrollbar">
-        {PROFILE_TABS.map((t) => {
+        {tabs.map((t) => {
           const on = t.id === active;
           return (
             <button key={t.id} id={`profile-tab-${t.id}`} role="tab" aria-selected={on}

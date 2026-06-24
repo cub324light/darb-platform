@@ -13,6 +13,7 @@ export interface DarbUser {
   gradStage?: string;       // نوع الخريج: خريج ثانوي / خريج جامعة
   universityYear?: string;  // السنة الدراسية (للجامعي): الأولى ... الخامسة+
   goal?: StudyGoalType;     // الهدف الحالي — يقود تفعيل المسارات والأولويات
+  gapYear?: boolean;        // خريج ينوي إعادة القدرات/التحصيلي (سنة استدراك)
   studyHours?: number;
   subjects?: string[];
   activeTracks?: TrackId[];
@@ -73,6 +74,17 @@ export function saveUser(user: DarbUser) {
   try {
     localStorage.setItem(USER_KEY, JSON.stringify(user));
   } catch {}
+}
+
+/* ── الأهلية لواجهة القبول الجامعي ──
+   ذكاء القبول (الموزونة/المقارنة/تحليل الفجوة) مخصّص لمن هم على أعتاب القبول:
+   طالب ثالث ثانوي أو خريج. لا يُعرض لطلاب أول/ثاني ثانوي (بعيدون) ولا للجامعي
+   (التحق فعلاً). نقي وحتمي — مصدر واحد لكل المستهلكين. */
+export function showsUniversityUI(u?: DarbUser | null): boolean {
+  if (!u) return false;
+  if (u.studyLevel === "خريج") return true;
+  if (u.studyLevel === "ثانوي" && u.grade === "ثالث ثانوي") return true;
+  return false;
 }
 
 /* ── الإحصاءات ── */
