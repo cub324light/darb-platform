@@ -4,6 +4,7 @@ import { loadEvents, saveEvents, loadUser, loadExamCoord, examCoordPrompt, recor
 import { getEventsForDate } from "@/components/DayScheduler";
 import { normalizeDigits, fmtHour } from "@/lib/utils";
 import { buildDuwairbProfile } from "@/lib/duwairb";
+import { recordCoachInteraction } from "@/lib/coachMemory";
 import { trackEvent } from "@/lib/events";
 
 const QUICK_PROMPTS = [
@@ -91,7 +92,12 @@ export default function DashAI({ subjects, onOpenScheduler }: Props) {
       const data = await res.json() as { text?: string; error?: string };
       const raw = (data.text ?? data.error ?? "حدث خطأ").trim();
       setResponse(raw);
-      if (!data.error) { recordAIChat(); trackEvent("ai_plan_generated", { personalized }); }
+      if (!data.error) {
+        recordAIChat();
+        trackEvent("ai_plan_generated", { personalized });
+        const { goalLine } = buildDuwairbProfile();
+        recordCoachInteraction("schedule", raw, { subjects, goalLine: goalLine ?? undefined });
+      }
       const parsed = parseSchedule(raw, today, subjects.map((s) => ({ name: s })));
       setParsedCount(parsed.length);
     } catch {

@@ -12,6 +12,8 @@ import TopicsTool from "@/components/TopicsTool";
 import { loadUser } from "@/lib/storage";
 import { subjectsForTracks, type TrackId } from "@/lib/tracks";
 import { buildDuwairbProfile } from "@/lib/duwairb";
+import { loadCoachMemory, formatMemoryHint } from "@/lib/coachMemory";
+import { trackEvent } from "@/lib/events";
 
 export type DuirbView = "menu" | "schedule" | "progress" | "file" | "quiz" | "explain" | "topics";
 type DuirbTab = Exclude<DuirbView, "menu">;
@@ -50,6 +52,14 @@ export default function DuirbHub({ subjects: propSubjects, defaultView = "schedu
   /* جملة هدف الطالب — تجعل التخصيص مرئياً في رأس الهَب */
   const goalLine = useMemo(() => buildDuwairbProfile().goalLine, []);
 
+  /* تذكير الذاكرة القصيرة */
+  const memoryHint = useMemo(() => {
+    const m = loadCoachMemory();
+    const hint = formatMemoryHint(m);
+    if (hint) trackEvent("coach_memory_shown");
+    return hint;
+  }, []);
+
   return (
     <section className="card">
       {/* رأس دويرب */}
@@ -65,9 +75,13 @@ export default function DuirbHub({ subjects: propSubjects, defaultView = "schedu
         </span>
       </div>
       {goalLine && (
-        <p className="text-[12px] font-bold mb-4 mr-10" style={{ color: "var(--accent-light)" }}>🎯 {goalLine} — دويرب يخصّص لك كل شيء حسب هدفك</p>
+        <p className="text-[12px] font-bold mr-10" style={{ color: "var(--accent-light)" }}>🎯 {goalLine} — دويرب يخصّص لك كل شيء حسب هدفك</p>
       )}
-      {!goalLine && <div className="mb-4" />}
+      {memoryHint && (
+        <p className="text-[12px] font-semibold mr-10 mt-1 mb-2" style={{ color: "var(--text-muted)" }}>💬 {memoryHint}</p>
+      )}
+      {!goalLine && !memoryHint && <div className="mb-4" />}
+      {(goalLine || memoryHint) && <div className="mb-3" />}
 
       {/* صف التبويبات — ست قدرات في صفّين */}
       <div className="grid grid-cols-3 gap-1.5 mb-4 p-1.5 rounded-2xl" style={{ background: "var(--surface2)" }}>

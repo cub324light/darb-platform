@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { recordQuiz } from "@/lib/storage";
 import { buildDuwairbProfile } from "@/lib/duwairb";
+import { recordCoachInteraction } from "@/lib/coachMemory";
 import { trackEvent } from "@/lib/events";
 
 interface QA { q: string; a: string }
@@ -70,7 +71,13 @@ export default function QuizGen({ subjects }: Props) {
       if (data.error && !data.text) { setErr(data.error); return; }
       const text = (data.text ?? "").trim();
       const parsed = parseQuestions(text);
-      if (parsed.length > 0) { setQuestions(parsed); recordQuiz(); trackEvent("ai_quiz_generated", { subject, personalized }); }
+      if (parsed.length > 0) {
+        setQuestions(parsed);
+        recordQuiz();
+        trackEvent("ai_quiz_generated", { subject, personalized });
+        const { goalLine } = buildDuwairbProfile();
+        recordCoachInteraction("quiz", text, { subjects: [subject], goalLine: goalLine ?? undefined });
+      }
       else setRaw(text || "لم يرجع رد، حاول مرة ثانية");
     } catch {
       setErr("تعذّر الاتصال — حاول مرة ثانية");

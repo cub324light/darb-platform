@@ -13,6 +13,7 @@ const ALLOWED = new Set([
   "ai_plan_generated", "ai_explain_requested", "ai_quiz_generated", "page_view",
   "duwairb_opened", "ai_progress_analyzed",
   "daily_checkin", "weekly_report_viewed", "streak_recovered", "milestone_reached", "comeback_shown",
+  "coach_report_viewed", "duwairb_score_viewed", "missed_opportunity_shown", "coach_memory_shown",
 ]);
 
 /* حد إساءة: 60 حدث بالدقيقة لكل IP (الأحداث متكررة بطبيعتها) */

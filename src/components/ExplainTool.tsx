@@ -4,6 +4,7 @@
    وأين يقع الخطأ الشائع ونصيحة لتفاديه (mode:"explain"). */
 import { useState } from "react";
 import { buildDuwairbProfile } from "@/lib/duwairb";
+import { recordCoachInteraction } from "@/lib/coachMemory";
 import { trackEvent } from "@/lib/events";
 
 interface Props {
@@ -37,8 +38,11 @@ export default function ExplainTool({ subjects }: Props) {
       });
       const data = (await res.json()) as { text?: string; error?: string };
       if (data.error && !data.text) { setErr(data.error); return; }
-      setResponse((data.text ?? "لم يرجع رد، حاول مرة ثانية").trim());
+      const text = (data.text ?? "لم يرجع رد، حاول مرة ثانية").trim();
+      setResponse(text);
       trackEvent("ai_explain_requested", { personalized });
+      const { goalLine } = buildDuwairbProfile();
+      recordCoachInteraction("explain", text, { subjects: subject ? [subject] : subjects, goalLine: goalLine ?? undefined });
     } catch {
       setErr("تعذّر الاتصال — حاول مرة ثانية");
     } finally {

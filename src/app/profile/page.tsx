@@ -35,6 +35,8 @@ import ProfileStats from "@/components/profile/ProfileStats";
 import ProfileGoals from "@/components/profile/ProfileGoals";
 import ProfilePreferences from "@/components/profile/ProfilePreferences";
 import ProfileAchievements from "@/components/profile/ProfileAchievements";
+import dynamic from "next/dynamic";
+const CoachReportView = dynamic(() => import("@/components/CoachReportView"), { ssr: false });
 
 function fmtJoin(d: string): string {
   try { return "انضم " + new Date(d + "T12:00:00").toLocaleDateString("ar-SA", { year: "numeric", month: "long" }); }
@@ -244,6 +246,12 @@ export default function ProfilePage() {
         {tab === "prefs" && (
           <div id="profile-panel-prefs" role="tabpanel" aria-labelledby="profile-tab-prefs" className="profile-tab-panel">
             <ProfilePreferences prefs={prefs} onPrefsChange={updatePrefs} isPrivate={isPrivate} onTogglePrivacy={togglePrivacy} />
+          </div>
+        )}
+
+        {tab === "coach" && (
+          <div id="profile-panel-coach" role="tabpanel" aria-labelledby="profile-tab-coach" className="profile-tab-panel">
+            <CoachReportView />
           </div>
         )}
 

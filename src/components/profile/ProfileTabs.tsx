@@ -3,12 +3,13 @@
    تحكّم خارجي (controlled): الحالة في الصفحة الأم. */
 import { memo } from "react";
 
-export type ProfileTab = "overview" | "stats" | "goals" | "prefs" | "achievements";
+export type ProfileTab = "overview" | "stats" | "goals" | "prefs" | "achievements" | "coach";
 
 export const PROFILE_TABS: { id: ProfileTab; label: string; icon: string }[] = [
   { id: "overview",     label: "نظرة عامة", icon: "🧭" },
   { id: "stats",        label: "الإحصائيات", icon: "📊" },
   { id: "goals",        label: "الأهداف",    icon: "🎯" },
+  { id: "coach",        label: "مدرّبي",     icon: "🤖" },
   { id: "prefs",        label: "التفضيلات",  icon: "⚙️" },
   { id: "achievements", label: "الإنجازات",  icon: "🏅" },
 ];

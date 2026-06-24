@@ -5,6 +5,8 @@
 import { useState } from "react";
 import { buildDuwairbProfile } from "@/lib/duwairb";
 import { recordAIChat } from "@/lib/storage";
+import { recordCoachInteraction } from "@/lib/coachMemory";
+import DuwairbScoreView from "@/components/DuwairbScoreView";
 import { trackEvent } from "@/lib/events";
 
 interface Props {
@@ -37,9 +39,12 @@ export default function ProgressTool({ subjects }: Props) {
       });
       const data = (await res.json()) as { text?: string; error?: string };
       if (data.error && !data.text) { setErr(data.error); return; }
-      setResponse((data.text ?? "لم يرجع رد، حاول مرة ثانية").trim());
+      const text = (data.text ?? "لم يرجع رد، حاول مرة ثانية").trim();
+      setResponse(text);
       recordAIChat();
       trackEvent("ai_progress_analyzed", { personalized });
+      const { goalLine } = buildDuwairbProfile();
+      recordCoachInteraction("progress", text, { subjects, goalLine: goalLine ?? undefined });
     } catch {
       setErr("تعذّر الاتصال — حاول مرة ثانية");
     } finally {
@@ -88,6 +93,10 @@ export default function ProgressTool({ subjects }: Props) {
           <div className="mt-3 rounded-2xl px-4 py-3.5"
             style={{ background: "color-mix(in srgb, var(--accent) 6%, var(--surface2))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
             <p className="text-[14px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{response}</p>
+          </div>
+          {/* تقييم دويرب + فرص ضائعة */}
+          <div className="mt-2">
+            <DuwairbScoreView expanded={false} />
           </div>
           {/* الخطوة التالية */}
           <div className="grid grid-cols-2 gap-2 mt-2">

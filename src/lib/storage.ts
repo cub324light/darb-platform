@@ -320,7 +320,7 @@ export function resetAll() {
      "darb_tadreeb_items","darb_tadreeb_done","darb_tasreebat_pct","darb_subject_exam_dates",
      "darb_track_exam_dates","darb_results","darb_skills","darb_skill_progress",
      "darb_session_log","darb_leaks_plan","darb_exam_coord","darb_dash_config","darb_dash_sched_v2",
-     "darb_prefs","darb_goals","darb_daily","darb_retention"].forEach((k) =>
+     "darb_prefs","darb_goals","darb_daily","darb_retention","darb_coach_memory"].forEach((k) =>
       localStorage.removeItem(k)
     );
     /* تعليمات أول زيارة تظهر من جديد بعد الضبط */
