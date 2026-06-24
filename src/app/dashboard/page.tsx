@@ -17,6 +17,7 @@ import ExamDateButton from "@/components/ExamDateButton";
 import dynamic from "next/dynamic";
 const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
 const RetentionHost = dynamic(() => import("@/components/retention/RetentionHost"), { ssr: false });
+const ExamRegistrationAlert = dynamic(() => import("@/components/ExamRegistrationAlert"), { ssr: false });
 import SaudiMap from "@/components/SaudiMap";
 import { NumberTicker } from "@/components/ui/number-ticker";
 import { BorderBeam } from "@/components/ui/border-beam";
@@ -1006,6 +1007,9 @@ export default function DashboardPage() {
 
       {/* ═══ المحتوى ═══ */}
       <div className="page-content mt-4">
+
+        {/* ── تنبيهات التسجيل في الاختبارات الرسمية ── */}
+        <ExamRegistrationAlert />
 
         {/* خطوتك التالية — نداء واحد ذكي (أعلى أولوية فقط) */}
         {!editMode && topNudge && (

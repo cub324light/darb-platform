@@ -322,7 +322,8 @@ export function resetAll() {
      "darb_tadreeb_items","darb_tadreeb_done","darb_tasreebat_pct","darb_subject_exam_dates",
      "darb_track_exam_dates","darb_results","darb_skills","darb_skill_progress",
      "darb_session_log","darb_leaks_plan","darb_exam_coord","darb_dash_config","darb_dash_sched_v2",
-     "darb_prefs","darb_goals","darb_daily","darb_retention","darb_coach_memory","darb_calendar"].forEach((k) =>
+     "darb_prefs","darb_goals","darb_daily","darb_retention","darb_coach_memory","darb_calendar",
+     "darb_study_plan"].forEach((k) =>
       localStorage.removeItem(k)
     );
     /* تعليمات أول زيارة تظهر من جديد بعد الضبط */
@@ -715,4 +716,30 @@ export function loadDashConfig(): DashConfig {
 
 export function saveDashConfig(cfg: DashConfig) {
   try { localStorage.setItem(DASH_CONFIG_KEY, JSON.stringify(cfg)); } catch {}
+}
+
+/* ── مخطط الدراسة الذكي — تعديلات المستخدم على الساعات وترتيب المواد ── */
+export interface StudyPlanSubject {
+  name: string;
+  hoursPerWeek: number;   // ساعات أسبوعية (معدَّلة يدوياً)
+  order: number;          // ترتيب العرض (0 = أعلى)
+}
+export interface StudyPlanOverride {
+  subjects: StudyPlanSubject[];
+  lastModified: string;  // ISO timestamp
+}
+
+const STUDY_PLAN_KEY = "darb_study_plan";
+export function loadStudyPlan(): StudyPlanOverride | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(STUDY_PLAN_KEY);
+    return raw ? (JSON.parse(raw) as StudyPlanOverride) : null;
+  } catch { return null; }
+}
+export function saveStudyPlan(plan: StudyPlanOverride) {
+  try { localStorage.setItem(STUDY_PLAN_KEY, JSON.stringify(plan)); } catch {}
+}
+export function clearStudyPlan() {
+  try { localStorage.removeItem(STUDY_PLAN_KEY); } catch {}
 }

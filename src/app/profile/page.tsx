@@ -41,6 +41,7 @@ const CalendarSettings = dynamic(() => import("@/components/CalendarSettings"), 
 const GoalRealityCard = dynamic(() => import("@/components/GoalRealityCard"), { ssr: false });
 const UniversityFuture = dynamic(() => import("@/components/UniversityFuture"), { ssr: false });
 const UniversityFutureCard = dynamic(() => import("@/components/UniversityFutureCard"), { ssr: false });
+const ExamRegistrationAlert = dynamic(() => import("@/components/ExamRegistrationAlert"), { ssr: false });
 
 function fmtJoin(d: string): string {
   try { return "انضم " + new Date(d + "T12:00:00").toLocaleDateString("ar-SA", { year: "numeric", month: "long" }); }
@@ -243,6 +244,7 @@ export default function ProfilePage() {
 
         {tab === "goals" && (
           <div id="profile-panel-goals" role="tabpanel" aria-labelledby="profile-tab-goals" className="profile-tab-panel flex flex-col gap-4">
+            <ExamRegistrationAlert />
             <GoalRealityCard />
             <ProfileGoals goals={goals} onGoalsChange={updateGoals}
               results={results} onAddResult={addResult} onDeleteResult={deleteResult} />

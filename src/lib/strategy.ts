@@ -8,11 +8,12 @@
 
    getStrategy() (عميل فقط) يجمع المدخلات من التخزين الموجود — لا تخزين مكرّر:
    يعيد استخدام buildDuwairbProfile (الجاهزية/الهدف/الأقوى/الأحوج) + التفضيلات. */
-import { loadPrefs, loadCalendarConfig, loadTrackExamDates, type DarbPrefs } from "./storage";
+import { loadPrefs, loadCalendarConfig, loadTrackExamDates, loadGoals, type DarbPrefs } from "./storage";
 import { buildDuwairbProfile, sessionIntervalRule, type DuwairbProfile } from "./duwairb";
 import { loadUser } from "./storage";
 import { subjectsForTracks, type TrackId } from "./tracks";
 import { resolveCalendar, calendarSignals, type CalendarSignals, type CalendarConfig } from "./academicCalendar";
+import { findMajor, type MajorCategory } from "./university";
 
 /* ── أنواع القرار ── */
 export type StudyIntensity = "light" | "moderate" | "intensive";
@@ -66,6 +67,8 @@ export interface StrategyInputs {
   /* إشارات التقويم الدراسي (تُحقن من academicCalendar — عميل وخادم) */
   onVacation?: boolean;
   inSchoolFinals?: boolean;
+  /* تعزيز التخصص الجامعي — يرفع وزن المواد ذات الصلة تلقائياً */
+  majorCategory?: MajorCategory;
 }
 
 /* تفضيلات التخطيط القابلة للضبط — تُخزَّن في DarbPrefs */
@@ -171,8 +174,12 @@ export function buildStrategy(inp: StrategyInputs): StudyStrategy {
   const schoolFinalsCut = schoolFinals && !qiyasImminent ? 0.55 : 1;
   const perDay = basePerDay * vacationBoost * schoolFinalsCut;
   const weeklyHoursTotal = Math.round(perDay * studyDaysPerWeek);
-  const weightFor = (name: string) =>
-    name === inp.weakest ? 1.6 : name === inp.strongest ? 0.8 : 1.0;
+  /* أوزان تعزيز التخصص الجامعي — تُضاف فوق weakest/strongest */
+  const majorBoost = majorSubjectBoost(inp.majorCategory);
+  const weightFor = (name: string) => {
+    const base = name === inp.weakest ? 1.6 : name === inp.strongest ? 0.8 : 1.0;
+    return base * (majorBoost[name] ?? 1.0);
+  };
   const sumW = subjects.reduce((s, n) => s + weightFor(n), 0) || 1;
   const perSubject: SubjectWeeklyHours[] = subjects.map((name) => ({
     name,
@@ -241,6 +248,7 @@ export function strategyFromProfile(
   planning: PlanningPrefs | undefined,
   subjects: string[],
   calendar?: CalendarSignals,
+  majorCategory?: MajorCategory,
 ): StudyStrategy {
   const exam = nearestExam(profile);
   /* موعد الطالب المسجّل له الأولوية؛ وإلا نافذة التقويم التقديرية */
@@ -260,6 +268,7 @@ export function strategyFromProfile(
     allocationOverride: planning?.subjectFocus,
     onVacation: calendar?.onVacation,
     inSchoolFinals: calendar?.inSchoolFinals,
+    majorCategory,
   });
 }
 
@@ -281,12 +290,64 @@ export function getStrategy(): StudyStrategy {
   const u = loadUser();
   const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
   const subjects = subjectsForTracks(ids.length ? ids : (["تحصيلي"] as TrackId[])).map((s) => s.name);
-  return strategyFromProfile(
+  /* التخصص الجامعي يُضخّ تلقائياً من الأهداف */
+  const goals = loadGoals();
+  const major = findMajor(goals.majorId);
+  const majorCategory = major?.category;
+  const strategy = strategyFromProfile(
     profile,
     { studyDays: prefs.studyDays, vacationMode: prefs.vacationMode, subjectFocus: prefs.subjectFocus },
     subjects,
     currentCalendarSignals(),
   );
+  /* إعادة بناء مع majorCategory إذا كان محدداً */
+  if (!majorCategory) return strategy;
+  const exam = (() => {
+    const withDays = (profile.exams ?? []).filter((e) => e.days != null);
+    if (!withDays.length) {
+      const wt = (profile.exams ?? []).find((e) => e.target != null);
+      return wt ? { target: wt.target } : null;
+    }
+    withDays.sort((a, b) => (a.days ?? 9999) - (b.days ?? 9999));
+    return { target: withDays[0].target, days: withDays[0].days };
+  })();
+  const cal = currentCalendarSignals();
+  return buildStrategy({
+    targetScore: exam?.target ?? null,
+    daysToExam: exam?.days ?? cal?.daysToNextExam ?? null,
+    readinessPct: profile.readinessPct ?? null,
+    studyHours: profile.studyHours ?? null,
+    preferredTime: profile.preferredTime,
+    sessionLen: profile.sessionLen,
+    subjects,
+    weakest: profile.weakest,
+    strongest: profile.strongest,
+    studyDaysPerWeek: prefs.studyDays ?? null,
+    vacationMode: prefs.vacationMode,
+    allocationOverride: prefs.subjectFocus,
+    onVacation: cal?.onVacation,
+    inSchoolFinals: cal?.inSchoolFinals,
+    majorCategory,
+  });
+}
+
+/* ─── تعزيز التخصص الجامعي: يرفع وزن المواد ذات الصلة تلقائياً ───
+   الرابط بين university.ts والاستراتيجية — بلا تدخّل المستخدم. */
+export function majorSubjectBoost(cat?: MajorCategory): Record<string, number> {
+  if (!cat) return {};
+  switch (cat) {
+    case "صحي":
+      return { "كمي": 1.35, "لفظي": 1.15, "أحياء": 1.4, "كيمياء": 1.3, "فيزياء": 1.1 };
+    case "هندسي":
+      return { "رياضيات": 1.4, "فيزياء": 1.4, "كمي": 1.25 };
+    case "حاسب":
+      return { "رياضيات": 1.4, "كمي": 1.35, "إنجليزي": 1.2, "قراءة": 1.1 };
+    case "إداري":
+    case "قانوني":
+      return { "لفظي": 1.35, "قراءة": 1.3, "إنجليزي": 1.25, "كمي": 1.1 };
+    default:
+      return {};
+  }
 }
 
 /* يقرأ تفضيلات التخطيط فقط (لإرسالها للراوت مع الطلب) */

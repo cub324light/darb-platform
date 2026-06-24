@@ -11,6 +11,7 @@ const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
 const StrategyBanner = dynamic(() => import("@/components/StrategyBanner"), { ssr: false });
 const CalendarStatusCard = dynamic(() => import("@/components/CalendarStatusCard"), { ssr: false });
 const GoalRealityCard = dynamic(() => import("@/components/GoalRealityCard"), { ssr: false });
+const ExamRegistrationAlert = dynamic(() => import("@/components/ExamRegistrationAlert"), { ssr: false });
 import { getEventsForDate } from "@/components/DayScheduler";
 import { loadUser, loadStats, loadEvents, loadExamDate, saveExamDate, loadTrackExamDates, computeStreak, type ScheduleEvent } from "@/lib/storage";
 import { subjectsForTracks, getTrack, colorForSubject, type TrackId } from "@/lib/tracks";
@@ -150,6 +151,7 @@ export default function PlanPage() {
 
       {/* ── التقويم الدراسي + استراتيجية المذاكرة الموحّدة ── */}
       <div className="px-5 mb-5 rise rise-1 flex flex-col gap-4">
+        <ExamRegistrationAlert />
         <CalendarStatusCard />
         <GoalRealityCard />
         <StrategyBanner defaultExpanded />
@@ -330,8 +332,9 @@ export default function PlanPage() {
       <div className="px-5 mb-5 rise rise-6">
         <div className="grid grid-cols-2 gap-3">
           {[
-            { href: "/roadmap", icon: "🗺️", label: "مساري", desc: "الخريطة الدراسية" },
-            { href: "/orbit",   icon: "⏱️", label: "أوربت",  desc: "ابدأ جلسة تركيز" },
+            { href: "/study-plan", icon: "📊", label: "مخطط الدراسة", desc: "وزّع ساعاتك الأسبوعية" },
+            { href: "/roadmap",    icon: "🗺️", label: "مساري",         desc: "الخريطة الدراسية" },
+            { href: "/orbit",      icon: "⏱️", label: "أوربت",          desc: "ابدأ جلسة تركيز" },
           ].map((item) => (
             <Link key={item.href} href={item.href}
               className="rounded-2xl p-4 flex flex-col gap-1.5 transition active:scale-[0.97]"
