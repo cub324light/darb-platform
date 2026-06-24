@@ -387,6 +387,10 @@ export interface DarbPrefs {
   learningStyle?: LearningStyle[]; // متعدّد الاختيار
   device?: StudyDevice;
   format?: StudyFormat;
+  /* مدخلات محرّك الاستراتيجية (كلها اختيارية — للمحرّك افتراضات ذكية) */
+  studyDays?: number;              // أيام المذاكرة الأسبوعية (3–7)
+  vacationMode?: boolean;          // وضع الإجازة → طاقة أعلى وأيام أكثر
+  subjectFocus?: "auto" | "single" | "parallel" | "rotating"; // تجاوز توزيع المواد
 }
 
 const PREFS_KEY = "darb_prefs";

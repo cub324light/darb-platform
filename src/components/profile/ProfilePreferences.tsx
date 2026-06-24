@@ -86,6 +86,39 @@ function ProfilePreferencesBase({ prefs, onPrefsChange, isPrivate, onTogglePriva
               onClick={() => onPrefsChange({ format: prefs.format === f ? undefined : f })}>{f}</Chip>
           ))}
         </Group>
+
+        {/* ── مدخلات استراتيجية المذاكرة — تُغذّي محرّك التخطيط الموحّد ── */}
+        <div className="pt-1" style={{ borderTop: "1px solid var(--border)" }} />
+        <div>
+          <p className="text-[13px] font-bold" style={{ color: "var(--text)" }}>📐 استراتيجية المذاكرة</p>
+          <p className="text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>يستعملها دويرب والخطة والخريطة معاً — قرار واحد في كل مكان.</p>
+        </div>
+
+        <Group title="🗓️ أيام المذاكرة الأسبوعية">
+          {[3, 4, 5, 6, 7].map((d) => (
+            <Chip key={d} on={prefs.studyDays === d} label={`${d} أيام`}
+              onClick={() => onPrefsChange({ studyDays: prefs.studyDays === d ? undefined : d })}>{d.toLocaleString("ar")}</Chip>
+          ))}
+        </Group>
+
+        <Group title="🌴 وضع الإجازة (طاقة أعلى)">
+          <Chip on={prefs.vacationMode === true} label="وضع الإجازة مفعّل"
+            onClick={() => onPrefsChange({ vacationMode: prefs.vacationMode ? undefined : true })}>
+            {prefs.vacationMode ? "مفعّل ●" : "مفعّل"}
+          </Chip>
+        </Group>
+
+        <Group title="🔀 توزيع المواد">
+          {([
+            { id: "auto", label: "تلقائي (يقرّره دويرب)" },
+            { id: "single", label: "مادة واحدة حتى الإتقان" },
+            { id: "parallel", label: "مادتان بالتوازي" },
+            { id: "rotating", label: "تدوير على الكل" },
+          ] as const).map((o) => (
+            <Chip key={o.id} on={(prefs.subjectFocus ?? "auto") === o.id} label={o.label}
+              onClick={() => onPrefsChange({ subjectFocus: o.id === "auto" ? undefined : o.id })}>{o.label}</Chip>
+          ))}
+        </Group>
       </div>
 
       {/* الخصوصية */}

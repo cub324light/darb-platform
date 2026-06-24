@@ -4,6 +4,7 @@
    قراءة موجزة + خطوة عملية واحدة. أبرز قدرة شخصية في درب. */
 import { useState } from "react";
 import { buildDuwairbProfile } from "@/lib/duwairb";
+import { loadPlanningPrefs } from "@/lib/strategy";
 import { recordAIChat } from "@/lib/storage";
 import { recordCoachInteraction } from "@/lib/coachMemory";
 import DuwairbScoreView from "@/components/DuwairbScoreView";
@@ -35,6 +36,7 @@ export default function ProgressTool({ subjects }: Props) {
           subjects,
           mode: "progress",
           profile,
+          planning: loadPlanningPrefs(),
         }),
       });
       const data = (await res.json()) as { text?: string; error?: string };

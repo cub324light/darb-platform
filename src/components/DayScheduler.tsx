@@ -3,8 +3,8 @@ import { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import type { ScheduleEvent } from "@/lib/storage";
 import { fmtHour, normalizeDigits } from "@/lib/utils";
-import { loadPrefs } from "@/lib/storage";
-import { buildDuwairbProfile, sessionIntervalRule } from "@/lib/duwairb";
+import { buildDuwairbProfile } from "@/lib/duwairb";
+import { strategyFromProfile, loadPlanningPrefs } from "@/lib/strategy";
 
 export type { ScheduleEvent };
 
@@ -149,11 +149,12 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
   };
 
   /* ─── طلب ذكاء اصطناعي ─── */
-  const callAI = async (prompt: string) => {
+  const callAI = async (prompt: string, planningOverride?: ReturnType<typeof loadPlanningPrefs>) => {
     setAiLoading(true);
     try {
       const { profile } = buildDuwairbProfile();
-      const res  = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt, subjects: subjects.map((s) => s.name), mode: "schedule", profile }) });
+      const planning = planningOverride ?? loadPlanningPrefs();
+      const res  = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt, subjects: subjects.map((s) => s.name), mode: "schedule", profile, planning }) });
       const data = await res.json();
       const raw = (data.text ?? data.error ?? "حدث خطأ في الاستجابة").replace(/\n{3,}/g, "\n\n").trim();
       const parsed = parseAISchedule(raw, date, subjects);
@@ -182,25 +183,27 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
     const examCtx = examDate
       ? `\nيوم الاختبار: ${new Date(examDate + "T12:00:00").toLocaleDateString("ar-SA", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}`
       : "";
-    const strategyCtx = scheduleStrategy === "per-track"
-      ? "\nاستراتيجية: خصص كل يوم لمسار/مادة واحدة فقط."
-      : scheduleStrategy === "time-blocks"
-      ? "\nاستراتيجية: خصص فترات زمنية مختلفة لمسارات مختلفة في نفس اليوم."
-      : "\nاستراتيجية: وزّع المواد من مختلف المسارات على مدار اليوم.";
-    const prefs = loadPrefs();
-    const orbitRule = sessionIntervalRule(prefs.sessionLen);
-    const timeCtx = prefs.studyTime ? `\nوقت المذاكرة المفضّل: ${prefs.studyTime} — اجعل معظم الجلسات ضمنه ما أمكن.` : "";
+    /* زر التوزيع اليدوي يصير تجاوزاً يُغذّي المحرّك — لا قرار مستقل في هذا المكوّن.
+       كل سياق الجدول (الجلسة/الوقت/المراجعة/التوزيع) يأتي من استراتيجية واحدة. */
+    const subjectFocus = scheduleStrategy === "per-track" ? "single"
+      : scheduleStrategy === "time-blocks" ? "parallel" : "auto";
+    const basePlanning = loadPlanningPrefs();
+    const planning = { ...basePlanning, subjectFocus: subjectFocus === "auto" ? basePlanning.subjectFocus : subjectFocus } as ReturnType<typeof loadPlanningPrefs>;
+    const { profile } = buildDuwairbProfile();
+    const strat = strategyFromProfile(profile, planning, subjects.map((s) => s.name));
+    const strategyCtx = `\nالاستراتيجية المعتمدة: ${strat.labels.allocation} — ${strat.transitionRule} الكثافة ${strat.labels.intensity}، المراجعة ${strat.labels.review}.`;
+    const timeCtx = strat.preferredTime ? `\nوقت المذاكرة المفضّل: ${strat.preferredTime} — اجعل معظم الجلسات ضمنه ما أمكن.` : "";
     callAI(`أنت مساعد جدول دراسي. اليوم: ${arabicDate}.${examCtx}${strategyCtx}${timeCtx}
 المواد: ${subjectsList}.
 مشاغيل الطالب: ${textToUse}
 
-اقترح جدولاً دراسياً للأوقات الفارغة باستخدام نظام Orbit (${orbitRule}).
+اقترح جدولاً دراسياً للأوقات الفارغة باستخدام نظام Orbit (${strat.session.label}).
 اكتب كل فترة بهذه الصيغة فقط — يُسمح بالنصف ساعة (H:30):
 من [رقم] [ص/م] إلى [رقم] [ص/م] — [المادة أو الراحة]
 مثال:
 من 8 ص إلى 9 ص — رياضيات
 من 9 ص إلى 10 ص — فيزياء
-لا تضف أي شرح أو نص خارج هذه الصيغة.`);
+لا تضف أي شرح أو نص خارج هذه الصيغة.`, planning);
   };
 
   const runEdit = () => {

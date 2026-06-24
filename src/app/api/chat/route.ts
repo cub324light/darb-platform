@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { recordAiUsage } from "@/lib/aiUsage";
 import { formatProfileBlock, sessionIntervalRule, type DuwairbProfile, type DuwairbExam } from "@/lib/duwairb";
+import { strategyFromProfile, formatStrategyBlock, type PlanningPrefs, type AllocationPref } from "@/lib/strategy";
 
 /* firebase-admin (تسجيل الاستهلاك) يحتاج Node APIs */
 export const runtime = "nodejs";
@@ -258,6 +259,22 @@ function sanitizeProfile(raw: unknown): DuwairbProfile | null {
   return Object.values(p).some((v) => v != null) ? p : null;
 }
 
+/* تنقية تفضيلات التخطيط القادمة من العميل — قيم مُقيَّدة فقط */
+function sanitizePlanning(raw: unknown): PlanningPrefs | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const r = raw as Record<string, unknown>;
+  const focusVals = new Set(["auto", "single", "parallel", "rotating"]);
+  const out: PlanningPrefs = {};
+  if (typeof r.studyDays === "number" && Number.isFinite(r.studyDays)) {
+    out.studyDays = Math.max(1, Math.min(7, Math.round(r.studyDays)));
+  }
+  if (typeof r.vacationMode === "boolean") out.vacationMode = r.vacationMode;
+  if (typeof r.subjectFocus === "string" && focusVals.has(r.subjectFocus)) {
+    out.subjectFocus = r.subjectFocus as AllocationPref;
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
 export async function POST(req: NextRequest) {
   /* التحقق من Content-Type */
   if (!req.headers.get("content-type")?.includes("application/json")) {
@@ -273,12 +290,15 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "طلب غير صالح" }, { status: 400 });
 
-  const { prompt, subjects: rawSubjects, mode, images: rawImages, profile: rawProfile } = body as {
-    prompt?: string; subjects?: unknown; mode?: string; images?: unknown; profile?: unknown;
+  const { prompt, subjects: rawSubjects, mode, images: rawImages, profile: rawProfile, planning: rawPlanning } = body as {
+    prompt?: string; subjects?: unknown; mode?: string; images?: unknown; profile?: unknown; planning?: unknown;
   };
 
   /* ملف الطالب للتخصيص — اختياري، يُنظَّف بصرامة (allow-list) */
   const profile = sanitizeProfile(rawProfile);
+
+  /* تفضيلات التخطيط — ثلاث قيم بسيطة تُغذّي محرّك الاستراتيجية */
+  const planning = sanitizePlanning(rawPlanning);
 
   /* مواد الطالب — اختيارية، مع تحقق صارم */
   const subjects: string[] = Array.isArray(rawSubjects)
@@ -350,7 +370,15 @@ export async function POST(req: NextRequest) {
 
   /* حقن ملف الطالب في برومبت النظام للأوضاع المحادثية فقط */
   const profileBlock = personalize && profile ? formatProfileBlock(profile) : "";
-  const system = profileBlock ? `${baseSystem}\n\n${profileBlock}` : baseSystem;
+
+  /* حقن استراتيجية المذاكرة الموحّدة — لأوضاع التخطيط فقط (جدول/مذاكرة/تقدّم).
+     تُبنى من نفس الملف والتفضيلات التي يستعملها العميل ⇒ نفس التوجيه في كل مكان. */
+  const STRATEGY_MODES = new Set(["schedule", "study", "progress", undefined]);
+  const strategyBlock = personalize && profile && STRATEGY_MODES.has(mode)
+    ? formatStrategyBlock(strategyFromProfile(profile, planning, subjects))
+    : "";
+
+  const system = [baseSystem, profileBlock, strategyBlock].filter(Boolean).join("\n\n");
 
   /* مع الصور نستخدم موديل الرؤية (Llama 4 Scout)؛ غيره نصّي */
   const useVision = isTopics && images.length > 0;

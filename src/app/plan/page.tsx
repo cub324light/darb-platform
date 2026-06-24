@@ -8,6 +8,7 @@ import PageGuide from "@/components/PageGuide";
 import CalendarExport from "@/components/CalendarExport";
 import dynamic from "next/dynamic";
 const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
+const StrategyBanner = dynamic(() => import("@/components/StrategyBanner"), { ssr: false });
 import { getEventsForDate } from "@/components/DayScheduler";
 import { loadUser, loadStats, loadEvents, loadExamDate, saveExamDate, loadTrackExamDates, computeStreak, type ScheduleEvent } from "@/lib/storage";
 import { subjectsForTracks, getTrack, colorForSubject, type TrackId } from "@/lib/tracks";
@@ -144,6 +145,11 @@ export default function PlanPage() {
         </div>
       </Dome>
       <div className="h-5" />
+
+      {/* ── استراتيجية المذاكرة الموحّدة ── */}
+      <div className="px-5 mb-5 rise rise-1">
+        <StrategyBanner defaultExpanded />
+      </div>
 
       {/* ── الاستعداد ── */}
       <div className="px-5 mb-5 rise rise-1">

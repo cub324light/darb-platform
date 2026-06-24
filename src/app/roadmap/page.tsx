@@ -28,6 +28,7 @@ const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
 const TopicExtractor = dynamic(() => import("@/components/TopicExtractor"), { ssr: false });
 const LeaksPlanner = dynamic(() => import("@/components/LeaksPlanner"), { ssr: false });
 const ExamCoordPanel = dynamic(() => import("@/components/ExamCoordPanel"), { ssr: false });
+const StrategyBanner = dynamic(() => import("@/components/StrategyBanner"), { ssr: false });
 import DayScheduler, { getEventsForDate } from "@/components/DayScheduler";
 import ExamDateButton from "@/components/ExamDateButton";
 
@@ -840,6 +841,11 @@ export default function RoadmapPage() {
           </span>
           <span className="text-[18px] font-black">←</span>
         </Link>
+      </div>
+
+      {/* استراتيجية المذاكرة الموحّدة — نفس قرار الخطة والمدرّب */}
+      <div className="px-5 mb-4">
+        <StrategyBanner />
       </div>
 
       {/* فلتر الاختبارات — [الكل] + كل اختبار */}

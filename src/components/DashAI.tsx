@@ -4,6 +4,7 @@ import { loadEvents, saveEvents, loadUser, loadExamCoord, examCoordPrompt, recor
 import { getEventsForDate } from "@/components/DayScheduler";
 import { normalizeDigits, fmtHour } from "@/lib/utils";
 import { buildDuwairbProfile } from "@/lib/duwairb";
+import { loadPlanningPrefs } from "@/lib/strategy";
 import { recordCoachInteraction } from "@/lib/coachMemory";
 import { trackEvent } from "@/lib/events";
 
@@ -87,7 +88,7 @@ export default function DashAI({ subjects, onOpenScheduler }: Props) {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: p + busyNote + coordNote, subjects, mode: "schedule", profile }),
+        body: JSON.stringify({ prompt: p + busyNote + coordNote, subjects, mode: "schedule", profile, planning: loadPlanningPrefs() }),
       });
       const data = await res.json() as { text?: string; error?: string };
       const raw = (data.text ?? data.error ?? "حدث خطأ").trim();

@@ -8,6 +8,7 @@ import { computeWeeklyReport, fmtMins } from "@/lib/weeklyReport";
 import { buildDuwairbProfile } from "@/lib/duwairb";
 import { computeDuwairbScore, detectMissedOpportunities } from "@/lib/coachScore";
 import { activeDaysWithin } from "@/lib/insights";
+import StrategyBanner from "@/components/StrategyBanner";
 import { trackEvent } from "@/lib/events";
 import { useEffect } from "react";
 
@@ -81,6 +82,9 @@ export default function CoachReportView() {
         </p>
         {goalLine && <p className="text-[13px] font-semibold" style={{ color: "var(--accent-light)" }}>🎯 {goalLine}</p>}
       </div>
+
+      {/* الاستراتيجية الموحّدة — نفس قرار الخطة والخريطة ودويرب */}
+      <StrategyBanner />
 
       {/* شبكة الإحصائيات */}
       <div className="grid grid-cols-2 gap-2.5">
