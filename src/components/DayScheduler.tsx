@@ -3,6 +3,8 @@ import { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import type { ScheduleEvent } from "@/lib/storage";
 import { fmtHour, normalizeDigits } from "@/lib/utils";
+import { loadPrefs } from "@/lib/storage";
+import { buildDuwairbProfile, sessionIntervalRule } from "@/lib/duwairb";
 
 export type { ScheduleEvent };
 
@@ -150,7 +152,8 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
   const callAI = async (prompt: string) => {
     setAiLoading(true);
     try {
-      const res  = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt, subjects: subjects.map((s) => s.name) }) });
+      const { profile } = buildDuwairbProfile();
+      const res  = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt, subjects: subjects.map((s) => s.name), mode: "schedule", profile }) });
       const data = await res.json();
       const raw = (data.text ?? data.error ?? "حدث خطأ في الاستجابة").replace(/\n{3,}/g, "\n\n").trim();
       const parsed = parseAISchedule(raw, date, subjects);
@@ -184,11 +187,14 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
       : scheduleStrategy === "time-blocks"
       ? "\nاستراتيجية: خصص فترات زمنية مختلفة لمسارات مختلفة في نفس اليوم."
       : "\nاستراتيجية: وزّع المواد من مختلف المسارات على مدار اليوم.";
-    callAI(`أنت مساعد جدول دراسي. اليوم: ${arabicDate}.${examCtx}${strategyCtx}
+    const prefs = loadPrefs();
+    const orbitRule = sessionIntervalRule(prefs.sessionLen);
+    const timeCtx = prefs.studyTime ? `\nوقت المذاكرة المفضّل: ${prefs.studyTime} — اجعل معظم الجلسات ضمنه ما أمكن.` : "";
+    callAI(`أنت مساعد جدول دراسي. اليوم: ${arabicDate}.${examCtx}${strategyCtx}${timeCtx}
 المواد: ${subjectsList}.
 مشاغيل الطالب: ${textToUse}
 
-اقترح جدولاً دراسياً للأوقات الفارغة باستخدام نظام Orbit (50 دقيقة تركيز + 10 دقائق راحة).
+اقترح جدولاً دراسياً للأوقات الفارغة باستخدام نظام Orbit (${orbitRule}).
 اكتب كل فترة بهذه الصيغة فقط — يُسمح بالنصف ساعة (H:30):
 من [رقم] [ص/م] إلى [رقم] [ص/م] — [المادة أو الراحة]
 مثال:

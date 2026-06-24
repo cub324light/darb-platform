@@ -29,10 +29,21 @@ export interface DuwairbProfile {
   preferredTime?: string;
   sessionLen?: number;
   learningStyles?: string[];
+  device?: string;
   strongest?: string;
   weakest?: string;
   readinessPct?: number;
   readinessLabel?: string;
+}
+
+/* قاعدة فترة التركيز/الراحة حسب تفضيل الطالب — مصدر واحد يستعمله
+   برومبت الجدول (الخادم) ومنشئ اليوم (DayScheduler) فلا يتعارضان. */
+export function sessionIntervalRule(len?: number): string {
+  if (len === 25) return "25 دقيقة تركيز + 5 راحة (بومودورو قصير)";
+  if (len === 45) return "45 دقيقة تركيز + 10 راحة";
+  if (len === 60) return "60 دقيقة تركيز + 12 راحة";
+  if (len === 90) return "90 دقيقة تركيز + 18 راحة (جلسة عميقة)";
+  return "50 دقيقة تركيز + 10 راحة";
 }
 
 /* المسار → حقل الدرجة المستهدفة في DarbGoals */
@@ -90,6 +101,7 @@ export function buildDuwairbProfile(): { profile: DuwairbProfile; goalLine: stri
     preferredTime: prefs.studyTime || undefined,
     sessionLen: prefs.sessionLen || undefined,
     learningStyles: prefs.learningStyle?.length ? prefs.learningStyle : undefined,
+    device: prefs.device || undefined,
     strongest: rated[0]?.name,
     weakest: rated.length > 1 ? rated[rated.length - 1].name : undefined,
     readinessPct: rated.length || (stats.trackProgress ?? 0) > 0 ? readiness.pct : undefined,
@@ -148,6 +160,7 @@ export function formatProfileBlock(p: DuwairbProfile): string {
     lines.push(`- نمط المذاكرة: ${t}`);
   }
   if (p.learningStyles?.length) lines.push(`- أسلوب التعلّم المفضّل: ${p.learningStyles.join("، ")}`);
+  if (p.device) lines.push(`- جهاز المذاكرة: ${p.device}`);
   if (p.strongest || p.weakest) {
     const s = [p.strongest ? `أقوى مادة ${p.strongest}` : "", p.weakest ? `أحوج مادة لتقوية ${p.weakest}` : ""].filter(Boolean).join("، ");
     lines.push(`- المهارات: ${s}`);
@@ -155,8 +168,10 @@ export function formatProfileBlock(p: DuwairbProfile): string {
   if (p.readinessPct != null) lines.push(`- الجاهزية المقدّرة: ${p.readinessPct}٪${p.readinessLabel ? ` (${p.readinessLabel})` : ""}`);
 
   if (!lines.length) return "";
-  return `معلومات الطالب (استخدمها لتخصيص ردّك؛ واربط اقتراحك بهدفه عند المناسبة، مثل «بما أن هدفك ... فإن ...»):
-${lines.join("\n")}`;
+  return `معلومات الطالب (استخدمها لتخصيص ردّك ضمنياً؛ واربط اقتراحك بهدفه عند المناسبة، مثل «بما أن هدفك ... فإن ...»):
+${lines.join("\n")}
+
+مهم: لا تعرض هذه المعلومات كقائمة للطالب ولا تكررها حرفياً؛ وظّفها داخل صياغة ردّك فقط ليبدو مفصّلاً له شخصياً.`;
 }
 
 /* ── التبويب المقترح حسب الصفحة (وعي بالسياق) ── */
