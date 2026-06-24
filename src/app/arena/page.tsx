@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import BottomNav from "@/components/BottomNav";
 import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
 import Confetti from "@/components/Confetti";
@@ -331,8 +330,6 @@ export default function ArenaPage() {
             ابدأ التحدي
           </button>
         </div>
-
-        <BottomNav />
       </div>
     );
   }
@@ -376,7 +373,6 @@ export default function ArenaPage() {
             </button>
           </div>
         </div>
-        <BottomNav />
       </div>
     );
   }
@@ -464,7 +460,6 @@ export default function ArenaPage() {
       </div>
 
       <PageFooter />
-      <BottomNav />
     </div>
   );
 }

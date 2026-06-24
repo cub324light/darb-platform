@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
-import BottomNav from "@/components/BottomNav";
 import PageFooter from "@/components/PageFooter";
 import { postSocial } from "@/lib/authFetch";
 import { getTrack } from "@/lib/tracks";
@@ -100,7 +99,6 @@ export default function LeaderboardPage() {
       </div>
 
       <PageFooter />
-      <BottomNav />
     </div>
   );
 }

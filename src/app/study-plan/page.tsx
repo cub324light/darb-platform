@@ -3,7 +3,6 @@
    يعرض توزيع ساعات المواد من محرّك الاستراتيجية، ويتيح التعديل اليدوي
    مع إعادة الموازنة التلقائية. مصدر القرار: دويرب + الخطة + الخريطة + تقرير المدرّب. */
 import { useState, useEffect, useCallback } from "react";
-import BottomNav from "@/components/BottomNav";
 import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
 import Link from "next/link";
@@ -157,7 +156,6 @@ export default function StudyPlanPage() {
   if (!strategy) return (
     <div className="page flex items-center justify-center">
       <p style={{ color: "var(--text-muted)" }}>يرجى تسجيل الدخول أولاً</p>
-      <BottomNav />
     </div>
   );
 
@@ -343,7 +341,6 @@ export default function StudyPlanPage() {
 
       <div className="h-6" />
       <PageFooter />
-      <BottomNav />
     </div>
   );
 }

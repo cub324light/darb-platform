@@ -1,7 +1,6 @@
 "use client";
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import BottomNav from "@/components/BottomNav";
 import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
 import { skillsForTracks, groupedSkills, type GlobalSkill } from "@/lib/globalSkills";
@@ -234,7 +233,6 @@ export default function SkillsPage() {
       </div>
 
       <PageFooter />
-      <BottomNav />
     </div>
   );
 }

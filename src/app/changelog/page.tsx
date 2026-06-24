@@ -1,7 +1,6 @@
 "use client";
 import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
-import BottomNav from "@/components/BottomNav";
 import { CHANGELOG, CHANGE_META } from "@/lib/changelog";
 
 function fmtDate(d: string): string {
@@ -50,7 +49,6 @@ export default function ChangelogPage() {
         ))}
       </div>
 
-      <BottomNav />
     </div>
   );
 }

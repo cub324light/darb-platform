@@ -5,7 +5,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
-import BottomNav from "@/components/BottomNav";
 import PageFooter from "@/components/PageFooter";
 import {
   loadUser, saveUser, loadStats, computeStreak, ensureJoinDate,
@@ -278,7 +277,6 @@ export default function ProfilePage() {
       </div>
 
       <PageFooter />
-      <BottomNav />
     </div>
   );
 }

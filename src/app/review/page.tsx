@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import BottomNav from "@/components/BottomNav";
 import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
@@ -151,7 +150,6 @@ export default function ReviewPage() {
               العودة للقائمة
             </button>
           </div>
-          <BottomNav />
         </div>
       );
     }
@@ -231,8 +229,6 @@ export default function ReviewPage() {
             </div>
           )}
         </div>
-
-        <BottomNav />
       </div>
     );
   }
@@ -443,7 +439,6 @@ export default function ReviewPage() {
       </div>
 
       <PageFooter />
-      <BottomNav />
     </div>
   );
 }

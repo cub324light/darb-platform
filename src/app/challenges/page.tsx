@@ -2,7 +2,6 @@
 import { useState } from "react";
 import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
-import BottomNav from "@/components/BottomNav";
 import PageFooter from "@/components/PageFooter";
 import { getChallengeStates, claimChallenge, type ChallengeState } from "@/lib/challenges";
 
@@ -95,7 +94,6 @@ export default function ChallengesPage() {
       )}
 
       <PageFooter />
-      <BottomNav />
     </div>
   );
 }

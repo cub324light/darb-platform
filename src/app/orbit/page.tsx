@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useRef, useCallback, useMemo, useSyncExternalStore } from "react";
-import BottomNav from "@/components/BottomNav";
 import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
@@ -791,7 +790,6 @@ export default function OrbitPage() {
       </div>
 
       <PageFooter />
-      <BottomNav />
     </div>
   );
 }
