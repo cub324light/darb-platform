@@ -13,10 +13,12 @@ import { useFlag } from "@/lib/flags";
 /* syncUser مُستورَد ديناميكياً أسفل — يُبعد Firebase عن حزمة الداشبورد المبدئية */
 import DayScheduler, { getEventsForDate } from "@/components/DayScheduler";
 import ExamDateButton from "@/components/ExamDateButton";
+/* استيراد مباشر (لا code-split) لتفادي انزياح التخطيط: التنبيه يحسب حالته
+   تزامنياً ويظهر في نفس إطار الرسم بدل القفز بعد تحميل حزمة منفصلة */
+import ExamRegistrationAlert from "@/components/ExamRegistrationAlert";
 import dynamic from "next/dynamic";
 const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
 const RetentionHost = dynamic(() => import("@/components/retention/RetentionHost"), { ssr: false });
-const ExamRegistrationAlert = dynamic(() => import("@/components/ExamRegistrationAlert"), { ssr: false });
 import SaudiMap from "@/components/SaudiMap";
 import { NumberTicker } from "@/components/ui/number-ticker";
 import { BorderBeam } from "@/components/ui/border-beam";

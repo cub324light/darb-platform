@@ -376,9 +376,16 @@ export default function CouncilPage() {
 
     return (
       <>
+        {/* في الوضع النافذي (غير ملء الشاشة) يبقى الشريط السفلي ظاهراً وقابلاً للضغط،
+            فنرفع أسفل اللوحة فوق ارتفاع الشريط حتى لا يغطّي مربّع كتابة الرسالة */}
         <div
           className="fixed flex flex-col"
-          style={{ inset: 0, zIndex: isFullscreen ? 9999 : 50, background: "var(--bg)" }}
+          style={{
+            top: 0, left: 0, right: 0,
+            bottom: isFullscreen ? 0 : "calc(var(--nav-h) + env(safe-area-inset-bottom, 0px))",
+            zIndex: isFullscreen ? 9999 : 50,
+            background: "var(--bg)",
+          }}
         >
           {/* ─ الرأس ─ */}
           <div

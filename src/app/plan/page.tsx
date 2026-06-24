@@ -5,12 +5,13 @@ import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import CalendarExport from "@/components/CalendarExport";
+/* استيراد مباشر لتفادي انزياح التخطيط — يظهر فوراً بحالته المحسوبة تزامنياً */
+import ExamRegistrationAlert from "@/components/ExamRegistrationAlert";
 import dynamic from "next/dynamic";
 const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
 const StrategyBanner = dynamic(() => import("@/components/StrategyBanner"), { ssr: false });
 const CalendarStatusCard = dynamic(() => import("@/components/CalendarStatusCard"), { ssr: false });
 const GoalRealityCard = dynamic(() => import("@/components/GoalRealityCard"), { ssr: false });
-const ExamRegistrationAlert = dynamic(() => import("@/components/ExamRegistrationAlert"), { ssr: false });
 import { getEventsForDate } from "@/components/DayScheduler";
 import { loadUser, loadStats, loadEvents, loadExamDate, saveExamDate, loadTrackExamDates, computeStreak, type ScheduleEvent } from "@/lib/storage";
 import { subjectsForTracks, getTrack, colorForSubject, type TrackId } from "@/lib/tracks";

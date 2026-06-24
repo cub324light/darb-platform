@@ -34,13 +34,14 @@ import ProfileStats from "@/components/profile/ProfileStats";
 import ProfileGoals from "@/components/profile/ProfileGoals";
 import ProfilePreferences from "@/components/profile/ProfilePreferences";
 import ProfileAchievements from "@/components/profile/ProfileAchievements";
+/* استيراد مباشر لتفادي انزياح التخطيط عند ظهور التنبيه */
+import ExamRegistrationAlert from "@/components/ExamRegistrationAlert";
 import dynamic from "next/dynamic";
 const CoachReportView = dynamic(() => import("@/components/CoachReportView"), { ssr: false });
 const CalendarSettings = dynamic(() => import("@/components/CalendarSettings"), { ssr: false });
 const GoalRealityCard = dynamic(() => import("@/components/GoalRealityCard"), { ssr: false });
 const UniversityFuture = dynamic(() => import("@/components/UniversityFuture"), { ssr: false });
 const UniversityFutureCard = dynamic(() => import("@/components/UniversityFutureCard"), { ssr: false });
-const ExamRegistrationAlert = dynamic(() => import("@/components/ExamRegistrationAlert"), { ssr: false });
 
 function fmtJoin(d: string): string {
   try { return "انضم " + new Date(d + "T12:00:00").toLocaleDateString("ar-SA", { year: "numeric", month: "long" }); }
