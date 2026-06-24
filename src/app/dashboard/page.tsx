@@ -7,7 +7,7 @@ import PageGuide from "@/components/PageGuide";
 import { getTrack, TRACKS, type TrackId } from "@/lib/tracks";
 import { fmtHour } from "@/lib/utils";
 import { quoteOfToday } from "@/lib/quotes";
-import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, saveExamDate, loadDashConfig, saveDashConfig, loadTrackExamDates, saveTrackExamDates, DASH_SECTION_META, localDayKey, type DarbUser, type ScheduleEvent, type DashItem, type DashSectionId, saveEvents } from "@/lib/storage";
+import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, saveExamDate, loadDashConfig, saveDashConfig, loadTrackExamDates, saveTrackExamDates, DASH_SECTION_META, localDayKey, showsUniversityUI, type DarbUser, type ScheduleEvent, type DashItem, type DashSectionId, saveEvents } from "@/lib/storage";
 import CalendarExport from "@/components/CalendarExport";
 import { useFlag } from "@/lib/flags";
 /* syncUser مُستورَد ديناميكياً أسفل — يُبعد Firebase عن حزمة الداشبورد المبدئية */
@@ -1011,6 +1011,26 @@ export default function DashboardPage() {
 
         {/* ── تنبيهات التسجيل في الاختبارات الرسمية ── */}
         <ExamRegistrationAlert />
+
+        {/* ── بطاقة القبول الجامعي — تظهر لطالب ثالث ثانوي أو خريج فقط ── */}
+        {showsUniversityUI(user) && (
+          <Link href="/university"
+            className="rise block rounded-2xl px-5 py-4 transition active:scale-[0.98]"
+            style={{
+              background: "linear-gradient(135deg, color-mix(in srgb,#F5B40A 10%,transparent), color-mix(in srgb,var(--accent) 6%,transparent)), var(--surface)",
+              border: "1.5px solid color-mix(in srgb,#F5B40A 30%,transparent)",
+              textDecoration: "none",
+            }}>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[13px] font-bold mb-1" style={{ color: "#D4920A" }}>🎓 القبول الجامعي</p>
+                <p className="text-[15px] font-black" style={{ color: "var(--text)" }}>حساب الموزونة ومقارنة الجامعات</p>
+                <p className="text-[12.5px] mt-0.5" style={{ color: "var(--text-muted)" }}>اكتشف وين تقف وش تحتاج تحسّن</p>
+              </div>
+              <span className="text-[26px] flex-shrink-0">🏛️</span>
+            </div>
+          </Link>
+        )}
 
         {/* خطوتك التالية — نداء واحد ذكي (أعلى أولوية فقط) */}
         {!editMode && topNudge && (

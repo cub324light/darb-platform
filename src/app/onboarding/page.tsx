@@ -66,6 +66,7 @@ export default function OnboardingPage() {
   const [region, setRegion] = useState("");
   const [city, setCity] = useState("");
   const [phone, setPhone] = useState("");
+  const [highschoolPct, setHighschoolPct] = useState("");
 
   /* المسارات المُفعّلة تلقائياً من الحالة + الصف + الهدف + سنة الاستدراك */
   const computedTracks = basicTracksFor({
@@ -124,7 +125,7 @@ export default function OnboardingPage() {
       track: primaryTrack,
       activeTracks: tracks,
       onboarded: true,
-      age: age ? parseInt(age) : undefined,
+      age: age ? parseInt(age) : undefined, // step 0 requires age — fallback for safety
       studyLevel: status || undefined,
       grade: status === "ثانوي" && grade ? grade : undefined,
       gradStage: status === "خريج" && gradStage ? gradStage : undefined,
@@ -136,8 +137,9 @@ export default function OnboardingPage() {
       ...extras,
     });
 
-    /* حفظ الوجهة الجامعية في الأهداف (SSoT لدويرب) */
-    if (universityId || majorId) {
+    /* حفظ الأهداف: الوجهة الجامعية + درجة الثانوية (كتابة واحدة) */
+    const showsHighschool = (status === "ثانوي" && grade === "ثالث ثانوي") || status === "خريج";
+    if (universityId || majorId || (showsHighschool && highschoolPct)) {
       const g = loadGoals();
       const next = { ...g };
       if (universityId) {
@@ -145,6 +147,7 @@ export default function OnboardingPage() {
         next.university = universityId === "other" ? (otherUni.trim() || "أخرى") : (universityName || findUniversity(universityId)?.name);
       }
       if (majorId) { next.majorId = majorId; next.major = findMajor(majorId)?.name; }
+      if (showsHighschool && highschoolPct) next.highschoolPct = parseFloat(highschoolPct);
       saveGoals(next);
     }
 
@@ -278,7 +281,7 @@ export default function OnboardingPage() {
         </div>
 
         <div>
-          <p className="label mb-3">عمرك؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+          <p className="label mb-3">عمرك؟</p>
           <input type="number" value={age} onChange={(e) => setAge(e.target.value)}
             placeholder="مثال: 18" min={13} max={60}
             className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
@@ -300,8 +303,8 @@ export default function OnboardingPage() {
           </div>
         </div>
 
-        <button className="btn-primary glow-blue" onClick={() => { if (name.trim() && status) setStep(1); }}
-          disabled={!name.trim() || !status} style={{ opacity: name.trim() && status ? 1 : 0.4 }}>
+        <button className="btn-primary glow-blue" onClick={() => { if (name.trim() && status && age) setStep(1); }}
+          disabled={!name.trim() || !status || !age} style={{ opacity: name.trim() && status && age ? 1 : 0.4 }}>
           التالي ←
         </button>
       </div>
@@ -394,18 +397,18 @@ export default function OnboardingPage() {
                 </div>
               </div>
               <div>
-                <p className="label mb-1">تنوي تعيد القدرات أو التحصيلي؟</p>
-                <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>إذا خلّصت اختباراتك وبتركّز على القبول، اختر «خلصتها»</p>
+                <p className="label mb-1">هل تنوي تحسين درجات القدرات أو التحصيلي؟</p>
+                <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>اختر «لا» لو خلّصت اختباراتك وتريد التركيز على القبول الجامعي فقط</p>
                 <div className="grid grid-cols-2 gap-2.5">
                   <button onClick={() => setGapYear(gapYear === "yes" ? "" : "yes")}
                     className="rounded-2xl py-3.5 px-3 font-bold text-[14px] transition active:scale-[0.98] text-center leading-snug"
                     style={chipStyle(gapYear === "yes")}>
-                    نعم، سنة استدراك 📈
+                    نعم، أبي أحسّنها 📈
                   </button>
                   <button onClick={() => setGapYear(gapYear === "no" ? "" : "no")}
                     className="rounded-2xl py-3.5 px-3 font-bold text-[14px] transition active:scale-[0.98] text-center leading-snug"
                     style={chipStyle(gapYear === "no")}>
-                    لا، خلّصتها 🎓
+                    لا، ركّز على القبول 🎓
                   </button>
                 </div>
               </div>
@@ -542,32 +545,74 @@ export default function OnboardingPage() {
             onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
         </div>
 
-        {/* معلومات إضافية (اختياري) */}
+        {/* درجة الثانوية — لطالب ثالث ثانوي أو خريج (مهمة لحساب الموزونة والقبول) */}
+        {((status === "ثانوي" && grade === "ثالث ثانوي") || status === "خريج") && (
+          <div>
+            <p className="label mb-1">📊 درجة الثانوية العامة (النسبة المئوية)</p>
+            <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>مهمة لحساب الموزونة ومقارنة فرص القبول</p>
+            <input type="number" value={highschoolPct} onChange={(e) => setHighschoolPct(e.target.value)}
+              placeholder="مثال: 94.5" min={50} max={100} step={0.1}
+              className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+              style={inputStyle}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
+          </div>
+        )}
+
+        {/* معلومات شخصية */}
         <div className="flex flex-col gap-4">
-          <p className="label">معلومات إضافية <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
-          {[
-            { label: "اسم المدرسة / الجامعة", value: school, setter: setSchool, placeholder: "مثال: ثانوية الملك فهد", type: "text" as const },
-            { label: "المدينة", value: city, setter: setCity, placeholder: "مثال: الرياض، جدة...", type: "text" as const },
-            { label: "رقم الجوال", value: phone, setter: setPhone, placeholder: "05xxxxxxxx", type: "tel" as const },
-          ].map(({ label, value, setter, placeholder, type }) => (
-            <input key={label} type={type} value={value} onChange={(e) => setter(e.target.value)}
-              placeholder={placeholder} aria-label={label}
+          <p className="label">معلومات شخصية</p>
+          <div>
+            <p className="text-[13px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>اسم المدرسة / الجامعة</p>
+            <input type="text" value={school} onChange={(e) => setSchool(e.target.value)}
+              placeholder="مثال: ثانوية الملك فهد"
               className="w-full rounded-2xl px-5 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
               style={inputStyle}
               onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
               onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
-          ))}
-          <select value={region} onChange={(e) => setRegion(e.target.value)} aria-label="المنطقة"
-            className="w-full rounded-2xl px-5 py-3.5 text-base text-[var(--text)] outline-none"
-            style={inputStyle}>
-            <option value="">المنطقة</option>
-            {SAUDI_REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-          </select>
+          </div>
+          <div>
+            <p className="text-[13px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>المدينة</p>
+            <input type="text" value={city} onChange={(e) => setCity(e.target.value)}
+              placeholder="مثال: الرياض، جدة..."
+              className="w-full rounded-2xl px-5 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+              style={inputStyle}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
+          </div>
+          <div>
+            <p className="text-[13px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>رقم الجوال</p>
+            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
+              placeholder="05xxxxxxxx"
+              className="w-full rounded-2xl px-5 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+              style={inputStyle}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
+          </div>
+          <div>
+            <p className="text-[13px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>المنطقة</p>
+            <select value={region} onChange={(e) => setRegion(e.target.value)} aria-label="المنطقة"
+              className="w-full rounded-2xl px-5 py-3.5 text-base text-[var(--text)] outline-none"
+              style={inputStyle}>
+              <option value="">اختر منطقتك</option>
+              {SAUDI_REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+            </select>
+          </div>
         </div>
 
+        {/* نتائج ناقصة */}
+        {((!goal || !studyHours || needsUniPicker || !school.trim() || !city.trim() || !phone.trim() || !region ||
+          ((status === "ثانوي" && grade === "ثالث ثانوي" || status === "خريج") && !highschoolPct))) && (
+          <p className="text-[12px] text-center" style={{ color: "var(--text-muted)" }}>
+            أكمل جميع الحقول أعلاه للمتابعة
+          </p>
+        )}
+
         <button className="btn-primary glow-blue" onClick={finish}
-          disabled={!goal || !studyHours || needsUniPicker}
-          style={{ opacity: goal && studyHours && !needsUniPicker ? 1 : 0.4 }}>
+          disabled={!goal || !studyHours || needsUniPicker || !school.trim() || !city.trim() || !phone.trim() || !region ||
+            ((status === "ثانوي" && grade === "ثالث ثانوي" || status === "خريج") && !highschoolPct)}
+          style={{ opacity: goal && studyHours && !needsUniPicker && school.trim() && city.trim() && phone.trim() && region &&
+            !((status === "ثانوي" && grade === "ثالث ثانوي" || status === "خريج") && !highschoolPct) ? 1 : 0.4 }}>
           يلا نبدأ ←
         </button>
         <button onClick={() => setStep(1)} className="text-[15px] font-semibold w-full text-center py-1"
