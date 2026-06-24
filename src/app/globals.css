@@ -545,6 +545,7 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
   box-shadow: 0 12px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 [data-theme="light"] .float-nav { box-shadow: 0 12px 34px rgba(120,90,30,0.18); }
+body[data-nav-hidden="1"] .float-nav { display: none; }
 
 .float-nav-item {
   display: flex;

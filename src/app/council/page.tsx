@@ -6,7 +6,6 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 /* onAuth مُستورَد ديناميكياً أسفل */
-import BottomNav from "@/components/BottomNav";
 import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
@@ -91,6 +90,11 @@ export default function CouncilPage() {
   const [activeChannel, setActiveChannel] = useState<"general" | "official">("general");
   const [isFullscreen, setIsFullscreen] = useState(true);
   const [showFriends, setShowFriends] = useState(false);
+
+  useEffect(() => {
+    document.body.dataset.navHidden = isFullscreen ? "1" : "0";
+    return () => { delete document.body.dataset.navHidden; };
+  }, [isFullscreen]);
 
   /* ─ رسائل عام (من Firestore) ─ */
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -652,7 +656,6 @@ export default function CouncilPage() {
           </div>
         )}
 
-        {!isFullscreen && <BottomNav />}
       </>
     );
   }
@@ -704,7 +707,6 @@ export default function CouncilPage() {
       {showFriends && <FriendsPanel onClose={() => setShowFriends(false)} />}
 
       <PageFooter />
-      <BottomNav />
     </div>
   );
 }
