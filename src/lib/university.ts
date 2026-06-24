@@ -405,3 +405,137 @@ export function universityReadiness(inp: UniversityReadinessInputs): UniversityR
 
   return { level, icon, score: clamped, reasons: reasons.slice(0, 4), hasData };
 }
+
+/* ════════ ذكاء القبول: ماذا أحتاج + تحليل الفجوة ════════ */
+
+/* الدرجات التقريبية المطلوبة لتخصص (إرشادية — مشتقّة من مستويات المتطلبات) */
+export interface RequiredScores {
+  qudurat?: number;
+  tahsili?: number;
+  step?: number;
+  gpa?: number;
+}
+export function requiredScores(req?: MajorRequirements): RequiredScores {
+  if (!req) return {};
+  const out: RequiredScores = {};
+  if (req.qudurat) out.qudurat = thresholdFor(req.qudurat);
+  if (req.tahsili) out.tahsili = thresholdFor(req.tahsili);
+  if (req.step)    out.step    = thresholdFor(req.step);
+  if (req.gpa)     out.gpa     = thresholdFor(req.gpa);
+  return out;
+}
+
+/* تحليل الفجوة لمكوّن واحد: الحالي مقابل المطلوب */
+export interface GapItem {
+  label: string;
+  current: number | null;
+  required: number;
+  gap: number;            // المتبقّي (موجب = يحتاج رفع)؛ ≤0 = مكتمل
+  met: boolean;
+  weeklyNeed?: number;    // نقاط/أسبوع للوصول قبل الاختبار (إن توفّرت المدة)
+}
+export interface GapAnalysis {
+  items: GapItem[];
+  remainingTotal: number; // مجموع النقاط المتبقية عبر كل المكوّنات
+  allMet: boolean;
+  hasData: boolean;
+}
+export function gapAnalysis(
+  req: MajorRequirements | undefined,
+  have: { qudurat?: number | null; tahsili?: number | null; step?: number | null; gpa?: number | null },
+  weeksUntilExam?: number | null,
+): GapAnalysis {
+  const need = requiredScores(req);
+  const rows: { key: keyof RequiredScores; label: string; have: number | null | undefined }[] = [
+    { key: "qudurat", label: "القدرات", have: have.qudurat },
+    { key: "tahsili", label: "التحصيلي", have: have.tahsili },
+    { key: "step",    label: "STEP",    have: have.step },
+    { key: "gpa",     label: "الثانوية", have: have.gpa },
+  ];
+  const items: GapItem[] = [];
+  let remainingTotal = 0;
+  for (const r of rows) {
+    const required = need[r.key];
+    if (required == null) continue;
+    const current = r.have == null || Number.isNaN(r.have) ? null : r.have;
+    const gap = current == null ? required : Math.max(0, Math.round((required - current) * 10) / 10);
+    const met = current != null && current >= required;
+    if (!met) remainingTotal += gap;
+    const weeklyNeed = !met && weeksUntilExam && weeksUntilExam > 0
+      ? Math.round((gap / weeksUntilExam) * 10) / 10
+      : undefined;
+    items.push({ label: r.label, current, required, gap, met, weeklyNeed });
+  }
+  const hasData = items.length > 0;
+  return { items, remainingTotal: Math.round(remainingTotal * 10) / 10, allMet: hasData && items.every((i) => i.met), hasData };
+}
+
+/* ════════ المسافة بين مناطق السعودية (تقريبية — مراكز المناطق) ════════ */
+const REGION_COORDS: Record<string, [number, number]> = {
+  "الرياض": [24.71, 46.68],
+  "الخرج": [24.15, 47.30],
+  "مكة المكرمة": [21.43, 39.83],
+  "المدينة المنورة": [24.47, 39.61],
+  "القصيم": [26.33, 43.97],
+  "المنطقة الشرقية": [26.42, 50.09],
+  "الأحساء": [25.38, 49.59],
+  "عسير": [18.22, 42.50],
+  "تبوك": [28.38, 36.57],
+  "حائل": [27.52, 41.69],
+  "الحدود الشمالية": [30.98, 41.02],
+  "جازان": [16.89, 42.57],
+  "نجران": [17.49, 44.13],
+  "الباحة": [20.01, 41.47],
+  "الجوف": [29.97, 40.20],
+};
+export function regionDistanceKm(a?: string, b?: string): number | null {
+  if (!a || !b) return null;
+  if (a === b) return 0;
+  const pa = REGION_COORDS[a], pb = REGION_COORDS[b];
+  if (!pa || !pb) return null;
+  const R = 6371;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(pb[0] - pa[0]);
+  const dLon = toRad(pb[1] - pa[1]);
+  const lat1 = toRad(pa[0]), lat2 = toRad(pb[0]);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+  return Math.round(2 * R * Math.asin(Math.sqrt(h)));
+}
+
+/* السكن الطلابي: الجامعات الحكومية توفّره عادةً (خاصةً لطلاب خارج المنطقة) */
+export function housingInfo(u?: UniversityOption): string {
+  if (!u) return "—";
+  if (u.kind === "حكومية") return "سكن طلابي متاح غالباً";
+  return "يختلف — راجع الجامعة";
+}
+
+/* نوع القبول المختصر للعرض في المقارنة */
+export function admissionType(u?: UniversityOption): string {
+  if (!u) return "—";
+  if (u.formulas?.length) {
+    const f = u.formulas[0];
+    return `موزونة (${f.highschool}/${f.qudurat}/${f.tahsili})`;
+  }
+  return u.kind === "أهلية" ? "ثانوية + قدرات + لغة (يختلف)" : "موزونة";
+}
+
+/* ════════ موسم القبول الجامعي (إرشادي — راجع بوابة القبول الرسمية) ════════
+   القبول الموحّد للجامعات الحكومية يفتح عادةً منتصف العام للفصل الأول.
+   التواريخ تقريبية وتتغيّر سنوياً؛ نحسب الحالة من الشهر الحالي فقط. */
+export type AdmissionSeasonStatus = "open" | "upcoming" | "closed";
+export interface AdmissionSeason {
+  status: AdmissionSeasonStatus;
+  icon: "🔔" | "⏳" | "❌";
+  label: string;
+}
+export function admissionSeason(today: Date): AdmissionSeason {
+  const m = today.getMonth() + 1; // 1–12
+  // نافذة تقديم تقريبية للفصل الأول: يونيو–أغسطس (٦–٨)
+  if (m >= 6 && m <= 8) {
+    return { status: "open", icon: "🔔", label: "موسم التقديم على الجامعات مفتوح غالباً الآن — راجع بوابة القبول" };
+  }
+  if (m >= 3 && m <= 5) {
+    return { status: "upcoming", icon: "⏳", label: "يقترب موسم التقديم (يفتح غالباً في يونيو) — جهّز أوراقك ودرجاتك" };
+  }
+  return { status: "closed", icon: "❌", label: "موسم التقديم الرئيسي مُغلق غالباً — تابع بوابة القبول للفترات الاستثنائية" };
+}

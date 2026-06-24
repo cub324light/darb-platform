@@ -15,6 +15,7 @@ import { getStrategy } from "@/lib/strategy";
 import { daysUntil } from "@/lib/insights";
 import { getTrack, type TrackId } from "@/lib/tracks";
 import WeightedCalculator from "./WeightedCalculator";
+import Link from "next/link";
 
 const ar = (n: number) => n.toLocaleString("ar");
 
@@ -107,9 +108,14 @@ export default function UniversityFuture() {
       <div className="rounded-3xl p-5"
         style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
         <p className="text-[20px] font-black mb-1" style={{ color: "var(--text)" }}>🎓 مستقبلي الجامعي</p>
-        <p className="text-[13px] font-semibold" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[13px] font-semibold mb-3" style={{ color: "var(--text-muted)" }}>
           حدّد وجهتك الجامعية ليخصّص دويرب خطتك وتوصياته نحوها.
         </p>
+        <Link href="/university"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl text-[13px] font-black transition active:scale-95"
+          style={{ background: "var(--accent)", color: "#fff" }}>
+          ⚖️ لوحة القبول الكاملة — موزونة ومقارنة وتحليل فجوة ←
+        </Link>
       </div>
 
       {/* اختيار الجامعة */}
