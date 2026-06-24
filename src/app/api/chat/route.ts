@@ -240,6 +240,18 @@ function sanitizeProfile(raw: unknown): DuwairbProfile | null {
     ? (r.learningStyles as unknown[]).filter((s): s is string => typeof s === "string").map((s) => cleanStr(s, 20)).filter(Boolean).slice(0, 5) as string[]
     : undefined;
 
+  /* currentScores: خريطة { اسم الاختبار: درجة } — أرقام فقط في نطاق 0–160 */
+  let currentScores: Record<string, number> | undefined;
+  if (r.currentScores && typeof r.currentScores === "object" && !Array.isArray(r.currentScores)) {
+    const cs: Record<string, number> = {};
+    for (const [k, v] of Object.entries(r.currentScores as Record<string, unknown>)) {
+      const key = typeof k === "string" ? k.slice(0, 30) : null;
+      const val = typeof v === "number" && Number.isFinite(v) ? Math.max(0, Math.min(160, v)) : null;
+      if (key && val != null) cs[key] = val;
+    }
+    if (Object.keys(cs).length) currentScores = cs;
+  }
+
   const p: DuwairbProfile = {
     name: cleanStr(r.name, 24),
     exams: exams.length ? exams : undefined,
@@ -255,6 +267,9 @@ function sanitizeProfile(raw: unknown): DuwairbProfile | null {
     weakest: cleanStr(r.weakest, 30),
     readinessPct: cleanNum(r.readinessPct, 0, 100),
     readinessLabel: cleanStr(r.readinessLabel, 16),
+    currentScores,
+    attemptCount: cleanNum(r.attemptCount, 0, 50),
+    trackType: cleanStr(r.trackType, 20),
   };
   // أعِد null إن لم يبقَ شيء مفيد
   return Object.values(p).some((v) => v != null) ? p : null;

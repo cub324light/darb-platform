@@ -38,6 +38,7 @@ import ProfileAchievements from "@/components/profile/ProfileAchievements";
 import dynamic from "next/dynamic";
 const CoachReportView = dynamic(() => import("@/components/CoachReportView"), { ssr: false });
 const CalendarSettings = dynamic(() => import("@/components/CalendarSettings"), { ssr: false });
+const GoalRealityCard = dynamic(() => import("@/components/GoalRealityCard"), { ssr: false });
 
 function fmtJoin(d: string): string {
   try { return "انضم " + new Date(d + "T12:00:00").toLocaleDateString("ar-SA", { year: "numeric", month: "long" }); }
@@ -238,7 +239,8 @@ export default function ProfilePage() {
         )}
 
         {tab === "goals" && (
-          <div id="profile-panel-goals" role="tabpanel" aria-labelledby="profile-tab-goals" className="profile-tab-panel">
+          <div id="profile-panel-goals" role="tabpanel" aria-labelledby="profile-tab-goals" className="profile-tab-panel flex flex-col gap-4">
+            <GoalRealityCard />
             <ProfileGoals goals={goals} onGoalsChange={updateGoals}
               results={results} onAddResult={addResult} onDeleteResult={deleteResult} />
           </div>

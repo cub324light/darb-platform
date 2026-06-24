@@ -6,7 +6,7 @@
      • formatProfileBlock — نص يُحقن في برومبت النظام (يعمل على الخادم).
    كما يوفّر التبويب المقترح حسب الصفحة، وأسماء أحداث التحليلات. */
 import {
-  loadUser, loadStats, loadPrefs, loadGoals, loadTrackExamDates,
+  loadUser, loadStats, loadPrefs, loadGoals, loadTrackExamDates, currentScoreMap,
   type DarbGoals,
 } from "./storage";
 import { loadSkillProgress, overallStats } from "./skillProgress";
@@ -34,6 +34,10 @@ export interface DuwairbProfile {
   weakest?: string;
   readinessPct?: number;
   readinessLabel?: string;
+  /* حقول جديدة */
+  currentScores?: Record<string, number>; // أعلى درجة لكل اختبار (من نتائج الطالب)
+  attemptCount?: number;                  // مجموع المحاولات السابقة (خبرة)
+  trackType?: string;                     // نوع المسار الجامعي: صحي/هندسي/حاسب/إداري/عام
 }
 
 /* قاعدة فترة التركيز/الراحة حسب تفضيل الطالب — مصدر واحد يستعمله
@@ -91,6 +95,13 @@ export function buildDuwairbProfile(): { profile: DuwairbProfile; goalLine: stri
   const avg = rated.length ? overallStats(progress, skillIds).avgScore : 0;
   const readiness = estimateReadiness(stats, avg);
 
+  /* درجات الاختبارات السابقة وعدد المحاولات */
+  const scoreMap = currentScoreMap();
+  const currentScores = Object.keys(scoreMap).length
+    ? Object.fromEntries(Object.entries(scoreMap).map(([k, v]) => [k, v.score]))
+    : undefined;
+  const attemptCount = Object.values(scoreMap).reduce((s, v) => s + v.attempts, 0) || undefined;
+
   const profile: DuwairbProfile = {
     name: u.name || undefined,
     exams: exams.length ? exams : undefined,
@@ -106,6 +117,9 @@ export function buildDuwairbProfile(): { profile: DuwairbProfile; goalLine: stri
     weakest: rated.length > 1 ? rated[rated.length - 1].name : undefined,
     readinessPct: rated.length || (stats.trackProgress ?? 0) > 0 ? readiness.pct : undefined,
     readinessLabel: rated.length || (stats.trackProgress ?? 0) > 0 ? readiness.label : undefined,
+    currentScores,
+    attemptCount,
+    trackType: u.trackType || undefined,
   };
 
   /* جملة الهدف للواجهة — أولوية للاختبار صاحب الهدف الأقرب موعداً */
@@ -114,7 +128,8 @@ export function buildDuwairbProfile(): { profile: DuwairbProfile; goalLine: stri
   const personalized = Boolean(
     profile.exams?.some((e) => e.target != null) ||
     profile.university || profile.major || profile.studyHours ||
-    profile.preferredTime || profile.learningStyles || profile.strongest,
+    profile.preferredTime || profile.learningStyles || profile.strongest ||
+    profile.trackType || profile.currentScores,
   );
 
   return { profile, goalLine, personalized };
@@ -166,6 +181,12 @@ export function formatProfileBlock(p: DuwairbProfile): string {
     lines.push(`- المهارات: ${s}`);
   }
   if (p.readinessPct != null) lines.push(`- الجاهزية المقدّرة: ${p.readinessPct}٪${p.readinessLabel ? ` (${p.readinessLabel})` : ""}`);
+  if (p.trackType) lines.push(`- التخصص المستهدف: ${p.trackType}`);
+  if (p.attemptCount) lines.push(`- محاولات اختبارات سابقة: ${p.attemptCount}`);
+  if (p.currentScores && Object.keys(p.currentScores).length) {
+    const scStr = Object.entries(p.currentScores).map(([k, v]) => `${k} ${v}`).join("، ");
+    lines.push(`- أعلى درجات سابقة: ${scStr}`);
+  }
 
   if (!lines.length) return "";
   return `معلومات الطالب (استخدمها لتخصيص ردّك ضمنياً؛ واربط اقتراحك بهدفه عند المناسبة، مثل «بما أن هدفك ... فإن ...»):

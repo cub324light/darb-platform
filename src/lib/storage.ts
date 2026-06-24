@@ -21,6 +21,7 @@ export interface DarbUser {
   bio?: string;        // سيرة قصيرة اختيارية (≤ ١٦٠ حرف)
   avatar?: string;     // معرّف أفاتار جاهز (وإلا صورة Google أو أول حرف)
   graduationYear?: number; // سنة التخرج المتوقعة (لمواءمة التقويم الدراسي)
+  trackType?: string;  // نوع المسار الجامعي: صحي/هندسي/حاسب/إداري/عام (اختياري)
 }
 
 export interface DarbStats {
@@ -365,15 +366,39 @@ export function examCoordPrompt(c: ExamCoord, tracks: string[]): string {
 /* ── نتائج اختبارات الطالب («نتائجي») — سجل يدوي يضيفه الطالب ── */
 export interface ExamResult {
   id: string;
-  exam: string;     // اسم الاختبار (مسار أو نص حر)
-  date?: string;    // YYYY-MM-DD
-  score?: string;   // الدرجة كنص (يسمح 87.5 أو 6.5 ...)
+  exam: string;           // اسم الاختبار (مسار أو نص حر)
+  date?: string;          // YYYY-MM-DD
+  score?: string;         // الدرجة كنص (يسمح 87.5 أو 6.5 ...)
   note?: string;
+  attemptNumber?: number; // رقم المحاولة (١، ٢، ...) — يُحتسب تلقائياً عند الإضافة
 }
 
 const RESULTS_KEY = "darb_results";
 export function loadResults(): ExamResult[] { return loadList<ExamResult>(RESULTS_KEY); }
 export function saveResults(list: ExamResult[]) { saveList(RESULTS_KEY, list); }
+
+/* خريطة تجمّع أحدث درجة لكل اختبار + عدد المحاولات — للمحركات (نقية، لا تعديل) */
+export function currentScoreMap(): Record<string, { score: number; date: string; attempts: number }> {
+  const results = loadResults();
+  const map: Record<string, { score: number; date: string; attempts: number }> = {};
+  for (const r of results) {
+    const key = r.exam.trim();
+    if (!key || !r.score) continue;
+    const n = parseFloat(r.score);
+    if (!Number.isFinite(n)) continue;
+    const prev = map[key];
+    if (!prev) {
+      map[key] = { score: n, date: r.date ?? "", attempts: 1 };
+    } else {
+      map[key] = {
+        score: Math.max(prev.score, n),   // أعلى درجة
+        date: r.date && r.date > prev.date ? r.date : prev.date,
+        attempts: prev.attempts + 1,
+      };
+    }
+  }
+  return map;
+}
 
 /* ── تفضيلات التعلّم — كيف يحب الطالب يذاكر (كلها اختيارية) ── */
 export type StudyTime    = "فجر" | "صباح" | "ظهر" | "مساء" | "ليل";

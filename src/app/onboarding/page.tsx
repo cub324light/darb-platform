@@ -9,6 +9,8 @@ import Dome from "@/components/Dome";
 import Logo from "@/components/Logo";
 
 const STUDY_LEVELS = ["ثانوي", "جامعي", "خريج", "أخرى"];
+const TRACK_TYPES = ["صحي", "هندسي", "حاسب", "إداري", "عام"] as const;
+type TrackType = (typeof TRACK_TYPES)[number];
 const GRADES = ["أول ثانوي", "ثاني ثانوي", "ثالث ثانوي"];
 const MAX_TRACKS = 3;
 const SAUDI_REGIONS = [
@@ -33,6 +35,7 @@ export default function OnboardingPage() {
   const [studyHours, setStudyHours] = useState("");
   const [sessionLen, setSessionLen] = useState<SessionLen | 0>(0);
   const [preferredTime, setPreferredTime] = useState<StudyTime | "">("");
+  const [trackType, setTrackType] = useState<TrackType | "">("");
   const [school, setSchool]   = useState("");
   const [region, setRegion]   = useState("");
   const [city, setCity]       = useState("");
@@ -77,6 +80,7 @@ export default function OnboardingPage() {
       studyLevel: studyLevel || undefined,
       grade: studyLevel === "ثانوي" && grade ? grade : undefined,
       studyHours: studyHours ? parseInt(studyHours) : undefined,
+      trackType: trackType || undefined,
       ...extras,
     });
     /* حفظ تاريخ المسار الأساسي (للتوافق مع الكود الحالي) */
@@ -245,6 +249,28 @@ export default function OnboardingPage() {
               return (
                 <button key={t} onClick={() => setPreferredTime(active ? "" : t)}
                   className="rounded-2xl py-3 font-bold text-[15px] transition active:scale-[0.98]"
+                  style={{
+                    background: active ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
+                    border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
+                    color: active ? "var(--accent-light)" : "var(--text)",
+                  }}>
+                  {t}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ─── نوع المسار الجامعي (اختياري) ─── */}
+        <div>
+          <p className="label mb-1">التخصص أو المجال المستهدف؟</p>
+          <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>اختياري — يساعد دويرب يخصّص توجيهاته لك</p>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+            {TRACK_TYPES.map((t) => {
+              const active = trackType === t;
+              return (
+                <button key={t} onClick={() => setTrackType(active ? "" : t)}
+                  className="rounded-2xl py-3 font-bold text-[14px] transition active:scale-[0.98]"
                   style={{
                     background: active ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
                     border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,

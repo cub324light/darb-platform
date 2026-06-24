@@ -300,6 +300,7 @@ export function formatStrategyBlock(s: StudyStrategy): string {
   const alloc = s.perSubject.length
     ? s.perSubject.map((x) => `${x.name} ${x.hoursPerWeek}`).join("، ")
     : "—";
+  const priority = subjectPriorityOrder(s);
   const lines = [
     `- الوضع الدراسي الآن: ${s.calendarStatus}${s.onVacation ? " (إجازة — ساعات أعلى)" : ""}`,
     s.inSchoolFinals ? `- اختبارات مدرسية حالياً: نعم — قدّم المدرسة` : "",
@@ -308,6 +309,7 @@ export function formatStrategyBlock(s: StudyStrategy): string {
     `- توزيع المواد: ${s.labels.allocation}`,
     `- إجمالي الساعات الأسبوعية: ${s.weeklyHoursTotal} ساعة على ${s.studyDaysPerWeek} أيام`,
     s.perSubject.length ? `- ساعات كل مادة أسبوعياً: ${alloc}` : "",
+    priority.length > 1 ? `- ترتيب أولوية المواد (الأحوج أولاً): ${priority.join(" ← ")}` : "",
     `- بنية الجلسة: ${s.session.label}`,
     `- تكرار المراجعة: ${s.labels.review}`,
     `- قاعدة الانتقال: ${s.transitionRule}`,
@@ -316,6 +318,16 @@ export function formatStrategyBlock(s: StudyStrategy): string {
   ].filter(Boolean);
   return `استراتيجية المذاكرة المعتمدة لهذا الطالب (هي مصدر القرار الموحّد — التزم بها حرفياً ولا تقترح كثافة أو توزيعاً مختلفاً):
 ${lines.join("\n")}`;
+}
+
+/* ── ترتيب أولوية المواد حسب الاستراتيجية المعتمدة ──
+   يُستهلَك في: منشئ اليوم (DayScheduler) + برومبت دويرب.
+   المنطق: الأحوج دائماً أولاً، ثم الأقوى أخيراً لدعم الثقة. */
+export function subjectPriorityOrder(strategy: StudyStrategy): string[] {
+  if (!strategy.perSubject.length) return [];
+  // ترتيب تنازلي بالساعات (الأحوج → الأكثر ساعات → أول قائمة)
+  const sorted = [...strategy.perSubject].sort((a, b) => b.hoursPerWeek - a.hoursPerWeek);
+  return sorted.map((s) => s.name);
 }
 
 /* ── نص عادي مختصر (للتقارير/الإيميل المستقبلي) ── */
