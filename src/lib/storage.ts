@@ -459,6 +459,7 @@ export interface DarbGoals {
   major?: string;           // اسم التخصص المحلول
   universityId?: string;    // معرّف منظَّم من قائمة الجامعات (أو «other»)
   majorId?: string;         // معرّف منظَّم من قائمة التخصصات (أو «other»)
+  highschoolPct?: number;   // نسبة الثانوية العامة (لحساب الموزونة)
 }
 
 const GOALS_KEY = "darb_goals";

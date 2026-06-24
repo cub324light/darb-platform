@@ -14,6 +14,7 @@ import { loadGoals, saveGoals, currentScoreMap, loadUser, loadTrackExamDates, ty
 import { getStrategy } from "@/lib/strategy";
 import { daysUntil } from "@/lib/insights";
 import { getTrack, type TrackId } from "@/lib/tracks";
+import WeightedCalculator from "./WeightedCalculator";
 
 const ar = (n: number) => n.toLocaleString("ar");
 
@@ -152,6 +153,11 @@ export default function UniversityFuture() {
             style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
         )}
       </div>
+
+      {/* حاسبة الموزونة — تظهر بعد اختيار الجامعة */}
+      {selectedUni && selectedUni.id !== "other" && (
+        <WeightedCalculator universityId={selectedUni.id} />
+      )}
 
       {/* اختيار التخصص */}
       <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
