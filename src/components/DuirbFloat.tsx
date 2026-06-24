@@ -84,8 +84,6 @@ export default function DuirbFloat() {
         aria-label="افتح دويرب — مساعدك الذكي"
         className="duirb-fab fixed z-[9970] flex items-center justify-center rounded-full transition-transform active:scale-95"
         style={{
-          bottom: "calc(env(safe-area-inset-bottom, 0px) + 84px)",
-          left: "16px",
           width: "52px",
           height: "52px",
           background: "color-mix(in srgb, var(--accent) 28%, transparent)",
