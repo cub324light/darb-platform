@@ -8,7 +8,7 @@ import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import PageFooter from "@/components/PageFooter";
 import {
-  loadUser, loadGoals, currentScoreMap, loadTrackExamDates, loadResults,
+  loadUser, loadGoals, currentScoreMap, loadTrackExamDates,
   loadAdmissions, saveAdmissions, showsUniversityUI,
   type AdmissionApplication, type AdmissionStatus,
 } from "@/lib/storage";
