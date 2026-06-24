@@ -1,5 +1,5 @@
 /* ─── تخزين حقيقي في localStorage — صفر بيانات وهمية ─── */
-import type { TrackId } from "./tracks";
+import type { TrackId, StudyGoalType } from "./tracks";
 import type { PlanId } from "./types";
 
 export interface DarbUser {
@@ -8,8 +8,11 @@ export interface DarbUser {
   examDate?: string;
   onboarded: boolean;
   age?: number;
-  studyLevel?: string;
-  grade?: string;
+  studyLevel?: string;      // الحالة التعليمية: ثانوي/جامعي/خريج
+  grade?: string;           // الصف (للثانوي): أول/ثاني/ثالث ثانوي
+  gradStage?: string;       // نوع الخريج: خريج ثانوي / خريج جامعة
+  universityYear?: string;  // السنة الدراسية (للجامعي): الأولى ... الخامسة+
+  goal?: StudyGoalType;     // الهدف الحالي — يقود تفعيل المسارات والأولويات
   studyHours?: number;
   subjects?: string[];
   activeTracks?: TrackId[];

@@ -12,7 +12,7 @@ import {
 import { loadSkillProgress, overallStats } from "./skillProgress";
 import { skillsForTracks, SKILL_BY_ID } from "./globalSkills";
 import { estimateReadiness, daysUntil } from "./insights";
-import { getTrack, type TrackId } from "./tracks";
+import { getTrack, goalLabel, type TrackId } from "./tracks";
 import { findMajor, requirementsText } from "./university";
 
 /* ── القدرات الخمس الأساسية + المواضيع ── */
@@ -40,6 +40,9 @@ export interface DuwairbProfile {
   attemptCount?: number;                  // مجموع المحاولات السابقة (خبرة)
   trackType?: string;                     // نوع المسار الجامعي: صحي/هندسي/حاسب/إداري/عام
   majorRequirements?: string;             // متطلبات التخصص المستهدف الإرشادية (نص)
+  goal?: string;                          // الهدف الحالي المختار في التسجيل (نص الهدف)
+  eduStatus?: string;                     // الحالة التعليمية: ثانوي/جامعي/خريج
+  universityYear?: string;                // السنة الدراسية (للجامعي)
 }
 
 /* قاعدة فترة التركيز/الراحة حسب تفضيل الطالب — مصدر واحد يستعمله
@@ -129,6 +132,9 @@ export function buildDuwairbProfile(): { profile: DuwairbProfile; goalLine: stri
     attemptCount,
     trackType: u.trackType || undefined,
     majorRequirements,
+    goal: goalLabel(u.goal) || undefined,
+    eduStatus: u.studyLevel || undefined,
+    universityYear: u.universityYear || undefined,
   };
 
   /* جملة الهدف للواجهة — أولوية للاختبار صاحب الهدف الأقرب موعداً */
@@ -138,7 +144,8 @@ export function buildDuwairbProfile(): { profile: DuwairbProfile; goalLine: stri
     profile.exams?.some((e) => e.target != null) ||
     profile.university || profile.major || profile.studyHours ||
     profile.preferredTime || profile.learningStyles || profile.strongest ||
-    profile.trackType || profile.currentScores || profile.majorRequirements,
+    profile.trackType || profile.currentScores || profile.majorRequirements ||
+    profile.goal || profile.eduStatus,
   );
 
   return { profile, goalLine, personalized };
@@ -164,6 +171,8 @@ export function buildGoalLine(p: DuwairbProfile): string | null {
 export function formatProfileBlock(p: DuwairbProfile): string {
   const lines: string[] = [];
   if (p.name) lines.push(`- الاسم: ${p.name}`);
+  if (p.eduStatus) lines.push(`- الحالة التعليمية: ${p.eduStatus}${p.universityYear ? ` (السنة ${p.universityYear})` : ""}`);
+  if (p.goal) lines.push(`- هدفه الحالي: ${p.goal} (وجّه كل توصياتك لخدمة هذا الهدف مباشرةً)`);
 
   if (p.exams?.length) {
     const exStr = p.exams.map((e) => {

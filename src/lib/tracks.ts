@@ -231,6 +231,52 @@ export function trackByTitle(title: string): Track | undefined {
   return TRACKS.find((tr) => tr.title === t || tr.id === t);
 }
 
+/* ─── الهدف الحالي + تفعيل الاختبارات الأساسية تلقائياً ───
+   التسجيل الأساسي يقتصر على اختبارات قياس الأساسية (قدرات/تحصيلي/تحصيلي مبكر/STEP).
+   CPC/ITC والاختبارات الإنجليزية المهنية تُضاف لاحقاً من الملف الشخصي عند الحاجة. */
+export const MAX_BASIC_TRACKS = 3;
+
+export type StudyGoalType = "qudurat" | "tahsili" | "step" | "university" | "major";
+
+export const STUDY_GOALS: { id: StudyGoalType; label: string; icon: string }[] = [
+  { id: "qudurat",    label: "رفع درجة القدرات",     icon: "📈" },
+  { id: "tahsili",    label: "رفع درجة التحصيلي",    icon: "📊" },
+  { id: "step",       label: "رفع درجة STEP",        icon: "🔤" },
+  { id: "university", label: "دخول جامعة محددة",      icon: "🏛️" },
+  { id: "major",      label: "الوصول إلى تخصص معيّن", icon: "🎯" },
+];
+
+export const goalLabel = (id?: StudyGoalType): string | undefined =>
+  id ? STUDY_GOALS.find((g) => g.id === id)?.label : undefined;
+
+/* يحدّد المسارات النشطة تلقائياً من الحالة التعليمية + الصف + الهدف.
+   نقيّة وحتمية — تُستعمل في التسجيل وعند تغيير الهدف لاحقاً. */
+export function basicTracksFor(opts: { status?: string; grade?: string; goal?: StudyGoalType }): TrackId[] {
+  const early = opts.grade === "أول ثانوي" || opts.grade === "ثاني ثانوي";
+  const tahsiliTrack: TrackId = early ? "تحصيلي مبكر" : "تحصيلي";
+
+  const primary: TrackId | null =
+    opts.goal === "qudurat" ? "قدرات" :
+    opts.goal === "tahsili" ? tahsiliTrack :
+    opts.goal === "step"    ? "ستيب" : null;
+
+  const dedupe = (arr: TrackId[]) => [...new Set(arr)];
+
+  /* الجامعي: لا نشّط حزمة اختبارات كاملة — فقط ما يخدم هدفه (أو القدرات افتراضاً) */
+  if (opts.status === "جامعي") {
+    return primary ? [primary] : ["قدرات"];
+  }
+
+  /* ثانوي/خريج: نشّط اختبارات قياس الأساسية المناسبة للمرحلة */
+  const core: TrackId[] = opts.status === "خريج"
+    ? ["قدرات", "تحصيلي"]
+    : ["قدرات", tahsiliTrack];
+  if (opts.goal === "step") core.unshift("ستيب");
+  const ordered = primary ? [primary, ...core] : core;
+  return dedupe(ordered).slice(0, MAX_BASIC_TRACKS);
+}
+
+
 /* نطاق درجة اختبار من عنوانه — undefined لو غير معروف، null لو بلا درجة */
 export function scoreRangeForTitle(title: string): ScoreRange | null | undefined {
   const tr = trackByTitle(title);

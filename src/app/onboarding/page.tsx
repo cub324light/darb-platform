@@ -1,18 +1,25 @@
 "use client";
 import { useState, useEffect } from "react";
-import { TRACKS, TRACK_GROUPS, scoreRangeForTitle, validateScore, type TrackId } from "@/lib/tracks";
-import { saveUser, saveExamDate, saveResults, saveTrackExamDates, loadPrefs, savePrefs, type SessionLen, type StudyTime } from "@/lib/storage";
+import {
+  TRACKS, basicTracksFor, STUDY_GOALS, scoreRangeForTitle, validateScore,
+  type StudyGoalType,
+} from "@/lib/tracks";
+import { UNIVERSITIES, MAJORS, findUniversity, findMajor } from "@/lib/university";
+import { saveUser, saveExamDate, saveResults, saveTrackExamDates, loadGoals, saveGoals } from "@/lib/storage";
 /* registerUser, pushBackup, currentUser مُستورَدة ديناميكياً أسفل */
 import { trackEvent } from "@/lib/events";
 import { redeemPendingRef } from "@/lib/referral";
 import Dome from "@/components/Dome";
 import Logo from "@/components/Logo";
 
-const STUDY_LEVELS = ["ثانوي", "جامعي", "خريج", "أخرى"];
-const TRACK_TYPES = ["صحي", "هندسي", "حاسب", "إداري", "عام"] as const;
-type TrackType = (typeof TRACK_TYPES)[number];
+const STATUSES = ["ثانوي", "جامعي", "خريج"] as const;
+type Status = (typeof STATUSES)[number];
 const GRADES = ["أول ثانوي", "ثاني ثانوي", "ثالث ثانوي"];
-const MAX_TRACKS = 3;
+const TRACK_TYPES = ["عام", "صحي", "هندسي", "حاسب", "إداري"] as const;
+const GRAD_STAGES = ["خريج ثانوي", "خريج جامعة"];
+const UNI_YEARS = ["الأولى", "الثانية", "الثالثة", "الرابعة", "الخامسة+"];
+/* اختبارات النتائج السابقة للخريج — العناوين تطابق سُلّم الدرجات في tracks.ts */
+const PREV_EXAMS = ["القدرات", "التحصيلي", "ستيب STEP"];
 const SAUDI_REGIONS = [
   "الرياض", "مكة المكرمة", "المدينة المنورة", "القصيم", "المنطقة الشرقية",
   "عسير", "تبوك", "حائل", "الحدود الشمالية", "جازان", "نجران", "الباحة", "الجوف",
@@ -21,50 +28,87 @@ const SAUDI_REGIONS = [
 export default function OnboardingPage() {
   const [step, setStep] = useState<0 | 1 | 2>(0);
 
+  /* ── الأساسيات ── */
   const [name, setName] = useState("");
-  /* لو المستخدم دخل بـ Google، اقترح اسمه بعد تحميل Firebase */
   useEffect(() => {
     import("@/lib/cloud").then(({ currentUser }) => {
       const dn = currentUser()?.displayName;
       if (dn) setName((prev) => prev || dn.split(" ")[0]);
     });
   }, []);
-  const [age, setAge]               = useState("");
-  const [studyLevel, setStudyLevel] = useState("");
-  const [grade, setGrade]           = useState("");
-  const [studyHours, setStudyHours] = useState("");
-  const [sessionLen, setSessionLen] = useState<SessionLen | 0>(0);
-  const [preferredTime, setPreferredTime] = useState<StudyTime | "">("");
-  const [trackType, setTrackType] = useState<TrackType | "">("");
-  const [school, setSchool]   = useState("");
-  const [region, setRegion]   = useState("");
-  const [city, setCity]       = useState("");
-  const [phone, setPhone]     = useState("");
+  const [age, setAge] = useState("");
+  const [status, setStatus] = useState<Status | "">("");
 
-  const [activeTracks, setActiveTracks] = useState<TrackId[]>([]);
-  /* تواريخ اختبار لكل مسار على حدة */
-  const [trackDates, setTrackDates] = useState<Record<string, string>>({});
-  /* نتائج اختبارات سابقة (اختياري) — تُحفظ في «نتائجي» */
-  const [prevExams, setPrevExams] = useState<{ exam: string; score: string }[]>([]);
+  /* ── تفاصيل المرحلة ── */
+  const [grade, setGrade] = useState("");                 // ثانوي
+  const [trackType, setTrackType] = useState("");         // ثانوي: المسار
+  const [gradStage, setGradStage] = useState("");         // خريج
+  const [universityYear, setUniversityYear] = useState(""); // جامعي
+  /* الجامعة/التخصص (جامعي + هدف الجامعة/التخصص) */
+  const [universityId, setUniversityId] = useState("");
+  const [universityName, setUniversityName] = useState("");
+  const [majorId, setMajorId] = useState("");
+  const [uniQuery, setUniQuery] = useState("");
+  const [otherUni, setOtherUni] = useState("");
+  /* نتائج سابقة للخريج: { exam: { tested, score } } */
+  const [prevResults, setPrevResults] = useState<Record<string, { tested: boolean; score: string }>>(
+    Object.fromEntries(PREV_EXAMS.map((e) => [e, { tested: false, score: "" }]))
+  );
   const [prevErr, setPrevErr] = useState("");
 
-  const toggleTrack = (id: TrackId) => {
-    setActiveTracks((prev) =>
-      prev.includes(id) ? prev.filter((t) => t !== id) : prev.length >= MAX_TRACKS ? prev : [...prev, id]
-    );
+  /* ── الهدف + إضافات ── */
+  const [goal, setGoal] = useState<StudyGoalType | "">("");
+  const [studyHours, setStudyHours] = useState("");
+  const [examDate, setExamDate] = useState("");
+  const [school, setSchool] = useState("");
+  const [region, setRegion] = useState("");
+  const [city, setCity] = useState("");
+  const [phone, setPhone] = useState("");
+
+  /* المسارات المُفعّلة تلقائياً من الحالة + الصف + الهدف */
+  const computedTracks = basicTracksFor({ status: status || undefined, grade, goal: goal || undefined });
+
+  const pickUni = (id: string) => {
+    const u = findUniversity(id);
+    if (!u) return;
+    setUniversityId(id);
+    setUniversityName(id === "other" ? (otherUni.trim() || "أخرى") : u.name);
+    setUniQuery("");
+  };
+  const pickMajor = (id: string) => {
+    const m = findMajor(id);
+    if (!m) return;
+    setMajorId(majorId === id ? "" : id);
   };
 
+  const filteredUnis = (() => {
+    const q = uniQuery.trim();
+    if (!q) return UNIVERSITIES;
+    return UNIVERSITIES.filter((u) => u.name.includes(q) || (u.region ?? "").includes(q));
+  })();
+
+  /* ── الإنهاء ── */
   const finish = async () => {
-    if (!activeTracks.length) return;
-    /* تحقق من درجات النتائج السابقة حسب سُلّم كل اختبار قبل المتابعة */
-    for (const p of prevExams) {
-      if (!p.exam.trim()) continue;
-      const err = validateScore(p.exam, p.score);
-      if (err) { setPrevErr(`${p.exam}: ${err}`); return; }
+    if (!goal) return;
+    const tracks = computedTracks;
+    if (!tracks.length) return;
+    const primaryTrack = tracks[0];
+
+    /* تحقّق درجات الخريج السابقة */
+    for (const exam of PREV_EXAMS) {
+      const r = prevResults[exam];
+      if (!r?.tested) continue;
+      const err = validateScore(exam, r.score);
+      if (err) { setPrevErr(`${exam}: ${err}`); return; }
     }
     setPrevErr("");
+
     const trimmedName = name.trim();
-    const primaryTrack = activeTracks[0];
+    /* نوع المسار: ثانوي → الاختيار، جامعي → تصنيف التخصص المختار */
+    const resolvedTrackType =
+      status === "جامعي" && majorId ? findMajor(majorId)?.category :
+      (trackType || undefined);
+
     const extras = {
       school: school.trim() || undefined,
       region: region        || undefined,
@@ -74,41 +118,50 @@ export default function OnboardingPage() {
     saveUser({
       name: trimmedName,
       track: primaryTrack,
-      activeTracks,
+      activeTracks: tracks,
       onboarded: true,
       age: age ? parseInt(age) : undefined,
-      studyLevel: studyLevel || undefined,
-      grade: studyLevel === "ثانوي" && grade ? grade : undefined,
+      studyLevel: status || undefined,
+      grade: status === "ثانوي" && grade ? grade : undefined,
+      gradStage: status === "خريج" && gradStage ? gradStage : undefined,
+      universityYear: status === "جامعي" && universityYear ? universityYear : undefined,
+      goal: goal || undefined,
       studyHours: studyHours ? parseInt(studyHours) : undefined,
-      trackType: trackType || undefined,
+      trackType: resolvedTrackType,
       ...extras,
     });
-    /* حفظ تاريخ المسار الأساسي (للتوافق مع الكود الحالي) */
-    const primaryDate = trackDates[primaryTrack];
-    if (primaryDate) saveExamDate(primaryDate);
-    /* حفظ تواريخ كل المسارات */
-    const allDates: Record<string, string> = {};
-    for (const id of activeTracks) { if (trackDates[id]) allDates[id] = trackDates[id]; }
-    if (Object.keys(allDates).length) saveTrackExamDates(allDates);
-    const validPrev = prevExams.filter((p) => p.exam.trim());
+
+    /* حفظ الوجهة الجامعية في الأهداف (SSoT لدويرب) */
+    if (universityId || majorId) {
+      const g = loadGoals();
+      const next = { ...g };
+      if (universityId) {
+        next.universityId = universityId;
+        next.university = universityId === "other" ? (otherUni.trim() || "أخرى") : (universityName || findUniversity(universityId)?.name);
+      }
+      if (majorId) { next.majorId = majorId; next.major = findMajor(majorId)?.name; }
+      saveGoals(next);
+    }
+
+    /* موعد الاختبار القادم للمسار الأساسي */
+    if (examDate) {
+      saveExamDate(examDate);
+      saveTrackExamDates({ [primaryTrack]: examDate });
+    }
+
+    /* نتائج الخريج السابقة → «نتائجي» */
+    const validPrev = PREV_EXAMS.filter((e) => prevResults[e]?.tested && prevResults[e].score.trim());
     if (validPrev.length) {
-      saveResults(validPrev.map((p, i) => {
-        // اختبار بلا درجة (CPC/ITC) → لا نحفظ درجة
-        const noScore = scoreRangeForTitle(p.exam) === null;
-        return {
-          id: `${Date.now()}-${i}`,
-          exam: p.exam.trim(),
-          score: noScore ? undefined : (p.score.trim() || undefined),
-        };
-      }));
+      saveResults(validPrev.map((exam, i) => ({
+        id: `${Date.now()}-${i}`,
+        exam,
+        score: prevResults[exam].score.trim(),
+      })));
     }
-    if (sessionLen || preferredTime) {
-      savePrefs({ ...loadPrefs(), ...(sessionLen ? { sessionLen } : {}), ...(preferredTime ? { studyTime: preferredTime } : {}) });
-    }
+
     import("@/lib/firestore").then(({ registerUser }) => { registerUser(trimmedName, primaryTrack, extras); });
-    trackEvent("onboarding_completed", { track: primaryTrack, tracks: activeTracks.length });
+    trackEvent("onboarding_completed", { track: primaryTrack, tracks: tracks.length, goal, status });
     import("@/lib/cloud").then(({ pushBackup }) => { pushBackup().catch(() => {}); });
-    /* استبدل كود الإحالة إن وُجد — يمنح الطالب المُحال فضته فوراً */
     await redeemPendingRef().catch(() => 0);
     window.location.href = "/dashboard";
   };
@@ -130,6 +183,78 @@ export default function OnboardingPage() {
     </div>
   );
 
+  const inputStyle = { background: "var(--surface)", border: "2px solid var(--border)" };
+  const chipStyle = (active: boolean) => ({
+    background: active ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
+    border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
+    color: active ? "var(--accent-light)" : "var(--text)",
+  });
+
+  /* منتقي الجامعة + التخصص (مشترك بين الجامعي وهدف الجامعة/التخصص) */
+  const uniMajorPicker = (
+    <div className="flex flex-col gap-5">
+      <div>
+        <p className="label mb-3">🏛️ جامعتك المستهدفة</p>
+        {universityId ? (
+          <div className="rounded-2xl px-4 py-3 flex items-center gap-2"
+            style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid color-mix(in srgb, var(--accent) 28%, transparent)" }}>
+            <span className="font-bold text-[15px] flex-1" style={{ color: "var(--accent-light)" }}>
+              {universityId === "other" ? (otherUni.trim() || "أخرى") : universityName}
+            </span>
+            <button onClick={() => { setUniversityId(""); setUniversityName(""); }}
+              className="text-[13px] font-bold px-2" style={{ color: "var(--text-muted)" }}>تغيير ✕</button>
+          </div>
+        ) : (
+          <>
+            <input value={uniQuery} onChange={(e) => setUniQuery(e.target.value)}
+              placeholder="🔎 ابحث عن جامعتك..."
+              className="w-full rounded-2xl px-4 py-3 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none mb-2.5"
+              style={inputStyle} />
+            <div className="flex flex-wrap gap-2 max-h-52 overflow-y-auto">
+              {filteredUnis.map((u) => (
+                <button key={u.id} onClick={() => pickUni(u.id)}
+                  className="px-3 py-2 rounded-full text-[13px] font-bold transition active:scale-95"
+                  style={{ background: "var(--surface2)", color: "var(--text)", border: "1.5px solid var(--border)" }}>
+                  {u.name}
+                </button>
+              ))}
+              {filteredUnis.length === 0 && (
+                <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>لا نتائج — اختر «أخرى».</p>
+              )}
+            </div>
+          </>
+        )}
+        {universityId === "other" && (
+          <input value={otherUni} onChange={(e) => { setOtherUni(e.target.value); setUniversityName(e.target.value.trim() || "أخرى"); }}
+            placeholder="اكتب اسم جامعتك" maxLength={60}
+            className="w-full mt-2.5 rounded-2xl px-4 py-3 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+            style={inputStyle} />
+        )}
+      </div>
+
+      <div>
+        <p className="label mb-3">📚 تخصصك المستهدف</p>
+        <div className="flex flex-wrap gap-2">
+          {MAJORS.map((m) => {
+            const on = majorId === m.id;
+            return (
+              <button key={m.id} onClick={() => pickMajor(m.id)} aria-pressed={on}
+                className="px-3 py-2 rounded-full text-[13px] font-bold transition active:scale-95"
+                style={{
+                  background: on ? "var(--accent)" : "var(--surface2)",
+                  color: on ? "#fff" : "var(--text)",
+                  border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}`,
+                }}>
+                {m.name}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
+  /* ════════ الخطوة 0 — الأساسيات + الحالة ════════ */
   if (step === 0) return (
     <div className="min-h-dvh flex flex-col app-col">
       {header}
@@ -142,374 +267,283 @@ export default function OnboardingPage() {
             onChange={(e) => setName(e.target.value)}
             placeholder="مثال: فهد، سارة، خالد..." maxLength={20}
             className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
-            style={{ background: "var(--surface)", border: "2px solid var(--border)" }}
+            style={inputStyle}
             onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
             onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
         </div>
 
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <p className="label">عمرك؟</p>
-          </div>
+          <p className="label mb-3">عمرك؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
           <input type="number" value={age} onChange={(e) => setAge(e.target.value)}
             placeholder="مثال: 18" min={13} max={60}
             className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
-            style={{ background: "var(--surface)", border: "2px solid var(--border)" }}
+            style={inputStyle}
             onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
             onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
         </div>
 
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <p className="label">مرحلتك الدراسية؟</p>
-          </div>
-          <div className="grid grid-cols-2 gap-2.5">
-            {STUDY_LEVELS.map((lvl) => {
-              const active = studyLevel === lvl;
-              return (
-                <button key={lvl} onClick={() => setStudyLevel(active ? "" : lvl)}
-                  className="rounded-2xl py-3.5 font-bold text-[17px] transition active:scale-[0.98]"
-                  style={{
-                    background: active ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
-                    border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
-                    color: active ? "var(--accent-light)" : "var(--text)",
-                  }}>
-                  {lvl}
-                </button>
-              );
-            })}
+          <p className="label mb-3">مرحلتك الدراسية؟</p>
+          <div className="grid grid-cols-3 gap-2.5">
+            {STATUSES.map((s) => (
+              <button key={s} onClick={() => setStatus(status === s ? "" : s)}
+                className="rounded-2xl py-3.5 font-bold text-[16px] transition active:scale-[0.98]"
+                style={chipStyle(status === s)}>
+                {s}
+              </button>
+            ))}
           </div>
         </div>
 
-        {studyLevel === "ثانوي" && (
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <p className="label">أي صف؟</p>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {GRADES.map((g) => {
-                const active = grade === g;
-                return (
-                  <button key={g} onClick={() => setGrade(active ? "" : g)}
-                    className="rounded-2xl py-3 font-bold text-[14px] transition active:scale-[0.98]"
-                    style={{
-                      background: active ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
-                      border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
-                      color: active ? "var(--accent-light)" : "var(--text)",
-                    }}>
-                    {g}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <p className="label">كم ساعة تقدر تذاكر باليوم؟</p>
-          </div>
-          <input type="number" value={studyHours} onChange={(e) => setStudyHours(e.target.value)}
-            placeholder="مثال: 3" min={1} max={16}
-            className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
-            style={{ background: "var(--surface)", border: "2px solid var(--border)" }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
-        </div>
-
-        <div>
-          <p className="label mb-3">مدة جلسة التركيز؟</p>
-          <div className="grid grid-cols-4 gap-2">
-            {([25, 45, 60, 90] as const).map((len) => {
-              const active = sessionLen === len;
-              const labels: Record<number, string> = { 25: "25 د", 45: "45 د", 60: "ساعة", 90: "90 د" };
-              return (
-                <button key={len} onClick={() => setSessionLen(active ? 0 : len)}
-                  className="rounded-2xl py-3 font-bold text-[15px] transition active:scale-[0.98]"
-                  style={{
-                    background: active ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
-                    border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
-                    color: active ? "var(--accent-light)" : "var(--text)",
-                  }}>
-                  {labels[len]}
-                </button>
-              );
-            })}
-          </div>
-          <p className="text-xs mt-1.5 px-1" style={{ color: "var(--text-muted)" }}>
-            الراحة: 25→5 | 45→10 | ساعة→12 | 90→18 دقيقة
-          </p>
-        </div>
-
-        <div>
-          <p className="label mb-3">وقت مذاكرتك المفضّل؟</p>
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-            {(["فجر", "صباح", "ظهر", "مساء", "ليل"] as const).map((t) => {
-              const active = preferredTime === t;
-              return (
-                <button key={t} onClick={() => setPreferredTime(active ? "" : t)}
-                  className="rounded-2xl py-3 font-bold text-[15px] transition active:scale-[0.98]"
-                  style={{
-                    background: active ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
-                    border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
-                    color: active ? "var(--accent-light)" : "var(--text)",
-                  }}>
-                  {t}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ─── نوع المسار الجامعي (اختياري) ─── */}
-        <div>
-          <p className="label mb-1">التخصص أو المجال المستهدف؟</p>
-          <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>اختياري — يساعد دويرب يخصّص توجيهاته لك</p>
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-            {TRACK_TYPES.map((t) => {
-              const active = trackType === t;
-              return (
-                <button key={t} onClick={() => setTrackType(active ? "" : t)}
-                  className="rounded-2xl py-3 font-bold text-[14px] transition active:scale-[0.98]"
-                  style={{
-                    background: active ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
-                    border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
-                    color: active ? "var(--accent-light)" : "var(--text)",
-                  }}>
-                  {t}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ─── المدرسة والموقع والجوال ─── */}
-        <div className="flex flex-col gap-4">
-          {[
-            { label: "اسم المدرسة / الجامعة", value: school, setter: setSchool, placeholder: "مثال: ثانوية الملك فهد", type: "text" as const },
-            { label: "المدينة أو المحافظة",   value: city,   setter: setCity,   placeholder: "مثال: الرياض، جدة، الدمام...", type: "text" as const },
-            { label: "رقم الجوال",             value: phone,  setter: setPhone,  placeholder: "05xxxxxxxx", type: "tel" as const },
-          ].map(({ label, value, setter, placeholder, type }) => (
-            <div key={label}>
-              <div className="flex items-center gap-2 mb-3">
-                <p className="label">{label}</p>
-              </div>
-              <input type={type} value={value} onChange={(e) => setter(e.target.value)}
-                placeholder={placeholder}
-                className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
-                style={{ background: "var(--surface)", border: "2px solid var(--border)" }}
-                onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-                onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
-            </div>
-          ))}
-
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <p className="label">المنطقة</p>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {SAUDI_REGIONS.map((r) => (
-                <button key={r} onClick={() => setRegion(region === r ? "" : r)}
-                  className="rounded-2xl py-2.5 px-3 font-bold text-[13px] text-right transition active:scale-[0.98]"
-                  style={{
-                    background: region === r ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
-                    border: `2px solid ${region === r ? "var(--accent)" : "var(--border)"}`,
-                    color: region === r ? "var(--accent-light)" : "var(--text)",
-                  }}>
-                  {r}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <button className="btn-primary glow-blue" onClick={() => { if (name.trim()) setStep(1); }}
-          disabled={!name.trim()} style={{ opacity: name.trim() ? 1 : 0.4 }}>
+        <button className="btn-primary glow-blue" onClick={() => { if (name.trim() && status) setStep(1); }}
+          disabled={!name.trim() || !status} style={{ opacity: name.trim() && status ? 1 : 0.4 }}>
           التالي ←
         </button>
       </div>
     </div>
   );
 
-  if (step === 1) return (
-    <div className="min-h-dvh flex flex-col app-col">
-      {header}
-      <div className="flex-1 px-6 py-8 max-w-sm mx-auto w-full">
-        {stepDots}
-        <div className="flex items-center gap-2 mb-5">
-          <p className="label">اختر مساراتك</p>
-          <span className="text-xs px-2 py-0.5 rounded-full font-black"
-            style={{
-              background: activeTracks.length >= MAX_TRACKS ? "color-mix(in srgb, var(--gold) 15%, transparent)" : "color-mix(in srgb, var(--accent) 12%, transparent)",
-              color: activeTracks.length >= MAX_TRACKS ? "var(--gold)" : "var(--accent-light)",
-            }}>
-            {activeTracks.length}/{MAX_TRACKS}
-          </span>
-        </div>
+  /* ════════ الخطوة 1 — تفاصيل المرحلة ════════ */
+  if (step === 1) {
+    const canProceed =
+      status === "ثانوي" ? !!grade :
+      status === "خريج"  ? !!gradStage :
+      true; // جامعي: الجامعة/التخصص اختيارية
 
-        <div className="flex flex-col gap-5 mb-6">
-          {TRACK_GROUPS.map((group) => (
-            <div key={group.label}>
-              <p className="text-[11px] font-black tracking-widest mb-2.5 px-1" style={{ color: "var(--text-muted)" }}>
-                ── {group.label} ──
-              </p>
-              <div className="grid grid-cols-2 gap-2.5">
-                {group.ids.map((id) => {
-                  const t = TRACKS.find((tr) => tr.id === id)!;
-                  const selected = activeTracks.includes(id);
-                  const disabled = !selected && activeTracks.length >= MAX_TRACKS;
-                  return (
-                    <button key={id} onClick={() => !disabled && toggleTrack(id)}
-                      className="rounded-2xl p-4 text-right transition-all duration-200 active:scale-[0.98] relative"
-                      style={{
-                        background: selected ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
-                        border: `2px solid ${selected ? "var(--accent)" : "var(--border)"}`,
-                        opacity: disabled ? 0.38 : 1,
-                      }}>
-                      {selected && <span className="absolute top-2 left-2.5 text-base font-black text-[var(--accent-light)]">✓</span>}
-                      <p className="font-black text-base text-[var(--text)]">{t.title}</p>
-                      <p className="text-xs text-[var(--text-muted)] mt-1 leading-snug">{t.sub}</p>
-                      {t.subjects.length > 0 && (
-                        <div className="flex gap-1 mt-2 flex-wrap">
-                          {t.subjects.map((s) => (
-                            <span key={s.name} className="w-2 h-2 rounded-full inline-block"
-                              style={{ background: s.color }} />
-                          ))}
-                        </div>
-                      )}
+    return (
+      <div className="min-h-dvh flex flex-col app-col">
+        {header}
+        <div className="flex-1 px-6 py-8 max-w-sm mx-auto w-full flex flex-col gap-6">
+          {stepDots}
+
+          {/* ── ثانوي ── */}
+          {status === "ثانوي" && (
+            <>
+              <div>
+                <p className="label mb-3">أي صف أنت؟</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {GRADES.map((g) => (
+                    <button key={g} onClick={() => setGrade(grade === g ? "" : g)}
+                      className="rounded-2xl py-3 font-bold text-[14px] transition active:scale-[0.98]"
+                      style={chipStyle(grade === g)}>
+                      {g}
                     </button>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+              <div>
+                <p className="label mb-1">مسارك الدراسي؟</p>
+                <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>يساعدنا نرتّب أولوياتك تلقائياً</p>
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                  {TRACK_TYPES.map((t) => (
+                    <button key={t} onClick={() => setTrackType(trackType === t ? "" : t)}
+                      className="rounded-2xl py-3 font-bold text-[14px] transition active:scale-[0.98]"
+                      style={chipStyle(trackType === t)}>
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-2xl px-4 py-3"
+                style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
+                <p className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>
+                  🎯 نفعّل لك تلقائياً اختبارات قياس المناسبة لمرحلتك — تقدر تضيف غيرها لاحقاً.
+                </p>
+              </div>
+            </>
+          )}
 
-        <button className="btn-primary glow-blue mb-3" onClick={() => { if (activeTracks.length) setStep(2); }}
-          disabled={activeTracks.length === 0} style={{ opacity: activeTracks.length > 0 ? 1 : 0.4 }}>
-          التالي ←
-        </button>
-        <button onClick={() => setStep(0)} className="text-[15px] font-semibold w-full text-center py-2"
-          style={{ color: "var(--text-muted)" }}>← رجوع</button>
+          {/* ── جامعي ── */}
+          {status === "جامعي" && (
+            <>
+              {uniMajorPicker}
+              <div>
+                <p className="label mb-3">سنتك الدراسية؟</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {UNI_YEARS.map((y) => (
+                    <button key={y} onClick={() => setUniversityYear(universityYear === y ? "" : y)}
+                      className="rounded-2xl py-3 font-bold text-[14px] transition active:scale-[0.98]"
+                      style={chipStyle(universityYear === y)}>
+                      {y}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ── خريج ── */}
+          {status === "خريج" && (
+            <>
+              <div>
+                <p className="label mb-3">نوع تخرّجك؟</p>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {GRAD_STAGES.map((g) => (
+                    <button key={g} onClick={() => setGradStage(gradStage === g ? "" : g)}
+                      className="rounded-2xl py-3.5 font-bold text-[15px] transition active:scale-[0.98]"
+                      style={chipStyle(gradStage === g)}>
+                      {g}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="label mb-1">نتائجك السابقة؟</p>
+                <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>نستخدمها لحساب جاهزيتك وتخصيص خطتك — اختياري</p>
+                <div className="flex flex-col gap-2.5">
+                  {PREV_EXAMS.map((exam) => {
+                    const r = prevResults[exam];
+                    const range = scoreRangeForTitle(exam);
+                    return (
+                      <div key={exam} className="rounded-2xl px-4 py-3"
+                        style={{ background: "var(--surface)", border: "2px solid var(--border)" }}>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setPrevResults((p) => ({ ...p, [exam]: { ...p[exam], tested: !p[exam].tested } }))}
+                            className="w-6 h-6 rounded-lg flex items-center justify-center text-[13px] font-black flex-shrink-0 transition"
+                            style={{
+                              background: r.tested ? "var(--accent)" : "var(--surface2)",
+                              border: `1.5px solid ${r.tested ? "var(--accent)" : "var(--border)"}`,
+                              color: r.tested ? "#fff" : "transparent",
+                            }}>✓</button>
+                          <span className="font-bold text-[15px] flex-1" style={{ color: "var(--text)" }}>{exam}</span>
+                          <input value={r.score} inputMode="decimal" disabled={!r.tested}
+                            onChange={(e) => { setPrevErr(""); setPrevResults((p) => ({ ...p, [exam]: { ...p[exam], score: e.target.value } })); }}
+                            placeholder="الدرجة" maxLength={6}
+                            className="w-20 rounded-xl px-3 py-2 text-base text-center text-[var(--text)] placeholder-[var(--text-muted)] outline-none disabled:opacity-30"
+                            style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
+                        </div>
+                        {r.tested && range && (
+                          <p className="text-[11px] mt-1.5 px-1" style={{ color: "var(--text-muted)" }}>الدرجة: {range.hint}</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                {prevErr && <p className="text-[12px] mt-2 font-bold" style={{ color: "var(--danger)" }}>{prevErr}</p>}
+              </div>
+            </>
+          )}
+
+          <button className="btn-primary glow-blue" onClick={() => { if (canProceed) setStep(2); }}
+            disabled={!canProceed} style={{ opacity: canProceed ? 1 : 0.4 }}>
+            التالي ←
+          </button>
+          <button onClick={() => setStep(0)} className="text-[15px] font-semibold w-full text-center py-1"
+            style={{ color: "var(--text-muted)" }}>← رجوع</button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  /* ════════ الخطوة 2 — الهدف + إضافات ════════ */
+  const needsUniPicker = (goal === "university" && !universityId) || (goal === "major" && !majorId);
+  const primaryTrack = computedTracks[0];
 
   return (
     <div className="min-h-dvh flex flex-col app-col">
       {header}
-      <div className="flex-1 px-6 py-8 max-w-sm mx-auto w-full">
+      <div className="flex-1 px-6 py-8 max-w-sm mx-auto w-full flex flex-col gap-6">
         {stepDots}
 
-        <div className="mb-6">
-          <p className="label mb-4">مساراتك المختارة</p>
+        <div>
+          <p className="label mb-1">ما هدفك الحالي؟</p>
+          <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>نبني خطتك وجدولك وأولوياتك حوله تلقائياً</p>
           <div className="flex flex-col gap-2.5">
-            {activeTracks.map((id) => {
-              const t = TRACKS.find((tr) => tr.id === id)!;
+            {STUDY_GOALS.map((g) => {
+              const on = goal === g.id;
               return (
-                <div key={id} className="rounded-2xl px-4 py-3 flex items-center gap-3"
-                  style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid color-mix(in srgb, var(--accent) 28%, transparent)" }}>
-                  <div className="flex gap-1">
-                    {t.subjects.map((s) => (
-                      <span key={s.name} className="w-2.5 h-2.5 rounded-full" style={{ background: s.color }} />
-                    ))}
-                  </div>
-                  <span className="font-bold text-[15px] flex-1" style={{ color: "var(--accent-light)" }}>{t.title}</span>
-                  <button onClick={() => toggleTrack(id)} className="text-[var(--text-muted)] text-sm font-bold px-2 py-1">✕</button>
-                </div>
+                <button key={g.id} onClick={() => setGoal(on ? "" : g.id)}
+                  className="rounded-2xl px-4 py-3.5 flex items-center gap-3 text-right transition active:scale-[0.98]"
+                  style={chipStyle(on)}>
+                  <span className="text-[20px]">{g.icon}</span>
+                  <span className="font-bold text-[15px] flex-1">{g.label}</span>
+                  {on && <span className="text-[16px] font-black" style={{ color: "var(--accent-light)" }}>✓</span>}
+                </button>
               );
             })}
           </div>
         </div>
 
-        {/* تواريخ الاختبار لكل مسار */}
-        <div className="mb-7 flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <p className="label">متى اختباراتك؟</p>
+        {/* منتقي الجامعة/التخصص عند الحاجة */}
+        {needsUniPicker && (
+          <div className="rounded-2xl p-4" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+            {uniMajorPicker}
           </div>
-          {activeTracks.map((id) => {
-            const t = TRACKS.find((tr) => tr.id === id)!;
-            const d = trackDates[id] ?? "";
-            const today = new Date().toISOString().slice(0, 10);
-            const days = d ? Math.max(0, Math.round((new Date(d + "T00:00:00").getTime() - new Date(today + "T00:00:00").getTime()) / 86400000)) : null;
-            return (
-              <div key={id} className="rounded-2xl px-4 py-3"
-                style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex gap-1">
-                    {t.subjects.map((s) => <span key={s.name} className="w-2 h-2 rounded-full" style={{ background: s.color }} />)}
-                  </div>
-                  <p className="font-bold text-[14px]" style={{ color: "var(--accent-light)" }}>📅 موعد اختبار {t.title}</p>
-                </div>
-                <input type="date" value={d} onChange={(e) => setTrackDates((p) => ({ ...p, [id]: e.target.value }))}
-                  min={today}
-                  className="w-full rounded-xl px-4 py-3 text-base text-[var(--text)] outline-none"
-                  style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", colorScheme: "dark" }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
-                {days !== null && (
-                  <p className="text-sm mt-1.5 font-semibold" style={{ color: "var(--gold)" }}>
-                    {days} يوم على الاختبار
-                  </p>
-                )}
-              </div>
-            );
-          })}
+        )}
+
+        {/* الاختبارات المُفعّلة تلقائياً — شفافية */}
+        {goal && computedTracks.length > 0 && (
+          <div>
+            <p className="label mb-2.5">فعّلنا لك هذه الاختبارات</p>
+            <div className="flex flex-wrap gap-2">
+              {computedTracks.map((id) => {
+                const t = TRACKS.find((tr) => tr.id === id)!;
+                return (
+                  <span key={id} className="px-3 py-2 rounded-full text-[13px] font-black flex items-center gap-1.5"
+                    style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)", border: "1.5px solid color-mix(in srgb, var(--accent) 28%, transparent)" }}>
+                    <span className="w-2 h-2 rounded-full" style={{ background: t.color }} />
+                    {t.title}
+                  </span>
+                );
+              })}
+            </div>
+            <p className="text-[11.5px] mt-2" style={{ color: "var(--text-muted)" }}>
+              تقدر تضيف اختبارات أخرى (مثل آيلتس أو توفل) لاحقاً من ملفك الشخصي.
+            </p>
+          </div>
+        )}
+
+        {/* موعد الاختبار القادم (اختياري) */}
+        {goal && primaryTrack && (
+          <div>
+            <p className="label mb-3">📅 موعد اختبارك القادم؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+            <input type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)}
+              min={new Date().toISOString().slice(0, 10)}
+              className="w-full rounded-2xl px-4 py-3 text-base text-[var(--text)] outline-none"
+              style={{ background: "var(--surface)", border: "2px solid var(--border)", colorScheme: "dark" }} />
+          </div>
+        )}
+
+        {/* ساعات المذاكرة (اختياري) */}
+        <div>
+          <p className="label mb-3">كم ساعة تقدر تذاكر باليوم؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+          <input type="number" value={studyHours} onChange={(e) => setStudyHours(e.target.value)}
+            placeholder="مثال: 3" min={1} max={16}
+            className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+            style={inputStyle}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
         </div>
 
-        <div className="mb-7">
-          <div className="flex items-center gap-2 mb-3">
-            <p className="label">اختبرت من قبل؟</p>
-          </div>
-          <div className="flex flex-col gap-2.5">
-            {prevExams.map((p, i) => {
-              const range = p.exam ? scoreRangeForTitle(p.exam) : undefined;
-              const noScore = range === null;
-              return (
-                <div key={i} className="flex flex-col gap-1.5">
-                  <div className="flex gap-2">
-                    <select value={p.exam}
-                      onChange={(e) => setPrevExams((prev) => prev.map((x, j) => j === i ? { exam: e.target.value, score: "" } : x))}
-                      className="flex-1 min-w-0 rounded-2xl px-4 py-3 text-base text-[var(--text)] outline-none"
-                      style={{ background: "var(--surface)", border: "2px solid var(--border)" }}>
-                      <option value="">اختر الاختبار</option>
-                      {TRACKS.map((t) => (
-                        <option key={t.id} value={t.title}>{t.title}</option>
-                      ))}
-                    </select>
-                    <input value={p.score} inputMode="decimal" disabled={noScore}
-                      onChange={(e) => { setPrevErr(""); setPrevExams((prev) => prev.map((x, j) => j === i ? { ...x, score: e.target.value } : x)); }}
-                      placeholder={noScore ? "بلا درجة" : "الدرجة"} maxLength={6}
-                      className="w-24 rounded-2xl px-3 py-3 text-base text-center text-[var(--text)] placeholder-[var(--text-muted)] outline-none disabled:opacity-40"
-                      style={{ background: "var(--surface)", border: "2px solid var(--border)" }} />
-                    <button onClick={() => setPrevExams((prev) => prev.filter((_, j) => j !== i))}
-                      className="px-3 rounded-2xl font-bold text-[var(--text-muted)]"
-                      style={{ background: "var(--surface)", border: "2px solid var(--border)" }}>✕</button>
-                  </div>
-                  {p.exam && range && (
-                    <p className="text-xs px-1" style={{ color: "var(--text-muted)" }}>الدرجة: {range.hint}</p>
-                  )}
-                  {noScore && (
-                    <p className="text-xs px-1" style={{ color: "var(--text-muted)" }}>هذا الاختبار ما له درجة رقمية.</p>
-                  )}
-                </div>
-              );
-            })}
-            <button onClick={() => setPrevExams((prev) => [...prev, { exam: "", score: "" }])}
-              className="rounded-2xl py-3 font-bold text-[15px]"
-              style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid color-mix(in srgb, var(--accent) 30%, transparent)", color: "var(--accent-light)" }}>
-              + أضف نتيجة سابقة
-            </button>
-          </div>
-          {prevErr && <p className="text-xs mt-2 font-bold" style={{ color: "var(--danger)" }}>{prevErr}</p>}
-          <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>تنحفظ في «نتائجي» وتقدر تعدّلها بعدين.</p>
+        {/* معلومات إضافية (اختياري) */}
+        <div className="flex flex-col gap-4">
+          <p className="label">معلومات إضافية <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+          {[
+            { label: "اسم المدرسة / الجامعة", value: school, setter: setSchool, placeholder: "مثال: ثانوية الملك فهد", type: "text" as const },
+            { label: "المدينة", value: city, setter: setCity, placeholder: "مثال: الرياض، جدة...", type: "text" as const },
+            { label: "رقم الجوال", value: phone, setter: setPhone, placeholder: "05xxxxxxxx", type: "tel" as const },
+          ].map(({ label, value, setter, placeholder, type }) => (
+            <input key={label} type={type} value={value} onChange={(e) => setter(e.target.value)}
+              placeholder={placeholder} aria-label={label}
+              className="w-full rounded-2xl px-5 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+              style={inputStyle}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
+          ))}
+          <select value={region} onChange={(e) => setRegion(e.target.value)} aria-label="المنطقة"
+            className="w-full rounded-2xl px-5 py-3.5 text-base text-[var(--text)] outline-none"
+            style={inputStyle}>
+            <option value="">المنطقة</option>
+            {SAUDI_REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+          </select>
         </div>
 
-        <button className="btn-primary glow-blue mb-3" onClick={finish}
-          disabled={activeTracks.length === 0} style={{ opacity: activeTracks.length > 0 ? 1 : 0.4 }}>
+        <button className="btn-primary glow-blue" onClick={finish}
+          disabled={!goal} style={{ opacity: goal ? 1 : 0.4 }}>
           يلا نبدأ ←
         </button>
-        <button onClick={() => setStep(1)} className="text-[15px] font-semibold w-full text-center py-2"
+        <button onClick={() => setStep(1)} className="text-[15px] font-semibold w-full text-center py-1"
           style={{ color: "var(--text-muted)" }}>← رجوع</button>
       </div>
     </div>

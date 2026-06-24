@@ -290,45 +290,16 @@ export function getStrategy(): StudyStrategy {
   const u = loadUser();
   const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
   const subjects = subjectsForTracks(ids.length ? ids : (["تحصيلي"] as TrackId[])).map((s) => s.name);
-  /* التخصص الجامعي يُضخّ تلقائياً من الأهداف */
+  /* التخصص يُضخّ تلقائياً من الأهداف، وإلا من نوع المسار المختار في التسجيل */
   const goals = loadGoals();
-  const major = findMajor(goals.majorId);
-  const majorCategory = major?.category;
-  const strategy = strategyFromProfile(
+  const majorCategory = findMajor(goals.majorId)?.category ?? (u?.trackType as MajorCategory | undefined);
+  return strategyFromProfile(
     profile,
     { studyDays: prefs.studyDays, vacationMode: prefs.vacationMode, subjectFocus: prefs.subjectFocus },
     subjects,
     currentCalendarSignals(),
-  );
-  /* إعادة بناء مع majorCategory إذا كان محدداً */
-  if (!majorCategory) return strategy;
-  const exam = (() => {
-    const withDays = (profile.exams ?? []).filter((e) => e.days != null);
-    if (!withDays.length) {
-      const wt = (profile.exams ?? []).find((e) => e.target != null);
-      return wt ? { target: wt.target } : null;
-    }
-    withDays.sort((a, b) => (a.days ?? 9999) - (b.days ?? 9999));
-    return { target: withDays[0].target, days: withDays[0].days };
-  })();
-  const cal = currentCalendarSignals();
-  return buildStrategy({
-    targetScore: exam?.target ?? null,
-    daysToExam: exam?.days ?? cal?.daysToNextExam ?? null,
-    readinessPct: profile.readinessPct ?? null,
-    studyHours: profile.studyHours ?? null,
-    preferredTime: profile.preferredTime,
-    sessionLen: profile.sessionLen,
-    subjects,
-    weakest: profile.weakest,
-    strongest: profile.strongest,
-    studyDaysPerWeek: prefs.studyDays ?? null,
-    vacationMode: prefs.vacationMode,
-    allocationOverride: prefs.subjectFocus,
-    onVacation: cal?.onVacation,
-    inSchoolFinals: cal?.inSchoolFinals,
     majorCategory,
-  });
+  );
 }
 
 /* ─── تعزيز التخصص الجامعي: يرفع وزن المواد ذات الصلة تلقائياً ───
