@@ -12,7 +12,7 @@ import {
 import { loadSkillProgress, overallStats } from "./skillProgress";
 import { skillsForTracks, SKILL_BY_ID } from "./globalSkills";
 import { estimateReadiness, daysUntil } from "./insights";
-import { getTrack, goalLabel, type TrackId } from "./tracks";
+import { getTrack, goalLabel, type TrackId, type StudyGoalType } from "./tracks";
 import { findMajor, requirementsText } from "./university";
 
 /* ── القدرات الخمس الأساسية + المواضيع ── */
@@ -41,8 +41,11 @@ export interface DuwairbProfile {
   trackType?: string;                     // نوع المسار الجامعي: صحي/هندسي/حاسب/إداري/عام
   majorRequirements?: string;             // متطلبات التخصص المستهدف الإرشادية (نص)
   goal?: string;                          // الهدف الحالي المختار في التسجيل (نص الهدف)
+  goalType?: StudyGoalType;               // معرّف الهدف (qudurat/tahsili/university/major…) — للمسار الذهبي
   eduStatus?: string;                     // الحالة التعليمية: ثانوي/جامعي/خريج
   universityYear?: string;                // السنة الدراسية (للجامعي)
+  gapYear?: boolean;                      // خريج بسنة استدراك (لإعادة قياس) — للمسار الذهبي
+  highschoolPct?: number;                 // نسبة الثانوية العامة — لمتطلبات القبول
 }
 
 /* قاعدة فترة التركيز/الراحة حسب تفضيل الطالب — مصدر واحد يستعمله
@@ -133,8 +136,11 @@ export function buildDuwairbProfile(): { profile: DuwairbProfile; goalLine: stri
     trackType: u.trackType || undefined,
     majorRequirements,
     goal: goalLabel(u.goal) || undefined,
+    goalType: u.goal || undefined,
     eduStatus: u.studyLevel || undefined,
     universityYear: u.universityYear || undefined,
+    gapYear: u.gapYear || undefined,
+    highschoolPct: goals.highschoolPct ?? undefined,
   };
 
   /* جملة الهدف للواجهة — أولوية للاختبار صاحب الهدف الأقرب موعداً */

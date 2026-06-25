@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { recordAiUsage } from "@/lib/aiUsage";
 import { formatProfileBlock, sessionIntervalRule, type DuwairbProfile, type DuwairbExam } from "@/lib/duwairb";
 import { strategyFromProfile, formatStrategyBlock, type PlanningPrefs, type AllocationPref } from "@/lib/strategy";
+import { goldenPathFromProfile, formatGoldenPathBlock, priorityFocusSubjects } from "@/lib/goldenPath";
+import type { StudyGoalType } from "@/lib/tracks";
 import type { CalendarSignals } from "@/lib/academicCalendar";
 
 /* firebase-admin (تسجيل الاستهلاك) يحتاج Node APIs */
@@ -160,8 +162,8 @@ function buildProgressPrompt(subjects: string[]): string {
 
 ${subjectCtx}
 
-تصلك معلومات الطالب (الأهداف، الجاهزية، أقوى/أحوج مادة، ساعات المذاكرة، الوجهة الجامعية). حلّلها وقدّم:
-1. قراءة موجزة لوضعه الحالي (جملة واحدة تربطه بهدفه وجاهزيته).
+تصلك معلومات الطالب (الأهداف، الجاهزية، أقوى/أحوج مادة، ساعات المذاكرة، الوجهة الجامعية) وأولويته الحالية حسب «المسار الذهبي». حلّلها وقدّم:
+1. ابدأ بتأكيد أولوية الطالب الحالية صراحةً مع ذكر درجاته ومرحلته (مثل: «أنت ثاني ثانوي، قدراتك ٨٨ وهدفك ٩٥ — أولويتك القدرات الآن»)، ولا توصِ بما أوقفه المسار الذهبي.
 2. أهم تركيز للفترة القادمة — اذكر أحوج مادة له بالاسم، واستثمر أقوى مادة كنقطة ثقة.
 3. خطوة عملية واحدة لليوم أو الأسبوع (محدّدة وقابلة للتنفيذ).
 
@@ -223,6 +225,7 @@ function cleanNum(v: unknown, min: number, max: number): number | undefined {
   if (typeof v !== "number" || !Number.isFinite(v)) return undefined;
   return Math.max(min, Math.min(max, Math.round(v)));
 }
+const GOAL_TYPES = new Set<string>(["qudurat", "tahsili", "step", "university", "major"]);
 function sanitizeProfile(raw: unknown): DuwairbProfile | null {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
@@ -272,8 +275,11 @@ function sanitizeProfile(raw: unknown): DuwairbProfile | null {
     trackType: cleanStr(r.trackType, 20),
     majorRequirements: cleanStr(r.majorRequirements, 120),
     goal: cleanStr(r.goal, 40),
+    goalType: GOAL_TYPES.has(r.goalType as string) ? (r.goalType as StudyGoalType) : undefined,
     eduStatus: cleanStr(r.eduStatus, 12),
     universityYear: cleanStr(r.universityYear, 12),
+    gapYear: typeof r.gapYear === "boolean" ? r.gapYear : undefined,
+    highschoolPct: cleanNum(r.highschoolPct, 0, 100),
   };
   // أعِد null إن لم يبقَ شيء مفيد
   return Object.values(p).some((v) => v != null) ? p : null;
@@ -407,14 +413,23 @@ export async function POST(req: NextRequest) {
   /* حقن ملف الطالب في برومبت النظام للأوضاع المحادثية فقط */
   const profileBlock = personalize && profile ? formatProfileBlock(profile) : "";
 
-  /* حقن استراتيجية المذاكرة الموحّدة — لأوضاع التخطيط فقط (جدول/مذاكرة/تقدّم).
-     تُبنى من نفس الملف والتفضيلات التي يستعملها العميل ⇒ نفس التوجيه في كل مكان. */
+  /* المسار الذهبي: أولوية الطالب الحالية — تُحقن أولاً (أعلى أولوية) لكل
+     أوضاع التخطيط، فيبدأ دويرب بتأكيد الأولوية ولا يوصي بما أوقفناه. */
   const STRATEGY_MODES = new Set(["schedule", "study", "progress", undefined]);
+  const goldenPath = personalize && profile && STRATEGY_MODES.has(mode)
+    ? goldenPathFromProfile(profile)
+    : null;
+  const goldenBlock = goldenPath ? formatGoldenPathBlock(goldenPath) : "";
+
+  /* حقن استراتيجية المذاكرة الموحّدة — لأوضاع التخطيط فقط (جدول/مذاكرة/تقدّم).
+     تُبنى من نفس الملف والتفضيلات التي يستعملها العميل ⇒ نفس التوجيه في كل مكان.
+     نمرّر بؤرة المسار الذهبي لترفع مواد الأولوية وتخفّض الموقوفة في الخطة. */
   const strategyBlock = personalize && profile && STRATEGY_MODES.has(mode)
-    ? formatStrategyBlock(strategyFromProfile(profile, planning, subjects, calendar))
+    ? formatStrategyBlock(strategyFromProfile(profile, planning, subjects, calendar, undefined,
+        goldenPath ? priorityFocusSubjects(goldenPath) : undefined))
     : "";
 
-  const system = [baseSystem, profileBlock, strategyBlock].filter(Boolean).join("\n\n");
+  const system = [baseSystem, goldenBlock, profileBlock, strategyBlock].filter(Boolean).join("\n\n");
 
   /* مع الصور نستخدم موديل الرؤية (Llama 4 Scout)؛ غيره نصّي */
   const useVision = isTopics && images.length > 0;

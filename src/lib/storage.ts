@@ -76,6 +76,18 @@ export function saveUser(user: DarbUser) {
   } catch {}
 }
 
+/* يضيف مساراً إلى المسارات النشطة (dedupe) ويحفظ — لزر تفعيل المسار الذهبي.
+   لا يغيّر المسار الأساسي ولا يصفّر شيئاً؛ مجرّد تفعيل إضافي بإذن المستخدم. */
+export function activateTrack(id: TrackId): DarbUser | null {
+  const u = loadUser();
+  if (!u) return null;
+  const current = u.activeTracks?.length ? u.activeTracks : (u.track ? [u.track] : []);
+  if (current.includes(id)) return u;
+  const next: DarbUser = { ...u, activeTracks: [...current, id] };
+  saveUser(next);
+  return next;
+}
+
 /* ── الأهلية لواجهة القبول الجامعي ──
    ذكاء القبول (الموزونة/المقارنة/تحليل الفجوة) مخصّص لمن هم على أعتاب القبول:
    طالب ثالث ثانوي أو خريج. لا يُعرض لطلاب أول/ثاني ثانوي (بعيدون) ولا للجامعي

@@ -17,6 +17,7 @@ import ExamDateButton from "@/components/ExamDateButton";
    تزامنياً ويظهر في نفس إطار الرسم بدل القفز بعد تحميل حزمة منفصلة */
 import ExamRegistrationAlert from "@/components/ExamRegistrationAlert";
 import SchoolCalendarAlert from "@/components/SchoolCalendarAlert";
+import GoldenPathCard from "@/components/GoldenPathCard";
 import dynamic from "next/dynamic";
 const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
 const RetentionHost = dynamic(() => import("@/components/retention/RetentionHost"), { ssr: false });
@@ -1009,6 +1010,9 @@ export default function DashboardPage() {
 
       {/* ═══ المحتوى ═══ */}
       <div className="page-content mt-4">
+
+        {/* ── المسار الذهبي: أولويتك الحالية (أعلى أولوية) ── */}
+        <GoldenPathCard />
 
         {/* ── تنبيهات التسجيل في الاختبارات الرسمية ── */}
         <ExamRegistrationAlert />

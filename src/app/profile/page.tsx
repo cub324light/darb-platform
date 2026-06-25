@@ -33,6 +33,7 @@ import ProfileTimeline, { type JourneyItem } from "@/components/profile/ProfileT
 import ProfileSocial from "@/components/profile/ProfileSocial";
 import ProfileStats from "@/components/profile/ProfileStats";
 import ProfileGoals from "@/components/profile/ProfileGoals";
+import GoldenPathCard from "@/components/GoldenPathCard";
 import ProfilePreferences from "@/components/profile/ProfilePreferences";
 import ProfileAchievements from "@/components/profile/ProfileAchievements";
 /* استيراد مباشر لتفادي انزياح التخطيط عند ظهور التنبيه */
@@ -230,6 +231,7 @@ export default function ProfilePage() {
         {tab === "overview" && (
           <div id="profile-panel-overview" role="tabpanel" aria-labelledby="profile-tab-overview"
             className="flex flex-col gap-5 profile-tab-panel">
+            <GoldenPathCard />
             <ProfileMotivation quote={quoteOfToday()} weekly={weekly} level={level} nextBadge={nextBadge} />
             {showUni && <UniversityFutureCard onOpenTab={() => setTab("future")} />}
             <ProfileInsights data={insights} />

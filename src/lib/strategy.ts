@@ -14,6 +14,7 @@ import { loadUser } from "./storage";
 import { subjectsForTracks, type TrackId } from "./tracks";
 import { resolveCalendar, calendarSignals, type CalendarSignals, type CalendarConfig } from "./academicCalendar";
 import { findMajor, type MajorCategory } from "./university";
+import { loadGoldenPath, priorityFocusSubjects } from "./goldenPath";
 
 /* ── أنواع القرار ── */
 export type StudyIntensity = "light" | "moderate" | "intensive";
@@ -69,6 +70,8 @@ export interface StrategyInputs {
   inSchoolFinals?: boolean;
   /* تعزيز التخصص الجامعي — يرفع وزن المواد ذات الصلة تلقائياً */
   majorCategory?: MajorCategory;
+  /* بؤرة المسار الذهبي — ترفع مواد الأولوية الحالية وتخفّض مواد المسارات الموقوفة */
+  priorityFocus?: { boost: string[]; suppress: string[] };
 }
 
 /* تفضيلات التخطيط القابلة للضبط — تُخزَّن في DarbPrefs */
@@ -176,9 +179,13 @@ export function buildStrategy(inp: StrategyInputs): StudyStrategy {
   const weeklyHoursTotal = Math.round(perDay * studyDaysPerWeek);
   /* أوزان تعزيز التخصص الجامعي — تُضاف فوق weakest/strongest */
   const majorBoost = majorSubjectBoost(inp.majorCategory);
+  /* بؤرة المسار الذهبي: رفع مواد الأولوية، خفض مواد المسارات الموقوفة */
+  const boostSet = new Set(inp.priorityFocus?.boost ?? []);
+  const suppressSet = new Set(inp.priorityFocus?.suppress ?? []);
   const weightFor = (name: string) => {
     const base = name === inp.weakest ? 1.6 : name === inp.strongest ? 0.8 : 1.0;
-    return base * (majorBoost[name] ?? 1.0);
+    const focus = boostSet.has(name) ? 1.5 : suppressSet.has(name) ? 0.35 : 1.0;
+    return base * (majorBoost[name] ?? 1.0) * focus;
   };
   const sumW = subjects.reduce((s, n) => s + weightFor(n), 0) || 1;
   const perSubject: SubjectWeeklyHours[] = subjects.map((name) => ({
@@ -249,6 +256,7 @@ export function strategyFromProfile(
   subjects: string[],
   calendar?: CalendarSignals,
   majorCategory?: MajorCategory,
+  priorityFocus?: { boost: string[]; suppress: string[] },
 ): StudyStrategy {
   const exam = nearestExam(profile);
   /* موعد الطالب المسجّل له الأولوية؛ وإلا نافذة التقويم التقديرية */
@@ -269,6 +277,7 @@ export function strategyFromProfile(
     onVacation: calendar?.onVacation,
     inSchoolFinals: calendar?.inSchoolFinals,
     majorCategory,
+    priorityFocus,
   });
 }
 
@@ -293,12 +302,16 @@ export function getStrategy(): StudyStrategy {
   /* التخصص يُضخّ تلقائياً من الأهداف، وإلا من نوع المسار المختار في التسجيل */
   const goals = loadGoals();
   const majorCategory = findMajor(goals.majorId)?.category ?? (u?.trackType as MajorCategory | undefined);
+  /* بؤرة المسار الذهبي — تعكس الأولوية الحالية في توزيع ساعات الخطة */
+  const gp = loadGoldenPath();
+  const priorityFocus = gp.show ? priorityFocusSubjects(gp) : undefined;
   return strategyFromProfile(
     profile,
     { studyDays: prefs.studyDays, vacationMode: prefs.vacationMode, subjectFocus: prefs.subjectFocus },
     subjects,
     currentCalendarSignals(),
     majorCategory,
+    priorityFocus,
   );
 }
 
