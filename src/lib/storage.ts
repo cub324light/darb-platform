@@ -26,6 +26,11 @@ export interface DarbUser {
   avatar?: string;     // معرّف أفاتار جاهز (وإلا صورة Google أو أول حرف)
   graduationYear?: number; // سنة التخرج المتوقعة (لمواءمة التقويم الدراسي)
   trackType?: string;  // نوع المسار الجامعي: صحي/هندسي/حاسب/إداري/عام (اختياري)
+  /* ── حقول الجامعي (Phase Engine) — لا تظهر للثانوي أبداً ── */
+  universityGpa?: number;        // المعدل الجامعي من 5
+  creditHoursCompleted?: number; // الساعات المعتمدة المنجزة
+  coopDone?: boolean;            // أنجز التدريب التعاوني/الصيفي
+  gradSchoolInterest?: boolean;  // اهتمام بالدراسات العليا
 }
 
 export interface DarbStats {

@@ -23,6 +23,8 @@ export default function GoldenPathCard() {
 
   const accent = "#D4920A"; // ذهبي — هوية المسار الذهبي
   const isAdmission = state?.primary.kind === "admission";
+  const isUniversity = state?.phaseId.startsWith("uni-") ?? false;
+  const cardTitle = isUniversity ? "🎓 مسارك الجامعي الآن" : "🧭 أولويتك الآن";
 
   const milestoneText = useMemo(() => {
     if (!state?.nextMilestone) return null;
@@ -41,7 +43,7 @@ export default function GoldenPathCard() {
       }}>
       {/* العنوان + المرحلة */}
       <div className="flex items-center justify-between gap-3 mb-2">
-        <p className="text-[12.5px] font-bold" style={{ color: accent }}>🧭 أولويتك الآن</p>
+        <p className="text-[12.5px] font-bold" style={{ color: accent }}>{cardTitle}</p>
         <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
           style={{ background: "color-mix(in srgb,#F5B40A 14%,transparent)", color: accent }}>
           {state.phaseLabel}

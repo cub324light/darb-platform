@@ -46,6 +46,11 @@ export interface DuwairbProfile {
   universityYear?: string;                // السنة الدراسية (للجامعي)
   gapYear?: boolean;                      // خريج بسنة استدراك (لإعادة قياس) — للمسار الذهبي
   highschoolPct?: number;                 // نسبة الثانوية العامة — لمتطلبات القبول
+  /* ── حقول الجامعي (Phase Engine) — لا تُرسَل للثانوي ── */
+  universityGpa?: number;                 // المعدل الجامعي من 5
+  creditHoursCompleted?: number;          // الساعات المعتمدة المنجزة
+  coopDone?: boolean;                     // أنجز التدريب التعاوني/الصيفي
+  gradSchoolInterest?: boolean;           // اهتمام بالدراسات العليا
 }
 
 /* قاعدة فترة التركيز/الراحة حسب تفضيل الطالب — مصدر واحد يستعمله
@@ -141,6 +146,11 @@ export function buildDuwairbProfile(): { profile: DuwairbProfile; goalLine: stri
     universityYear: u.universityYear || undefined,
     gapYear: u.gapYear || undefined,
     highschoolPct: goals.highschoolPct ?? undefined,
+    /* حقول الجامعي — تُرسَل فقط للجامعي (لا تلوّث ملف الثانوي) */
+    universityGpa: u.studyLevel === "جامعي" ? u.universityGpa ?? undefined : undefined,
+    creditHoursCompleted: u.studyLevel === "جامعي" ? u.creditHoursCompleted ?? undefined : undefined,
+    coopDone: u.studyLevel === "جامعي" ? u.coopDone ?? undefined : undefined,
+    gradSchoolInterest: u.studyLevel === "جامعي" ? u.gradSchoolInterest ?? undefined : undefined,
   };
 
   /* جملة الهدف للواجهة — أولوية للاختبار صاحب الهدف الأقرب موعداً */
@@ -173,11 +183,46 @@ export function buildGoalLine(p: DuwairbProfile): string | null {
 }
 
 /* ── منسّق نص يُحقن في برومبت النظام (نقي — يعمل على الخادم) ──
-   يستقبل ملفاً مُقيَّداً (يُنظَّف على الخادم قبل الاستدعاء). يعيد "" إن لا بيانات. */
+   يستقبل ملفاً مُقيَّداً (يُنظَّف على الخادم قبل الاستدعاء). يعيد "" إن لا بيانات.
+   يتفرع حسب المرحلة: الجامعي يحصل على حقله الخاص + حظر صريح لمفاهيم القياس/القبول. */
 export function formatProfileBlock(p: DuwairbProfile): string {
+  const isUni = p.eduStatus === "جامعي";
   const lines: string[] = [];
+
   if (p.name) lines.push(`- الاسم: ${p.name}`);
   if (p.eduStatus) lines.push(`- الحالة التعليمية: ${p.eduStatus}${p.universityYear ? ` (السنة ${p.universityYear})` : ""}`);
+
+  if (isUni) {
+    /* ── الجامعي: عالم المعدل / التدريب / المشاريع / سوق العمل ── */
+    if (p.university || p.major) {
+      lines.push(`- الجامعة والتخصص: ${[p.major, p.university].filter(Boolean).join(" — ")}`);
+    }
+    if (p.universityGpa != null) lines.push(`- المعدل الجامعي الحالي: ${p.universityGpa} من 5`);
+    if (p.creditHoursCompleted != null) lines.push(`- الساعات المعتمدة المنجزة: ${p.creditHoursCompleted}`);
+    if (p.coopDone != null) {
+      lines.push(`- التدريب التعاوني/الصيفي: ${p.coopDone ? "أنجزه ✓" : "لم ينجزه بعد — أولوية قريبة"}`);
+    }
+    if (p.gradSchoolInterest) {
+      lines.push(`- الاهتمام بالدراسات العليا: نعم — وجّه توصياتك للتميّز الأكاديمي والبحث العلمي`);
+    }
+    if (p.studyHours != null) lines.push(`- ساعات الدراسة المتاحة يومياً: ${p.studyHours}`);
+    if (p.preferredTime || p.sessionLen != null) {
+      const t = [p.preferredTime ? `الوقت المفضّل ${p.preferredTime}` : "", p.sessionLen != null ? `مدة الجلسة ${p.sessionLen} دقيقة` : ""].filter(Boolean).join("، ");
+      lines.push(`- نمط الدراسة: ${t}`);
+    }
+    if (p.learningStyles?.length) lines.push(`- أسلوب التعلّم المفضّل: ${p.learningStyles.join("، ")}`);
+    if (p.device) lines.push(`- الجهاز: ${p.device}`);
+    if (p.readinessPct != null) lines.push(`- مستوى الأداء الأكاديمي المقدّر: ${p.readinessPct}٪`);
+
+    if (!lines.length) return "";
+    return `معلومات الطالب الجامعي (خصّص ردّك بناءً عليها):
+${lines.join("\n")}
+
+حكم أساسي لا استثناء فيه: هذا الطالب جامعي — لا تذكر أبداً القدرات أو التحصيلي أو الموزونة أو القبول الجامعي أو فرص القبول. مرحلة القياس والقبول انتهت وانقضت. ركّز فقط على: المعدل الجامعي، التدريب، المشاريع، الشهادات المهنية، المهارات، وسوق العمل.
+لا تعرض هذه المعلومات كقائمة للطالب — وظّفها داخل صياغة ردّك فقط.`;
+  }
+
+  /* ── الثانوي والخريج: عالم القياس والمدرسة والقبول ── */
   if (p.goal) lines.push(`- هدفه الحالي: ${p.goal} (وجّه كل توصياتك لخدمة هذا الهدف مباشرةً)`);
 
   if (p.exams?.length) {

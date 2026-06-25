@@ -53,6 +53,11 @@ export interface GoldenPathInput {
   needsEnglish: boolean;        // الوجهة تتطلب إثبات إنجليزي (جامعة البترول…)
   daysToNearestExam?: number | null;
   nearestExamLabel?: string;
+  /* ── حقول مرحلة الجامعي (Phase Engine) ── */
+  universityYear?: string;       // الأولى/الثانية/الثالثة/الرابعة/الخامسة+
+  universityGpa?: number;        // المعدل من 5
+  coopDone?: boolean;            // أنجز التدريب التعاوني/الصيفي
+  gradSchoolInterest?: boolean;  // اهتمام بالدراسات العليا
 }
 
 const ar = (n: number) => n.toLocaleString("ar");
@@ -99,12 +104,9 @@ export function computeGoldenPath(inp: GoldenPathInput): GoldenPathState {
     suggestedActivate: [] as TrackId[],
   };
 
-  /* ── الجامعي: خارج بؤرة المسار الذهبي ── */
+  /* ── الجامعي: مسار ذهبي مستقل (لا علاقة بالقياس/القبول) ── */
   if (inp.eduStatus === "جامعي") {
-    return {
-      ...base, show: false, phaseId: "university", phaseLabel: "طالب جامعي",
-      primary: { kind: "track", label: "مسار هدفك" }, reason: "",
-    };
+    return universityPhase(inp);
   }
 
   /* ── الخريج ── */
@@ -287,6 +289,71 @@ function admissionPhase(inp: GoldenPathInput, phaseId: string, phaseLabel: strin
   };
 }
 
+/* ════════ مرحلة الجامعي (مستقلة كلياً عن القياس/القبول) ════════ */
+function universityPhase(inp: GoldenPathInput): GoldenPathState {
+  const { universityYear: year, universityGpa: gpa, coopDone, gradSchoolInterest } = inp;
+  const base = {
+    show: true,
+    paused: [] as GoldenPaused[],
+    focusTracks: [] as TrackId[],
+    pausedTracks: [] as TrackId[],
+    suggestedActivate: [] as TrackId[],
+  };
+  const phaseLabel = year ? `جامعي — السنة ${year}` : "طالب جامعي";
+  const gpaStr = gpa != null ? ` (معدلك ${ar(gpa)} من 5)` : "";
+
+  const isLateYear  = year === "الرابعة" || year === "الخامسة+";
+  const isMidYear   = year === "الثالثة" || year === "الرابعة";
+  const isEarlyYear = year === "الأولى"  || year === "الثانية";
+
+  /* رابعة/خامسة: مشروع التخرج + التوظيف */
+  if (isLateYear) {
+    const secondary: GoldenFocus = gradSchoolInterest
+      ? { kind: "track", label: "تجهيز ملف الدراسات العليا" }
+      : { kind: "track", label: "بناء السيرة الذاتية والشبكة المهنية" };
+    return {
+      ...base, phaseId: "uni-late", phaseLabel,
+      primary:   { kind: "track", label: "مشروع التخرج والتوظيف" },
+      secondary,
+      reason: `أنت في المراحل الأخيرة — ركّز على مشروع التخرج وتجهيز نفسك لسوق العمل${gpaStr}.`,
+    };
+  }
+
+  /* ثالثة/رابعة بدون تدريب: التدريب أولوية */
+  if (isMidYear && coopDone === false) {
+    const secondary: GoldenFocus = gpa != null && gpa < 3.5
+      ? { kind: "track", label: `رفع المعدل الجامعي (${ar(gpa)})` }
+      : { kind: "track", label: "الشهادات المهنية والتأهيل" };
+    return {
+      ...base, phaseId: "uni-coop", phaseLabel,
+      primary: { kind: "track", label: "التدريب التعاوني / الصيفي" },
+      secondary,
+      reason: `أولويتك التدريب التعاوني أو الصيفي — الوقت المناسب لتأمين تجربة عملية تفتح أبواب التوظيف${gpaStr}.`,
+    };
+  }
+
+  /* أولى/ثانية: بناء القاعدة الأكاديمية */
+  if (isEarlyYear || !year) {
+    return {
+      ...base, phaseId: "uni-early", phaseLabel: year ? phaseLabel : "جامعي — السنة الأولى",
+      primary:   { kind: "track", label: gpa != null ? `رفع المعدل الجامعي (${ar(gpa)})` : "بناء المعدل الجامعي" },
+      secondary: { kind: "track", label: "مهارات دراسية + أنشطة طلابية" },
+      reason: `ركّز على بناء معدل جامعي قوي وعادات دراسة ثابتة — هذه السنوات الأولى تحدد مسارك كاملاً${gpaStr}.`,
+    };
+  }
+
+  /* افتراضي آمن للثالثة مع تدريب منجز */
+  const secondary: GoldenFocus = gradSchoolInterest
+    ? { kind: "track", label: "تجهيز ملف الدراسات العليا" }
+    : { kind: "track", label: "الشهادات المهنية والمهارات التقنية" };
+  return {
+    ...base, phaseId: "uni-mid", phaseLabel,
+    primary:   { kind: "track", label: gpa != null ? `تحسين المعدل (${ar(gpa)})` : "رفع المعدل الجامعي" },
+    secondary,
+    reason: `طوّر كفاءتك الأكاديمية والمهنية معاً — المعدل + الشهادات + التحضير لسوق العمل${gpaStr}.`,
+  };
+}
+
 /* ════════ مطابقة الدرجات/الأهداف من أسماء الاختبارات ════════ */
 function pickByName<T>(map: Record<string, T>, needle: RegExp): T | undefined {
   for (const [k, v] of Object.entries(map)) if (needle.test(k)) return v;
@@ -317,6 +384,10 @@ export function loadGoldenPath(now: Date = new Date()): GoldenPathState {
     university: goals.university,
     major: goals.major,
     needsEnglish: detectNeedsEnglish(goals.university, goals.stepTarget),
+    universityYear: u?.universityYear,
+    universityGpa: u?.universityGpa,
+    coopDone: u?.coopDone,
+    gradSchoolInterest: u?.gradSchoolInterest,
   });
 }
 
@@ -326,6 +397,7 @@ export function goldenPathFromProfile(profile: DuwairbProfile, now: Date = new D
   const examTarget = (needle: RegExp) => exams.find((e) => needle.test(e.name))?.target;
   const cs = profile.currentScores ?? {};
 
+  const sortedByDays = exams.filter((e) => e.days != null).sort((a, b) => (a.days ?? 9999) - (b.days ?? 9999));
   return computeGoldenPath({
     eduStatus: profile.eduStatus,
     grade: profile.grade,
@@ -348,14 +420,13 @@ export function goldenPathFromProfile(profile: DuwairbProfile, now: Date = new D
     university: profile.university,
     major: profile.major,
     needsEnglish: detectNeedsEnglish(profile.university, examTarget(/ستيب|step/i)),
-    daysToNearestExam: (() => {
-      const withDays = exams.filter((e) => e.days != null).sort((a, b) => (a.days ?? 9999) - (b.days ?? 9999));
-      return withDays[0]?.days ?? null;
-    })(),
-    nearestExamLabel: (() => {
-      const withDays = exams.filter((e) => e.days != null).sort((a, b) => (a.days ?? 9999) - (b.days ?? 9999));
-      return withDays[0]?.name;
-    })(),
+    daysToNearestExam: sortedByDays[0]?.days ?? null,
+    nearestExamLabel: sortedByDays[0]?.name,
+    /* حقول الجامعي */
+    universityYear: profile.universityYear,
+    universityGpa: profile.universityGpa,
+    coopDone: profile.coopDone,
+    gradSchoolInterest: profile.gradSchoolInterest,
   });
 }
 
@@ -371,6 +442,7 @@ export function priorityFocusSubjects(state: GoldenPathState): { boost: string[]
 /* ════════ كتلة نصّية تُحقن في برومبت دويرب (نقيّة — خادم) ════════ */
 export function formatGoldenPathBlock(s: GoldenPathState): string {
   if (!s.show) return "";
+  const isUniversity = s.phaseId.startsWith("uni-") || s.phaseId === "university";
   const lines: string[] = [
     `- المرحلة: ${s.phaseLabel}`,
     `- أولوية الطالب الآن: ${s.primary.label}`,
@@ -382,6 +454,13 @@ export function formatGoldenPathBlock(s: GoldenPathState): string {
     const cl = s.admissionChecklist.map((c) => `${c.label}${c.done ? ` ✓${c.value ? ` ${c.value}` : ""}` : " (ناقص)"}`).join("، ");
     lines.push(`- متطلبات القبول: ${cl}`);
   }
+
+  if (isUniversity) {
+    return `أولوية الطالب الجامعي الحالية حسب «المسار الذهبي» (ابدأ ردّك بتأكيد هذه الأولوية — لا تذكر أبداً القياس أو التحصيلي أو الموزونة أو القبول الجامعي، فهذا الطالب جامعي ومرحلة القبول انتهت):
+${lines.join("\n")}
+السبب المعتمد: ${s.reason}`;
+  }
+
   return `أولوية الطالب الحالية حسب «المسار الذهبي» (ابدأ ردّك بتأكيد هذه الأولوية صراحةً مع ذكر درجاته، ولا توصِ بما أوقفناه):
 ${lines.join("\n")}
 السبب المعتمد: ${s.reason}`;

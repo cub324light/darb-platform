@@ -18,6 +18,7 @@ import ExamDateButton from "@/components/ExamDateButton";
 import ExamRegistrationAlert from "@/components/ExamRegistrationAlert";
 import SchoolCalendarAlert from "@/components/SchoolCalendarAlert";
 import GoldenPathCard from "@/components/GoldenPathCard";
+import { isUniversityPhase } from "@/lib/phase";
 import dynamic from "next/dynamic";
 const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
 const RetentionHost = dynamic(() => import("@/components/retention/RetentionHost"), { ssr: false });
@@ -1014,10 +1015,9 @@ export default function DashboardPage() {
         {/* ── المسار الذهبي: أولويتك الحالية (أعلى أولوية) ── */}
         <GoldenPathCard />
 
-        {/* ── تنبيهات التسجيل في الاختبارات الرسمية ── */}
-        <ExamRegistrationAlert />
-        {/* ── تنبيهات التقويم الدراسي (للثانوي فقط) ── */}
-        <SchoolCalendarAlert />
+        {/* ── تنبيهات القياس والتقويم — للثانوي والخريج فقط (لا للجامعي) ── */}
+        {!isUniversityPhase(user) && <ExamRegistrationAlert />}
+        {!isUniversityPhase(user) && <SchoolCalendarAlert />}
 
         {/* ── بطاقة القبول الجامعي — تظهر لطالب ثالث ثانوي أو خريج فقط ── */}
         {showsUniversityUI(user) && (

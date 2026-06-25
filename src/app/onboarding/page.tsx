@@ -57,6 +57,10 @@ export default function OnboardingPage() {
   const [prevErr, setPrevErr] = useState("");
 
   const [gapYear, setGapYear] = useState<"" | "yes" | "no">(""); // خريج: إعادة الاختبارات؟
+  /* ── حقول الجامعي (Phase Engine) ── */
+  const [universityGpa, setUniversityGpa] = useState("");
+  const [coopDone, setCoopDone] = useState<boolean | undefined>(undefined);
+  const [gradSchoolInterest, setGradSchoolInterest] = useState<boolean | undefined>(undefined);
 
   /* ── الهدف + إضافات ── */
   const [goal, setGoal] = useState<StudyGoalType | "">("");
@@ -134,6 +138,10 @@ export default function OnboardingPage() {
       gapYear: status === "خريج" ? gapYear === "yes" : undefined,
       studyHours: studyHours ? parseInt(studyHours) : undefined,
       trackType: resolvedTrackType,
+      /* حقول الجامعي */
+      universityGpa: status === "جامعي" && universityGpa ? parseFloat(universityGpa) : undefined,
+      coopDone: status === "جامعي" ? coopDone : undefined,
+      gradSchoolInterest: status === "جامعي" ? gradSchoolInterest : undefined,
       ...extras,
     });
 
@@ -376,6 +384,52 @@ export default function OnboardingPage() {
                       {y}
                     </button>
                   ))}
+                </div>
+              </div>
+
+              {/* المعدل الجامعي — اختياري */}
+              <div>
+                <p className="label mb-1">معدلك الجامعي الحالي؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+                <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>من 5 — يساعدنا نخصّص توصياتك وأولوياتك</p>
+                <input type="number" value={universityGpa} onChange={(e) => setUniversityGpa(e.target.value)}
+                  placeholder="مثال: 3.75" min={0} max={5} step={0.01}
+                  className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+                  style={inputStyle}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
+              </div>
+
+              {/* التدريب التعاوني — اختياري */}
+              <div>
+                <p className="label mb-1">التدريب التعاوني أو الصيفي؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button onClick={() => setCoopDone(coopDone === true ? undefined : true)}
+                    className="rounded-2xl py-3.5 px-3 font-bold text-[14px] transition active:scale-[0.98] text-center leading-snug"
+                    style={chipStyle(coopDone === true)}>
+                    أنجزته ✅
+                  </button>
+                  <button onClick={() => setCoopDone(coopDone === false ? undefined : false)}
+                    className="rounded-2xl py-3.5 px-3 font-bold text-[14px] transition active:scale-[0.98] text-center leading-snug"
+                    style={chipStyle(coopDone === false)}>
+                    لم أنجزه بعد ⏳
+                  </button>
+                </div>
+              </div>
+
+              {/* الدراسات العليا — اختياري */}
+              <div>
+                <p className="label mb-1">هل تفكر في الدراسات العليا؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button onClick={() => setGradSchoolInterest(gradSchoolInterest === true ? undefined : true)}
+                    className="rounded-2xl py-3.5 px-3 font-bold text-[14px] transition active:scale-[0.98] text-center leading-snug"
+                    style={chipStyle(gradSchoolInterest === true)}>
+                    نعم، مهتم 🎓
+                  </button>
+                  <button onClick={() => setGradSchoolInterest(gradSchoolInterest === false ? undefined : false)}
+                    className="rounded-2xl py-3.5 px-3 font-bold text-[14px] transition active:scale-[0.98] text-center leading-snug"
+                    style={chipStyle(gradSchoolInterest === false)}>
+                    لا، أركّز على سوق العمل 💼
+                  </button>
                 </div>
               </div>
             </>
