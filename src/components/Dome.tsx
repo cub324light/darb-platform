@@ -52,16 +52,18 @@ export default function Dome({
   compact?: boolean;
   hideControls?: boolean;
 }) {
-  const [stars] = useState<Star[]>(() =>
-    Array.from({ length: compact ? 16 : 30 }).map(() => ({
+  const [stars] = useState<Star[]>(() => {
+    const desktop = typeof window !== "undefined" && window.innerWidth >= 1100;
+    const count = compact ? (desktop ? 8 : 16) : (desktop ? 14 : 30);
+    return Array.from({ length: count }).map(() => ({
       left: Math.random() * 100 + "%",
       top: Math.random() * 85 + "%",
       size: Math.random() * 1.8 + 1 + "px",
       opacity: Math.random() * 0.5 + 0.2,
       duration: 2 + Math.random() * 4 + "s",
       delay: Math.random() * 4 + "s",
-    }))
-  );
+    }));
+  });
   const [shootKey, setShootKey] = useState(0);
 
   useEffect(() => {
@@ -69,16 +71,25 @@ export default function Dome({
     return () => clearInterval(t);
   }, []);
 
-  /* احترام تفضيل تقليل الحركة + توفير المعالج/البطارية على الأجهزة الضعيفة:
-     لا نشغّل الجسيمات/الشُهب إن طلب المستخدم تقليل الحركة */
+  /* احترام تفضيل تقليل الحركة + توفير المعالج/البطارية على الأجهزة الضعيفة */
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduceMotion(mq.matches);
-    const h = () => setReduceMotion(mq.matches);
-    mq.addEventListener?.("change", h);
-    return () => mq.removeEventListener?.("change", h);
+    const rmq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduceMotion(rmq.matches);
+    const hr = () => setReduceMotion(rmq.matches);
+    rmq.addEventListener?.("change", hr);
+
+    const dmq = window.matchMedia("(min-width: 1100px)");
+    setIsDesktop(dmq.matches);
+    const hd = () => setIsDesktop(dmq.matches);
+    dmq.addEventListener?.("change", hd);
+
+    return () => {
+      rmq.removeEventListener?.("change", hr);
+      dmq.removeEventListener?.("change", hd);
+    };
   }, []);
 
   return (
@@ -139,7 +150,7 @@ export default function Dome({
         {/* توهّج + شُهب خفيفة (CSS فقط — بلا motion) على رأس كل صفحة.
             تُعطَّل عند تفضيل تقليل الحركة لتوفير الأداء/البطارية. */}
         <div className="dome-glow" />
-        {!reduceMotion && <Meteors number={compact ? 4 : 6} />}
+        {!reduceMotion && <Meteors number={compact ? (isDesktop ? 2 : 4) : (isDesktop ? 3 : 6)} />}
       </div>
 
       {/* ── المحتوى ── */}

@@ -102,13 +102,21 @@ export default function LandingPage() {
   };
 
   const ctaHref = "/onboarding";
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1100px)");
+    setIsDesktop(mq.matches);
+    const h = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", h);
+    return () => mq.removeEventListener("change", h);
+  }, []);
 
   return (
     <div ref={rootRef} className="relative z-[1]">
 
       {/* ── ناف بار ── */}
-      <nav className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-5 py-3.5"
-        style={{ background: "color-mix(in srgb, var(--bg) 88%, transparent)", backdropFilter: "blur(20px)", borderBottom: "1px solid var(--border)" }}>
+      <nav className="landing-nav fixed top-0 inset-x-0 z-50 flex items-center justify-between px-5 py-3.5"
+        style={{ background: "color-mix(in srgb, var(--bg) 88%, transparent)", borderBottom: "1px solid var(--border)" }}>
         <Logo className="font-black text-2xl" style={{ letterSpacing: "-0.5px" }} />
         <div className="flex items-center gap-2">
           <button onClick={toggleTheme}
@@ -163,9 +171,9 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════ */}
       <section className="relative min-h-dvh flex flex-col items-center justify-center px-5 text-center pt-20 pb-12 max-w-2xl mx-auto overflow-hidden">
 
-        {/* خلفية جسيمات */}
-        <Sparkles count={28} color="var(--accent-hi)" />
-        <Meteors number={8} />
+        {/* خلفية جسيمات — أقل على سطح المكتب (العرض الأكبر يرفع تكلفة الرسم) */}
+        <Sparkles count={isDesktop ? 12 : 28} color="var(--accent-hi)" />
+        <Meteors number={isDesktop ? 4 : 8} />
 
         {/* دائرة توهج خلفية */}
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full hero-pulse pointer-events-none"
@@ -386,7 +394,7 @@ export default function LandingPage() {
             border: "1.5px solid color-mix(in srgb, var(--accent) 22%, transparent)",
           }}>
           <BorderBeam size={250} duration={12} colorFrom="var(--accent-hi)" colorTo="var(--gold)" />
-          <Sparkles count={10} color="var(--accent-hi)" />
+          <Sparkles count={isDesktop ? 5 : 10} color="var(--accent-hi)" />
 
           <h2 className="font-black text-2xl mb-3 relative z-10" style={{ color: "var(--text)" }}>جاهز تبدأ دربك؟</h2>
           <p className="text-base mb-7 leading-relaxed relative z-10" style={{ color: "var(--text-dim)" }}>

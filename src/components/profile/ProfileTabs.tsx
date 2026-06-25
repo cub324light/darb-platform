@@ -19,8 +19,8 @@ function ProfileTabsBase({ active, onChange, showUniversity = true }: { active: 
   /* تبويب «مستقبلي الجامعي» يظهر فقط للمؤهَّلين (ثالث ثانوي/خريج) */
   const tabs = showUniversity ? PROFILE_TABS : PROFILE_TABS.filter((t) => t.id !== "future");
   return (
-    <div className="sticky top-0 z-30 -mx-5 px-5 py-2.5 mb-1"
-      style={{ background: "var(--glass-bg)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: "1px solid var(--border)" }}>
+    <div className="profile-tabs-bar sticky top-0 z-30 -mx-5 px-5 py-2.5 mb-1"
+      style={{ background: "var(--glass-bg)", borderBottom: "1px solid var(--border)" }}>
       <div role="tablist" aria-label="أقسام الملف الشخصي"
         className="flex gap-1.5 overflow-x-auto no-scrollbar">
         {tabs.map((t) => {

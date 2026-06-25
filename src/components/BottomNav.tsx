@@ -114,7 +114,7 @@ export default function BottomNav() {
                 </span>
               )}
             </span>
-            <span className={`text-[11.5px] ${active ? "font-extrabold" : "font-semibold"}`}>{item.label}</span>
+            <span className={`nav-label text-[11.5px] ${active ? "font-extrabold" : "font-semibold"}`}>{item.label}</span>
           </Link>
         );
       })}
