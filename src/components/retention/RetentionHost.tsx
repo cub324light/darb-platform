@@ -16,15 +16,13 @@ import {
   pendingMilestone, markMilestoneSeen,
   streakBreak, canUseRecovery, applyRecovery,
   shouldShowWeekly, markWeeklySeen,
-  needsDailyCheckin, saveDailyCheckin, skipDailyCheckin,
 } from "@/lib/retention";
 
 type View =
   | { type: "milestone"; pct: number }
   | { type: "welcome"; away: number }
   | { type: "recovery"; priorStreak: number }
-  | { type: "weekly" }
-  | { type: "checkin" };
+  | { type: "weekly" };
 
 const ar = (n: number) => n.toLocaleString("ar");
 
@@ -81,7 +79,6 @@ export default function RetentionHost() {
     else if (shouldShowWeekly(data.weekly.hasData)) events.push({ type: "weekly" });
 
     const q: View[] = [...events];
-    if (needsDailyCheckin()) q.push({ type: "checkin" });
 
     recordOpenToday();
     setQueue(q);
@@ -108,7 +105,6 @@ export default function RetentionHost() {
     case "welcome":     return <WelcomeView away={v.away} onClose={next} />;
     case "recovery":    return <RecoveryView priorStreak={v.priorStreak} onClose={next} />;
     case "weekly":      return <WeeklyView weekly={data.weekly} profile={data.profile} goalLine={data.goalLine} onClose={next} />;
-    case "checkin":     return <CheckinView subjects={data.subjects} onClose={next} />;
     default:            return null;
   }
 }
@@ -283,81 +279,3 @@ function WeeklyView({ weekly, profile, goalLine, onClose }: { weekly: WeeklyRepo
   );
 }
 
-/* ════════ ١) تسجيل اليوم — هدف الساعات + المادة الأساسية ════════ */
-const HOUR_OPTIONS = [1, 2, 3, 4, 5, 6];
-function CheckinView({ subjects, onClose }: { subjects: string[]; onClose: () => void }) {
-  const [hours, setHours] = useState(2);
-  const [subject, setSubject] = useState(subjects[0] ?? "");
-  const [saved, setSaved] = useState(false);
-  const save = () => { saveDailyCheckin(hours, subject); setSaved(true); trackEvent("daily_checkin", { hours, subject }); };
-  const skip = () => { skipDailyCheckin(); onClose(); };
-
-  if (saved) {
-    return (
-      <Sheet onClose={onClose} closeLabel="يلا نبدأ 🚀">
-        <div className="flex flex-col items-center gap-2 text-center">
-          <span className="text-[44px] leading-none">🎯</span>
-          <h2 className="text-[19px] font-black" style={{ color: "var(--text)" }}>هدف اليوم محدّد!</h2>
-          <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>
-            {ar(hours)} ساعات في <b style={{ color: "var(--accent-light)" }}>{subject || "مادتك"}</b> — دويرب يذكّرك ويعينك توصل.
-          </p>
-        </div>
-      </Sheet>
-    );
-  }
-
-  return createPortal(
-    <div className="fixed inset-0 z-[9990] flex items-end justify-center p-4 pb-8"
-      role="dialog" aria-modal="true"
-      style={{ background: "rgba(0,0,0,0.72)", backdropFilter: "blur(6px)" }}
-      onClick={skip} onKeyDown={(e) => { if (e.key === "Escape") skip(); }}>
-      <div className="w-full max-w-sm rounded-3xl p-6 flex flex-col gap-5 slide-up"
-        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
-        onClick={(e) => e.stopPropagation()}>
-        <div className="text-center">
-          <span className="text-[40px] leading-none">☀️</span>
-          <h2 className="text-[19px] font-black mt-1" style={{ color: "var(--text)" }}>تسجيل اليوم</h2>
-          <p className="text-[12.5px]" style={{ color: "var(--text-muted)" }}>ثانيتان — ونبني لك يوماً واضح الهدف.</p>
-        </div>
-
-        <div>
-          <p className="text-[13px] font-bold mb-2" style={{ color: "var(--text)" }}>كم ساعة هدفك اليوم؟</p>
-          <div className="flex flex-wrap gap-2">
-            {HOUR_OPTIONS.map((h) => (
-              <button key={h} onClick={() => setHours(h)} aria-pressed={hours === h}
-                className="px-4 py-2 rounded-full text-[14px] font-black transition active:scale-95"
-                style={hours === h
-                  ? { background: "var(--accent)", color: "#fff", border: "1.5px solid var(--accent)" }
-                  : { background: "var(--surface2)", color: "var(--text-muted)", border: "1.5px solid var(--border)" }}>
-                {ar(h)}{h === 6 ? "+" : ""}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="text-[13px] font-bold mb-2" style={{ color: "var(--text)" }}>ما المادة الأساسية اليوم؟</p>
-          {subjects.length > 0 ? (
-            <select value={subject} onChange={(e) => setSubject(e.target.value)}
-              className="w-full rounded-2xl px-4 py-3 text-[15px] outline-none"
-              style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
-              {subjects.map((s) => <option key={s}>{s}</option>)}
-            </select>
-          ) : (
-            <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="اكتب المادة"
-              className="w-full rounded-2xl px-4 py-3 text-[15px] outline-none"
-              style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
-          )}
-        </div>
-
-        <div className="flex gap-2">
-          <button onClick={skip} className="px-4 py-3 rounded-2xl text-[14px] font-bold flex-shrink-0"
-            style={{ background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>تخطّى</button>
-          <button onClick={save} className="flex-1 py-3 rounded-2xl text-[15px] font-black transition active:scale-[0.98]"
-            style={{ background: "var(--accent)", color: "#fff" }}>ثبّت هدف اليوم 🎯</button>
-        </div>
-      </div>
-    </div>,
-    document.body,
-  );
-}

@@ -281,6 +281,9 @@ export function basicTracksFor(opts: { status?: string; grade?: string; goal?: S
     return primary ? [primary] : ["قدرات"];
   }
 
+  /* لما يختار جامعة أو تخصص: التركيز على القبول لا إعادة الاختبارات */
+  const isUniGoal = opts.goal === "university" || opts.goal === "major";
+
   /* الخريج: أنهى القدرات/التحصيلي — لا نعيد تفعيل حزمة التحضير إلا إذا اختار
      سنة استدراك (gapYear) لإعادة الاختبار. بدون استدراك: نفعّل فقط المسار
      الذي يخدم هدفه (إن كان رفع درجة)، وإلا اختبار أساسي واحد ليعمل التطبيق. */
@@ -291,10 +294,15 @@ export function basicTracksFor(opts: { status?: string; grade?: string; goal?: S
       const ordered = primary ? [primary, ...core] : core;
       return dedupe(ordered).slice(0, MAX_BASIC_TRACKS);
     }
+    // هدف القبول: لا نضيف قدرات أو تحصيلي
+    if (isUniGoal) return ["مدرسه"];
     return primary ? [primary] : ["قدرات"];
   }
 
-  /* ثانوي: نشّط اختبارات قياس + مسار المدرسة لثالث ثانوي */
+  /* ثانوي + هدف القبول: مسار المدرسة فقط (بدون قدرات أو تحصيلي) */
+  if (isUniGoal) {
+    return ["مدرسه"];
+  }
   const core: TrackId[] = ["قدرات", tahsiliTrack];
   if (opts.goal === "step") core.unshift("ستيب");
   const ordered = primary ? [primary, ...core] : core;

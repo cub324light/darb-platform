@@ -20,10 +20,10 @@ import SchoolCalendarAlert from "@/components/SchoolCalendarAlert";
 import dynamic from "next/dynamic";
 const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
 const RetentionHost = dynamic(() => import("@/components/retention/RetentionHost"), { ssr: false });
-import SaudiMap from "@/components/SaudiMap";
+const SaudiMap = dynamic(() => import("@/components/SaudiMap"), { ssr: false });
+const WeeklyReport = dynamic(() => import("@/components/WeeklyReport"), { ssr: false });
 import { NumberTicker } from "@/components/ui/number-ticker";
 import { BorderBeam } from "@/components/ui/border-beam";
-import WeeklyReport from "@/components/WeeklyReport";
 
 const DAILY_TARGET = 200;
 
