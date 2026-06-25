@@ -76,6 +76,12 @@ const QUESTION_BANK: Record<TrackId, Question[]> = {
     { q: "أي الخيارات ليس نوع قاعدة بيانات؟", options: ["SQL", "HDMI", "Oracle", "MongoDB"], correct: 1, subject: "منطق" },
     { q: "He ____ the report before the deadline.", options: ["finish", "finishes", "finished", "finishing"], correct: 2, subject: "إنجليزي" },
   ],
+  مدرسه: [
+    { q: "كم عدد أركان الإسلام؟", options: ["ثلاثة", "أربعة", "خمسة", "ستة"], correct: 2, subject: "إسلامية" },
+    { q: "ما جمع كلمة «كتاب»؟", options: ["كتابات", "كتب", "أكتاب", "مكاتب"], correct: 1, subject: "عربي" },
+    { q: "What is the plural of 'child'?", options: ["childs", "childes", "children", "child"], correct: 2, subject: "إنجليزي" },
+    { q: "ما ناتج: ٤٥ × ٢؟", options: ["٨٠", "٩٠", "٨٥", "٩٥"], correct: 1, subject: "رياضيات" },
+  ],
 };
 
 type GameState = "lobby" | "playing" | "result";

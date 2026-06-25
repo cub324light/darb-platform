@@ -2,7 +2,7 @@
 
 export type TrackId =
   | "قدرات" | "تحصيلي" | "تحصيلي مبكر" | "CPC" | "ITC"
-  | "ايلتس" | "ستيب" | "توفل" | "دوليقو";
+  | "ايلتس" | "ستيب" | "توفل" | "دوليقو" | "مدرسه";
 
 export const TRACK_BLUE = "#2563EB";
 
@@ -111,11 +111,24 @@ export const TRACKS: Track[] = [
     color: "#EC4899",
     subjects: [SKILL_READ, SKILL_WRITE, SKILL_LISTEN, SKILL_SPEAK],
   },
+  {
+    id: "مدرسه",
+    title: "المدرسة",
+    sub: "المواد الدراسية اليومية",
+    icon: "",
+    color: "#0EA5E9",
+    subjects: [
+      { name: "عربي",     icon: "", color: "#F59E0B" },
+      { name: "إنجليزي", icon: "", color: "#3B82F6" },
+      { name: "رياضيات", icon: "", color: "#10B981" },
+      { name: "إسلامية", icon: "", color: "#22C55E" },
+    ],
+  },
 ];
 
 /* ── تجميع المسارات حسب المرحلة ── */
 export const TRACK_GROUPS: { label: string; ids: TrackId[] }[] = [
-  { label: "الثانوية",      ids: ["تحصيلي", "تحصيلي مبكر", "قدرات"] },
+  { label: "الثانوية",      ids: ["تحصيلي", "تحصيلي مبكر", "قدرات", "مدرسه"] },
   { label: "الإنجليزي",    ids: ["ايلتس", "ستيب", "توفل", "دوليقو"] },
   { label: "اختبارات القبول", ids: ["CPC", "ITC"] },
 ];
@@ -223,6 +236,7 @@ export const EXAM_SCORE: Record<TrackId, ScoreRange | null> = {
   "دوليقو":       { min: 10, max: 160, step: 5,  hint: "من ١٠ إلى ١٦٠" },
   "CPC":          null,
   "ITC":          null,
+  "مدرسه":        null,
 };
 
 /* مسار من عنوانه المعروض (للربط بين «نتائجي» والمسارات) */
@@ -280,11 +294,14 @@ export function basicTracksFor(opts: { status?: string; grade?: string; goal?: S
     return primary ? [primary] : ["قدرات"];
   }
 
-  /* ثانوي: نشّط اختبارات قياس الأساسية المناسبة للمرحلة */
+  /* ثانوي: نشّط اختبارات قياس + مسار المدرسة لثالث ثانوي */
   const core: TrackId[] = ["قدرات", tahsiliTrack];
   if (opts.goal === "step") core.unshift("ستيب");
   const ordered = primary ? [primary, ...core] : core;
-  return dedupe(ordered).slice(0, MAX_BASIC_TRACKS);
+  const examTracks = dedupe(ordered).slice(0, MAX_BASIC_TRACKS);
+  // ثالث ثانوي: مسار المدرسة دائماً بجانب اختبارات قياس
+  if (opts.grade === "ثالث ثانوي") return dedupe([...examTracks, "مدرسه"]);
+  return examTracks;
 }
 
 

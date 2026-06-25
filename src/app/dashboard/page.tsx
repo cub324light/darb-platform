@@ -16,6 +16,7 @@ import ExamDateButton from "@/components/ExamDateButton";
 /* استيراد مباشر (لا code-split) لتفادي انزياح التخطيط: التنبيه يحسب حالته
    تزامنياً ويظهر في نفس إطار الرسم بدل القفز بعد تحميل حزمة منفصلة */
 import ExamRegistrationAlert from "@/components/ExamRegistrationAlert";
+import SchoolCalendarAlert from "@/components/SchoolCalendarAlert";
 import dynamic from "next/dynamic";
 const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
 const RetentionHost = dynamic(() => import("@/components/retention/RetentionHost"), { ssr: false });
@@ -1011,6 +1012,8 @@ export default function DashboardPage() {
 
         {/* ── تنبيهات التسجيل في الاختبارات الرسمية ── */}
         <ExamRegistrationAlert />
+        {/* ── تنبيهات التقويم الدراسي (للثانوي فقط) ── */}
+        <SchoolCalendarAlert />
 
         {/* ── بطاقة القبول الجامعي — تظهر لطالب ثالث ثانوي أو خريج فقط ── */}
         {showsUniversityUI(user) && (

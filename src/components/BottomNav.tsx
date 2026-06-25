@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { loadUser, showsUniversityUI } from "@/lib/storage";
 
 function calcDue(): number {
   if (typeof window === "undefined") return 0;
@@ -22,40 +23,83 @@ function useDueCards() {
 
 interface NavItem { href: string; label: string; icon: (a: boolean) => React.ReactNode; }
 
-const NAV_ITEMS: NavItem[] = [
-  { href: "/dashboard", label: "الرئيسية", icon: (a: boolean) => (
-    <svg viewBox="0 0 24 24" fill={a ? "currentColor" : "none"} stroke="currentColor" strokeWidth={a ? 0 : 1.9} className="w-6 h-6">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3.5 10.5 12 3l8.5 7.5V20a1.5 1.5 0 0 1-1.5 1.5h-4.5V14h-5v7.5H5A1.5 1.5 0 0 1 3.5 20v-9.5z" />
-    </svg>
-  )},
-  { href: "/orbit", label: "أوربت", icon: (a: boolean) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
-      <circle cx="12" cy="13" r="8" /><path strokeLinecap="round" d="M12 9.5V13l2.5 2M10 2h4" />
-    </svg>
-  )},
-  { href: "/roadmap", label: "مساري", icon: (a: boolean) => (
+const ROADMAP_ITEM: NavItem = {
+  href: "/roadmap",
+  label: "مساري",
+  icon: (a: boolean) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 20 3.5 17.5v-13L9 7m0 13 6-3m-6 3V7m6 10 5.5 2.5v-13L15 4m0 13V4M9 7l6-3" />
     </svg>
-  )},
-  { href: "/vault", label: "أخطائي", icon: (a: boolean) => (
+  ),
+};
+
+const ADMISSION_ITEM: NavItem = {
+  href: "/university",
+  label: "القبول",
+  icon: (a: boolean) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
-      <rect x="4.5" y="10" width="15" height="10.5" rx="2.5" /><path strokeLinecap="round" d="M8 10V7.5a4 4 0 0 1 8 0V10" /><circle cx="12" cy="15.2" r="1.4" fill="currentColor" stroke="none" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3 2 8.5l10 5.5 10-5.5L12 3z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2 8.5v7M22 8.5v3" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 10.8v5.2a8 8 0 0 0 12 0v-5.2" />
     </svg>
-  )},
-  { href: "/review", label: "بطاقاتي", icon: (a: boolean) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
-      <rect x="5" y="4" width="14" height="17" rx="2.5" /><path strokeLinecap="round" d="M9 4.5V3m6 1.5V3M9 12l2 2 4-4.5" />
-    </svg>
-  )},
+  ),
+};
+
+const BASE_ITEMS: (NavItem | "MID")[] = [
+  {
+    href: "/dashboard",
+    label: "الرئيسية",
+    icon: (a: boolean) => (
+      <svg viewBox="0 0 24 24" fill={a ? "currentColor" : "none"} stroke="currentColor" strokeWidth={a ? 0 : 1.9} className="w-6 h-6">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.5 10.5 12 3l8.5 7.5V20a1.5 1.5 0 0 1-1.5 1.5h-4.5V14h-5v7.5H5A1.5 1.5 0 0 1 3.5 20v-9.5z" />
+      </svg>
+    ),
+  },
+  {
+    href: "/orbit",
+    label: "أوربت",
+    icon: (a: boolean) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
+        <circle cx="12" cy="13" r="8" /><path strokeLinecap="round" d="M12 9.5V13l2.5 2M10 2h4" />
+      </svg>
+    ),
+  },
+  "MID",
+  {
+    href: "/vault",
+    label: "أخطائي",
+    icon: (a: boolean) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
+        <rect x="4.5" y="10" width="15" height="10.5" rx="2.5" /><path strokeLinecap="round" d="M8 10V7.5a4 4 0 0 1 8 0V10" /><circle cx="12" cy="15.2" r="1.4" fill="currentColor" stroke="none" />
+      </svg>
+    ),
+  },
+  {
+    href: "/review",
+    label: "بطاقاتي",
+    icon: (a: boolean) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
+        <rect x="5" y="4" width="14" height="17" rx="2.5" /><path strokeLinecap="round" d="M9 4.5V3m6 1.5V3M9 12l2 2 4-4.5" />
+      </svg>
+    ),
+  },
 ];
 
 export default function BottomNav() {
   const pathname = usePathname();
   const dueCount = useDueCards();
+  const [uniMode, setUniMode] = useState(false);
+
+  useEffect(() => {
+    setUniMode(showsUniversityUI(loadUser()));
+  }, []);
+
+  const midItem = uniMode ? ADMISSION_ITEM : ROADMAP_ITEM;
+  const navItems: NavItem[] = BASE_ITEMS.map((it) => it === "MID" ? midItem : it) as NavItem[];
+
   return (
     <nav className="float-nav flex items-stretch px-2" aria-label="التنقل الرئيسي">
-      {NAV_ITEMS.map((item) => {
+      {navItems.map((item) => {
         const active = pathname === item.href;
         const badge = item.href === "/review" && dueCount > 0 ? dueCount : 0;
         return (
