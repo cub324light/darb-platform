@@ -282,7 +282,7 @@ export default function LandingPage() {
             {" "}تحصّلها بمكان واحد
           </h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 desk-grid-3 gap-3">
           {FEATURES.map((f, i) => (
             <div key={f.title}
               className={`reveal reveal-d${(i % 3) + 1} rounded-2xl p-5 glow-card-hover group relative overflow-hidden`}

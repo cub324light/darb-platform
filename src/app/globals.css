@@ -541,6 +541,13 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
   /* الصفحة: لا حشو أسفل — الشريط بات جانبياً */
   .page { padding-bottom: 40px; }
 
+  /* محتوى الصفحة: فراغات أكبر على الشاشات الواسعة */
+  .page-content { padding: 0 28px; gap: 20px; }
+
+  /* شبكات متجاوبة — أكثر كثافة على سطح المكتب */
+  .desk-grid-3 { grid-template-columns: repeat(3, 1fr) !important; }
+  .desk-grid-4 { grid-template-columns: repeat(4, 1fr) !important; }
+
   /* ─── شريط التنقل → شريط جانبي أيقوني على يمين الشاشة (RTL start) ─── */
   .float-nav {
     left: auto;

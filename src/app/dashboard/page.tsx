@@ -476,7 +476,7 @@ export default function DashboardPage() {
               return (
                 <div className="mt-3">
                   <p className="eyebrow mb-2">مواد {t.title}</p>
-                  <div className="grid grid-cols-2 gap-2.5">
+                  <div className="grid grid-cols-2 desk-grid-4 gap-2.5">
                     {t.subjects.map((s, i) => (
                       <Link key={s.name} href="/roadmap"
                         className="rounded-2xl px-4 py-3 flex items-center gap-3 transition active:scale-[0.97] subject-card"
@@ -786,7 +786,7 @@ export default function DashboardPage() {
         return (
           <section>
             <p className="eyebrow mb-2.5 px-1">أدوات درب</p>
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 desk-grid-3 gap-2.5">
               {([
                 { icon: "🤖", label: "دويرب",          desc: "خطط ذكية وتحليل ملفاتك", href: null,      event: "darb:openDuirb", accent: "var(--accent)" },
                 { icon: "⏱️", label: "أوربت",          desc: "جلسات تركيز ٥٠/١٠",      href: "/orbit",  event: null,             accent: "var(--accent-hi)" },
@@ -815,7 +815,7 @@ export default function DashboardPage() {
 
       case "community":
         return (
-          <section className="grid grid-cols-2 gap-2.5">
+          <section className="grid grid-cols-2 desk-grid-3 gap-2.5">
             {councilOn && (
               <Link href="/council" className="card flex items-center gap-3 active:scale-[0.97] transition"
                 style={{ minHeight: "74px", textDecoration: "none" }}>

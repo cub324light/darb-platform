@@ -977,7 +977,7 @@ export default function RoadmapPage() {
             <span className="font-bold text-[17px]" style={{ color: "#10B981" }}>التأسيس مكتمل — انتقلت للتدريب</span>
           </div>
         )}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 desk-grid-3 gap-3">
           {track.subjects.map((s) => {
             const ls = lessonsOf(s.name);
             const dc = ls.filter((l) => doneSet.has(l.key)).length;
@@ -1022,7 +1022,7 @@ export default function RoadmapPage() {
             <span className="font-bold text-[17px]" style={{ color: "#10B981" }}>التدريب مكتمل — انتقلت للتسريبات</span>
           </div>
         )}
-        <div className="grid grid-cols-2 gap-3 mb-3">
+        <div className="grid grid-cols-2 desk-grid-3 gap-3 mb-3">
           {track.subjects.map((s) => {
             const items = trainingOf(s.name);
             const dc = items.filter((t) => tadreebDoneSet.has(t.id)).length;
