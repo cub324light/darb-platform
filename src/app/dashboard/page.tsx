@@ -182,6 +182,17 @@ export default function DashboardPage() {
   const lastY = useRef(0);
   const autoScroll = useRef<number | null>(null);
 
+  /* تخطيط سطح المكتب الثلاثي — يُفعّل عند ≥1280px فقط (الجوال لا يتأثر) */
+  const [isWide, setIsWide] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(min-width: 1280px)").matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1280px)");
+    const h = (e: MediaQueryListEvent) => setIsWide(e.matches);
+    mq.addEventListener("change", h);
+    return () => mq.removeEventListener("change", h);
+  }, []);
+
   /* ساعة — تحديث كل ٣٠ ثانية */
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 30000);
@@ -915,7 +926,7 @@ export default function DashboardPage() {
   const hiddenItems = layout.filter((l) => !l.visible);
 
   return (
-    <div className="page">
+    <div className={`page${isWide ? " desk-wide" : ""}`}>
 
       <PageGuide pageKey="dashboard" steps={[
         { title: "أهلاً بك في درب", desc: "هذي صفحتك الرئيسية — تشوف فيها تقدم يومك، الستريك، والفضة اللي جمعتها من جلسات التركيز." },
@@ -1009,7 +1020,42 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ═══ المحتوى ═══ */}
+      {/* ═══ تخطيط سطح المكتب: ثلاثة أعمدة (≥1280px) ═══ */}
+      {isWide && (
+        <div className="dash-desk mt-4">
+          {/* العمود الأيمن (rail لاصق): الأولوية + اليوم + الإحصاءات */}
+          <div className="dash-col">
+            <div className="dash-col-rail flex flex-col gap-[18px]">
+              <GoldenPathCard />
+              {renderSection("today")}
+              {renderSection("stats")}
+            </div>
+          </div>
+
+          {/* العمود الأوسط: التنبيهات + المسارات + الجدول + الأسبوع */}
+          <div className="dash-col">
+            {!isUniversityPhase(user) && <ExamRegistrationAlert />}
+            {!isUniversityPhase(user) && <SchoolCalendarAlert />}
+            {renderSection("track")}
+            {renderSection("schedule")}
+            {renderSection("weekly")}
+          </div>
+
+          {/* العمود الأيسر (rail لاصق): دويرب دائماً ظاهر + الأدوات + المجتمع */}
+          <div className="dash-col">
+            <div className="dash-col-rail flex flex-col gap-[18px]">
+              {renderSection("ai")}
+              {renderSection("tools")}
+              {renderSection("community")}
+              {renderSection("certificate")}
+              {renderSection("quote")}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ المحتوى (الجوال + اللوحات الأضيق) ═══ */}
+      {!isWide && (
       <div className="page-content mt-4">
 
         {/* ── المسار الذهبي: أولويتك الحالية (أعلى أولوية) ── */}
@@ -1184,6 +1230,7 @@ export default function DashboardPage() {
         )}
 
       </div>
+      )}
 
       <PageFooter />
 

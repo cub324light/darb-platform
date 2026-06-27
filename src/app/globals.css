@@ -734,8 +734,25 @@ html[data-sidebar="collapsed"] { --desk-sw: 76px;  }
   .desk-sidebar.collapsed .desk-sidebar-head { justify-content: center; }
   .desk-sidebar.collapsed .desk-nav-sep { justify-content: center; padding: 10px 0 4px; }
   .desk-sidebar.collapsed .desk-nav-sep::before { content: ""; width: 22px; height: 1px; background: var(--border); }
-  .desk-sidebar.collapsed .desk-quick-row { justify-content: center; }
+  .desk-sidebar.collapsed .desk-quick-row { flex-direction: column; justify-content: center; }
   .desk-sidebar.collapsed .desk-profile { justify-content: center; padding: 6px; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   لوحة سطح المكتب — تخطيط ثلاثي الأعمدة (Dashboard)
+   يظهر فقط ≥1280px؛ تحته تبقى تجربة العمود الواحد.
+   ═══════════════════════════════════════════════════════ */
+@media (min-width: 1280px) {
+  .dash-desk {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.32fr) minmax(0, 1fr);
+    gap: 20px;
+    padding: 0 28px;
+    align-items: start;
+  }
+  .dash-col { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+  /* العمود الأيسر (الأولوية والإحصاءات) يبقى مرئياً أثناء التمرير */
+  .dash-col-rail { position: sticky; top: 16px; }
 }
 
 /* ═══════ شريط التنقل العائم — كبسولة ═══════ */
