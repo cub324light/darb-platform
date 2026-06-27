@@ -11,6 +11,7 @@ import { subjectsForTracks, type TrackId, type StudyGoalType } from "./tracks";
 import type { DuwairbProfile } from "./duwairb";
 import { loadUser, loadGoals, currentScoreMap } from "./storage";
 import { buildDuwairbProfile } from "./duwairb";
+import { destinationNeedsEnglish } from "./darbKnowledge";
 
 /* ════════ الأنواع ════════ */
 export type SemesterPhase = "أول" | "ثاني" | "صيف";
@@ -78,11 +79,9 @@ export function currentSemester(now: Date = new Date()): SemesterPhase {
   return "ثاني";
 }
 
-/* الوجهة تتطلب إثبات إنجليزي؟ (جامعة الملك فهد للبترول والمعادن مثالاً) */
+/* الوجهة تتطلب إثبات إنجليزي؟ — يفوّض لمحرّك المعرفة (SSoT) بدل تكرار القاعدة */
 function detectNeedsEnglish(university?: string, stepTarget?: number): boolean {
-  if (stepTarget != null) return true;
-  if (!university) return false;
-  return /بترول|فهد للبترول|kfupm/i.test(university);
+  return destinationNeedsEnglish({ university, stepTarget });
 }
 
 /* ════════ المحرّك النقي ════════ */
