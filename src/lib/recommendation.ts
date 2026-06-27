@@ -24,6 +24,7 @@ import type { StudentPhase } from "./phase";
 import type { ExamAlert } from "./examProvider";
 import type { DashSectionId } from "./storage";
 import type { StudentContext, StudyWindow } from "./memory/types";
+import { nsKey } from "./engineNamespace";
 
 /* ════════════════════════════════════════════════════════════
    الأنواع — عقد التوصية (Recommendation Contract)
@@ -351,17 +352,18 @@ export function promotedCards(recs: Recommendation[]): DashSectionId[] {
    التجاهل/القبول — جسر مبكر نحو محرّك الأحداث (المرحلة ٣)
    ════════════════════════════════════════════════════════════ */
 const DISMISS_KEY = "darb_rec_dismissed";
+const dismissKey = () => nsKey(DISMISS_KEY);
 
 export function loadDismissed(): Record<string, number> {
   if (typeof window === "undefined") return {};
   try {
-    const raw = localStorage.getItem(DISMISS_KEY);
+    const raw = localStorage.getItem(dismissKey());
     const obj = raw ? (JSON.parse(raw) as Record<string, number>) : {};
     // تنظيف المنتهية
     const now = Date.now();
     let changed = false;
     for (const k of Object.keys(obj)) if (obj[k] <= now) { delete obj[k]; changed = true; }
-    if (changed) localStorage.setItem(DISMISS_KEY, JSON.stringify(obj));
+    if (changed) localStorage.setItem(dismissKey(), JSON.stringify(obj));
     return obj;
   } catch { return {}; }
 }
@@ -372,6 +374,6 @@ export function dismissRecommendation(id: string, until?: number): void {
   try {
     const obj = loadDismissed();
     obj[id] = until ?? endOfDay(Date.now());
-    localStorage.setItem(DISMISS_KEY, JSON.stringify(obj));
+    localStorage.setItem(dismissKey(), JSON.stringify(obj));
   } catch { /* */ }
 }

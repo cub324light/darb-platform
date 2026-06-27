@@ -5,6 +5,7 @@
    حسب studentId دون لمس المحرّك.
    ═══════════════════════════════════════════════════════════════════════ */
 import type { AnyEvent } from "./types";
+import { nsKey } from "../engineNamespace";
 
 export interface EventStore {
   append(e: AnyEvent): void;
@@ -18,12 +19,13 @@ export const MAX_LOCAL_EVENTS = 500;
 export const MAX_LOCAL_AGE_DAYS = 90;
 const DAY_MS = 86_400_000;
 
-function prune(list: AnyEvent[], now: number): AnyEvent[] {
+export function pruneEventWindow(list: AnyEvent[], now: number): AnyEvent[] {
   const cutoff = now - MAX_LOCAL_AGE_DAYS * DAY_MS;
   // احتفظ بالأحدث ضمن النافذة الزمنية، ثم بحدّ العدد (الأحدث)
   const within = list.filter((e) => e.timestamp >= cutoff);
   return within.length > MAX_LOCAL_EVENTS ? within.slice(-MAX_LOCAL_EVENTS) : within;
 }
+const prune = pruneEventWindow;
 
 /* ── مخزن في الذاكرة — للاختبارات (غير محدود، حتمي) ── */
 export class InMemoryEventStore implements EventStore {
@@ -43,12 +45,13 @@ interface EventEnvelope { v: number; events: AnyEvent[] }
 export class LocalEventStore implements EventStore {
   private list: AnyEvent[] = [];
   private loaded = false;
+  private readonly key = nsKey(EVENT_LOG_KEY);
   constructor(private clock: () => number = () => Date.now()) {}
 
   private ensure(): void {
     if (this.loaded || typeof window === "undefined") { this.loaded = true; return; }
     try {
-      const raw = localStorage.getItem(EVENT_LOG_KEY);
+      const raw = localStorage.getItem(this.key);
       if (raw) {
         const env = JSON.parse(raw) as EventEnvelope;
         if (env && Array.isArray(env.events)) this.list = env.events;
@@ -60,7 +63,7 @@ export class LocalEventStore implements EventStore {
     if (typeof window === "undefined") return;
     try {
       const env: EventEnvelope = { v: ENVELOPE_VERSION, events: this.list };
-      localStorage.setItem(EVENT_LOG_KEY, JSON.stringify(env));
+      localStorage.setItem(this.key, JSON.stringify(env));
     } catch { /* الحصّة ممتلئة — القصّ يعالجها */ }
   }
 

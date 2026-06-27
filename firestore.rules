@@ -54,6 +54,12 @@ service cloud.firestore {
       match /friends/{fid} {
         allow read, write: if signedIn() && request.auth.uid == uid;
       }
+
+      // حالة المحرّكات (ذاكرة/سجلّ الأحداث) — مزامنة على مستوى الكيان لصاحبها فقط.
+      // خارج وثيقة المستخدم لتفادي حدّ 1MB ولدمج id/version عبر الأجهزة.
+      match /engine/{docId} {
+        allow read, write: if signedIn() && request.auth.uid == uid;
+      }
     }
 
     // Official announcements: signed-in users read; writes only from server (Admin SDK)

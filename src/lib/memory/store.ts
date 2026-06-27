@@ -4,6 +4,7 @@
    (محلي → بعيد على الخادم) عند التوسّع لملايين المستخدمين دون لمس المحرّك.
    ═══════════════════════════════════════════════════════════════════════ */
 import type { AnyMemory } from "./types";
+import { nsKey } from "../engineNamespace";
 
 export interface MemoryStore {
   getAll(): AnyMemory[];
@@ -37,11 +38,13 @@ interface MemoryEnvelope { v: number; memories: AnyMemory[]; }
 export class LocalStore implements MemoryStore {
   private map = new Map<string, AnyMemory>();
   private loaded = false;
+  /* المفتاح يُنطَّق بفضاء المستخدم عند الإنشاء (المثيل يُعاد بناؤه عند تبديل الحساب) */
+  private readonly key = nsKey(MEMORY_STORAGE_KEY);
 
   private ensure(): void {
     if (this.loaded || typeof window === "undefined") { this.loaded = true; return; }
     try {
-      const raw = localStorage.getItem(MEMORY_STORAGE_KEY);
+      const raw = localStorage.getItem(this.key);
       if (raw) {
         const env = JSON.parse(raw) as MemoryEnvelope;
         if (env && Array.isArray(env.memories)) {
@@ -59,7 +62,7 @@ export class LocalStore implements MemoryStore {
     for (let attempt = 0; attempt < 200; attempt++) {
       try {
         const env: MemoryEnvelope = { v: ENVELOPE_VERSION, memories: [...this.map.values()] };
-        localStorage.setItem(MEMORY_STORAGE_KEY, JSON.stringify(env));
+        localStorage.setItem(this.key, JSON.stringify(env));
         return;
       } catch {
         if (!this.evictOne()) return; // لا شيء لإخلائه — نتوقّف بهدوء

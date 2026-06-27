@@ -42,7 +42,9 @@ const BACKUP_KEYS = [
   "darb_dash_sched_v2", "darb_results", "darb_skills", "darb_skill_progress",
   "darb_session_log", "darb_leaks_plan", "darb_exam_coord",
   "darb_prefs", "darb_goals", "darb_daily", "darb_retention", "darb_coach_memory", "darb_calendar",
-  "darb_study_plan", "darb_admissions", "darb_memory_v1",
+  "darb_study_plan", "darb_admissions",
+  /* ملاحظة: darb_memory_v1 و darb_event_log_v1 لا تُزامَن هنا — لها مزامنة
+     على مستوى الكيان (engineSync) بدمج id/version، خارج وثيقة المستخدم. */
 ];
 
 /* أعلام المزامنة والحظر مُعرَّفة في cloudFlags.ts (بلا Firebase)
@@ -207,6 +209,9 @@ export async function initialSync(): Promise<void> {
       (async () => {
         const restored = await pullBackup();
         if (!restored && hasLocalData()) await pushBackup();
+        /* مزامنة حالة المحرّكات (ذاكرة/أحداث) على مستوى الكيان بدمج */
+        const { pullEngineState } = await import("./engineSync");
+        await pullEngineState();
       })(),
       timeout,
     ]);
@@ -255,6 +260,9 @@ export async function pushBackup(): Promise<boolean> {
       },
       { merge: true }
     );
+    /* رفع حالة المحرّكات (ذاكرة/أحداث) بدمج ذرّي — منفصل عن الكتلة */
+    const { pushEngineState } = await import("./engineSync");
+    await pushEngineState();
     return true;
   } catch {
     return false;

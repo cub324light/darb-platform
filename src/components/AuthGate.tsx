@@ -5,6 +5,7 @@ import type { User } from "firebase/auth";
 import dynamic from "next/dynamic";
 import { isInitialSyncDone, isAccountBlocked } from "@/lib/cloudFlags";
 import { loadUser } from "@/lib/storage";
+import { setNamespace } from "@/lib/engineNamespace";
 import Logo from "./Logo";
 import BottomNav from "./BottomNav";
 import DesktopSidebar from "./DesktopSidebar";
@@ -89,6 +90,11 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     let unsub: (() => void) | undefined;
     import("@/lib/cloud").then(({ onAuth }) => {
       unsub = onAuth((u) => {
+        /* بدّل فضاء المحرّكات لهذا المستخدم قبل أي وصول/مزامنة — يمنع تسرّب
+           بيانات حساب لآخر. الضبط متزامن؛ إسقاط المثائل القديمة كسولاً. */
+        if (setNamespace(u?.uid ?? null)) {
+          import("@/lib/engineSession").then(({ resetEngineSingletons }) => resetEngineSingletons());
+        }
         setUser(u);
         setAuthResolved(true);
         if (u) {

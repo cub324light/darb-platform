@@ -7,9 +7,11 @@ import { events } from "./index";
 import type { ImportSnapshot } from "./types";
 import { loadUser, loadGoals } from "../storage";
 import { findMajor } from "../university";
+import { nsKey } from "../engineNamespace";
 import type { EduStage } from "../memory/types";
 
 const SEED_FLAG = "darb_memory_seeded_v1";
+const seedFlagKey = () => nsKey(SEED_FLAG);
 
 function stageFor(studyLevel?: string): EduStage {
   if (studyLevel === "جامعي") return "university";
@@ -20,7 +22,7 @@ function stageFor(studyLevel?: string): EduStage {
 /** يبني لقطة الطالب من التخزين ويُطلق StudentRegistered مرة واحدة. */
 export function seedStudentMemory(): void {
   if (typeof window === "undefined") return;
-  try { if (localStorage.getItem(SEED_FLAG)) return; } catch { return; }
+  try { if (localStorage.getItem(seedFlagKey())) return; } catch { return; }
 
   const u = loadUser();
   if (!u) return; // لا نمهّد قبل اكتمال التسجيل
@@ -52,5 +54,5 @@ export function seedStudentMemory(): void {
     actor: { kind: "system" },
   });
 
-  try { localStorage.setItem(SEED_FLAG, "1"); } catch { /* */ }
+  try { localStorage.setItem(seedFlagKey(), "1"); } catch { /* */ }
 }
