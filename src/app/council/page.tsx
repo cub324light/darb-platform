@@ -367,6 +367,44 @@ export default function CouncilPage() {
     );
   };
 
+  /* تخطيط سطح المكتب: قائمة المجموعات + المحادثة جنباً إلى جنب (≥1280px) */
+  const [isWide, setIsWide] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(min-width: 1280px)").matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1280px)");
+    const onCh = (e: MediaQueryListEvent) => setIsWide(e.matches);
+    mq.addEventListener("change", onCh);
+    return () => mq.removeEventListener("change", onCh);
+  }, []);
+
+  /* جسم قائمة المجموعات — شريط جانبي على سطح المكتب، قائمة رئيسية على الجوال */
+  const groupListBody = (
+    <>
+      <div className="flex flex-col">
+        {generalGroup && renderGroup(generalGroup)}
+      </div>
+      <button
+        onClick={() => setShowFriends(true)}
+        className="flex items-center gap-3 px-5 py-4 text-right transition active:opacity-70 w-full"
+        style={{ borderBottom: "1px solid var(--border)" }}
+      >
+        <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
+          style={{ background: "color-mix(in srgb, var(--gold) 12%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--gold) 40%, var(--border))" }}>
+          👥
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-[15px]" style={{ color: "var(--text)" }}>الأصدقاء</p>
+          <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>ابحث عن زملائك وأضفهم</p>
+        </div>
+        <span className="text-[var(--text-muted)] text-lg flex-shrink-0">‹</span>
+      </button>
+      <div className="flex flex-col">
+        {restGroups.map((group) => renderGroup(group))}
+      </div>
+    </>
+  );
+
   /* ══════════════════════════════════════════════════
      شاشة المحادثة
   ══════════════════════════════════════════════════ */
@@ -374,19 +412,8 @@ export default function CouncilPage() {
     const isMyTrack = activeGroup.trackId ? userTrackIds.includes(activeGroup.trackId) : false;
     const isGuest = !authUid;
 
-    return (
+    const chatInner = (
       <>
-        {/* في الوضع النافذي (غير ملء الشاشة) يبقى الشريط السفلي ظاهراً وقابلاً للضغط،
-            فنرفع أسفل اللوحة فوق ارتفاع الشريط حتى لا يغطّي مربّع كتابة الرسالة */}
-        <div
-          className="fixed flex flex-col"
-          style={{
-            top: 0, left: 0, right: 0,
-            bottom: isFullscreen ? 0 : "calc(var(--nav-h) + env(safe-area-inset-bottom, 0px))",
-            zIndex: isFullscreen ? 9999 : 50,
-            background: "var(--bg)",
-          }}
-        >
           {/* ─ الرأس ─ */}
           <div
             className="flex items-center gap-3 px-4 flex-shrink-0"
@@ -602,10 +629,11 @@ export default function CouncilPage() {
               </p>
             </div>
           )}
-        </div>
+      </>
+    );
 
-        {/* ─ نافذة الإبلاغ ─ */}
-        {reportTarget && (
+    /* نافذة الإبلاغ — مودال مشترك بين الجوال وسطح المكتب */
+    const reportModalEl = reportTarget ? (
           <div className="fixed inset-0 flex items-end sm:items-center justify-center p-4"
             role="dialog" aria-modal="true" aria-label="الإبلاغ عن رسالة"
             style={{ zIndex: 10000, background: "rgba(0,0,0,0.6)" }}
@@ -661,8 +689,38 @@ export default function CouncilPage() {
               )}
             </div>
           </div>
-        )}
+    ) : null;
 
+    /* سطح المكتب: قائمة المجموعات (يمين) + المحادثة (يسار) جنباً إلى جنب */
+    if (isWide) {
+      return (
+        <div className="cc-shell desk-wide min-h-dvh pb-nav">
+          <aside className="cc-rail">
+            <div className="cc-rail-head"><span className="title-md" style={{ color: "var(--text)" }}>المجلس</span></div>
+            {groupListBody}
+          </aside>
+          <main className="cc-main">{chatInner}</main>
+          {reportModalEl}
+          {showFriends && <FriendsPanel onClose={() => setShowFriends(false)} />}
+        </div>
+      );
+    }
+
+    /* الجوال: المحادثة شاشة كاملة فوق قائمة المجموعات */
+    return (
+      <>
+        <div
+          className="fixed flex flex-col"
+          style={{
+            top: 0, left: 0, right: 0,
+            bottom: isFullscreen ? 0 : "calc(var(--nav-h) + env(safe-area-inset-bottom, 0px))",
+            zIndex: isFullscreen ? 9999 : 50,
+            background: "var(--bg)",
+          }}
+        >
+          {chatInner}
+        </div>
+        {reportModalEl}
       </>
     );
   }
@@ -670,6 +728,27 @@ export default function CouncilPage() {
   /* ══════════════════════════════════════════════════
      الشاشة الرئيسية — قائمة المجموعات
   ══════════════════════════════════════════════════ */
+
+  /* سطح المكتب بلا مجموعة مفتوحة: الشريط (يمين) + لوحة ترحيب (يسار) */
+  if (isWide) {
+    return (
+      <div className="cc-shell desk-wide min-h-dvh pb-nav">
+        <aside className="cc-rail">
+          <div className="cc-rail-head"><span className="title-md" style={{ color: "var(--text)" }}>المجلس</span></div>
+          {groupListBody}
+        </aside>
+        <main className="cc-main cc-empty">
+          <span className="text-[44px]">💬</span>
+          <p className="font-bold text-[17px] mt-3" style={{ color: "var(--text)" }}>اختر مجموعة لبدء النقاش</p>
+          <p className="text-[13.5px] mt-1.5 leading-relaxed" style={{ color: "var(--text-muted)" }}>
+            مجموعات مسارك ونقاشات الطلاب على اليمين — اضغط أي مجموعة لفتح محادثتها هنا.
+          </p>
+        </main>
+        {showFriends && <FriendsPanel onClose={() => setShowFriends(false)} />}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-dvh pb-nav">
       <Dome compact>
@@ -681,35 +760,7 @@ export default function CouncilPage() {
 
       <div className="h-2" />
 
-      {/* ١) العام أولاً */}
-      <div className="flex flex-col">
-        {generalGroup && renderGroup(generalGroup)}
-      </div>
-
-      {/* ٢) مدخل الأصدقاء */}
-      <button
-        onClick={() => setShowFriends(true)}
-        className="flex items-center gap-3 px-5 py-4 text-right transition active:opacity-70 w-full"
-        style={{ borderBottom: "1px solid var(--border)" }}
-      >
-        <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
-          style={{
-            background: "color-mix(in srgb, var(--gold) 12%, var(--surface))",
-            border: "1.5px solid color-mix(in srgb, var(--gold) 40%, var(--border))",
-          }}>
-          👥
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-bold text-[15px]" style={{ color: "var(--text)" }}>الأصدقاء</p>
-          <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>ابحث عن زملائك وأضفهم</p>
-        </div>
-        <span className="text-[var(--text-muted)] text-lg flex-shrink-0">‹</span>
-      </button>
-
-      {/* ٣) مجموعات مسارك ثم ٤) الباقي */}
-      <div className="flex flex-col">
-        {restGroups.map((group) => renderGroup(group))}
-      </div>
+      {groupListBody}
 
       {showFriends && <FriendsPanel onClose={() => setShowFriends(false)} />}
 

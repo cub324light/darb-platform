@@ -834,6 +834,45 @@ html[data-sidebar="collapsed"] { --desk-sw: 76px;  }
   .rm-detail .px-5 { padding-inline: 16px; }
 }
 
+/* ═══════════════════════════════════════════════════════
+   المجلس (Council) — لوحتان كـ Discord/Reddit (≥1280px)
+   قائمة المجموعات (يمين، RTL start) + المحادثة (يسار).
+   ═══════════════════════════════════════════════════════ */
+@media (min-width: 1280px) {
+  .cc-shell {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    align-items: start;
+  }
+  .cc-rail {
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    overflow-y: auto;
+    border-inline-start: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .cc-rail-head {
+    padding: 18px;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0;
+    background: var(--surface);
+    z-index: 1;
+  }
+  .cc-main {
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .cc-empty {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px;
+  }
+}
+
 /* ═══════ شريط التنقل العائم — كبسولة ═══════ */
 .float-nav {
   position: fixed;
