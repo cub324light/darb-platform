@@ -329,9 +329,14 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "طلب غير صالح" }, { status: 400 });
 
-  const { prompt, subjects: rawSubjects, mode, images: rawImages, profile: rawProfile, planning: rawPlanning, calendar: rawCalendar } = body as {
-    prompt?: string; subjects?: unknown; mode?: string; images?: unknown; profile?: unknown; planning?: unknown; calendar?: unknown;
+  const { prompt, subjects: rawSubjects, mode, images: rawImages, profile: rawProfile, planning: rawPlanning, calendar: rawCalendar, context: rawContext } = body as {
+    prompt?: string; subjects?: unknown; mode?: string; images?: unknown; profile?: unknown; planning?: unknown; calendar?: unknown; context?: unknown;
   };
+
+  /* السياق الموحّد من محرّكات درب (طبقة التنسيق) — نصّ مُقيَّد الطول، يُحقن أولاً.
+     الذكاء يأتي من المحرّكات؛ النموذج طبقة لغة فقط. */
+  const unifiedContext = typeof rawContext === "string" && rawContext.length <= 4000 && !isInjection(rawContext)
+    ? rawContext.trim() : "";
 
   /* ملف الطالب للتخصيص — اختياري، يُنظَّف بصرامة (allow-list) */
   const profile = sanitizeProfile(rawProfile);
@@ -429,7 +434,8 @@ export async function POST(req: NextRequest) {
         goldenPath ? priorityFocusSubjects(goldenPath) : undefined))
     : "";
 
-  const system = [baseSystem, goldenBlock, profileBlock, strategyBlock].filter(Boolean).join("\n\n");
+  /* السياق الموحّد أولاً (طبقة التنسيق) ثم البرومبت والكتل التخصصية للتخطيط */
+  const system = [baseSystem, personalize ? unifiedContext : "", goldenBlock, profileBlock, strategyBlock].filter(Boolean).join("\n\n");
 
   /* مع الصور نستخدم موديل الرؤية (Llama 4 Scout)؛ غيره نصّي */
   const useVision = isTopics && images.length > 0;

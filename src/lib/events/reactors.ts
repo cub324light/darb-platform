@@ -26,6 +26,7 @@ export function makeMemoryReactor(mem: MemoryEngine): Reactor {
       "StudentRegistered", "GoalChanged", "UniversitySelected",
       "ScoreUpdated", "ExamCompleted", "STEPCompleted",
       "StudentFinishedSession", "UniversityPhaseEntered", "CareerPhaseEntered",
+      "DuwairbConversationFinished",
     ],
     react: (e) => {
       const stage = e.educationalStage as EduStage;
@@ -74,6 +75,12 @@ export function makeMemoryReactor(mem: MemoryEngine): Reactor {
           break;
         case "CareerPhaseEntered":
           mem.remember({ type: "relationship.milestone", value: { text: "دخل مرحلة العمل" }, source: "event", educationalStage: "career", dedupeKey: e.id, evidence: evidence(e) });
+          break;
+        case "DuwairbConversationFinished":
+          // المحادثات السابقة تُحفظ كحقيقة بارزة (معرّف حتميّ للاستعادة)
+          if (e.metadata.topic && (e.metadata.messages ?? 0) > 0) {
+            mem.remember({ type: "conversation.salientFact", value: { text: `سأل دويرب عن: ${e.metadata.topic}` }, source: "duwairb", educationalStage: stage, dedupeKey: e.id, evidence: evidence(e) });
+          }
           break;
       }
     },

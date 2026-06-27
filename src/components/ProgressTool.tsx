@@ -4,6 +4,7 @@
    قراءة موجزة + خطوة عملية واحدة. أبرز قدرة شخصية في درب. */
 import { useState } from "react";
 import { buildDuwairbProfile } from "@/lib/duwairb";
+import { askDuwairb } from "@/lib/orchestrator";
 import { loadPlanningPrefs, currentCalendarSignals } from "@/lib/strategy";
 import { recordAIChat } from "@/lib/storage";
 import { recordCoachInteraction } from "@/lib/coachMemory";
@@ -28,21 +29,18 @@ export default function ProgressTool({ subjects }: Props) {
     setErr("");
     setResponse("");
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: "حلّل تقدّمي الحالي وأعطني أهم تركيز وخطوة عملية واحدة لأقترب من هدفي.",
-          subjects,
-          mode: "progress",
-          profile,
-          planning: loadPlanningPrefs(),
-          calendar: currentCalendarSignals(),
-        }),
+      /* عبر طبقة التنسيق: يبني السياق الموحّد من كل المحرّكات، يستدعي النموذج،
+         ويُطلق أحداث المحادثة (فتعلّم الذاكرة منها) — لا اتصال مباشر بالنموذج. */
+      const { text: raw } = await askDuwairb({
+        prompt: "حلّل تقدّمي الحالي وأعطني أهم تركيز وخطوة عملية واحدة لأقترب من هدفي.",
+        subjects,
+        mode: "progress",
+        topic: "تحليل التقدّم",
+        profile,
+        planning: loadPlanningPrefs(),
+        calendar: currentCalendarSignals(),
       });
-      const data = (await res.json()) as { text?: string; error?: string };
-      if (data.error && !data.text) { setErr(data.error); return; }
-      const text = (data.text ?? "لم يرجع رد، حاول مرة ثانية").trim();
+      const text = (raw || "لم يرجع رد، حاول مرة ثانية").trim();
       setResponse(text);
       recordAIChat();
       trackEvent("ai_progress_analyzed", { personalized });
