@@ -454,6 +454,17 @@ export default function RoadmapPage() {
     if (tadreebComplete) celebrate("darb_tadreeb_celebrated");
   }, [taseesComplete, tadreebComplete]);
 
+  /* تخطيط سطح المكتب: القائمة + تفاصيل المادة جنباً إلى جنب (≥1280px) */
+  const [isWide, setIsWide] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(min-width: 1280px)").matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1280px)");
+    const h = (e: MediaQueryListEvent) => setIsWide(e.matches);
+    mq.addEventListener("change", h);
+    return () => mq.removeEventListener("change", h);
+  }, []);
+
   /* ─── Actions ─── */
   const updFlow = (patch: Partial<ExamFlow>) => {
     const u = { ...examFlow, ...patch };
@@ -518,125 +529,118 @@ export default function RoadmapPage() {
     setTasreebatPct(0); saveTasreebatPct(0);
   };
 
-  /* ══ Drill-down: التأسيس ══ */
-  if (selected && drillPhase === "tasees") {
-    const color   = subjectColor(track, selected);
-    const lessons = lessonsOf(selected);
-    const dc      = lessons.filter((l) => doneSet.has(l.key)).length;
-    const pct     = lessons.length === 0 ? 0 : Math.round((dc / lessons.length) * 100);
-    const totals  = isTahsili ? TAHSILI_TOTALS[selected as TahsiliSubject] : null;
+  /* ══ تفاصيل المادة (تأسيس/تدريب) — جسم مشترك بين الجوال (شاشة كاملة) وسطح المكتب (لوحة جانبية) ══ */
+  const detailCount = (): string => {
+    if (!selected || !drillPhase) return "";
+    if (drillPhase === "tasees") {
+      const l = lessonsOf(selected);
+      return `${l.filter((x) => doneSet.has(x.key)).length}/${l.length}`;
+    }
+    const it = trainingOf(selected);
+    return `${it.filter((x) => tadreebDoneSet.has(x.id)).length}/${it.length}`;
+  };
 
-    const addCustom = () => {
-      if (!newLesson.trim()) return;
-      setCustom((p) => [...p, { id: Date.now().toString(), subject: selected, title: newLesson.trim() }]);
-      setNewLesson("");
-    };
-    const toggle = (key: string) =>
-      setDone((p) => p.includes(key) ? p.filter((k) => k !== key) : [...p, key]);
+  const renderDetailBody = () => {
+    if (!selected || !drillPhase) return null;
 
-    return (
-      <div className="min-h-dvh pb-nav relative z-[1]">
-        <Dome compact>
-          <div className="flex items-center justify-between">
-            <button onClick={() => setSelected(null)} className="dome-chip text-[17px] font-bold" style={{ color: "var(--text)" }}>← رجوع</button>
-            <h1 className="title-lg grad-title">{selected}</h1>
-            <span className="dome-chip num-hero text-[17px]" style={{ color: "var(--text)" }}>{dc}/{lessons.length}</span>
+    if (drillPhase === "tasees") {
+      const color   = subjectColor(track, selected);
+      const lessons = lessonsOf(selected);
+      const dc      = lessons.filter((l) => doneSet.has(l.key)).length;
+      const pct     = lessons.length === 0 ? 0 : Math.round((dc / lessons.length) * 100);
+      const totals  = isTahsili ? TAHSILI_TOTALS[selected as TahsiliSubject] : null;
+      const addCustom = () => {
+        if (!newLesson.trim()) return;
+        setCustom((p) => [...p, { id: Date.now().toString(), subject: selected, title: newLesson.trim() }]);
+        setNewLesson("");
+      };
+      const toggle = (key: string) =>
+        setDone((p) => p.includes(key) ? p.filter((k) => k !== key) : [...p, key]);
+
+      return (
+        <>
+          <div className="px-5 mb-6 rise rise-1">
+            <div className="rounded-2xl p-5" style={{ background: "var(--surface)", border: `1.5px solid ${color}`, boxShadow: `0 0 14px ${color}25` }}>
+              <div className="flex items-center justify-between mb-3">
+                <p className="font-bold text-base text-[var(--text)]">التأسيس — {selected}</p>
+                <span className="font-mono-nums font-black text-2xl" style={{ color }}>{pct}%</span>
+              </div>
+              <div className="h-2.5 bg-[var(--border)] rounded-full overflow-hidden mb-3">
+                <div className="h-full rounded-full transition-all duration-500" style={{ width: pct + "%", background: color }} />
+              </div>
+              <div className="flex gap-4 flex-wrap">
+                <span className="text-sm text-[var(--text-muted)]">{lessons.length} درس</span>
+                {totals && <><span className="text-sm text-[var(--text-muted)]">{totals.hours} ساعة</span><span className="text-sm text-[var(--text-muted)]">ص {totals.pages}</span></>}
+              </div>
+            </div>
           </div>
-        </Dome>
-        <div className="h-5" />
-        <div className="px-5 mb-6 rise rise-1">
-          <div className="rounded-2xl p-5" style={{ background: "var(--surface)", border: `1.5px solid ${color}`, boxShadow: `0 0 14px ${color}25` }}>
-            <div className="flex items-center justify-between mb-3">
-              <p className="font-bold text-base text-[var(--text)]">التأسيس — {selected}</p>
-              <span className="font-mono-nums font-black text-2xl" style={{ color }}>{pct}%</span>
-            </div>
-            <div className="h-2.5 bg-[var(--border)] rounded-full overflow-hidden mb-3">
-              <div className="h-full rounded-full transition-all duration-500" style={{ width: pct + "%", background: color }} />
-            </div>
-            <div className="flex gap-4 flex-wrap">
-              <span className="text-sm text-[var(--text-muted)]">{lessons.length} درس</span>
-              {totals && <><span className="text-sm text-[var(--text-muted)]">{totals.hours} ساعة</span><span className="text-sm text-[var(--text-muted)]">ص {totals.pages}</span></>}
-            </div>
-          </div>
-        </div>
-        {!isTahsili && (
-          <div className="px-5 mb-6 flex flex-col gap-3">
-            <div className="flex gap-2.5">
-              <input value={newLesson} onChange={(e) => setNewLesson(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addCustom()}
-                placeholder={`درس جديد في ${selected}...`}
-                className="flex-1 min-w-0 rounded-2xl px-4 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none min-h-[54px]"
-                style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }} />
-              <button onClick={addCustom} className="px-6 rounded-2xl font-black text-lg min-h-[54px]"
-                style={{ background: "transparent", border: `1.5px solid ${color}`, color }}>+</button>
-            </div>
-            <TopicExtractor subject={selected} color={color}
-              onAdd={(titles) => setCustom((p) => [
-                ...p,
-                ...titles.map((t, i) => ({ id: `${Date.now()}-${i}`, subject: selected, title: t })),
-              ])} />
-          </div>
-        )}
-        <div className="px-5 flex flex-col gap-3 rise rise-2">
-          {lessons.length === 0 && (
-            <div className="text-center py-12">
-              <p className="title-md text-[var(--text)] mb-2">ما فيه دروس بعد</p>
-              <p className="body-sm">أضف دروسك فوق وتابع تقدمك درساً بدرس.</p>
+          {!isTahsili && (
+            <div className="px-5 mb-6 flex flex-col gap-3">
+              <div className="flex gap-2.5">
+                <input value={newLesson} onChange={(e) => setNewLesson(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addCustom()}
+                  placeholder={`درس جديد في ${selected}...`}
+                  className="flex-1 min-w-0 rounded-2xl px-4 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none min-h-[54px]"
+                  style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }} />
+                <button onClick={addCustom} className="px-6 rounded-2xl font-black text-lg min-h-[54px]"
+                  style={{ background: "transparent", border: `1.5px solid ${color}`, color }}>+</button>
+              </div>
+              <TopicExtractor subject={selected} color={color}
+                onAdd={(titles) => setCustom((p) => [
+                  ...p,
+                  ...titles.map((t, i) => ({ id: `${Date.now()}-${i}`, subject: selected, title: t })),
+                ])} />
             </div>
           )}
-          {lessons.map((lesson) => {
-            const isDone = doneSet.has(lesson.key);
-            const diffColor = lesson.diff === "سهل" ? "#10B981" : lesson.diff === "متوسط" ? "#F59E0B" : "#EF4444";
-            return (
-              <div key={lesson.key} onClick={() => toggle(lesson.key)}
-                className="rounded-2xl p-5 cursor-pointer transition active:scale-[0.98]"
-                style={{ background: isDone ? color + "10" : "var(--surface)", border: `1.5px solid ${isDone ? color + "40" : "var(--border)"}`, minHeight: "76px" }}>
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={isDone ? { background: color } : { border: "2px solid var(--border)" }}>
-                    {isDone && <span className="text-white text-lg font-black">✓</span>}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`font-black text-base leading-snug ${isDone ? "line-through text-[var(--text-muted)]" : "text-[var(--text)]"}`}>{lesson.title}</p>
-                    {lesson.meta && <p className="text-sm text-[var(--text-muted)] mt-1.5">{lesson.meta}</p>}
-                  </div>
-                  {lesson.diff && <span className="text-sm font-bold flex-shrink-0" style={{ color: diffColor }}>{lesson.diff}</span>}
-                  {!isTahsili && (
-                    <button onClick={(e) => { e.stopPropagation(); setCustom((p) => p.filter((c) => `custom-${c.id}` !== lesson.key)); setDone((p) => p.filter((k) => k !== lesson.key)); }}
-                      className="text-[var(--text-muted)] text-lg px-2 min-h-[44px]" aria-label="حذف">✕</button>
-                  )}
-                </div>
+          <div className="px-5 flex flex-col gap-3 rise rise-2">
+            {lessons.length === 0 && (
+              <div className="text-center py-12">
+                <p className="title-md text-[var(--text)] mb-2">ما فيه دروس بعد</p>
+                <p className="body-sm">أضف دروسك فوق وتابع تقدمك درساً بدرس.</p>
               </div>
-            );
-          })}
-        </div>
-        <div className="h-6" />
-      </div>
-    );
-  }
+            )}
+            {lessons.map((lesson) => {
+              const isDone = doneSet.has(lesson.key);
+              const diffColor = lesson.diff === "سهل" ? "#10B981" : lesson.diff === "متوسط" ? "#F59E0B" : "#EF4444";
+              return (
+                <div key={lesson.key} onClick={() => toggle(lesson.key)}
+                  className="rounded-2xl p-5 cursor-pointer transition active:scale-[0.98]"
+                  style={{ background: isDone ? color + "10" : "var(--surface)", border: `1.5px solid ${isDone ? color + "40" : "var(--border)"}`, minHeight: "76px" }}>
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={isDone ? { background: color } : { border: "2px solid var(--border)" }}>
+                      {isDone && <span className="text-white text-lg font-black">✓</span>}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`font-black text-base leading-snug ${isDone ? "line-through text-[var(--text-muted)]" : "text-[var(--text)]"}`}>{lesson.title}</p>
+                      {lesson.meta && <p className="text-sm text-[var(--text-muted)] mt-1.5">{lesson.meta}</p>}
+                    </div>
+                    {lesson.diff && <span className="text-sm font-bold flex-shrink-0" style={{ color: diffColor }}>{lesson.diff}</span>}
+                    {!isTahsili && (
+                      <button onClick={(e) => { e.stopPropagation(); setCustom((p) => p.filter((c) => `custom-${c.id}` !== lesson.key)); setDone((p) => p.filter((k) => k !== lesson.key)); }}
+                        className="text-[var(--text-muted)] text-lg px-2 min-h-[44px]" aria-label="حذف">✕</button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="h-6" />
+        </>
+      );
+    }
 
-  /* ══ Drill-down: التدريب ══ */
-  if (selected && drillPhase === "tadreeb") {
+    /* تدريب */
     const color = subjectColor(track, selected);
     const items = trainingOf(selected);
-    const dc    = items.filter((t) => tadreebDoneSet.has(t.id)).length;
-    const pct   = items.length === 0 ? 0 : Math.round((dc / items.length) * 100);
-
     const addTraining = () => {
       if (!newTraining.trim()) return;
       setTadreebItems((p) => [...p, { id: Date.now().toString() + Math.random().toString(36).slice(2), subject: selected, title: newTraining.trim() }]);
       setNewTraining("");
     };
+    const pct = items.length === 0 ? 0 : Math.round((items.filter((t) => tadreebDoneSet.has(t.id)).length / items.length) * 100);
 
     return (
-      <div className="min-h-dvh pb-nav relative z-[1]">
-        <Dome compact>
-          <div className="flex items-center justify-between">
-            <button onClick={() => setSelected(null)} className="dome-chip text-[17px] font-bold" style={{ color: "var(--text)" }}>← رجوع</button>
-            <h1 className="title-lg grad-title">{selected}</h1>
-            <span className="dome-chip num-hero text-[17px]" style={{ color: "var(--text)" }}>{dc}/{items.length}</span>
-          </div>
-        </Dome>
-        <div className="h-5" />
+      <>
         <div className="px-5 mb-5 rise rise-1">
           <div className="rounded-2xl p-5" style={{ background: "var(--surface)", border: `1.5px solid ${color}55` }}>
             <div className="flex items-center justify-between mb-3">
@@ -690,6 +694,23 @@ export default function RoadmapPage() {
           })}
         </div>
         <div className="h-6" />
+      </>
+    );
+  };
+
+  /* الجوال: تفاصيل المادة شاشة كاملة (سطح المكتب يعرضها كلوحة جانبية في العرض الرئيسي) */
+  if (!isWide && selected && (drillPhase === "tasees" || drillPhase === "tadreeb")) {
+    return (
+      <div className="min-h-dvh pb-nav relative z-[1]">
+        <Dome compact>
+          <div className="flex items-center justify-between">
+            <button onClick={() => setSelected(null)} className="dome-chip text-[17px] font-bold" style={{ color: "var(--text)" }}>← رجوع</button>
+            <h1 className="title-lg grad-title">{selected}</h1>
+            <span className="dome-chip num-hero text-[17px]" style={{ color: "var(--text)" }}>{detailCount()}</span>
+          </div>
+        </Dome>
+        <div className="h-5" />
+        {renderDetailBody()}
       </div>
     );
   }
@@ -811,8 +832,11 @@ export default function RoadmapPage() {
 
   /* ══ الصفحة الرئيسية ══ */
   return (
-    <div className="min-h-dvh pb-nav relative z-[1] page-enter">
+    <div className="min-h-dvh pb-nav relative z-[1] page-enter desk-wide">
       {showConfetti && <Confetti count={36} />}
+      {/* سطح المكتب: شبكة [القائمة | تفاصيل المادة] جنباً إلى جنب؛ الجوال يبقى عموداً واحداً */}
+      <div className="rm-grid">
+      <div className="rm-main">
       <PageGuide pageKey="roadmap" steps={[
         { title: "خريطة طريقك", desc: "رحلتك ثلاث مراحل: تأسيس (تتعلم الأساسيات) ← تدريب (تحل تجميعات) ← تسريبات (محاكاة الاختبار الحقيقي)." },
         { title: "علّم اللي خلصته", desc: "اضغط على أي درس بعد ما تخلصه وبتشوف نسبة تقدمك ترتفع. كل ربع تكمله يطلع لك تنبيه مراجعة." },
@@ -1269,6 +1293,32 @@ export default function RoadmapPage() {
 
       <div className="h-6" />
       <PageFooter />
+      </div>
+
+      {/* لوحة تفاصيل المادة الجانبية (سطح المكتب فقط) */}
+      {isWide && (
+        <aside className="rm-detail">
+          {selected && drillPhase ? (
+            <>
+              <div className="rm-detail-head">
+                <span className="font-black text-[15px] flex-1 min-w-0 truncate" style={{ color: "var(--text)" }}>{selected}</span>
+                <span className="num-hero text-[13px]" style={{ color: "var(--text-muted)" }}>{detailCount()}</span>
+                <button onClick={() => setSelected(null)} className="rm-detail-close" aria-label="إغلاق التفاصيل">✕</button>
+              </div>
+              <div className="rm-detail-scroll">{renderDetailBody()}</div>
+            </>
+          ) : (
+            <div className="rm-detail-empty">
+              <span className="text-[34px]">🗺️</span>
+              <p className="font-bold text-[15px] mt-3" style={{ color: "var(--text)" }}>اختر مادة لعرض دروسها</p>
+              <p className="text-[13px] mt-1 leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                اضغط أي مادة من المراحل على اليمين لتتابع دروسها وتمارينها هنا.
+              </p>
+            </div>
+          )}
+        </aside>
+      )}
+      </div>
 
       {/* DayScheduler */}
       {schedulerDate && (

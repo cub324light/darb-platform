@@ -789,6 +789,51 @@ html[data-sidebar="collapsed"] { --desk-sw: 76px;  }
   }
 }
 
+/* ═══════════════════════════════════════════════════════
+   مساري (Roadmap) — القائمة + تفاصيل المادة جنباً إلى جنب (≥1280px)
+   .rm-grid/.rm-main شفّافة على الجوال؛ .rm-detail لا يُركّب إلا على سطح المكتب.
+   ═══════════════════════════════════════════════════════ */
+@media (min-width: 1280px) {
+  .rm-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 400px;
+    align-items: start;
+  }
+  .rm-main { min-width: 0; }
+  .rm-detail {
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    border-inline-start: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .rm-detail-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .rm-detail-close {
+    flex-shrink: 0;
+    width: 30px; height: 30px;
+    border-radius: 9px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .rm-detail-close:hover { color: var(--text); }
+  .rm-detail-scroll { flex: 1; overflow-y: auto; padding-top: 16px; }
+  .rm-detail-empty {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 40px 24px;
+  }
+  .rm-detail .px-5 { padding-inline: 16px; }
+}
+
 /* ═══════ شريط التنقل العائم — كبسولة ═══════ */
 .float-nav {
   position: fixed;
