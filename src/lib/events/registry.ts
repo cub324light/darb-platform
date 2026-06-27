@@ -49,7 +49,16 @@ export const EVENT_REGISTRY: EventRegistry = {
     validate: (m) => !!m.recId },
   RecommendationDismissed: { type: "RecommendationDismissed", category: "recommendation", milestone: false,
     validate: (m) => !!m.recId },
-  NotificationOpened:      { type: "NotificationOpened", category: "notification", milestone: false },
+
+  NotificationCreated:   { type: "NotificationCreated", category: "notification", milestone: false, validate: (m) => !!m.notificationId },
+  NotificationScheduled: { type: "NotificationScheduled", category: "notification", milestone: false, validate: (m) => !!m.notificationId },
+  NotificationSent:      { type: "NotificationSent", category: "notification", milestone: false, validate: (m) => !!m.notificationId },
+  NotificationDelivered: { type: "NotificationDelivered", category: "notification", milestone: false },
+  NotificationOpened:    { type: "NotificationOpened", category: "notification", milestone: false },
+  NotificationDismissed: { type: "NotificationDismissed", category: "notification", milestone: false },
+  NotificationCompleted: { type: "NotificationCompleted", category: "notification", milestone: false },
+  NotificationMerged:    { type: "NotificationMerged", category: "notification", milestone: false },
+  NotificationCancelled: { type: "NotificationCancelled", category: "notification", milestone: false },
 
   /* المحادثات */
   DuwairbConversationStarted:  { type: "DuwairbConversationStarted", category: "conversation", milestone: false },

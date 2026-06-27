@@ -67,7 +67,17 @@ export interface EventMetaMap {
   /* ── التوصيات والإشعارات ── */
   "RecommendationAccepted":  { recId: string; source: string; targetPage?: string };
   "RecommendationDismissed": { recId: string; source: string };
-  "NotificationOpened":      { notificationId: string };
+
+  /* دورة حياة الإشعار — كلها أحداث (لا حالة موازية) */
+  "NotificationCreated":   { notificationId: string; notifType: string; recId?: string; composite: number };
+  "NotificationScheduled": { notificationId: string; deliverAt: number };
+  "NotificationSent":      { notificationId: string; notifType: string; transport: string };
+  "NotificationDelivered": { notificationId: string };
+  "NotificationOpened":    { notificationId: string };
+  "NotificationDismissed": { notificationId: string };
+  "NotificationCompleted": { notificationId: string };
+  "NotificationMerged":    { notificationId: string; into: string };
+  "NotificationCancelled": { notificationId: string; reason: string };
 
   /* ── المحادثات (دويرب) ── */
   "DuwairbConversationStarted":  { topic?: string; tab?: string };
