@@ -7,6 +7,7 @@ import { isInitialSyncDone, isAccountBlocked } from "@/lib/cloudFlags";
 import { loadUser } from "@/lib/storage";
 import Logo from "./Logo";
 import BottomNav from "./BottomNav";
+import DesktopSidebar from "./DesktopSidebar";
 
 /* المسارات العامة — تُعرض بدون تسجيل دخول للطالب:
    «/» و«/privacy» تسويقية، و«/admin» له حماية كلمة سر خاصة على الخادم. */
@@ -136,12 +137,12 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   /* عائد بجلسة سابقة على نفس الجهاز: اعرض التطبيق فوراً من بياناته المحلية بينما
      يُحمَّل Firebase وتُحَلّ المصادقة في الخلفية. */
   if (!authResolved) {
-    if (hasLocal && !guestMode) return <>{children}{showNav && <BottomNav />}</>;
+    if (hasLocal && !guestMode) return <>{children}{showNav && <><BottomNav /><DesktopSidebar /></>}</>;
     return <Splash />;
   }
   if (!authed) return <SignInScreen initialError={redirectErr} onGuest={enterGuestMode} />;
   if (!synced && !guestMode && !hasLocal) return <Splash label="جارٍ استرجاع بياناتك..." />;
   if (isAccountBlocked()) return <BlockedScreen />;
   if (needsOnboarding) return <Splash />;
-  return <>{children}{showNav && <BottomNav />}</>;
+  return <>{children}{showNav && <><BottomNav /><DesktopSidebar /></>}</>;
 }

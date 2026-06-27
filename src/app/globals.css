@@ -548,33 +548,17 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
   .desk-grid-3 { grid-template-columns: repeat(3, 1fr) !important; }
   .desk-grid-4 { grid-template-columns: repeat(4, 1fr) !important; }
 
-  /* ─── شريط التنقل → شريط جانبي أيقوني على يمين الشاشة (RTL start) ─── */
-  .float-nav {
-    left: auto;
-    right: 8px;
-    bottom: auto;
-    top: 50%;
-    transform: translateY(-50%);
-    max-width: none;
-    width: 60px;
-    height: auto;
-    border-radius: 20px;
-    padding: 10px 0;
-    flex-direction: column;
-    backdrop-filter: blur(14px) saturate(150%);
-    -webkit-backdrop-filter: blur(14px) saturate(150%);
+  /* ─── الشريط الجانبي يحلّ محلّ الشريط السفلي وزر دويرب العائم ─── */
+  .float-nav { display: none !important; }
+  .duirb-fab { display: none !important; }
+
+  /* تجربة سطح المكتب: المحتوى يُزاح بعرض الشريط الجانبي.
+     الصفحات المعاد تصميمها لسطح المكتب تتمدّد بنفسها عبر .desk-wide. */
+  html[data-sidebar] #darb-main {
+    padding-inline-start: var(--desk-sw, 248px);
+    transition: padding-inline-start 0.18s ease;
   }
-  .float-nav-item {
-    flex: none;
-    width: 100%;
-    height: 52px;
-    gap: 0;
-  }
-  .float-nav-item .nav-bubble {
-    width: 44px;
-    height: 38px;
-  }
-  .nav-label { display: none; }
+  .desk-wide.page, .desk-wide.pb-nav { max-width: 1280px; }
 
   /* ─── تخفيف الضبابية (تكلفة الرسم ترتفع مع عرض 920px) ─── */
   .landing-nav {
@@ -586,6 +570,172 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
     -webkit-backdrop-filter: blur(6px);
   }
   .hero-pulse { filter: blur(20px); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   الشريط الجانبي الدائم (سطح المكتب) — DesktopSidebar
+   مخفيّ على الجوال تماماً؛ يظهر كعمود ثابت عند ≥1100px.
+   ═══════════════════════════════════════════════════════ */
+html[data-sidebar="expanded"]  { --desk-sw: 248px; }
+html[data-sidebar="collapsed"] { --desk-sw: 76px;  }
+
+.desk-sidebar { display: none; }
+
+@media (min-width: 1100px) {
+  .desk-sidebar {
+    position: fixed;
+    inset-inline-start: 0;       /* RTL → الحافة اليمنى */
+    top: 0; bottom: 0;
+    z-index: 60;
+    width: var(--desk-sw, 248px);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 16px 12px;
+    background: var(--surface);
+    border-inline-end: 1px solid var(--border);   /* الحافة الداخلية تجاه المحتوى */
+    box-shadow: 0 0 40px rgba(0,0,0,0.18);
+    transition: width 0.18s ease;
+    overflow: hidden;
+  }
+
+  /* رأس: الهوية + زر الطيّ */
+  .desk-sidebar-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 6px 12px;
+    min-height: 44px;
+  }
+  .desk-brand { display: inline-flex; align-items: center; overflow: hidden; white-space: nowrap; }
+  .desk-collapse-btn {
+    flex-shrink: 0;
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 9px;
+    color: var(--text-muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    transition: color 0.15s, background 0.15s;
+  }
+  .desk-collapse-btn:hover { color: var(--text); background: color-mix(in srgb, var(--accent) 12%, var(--surface2)); }
+
+  /* قائمة التنقّل */
+  .desk-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+  }
+  .desk-nav::-webkit-scrollbar { width: 6px; }
+  .desk-nav::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .desk-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 11px;
+    border-radius: 11px;
+    color: var(--text-dim);
+    font-weight: 700;
+    font-size: 14.5px;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: color 0.15s, background 0.15s;
+  }
+  .desk-nav-item:hover { color: var(--text); background: var(--surface2); }
+  .desk-nav-item.active {
+    color: var(--accent-light);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+  .desk-nav-icon { position: relative; flex-shrink: 0; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; }
+  .desk-nav-label { overflow: hidden; text-overflow: ellipsis; }
+  .desk-nav-badge {
+    position: absolute;
+    top: -6px; inset-inline-end: -7px;
+    min-width: 16px; height: 16px;
+    padding: 0 4px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 9999px;
+    background: #EF4444; color: #fff;
+    font-size: 9px; font-weight: 800; line-height: 1;
+  }
+
+  /* فاصل مجموعة */
+  .desk-nav-sep {
+    display: flex; align-items: center;
+    padding: 12px 11px 4px;
+  }
+  .desk-nav-grouplabel {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.04em;
+    color: var(--text-muted);
+    text-transform: none;
+    white-space: nowrap;
+  }
+
+  /* أسفل: إجراءات + بروفايل */
+  .desk-sidebar-foot {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .desk-quick { display: flex; flex-direction: column; gap: 8px; }
+  .desk-quick-btn {
+    display: flex; align-items: center; gap: 12px;
+    padding: 9px 11px;
+    border-radius: 11px;
+    font-weight: 800; font-size: 14.5px;
+    white-space: nowrap;
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--ring));
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    color: var(--accent-light);
+    transition: background 0.15s;
+  }
+  .desk-quick-btn:hover { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+  .desk-quick-duirb .desk-nav-label { color: var(--accent-light); }
+  .desk-quick-row { display: flex; align-items: center; gap: 8px; }
+
+  .desk-profile {
+    display: flex; align-items: center; gap: 11px;
+    padding: 8px;
+    border-radius: 13px;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    transition: background 0.15s;
+  }
+  .desk-profile:hover { background: color-mix(in srgb, var(--accent) 10%, var(--surface2)); }
+  .desk-profile-avatar {
+    flex-shrink: 0;
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 10px;
+    font-weight: 900; font-size: 16px; color: #fff;
+    background: linear-gradient(135deg, var(--accent-2), var(--accent-light));
+  }
+  .desk-profile-meta { display: flex; flex-direction: column; overflow: hidden; }
+  .desk-profile-name { font-weight: 800; font-size: 14px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .desk-profile-sub  { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; }
+
+  /* ─── الحالة المطويّة ─── */
+  .desk-sidebar.collapsed { padding: 16px 10px; align-items: stretch; }
+  .desk-sidebar.collapsed .desk-nav-label,
+  .desk-sidebar.collapsed .desk-nav-grouplabel,
+  .desk-sidebar.collapsed .desk-profile-meta,
+  .desk-sidebar.collapsed .desk-brand { display: none; }
+  .desk-sidebar.collapsed .desk-nav-item,
+  .desk-sidebar.collapsed .desk-quick-btn { justify-content: center; padding: 10px 0; gap: 0; }
+  .desk-sidebar.collapsed .desk-sidebar-head { justify-content: center; }
+  .desk-sidebar.collapsed .desk-nav-sep { justify-content: center; padding: 10px 0 4px; }
+  .desk-sidebar.collapsed .desk-nav-sep::before { content: ""; width: 22px; height: 1px; background: var(--border); }
+  .desk-sidebar.collapsed .desk-quick-row { justify-content: center; }
+  .desk-sidebar.collapsed .desk-profile { justify-content: center; padding: 6px; }
 }
 
 /* ═══════ شريط التنقل العائم — كبسولة ═══════ */
