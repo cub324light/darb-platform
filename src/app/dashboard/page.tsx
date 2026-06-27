@@ -15,10 +15,7 @@ import DayScheduler, { getEventsForDate } from "@/components/DayScheduler";
 import ExamDateButton from "@/components/ExamDateButton";
 /* استيراد مباشر (لا code-split) لتفادي انزياح التخطيط: التنبيه يحسب حالته
    تزامنياً ويظهر في نفس إطار الرسم بدل القفز بعد تحميل حزمة منفصلة */
-import ExamRegistrationAlert from "@/components/ExamRegistrationAlert";
-import SchoolCalendarAlert from "@/components/SchoolCalendarAlert";
-import GoldenPathCard from "@/components/GoldenPathCard";
-import { isUniversityPhase } from "@/lib/phase";
+import RecommendationFeed from "@/components/RecommendationFeed";
 import dynamic from "next/dynamic";
 const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
 const RetentionHost = dynamic(() => import("@/components/retention/RetentionHost"), { ssr: false });
@@ -1026,16 +1023,14 @@ export default function DashboardPage() {
           {/* العمود الأيمن (rail لاصق): الأولوية + اليوم + الإحصاءات */}
           <div className="dash-col">
             <div className="dash-col-rail flex flex-col gap-[18px]">
-              <GoldenPathCard />
+              <RecommendationFeed />
               {renderSection("today")}
               {renderSection("stats")}
             </div>
           </div>
 
-          {/* العمود الأوسط: التنبيهات + المسارات + الجدول + الأسبوع */}
+          {/* العمود الأوسط: المسارات + الجدول + الأسبوع */}
           <div className="dash-col">
-            {!isUniversityPhase(user) && <ExamRegistrationAlert />}
-            {!isUniversityPhase(user) && <SchoolCalendarAlert />}
             {renderSection("track")}
             {renderSection("schedule")}
             {renderSection("weekly")}
@@ -1058,51 +1053,8 @@ export default function DashboardPage() {
       {!isWide && (
       <div className="page-content mt-4">
 
-        {/* ── المسار الذهبي: أولويتك الحالية (أعلى أولوية) ── */}
-        <GoldenPathCard />
-
-        {/* ── تنبيهات القياس والتقويم — للثانوي والخريج فقط (لا للجامعي) ── */}
-        {!isUniversityPhase(user) && <ExamRegistrationAlert />}
-        {!isUniversityPhase(user) && <SchoolCalendarAlert />}
-
-        {/* ── بطاقة القبول الجامعي — تظهر لطالب ثالث ثانوي أو خريج فقط ── */}
-        {showsUniversityUI(user) && (
-          <Link href="/university"
-            className="rise block rounded-2xl px-5 py-4 transition active:scale-[0.98]"
-            style={{
-              background: "linear-gradient(135deg, color-mix(in srgb,#F5B40A 10%,transparent), color-mix(in srgb,var(--accent) 6%,transparent)), var(--surface)",
-              border: "1.5px solid color-mix(in srgb,#F5B40A 30%,transparent)",
-              textDecoration: "none",
-            }}>
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[13px] font-bold mb-1" style={{ color: "#D4920A" }}>🎓 القبول الجامعي</p>
-                <p className="text-[15px] font-black" style={{ color: "var(--text)" }}>حساب الموزونة ومقارنة الجامعات</p>
-                <p className="text-[12.5px] mt-0.5" style={{ color: "var(--text-muted)" }}>اكتشف وين تقف وش تحتاج تحسّن</p>
-              </div>
-              <span className="text-[26px] flex-shrink-0">🏛️</span>
-            </div>
-          </Link>
-        )}
-
-        {/* خطوتك التالية — نداء واحد ذكي (أعلى أولوية فقط) */}
-        {!editMode && topNudge && (
-          <Link href={topNudge.href} className="rise block rounded-2xl px-4 py-3.5 transition active:scale-[0.98]"
-            style={{
-              background: `color-mix(in srgb, ${topNudge.color} 9%, transparent)`,
-              border: `1px solid color-mix(in srgb, ${topNudge.color} 28%, transparent)`,
-              textDecoration: "none",
-            }}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[13px] font-bold mb-0.5" style={{ color: "var(--text-muted)" }}>خطوتك التالية</p>
-                <p className="text-[15px] font-black" style={{ color: topNudge.color }}>{topNudge.text}</p>
-                <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>{topNudge.sub}</p>
-              </div>
-              <span className="text-lg font-black" style={{ color: topNudge.color }}>←</span>
-            </div>
-          </Link>
-        )}
+        {/* ── منطقة التوصيات — مدفوعة بمحرّك التوصيات المركزي (المسار الذهبي + التنبيهات + القبول) ── */}
+        {!editMode && <RecommendationFeed />}
 
         {/* شريط التخصيص — واضح: من ما عجبه الترتيب يغيّره */}
         <div className="flex justify-between items-center gap-3">
