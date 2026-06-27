@@ -66,7 +66,7 @@ export class MemoryEngine {
       throw new Error(`Memory value failed validation for type "${input.type}"`);
     }
     const now = this.now();
-    const key = def.naturalKey ? def.naturalKey(input.value) : undefined;
+    const key = input.dedupeKey ?? (def.naturalKey ? def.naturalKey(input.value) : undefined);
     const id = key != null ? `${input.type}:${key}` : `${input.type}:${uid()}`;
 
     const tags = Array.from(new Set([

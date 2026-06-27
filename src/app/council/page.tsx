@@ -15,7 +15,7 @@ import type { TrackId } from "@/lib/tracks";
 import { CHAT_GROUPS, type ChatGroup } from "@/lib/groups";
 import { detectContact } from "@/lib/contactFilter";
 import { detectProfanity, detectSensitive } from "@/lib/moderation";
-import { trackEvent } from "@/lib/events";
+import { trackEvent } from "@/lib/analytics";
 import { EmailVerifyNotice } from "@/components/EmailVerify";
 
 /* ─── بيانات ─── */

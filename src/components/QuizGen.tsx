@@ -3,7 +3,7 @@ import { useState } from "react";
 import { recordQuiz } from "@/lib/storage";
 import { buildDuwairbProfile } from "@/lib/duwairb";
 import { recordCoachInteraction } from "@/lib/coachMemory";
-import { trackEvent } from "@/lib/events";
+import { trackEvent } from "@/lib/analytics";
 
 interface QA { q: string; a: string }
 

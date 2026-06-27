@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { buildDuwairbProfile } from "@/lib/duwairb";
 import { recordCoachInteraction } from "@/lib/coachMemory";
-import { trackEvent } from "@/lib/events";
+import { trackEvent } from "@/lib/analytics";
 
 interface Props {
   subjects: string[];

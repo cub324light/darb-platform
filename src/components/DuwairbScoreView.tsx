@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { loadStats } from "@/lib/storage";
 import { buildDuwairbProfile } from "@/lib/duwairb";
 import { computeDuwairbScore, detectMissedOpportunities, type MissedOpportunity } from "@/lib/coachScore";
-import { trackEvent } from "@/lib/events";
+import { trackEvent } from "@/lib/analytics";
 import { useEffect, useState } from "react";
 
 const ar = (n: number) => n.toLocaleString("ar");

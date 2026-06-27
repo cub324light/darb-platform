@@ -14,7 +14,8 @@ import { canApplyUniversity } from "./darbKnowledge";
 import { loadGoldenPath } from "./goldenPath";
 import { buildExamAlerts } from "./examProvider";
 import { memory } from "./memory";
-import { seedMemoryFromStorage } from "./memory/seed";
+import { events } from "./events";
+import { seedStudentMemory } from "./events/bootstrap";
 import type { TrackId } from "./tracks";
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -36,8 +37,10 @@ function readUnreviewedErrors(): number {
 
 /** يجمع كل إشارات الطالب في سياق واحد للمحرّك. */
 export function gatherRecommendationContext(now: number = Date.now()): RecContext {
-  /* امنح المستخدمين الحاليين «دماغاً» مرة واحدة، ثم ابنِ السياق الشخصي */
-  seedMemoryFromStorage();
+  /* امنح المستخدمين الحاليين «دماغاً» عبر حدث StudentRegistered (event-sourcing)،
+     ثم ابنِ السياق الشخصي. events() يُسجّل المُتفاعلات الأساسية أول استدعاء. */
+  events();
+  seedStudentMemory();
   const studentContext = memory().buildStudentContext();
 
   const user = loadUser();

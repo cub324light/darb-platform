@@ -8,7 +8,7 @@ import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import { type DuirbView } from "@/components/DuirbHub";
 import { suggestedTabForPath, contextHintForPath } from "@/lib/duwairb";
-import { trackEvent } from "@/lib/events";
+import { trackEvent } from "@/lib/analytics";
 
 /* تحميل دويرب عند فتحه فقط — يبعد قدراته الخمس (وStorage) عن حزمة كل صفحة */
 const DuirbHub = dynamic(() => import("@/components/DuirbHub"), {

@@ -152,6 +152,9 @@ export interface RememberInput<T extends MemoryType = MemoryType> {
   expiresAt?: number | null;
   tags?: string[];
   evidence?: MemoryEvidence[];
+  /** مفتاح إزالة تكرار حتميّ — للذاكرات غير المُفتَّحة طبيعياً (معالم/أحداث)
+      كي تكون استعادة سجلّ الأحداث (replay) متطابقة (id ثابت بدل عشوائي). */
+  dedupeKey?: string;
 }
 
 export interface MemorySearchFilter {

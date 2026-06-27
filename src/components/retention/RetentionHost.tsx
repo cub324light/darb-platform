@@ -10,7 +10,7 @@ import { loadStats, loadSessionLog, loadUser } from "@/lib/storage";
 import { subjectsForTracks, type TrackId } from "@/lib/tracks";
 import { computeWeeklyReport, fmtMins, type WeeklyReportData } from "@/lib/weeklyReport";
 import { buildDuwairbProfile } from "@/lib/duwairb";
-import { trackEvent } from "@/lib/events";
+import { trackEvent } from "@/lib/analytics";
 import {
   daysAway, recordOpenToday, comebackSummary,
   pendingMilestone, markMilestoneSeen,

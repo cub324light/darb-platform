@@ -8,7 +8,7 @@ import { loadPlanningPrefs, currentCalendarSignals } from "@/lib/strategy";
 import { recordAIChat } from "@/lib/storage";
 import { recordCoachInteraction } from "@/lib/coachMemory";
 import DuwairbScoreView from "@/components/DuwairbScoreView";
-import { trackEvent } from "@/lib/events";
+import { trackEvent } from "@/lib/analytics";
 
 interface Props {
   subjects: string[];

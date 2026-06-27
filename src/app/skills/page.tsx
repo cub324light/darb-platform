@@ -9,7 +9,7 @@ import {
   overallStats, type SkillProgress, type SkillTier,
 } from "@/lib/skillProgress";
 import { loadUser, type DarbUser } from "@/lib/storage";
-import { trackEvent } from "@/lib/events";
+import { trackEvent } from "@/lib/analytics";
 import type { TrackId } from "@/lib/tracks";
 
 const TIER_CONFIG: Record<SkillTier, { label: string; color: string; bg: string }> = {

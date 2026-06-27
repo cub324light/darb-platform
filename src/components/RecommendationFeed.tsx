@@ -7,6 +7,7 @@ import Link from "next/link";
 import GoldenPathCard from "./GoldenPathCard";
 import { loadRecommendations } from "@/lib/recommendationClient";
 import { dismissRecommendation, type Recommendation } from "@/lib/recommendation";
+import { emit } from "@/lib/events";
 import { activateTrack } from "@/lib/storage";
 import { getTrack } from "@/lib/tracks";
 
@@ -20,10 +21,11 @@ const toneColor = (t: Recommendation["tone"]): string =>
   }[t] ?? "var(--accent)");
 
 /* بطاقة توصية إجرائية (تلميح/تنبيه) */
-function RecCard({ r, onDismiss, onAct }: {
+function RecCard({ r, onDismiss, onAct, onAccept }: {
   r: Recommendation;
-  onDismiss: (id: string) => void;
+  onDismiss: (r: Recommendation) => void;
   onAct: (r: Recommendation) => void;
+  onAccept: (r: Recommendation) => void;
 }) {
   const c = toneColor(r.tone);
   const inner = (
@@ -45,7 +47,7 @@ function RecCard({ r, onDismiss, onAct }: {
   return (
     <div className="rise relative rounded-2xl">
       {r.action.kind === "navigate" && r.action.href ? (
-        <Link href={r.action.href} className="block rounded-2xl px-4 py-3.5 transition active:scale-[0.98]" style={style}>
+        <Link href={r.action.href} onClick={() => onAccept(r)} className="block rounded-2xl px-4 py-3.5 transition active:scale-[0.98]" style={style}>
           {inner}
         </Link>
       ) : (
@@ -54,7 +56,7 @@ function RecCard({ r, onDismiss, onAct }: {
         </button>
       )}
       <button
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDismiss(r.id); }}
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDismiss(r); }}
         aria-label="تجاهل"
         className="absolute top-1.5 left-1.5 w-6 h-6 rounded-full flex items-center justify-center text-[12px] font-bold"
         style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
@@ -65,9 +67,9 @@ function RecCard({ r, onDismiss, onAct }: {
 }
 
 /* بطاقة ترقية (مثل القبول الجامعي) */
-function PromoCard({ r }: { r: Recommendation }) {
+function PromoCard({ r, onAccept }: { r: Recommendation; onAccept: (r: Recommendation) => void }) {
   return (
-    <Link href={r.action.href ?? "#"}
+    <Link href={r.action.href ?? "#"} onClick={() => onAccept(r)}
       className="rise block rounded-2xl px-5 py-4 transition active:scale-[0.98]"
       style={{
         background: "linear-gradient(135deg, color-mix(in srgb,#F5B40A 10%,transparent), color-mix(in srgb,var(--accent) 6%,transparent)), var(--surface)",
@@ -97,12 +99,20 @@ export default function RecommendationFeed({ maxNudges = 3 }: { maxNudges?: numb
     return () => window.removeEventListener("focus", onFocus);
   }, []);
 
-  const dismiss = (id: string) => {
-    dismissRecommendation(id);
-    setRecs((prev) => prev.filter((r) => r.id !== id));
+  /* تجاهل → حدث RecommendationDismissed (يُغذّي ذاكرة السلوك عبر المُتفاعل) */
+  const dismiss = (r: Recommendation) => {
+    emit({ eventType: "RecommendationDismissed", metadata: { recId: r.id, source: r.source } });
+    dismissRecommendation(r.id);
+    setRecs((prev) => prev.filter((x) => x.id !== r.id));
+  };
+
+  /* قبول → حدث RecommendationAccepted */
+  const accept = (r: Recommendation) => {
+    emit({ eventType: "RecommendationAccepted", metadata: { recId: r.id, source: r.source, targetPage: r.targetPage } });
   };
 
   const act = (r: Recommendation) => {
+    accept(r);
     if (r.action.kind === "activateTrack" && r.action.trackIds?.length) {
       const titles = r.action.trackIds.map((id) => getTrack(id).title).join(" و");
       if (!window.confirm(`بنفعّل ${titles} في مساراتك ونحدّث خطتك حسب أولويتك. تمام؟`)) return;
@@ -131,8 +141,8 @@ export default function RecommendationFeed({ maxNudges = 3 }: { maxNudges?: numb
     <div className="flex flex-col gap-3">
       {display.map((r) =>
         r.source === "goldenPath" ? <GoldenPathCard key={r.id} />
-        : r.kind === "promote" ? <PromoCard key={r.id} r={r} />
-        : <RecCard key={r.id} r={r} onDismiss={dismiss} onAct={act} />
+        : r.kind === "promote" ? <PromoCard key={r.id} r={r} onAccept={accept} />
+        : <RecCard key={r.id} r={r} onDismiss={dismiss} onAct={act} onAccept={accept} />
       )}
     </div>
   );

@@ -8,40 +8,46 @@ import type { MemoryRegistry, MemoryType, MemoryCategory } from "./types";
 const DAY = 1; // وحدة decayHalfLifeDays بالأيام
 
 export const MEMORY_REGISTRY: MemoryRegistry = {
-  /* ── Identity — دائمة، عالية الأهمية، لا تضمحل ── */
+  /* ── Identity — مفردة لكل طالب (naturalKey ثابت) فلا تتكرر وتُستعاد بثبات ── */
   "identity.name": {
     type: "identity.name", category: "identity",
     defaultImportance: 0.98, defaultConfidence: 1, decayHalfLifeDays: Infinity, pinned: true,
+    naturalKey: () => "self",
     validate: (v) => typeof v.name === "string" && v.name.trim().length > 0,
     deriveTags: () => ["identity", "name"],
   },
   "identity.age": {
     type: "identity.age", category: "identity",
     defaultImportance: 0.6, defaultConfidence: 0.95, decayHalfLifeDays: 365 * DAY, pinned: false,
+    naturalKey: () => "self",
     validate: (v) => Number.isFinite(v.age) && v.age > 0 && v.age < 120,
     deriveTags: () => ["identity", "age"],
   },
   "identity.region": {
     type: "identity.region", category: "identity",
     defaultImportance: 0.7, defaultConfidence: 0.95, decayHalfLifeDays: Infinity, pinned: true,
+    naturalKey: () => "self",
     validate: (v) => typeof v.region === "string" && v.region.length > 0,
     deriveTags: (v) => ["identity", "region", v.region],
   },
   "identity.school": {
     type: "identity.school", category: "identity",
     defaultImportance: 0.6, defaultConfidence: 0.9, decayHalfLifeDays: 365 * DAY, pinned: false,
+    naturalKey: () => "self",
     validate: (v) => typeof v.school === "string" && v.school.length > 0,
     deriveTags: () => ["identity", "school"],
   },
   "identity.studyLevel": {
     type: "identity.studyLevel", category: "identity",
     defaultImportance: 0.92, defaultConfidence: 0.95, decayHalfLifeDays: Infinity, pinned: true,
+    naturalKey: () => "self",
     validate: (v) => v.level === "ثانوي" || v.level === "جامعي" || v.level === "خريج",
     deriveTags: (v) => ["identity", "stage", v.level],
   },
   "identity.grade": {
     type: "identity.grade", category: "identity",
     defaultImportance: 0.8, defaultConfidence: 0.9, decayHalfLifeDays: 300 * DAY, pinned: false,
+    naturalKey: () => "self",
     validate: (v) => typeof v.grade === "string" && v.grade.length > 0,
     deriveTags: (v) => ["identity", "grade", v.grade],
   },

@@ -13,7 +13,7 @@ import { loadUser } from "@/lib/storage";
 import { subjectsForTracks, type TrackId } from "@/lib/tracks";
 import { buildDuwairbProfile } from "@/lib/duwairb";
 import { loadCoachMemory, formatMemoryHint } from "@/lib/coachMemory";
-import { trackEvent } from "@/lib/events";
+import { trackEvent } from "@/lib/analytics";
 
 export type DuirbView = "menu" | "schedule" | "progress" | "file" | "quiz" | "explain" | "topics";
 type DuirbTab = Exclude<DuirbView, "menu">;

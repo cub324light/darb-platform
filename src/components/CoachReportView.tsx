@@ -10,7 +10,7 @@ import { computeDuwairbScore, detectMissedOpportunities } from "@/lib/coachScore
 import { getStrategy } from "@/lib/strategy";
 import { findMajor, findUniversity, universityReadiness } from "@/lib/university";
 import StrategyBanner from "@/components/StrategyBanner";
-import { trackEvent } from "@/lib/events";
+import { trackEvent } from "@/lib/analytics";
 import { useEffect } from "react";
 
 const ar = (n: number) => n.toLocaleString("ar");

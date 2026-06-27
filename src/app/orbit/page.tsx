@@ -8,7 +8,7 @@ import { subjectsForTracks, getTrack } from "@/lib/tracks";
 import type { TrackId, Track } from "@/lib/tracks";
 import { loadUser, loadStats, recordSession, loadSessionLog, type SessionLogEntry } from "@/lib/storage";
 import { BorderBeam } from "@/components/ui/border-beam";
-import { trackEvent } from "@/lib/events";
+import { trackEvent } from "@/lib/analytics";
 
 type Phase = "idle" | "focus" | "break" | "done";
 type DurMode = "25" | "50" | "90" | "custom";

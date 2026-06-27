@@ -1,7 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { trackPageView } from "@/lib/events";
+import { trackPageView } from "@/lib/analytics";
 
 /* يسجّل زيارة كل صفحة في السجل الدائم (Firestore) لتحليلات الأدمن:
    عدد الزوار، أكثر الصفحات زيارة، نسبة التحويل.

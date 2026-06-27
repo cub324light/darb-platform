@@ -7,7 +7,7 @@ import {
 import { UNIVERSITIES, MAJORS, findUniversity, findMajor } from "@/lib/university";
 import { saveUser, saveExamDate, saveResults, saveTrackExamDates, loadGoals, saveGoals } from "@/lib/storage";
 /* registerUser, pushBackup, currentUser مُستورَدة ديناميكياً أسفل */
-import { trackEvent } from "@/lib/events";
+import { trackEvent } from "@/lib/analytics";
 import { redeemPendingRef } from "@/lib/referral";
 import Dome from "@/components/Dome";
 import Logo from "@/components/Logo";

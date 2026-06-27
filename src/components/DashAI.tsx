@@ -6,7 +6,7 @@ import { normalizeDigits, fmtHour } from "@/lib/utils";
 import { buildDuwairbProfile } from "@/lib/duwairb";
 import { loadPlanningPrefs, currentCalendarSignals } from "@/lib/strategy";
 import { recordCoachInteraction } from "@/lib/coachMemory";
-import { trackEvent } from "@/lib/events";
+import { trackEvent } from "@/lib/analytics";
 
 const QUICK_PROMPTS = [
   { label: "عطني جدول جاهز", text: "عطني جدول دراسي جاهز لليوم" },

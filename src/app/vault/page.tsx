@@ -8,7 +8,7 @@ import { ERROR_CATEGORIES } from "@/lib/constants";
 import { subjectsForTracks, colorForSubject, type TrackId } from "@/lib/tracks";
 import { loadUser, loadList, saveList } from "@/lib/storage";
 import { buildDuwairbProfile } from "@/lib/duwairb";
-import { trackEvent } from "@/lib/events";
+import { trackEvent } from "@/lib/analytics";
 import { getPlan, VAULT_FREE_LIMIT } from "@/lib/plan";
 import type { VaultError, VaultDifficulty, ReviewCard } from "@/lib/types";
 
