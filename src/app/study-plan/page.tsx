@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback } from "react";
 import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
+import ExamRegistrationAlert from "@/components/ExamRegistrationAlert";
 import Link from "next/link";
 import { getStrategy, majorSubjectBoost, subjectPriorityOrder } from "@/lib/strategy";
 import { loadStudyPlan, saveStudyPlan, clearStudyPlan, loadGoals, loadUser } from "@/lib/storage";
@@ -68,6 +69,17 @@ export default function StudyPlanPage() {
   });
 
   const colorOf = useCallback((name: string) => colorForSubject(activeIds, name), [activeIds]);
+
+  /* تخطيط سطح المكتب ثلاثي الأعمدة — ≥1280px فقط */
+  const [isWide, setIsWide] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(min-width: 1280px)").matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1280px)");
+    const h = (e: MediaQueryListEvent) => setIsWide(e.matches);
+    mq.addEventListener("change", h);
+    return () => mq.removeEventListener("change", h);
+  }, []);
 
   /* حفظ تلقائي بعد كل تعديل */
   useEffect(() => {
@@ -160,7 +172,7 @@ export default function StudyPlanPage() {
   );
 
   return (
-    <div className="page">
+    <div className={`page${isWide ? " desk-wide" : ""}`}>
       <Dome compact>
         <div className="flex items-center justify-between">
           <h1 className="title-lg grad-title">مخطط الدراسة</h1>
@@ -177,7 +189,11 @@ export default function StudyPlanPage() {
       </Dome>
       <div className="h-4" />
 
-      {/* ── بطاقة الملخص ── */}
+      {/* تخطيط سطح المكتب: شبكة ثلاثية شفّافة على الجوال، أعمدة عند ≥1280px */}
+      <div className="sp-grid">
+      <div className="sp-col">
+
+      {/* ── بطاقة الملخص (يمين: المواد والتقدّم) ── */}
       <div className="px-5 mb-4">
         <div className="rounded-2xl px-4 py-3 flex items-center justify-between gap-3"
           style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 20%, transparent)" }}>
@@ -204,6 +220,10 @@ export default function StudyPlanPage() {
           </div>
         )}
       </div>
+      </div>
+
+      {/* الوسط: الخطة القابلة للتعديل */}
+      <div className="sp-col">
 
       {/* ── قائمة المواد ── */}
       <div className="px-5 mb-5 flex flex-col gap-3">
@@ -304,6 +324,17 @@ export default function StudyPlanPage() {
           يُعيد الحساب التلقائي بناءً على موعدك وهدفك وجاهزيتك وتخصصك
         </p>
       </div>
+      </div>
+
+      {/* اليسار: توصيات دويرب + الاختبارات القادمة */}
+      <div className="sp-col">
+
+      {/* ── الاختبارات القادمة (سطح المكتب فقط) ── */}
+      {isWide && (
+        <div className="px-5 mb-5">
+          <ExamRegistrationAlert />
+        </div>
+      )}
 
       {/* ── ملاحظة الاستراتيجية ── */}
       <div className="px-5 mb-5 rise rise-3">
@@ -337,6 +368,8 @@ export default function StudyPlanPage() {
             </Link>
           ))}
         </div>
+      </div>
+      </div>
       </div>
 
       <div className="h-6" />

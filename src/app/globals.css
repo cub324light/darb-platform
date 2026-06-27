@@ -755,6 +755,23 @@ html[data-sidebar="collapsed"] { --desk-sw: 76px;  }
   .dash-col-rail { position: sticky; top: 16px; }
 }
 
+/* ═══════════════════════════════════════════════════════
+   مخطط الدراسة — شبكة ثلاثية (≥1280px)
+   .sp-grid/.sp-col شفّافة على الجوال (تبقى div عادية) فلا يتأثر الجوال.
+   ═══════════════════════════════════════════════════════ */
+@media (min-width: 1280px) {
+  .sp-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.32fr) minmax(0, 1fr);
+    gap: 20px;
+    padding: 0 28px;
+    align-items: start;
+  }
+  .sp-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  /* داخل الأعمدة نلغي حشو/هوامش الجوال (px-5 mb-*) ونعتمد فجوة الشبكة */
+  .sp-col > .px-5 { padding-inline: 0 !important; margin-bottom: 0 !important; }
+}
+
 /* ═══════ شريط التنقل العائم — كبسولة ═══════ */
 .float-nav {
   position: fixed;
