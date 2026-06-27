@@ -1,0 +1,30 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Memory — طبقة الوصول (السطح العام الموحّد)
+   نقطة الاستيراد الوحيدة للمستهلكين: import { memory, ... } from "@/lib/memory"
+   لا تلمس أي صفحة المخزن مباشرة — تمرّ عبر هذه الطبقة فقط (وغالباً للقراءة
+   عبر buildStudentContext). الكتابة من خطّافات محكومة ومن المحرّكات.
+   ═══════════════════════════════════════════════════════════════════════ */
+import { MemoryEngine } from "./engine";
+import { LocalStore } from "./store";
+
+let _engine: MemoryEngine | null = null;
+
+/** المثيل الافتراضي — مخزن محلي مع مزامنة سحابية (darb_memory_v1 في BACKUP_KEYS). */
+export function memory(): MemoryEngine {
+  if (!_engine) _engine = new MemoryEngine(new LocalStore());
+  return _engine;
+}
+
+/* لإعادة الضبط في الاختبارات/التبديل (لا يُستخدم في الإنتاج) */
+export function __setMemoryEngine(e: MemoryEngine | null): void { _engine = e; }
+
+export { MemoryEngine, DeterministicSummarizer, decayFactor } from "./engine";
+export { InMemoryStore, LocalStore, MEMORY_STORAGE_KEY } from "./store";
+export type { MemoryStore } from "./store";
+export { MEMORY_REGISTRY, ALL_MEMORY_TYPES, defFor, categoryOf } from "./registry";
+export type {
+  Memory, AnyMemory, MemoryType, MemoryCategory, MemoryValueMap, MemorySource,
+  MemoryStatus, MemoryEvidence, EduStage, RememberInput, MemorySearchFilter,
+  MemoryQuery, StudentContext, Summarizer, MemoryTypeDef, MemoryRegistry,
+  ExplanationStyle, StudyWindow, Pace, ConsistencyLevel, TonePreference, Sentiment,
+} from "./types";
