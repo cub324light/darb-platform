@@ -4,6 +4,7 @@
    وأين يقع الخطأ الشائع ونصيحة لتفاديه (mode:"explain"). */
 import { useState } from "react";
 import { buildDuwairbProfile } from "@/lib/duwairb";
+import { askDuwairb } from "@/lib/orchestrator";
 import { recordCoachInteraction } from "@/lib/coachMemory";
 import { trackEvent } from "@/lib/analytics";
 
@@ -26,25 +27,20 @@ export default function ExplainTool({ subjects }: Props) {
     setResponse("");
     try {
       const { profile, personalized } = buildDuwairbProfile();
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: subject ? `المادة: ${subject}\nالسؤال أو الخطأ: ${p}` : p,
-          subjects: subject ? [subject] : subjects,
-          mode: "explain",
-          profile,
-        }),
+      const { text: raw } = await askDuwairb({
+        prompt: subject ? `المادة: ${subject}\nالسؤال أو الخطأ: ${p}` : p,
+        subjects: subject ? [subject] : subjects,
+        mode: "explain",
+        topic: subject ? `شرح خطأ في ${subject}` : "شرح خطأ",
+        profile,
       });
-      const data = (await res.json()) as { text?: string; error?: string };
-      if (data.error && !data.text) { setErr(data.error); return; }
-      const text = (data.text ?? "لم يرجع رد، حاول مرة ثانية").trim();
+      const text = (raw || "لم يرجع رد، حاول مرة ثانية").trim();
       setResponse(text);
       trackEvent("ai_explain_requested", { personalized });
       const { goalLine } = buildDuwairbProfile();
       recordCoachInteraction("explain", text, { subjects: subject ? [subject] : subjects, goalLine: goalLine ?? undefined });
-    } catch {
-      setErr("تعذّر الاتصال — حاول مرة ثانية");
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "تعذّر الاتصال — حاول مرة ثانية");
     } finally {
       setLoading(false);
     }

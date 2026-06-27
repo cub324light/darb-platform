@@ -4,6 +4,7 @@
    ثم يعرض شاشة مراجعة بمربعات اختيار قبل الإضافة. */
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { askDuwairb, type DuwairbRequest } from "@/lib/orchestrator";
 
 type Stage = "input" | "loading" | "review";
 interface Item { id: string; title: string; checked: boolean; }
@@ -104,7 +105,7 @@ export default function TopicExtractor({
     }
     setStage("loading");
     try {
-      let body: Record<string, unknown>;
+      let req: DuwairbRequest;
       if (hasFiles) {
         const images: string[] = [];
         for (const f of files) {
@@ -116,28 +117,32 @@ export default function TopicExtractor({
           if (images.length >= 4) break;
         }
         if (images.length === 0) throw new Error("ما قدرنا نقرأ الملف");
-        body = {
+        req = {
           prompt: `استخرج أهم مواضيع مادة ${subject} من الصور المرفقة.`,
           subjects: [subject],
           mode: "topics",
+          topic: `استخراج مواضيع ${subject}`,
           images: images.slice(0, 4),
         };
       } else {
-        body = { prompt: text.trim(), subjects: [subject], mode: "topics" };
+        req = { prompt: text.trim(), subjects: [subject], mode: "topics", topic: `استخراج مواضيع ${subject}` };
       }
 
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const data = (await res.json()) as { text?: string; error?: string };
-      if (!res.ok || !data.text) {
-        setErr(data.error ?? "تعذّر الاستخراج — حاول مرة ثانية");
+      /* عبر طبقة التنسيق (مثل بقية تفاعلات دويرب) */
+      let resText = "";
+      try {
+        resText = (await askDuwairb(req)).text;
+      } catch (e) {
+        setErr(e instanceof Error ? e.message : "تعذّر الاستخراج — حاول مرة ثانية");
         setStage("input");
         return;
       }
-      const topics = parseTopics(data.text);
+      if (!resText) {
+        setErr("تعذّر الاستخراج — حاول مرة ثانية");
+        setStage("input");
+        return;
+      }
+      const topics = parseTopics(resText);
       if (topics.length === 0) {
         setErr("ما لقينا مواضيع واضحة — جرّب صورة أوضح للفهرس");
         setStage("input");

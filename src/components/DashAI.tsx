@@ -4,6 +4,7 @@ import { loadEvents, saveEvents, loadUser, loadExamCoord, examCoordPrompt, recor
 import { getEventsForDate } from "@/components/DayScheduler";
 import { normalizeDigits, fmtHour } from "@/lib/utils";
 import { buildDuwairbProfile } from "@/lib/duwairb";
+import { askDuwairb } from "@/lib/orchestrator";
 import { loadPlanningPrefs, currentCalendarSignals } from "@/lib/strategy";
 import { recordCoachInteraction } from "@/lib/coachMemory";
 import { trackEvent } from "@/lib/analytics";
@@ -85,24 +86,18 @@ export default function DashAI({ subjects, onOpenScheduler }: Props) {
       const activeTracks = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as string[];
       const coordNote = examCoordPrompt(loadExamCoord(), activeTracks);
       const { profile, personalized } = buildDuwairbProfile();
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: p + busyNote + coordNote, subjects, mode: "schedule", profile, planning: loadPlanningPrefs(), calendar: currentCalendarSignals() }),
-      });
-      const data = await res.json() as { text?: string; error?: string };
-      const raw = (data.text ?? data.error ?? "حدث خطأ").trim();
+      /* عبر طبقة التنسيق — يستشير المحرّكات، يبني السياق الموحّد، ويُطلق الأحداث */
+      const { text } = await askDuwairb({ prompt: p + busyNote + coordNote, subjects, mode: "schedule", topic: "جدول مذاكرة", profile, planning: loadPlanningPrefs(), calendar: currentCalendarSignals() });
+      const raw = (text || "حدث خطأ").trim();
       setResponse(raw);
-      if (!data.error) {
-        recordAIChat();
-        trackEvent("ai_plan_generated", { personalized });
-        const { goalLine } = buildDuwairbProfile();
-        recordCoachInteraction("schedule", raw, { subjects, goalLine: goalLine ?? undefined });
-      }
+      recordAIChat();
+      trackEvent("ai_plan_generated", { personalized });
+      const { goalLine } = buildDuwairbProfile();
+      recordCoachInteraction("schedule", raw, { subjects, goalLine: goalLine ?? undefined });
       const parsed = parseSchedule(raw, today, subjects.map((s) => ({ name: s })));
       setParsedCount(parsed.length);
-    } catch {
-      setResponse("حدث خطأ في الاتصال");
+    } catch (e) {
+      setResponse(e instanceof Error ? e.message : "حدث خطأ في الاتصال");
     } finally {
       setLoading(false);
     }

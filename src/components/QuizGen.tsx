@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { recordQuiz } from "@/lib/storage";
 import { buildDuwairbProfile } from "@/lib/duwairb";
+import { askDuwairb } from "@/lib/orchestrator";
 import { recordCoachInteraction } from "@/lib/coachMemory";
 import { trackEvent } from "@/lib/analytics";
 
@@ -57,19 +58,14 @@ export default function QuizGen({ subjects }: Props) {
     setRevealed(new Set());
     try {
       const { profile, personalized } = buildDuwairbProfile();
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: `ولّد أسئلة تدريب في مادة ${subject}`,
-          subjects: [subject],
-          mode: "questions",
-          profile,
-        }),
+      const { text: raw } = await askDuwairb({
+        prompt: `ولّد أسئلة تدريب في مادة ${subject}`,
+        subjects: [subject],
+        mode: "questions",
+        topic: `أسئلة تدريب ${subject}`,
+        profile,
       });
-      const data = (await res.json()) as { text?: string; error?: string };
-      if (data.error && !data.text) { setErr(data.error); return; }
-      const text = (data.text ?? "").trim();
+      const text = (raw || "").trim();
       const parsed = parseQuestions(text);
       if (parsed.length > 0) {
         setQuestions(parsed);
@@ -79,8 +75,8 @@ export default function QuizGen({ subjects }: Props) {
         recordCoachInteraction("quiz", text, { subjects: [subject], goalLine: goalLine ?? undefined });
       }
       else setRaw(text || "لم يرجع رد، حاول مرة ثانية");
-    } catch {
-      setErr("تعذّر الاتصال — حاول مرة ثانية");
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "تعذّر الاتصال — حاول مرة ثانية");
     } finally {
       setLoading(false);
     }

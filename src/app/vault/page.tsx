@@ -8,6 +8,7 @@ import { ERROR_CATEGORIES } from "@/lib/constants";
 import { subjectsForTracks, colorForSubject, type TrackId } from "@/lib/tracks";
 import { loadUser, loadList, saveList } from "@/lib/storage";
 import { buildDuwairbProfile } from "@/lib/duwairb";
+import { askDuwairb } from "@/lib/orchestrator";
 import { trackEvent } from "@/lib/analytics";
 import { getPlan, VAULT_FREE_LIMIT } from "@/lib/plan";
 import type { VaultError, VaultDifficulty, ReviewCard } from "@/lib/types";
@@ -153,16 +154,11 @@ export default function VaultPage() {
         `السؤال أو المفهوم: ${error.question}\nالمادة: ${error.subject}\nتصنيف الخطأ: ${error.category}` +
         (error.note ? `\nملاحظة الطالب: ${error.note}` : "");
       const { profile, personalized } = buildDuwairbProfile();
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: promptText, subjects, mode: "explain", profile }),
-      });
-      const data = (await res.json()) as { text?: string; error?: string };
-      setExplainById((p) => ({ ...p, [error.id]: (data.text ?? data.error ?? "تعذّر الشرح").trim() }));
-      if (!data.error) trackEvent("ai_explain_requested", { personalized, source: "vault" });
-    } catch {
-      setExplainById((p) => ({ ...p, [error.id]: "تعذّر الاتصال — حاول مرة ثانية" }));
+      const { text } = await askDuwairb({ prompt: promptText, subjects, mode: "explain", topic: `شرح خطأ في ${error.subject}`, profile });
+      setExplainById((p) => ({ ...p, [error.id]: (text || "تعذّر الشرح").trim() }));
+      trackEvent("ai_explain_requested", { personalized, source: "vault" });
+    } catch (e) {
+      setExplainById((p) => ({ ...p, [error.id]: e instanceof Error ? e.message : "تعذّر الاتصال — حاول مرة ثانية" }));
     } finally {
       setExplainLoadingId(null);
     }

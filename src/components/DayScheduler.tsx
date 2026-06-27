@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import type { ScheduleEvent } from "@/lib/storage";
 import { fmtHour, normalizeDigits } from "@/lib/utils";
 import { buildDuwairbProfile } from "@/lib/duwairb";
+import { askDuwairb } from "@/lib/orchestrator";
 import { strategyFromProfile, loadPlanningPrefs, currentCalendarSignals } from "@/lib/strategy";
 
 export type { ScheduleEvent };
@@ -154,12 +155,11 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
     try {
       const { profile } = buildDuwairbProfile();
       const planning = planningOverride ?? loadPlanningPrefs();
-      const res  = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt, subjects: subjects.map((s) => s.name), mode: "schedule", profile, planning, calendar: currentCalendarSignals() }) });
-      const data = await res.json();
-      const raw = (data.text ?? data.error ?? "حدث خطأ في الاستجابة").replace(/\n{3,}/g, "\n\n").trim();
+      const { text } = await askDuwairb({ prompt, subjects: subjects.map((s) => s.name), mode: "schedule", topic: "جدول اليوم", profile, planning, calendar: currentCalendarSignals() });
+      const raw = (text || "حدث خطأ في الاستجابة").replace(/\n{3,}/g, "\n\n").trim();
       const parsed = parseAISchedule(raw, date, subjects);
       setAiResult(parsed.length > 0 ? raw : "أنا فقط أبني جداول دراسية\nأدخل مشاغيلك مثل: من 8ص إلى 2م مدرسة");
-    } catch { setAiResult("حدث خطأ، تحقق من الاتصال وحاول مجدداً."); }
+    } catch (e) { setAiResult(e instanceof Error ? e.message : "حدث خطأ، تحقق من الاتصال وحاول مجدداً."); }
     finally  { setAiLoading(false); }
   };
 
