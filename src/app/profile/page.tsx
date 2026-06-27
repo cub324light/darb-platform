@@ -217,9 +217,9 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-dvh pb-nav">
+    <div className="min-h-dvh pb-nav desk-wide">
       {header}
-      <div className="px-5 py-5 max-w-lg mx-auto flex flex-col gap-5">
+      <div className="profile-shell px-5 py-5 max-w-lg mx-auto flex flex-col gap-5">
         <ProfileHeader
           user={user} track={getTrack(user.track)} level={level} xp={xp} streak={streak}
           joinLabel={joinDate ? fmtJoin(joinDate) : ""} planId={planId} photoURL={photoURL}
@@ -230,7 +230,7 @@ export default function ProfilePage() {
 
         {tab === "overview" && (
           <div id="profile-panel-overview" role="tabpanel" aria-labelledby="profile-tab-overview"
-            className="flex flex-col gap-5 profile-tab-panel">
+            className="flex flex-col gap-5 profile-tab-panel profile-overview-grid">
             <GoldenPathCard />
             <ProfileMotivation quote={quoteOfToday()} weekly={weekly} level={level} nextBadge={nextBadge} />
             {showUni && <UniversityFutureCard onOpenTab={() => setTab("future")} />}

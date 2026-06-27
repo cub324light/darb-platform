@@ -772,6 +772,23 @@ html[data-sidebar="collapsed"] { --desk-sw: 76px;  }
   .sp-col > .px-5 { padding-inline: 0 !important; margin-bottom: 0 !important; }
 }
 
+/* ═══════════════════════════════════════════════════════
+   الملف الشخصي — عمودان (Masonry) على سطح المكتب
+   تبويب «نظرة عامة» يعرض البطاقات في عمودين فلا حاجة لتمرير طويل.
+   ═══════════════════════════════════════════════════════ */
+@media (min-width: 1100px) {
+  .desk-wide .profile-shell { max-width: 1040px; }
+  .profile-overview-grid {
+    display: block !important;
+    column-count: 2;
+    column-gap: 18px;
+  }
+  .profile-overview-grid > * {
+    break-inside: avoid;
+    margin-bottom: 18px;
+  }
+}
+
 /* ═══════ شريط التنقل العائم — كبسولة ═══════ */
 .float-nav {
   position: fixed;
