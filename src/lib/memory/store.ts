@@ -54,10 +54,28 @@ export class LocalStore implements MemoryStore {
 
   private persist(): void {
     if (typeof window === "undefined") return;
-    try {
-      const env: MemoryEnvelope = { v: ENVELOPE_VERSION, memories: [...this.map.values()] };
-      localStorage.setItem(MEMORY_STORAGE_KEY, JSON.stringify(env));
-    } catch { /* الحصّة ممتلئة — يتعامل معها القصّ */ }
+    /* عند امتلاء الحصّة: نُخلي ذاكرات (المؤرشفة أولاً، ثم الأقل أهمية) ونعيد المحاولة
+       بدل الفقد الصامت للكتابة. حدّ محاولات يمنع الحلقة اللانهائية. */
+    for (let attempt = 0; attempt < 200; attempt++) {
+      try {
+        const env: MemoryEnvelope = { v: ENVELOPE_VERSION, memories: [...this.map.values()] };
+        localStorage.setItem(MEMORY_STORAGE_KEY, JSON.stringify(env));
+        return;
+      } catch {
+        if (!this.evictOne()) return; // لا شيء لإخلائه — نتوقّف بهدوء
+      }
+    }
+  }
+
+  /* إخلاء ذاكرة واحدة عند ضغط الحصّة (آلي، حسب الحالة/الأهمية/القِدَم). */
+  private evictOne(): boolean {
+    const all = [...this.map.values()];
+    const archived = all.filter((m) => m.status !== "active").sort((a, b) => a.updatedAt - b.updatedAt);
+    const victim = archived[0]
+      ?? all.filter((m) => m.status === "active").sort((a, b) => a.importance - b.importance || a.updatedAt - b.updatedAt)[0];
+    if (!victim) return false;
+    this.map.delete(victim.id);
+    return true;
   }
 
   getAll(): AnyMemory[] { this.ensure(); return [...this.map.values()]; }

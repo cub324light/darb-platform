@@ -13,7 +13,7 @@ import { computeStudentPhase } from "./phase";
 import { canApplyUniversity } from "./darbKnowledge";
 import { loadGoldenPath } from "./goldenPath";
 import { buildExamAlerts } from "./examProvider";
-import { memory } from "./memory";
+import { memory, maintainMemory } from "./memory";
 import { events } from "./events";
 import { seedStudentMemory } from "./events/bootstrap";
 import type { TrackId } from "./tracks";
@@ -41,6 +41,7 @@ export function gatherRecommendationContext(now: number = Date.now()): RecContex
      ثم ابنِ السياق الشخصي. events() يُسجّل المُتفاعلات الأساسية أول استدعاء. */
   events();
   seedStudentMemory();
+  maintainMemory(now);   // صيانة مُخنوقة تُبقي التخزين محدوداً
   const studentContext = memory().buildStudentContext();
 
   const user = loadUser();

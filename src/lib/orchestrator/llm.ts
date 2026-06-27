@@ -25,11 +25,11 @@ export interface LLMProvider {
 export class GroqProvider implements LLMProvider {
   name = "groq";
   async complete(req: LLMRequest): Promise<string> {
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(req),
-    });
+    /* أرفِق رمز هوية Firebase ليتحقّق الخادم من الطالب (نقطة نهاية مُصادَقة) */
+    const token = await import("@/lib/cloud").then((m) => m.getIdToken()).catch(() => null);
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const res = await fetch("/api/chat", { method: "POST", headers, body: JSON.stringify(req) });
     const data = await res.json().catch(() => null) as { text?: string; error?: string } | null;
     if (!res.ok || !data) throw new Error(data?.error ?? "تعذّر الاتصال بدويرب");
     return data.text ?? "";

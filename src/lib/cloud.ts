@@ -53,6 +53,13 @@ export function currentUser(): User | null {
   return auth.currentUser;
 }
 
+/* رمز هوية Firebase الحالي — تُرفقه نداءات الذكاء كي يتحقّق الخادم من الطالب. */
+export async function getIdToken(): Promise<string | null> {
+  const u = auth.currentUser;
+  if (!u) return null;
+  try { return await u.getIdToken(); } catch { return null; }
+}
+
 export function onAuth(cb: (u: User | null) => void) {
   return onAuthStateChanged(auth, cb);
 }

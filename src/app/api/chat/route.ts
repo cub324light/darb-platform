@@ -1,30 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { recordAiUsage } from "@/lib/aiUsage";
+import { getVerifiedUid } from "@/lib/server/firebaseAdmin";
+import { checkUserRateLimit } from "@/lib/server/rateLimit";
+import { chatComplete, LLMError, type LLMUserContent } from "@/lib/server/llm";
 import { formatProfileBlock, sessionIntervalRule, type DuwairbProfile, type DuwairbExam } from "@/lib/duwairb";
 import { strategyFromProfile, formatStrategyBlock, type PlanningPrefs, type AllocationPref } from "@/lib/strategy";
 import { goldenPathFromProfile, formatGoldenPathBlock, priorityFocusSubjects } from "@/lib/goldenPath";
 import type { StudyGoalType } from "@/lib/tracks";
 import type { CalendarSignals } from "@/lib/academicCalendar";
 
-/* firebase-admin (تسجيل الاستهلاك) يحتاج Node APIs */
+/* firebase-admin (المصادقة + تسجيل الاستهلاك) يحتاج Node APIs */
 export const runtime = "nodejs";
-
-/* rate limit بسيط في الذاكرة — يمنع الطلبات المتكررة من نفس الـ IP */
-const rateLimitMap = new Map<string, { count: number; reset: number }>();
-const RATE_LIMIT = 10;       // عدد الطلبات المسموحة
-const RATE_WINDOW = 60_000;  // في دقيقة واحدة (ms)
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-  if (!entry || now > entry.reset) {
-    rateLimitMap.set(ip, { count: 1, reset: now + RATE_WINDOW });
-    return true;
-  }
-  if (entry.count >= RATE_LIMIT) return false;
-  entry.count++;
-  return true;
-}
 
 function buildSchedulePrompt(subjects: string[], sessionLen?: number): string {
   const subjectRule = subjects.length > 0
@@ -320,9 +306,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "طلب غير صالح" }, { status: 400 });
   }
 
-  /* rate limiting */
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (!checkRateLimit(ip)) {
+  /* المصادقة — إجبارية: نقطة نهاية مكلفة (توكنز LLM) لا تُترك مفتوحة.
+     نتحقّق من Firebase ID Token على الخادم (لا نثق بالعميل). */
+  const uid = await getVerifiedUid(req);
+  if (!uid) {
+    return NextResponse.json({ error: "سجّل الدخول لاستخدام دويرب" }, { status: 401 });
+  }
+
+  /* تحديد المعدّل لكل مستخدم (دائم عبر Firestore — يعمل عبر كل instances) */
+  if (!(await checkUserRateLimit(uid))) {
     return NextResponse.json({ error: "طلبات كثيرة، انتظر دقيقة" }, { status: 429 });
   }
 
@@ -392,10 +384,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json({ error: "GROQ_API_KEY غير مضبوط — أضفه في Environment Variables ثم أعد الـ Deploy" }, { status: 500 });
-  }
+  /* مفتاح المزوّد يُفحَص داخل طبقة النموذج (chatComplete) */
 
   /* اختيار البرومبت ومعاملات النموذج حسب الوضع */
   const { system: baseSystem, maxTokens, temperature, personalize } = (() => {
@@ -437,64 +426,22 @@ export async function POST(req: NextRequest) {
   /* السياق الموحّد أولاً (طبقة التنسيق) ثم البرومبت والكتل التخصصية للتخطيط */
   const system = [baseSystem, personalize ? unifiedContext : "", goldenBlock, profileBlock, strategyBlock].filter(Boolean).join("\n\n");
 
-  /* مع الصور نستخدم موديل الرؤية (Llama 4 Scout)؛ غيره نصّي */
+  /* مع الصور نستخدم موديل الرؤية؛ غيره نصّي — تختار طبقة المزوّد النموذج */
   const useVision = isTopics && images.length > 0;
-  const model = useVision ? "meta-llama/llama-4-scout-17b-16e-instruct" : "llama-3.3-70b-versatile";
-  const userContent = useVision
+  const userContent: LLMUserContent = useVision
     ? [
         { type: "text", text: prompt?.trim() || "استخرج المواضيع من هذه الصور" },
-        ...images.map((url) => ({ type: "image_url", image_url: { url } })),
+        ...images.map((url) => ({ type: "image_url" as const, image_url: { url } })),
       ]
     : (prompt?.trim() ?? "");
 
   try {
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: maxTokens,
-        temperature,
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: userContent },
-        ],
-      }),
-    });
-
-    if (response.status === 429) {
-      return NextResponse.json({ error: "الخادم مشغول، حاول بعد ثوانٍ" }, { status: 429 });
-    }
-    if (!response.ok) {
-      /* في وضع الصور نُمرّر سبب Groq لتسهيل التشخيص (نموذج/حجم صورة) */
-      let detail = "";
-      if (useVision) {
-        try {
-          const errJson = await response.json() as { error?: { message?: string } };
-          detail = errJson?.error?.message ? ` — ${errJson.error.message}` : "";
-        } catch { /* تجاهل */ }
-      }
-      return NextResponse.json({ error: `تعذّر تحليل الصورة${detail || "، حاول بصورة أوضح"}` }, { status: 502 });
-    }
-
-    const data = (await response.json()) as {
-      choices?: { message?: { content?: string } }[];
-      usage?: { prompt_tokens?: number; completion_tokens?: number };
-    };
-    const text = data.choices?.[0]?.message?.content;
-
-    if (!text) {
-      return NextResponse.json({ error: "لم يرجع رد، حاول مرة ثانية" }, { status: 502 });
-    }
-
+    const result = await chatComplete({ system, userContent, useVision, maxTokens, temperature });
     /* تسجيل استهلاك التوكنز للوحة تكلفة الذكاء (لا يُفشل الرد إن فشل) */
-    await recordAiUsage(model, data.usage?.prompt_tokens ?? 0, data.usage?.completion_tokens ?? 0);
-
-    return NextResponse.json({ text });
-  } catch {
+    await recordAiUsage(result.model, result.promptTokens, result.completionTokens);
+    return NextResponse.json({ text: result.text });
+  } catch (e) {
+    if (e instanceof LLMError) return NextResponse.json({ error: e.message }, { status: e.status });
     return NextResponse.json({ error: "خطأ في الاتصال" }, { status: 500 });
   }
 }

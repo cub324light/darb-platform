@@ -18,6 +18,14 @@ export function memory(): MemoryEngine {
 /* لإعادة الضبط في الاختبارات/التبديل (لا يُستخدم في الإنتاج) */
 export function __setMemoryEngine(e: MemoryEngine | null): void { _engine = e; }
 
+/* صيانة مُخنوقة — تُبقي التخزين محدوداً دون تكلفة في كل استدعاء. */
+let _lastMaintain = 0;
+export function maintainMemory(now: number = Date.now()): void {
+  if (now - _lastMaintain < 10 * 60 * 1000) return; // ١٠ دقائق على الأكثر
+  _lastMaintain = now;
+  try { memory().maintain(); } catch { /* الصيانة لا تُفشل أي شيء */ }
+}
+
 export { MemoryEngine, DeterministicSummarizer, decayFactor } from "./engine";
 export { InMemoryStore, LocalStore, MEMORY_STORAGE_KEY } from "./store";
 export type { MemoryStore } from "./store";

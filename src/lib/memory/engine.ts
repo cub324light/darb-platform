@@ -329,6 +329,43 @@ export class MemoryEngine {
 
   /* ─────────── الضغط/الصيانة ─────────── */
 
+  /** حذف المؤرشفة/المُبطَلة القديمة (تتجاوز نافذة الاحتفاظ) — يحدّ نموّ التخزين.
+      النشِطة لا تُمسّ. حتميّ. */
+  pruneArchived(retentionDays = 60): number {
+    const cutoff = this.now() - retentionDays * DAY_MS;
+    let n = 0;
+    for (const m of this.store.getAll()) {
+      if (m.status !== "active" && m.updatedAt < cutoff) { this.store.delete(m.id); n++; }
+    }
+    return n;
+  }
+
+  /** سقف صلب لعدد الذاكرات — حاجز أخير ضد النموّ غير المحدود.
+      يُسقِط المؤرشفة أولاً (الأقدم)، ثم النشِطة غير المثبَّتة الأقل أهمية. */
+  capTotal(max = 1000): number {
+    let over = this.store.getAll().length - max;
+    if (over <= 0) return 0;
+    let n = 0;
+    const archived = this.store.getAll().filter((m) => m.status !== "active").sort((a, b) => a.updatedAt - b.updatedAt);
+    for (const m of archived) { if (over <= 0) break; this.store.delete(m.id); over--; n++; }
+    if (over > 0) {
+      const active = this.store.getAll()
+        .filter((m) => m.status === "active" && !MEMORY_REGISTRY[m.type].pinned)
+        .sort((a, b) => a.importance - b.importance || a.updatedAt - b.updatedAt);
+      for (const m of active) { if (over <= 0) break; this.store.delete(m.id); over--; n++; }
+    }
+    return n;
+  }
+
+  /** صيانة دورية — تُبقي التخزين محدوداً (انتهاء + ضغط + قصّ + سقف). حتميّ. */
+  maintain(): { expired: number; compressed: number; pruned: number; capped: number } {
+    const expired = this.sweepExpired();
+    const { compressed } = this.compressMemory();
+    const pruned = this.pruneArchived();
+    const capped = this.capTotal();
+    return { expired, compressed, pruned, capped };
+  }
+
   /** أرشفة المنتهية صلاحيتها (تُستدعى دورياً). */
   sweepExpired(): number {
     const now = this.now();

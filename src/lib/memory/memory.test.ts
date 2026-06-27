@@ -126,6 +126,39 @@ test("compressMemory rolls up old conversation facts into a summary", () => {
   assert.equal(eng.searchMemory({ type: "conversation.summary" }).length, 1, "summary created");
 });
 
+test("maintain bounds growth: prunes old archived, keeps active & pinned", () => {
+  const { eng, clk } = makeEngine();
+  // ذاكرات نشِطة مثبَّتة (هوية/هدف) + محادثات تتراكم ثم تُؤرشَف
+  eng.remember({ type: "identity.name", value: { name: "ليان" }, source: "onboarding" });
+  eng.remember({ type: "goal.targetMajor", value: { major: "طب" }, source: "explicit" });
+  for (let i = 0; i < 30; i++) eng.remember({ type: "conversation.salientFact", value: { text: `حقيقة ${i}` }, source: "duwairb" });
+
+  const c = eng.compressMemory();            // يؤرشِف القديمة الآن (updatedAt = T0)
+  assert.ok(c.compressed > 0, "old conversation facts compressed → archived");
+  clk.advanceDays(90);                        // الآن المؤرشفة تجاوزت نافذة الاحتفاظ
+  const res = eng.maintain();
+  assert.ok(res.pruned > 0, "archived-and-old facts pruned");
+
+  const ctx = eng.buildStudentContext();
+  assert.equal(ctx.identity.name, "ليان", "pinned identity survives maintenance");
+  assert.equal(ctx.currentGoal.major, "طب", "pinned goal survives maintenance");
+});
+
+test("capTotal is a hard ceiling that drops archived before active, never pinned", () => {
+  const { eng } = makeEngine();
+  eng.remember({ type: "identity.name", value: { name: "نواف" }, source: "onboarding" }); // pinned
+  // أنشئ ذاكرات نشِطة غير مثبَّتة (إتقان مواد) ومؤرشفة
+  for (let i = 0; i < 20; i++) {
+    const m = eng.remember({ type: "learning.subjectMastery", value: { subject: `مادة${i}`, mastery: 0.5 }, source: "event" });
+    if (i < 10) eng.forget(m.id); // أرشِف النصف
+  }
+  const before = eng.all().length;
+  const capped = eng.capTotal(8);
+  assert.ok(capped > 0 && eng.all().length <= 8, "capped to the ceiling");
+  assert.ok(eng.all().some((m) => m.type === "identity.name"), "pinned identity never dropped");
+  assert.ok(capped <= before, "sane");
+});
+
 test("returning-student standard: identity + goals survive heavy decay window", () => {
   const { eng, clk } = makeEngine();
   eng.remember({ type: "identity.name", value: { name: "ريم" }, source: "onboarding" });
