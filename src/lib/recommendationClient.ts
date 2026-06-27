@@ -13,6 +13,8 @@ import { computeStudentPhase } from "./phase";
 import { canApplyUniversity } from "./darbKnowledge";
 import { loadGoldenPath } from "./goldenPath";
 import { buildExamAlerts } from "./examProvider";
+import { memory } from "./memory";
+import { seedMemoryFromStorage } from "./memory/seed";
 import type { TrackId } from "./tracks";
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -34,6 +36,10 @@ function readUnreviewedErrors(): number {
 
 /** يجمع كل إشارات الطالب في سياق واحد للمحرّك. */
 export function gatherRecommendationContext(now: number = Date.now()): RecContext {
+  /* امنح المستخدمين الحاليين «دماغاً» مرة واحدة، ثم ابنِ السياق الشخصي */
+  seedMemoryFromStorage();
+  const studentContext = memory().buildStudentContext();
+
   const user = loadUser();
   const stats = loadStats();
   const phase = computeStudentPhase(user);
@@ -60,6 +66,7 @@ export function gatherRecommendationContext(now: number = Date.now()): RecContex
     examAlerts: ids.length ? buildExamAlerts(ids, localDateStr(d)) : [],
     canApplyUniversity: canApplyUniversity(user),
     dismissed: loadDismissed(),
+    memory: studentContext,
   };
 }
 

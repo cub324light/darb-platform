@@ -23,6 +23,7 @@ import type { GoldenPathState } from "./goldenPath";
 import type { StudentPhase } from "./phase";
 import type { ExamAlert } from "./examProvider";
 import type { DashSectionId } from "./storage";
+import type { StudentContext, StudyWindow } from "./memory/types";
 
 /* ════════════════════════════════════════════════════════════
    الأنواع — عقد التوصية (Recommendation Contract)
@@ -30,7 +31,7 @@ import type { DashSectionId } from "./storage";
 
 export type RecSource =
   | "goldenPath" | "review" | "streak" | "exam"
-  | "orbit" | "university" | "vault" | "onboarding";
+  | "orbit" | "university" | "vault" | "onboarding" | "memory";
 
 export type RecKind = "priority" | "alert" | "nudge" | "promote" | "hide";
 
@@ -84,6 +85,9 @@ export interface RecContext {
   examAlerts: ExamAlert[];
   canApplyUniversity: boolean;
   dismissed: Record<string, number>; // id → حتى متى (epoch ms)
+  /* الذاكرة — يجعل التوصيات شخصية (أولوية/ثقة/توقيت/إجراء). اختياري ليبقى المحرّك
+     قابلاً للاختبار بلا ذاكرة. */
+  memory?: StudentContext | null;
 }
 
 /* مهايئ صغير */
@@ -192,22 +196,56 @@ const examWindowProducer: Producer = (ctx) => {
     });
 };
 
-/* ٥) ابدأ اليوم — لم يذاكر بعد (ولا ينطبق خطر الستريك) */
+/* نافذة الساعة الحالية — لمواءمة التوقيت مع عادة الطالب (ذاكرة السلوك) */
+function hourWindow(h: number): StudyWindow {
+  if (h >= 5 && h < 11) return "صباح";
+  if (h >= 11 && h < 16) return "ظهر";
+  if (h >= 16 && h < 21) return "مساء";
+  return "ليل";
+}
+
+/* ٥) ابدأ اليوم — لم يذاكر بعد (ولا ينطبق خطر الستريك).
+   توقيتٌ واعٍ بالذاكرة: إن كان الطالب يذاكر عادةً في نافذة أخرى، نخفض الإلحاح
+   في غير وقته المعتاد بدل أن نزعجه. */
 const startSessionProducer: Producer = (ctx) => {
   const { streak, todayMins } = ctx.stats;
   if (todayMins > 0) return [];
   if (streak > 0 && ctx.hour >= 17) return []; // يغطّيه منتِج خطر الستريك
+  const win = ctx.memory?.bestStudyWindow;
+  const offWindow = !!win && hourWindow(ctx.hour) !== win;
   return [{
     id: "start-session",
     kind: "nudge",
-    priority: 44,
+    priority: offWindow ? 30 : 44,
     confidence: 0.7,
-    reason: "ما بدأت اليوم بعد — جلسة أوربت واحدة تكسر الصفر وتبني عادتك.",
+    reason: offWindow
+      ? `ما بدأت اليوم بعد. عادةً تذاكر ${win} — لا ضغط الآن، لكن جلسة قصيرة تكسر الصفر.`
+      : "ما بدأت اليوم بعد — جلسة أوربت واحدة تكسر الصفر وتبني عادتك.",
     source: "orbit",
     expiresAt: endOfDay(ctx.now),
     action: { kind: "navigate", label: "ابدأ جلسة", href: "/orbit" },
     targetPage: "/orbit",
     title: "ابدأ يومك بجلسة تركيز",
+    tone: "accent",
+  }];
+};
+
+/* ٨) تركيز على المادة الأضعف — مدفوع بذاكرة التعلّم (شخصي) */
+const weakSubjectFocusProducer: Producer = (ctx) => {
+  const weak = ctx.memory?.weakSubjects?.[0];
+  if (!weak) return [];
+  if (ctx.stats.todayMins > 0) return []; // ذاكر اليوم — لا داعي للدفع
+  return [{
+    id: `weak-focus:${weak}`,
+    kind: "nudge",
+    priority: 56,
+    confidence: 0.7,
+    reason: `نتذكّر أن «${weak}» من أضعف موادك — جلسة مركّزة عليها ترفع جاهزيتك أكثر من توزيع وقتك بالتساوي.`,
+    source: "memory",
+    expiresAt: endOfDay(ctx.now),
+    action: { kind: "navigate", label: `ذاكر ${weak}`, href: `/orbit?subject=${encodeURIComponent(weak)}` },
+    targetPage: "/orbit",
+    title: `ركّز على ${weak} اليوم`,
     tone: "accent",
   }];
 };
@@ -256,6 +294,7 @@ const PRODUCERS: Producer[] = [
   streakRiskProducer,
   examWindowProducer,
   dueReviewProducer,
+  weakSubjectFocusProducer,
   vaultReviewProducer,
   universityPromoteProducer,
   startSessionProducer,
