@@ -12,7 +12,7 @@ interface NavItem { id: AdminSection; label: string; icon: string; min: Role; re
 const NAV: NavItem[] = [
   { id: "overview",  label: "نظرة عامة",        icon: "📊", min: "moderator", ready: true },
   { id: "audit",     label: "سجلّ التدقيق",      icon: "🛡️", min: "moderator", ready: true },
-  { id: "broadcast", label: "مركز الإشعارات",    icon: "📢", min: "admin",     ready: false },
+  { id: "broadcast", label: "مركز الإشعارات",    icon: "📢", min: "admin",     ready: true },
   { id: "ranked",    label: "الرتب و1v1",        icon: "🏆", min: "admin",     ready: false },
   { id: "duwairb",   label: "إدارة دويرب",       icon: "🤖", min: "admin",     ready: false },
   { id: "settings",  label: "إعدادات المنصة",    icon: "⚙️", min: "owner",     ready: false },

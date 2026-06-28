@@ -12,6 +12,7 @@ import AdminShell, { type AdminSection } from "@/components/admin/AdminShell";
 /* لوحة إدارة المصادر (قاعدة المعرفة) + سجلّ التدقيق — تُحمَّل عند فتحها فقط */
 const SourcesManager = dynamic(() => import("@/components/admin/SourcesManager"), { ssr: false });
 const AuditLog = dynamic(() => import("@/components/admin/AuditLog"), { ssr: false });
+const BroadcastCenter = dynamic(() => import("@/components/admin/BroadcastCenter"), { ssr: false });
 
 type PlanId = "free" | "shaheen" | "anqa";
 
@@ -702,6 +703,7 @@ export default function AdminPage() {
   return (
     <AdminShell role={myRole} active={section} onNavigate={setSection}>
       {section === "audit" && <AuditLog pass={pass} />}
+      {section === "broadcast" && <BroadcastCenter pass={pass} />}
       {section === "overview" && (
       <div className="px-4 py-6">
       {/* الهيدر */}

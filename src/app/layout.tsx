@@ -8,6 +8,7 @@ import Telemetry from "@/components/Telemetry";
 import PageViewTracker from "@/components/PageViewTracker";
 import DuirbFloat from "@/components/DuirbFloat";
 import DuirbTour from "@/components/DuirbTour";
+import BroadcastHost from "@/components/BroadcastHost";
 
 /* الخطوط تُستضاف ذاتياً عبر next/font — صفر طلبات خارجية، بلا انزياح، وتحميل أسرع بكثير */
 const cairo = Cairo({
@@ -88,6 +89,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <PageViewTracker />
         <DuirbFloat />
         <DuirbTour />
+        <BroadcastHost />
         <AnalyticsGate />
       </body>
     </html>
