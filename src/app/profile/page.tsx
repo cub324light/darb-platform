@@ -34,6 +34,8 @@ import ProfileSocial from "@/components/profile/ProfileSocial";
 import ProfileStats from "@/components/profile/ProfileStats";
 import ProfileGoals from "@/components/profile/ProfileGoals";
 import GoldenPathCard from "@/components/GoldenPathCard";
+import RankBadge from "@/components/RankBadge";
+import { fetchMyRank } from "@/lib/arena/client";
 import ProfilePreferences from "@/components/profile/ProfilePreferences";
 import ProfileAchievements from "@/components/profile/ProfileAchievements";
 /* استيراد مباشر لتفادي انزياح التخطيط عند ظهور التنبيه */
@@ -69,6 +71,7 @@ export default function ProfilePage() {
   const [log, setLog] = useState<ReturnType<typeof loadSessionLog>>([]);
   const [skill, setSkill] = useState<SkillData>({ avg: null, strong: [], weak: [] });
   const [photoURL, setPhotoURL] = useState<string | null>(null);
+  const [arena, setArena] = useState<{ rp: number; wins: number; losses: number; peakRp: number } | null>(null);
 
   /* ── تحميل لمرة واحدة ── */
   useEffect(() => {
@@ -109,6 +112,13 @@ export default function ProfilePage() {
     let unsub: (() => void) | undefined;
     import("@/lib/cloud").then(({ onAuth }) => { unsub = onAuth((u) => setPhotoURL(u?.photoURL ?? null)); });
     return () => { unsub?.(); };
+  }, []);
+
+  /* رتبة الأرينا (1v1) */
+  useEffect(() => {
+    let alive = true;
+    fetchMyRank().then((r) => { if (alive) setArena({ rp: r.rp, wins: r.wins, losses: r.losses, peakRp: r.peakRp }); }).catch(() => {});
+    return () => { alive = false; };
   }, []);
 
   /* ── مشتقّات مذكَّرة (memoized) ── */
@@ -231,6 +241,18 @@ export default function ProfilePage() {
         {tab === "overview" && (
           <div id="profile-panel-overview" role="tabpanel" aria-labelledby="profile-tab-overview"
             className="flex flex-col gap-5 profile-tab-panel profile-overview-grid">
+            {arena && (
+              <div className="rounded-2xl px-4 py-3.5 flex items-center justify-between gap-3"
+                style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                <div className="min-w-0">
+                  <p className="font-bold text-[15px]" style={{ color: "var(--text)" }}>⚔️ رتبة الأرينا</p>
+                  <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+                    {arena.wins}ف · {arena.losses}خ · أعلى {arena.peakRp} RP
+                  </p>
+                </div>
+                <RankBadge rp={arena.rp} size="lg" showRp />
+              </div>
+            )}
             <GoldenPathCard />
             <ProfileMotivation quote={quoteOfToday()} weekly={weekly} level={level} nextBadge={nextBadge} />
             {showUni && <UniversityFutureCard onOpenTab={() => setTab("future")} />}

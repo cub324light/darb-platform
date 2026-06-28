@@ -4,17 +4,20 @@ import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import PageFooter from "@/components/PageFooter";
 import { postSocial } from "@/lib/authFetch";
+import { fetchLeaderboard, type LeaderRow } from "@/lib/arena/client";
+import RankBadge from "@/components/RankBadge";
 import { getTrack } from "@/lib/tracks";
 
 type Row = { uid: string; name: string; track: string; value: number };
-type Metric = "hours" | "streak";
+type Metric = "rp" | "hours" | "streak";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 
 export default function LeaderboardPage() {
-  const [metric, setMetric] = useState<Metric>("hours");
+  const [metric, setMetric] = useState<Metric>("rp");
   const [hours, setHours] = useState<Row[]>([]);
   const [streak, setStreak] = useState<Row[]>([]);
+  const [ranked, setRanked] = useState<LeaderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
@@ -22,19 +25,27 @@ export default function LeaderboardPage() {
     let alive = true;
     (async () => {
       try {
-        const res = await postSocial({ mode: "leaderboard" });
-        const data = await res.json();
+        const [social, arena] = await Promise.allSettled([
+          postSocial({ mode: "leaderboard" }).then((r) => r.json()),
+          fetchLeaderboard(),
+        ]);
         if (!alive) return;
-        if (res.ok) { setHours(data.topHours ?? []); setStreak(data.topStreak ?? []); }
-        else setErr(data.error ?? "تعذّر التحميل");
+        if (social.status === "fulfilled") {
+          setHours(social.value.topHours ?? []);
+          setStreak(social.value.topStreak ?? []);
+        }
+        if (arena.status === "fulfilled") setRanked(arena.value.leaderboard ?? []);
+        if (social.status === "rejected" && arena.status === "rejected") setErr("تعذّر التحميل");
       } catch { if (alive) setErr("تعذّر الاتصال"); }
       finally { if (alive) setLoading(false); }
     })();
     return () => { alive = false; };
   }, []);
 
-  const rows = metric === "hours" ? hours : streak;
-  const fmt = (v: number) => metric === "hours" ? `${(v / 60).toFixed(1).replace(/\.0$/, "")} س` : `${v} يوم`;
+  const rows: Row[] = metric === "rp"
+    ? ranked.map((r) => ({ uid: r.uid, name: r.name, track: r.track, value: r.rp }))
+    : metric === "hours" ? hours : streak;
+  const fmt = (v: number) => metric === "rp" ? `${v} RP` : metric === "hours" ? `${(v / 60).toFixed(1).replace(/\.0$/, "")} س` : `${v} يوم`;
 
   return (
     <div className="min-h-dvh pb-nav">
@@ -48,7 +59,7 @@ export default function LeaderboardPage() {
       <div className="px-5 py-5 max-w-lg mx-auto flex flex-col gap-4">
         {/* مبدّل المقياس */}
         <div className="flex gap-2 p-1 rounded-2xl" style={{ background: "var(--surface)" }}>
-          {([["hours", "⏱️ أكثر ساعات"], ["streak", "🔥 أعلى ستريك"]] as const).map(([m, label]) => (
+          {([["rp", "⚔️ الرتبة"], ["hours", "⏱️ ساعات"], ["streak", "🔥 ستريك"]] as const).map(([m, label]) => (
             <button key={m} onClick={() => setMetric(m)}
               className="flex-1 py-2.5 rounded-xl text-[14px] font-bold text-center transition"
               style={metric === m ? { background: "var(--accent)", color: "#fff" } : { color: "var(--text-muted)" }}>
@@ -86,7 +97,9 @@ export default function LeaderboardPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-[15px] truncate" style={{ color: "var(--text)" }}>{r.name}</p>
-                    {r.track && <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{r.track}</p>}
+                    {metric === "rp"
+                      ? <div className="mt-0.5"><RankBadge rp={r.value} size="xs" /></div>
+                      : r.track && <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{r.track}</p>}
                   </div>
                   <span className="font-mono-nums font-black text-[16px] flex-shrink-0" style={{ color: top3 ? "var(--gold)" : "var(--accent-light)" }}>
                     {fmt(r.value)}

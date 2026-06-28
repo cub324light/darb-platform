@@ -4,85 +4,16 @@ import Link from "next/link";
 import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
 import Confetti from "@/components/Confetti";
+import RankBadge from "@/components/RankBadge";
+import OnlineMatch from "@/components/arena/OnlineMatch";
+import { fetchMyRank } from "@/lib/arena/client";
+import { QUESTION_BANK } from "@/lib/arena/questions";
 import { loadUser, addSilver } from "@/lib/storage";
-/* currentUser مُستورَد ديناميكياً أسفل */
-import { postSocial } from "@/lib/authFetch";
-import { getTrack, type TrackId } from "@/lib/tracks";
+import { getTrack } from "@/lib/tracks";
 
 /* المنافس التدريبي: اسم + طير عشوائي، يجاوب بنفسه */
 const BOT_NAMES = ["سعود", "نورة", "فهد", "ريم", "خالد", "لمى", "تركي", "العنود"];
 const WIN_SILVER = 15;
-
-/* بنك أسئلة اختيار من متعدد لكل مسار */
-interface Question {
-  q: string;
-  options: string[];
-  correct: number; // فهرس الإجابة الصحيحة
-  subject: string;
-}
-
-const QUESTION_BANK: Record<TrackId, Question[]> = {
-  تحصيلي: [
-    { q: "ما قانون نيوتن الأول؟", options: ["القصور الذاتي", "الفعل ورد الفعل", "التسارع يتناسب مع القوة", "الجذب الكوني"], correct: 0, subject: "فيزياء" },
-    { q: "ما ناتج: log₂(8) ؟", options: ["2", "3", "4", "8"], correct: 1, subject: "رياضيات" },
-    { q: "ما رمز الكالسيوم في الجدول الدوري؟", options: ["Ca", "C", "Cl", "K"], correct: 0, subject: "كيمياء" },
-    { q: "ما العضو المسؤول عن تنقية الدم؟", options: ["الكبد", "الكلى", "الرئتان", "القلب"], correct: 1, subject: "أحياء" },
-  ],
-  قدرات: [
-    { q: "أكمل: قلم : كتابة — مقص : ؟", options: ["قص", "ورق", "حديد", "يد"], correct: 0, subject: "لفظي" },
-    { q: "العدد التالي: 3، 6، 12، 24، ...؟", options: ["36", "48", "30", "60"], correct: 1, subject: "كمي" },
-    { q: "ضد كلمة «السخاء»؟", options: ["الكرم", "الجود", "البخل", "العطاء"], correct: 2, subject: "لفظي" },
-    { q: "لو كان 40% من عدد يساوي 80، فالعدد؟", options: ["160", "200", "320", "120"], correct: 1, subject: "كمي" },
-  ],
-  CPC: [
-    { q: "Synonym of «rapid»:", options: ["slow", "fast", "heavy", "late"], correct: 1, subject: "إنجليزي" },
-    { q: "ما ناتج: ‎(2x + 3)(x − 1)‎ ؟", options: ["2x² + x − 3", "2x² − x − 3", "2x² + 5x − 3", "2x² − 3"], correct: 0, subject: "رياضيات" },
-    { q: "She ____ to work every day.", options: ["go", "goes", "going", "gone"], correct: 1, subject: "إنجليزي" },
-    { q: "مساحة دائرة نصف قطرها 7؟ (π ≈ 22/7)", options: ["44", "154", "49", "22"], correct: 1, subject: "رياضيات" },
-  ],
-  "تحصيلي مبكر": [
-    { q: "ما وحدة قياس القوة؟", options: ["جول", "نيوتن", "واط", "باسكال"], correct: 1, subject: "فيزياء" },
-    { q: "ما ناتج: ‎(x + 2)² ؟", options: ["x² + 4", "x² + 4x + 4", "x² + 2x + 4", "x² + 4x + 2"], correct: 1, subject: "رياضيات" },
-    { q: "ما الرقم الذري للهيدروجين؟", options: ["1", "2", "8", "0"], correct: 0, subject: "كيمياء" },
-    { q: "أين تحدث عملية البناء الضوئي؟", options: ["الميتوكوندريا", "البلاستيدات الخضراء", "النواة", "الغشاء"], correct: 1, subject: "أحياء" },
-  ],
-  ايلتس: [
-    { q: "The results ____ surprising.", options: ["was", "were", "is", "be"], correct: 1, subject: "كتابة" },
-    { q: "«in a nutshell» means:", options: ["بالتفصيل", "باختصار", "بصعوبة", "فجأة"], correct: 1, subject: "قراءة" },
-    { q: "Synonym of «significant»:", options: ["minor", "important", "strange", "quiet"], correct: 1, subject: "قراءة" },
-    { q: "Task 2 essay: كم كلمة كحد أدنى؟", options: ["150", "200", "250", "300"], correct: 2, subject: "كتابة" },
-  ],
-  ستيب: [
-    { q: "He ____ in Riyadh since 2019.", options: ["lives", "lived", "has lived", "living"], correct: 2, subject: "قواعد" },
-    { q: "Antonym of «ancient»:", options: ["old", "modern", "huge", "rare"], correct: 1, subject: "قراءة" },
-    { q: "If I ____ rich, I would travel.", options: ["am", "was", "were", "be"], correct: 2, subject: "قواعد" },
-    { q: "The main idea is usually found in the:", options: ["conclusion", "topic sentence", "title", "last line"], correct: 1, subject: "قراءة" },
-  ],
-  توفل: [
-    { q: "Synonym of «crucial»:", options: ["minor", "essential", "optional", "rare"], correct: 1, subject: "قراءة" },
-    { q: "مدة قسم الاستماع في TOEFL iBT تقريباً؟", options: ["20 دقيقة", "36 دقيقة", "60 دقيقة", "10 دقائق"], correct: 1, subject: "استماع" },
-    { q: "The professor insisted that the student ____ early.", options: ["arrives", "arrived", "arrive", "arriving"], correct: 2, subject: "قواعد" },
-    { q: "Integrated Writing: تقرأ وتسمع ثم؟", options: ["تتكلم", "تكتب ملخصاً يربط المحاضرة بالنص", "ترسم", "تختار"], correct: 1, subject: "كتابة" },
-  ],
-  دوليقو: [
-    { q: "اختر الكلمة الإنجليزية الحقيقية:", options: ["blicket", "bridge", "brold", "plon"], correct: 1, subject: "قراءة" },
-    { q: "نتيجة اختبار Duolingo تصدر عادة خلال؟", options: ["ساعة", "48 ساعة", "أسبوع", "شهر"], correct: 1, subject: "قراءة" },
-    { q: "She has been studying ____ three hours.", options: ["since", "for", "from", "at"], correct: 1, subject: "كتابة" },
-    { q: "Describe the image: المطلوب؟", options: ["ترجمتها", "وصف الصورة بجملة كاملة صحيحة", "تجاهلها", "عدّها"], correct: 1, subject: "محادثة" },
-  ],
-  ITC: [
-    { q: "Synonym of «efficient»:", options: ["lazy", "effective", "slow", "weak"], correct: 1, subject: "إنجليزي" },
-    { q: "ما ناتج: 15% من 200؟", options: ["15", "30", "45", "20"], correct: 1, subject: "رياضيات" },
-    { q: "أي الخيارات ليس نوع قاعدة بيانات؟", options: ["SQL", "HDMI", "Oracle", "MongoDB"], correct: 1, subject: "منطق" },
-    { q: "He ____ the report before the deadline.", options: ["finish", "finishes", "finished", "finishing"], correct: 2, subject: "إنجليزي" },
-  ],
-  مدرسه: [
-    { q: "كم عدد أركان الإسلام؟", options: ["ثلاثة", "أربعة", "خمسة", "ستة"], correct: 2, subject: "إسلامية" },
-    { q: "ما جمع كلمة «كتاب»؟", options: ["كتابات", "كتب", "أكتاب", "مكاتب"], correct: 1, subject: "عربي" },
-    { q: "What is the plural of 'child'?", options: ["childs", "childes", "children", "child"], correct: 2, subject: "إنجليزي" },
-    { q: "ما ناتج: ٤٥ × ٢؟", options: ["٨٠", "٩٠", "٨٥", "٩٥"], correct: 1, subject: "رياضيات" },
-  ],
-};
 
 type GameState = "lobby" | "playing" | "result";
 
@@ -107,12 +38,19 @@ export default function ArenaPage() {
   });
   const rewardedRef = useRef(false);
 
-  const [searchingPlayer, setSearchingPlayer] = useState(false);
-  const [playerSearchDone, setPlayerSearchDone] = useState(false);
-  const [foundPlayer, setFoundPlayer] = useState<{ name: string } | null>(null);
+  /* مباراة 1v1 حقيقية عبر الإنترنت — مكوّن مستقل يدير البحث/اللعب/النتيجة */
+  const [online, setOnline] = useState(false);
+  /* رتبة اللاعب الحالية (تُعرض في اللوبي) */
+  const [myRp, setMyRp] = useState<number | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetchMyRank().then((r) => { if (alive) setMyRp(r.rp); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   const startGame = () => {
-    setBot({ name: foundPlayer?.name ?? BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)] });
+    setBot({ name: BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)] });
     rewardedRef.current = false;
     const u = loadUser();
     const track = getTrack(u?.track);
@@ -125,46 +63,6 @@ export default function ArenaPage() {
     setAnswered(false);
     setSelectedOption(null);
     setTimeLeft(15);
-  };
-
-  const findPlayer = async () => {
-    setSearchingPlayer(true);
-    setPlayerSearchDone(false);
-    setFoundPlayer(null);
-
-    try {
-      const { currentUser } = await import("@/lib/cloud");
-      const uid = currentUser()?.uid;
-
-      // 1) جرّب مطابقة صديق حقيقي من قائمة الأصدقاء
-      if (uid) {
-        const fr = await postSocial({ mode: "getFriends" });
-        const frData = await fr.json() as { friends?: { name: string }[] };
-        const friends = (frData.friends ?? []).filter((f) => f.name?.trim());
-        if (friends.length > 0) {
-          const pick = friends[Math.floor(Math.random() * friends.length)];
-          setFoundPlayer({ name: pick.name });
-          return;
-        }
-      }
-
-      // 2) وإلا تحقّق من وجود طلاب متواجدين الآن
-      const res = await fetch("/api/social", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "studiers" }),
-      });
-      const data = await res.json() as { count?: number };
-      if ((data.count ?? 0) > 1) {
-        const names = ["سعود", "نورة", "فهد", "ريم", "خالد"];
-        setFoundPlayer({ name: names[Math.floor(Math.random() * names.length)] });
-      }
-    } catch {
-      // خطأ شبكة — لا لاعبين
-    } finally {
-      setSearchingPlayer(false);
-      setPlayerSearchDone(true);
-    }
   };
 
   const nextQuestion = () => {
@@ -235,6 +133,29 @@ export default function ArenaPage() {
 
   const q = questions[currentQ];
 
+  /* مباراة 1v1 حقيقية — مكوّن مستقل داخل هيكل الأرينا */
+  if (online) {
+    const track = getTrack(loadUser()?.track).id;
+    return (
+      <div className="min-h-dvh flex flex-col pb-nav relative z-[1]">
+        <Dome compact>
+          <div className="flex items-center gap-3">
+            <button onClick={() => setOnline(false)} className="rounded-full p-1.5 transition active:scale-95" style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)" }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-white">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
+            <div className="flex items-center justify-between flex-1">
+              <h1 className="title-lg grad-title">مباراة 1v1</h1>
+              <span className="dome-chip text-[17px] font-bold" style={{ color: "var(--gold-light)" }}>⚔️</span>
+            </div>
+          </div>
+        </Dome>
+        <OnlineMatch track={track} onExit={() => { setOnline(false); fetchMyRank().then((r) => setMyRp(r.rp)).catch(() => {}); }} />
+      </div>
+    );
+  }
+
   if (gameState === "lobby") {
     return (
       <div className="min-h-dvh flex flex-col pb-nav relative z-[1]">
@@ -278,45 +199,24 @@ export default function ArenaPage() {
             الفوز = +{WIN_SILVER} فضة
           </p>
 
-          {/* Player matching section */}
-          <div className="glass rounded-2xl p-5 mb-4 w-full max-w-xs">
-            <p className="font-black text-[17px] mb-3" style={{ color: "var(--text)" }}>ابحث عن منافس</p>
+          {/* رتبتي الحالية */}
+          {myRp != null && (
+            <div className="mb-4">
+              <RankBadge rp={myRp} size="md" showRp />
+            </div>
+          )}
 
-            {/* Find player button */}
-            <button onClick={findPlayer} disabled={searchingPlayer}
-              className="w-full py-3.5 rounded-xl font-bold text-[15px] mb-3 transition"
-              style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
-              {searchingPlayer ? "جاري البحث..." : "ابحث عن لاعب 🔍"}
-            </button>
-
-            {/* Result */}
-            {playerSearchDone && !foundPlayer && (
-              <div className="rounded-xl px-4 py-3 text-center mb-3"
-                style={{ background: "color-mix(in srgb, var(--text-muted) 8%, transparent)", border: "1px solid var(--border)" }}>
-                <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>ما فيه لاعبين الحين</p>
-                <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>العب ضد البوت في انتظار منافس</p>
-              </div>
-            )}
-
-            {foundPlayer && (
-              <div className="rounded-xl px-4 py-3 flex items-center gap-3 mb-3"
-                style={{ background: "color-mix(in srgb, var(--success) 10%, transparent)", border: "1.5px solid var(--success)" }}>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-white"
-                  style={{ background: "linear-gradient(135deg,var(--accent-2),var(--accent-light))" }}>
-                  {foundPlayer.name.charAt(0)}
-                </div>
-                <div className="flex-1">
-                  <p className="font-bold text-[14px]" style={{ color: "var(--text)" }}>{foundPlayer.name}</p>
-                  <p className="text-[12px]" style={{ color: "var(--success)" }}>جاهز للتحدي</p>
-                </div>
-                <button onClick={startGame}
-                  className="px-4 py-2 rounded-xl font-bold text-sm text-white"
-                  style={{ background: "var(--success)" }}>
-                  ابدأ
-                </button>
-              </div>
-            )}
-          </div>
+          {/* مباراة 1v1 حقيقية (مطابقة حسب الرتبة) */}
+          <button
+            onClick={() => setOnline(true)}
+            className="w-full max-w-xs py-5 rounded-2xl font-black text-lg glow-gold transition min-h-[60px] mb-2"
+            style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}
+          >
+            ابدأ 1v1 ⚔️
+          </button>
+          <p className="text-[12px] mb-5 text-center" style={{ color: "var(--text-muted)" }}>
+            مباراة حقيقية ضد لاعب من رتبتك — الفوز يرفع نقاطك (RP)
+          </p>
 
           {/* Divider */}
           <div className="flex items-center gap-3 mb-4 w-full max-w-xs">
@@ -325,15 +225,16 @@ export default function ArenaPage() {
             <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
           </div>
 
-          {/* Play against bot */}
-          <p className="font-black text-[15px] mb-3 text-center" style={{ color: "var(--text-dim)" }}>العب ضد البوت</p>
+          {/* Play against bot (تدريب — لا يؤثر على الرتبة) */}
+          <p className="font-black text-[15px] mb-1 text-center" style={{ color: "var(--text-dim)" }}>تدرّب ضد البوت</p>
+          <p className="text-[12px] mb-3 text-center" style={{ color: "var(--text-muted)" }}>لا يؤثر على رتبتك · الفوز +{WIN_SILVER} فضة</p>
 
           <button
             onClick={startGame}
-            className="w-full max-w-xs py-5 rounded-2xl font-black text-lg glow-gold transition min-h-[60px]"
+            className="w-full max-w-xs py-4 rounded-2xl font-black text-base transition min-h-[56px]"
             style={{ background: "rgba(245,158,11,0.08)", border: "1.5px solid #F59E0B", color: "#F59E0B" }}
           >
-            ابدأ التحدي
+            ابدأ التدريب
           </button>
         </div>
       </div>

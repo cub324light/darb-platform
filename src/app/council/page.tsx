@@ -17,6 +17,8 @@ import { detectContact } from "@/lib/contactFilter";
 import { detectProfanity, detectSensitive } from "@/lib/moderation";
 import { trackEvent } from "@/lib/analytics";
 import { EmailVerifyNotice } from "@/components/EmailVerify";
+import RankBadge from "@/components/RankBadge";
+import { fetchMyRank, getCachedRp } from "@/lib/arena/client";
 
 /* ─── بيانات ─── */
 interface ChatMessage {
@@ -25,6 +27,7 @@ interface ChatMessage {
   name: string;
   content: string;
   createdAt: number; // ms
+  rp?: number;       // لقطة RP للعرض (شارة الرتبة بجانب الاسم)
   isOfficial?: boolean;
   pinned?: boolean;
 }
@@ -159,6 +162,9 @@ export default function CouncilPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, officialMessages]);
 
+  /* ─ تسخين خبيئة RP مرة واحدة كي تحمل رسائلي شارة الرتبة ─ */
+  useEffect(() => { fetchMyRank().catch(() => {}); }, []);
+
   /* ─ تصفير الرسائل عند تبديل المجموعة (نمط React: ضبط الحالة أثناء العرض) ─ */
   const [loadedGroupId, setLoadedGroupId] = useState<string | null>(null);
   if (activeGroup && activeGroup.id !== loadedGroupId) {
@@ -182,7 +188,7 @@ export default function CouncilPage() {
         const data = d.data();
         const ts = data.createdAt;
         const createdAt = ts?.toMillis ? ts.toMillis() : (ts?.seconds ? ts.seconds * 1000 : Date.now());
-        return { id: d.id, uid: data.uid ?? "", name: data.name ?? "طالب", content: data.content ?? "", createdAt };
+        return { id: d.id, uid: data.uid ?? "", name: data.name ?? "طالب", content: data.content ?? "", createdAt, rp: typeof data.rp === "number" ? data.rp : undefined };
       });
       setMessages(msgs);
       setMsgLoading(false);
@@ -273,11 +279,13 @@ export default function CouncilPage() {
          قواعد Firestore تفحص rate/{uid} لفرض المهلة على الخادم. */
       const batch = writeBatch(db);
       const msgRef = doc(collection(db, "chats", activeGroup.id, "messages"));
+      const myRp = getCachedRp();
       batch.set(msgRef, {
         uid: authUid,
         name: userName,
         content: text,
         createdAt: serverTimestamp(),
+        ...(myRp != null ? { rp: myRp } : {}),
       });
       batch.set(doc(db, "rate", authUid), { lastPostAt: serverTimestamp() });
       await batch.commit();
@@ -514,10 +522,13 @@ export default function CouncilPage() {
                     <div className="flex flex-col gap-0.5"
                       style={{ maxWidth: "75%", alignItems: isMine ? "flex-end" : "flex-start" }}>
                       {!isMine && (
-                        <p className="text-[11px] font-bold"
-                          style={{ color: msg.isOfficial ? "var(--gold)" : "var(--accent-light)" }}>
-                          {msg.pinned ? "📌 " : ""}{msg.isOfficial ? "درب الرسمي" : msg.name}
-                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-[11px] font-bold"
+                            style={{ color: msg.isOfficial ? "var(--gold)" : "var(--accent-light)" }}>
+                            {msg.pinned ? "📌 " : ""}{msg.isOfficial ? "درب الرسمي" : msg.name}
+                          </p>
+                          {!msg.isOfficial && typeof msg.rp === "number" && <RankBadge rp={msg.rp} size="xs" showLabel={false} />}
+                        </div>
                       )}
                       <div className="rounded-2xl px-3 py-2.5"
                         style={{

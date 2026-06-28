@@ -29,7 +29,12 @@ service cloud.firestore {
         && !('blockUntil' in request.resource.data)
         && !('referredBy' in request.resource.data)
         && !('referralCount' in request.resource.data)
-        && !('pendingRefReward' in request.resource.data);
+        && !('pendingRefReward' in request.resource.data)
+        && !('rp' in request.resource.data)
+        && !('winStreak' in request.resource.data)
+        && !('peakRp' in request.resource.data)
+        && !('arenaWins' in request.resource.data)
+        && !('arenaLosses' in request.resource.data);
 
       allow update: if request.auth.uid == uid
         && ( !('role' in request.resource.data)
@@ -40,6 +45,18 @@ service cloud.firestore {
              || request.resource.data.blocked == resource.data.blocked )
         && ( !('blockUntil' in request.resource.data)
              || request.resource.data.blockUntil == resource.data.blockUntil )
+        // RP/الرتبة وإحصاءات الأرينا تُضبط عبر الخادم فقط (Admin SDK) —
+        // يمنع رفع الرتبة ذاتياً أو تزوير سجلّ الانتصارات.
+        && ( !('rp' in request.resource.data)
+             || request.resource.data.rp == resource.data.get('rp', 0) )
+        && ( !('winStreak' in request.resource.data)
+             || request.resource.data.winStreak == resource.data.get('winStreak', 0) )
+        && ( !('peakRp' in request.resource.data)
+             || request.resource.data.peakRp == resource.data.get('peakRp', 0) )
+        && ( !('arenaWins' in request.resource.data)
+             || request.resource.data.arenaWins == resource.data.get('arenaWins', 0) )
+        && ( !('arenaLosses' in request.resource.data)
+             || request.resource.data.arenaLosses == resource.data.get('arenaLosses', 0) )
         // حقول الإحالة تُضبط عبر الخادم فقط (Admin SDK) — يمنع تضخيم العدّ/المكافأة ذاتياً
         && ( !('referredBy' in request.resource.data)
              || request.resource.data.referredBy == resource.data.get('referredBy', null) )
@@ -112,6 +129,25 @@ service cloud.firestore {
     match /mod_actions/{id} {
       allow read: if isStaff();
       allow write: if false;
+    }
+
+    // ───── الأرينا 1v1 ─────
+    // طابور المطابقة: كل الكتابة عبر الخادم فقط (Admin SDK) لمنع التلاعب
+    // والمباريات الوهمية. صاحب التذكرة يقرأ تذكرته فقط (لرصد المطابقة فوراً).
+    match /matchQueue/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // المباريات: يقرؤها لاعباها فقط (الاسم/الرتبة/الأسئلة/النتيجة). الكتابة
+    // من الخادم فقط (إنشاء/حسم/تطبيق RP) — لا يكتب العميل أي نتيجة.
+    match /matches/{matchId} {
+      allow read: if signedIn() && request.auth.uid in resource.data.playerUids;
+      allow write: if false;
+      // مفتاح الإجابات وأي بيانات خاصة — لا يقرؤها العميل إطلاقاً
+      match /private/{doc} {
+        allow read, write: if false;
+      }
     }
 
     // Everything else: denied
