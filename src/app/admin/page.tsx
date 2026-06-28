@@ -7,8 +7,11 @@ import { authedFetch } from "@/lib/authFetch";
 import { onAuth } from "@/lib/cloud";
 import { ROLE_LABEL, ROLE_COLOR, ASSIGNABLE_ROLES, ROLE_RANK, canDo, type Role } from "@/lib/roles";
 
-/* لوحة إدارة المصادر (قاعدة المعرفة) — تُحمَّل عند فتحها فقط */
+import AdminShell, { type AdminSection } from "@/components/admin/AdminShell";
+
+/* لوحة إدارة المصادر (قاعدة المعرفة) + سجلّ التدقيق — تُحمَّل عند فتحها فقط */
 const SourcesManager = dynamic(() => import("@/components/admin/SourcesManager"), { ssr: false });
+const AuditLog = dynamic(() => import("@/components/admin/AuditLog"), { ssr: false });
 
 type PlanId = "free" | "shaheen" | "anqa";
 
@@ -288,6 +291,9 @@ export default function AdminPage() {
 
   /* ── إدارة المصادر (قاعدة المعرفة) ── */
   const [showSources, setShowSources] = useState(false);
+
+  /* ── القسم النشط في الهيكل الموحّد ── */
+  const [section, setSection] = useState<AdminSection>("overview");
   const loadReports = async () => {
     setReportsBusy(true);
     try {
@@ -694,7 +700,10 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-dvh px-4 py-6" style={{ background: "var(--bg)" }}>
+    <AdminShell role={myRole} active={section} onNavigate={setSection}>
+      {section === "audit" && <AuditLog pass={pass} />}
+      {section === "overview" && (
+      <div className="px-4 py-6">
       {/* الهيدر */}
       <div className="max-w-7xl mx-auto mb-6 flex items-center justify-between gap-4 flex-wrap">
         <div>
@@ -1505,6 +1514,8 @@ export default function AdminPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+      )}
+    </AdminShell>
   );
 }

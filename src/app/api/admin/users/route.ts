@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkAdminPassword, authorizeAdmin, getVerifiedRole, isOwnerEmail } from "@/lib/server/firebaseAdmin";
+import { recordAudit } from "@/lib/server/audit";
 import { ACTION_MIN_ROLE, ASSIGNABLE_ROLES, isRole, atLeast, type AdminAction, type Role } from "@/lib/roles";
 
 /* ربط كل وضع بأقل صلاحية مطلوبة (مصدر القرار في lib/roles) */
@@ -112,7 +113,12 @@ export async function POST(req: NextRequest) {
         await fbAuth.setCustomUserClaims(uid, { role });
         // مرآة في Firestore للعرض/الفلترة فقط
         const db = await adminDb();
+        const beforeRole = (await db.collection("users").doc(uid).get()).data()?.role ?? "user";
         await db.collection("users").doc(uid).set({ role }, { merge: true });
+        await recordAudit(db, req, caller, {
+          area: "users", action: "set_role", targetType: "user", targetId: uid,
+          before: { role: beforeRole }, after: { role }, summary: `تعيين دور «${role}»`,
+        });
         return NextResponse.json({ ok: true, uid, role });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -184,6 +190,11 @@ export async function POST(req: NextRequest) {
         const by = caller.email ?? caller.uid;
         const at = new Date().toISOString();
         await repRef.set({ status, resolution: action, resolvedBy: by, resolvedAt: at }, { merge: true });
+
+        await recordAudit(db, req, caller, {
+          area: "council", action: `report_${action}`, targetType: "report", targetId: reportId,
+          after: { resolution: action }, summary: `بلاغ مجلس: ${action === "delete" ? "حذف الرسالة" : action === "block" ? "حظر صاحب البلاغ" : "تجاهل"}`,
+        });
 
         /* سجلّ إجراءات الإشراف — تدقيق: مَن فعل ماذا ومتى (لا يُفشل الرد إن تعذّر) */
         await db.collection("mod_actions").add({
@@ -365,7 +376,12 @@ export async function POST(req: NextRequest) {
       }
       try {
         const db = await adminDb();
+        const beforePlan = (await db.collection("users").doc(uid).get()).data()?.plan ?? "free";
         await db.collection("users").doc(uid).set({ plan }, { merge: true });
+        await recordAudit(db, req, caller, {
+          area: "users", action: "set_plan", targetType: "user", targetId: uid,
+          before: { plan: beforePlan }, after: { plan }, summary: `تغيير الباقة إلى «${plan}»`,
+        });
         return NextResponse.json({ ok: true, uid, plan });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -399,6 +415,11 @@ export async function POST(req: NextRequest) {
           { blocked, blockUntil: blockUntil ?? null },
           { merge: true }
         );
+        await recordAudit(db, req, caller, {
+          area: "users", action: blocked ? "block_user_timed" : "unblock_user", targetType: "user", targetId: uid,
+          after: { blocked, blockUntil: blockUntil ?? null },
+          summary: blocked ? (blockUntil ? `إيقاف مؤقت ${durationHours} ساعة` : "إيقاف دائم") : "فك الإيقاف",
+        });
         return NextResponse.json({ ok: true, uid, blocked, blockUntil });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -414,7 +435,13 @@ export async function POST(req: NextRequest) {
       }
       try {
         const db = await adminDb();
+        const wasBlocked = (await db.collection("users").doc(uid).get()).data()?.blocked === true;
         await db.collection("users").doc(uid).set({ blocked: !!blocked }, { merge: true });
+        await recordAudit(db, req, caller, {
+          area: "users", action: blocked ? "block_user" : "unblock_user", targetType: "user", targetId: uid,
+          before: { blocked: wasBlocked }, after: { blocked: !!blocked },
+          summary: blocked ? "حظر المستخدم" : "فك حظر المستخدم",
+        });
         return NextResponse.json({ ok: true, uid, blocked: !!blocked });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -436,8 +463,13 @@ export async function POST(req: NextRequest) {
         if (target && isOwnerEmail(target.email)) {
           return NextResponse.json({ error: "لا يمكن حذف حساب المالك" }, { status: 400 });
         }
+        const beforeDel = (await db.collection("users").doc(uid).get()).data() ?? {};
         await db.collection("users").doc(uid).delete();
         try { await fbAuth.deleteUser(uid); } catch { /* قد لا يوجد في Auth */ }
+        await recordAudit(db, req, caller, {
+          area: "users", action: "delete_user", targetType: "user", targetId: uid,
+          before: { name: beforeDel.name ?? null, email: beforeDel.email ?? null }, summary: "حذف المستخدم نهائياً",
+        });
         return NextResponse.json({ ok: true, uid });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -458,6 +490,10 @@ export async function POST(req: NextRequest) {
           taseesProgress: 0, tadreebProgress: 0,
           backup: {},
         }, { merge: true });
+        await recordAudit(db, req, caller, {
+          area: "users", action: "reset_user", targetType: "user", targetId: uid,
+          summary: "تصفير تقدّم المستخدم",
+        });
         return NextResponse.json({ ok: true, uid });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendEmail, sendTemplate, isEmailConfigured } from "@/lib/email";
 import { TEMPLATES, type TemplateName, type TemplateProps } from "@/lib/email/templates";
-import { authorizeAdmin } from "@/lib/server/firebaseAdmin";
+import { authorizeAdmin, getAdminDb } from "@/lib/server/firebaseAdmin";
+import { recordAudit } from "@/lib/server/audit";
 
 /* Resend SDK يعمل على Node */
 export const runtime = "nodejs";
@@ -48,13 +49,28 @@ export async function POST(req: NextRequest) {
   catch { return NextResponse.json({ ok: false, error: "طلب غير صالح" }, { status: 400 }); }
 
   /* المصادقة عبر RBAC: كلمة المالك أو دور ≥ مشرف عام (admin) */
-  if (!(await authorizeAdmin(req, body, "admin"))) {
+  const caller = await authorizeAdmin(req, body, "admin");
+  if (!caller) {
     return NextResponse.json({ ok: false, error: "صلاحيات غير كافية" }, { status: 403 });
   }
 
   if (!body.to) {
     return NextResponse.json({ ok: false, error: "حقل المستلم (to) مطلوب" }, { status: 400 });
   }
+
+  /* تدقيق: مَن أرسل، لمن، وأي قالب (أفضل-جهد، لا يُفشل الإرسال) */
+  const auditSend = async () => {
+    try {
+      const db = await getAdminDb();
+      const toList = Array.isArray(body.to) ? body.to : [body.to];
+      await recordAudit(db, req, caller, {
+        area: "email", action: "send_email", targetType: "email",
+        targetId: toList.slice(0, 3).join(", "),
+        after: { template: body.template ?? "raw", recipients: toList.length, subject: body.subject ?? null },
+        summary: `إرسال بريد (${body.template ?? "مخصّص"}) لـ ${toList.length} مستلم`,
+      });
+    } catch { /* تجاهل */ }
+  };
 
   /* مسار القالب النوعي */
   if (body.template) {
@@ -67,6 +83,7 @@ export async function POST(req: NextRequest) {
       name,
       (body.props ?? {}) as unknown as TemplateProps[typeof name],
     );
+    if (result.ok) await auditSend();
     return NextResponse.json(result, { status: result.ok ? 200 : 502 });
   }
 
@@ -80,5 +97,6 @@ export async function POST(req: NextRequest) {
     html: body.html,
     text: body.text,
   });
+  if (result.ok) await auditSend();
   return NextResponse.json(result, { status: result.ok ? 200 : 502 });
 }

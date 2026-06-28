@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { Timestamp } from "firebase-admin/firestore";
 import { getAdminApp, getVerifiedUid, authorizeAdmin } from "@/lib/server/firebaseAdmin";
+import { recordAudit } from "@/lib/server/audit";
 
 /* firebase-admin يحتاج Node APIs — نمنع تجميعه على Edge */
 export const runtime = "nodejs";
@@ -125,7 +126,8 @@ export async function POST(req: NextRequest) {
       const { title, content, groupId, pinned } = body as {
         title?: string; content?: string; groupId?: string; pinned?: boolean;
       };
-      if (!(await authorizeAdmin(req, body as { password?: unknown }, "admin"))) {
+      const annCaller = await authorizeAdmin(req, body as { password?: unknown }, "admin");
+      if (!annCaller) {
         return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
       }
       if (!title || typeof title !== "string" || !title.trim()) {
@@ -141,6 +143,11 @@ export async function POST(req: NextRequest) {
         pinned: pinned === true,
         createdAt: FieldValue.serverTimestamp(),
       });
+      await recordAudit(db, req, annCaller, {
+        area: "council", action: "announce_create", targetType: "announcement", targetId: ref.id,
+        after: { title: title.trim(), groupId: groupId || "all", pinned: pinned === true },
+        summary: `نشر إعلان: ${title.trim().slice(0, 60)}`,
+      });
       return NextResponse.json({ ok: true, id: ref.id });
     }
 
@@ -149,7 +156,8 @@ export async function POST(req: NextRequest) {
       const { id, title, content, groupId } = body as {
         id?: string; title?: string; content?: string; groupId?: string;
       };
-      if (!(await authorizeAdmin(req, body as { password?: unknown }, "admin"))) {
+      const editCaller = await authorizeAdmin(req, body as { password?: unknown }, "admin");
+      if (!editCaller) {
         return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
       }
       if (!id || typeof id !== "string") {
@@ -163,32 +171,46 @@ export async function POST(req: NextRequest) {
         content: content.trim(),
         ...(typeof groupId === "string" && groupId ? { groupId } : {}),
       }, { merge: true });
+      await recordAudit(db, req, editCaller, {
+        area: "council", action: "announce_edit", targetType: "announcement", targetId: id,
+        after: { title: title.trim() }, summary: `تعديل إعلان: ${title.trim().slice(0, 60)}`,
+      });
       return NextResponse.json({ ok: true });
     }
 
     /* -------- pinAnnouncement: تثبيت / إلغاء تثبيت (للمشرف فقط) -------- */
     if (mode === "pinAnnouncement") {
       const { id, pinned } = body as { id?: string; pinned?: boolean };
-      if (!(await authorizeAdmin(req, body as { password?: unknown }, "admin"))) {
+      const pinCaller = await authorizeAdmin(req, body as { password?: unknown }, "admin");
+      if (!pinCaller) {
         return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
       }
       if (!id || typeof id !== "string") {
         return NextResponse.json({ error: "معرّف الإعلان مفقود" }, { status: 400 });
       }
       await db.collection("announcements").doc(id).set({ pinned: pinned === true }, { merge: true });
+      await recordAudit(db, req, pinCaller, {
+        area: "council", action: "announce_pin", targetType: "announcement", targetId: id,
+        after: { pinned: pinned === true }, summary: pinned ? "تثبيت إعلان" : "إلغاء تثبيت إعلان",
+      });
       return NextResponse.json({ ok: true, pinned: pinned === true });
     }
 
     /* -------- deleteAnnouncement: حذف إعلان (للمشرف فقط) -------- */
     if (mode === "deleteAnnouncement") {
       const { id } = body as { id?: string };
-      if (!(await authorizeAdmin(req, body as { password?: unknown }, "admin"))) {
+      const delCaller = await authorizeAdmin(req, body as { password?: unknown }, "admin");
+      if (!delCaller) {
         return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
       }
       if (!id || typeof id !== "string") {
         return NextResponse.json({ error: "معرّف الإعلان مفقود" }, { status: 400 });
       }
       await db.collection("announcements").doc(id).delete();
+      await recordAudit(db, req, delCaller, {
+        area: "council", action: "announce_delete", targetType: "announcement", targetId: id,
+        summary: "حذف إعلان",
+      });
       return NextResponse.json({ ok: true });
     }
 

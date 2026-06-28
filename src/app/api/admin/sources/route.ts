@@ -6,6 +6,7 @@ import {
   SOURCE_CATEGORIES, type Source, type KBEntry, type SourceCategory, type FetchMethod, type UpdateMode, type ItemStatus,
 } from "@/lib/kb";
 import { invalidateKBCache } from "@/lib/kb/server";
+import { recordAudit } from "@/lib/server/audit";
 
 export const runtime = "nodejs";
 
@@ -105,10 +106,11 @@ export async function POST(req: NextRequest) {
   }
 
   async function audit(action: string, targetId: string, changes: unknown) {
-    await db.collection("audit_log").add({
-      area: "kb", action, targetId,
-      by: caller!.email ?? caller!.uid, at: now, changes: changes ?? null,
-    }).catch(() => {});
+    await recordAudit(db, req, caller!, {
+      area: "kb", action, targetType: action.includes("entry") ? "kb_entry" : "kb_source", targetId,
+      changes: Array.isArray(changes) ? (changes as { field: string; before: string; after: string }[]) : undefined,
+      summary: `${action} · ${targetId}`,
+    });
   }
 
   try {
