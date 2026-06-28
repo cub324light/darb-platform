@@ -20,7 +20,7 @@ const DuirbHub = dynamic(() => import("@/components/DuirbHub"), {
   ),
 });
 
-const HIDDEN_ON = ["/onboarding", "/admin", "/pricing", "/privacy", "/parent"];
+const HIDDEN_ON = ["/onboarding", "/admin", "/pricing", "/privacy", "/terms", "/subscription", "/parent"];
 
 export default function DuirbFloat() {
   const pathname = usePathname();

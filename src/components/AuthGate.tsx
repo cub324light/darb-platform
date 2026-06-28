@@ -12,7 +12,7 @@ import DesktopSidebar from "./DesktopSidebar";
 
 /* المسارات العامة — تُعرض بدون تسجيل دخول للطالب:
    «/» و«/privacy» تسويقية، و«/admin» له حماية كلمة سر خاصة على الخادم. */
-const PUBLIC_PATHS = ["/", "/privacy", "/admin"];
+const PUBLIC_PATHS = ["/", "/privacy", "/terms", "/subscription", "/admin"];
 
 /* تحميل SignInScreen ديناميكياً — يُبعدها وما تستورده من Firebase عن الحزمة المبدئية.
    المستخدمون العائدون لا يحتاجون شاشة الدخول على الإطلاق. */

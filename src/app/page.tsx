@@ -407,9 +407,17 @@ export default function LandingPage() {
           </Link>
           <p className="text-xs mt-6 relative z-10" style={{ color: "var(--text-muted)" }}>صُنع في السعودية · مجاني بالكامل</p>
         </div>
-        <Link href="/privacy" className="inline-block mt-8 text-xs" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
-          سياسة الخصوصية
-        </Link>
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 mt-8 text-xs">
+          <Link href="/privacy" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+            سياسة الخصوصية
+          </Link>
+          <Link href="/terms" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+            شروط الاستخدام
+          </Link>
+          <Link href="/subscription" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+            الاشتراك والاسترجاع
+          </Link>
+        </div>
       </section>
 
     </div>
