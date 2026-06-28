@@ -2,15 +2,16 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 /* سياسة أمان المحتوى (CSP) — تسمح بمصادر درب المعروفة فقط (Firebase/Google،
-   PostHog، Clarity، Vercel) وتمنع غيرها. Sentry يمرّ عبر /monitoring (self).
+   PostHog، Vercel) وتمنع غيرها. Sentry يمرّ عبر /monitoring (self).
+   أُزيلت مصادر Microsoft Clarity (clarity.ms/bing.com) بعد حذف الأداة.
    'unsafe-inline'/'unsafe-eval' لازمة لـ Next/Firebase/pdf.js. عدّل بحذر. */
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.posthog.com https://*.clarity.ms https://va.vercel-scripts.com https://apis.google.com https://*.google.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.posthog.com https://va.vercel-scripts.com https://apis.google.com https://*.google.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.googleapis.com https://*.google.com https://*.gstatic.com https://*.firebaseio.com wss://*.firebaseio.com https://*.storage.googleapis.com https://*.posthog.com https://*.clarity.ms https://*.bing.com https://*.vercel-insights.com https://*.vercel-scripts.com",
+  "connect-src 'self' https://*.googleapis.com https://*.google.com https://*.gstatic.com https://*.firebaseio.com wss://*.firebaseio.com https://*.storage.googleapis.com https://*.posthog.com https://*.vercel-insights.com https://*.vercel-scripts.com",
   "frame-src 'self' https://*.firebaseapp.com https://*.google.com https://accounts.google.com",
   "worker-src 'self' blob:",
   "object-src 'none'",

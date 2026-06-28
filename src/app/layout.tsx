@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cairo, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
+import AnalyticsGate from "@/components/AnalyticsGate";
 import CloudSync from "@/components/CloudSync";
 import AuthGate from "@/components/AuthGate";
 import Telemetry from "@/components/Telemetry";
@@ -89,8 +88,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <PageViewTracker />
         <DuirbFloat />
         <DuirbTour />
-        <Analytics />
-        <SpeedInsights />
+        <AnalyticsGate />
       </body>
     </html>
   );

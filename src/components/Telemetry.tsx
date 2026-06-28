@@ -1,53 +1,48 @@
 "use client";
 import { useEffect } from "react";
+import { hasAnalyticsConsent, CONSENT_EVENT } from "@/lib/consent";
 
-/* ─── التحليلات ───
-   - MS Clarity : NEXT_PUBLIC_CLARITY_ID   (خرائط حرارية + تسجيل الجلسات)
-   - PostHog    : NEXT_PUBLIC_POSTHOG_KEY  (تحليلات المنتج — منطقة EU)
-   - Sentry     : يُدار عبر @sentry/nextjs في ملفات instrumentation
+/* ─── التحليلات (PostHog فقط — أحداث يدوية صريحة) ───
+   - لا تُحمَّل إطلاقاً قبل موافقة المستخدم (consent). الافتراضي: مُعطَّل.
+   - بلا autocapture وبلا التقاط تلقائي للصفحات أو المغادرة —
+     فقط استدعاءات trackEvent()/capture() الصريحة تُسجَّل.
+   - أُزيل Microsoft Clarity (تسجيل الجلسات) بالكامل.
+   - Sentry يُدار في instrumentation-client، مشروطاً بنفس الموافقة.
 */
 
 let started = false;
 
+function initPostHog() {
+  if (started) return;
+  // المعرّف عام (يظهر في كود المتصفح) — مضمّن افتراضياً بلا ضبط إضافي في Vercel
+  const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY || "phc_B9zkWuSUTpoQuZ4JZWyeTp3mFzDVmdYBkqPygVjJjziL";
+  const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://eu.i.posthog.com";
+  if (!posthogKey) return;
+  started = true;
+
+  import("posthog-js")
+    .then((mod) => {
+      mod.default.init(posthogKey, {
+        api_host: posthogHost,
+        person_profiles: "identified_only",
+        /* خصوصية-أولاً: لا التقاط تلقائي — أحداث صريحة فقط */
+        autocapture: false,
+        capture_pageview: false,
+        capture_pageleave: false,
+      });
+      // نتيحه عالمياً ليقرأه نظام أعلام الميزات (src/lib/flags.ts) ونظام الأحداث
+      (window as unknown as { posthog?: unknown }).posthog = mod.default;
+    })
+    .catch(() => {});
+}
+
 export default function Telemetry() {
-  /* التهيئة — مرة واحدة فقط */
   useEffect(() => {
-    if (started) return;
-    started = true;
-
-    // المعرّفات عامة (تظهر في كود المتصفح) — مضمّنة افتراضياً بلا ضبط إضافي في Vercel
-    const clarityId = process.env.NEXT_PUBLIC_CLARITY_ID || "x7xp1l6g8h";
-    const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY || "phc_B9zkWuSUTpoQuZ4JZWyeTp3mFzDVmdYBkqPygVjJjziL";
-    const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://eu.i.posthog.com";
-
-    /* Microsoft Clarity */
-    if (clarityId && !document.getElementById("ms-clarity")) {
-      const s = document.createElement("script");
-      s.id = "ms-clarity";
-      s.type = "text/javascript";
-      s.async = true;
-      s.innerHTML =
-        `(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};` +
-        `t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;` +
-        `y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","${clarityId}");`;
-      document.head.appendChild(s);
-    }
-
-    /* PostHog — 'history_change' يلتقط $pageview تلقائياً عند كل تنقّل في App Router */
-    if (posthogKey) {
-      import("posthog-js")
-        .then((mod) => {
-          mod.default.init(posthogKey, {
-            api_host: posthogHost,
-            person_profiles: "identified_only",
-            capture_pageview: "history_change",
-            capture_pageleave: true,
-          });
-          // نتيحه عالمياً ليقرأه نظام أعلام الميزات (src/lib/flags.ts)
-          (window as unknown as { posthog?: unknown }).posthog = mod.default;
-        })
-        .catch(() => {});
-    }
+    if (hasAnalyticsConsent()) initPostHog();
+    /* لو فعّل المستخدم التحليلات لاحقاً من الإعدادات — نهيّئها فوراً بلا إعادة تحميل */
+    const onConsent = () => { if (hasAnalyticsConsent()) initPostHog(); };
+    window.addEventListener(CONSENT_EVENT, onConsent);
+    return () => window.removeEventListener(CONSENT_EVENT, onConsent);
   }, []);
 
   return null;

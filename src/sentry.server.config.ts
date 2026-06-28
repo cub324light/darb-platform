@@ -10,5 +10,6 @@ const DSN =
    التقاط الأخطاء (الأهم) فعّالاً. */
 Sentry.init({
   dsn: DSN,
-  sendDefaultPii: true,
+  /* خصوصية-أولاً: لا إرسال IP ولا بيانات الطلب/المستخدم؛ يبقى التقاط الأخطاء فعّالاً */
+  sendDefaultPii: false,
 });

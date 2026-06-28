@@ -1,7 +1,8 @@
 "use client";
 /* ─── تفضيلات التعلّم + الخصوصية — تُغذّي تجربة الطالب لاحقاً ─── */
-import { memo } from "react";
+import { memo, useState } from "react";
 import type { DarbPrefs, StudyTime, SessionLen, LearningStyle, StudyDevice, StudyFormat } from "@/lib/storage";
+import { hasAnalyticsConsent, setAnalyticsConsent } from "@/lib/consent";
 
 interface Props {
   prefs: DarbPrefs;
@@ -35,6 +36,37 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
     <div>
       <p className="text-[13px] font-bold mb-2" style={{ color: "var(--text)" }}>{title}</p>
       <div className="flex flex-wrap gap-2">{children}</div>
+    </div>
+  );
+}
+
+/* صف موافقة التحليلات — مكتفٍ ذاتياً (يقرأ/يكتب علم الموافقة).
+   الافتراضي مُعطَّل؛ لا يُحمَّل أي طرف ثالث قبل التفعيل من هنا. */
+function AnalyticsConsentRow() {
+  /* تهيئة كسولة — يُركَّب هذا المكوّن بعد ثبوت التحميل (ready) فلا تعارض ترطيب */
+  const [on, setOn] = useState(() => typeof window !== "undefined" && hasAnalyticsConsent());
+  const toggle = () => {
+    const next = !on;
+    setAnalyticsConsent(next);
+    setOn(next);
+  };
+  return (
+    <div className="rounded-2xl px-4 py-4 flex items-center justify-between gap-3 mt-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+      <div className="min-w-0">
+        <p className="font-bold text-[15px]" style={{ color: "var(--text)" }}>التحليلات والقياس</p>
+        <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+          {on
+            ? "مفعّلة — تساعدنا على تحسين درب (PostHog وVercel ورصد الأعطال)"
+            : "معطّلة — لا تُرسَل أي بيانات استخدام لجهات خارجية"}
+        </p>
+      </div>
+      <button onClick={toggle}
+        className="px-4 py-2.5 rounded-xl font-black text-[14px] flex-shrink-0 transition active:scale-95"
+        style={on
+          ? { background: "var(--accent)", color: "#fff", border: "1.5px solid var(--accent)" }
+          : { background: "transparent", color: "var(--text-muted)", border: "1.5px solid var(--border)" }}>
+        {on ? "مفعّلة ●" : "معطّلة"}
+      </button>
     </div>
   );
 }
@@ -139,6 +171,9 @@ function ProfilePreferencesBase({ prefs, onPrefsChange, isPrivate, onTogglePriva
             {isPrivate ? "خاص ●" : "عام"}
           </button>
         </div>
+
+        {/* موافقة التحليلات — افتراضياً معطّلة (خصوصية-أولاً) */}
+        <AnalyticsConsentRow />
       </div>
     </div>
   );
