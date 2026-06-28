@@ -1,10 +1,14 @@
 "use client";
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { CHAT_GROUPS, groupName } from "@/lib/groups";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { authedFetch } from "@/lib/authFetch";
 import { onAuth } from "@/lib/cloud";
 import { ROLE_LABEL, ROLE_COLOR, ASSIGNABLE_ROLES, ROLE_RANK, canDo, type Role } from "@/lib/roles";
+
+/* لوحة إدارة المصادر (قاعدة المعرفة) — تُحمَّل عند فتحها فقط */
+const SourcesManager = dynamic(() => import("@/components/admin/SourcesManager"), { ssr: false });
 
 type PlanId = "free" | "shaheen" | "anqa";
 
@@ -281,6 +285,9 @@ export default function AdminPage() {
   const [showReports, setShowReports] = useState(false);
   const [reportsList, setReportsList] = useState<Report[]>([]);
   const [reportsBusy, setReportsBusy] = useState(false);
+
+  /* ── إدارة المصادر (قاعدة المعرفة) ── */
+  const [showSources, setShowSources] = useState(false);
   const loadReports = async () => {
     setReportsBusy(true);
     try {
@@ -737,6 +744,17 @@ export default function AdminPage() {
             <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{s.label}</p>
           </div>
         ))}
+      </div>
+
+      {/* قسم إدارة المصادر (قاعدة المعرفة) */}
+      <div className="max-w-7xl mx-auto mb-6">
+        <button onClick={() => setShowSources((v) => !v)}
+          className="flex items-center gap-2 mb-3 font-black text-[15px]"
+          style={{ color: "var(--text)" }}>
+          📚 إدارة المصادر (قاعدة المعرفة)
+          <span style={{ color: "var(--text-muted)" }}>{showSources ? "▲" : "▼"}</span>
+        </button>
+        {showSources && <SourcesManager pass={pass} />}
       </div>
 
       {/* قسم بلاغات المجلس */}

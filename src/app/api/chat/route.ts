@@ -6,6 +6,7 @@ import { chatComplete, LLMError, type LLMUserContent } from "@/lib/server/llm";
 import { formatProfileBlock, sessionIntervalRule, type DuwairbProfile, type DuwairbExam } from "@/lib/duwairb";
 import { strategyFromProfile, formatStrategyBlock, type PlanningPrefs, type AllocationPref } from "@/lib/strategy";
 import { goldenPathFromProfile, formatGoldenPathBlock, priorityFocusSubjects } from "@/lib/goldenPath";
+import { kbGroundingFor } from "@/lib/kb/server";
 import type { StudyGoalType } from "@/lib/tracks";
 import type { CalendarSignals } from "@/lib/academicCalendar";
 
@@ -423,8 +424,20 @@ export async function POST(req: NextRequest) {
         goldenPath ? priorityFocusSubjects(goldenPath) : undefined))
     : "";
 
-  /* السياق الموحّد أولاً (طبقة التنسيق) ثم البرومبت والكتل التخصصية للتخطيط */
-  const system = [baseSystem, personalize ? unifiedContext : "", goldenBlock, profileBlock, strategyBlock].filter(Boolean).join("\n\n");
+  /* تأريض من قاعدة المعرفة (KB-first): للأوضاع المعلوماتية نبحث محلياً عن
+     حقائق موثّقة (offline-first؛ بذرة + overlay) ونحقنها أولاً كي يعتمدها دويرب
+     ولا يختلق مواعيد/أرقاماً رسمية. مخبّأة على الخادم فلا تُثقل الطلبات. */
+  const KB_MODES = new Set(["explain", "progress", "study"]);
+  let kbBlock = "";
+  if (personalize && KB_MODES.has(mode ?? "") && typeof prompt === "string" && prompt.trim()) {
+    try {
+      const kb = await kbGroundingFor(prompt, { now: Date.now(), limit: 3 });
+      kbBlock = kb.grounding;
+    } catch { /* لا نُفشل الرد إن تعذّر تحميل القاعدة */ }
+  }
+
+  /* السياق الموحّد أولاً (طبقة التنسيق) ثم معرفة درب ثم البرومبت والكتل التخصصية */
+  const system = [baseSystem, personalize ? unifiedContext : "", kbBlock, goldenBlock, profileBlock, strategyBlock].filter(Boolean).join("\n\n");
 
   /* مع الصور نستخدم موديل الرؤية؛ غيره نصّي — تختار طبقة المزوّد النموذج */
   const useVision = isTopics && images.length > 0;

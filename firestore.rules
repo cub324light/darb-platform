@@ -150,6 +150,28 @@ service cloud.firestore {
       }
     }
 
+    // ───── قاعدة المعرفة (Knowledge Base) ─────
+    // المصادر: قراءة للطاقم فقط (إدارة)، الكتابة من الخادم فقط (Admin SDK).
+    match /kb_sources/{id} {
+      allow read: if isStaff();
+      allow write: if false;
+    }
+    // مدخلات المعرفة: يقرؤها أي مسجّل (تأريض دويرب offline-first بعد التخزين)،
+    // الكتابة من الخادم فقط (لا يلوّث العميل المعرفة).
+    match /kb_entries/{id} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+    // سجلّ نسخ المعرفة وسجلّ التدقيق: قراءة للطاقم، كتابة من الخادم فقط.
+    match /kb_versions/{id} {
+      allow read: if isStaff();
+      allow write: if false;
+    }
+    match /audit_log/{id} {
+      allow read: if isStaff();
+      allow write: if false;
+    }
+
     // Everything else: denied
     match /{document=**} {
       allow read, write: if false;
