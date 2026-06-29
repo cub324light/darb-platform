@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const BASE = "https://darb-platform.vercel.app";
+const BASE = "https://usedarb.com";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date(); // يُحدَّث تلقائياً مع كل بناء

@@ -16,6 +16,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: PRIVATE_PATHS,
     },
-    sitemap: "https://darb-platform.vercel.app/sitemap.xml",
+    sitemap: "https://usedarb.com/sitemap.xml",
   };
 }

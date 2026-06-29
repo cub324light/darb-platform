@@ -19,16 +19,16 @@ export default async function Image() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #F5B40A 0%, #D4920A 100%)",
+          background: "radial-gradient(circle at 50% 35%, #3a5bd0 0%, #1b2a70 70%, #15235e 100%)",
           fontFamily: "Tajawal",
-          color: "#2563EB",
+          color: "#FFFFFF",
           direction: "rtl",
         }}
       >
-        <div style={{ fontSize: 220, fontWeight: 700, lineHeight: 1, color: "#2563EB" }}>درب</div>
+        <div style={{ fontSize: 220, fontWeight: 700, lineHeight: 1, color: "#FFFFFF" }}>درب</div>
 
         {/* الكلمات معكوسة في المصدر لأن Satori يصفّها يساراً—لتظهر "طريقك للتفوق" */}
-        <div style={{ fontSize: 50, fontWeight: 700, marginTop: 22, color: "#1E40AF" }}>
+        <div style={{ fontSize: 50, fontWeight: 700, marginTop: 22, color: "#cdd8ff" }}>
           للتفوق طريقك
         </div>
       </div>

@@ -25,7 +25,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://darb-platform.vercel.app"),
+  metadataBase: new URL("https://usedarb.com"),
   title: "درب | المنصة التي تعاملك كأخ",
   description: "منصة تعليمية سعودية لتأسيس القدرات والتحصيلي وأرامكو CPC — تمارين وخرائط دراسية وذكاء اصطناعي يساعدك تتفوق",
   keywords: ["درب", "منصة تعليمية", "القدرات", "التحصيلي", "أرامكو", "CPC", "تأسيس", "مذاكرة", "Saudi education", "Qudurat", "Tahsili"],
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "درب | طريقك للتفوق",
     description: "منصة تعليمية سعودية — تأسيس حقيقي للقدرات والتحصيلي وأرامكو CPC",
-    url: "https://darb-platform.vercel.app",
+    url: "https://usedarb.com",
     siteName: "درب",
     locale: "ar_SA",
     type: "website",

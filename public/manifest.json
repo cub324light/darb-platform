@@ -6,8 +6,8 @@
   "display": "standalone",
   "dir": "rtl",
   "lang": "ar",
-  "background_color": "#F5B40A",
-  "theme_color": "#F5B40A",
+  "background_color": "#1b2a70",
+  "theme_color": "#1b2a70",
   "orientation": "portrait",
   "icons": [
     { "src": "/icon", "sizes": "512x512", "type": "image/png", "purpose": "any" },

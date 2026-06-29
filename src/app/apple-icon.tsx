@@ -16,9 +16,9 @@ export default async function AppleIcon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #F5B40A 0%, #D4920A 100%)",
+          background: "radial-gradient(circle at 50% 35%, #3a5bd0 0%, #1b2a70 70%, #15235e 100%)",
           fontFamily: "Tajawal",
-          color: "#2563EB",
+          color: "#FFFFFF",
           fontWeight: 700,
           fontSize: 88,
         }}

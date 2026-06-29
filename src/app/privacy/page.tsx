@@ -51,7 +51,7 @@ const SECTIONS: LegalSection[] = [
   },
   {
     h: "التواصل",
-    p: "لأي استفسار يتعلق بالخصوصية يمكن التواصل عبر: support@darb-platform.vercel.app",
+    p: "لأي استفسار يتعلق بالخصوصية يمكن التواصل عبر: support@usedarb.com",
   },
 ];
 
