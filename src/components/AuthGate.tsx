@@ -3,9 +3,10 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { User } from "firebase/auth";
 import dynamic from "next/dynamic";
-import { isInitialSyncDone, isAccountBlocked } from "@/lib/cloudFlags";
+import { isInitialSyncDone, isAccountBlocked, resetInitialSyncDone } from "@/lib/cloudFlags";
 import { loadUser } from "@/lib/storage";
 import { setNamespace } from "@/lib/engineNamespace";
+import { ensureLocalOwnership } from "@/lib/accountScope";
 import Logo from "./Logo";
 import BottomNav from "./BottomNav";
 import DesktopSidebar from "./DesktopSidebar";
@@ -94,6 +95,12 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
            بيانات حساب لآخر. الضبط متزامن؛ إسقاط المثائل القديمة كسولاً. */
         if (setNamespace(u?.uid ?? null)) {
           import("@/lib/engineSession").then(({ resetEngineSingletons }) => resetEngineSingletons());
+        }
+        /* C2: امسح بيانات أي حساب آخر على الجهاز قبل تحميل بيانات هذا المستخدم
+           (متزامن، بلا Firebase). إن مُسح شيء أعِد المزامنة لسحب بياناته. */
+        if (ensureLocalOwnership(u?.uid ?? null) && u) {
+          resetInitialSyncDone();
+          setSynced(false);
         }
         setUser(u);
         setAuthResolved(true);

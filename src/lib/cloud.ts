@@ -24,28 +24,18 @@ import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import { loadUser, saveUser, loadStats, computeStreak } from "./storage";
 import { normalizePlan } from "./plan";
+import { BACKUP_KEYS, ensureLocalOwnership } from "./accountScope";
 import {
   markInitialSyncDone, resetInitialSyncDone,
   markAccountBlocked,
 } from "./cloudFlags";
 
 export { isInitialSyncDone, isAccountBlocked } from "./cloudFlags";
+export { ensureLocalOwnership } from "./accountScope";
 
-/* المفاتيح التي تُحفظ في السحابة (كل بيانات المستخدم)
-   ملاحظة: darb_theme متعمداً غير مدرج — الثيم خاص بكل جهاز */
-const BACKUP_KEYS = [
-  "darb_user", "darb_stats", "darb_vault", "darb_cards", "darb_lessons",
-  "darb_done_lessons", "darb_posts", "darb_schedule", "darb_exam_date",
-  "darb_events", "darb_exam_flow", "darb_stage_reviews",
-  "darb_tadreeb_items", "darb_tadreeb_done", "darb_tasreebat_pct",
-  "darb_subject_exam_dates", "darb_track_exam_dates", "darb_dash_config",
-  "darb_dash_sched_v2", "darb_results", "darb_skills", "darb_skill_progress",
-  "darb_session_log", "darb_leaks_plan", "darb_exam_coord",
-  "darb_prefs", "darb_goals", "darb_daily", "darb_retention", "darb_coach_memory", "darb_calendar",
-  "darb_study_plan", "darb_admissions",
-  /* ملاحظة: darb_memory_v1 و darb_event_log_v1 لا تُزامَن هنا — لها مزامنة
-     على مستوى الكيان (engineSync) بدمج id/version، خارج وثيقة المستخدم. */
-];
+/* BACKUP_KEYS انتقلت إلى accountScope.ts (لتُشارَك مع البوابة وتُربَط بالمالك).
+   ملاحظة: darb_theme غير مدرج — الثيم خاص بكل جهاز. وذاكرة/أحداث المحرّك
+   تُزامَن على مستوى الكيان عبر engineSync (لا ضمن هذه الكتلة). */
 
 /* أعلام المزامنة والحظر مُعرَّفة في cloudFlags.ts (بلا Firebase)
    ومُعاد تصديرها أعلاه — نحدّثها هنا عبر setters فقط. */
@@ -133,6 +123,9 @@ export async function signOutUser() {
   await fbSignOut(auth);
   resetInitialSyncDone();
   markAccountBlocked(false);
+  /* C2: امسح بيانات المستخدم المحلية عند الخروج كي لا يراها المستخدم التالي
+     على الجهاز نفسه. بياناته محفوظة في السحابة وتُسحب عند دخوله مجدداً. */
+  ensureLocalOwnership(null);
 }
 
 export async function sendPasswordReset(email: string) {

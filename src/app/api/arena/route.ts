@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb, getVerifiedUid } from "@/lib/server/firebaseAdmin";
+import { isUserBlocked } from "@/lib/server/moderation";
 import {
   pickOpponent, scoreAnswers, decideWinner, seedFromMatchId,
   type QueueTicket,
@@ -66,6 +67,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "خدمة الأرينا غير مهيّأة على الخادم" }, { status: 503 });
   }
   const { FieldValue } = await import("firebase-admin/firestore");
+
+  /* H1: المحظور لا يدخل الطابور ولا يلعب (يؤثر على RP خصومه) — فرض خادمي.
+     لا يطال القراءة (leaderboard/me). */
+  if (mode === "enqueue" || mode === "submit" || mode === "leave") {
+    if (await isUserBlocked(db, uid)) {
+      return NextResponse.json({ error: "الحساب موقوف" }, { status: 403 });
+    }
+  }
 
   try {
     /* ─────────── leaderboard: ترتيب عالمي حسب RP ─────────── */

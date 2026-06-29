@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import {
-  collection, doc, writeBatch, addDoc, onSnapshot,
+  collection, doc, writeBatch, onSnapshot,
   orderBy, query, limit, serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -14,6 +14,7 @@ import { loadUser } from "@/lib/storage";
 import type { TrackId } from "@/lib/tracks";
 import { CHAT_GROUPS, type ChatGroup } from "@/lib/groups";
 import { detectContact } from "@/lib/contactFilter";
+import { postSocial } from "@/lib/authFetch";
 import { detectProfanity, detectSensitive } from "@/lib/moderation";
 import { trackEvent } from "@/lib/analytics";
 import { EmailVerifyNotice } from "@/components/EmailVerify";
@@ -136,18 +137,15 @@ export default function CouncilPage() {
     if (!reportTarget || !authUid || reportBusy) return;
     setReportBusy(true);
     try {
-      await addDoc(collection(db, "reports"), {
-        messageId: reportTarget.id,
+      /* C1: البلاغ يُنشأ على الخادم من الرسالة الحقيقية — العميل يرسل المعرّف فقط */
+      const res = await postSocial({
+        mode: "reportMessage",
         groupId: activeGroup?.id ?? "",
-        reportedUid: reportTarget.uid,
-        reportedName: reportTarget.name,
-        content: reportTarget.content.slice(0, 1000),
+        messageId: reportTarget.id,
         reason: reportReason,
-        note: reportNote.trim().slice(0, 300),
-        reporterUid: authUid,
-        status: "pending",
-        createdAt: serverTimestamp(),
+        note: reportNote.trim(),
       });
+      if (!res.ok) { setReportBusy(false); return; }
       setReportDone(true);
       trackEvent("council_message_reported", { reason: reportReason });
       setTimeout(() => { setReportTarget(null); setReportDone(false); }, 1300);
@@ -291,19 +289,15 @@ export default function CouncilPage() {
       await batch.commit();
       lastSentRef.current = Date.now();
       bumpDailyCount();
-      /* رفع تلقائي لطابور المراجعة عند رصد محتوى حسّاس (لا يحظر النشر) */
+      /* رفع تلقائي لطابور المراجعة عند رصد محتوى حسّاس (لا يحظر النشر) —
+         عبر الخادم (C1): يشتق حقول البلاغ من الرسالة الحقيقية بعد كتابتها. */
       if (sensitiveHit) {
-        addDoc(collection(db, "reports"), {
-          messageId: msgRef.id,
+        postSocial({
+          mode: "reportMessage",
           groupId: activeGroup.id,
-          reportedUid: authUid,
-          reportedName: userName,
-          content: text.slice(0, 1000),
+          messageId: msgRef.id,
           reason: "sensitive",
           note: `تلقائي: ${sensitiveHit}`,
-          reporterUid: authUid,
-          status: "pending",
-          createdAt: serverTimestamp(),
         }).catch(() => {});
       }
     } catch {

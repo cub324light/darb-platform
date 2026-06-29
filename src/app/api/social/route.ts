@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type { Timestamp } from "firebase-admin/firestore";
 import { getAdminApp, getVerifiedUid, authorizeAdmin } from "@/lib/server/firebaseAdmin";
 import { recordAudit } from "@/lib/server/audit";
+import { isUserBlocked, buildReportFields } from "@/lib/server/moderation";
 
 /* firebase-admin يحتاج Node APIs — نمنع تجميعه على Edge */
 export const runtime = "nodejs";
@@ -331,12 +332,36 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ topHours, topStreak });
     }
 
+    /* -------- reportMessage: بلاغ عن رسالة (C1) — الحقول تُشتق من الرسالة الحقيقية --------
+       جذر إصلاح C1: العميل يرسل (groupId, messageId, reason, note) فقط؛ الخادم
+       يقرأ الرسالة الفعلية ويشتق منها reportedUid/reportedName/content، فلا يمكن
+       تلفيق بلاغ عن ضحية أو حقن محتوى مزوّر. (البلاغات صارت خادمية فقط في القواعد.) */
+    if (mode === "reportMessage") {
+      const uid = await getVerifiedUid(req);
+      if (!uid) return NextResponse.json({ error: "يجب تسجيل الدخول" }, { status: 401 });
+      if (await isUserBlocked(db, uid)) return NextResponse.json({ error: "الحساب موقوف" }, { status: 403 });
+      const { groupId, messageId, reason, note } = body as { groupId?: string; messageId?: string; reason?: string; note?: string };
+      if (typeof groupId !== "string" || !groupId || typeof messageId !== "string" || !messageId) {
+        return NextResponse.json({ error: "بيانات البلاغ ناقصة" }, { status: 400 });
+      }
+      const msgSnap = await db.collection("chats").doc(groupId).collection("messages").doc(messageId).get();
+      if (!msgSnap.exists) return NextResponse.json({ error: "الرسالة غير موجودة" }, { status: 404 });
+      const report = buildReportFields({
+        groupId, messageId, msg: msgSnap.data() ?? {},
+        reporterUid: uid, reason: typeof reason === "string" ? reason : "other",
+        note: typeof note === "string" ? note : "",
+      });
+      const ref = await db.collection("reports").add({ ...report, createdAt: FieldValue.serverTimestamp() });
+      return NextResponse.json({ ok: true, id: ref.id });
+    }
+
     /* -------- submitFeedback: ملاحظة/اقتراح/مشكلة (هوية موثّقة) -------- */
     if (mode === "submitFeedback") {
       const uid = await getVerifiedUid(req);
       if (!uid) {
         return NextResponse.json({ error: "يجب تسجيل الدخول" }, { status: 401 });
       }
+      if (await isUserBlocked(db, uid)) return NextResponse.json({ error: "الحساب موقوف" }, { status: 403 });
       const { kind, text, name, page } = body as { kind?: string; text?: string; name?: string; page?: string };
       const KINDS = ["feature", "bug", "opinion"];
       if (!kind || !KINDS.includes(kind)) {

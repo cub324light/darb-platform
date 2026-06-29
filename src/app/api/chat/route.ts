@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { recordAiUsage } from "@/lib/aiUsage";
-import { getVerifiedUid } from "@/lib/server/firebaseAdmin";
+import { getVerifiedUid, getAdminDbOptional } from "@/lib/server/firebaseAdmin";
 import { checkUserRateLimit } from "@/lib/server/rateLimit";
+import { isUserBlocked } from "@/lib/server/moderation";
 import { chatComplete, LLMError, type LLMUserContent } from "@/lib/server/llm";
 import { formatProfileBlock, sessionIntervalRule, type DuwairbProfile, type DuwairbExam } from "@/lib/duwairb";
 import { strategyFromProfile, formatStrategyBlock, type PlanningPrefs, type AllocationPref } from "@/lib/strategy";
@@ -312,6 +313,12 @@ export async function POST(req: NextRequest) {
   const uid = await getVerifiedUid(req);
   if (!uid) {
     return NextResponse.json({ error: "سجّل الدخول لاستخدام دويرب" }, { status: 401 });
+  }
+
+  /* H1: المحظور لا يستهلك الذكاء (فرض الحظر على الخادم لا الواجهة فقط) */
+  const blockDb = await getAdminDbOptional();
+  if (blockDb && (await isUserBlocked(blockDb, uid))) {
+    return NextResponse.json({ error: "الحساب موقوف" }, { status: 403 });
   }
 
   /* تحديد المعدّل لكل مستخدم (دائم عبر Firestore — يعمل عبر كل instances) */

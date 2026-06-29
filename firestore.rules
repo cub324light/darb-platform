@@ -16,6 +16,12 @@ service cloud.firestore {
     function isAdmin() { return signedIn() && (isOwner() || roleClaim() == 'admin'); }
     function isStaff() { return signedIn() && (isAdmin() || roleClaim() == 'moderator'); }
 
+    // H1: الحظر مفروض على القواعد — المحظور لا يكتب (يقرأ وثيقته لمعرفة blocked).
+    function notBlocked() {
+      return !( exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.blocked == true );
+    }
+
     // Each user can read/write only their own document — أو الطاقم يقرأ أي مستخدم.
     // الحقول الإدارية (role/plan/blocked/blockUntil) لا تُكتب من العميل أبداً —
     // تُضبط عبر Admin SDK فقط (يتجاوز هذه القواعد). يمنع رفع الباقة ذاتياً أو فكّ الحظر.
@@ -86,9 +92,12 @@ service cloud.firestore {
     }
 
     // وثيقة المهلة لكل مستخدم — تُكتب مع كل رسالة لفرض المهلة على الخادم.
-    // يقرؤها/يكتبها صاحبها فقط؛ تُفحص في قاعدة إنشاء الرسالة عبر get/getAfter.
+    // H3: لا يُسمح بكتابة lastPostAt إلا بقيمة request.time (وقت الخادم الآن) —
+    // فلا يستطيع عميل معدَّل «تقديم» المهلة بوضع قيمة قديمة لتجاوز الانتظار.
     match /rate/{uid} {
-      allow read, write: if signedIn() && request.auth.uid == uid;
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if signedIn() && request.auth.uid == uid
+        && request.resource.data.lastPostAt == request.time;
     }
 
     // Council chat messages: signed-in users read and post their own messages;
@@ -101,6 +110,7 @@ service cloud.firestore {
     match /chats/{groupId}/messages/{msgId} {
       allow read: if signedIn();
       allow create: if signedIn()
+        && notBlocked()
         && request.auth.token.email_verified == true
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.content is string
@@ -113,15 +123,11 @@ service cloud.firestore {
       allow delete: if isStaff();
     }
 
-    // بلاغات المجلس: أي مستخدم مسجّل يُنشئ بلاغاً عن رسالة (لا يقرأ بلاغات غيره)؛
-    // الطاقم يقرأ ويُحدّث/يحذف (مراجعة وإغلاق). الحالة تبدأ "pending" فقط.
+    // بلاغات المجلس (C1): تُنشأ من الخادم فقط (Admin SDK) عبر mode=reportMessage،
+    // الذي يشتق المُبلَّغ عنه/الاسم/المحتوى من الرسالة الحقيقية — فلا يستطيع
+    // العميل تلفيق بلاغ عن ضحية أو حقن محتوى مزوّر. الطاقم يقرأ/يحدّث/يحذف.
     match /reports/{id} {
-      allow create: if signedIn()
-        && request.resource.data.reporterUid == request.auth.uid
-        && request.resource.data.status == 'pending'
-        && request.resource.data.reason is string
-        && request.resource.data.content is string
-        && request.resource.data.content.size() <= 1000;
+      allow create: if false;
       allow read, update, delete: if isStaff();
     }
 
