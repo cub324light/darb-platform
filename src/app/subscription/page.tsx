@@ -3,6 +3,7 @@ import LegalDoc, { type LegalSection } from "@/components/LegalDoc";
 export const metadata = {
   title: "سياسة الاشتراك والاسترجاع | درب",
   description: "سياسة الاشتراك والإلغاء والاسترجاع في درب",
+  alternates: { canonical: "/subscription" },
 };
 
 const SECTIONS: LegalSection[] = [

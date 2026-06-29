@@ -3,6 +3,7 @@ import LegalDoc, { type LegalSection } from "@/components/LegalDoc";
 export const metadata = {
   title: "شروط الاستخدام | درب",
   description: "شروط استخدام منصة درب",
+  alternates: { canonical: "/terms" },
 };
 
 const SECTIONS: LegalSection[] = [

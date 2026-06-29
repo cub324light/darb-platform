@@ -3,6 +3,7 @@ import LegalDoc, { type LegalSection } from "@/components/LegalDoc";
 export const metadata = {
   title: "سياسة الخصوصية | درب",
   description: "كيف نجمع بياناتك ونستخدمها ونحميها في درب",
+  alternates: { canonical: "/privacy" },
 };
 
 const SECTIONS: LegalSection[] = [

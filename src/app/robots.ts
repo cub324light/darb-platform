@@ -1,11 +1,20 @@
 import type { MetadataRoute } from "next";
 
+/* الصفحات الخاصة (خلف تسجيل الدخول أو إدارية) — تُمنع من الفهرسة كي لا يفهرس
+   Google جدران تسجيل دخول رفيعة أو مسارات خاصة. الصفحات العامة تبقى مسموحة. */
+const PRIVATE_PATHS = [
+  "/admin", "/api/",
+  "/dashboard", "/profile", "/vault", "/council", "/arena", "/orbit",
+  "/roadmap", "/review", "/skills", "/challenges", "/leaderboard",
+  "/study-plan", "/plan", "/university", "/parent", "/onboarding",
+];
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/admin", "/api/"],
+      disallow: PRIVATE_PATHS,
     },
     sitemap: "https://darb-platform.vercel.app/sitemap.xml",
   };
