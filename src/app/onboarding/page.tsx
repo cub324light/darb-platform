@@ -55,6 +55,9 @@ export default function OnboardingPage() {
     Object.fromEntries(PREV_EXAMS.map((e) => [e, { tested: false, score: "" }]))
   );
   const [prevErr, setPrevErr] = useState("");
+  /* H1: قفل ضغط مزدوج + رسالة فشل واضحة على آخر خطوة */
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitErr, setSubmitErr] = useState("");
 
   const [gapYear, setGapYear] = useState<"" | "yes" | "no">(""); // خريج: إعادة الاختبارات؟
   /* ── حقول الجامعي (Phase Engine) ── */
@@ -98,6 +101,8 @@ export default function OnboardingPage() {
 
   /* ── الإنهاء ── */
   const finish = async () => {
+    /* H1: امنع الدخول المتزامن/المكرر */
+    if (isSubmitting) return;
     if (!goal) return;
     const tracks = computedTracks;
     if (!tracks.length) return;
@@ -111,6 +116,21 @@ export default function OnboardingPage() {
       if (err) { setPrevErr(`${exam}: ${err}`); return; }
     }
     setPrevErr("");
+
+    /* H3: تحقّق برمجي من الحقول الرقمية (لا نعتمد على min/max المتصفح) */
+    const numErr = (() => {
+      if (age) { const a = parseInt(age); if (!Number.isFinite(a) || a < 10 || a > 80) return "العمر يجب أن يكون بين ١٠ و٨٠"; }
+      if (studyHours) { const h = parseInt(studyHours); if (!Number.isFinite(h) || h < 1 || h > 16) return "ساعات المذاكرة بين ١ و١٦"; }
+      if (status === "جامعي" && universityGpa) { const g = parseFloat(universityGpa); if (!Number.isFinite(g) || g < 0 || g > 5) return "المعدل الجامعي بين ٠ و٥"; }
+      const showsHs = (status === "ثانوي" && grade === "ثالث ثانوي") || status === "خريج";
+      if (showsHs && highschoolPct) { const p = parseFloat(highschoolPct); if (!Number.isFinite(p) || p < 0 || p > 100) return "نسبة الثانوية بين ٠ و١٠٠"; }
+      return "";
+    })();
+    if (numErr) { setSubmitErr(numErr); return; }
+
+    setSubmitErr("");
+    setIsSubmitting(true);
+    try {
 
     const trimmedName = name.trim();
     /* نوع المسار: ثانوي → الاختيار، جامعي → تصنيف التخصص المختار */
@@ -179,7 +199,12 @@ export default function OnboardingPage() {
     trackEvent("onboarding_completed", { track: primaryTrack, tracks: tracks.length, goal, status });
     import("@/lib/cloud").then(({ pushBackup }) => { pushBackup().catch(() => {}); });
     await redeemPendingRef().catch(() => 0);
-    window.location.href = "/dashboard";
+    window.location.assign("/dashboard");
+    } catch {
+      /* فشل الحفظ المحلي (مثلاً مساحة ممتلئة/وضع خاص) — لا نترك المستخدم عالقاً */
+      setIsSubmitting(false);
+      setSubmitErr("تعذّر حفظ بياناتك — تأكد من توفّر مساحة في المتصفح ثم حاول مجدداً");
+    }
   };
 
   const header = (
@@ -662,12 +687,16 @@ export default function OnboardingPage() {
           </p>
         )}
 
+        {submitErr && (
+          <p className="text-[13px] text-center font-bold" style={{ color: "var(--danger)" }}>{submitErr}</p>
+        )}
+
         <button className="btn-primary glow-blue" onClick={finish}
-          disabled={!goal || !studyHours || needsUniPicker || !school.trim() || !city.trim() || !phone.trim() || !region ||
+          disabled={isSubmitting || !goal || !studyHours || needsUniPicker || !school.trim() || !city.trim() || !phone.trim() || !region ||
             ((status === "ثانوي" && grade === "ثالث ثانوي" || status === "خريج") && !highschoolPct)}
-          style={{ opacity: goal && studyHours && !needsUniPicker && school.trim() && city.trim() && phone.trim() && region &&
+          style={{ opacity: !isSubmitting && goal && studyHours && !needsUniPicker && school.trim() && city.trim() && phone.trim() && region &&
             !((status === "ثانوي" && grade === "ثالث ثانوي" || status === "خريج") && !highschoolPct) ? 1 : 0.4 }}>
-          يلا نبدأ ←
+          {isSubmitting ? "جارٍ الحفظ…" : "يلا نبدأ ←"}
         </button>
         <button onClick={() => setStep(1)} className="text-[15px] font-semibold w-full text-center py-1"
           style={{ color: "var(--text-muted)" }}>← رجوع</button>

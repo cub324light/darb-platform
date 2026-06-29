@@ -149,6 +149,7 @@ export default function DashboardPage() {
   );
 
   const [studiersData, setStudiersData] = useState<{ count: number; regions: Record<string, number> } | null>(null);
+  const [studiersErr, setStudiersErr] = useState(false);
 
   /* علم ميزة المجلس — يُطفأ عن بُعد من لوحة PostHog عند الحاجة */
   const councilOn = useFlag("council");
@@ -354,18 +355,36 @@ export default function DashboardPage() {
     const hasMap = layout.some((l) => l.id === "map" && l.visible);
     if (!hasStudiers && !hasMap) return;
     studiersFetchedRef.current = true;
-    fetch("/api/social", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode: "studiers" }),
-    })
-      .then((r) => r.json())
-      .then((d: unknown) => {
-        if (d && typeof d === "object" && typeof (d as Record<string, unknown>).count === "number") {
-          setStudiersData(d as { count: number; regions: Record<string, number> });
-        }
+
+    /* H2: عند الفشل لا نترك «...» للأبد — نُظهر قيمة احتياطية ونعيد المحاولة
+       مرتين بفاصل قصير، مع حارس إلغاء عند مغادرة الصفحة. */
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let attempts = 0;
+    const load = () => {
+      fetch("/api/social", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "studiers" }),
       })
-      .catch(() => {});
+        .then((r) => r.json())
+        .then((d: unknown) => {
+          if (cancelled) return;
+          if (d && typeof d === "object" && typeof (d as Record<string, unknown>).count === "number") {
+            setStudiersData(d as { count: number; regions: Record<string, number> });
+            setStudiersErr(false);
+          } else {
+            throw new Error("bad-response");
+          }
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setStudiersErr(true);
+          if (attempts < 2) { attempts++; retryTimer = setTimeout(load, 15_000); }
+        });
+    };
+    load();
+    return () => { cancelled = true; if (retryTimer) clearTimeout(retryTimer); };
   }, [layout]);
 
   /* ── رسم كل قسم حسب معرّفه ── */
@@ -873,7 +892,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-4">
               <div className="flex-1">
                 <p className="title-md" style={{ color: "var(--text)" }}>
-                  {studiersData === null ? "..." : `${studiersData.count} طالب`}
+                  {studiersData === null ? (studiersErr ? "—" : "...") : `${studiersData.count} طالب`}
                 </p>
                 <p className="body-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
                   يذاكرون الآن على المنصة

@@ -8,6 +8,7 @@ import { createPortal } from "react-dom";
 import { ref, uploadBytes, getStorage } from "firebase/storage";
 import { auth, app } from "@/lib/firebase";
 import { extractFileText, detectKind } from "@/lib/fileText";
+import { authedFetch } from "@/lib/authFetch";
 import { recordFileAnalyzed } from "@/lib/storage";
 
 /* تهيئة Storage هنا فقط (هذا المكوّن محمّل ديناميكياً) — يُبعِد حزمة Storage
@@ -98,7 +99,7 @@ export default function FileAnalyzer({
 
       let data: Partial<Analysis> & { error?: string };
       try {
-        const res = await fetch("/api/analyze", {
+        const res = await authedFetch("/api/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text, pages, fileName: file.name, subjects }),

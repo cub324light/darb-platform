@@ -1,25 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { recordAiUsage } from "@/lib/aiUsage";
+import { getVerifiedUid } from "@/lib/server/firebaseAdmin";
+import { checkUserRateLimit } from "@/lib/server/rateLimit";
 
-/* تسجيل الاستهلاك يحتاج Node APIs */
+/* المصادقة + تسجيل الاستهلاك يحتاجان Node APIs */
 export const runtime = "nodejs";
 
-/* rate limit بسيط — 6 تحليلات بالدقيقة لكل IP (التحليل أثقل من المحادثة) */
-const rateLimitMap = new Map<string, { count: number; reset: number }>();
-const RATE_LIMIT = 6;
-const RATE_WINDOW = 60_000;
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-  if (!entry || now > entry.reset) {
-    rateLimitMap.set(ip, { count: 1, reset: now + RATE_WINDOW });
-    return true;
-  }
-  if (entry.count >= RATE_LIMIT) return false;
-  entry.count++;
-  return true;
-}
+/* حدّ المعدّل لكل مستخدم: 6 تحليلات بالدقيقة (التحليل أثقل من المحادثة).
+   دائم عبر Firestore (يعمل عبر كل instances) — نفس نظام /api/chat. */
+const ANALYZE_LIMIT = 6;
 
 const MODEL = "llama-3.3-70b-versatile";
 const MAX_TEXT = 120_000;   // أقصى حجم نص نقبله (حرف)
@@ -148,8 +137,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "طلب غير صالح" }, { status: 400 });
   }
 
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (!checkRateLimit(ip)) {
+  /* المصادقة إجبارية: نقطة نهاية مكلفة (حتى ٨ نداءات Groq) لا تُترك مفتوحة.
+     نتحقّق من Firebase ID Token على الخادم — لا نثق بالعميل. */
+  const uid = await getVerifiedUid(req);
+  if (!uid) {
+    return NextResponse.json({ error: "سجّل الدخول لتحليل الملفات" }, { status: 401 });
+  }
+
+  /* تحديد المعدّل لكل مستخدم (دائم عبر Firestore — يعمل عبر كل instances) */
+  if (!(await checkUserRateLimit(uid, ANALYZE_LIMIT))) {
     return NextResponse.json({ error: "طلبات كثيرة، انتظر دقيقة" }, { status: 429 });
   }
 
