@@ -59,23 +59,29 @@ async function adminAuth() {
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-    /* H-1: حماية تخمين كلمة سرّ الأدمن — محدّد دائم (Firestore) عبر كل instances:
-       ① لكل IP (5/دقيقة، يحفظ السلوك الحالي لكن لا يُصفَّر مع instance)،
-       ② حدّ عالمي احتياطي (200/دقيقة) كي لا يُتجاوَز بتدوير الـ IP/الـ XFF.
-       المقارنة تبقى ثابتة الوقت في checkAdminPassword. */
-    if (!(await checkRateLimit("adminusers_ip_" + ip, 5, 60_000))) {
-      return NextResponse.json({ error: "محاولات كثيرة — انتظر دقيقة" }, { status: 429 });
-    }
-    if (!(await checkRateLimit("adminusers_global", 200, 60_000))) {
-      return NextResponse.json({ error: "النظام مشغول — حاول بعد قليل" }, { status: 429 });
-    }
 
     const body = await req.json().catch(() => null);
-    const { mode } = (body ?? {}) as { password?: string; mode?: string };
+    const { mode, password } = (body ?? {}) as { password?: string; mode?: string };
+
+    /* H-1: حدّ تخمين كلمة سرّ الأدمن — دائم (Firestore) عبر كل instances، لكنه
+       يُطبَّق فقط على المحاولات الفاشلة (كلمة سر خاطئة). الأدمن الشرعي (كلمة
+       صحيحة أو توكن RBAC) لا يُحبَس مهما تعدّدت طلبات اللوحة — وهذا ما يُعيد
+       عمل اللوحة الكاملة. الحماية تبقى ٥ محاولات فاشلة/دقيقة لكل IP + حدّ عالمي
+       احتياطي. المقارنة ثابتة الوقت في checkAdminPassword. */
+    const pwAttempted = typeof password === "string" && password.length > 0;
+    const pwOk = checkAdminPassword(password);
+    if (pwAttempted && !pwOk) {
+      if (!(await checkRateLimit("adminpw_ip_" + ip, 5, 60_000))) {
+        return NextResponse.json({ error: "محاولات كثيرة — انتظر دقيقة" }, { status: 429 });
+      }
+      if (!(await checkRateLimit("adminpw_global", 200, 60_000))) {
+        return NextResponse.json({ error: "النظام مشغول — حاول بعد قليل" }, { status: 429 });
+      }
+    }
 
     /* whoami: يرجع دور المتصل (لأي مستخدم) — تستخدمه الواجهة لبوابة الدخول */
     if (mode === "whoami") {
-      if (checkAdminPassword((body as { password?: unknown })?.password)) {
+      if (pwOk) {
         return NextResponse.json({ role: "owner", email: null, via: "password" });
       }
       const who = await getVerifiedRole(req);
