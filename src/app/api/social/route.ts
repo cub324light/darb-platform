@@ -3,27 +3,16 @@ import type { Timestamp } from "firebase-admin/firestore";
 import { getAdminApp, getVerifiedUid, authorizeAdmin } from "@/lib/server/firebaseAdmin";
 import { recordAudit } from "@/lib/server/audit";
 import { isUserBlocked, buildReportFields } from "@/lib/server/moderation";
+import { checkRateLimit } from "@/lib/server/rateLimit";
+import { cleanId, canViewPrivateProfile } from "@/lib/server/sanitize";
 
 /* firebase-admin يحتاج Node APIs — نمنع تجميعه على Edge */
 export const runtime = "nodejs";
 
-/* حماية من الإساءة: 30 طلب بالدقيقة لكل IP */
-const attempts = new Map<string, { count: number; reset: number }>();
-function allowAttempt(ip: string): boolean {
-  const now = Date.now();
-  const e = attempts.get(ip);
-  if (!e || now > e.reset) {
-    attempts.set(ip, { count: 1, reset: now + 60_000 });
-    return true;
-  }
-  if (e.count >= 30) return false;
-  e.count++;
-  return true;
-}
-
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (!allowAttempt(ip)) {
+  /* M-4/M-6: محدّد معدّل دائم (Firestore) عبر كل instances — 30/دقيقة لكل IP */
+  if (!(await checkRateLimit("social_" + ip, 30, 60_000))) {
     return NextResponse.json({ error: "محاولات كثيرة — انتظر دقيقة" }, { status: 429 });
   }
 
@@ -235,8 +224,8 @@ export async function POST(req: NextRequest) {
       if (!uid) {
         return NextResponse.json({ error: "يجب تسجيل الدخول" }, { status: 401 });
       }
-      const { targetUid } = body as { targetUid?: string };
-      if (!targetUid || typeof targetUid !== "string") {
+      const targetUid = cleanId((body as { targetUid?: unknown }).targetUid, 128); // M-1
+      if (!targetUid) {
         return NextResponse.json({ error: "targetUid مفقود" }, { status: 400 });
       }
       const doc = await db.collection("users").doc(targetUid).get();
@@ -244,10 +233,14 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "الحساب غير موجود" }, { status: 404 });
       }
       const data = doc.data()!;
-      /* البروفايل الخاص لا يُكشف إلا لصاحبه أو لصديق مؤكَّد */
+      /* M-3: البروفايل الخاص لا يُكشف إلا لصاحبه أو بصداقة متبادلة (الطرفان أضاف
+         كلٌّ الآخر). الإضافة الذاتية أحادية الجانب لا تكفي. */
       if (data.isPrivate === true && targetUid !== uid) {
-        const friend = await db.collection("users").doc(uid).collection("friends").doc(targetUid).get();
-        if (!friend.exists) {
+        const [iAdded, theyAdded] = await Promise.all([
+          db.collection("users").doc(uid).collection("friends").doc(targetUid).get(),
+          db.collection("users").doc(targetUid).collection("friends").doc(uid).get(),
+        ]);
+        if (!canViewPrivateProfile({ isPrivate: true, isOwner: false, iAddedThem: iAdded.exists, theyAddedMe: theyAdded.exists })) {
           return NextResponse.json({ error: "هذا الحساب خاص" }, { status: 403 });
         }
       }
@@ -273,8 +266,8 @@ export async function POST(req: NextRequest) {
       if (!uid) {
         return NextResponse.json({ error: "يجب تسجيل الدخول" }, { status: 401 });
       }
-      const { targetUid } = body as { targetUid?: string };
-      if (!targetUid || typeof targetUid !== "string") {
+      const targetUid = cleanId((body as { targetUid?: unknown }).targetUid, 128); // M-1
+      if (!targetUid) {
         return NextResponse.json({ error: "targetUid مفقود" }, { status: 400 });
       }
       // جلب اسم الصديق المستهدف
@@ -297,8 +290,8 @@ export async function POST(req: NextRequest) {
       if (!uid) {
         return NextResponse.json({ error: "يجب تسجيل الدخول" }, { status: 401 });
       }
-      const { targetUid } = body as { targetUid?: string };
-      if (!targetUid || typeof targetUid !== "string") {
+      const targetUid = cleanId((body as { targetUid?: unknown }).targetUid, 128); // M-1
+      if (!targetUid) {
         return NextResponse.json({ error: "targetUid مفقود" }, { status: 400 });
       }
       await db.collection("users").doc(uid).collection("friends").doc(targetUid).delete();
@@ -340,8 +333,11 @@ export async function POST(req: NextRequest) {
       const uid = await getVerifiedUid(req);
       if (!uid) return NextResponse.json({ error: "يجب تسجيل الدخول" }, { status: 401 });
       if (await isUserBlocked(db, uid)) return NextResponse.json({ error: "الحساب موقوف" }, { status: 403 });
-      const { groupId, messageId, reason, note } = body as { groupId?: string; messageId?: string; reason?: string; note?: string };
-      if (typeof groupId !== "string" || !groupId || typeof messageId !== "string" || !messageId) {
+      /* M-1: نقّ المعرّفات (لا «/» ولا محارف مسار) قبل بناء مسار الوثيقة */
+      const groupId = cleanId((body as { groupId?: unknown }).groupId, 40);
+      const messageId = cleanId((body as { messageId?: unknown }).messageId, 40);
+      const { reason, note } = body as { reason?: string; note?: string };
+      if (!groupId || !messageId) {
         return NextResponse.json({ error: "بيانات البلاغ ناقصة" }, { status: 400 });
       }
       const msgSnap = await db.collection("chats").doc(groupId).collection("messages").doc(messageId).get();
@@ -425,8 +421,8 @@ export async function POST(req: NextRequest) {
     if (mode === "redeemReferral") {
       const uid = await getVerifiedUid(req);
       if (!uid) return NextResponse.json({ error: "يجب تسجيل الدخول" }, { status: 401 });
-      const { code } = body as { code?: string };
-      if (typeof code !== "string" || code.length < 6 || code.length > 128 || code === uid) {
+      const code = cleanId((body as { code?: unknown }).code, 128); // M-1: لا «/» في مسار الوثيقة
+      if (code.length < 6 || code === uid) {
         return NextResponse.json({ ok: false, error: "كود غير صالح" });
       }
       const REWARD = 50; // فضة لكلٍّ من المُحيل والمُحال

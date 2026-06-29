@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDbOptional, getVerifiedUid } from "@/lib/server/firebaseAdmin";
+import { checkRateLimit } from "@/lib/server/rateLimit";
 
 /* firebase-admin يحتاج Node APIs */
 export const runtime = "nodejs";
@@ -16,16 +17,6 @@ const ALLOWED = new Set([
   "coach_report_viewed", "duwairb_score_viewed", "missed_opportunity_shown", "coach_memory_shown",
 ]);
 
-/* حد إساءة: 60 حدث بالدقيقة لكل IP (الأحداث متكررة بطبيعتها) */
-const attempts = new Map<string, { count: number; reset: number }>();
-function allow(ip: string): boolean {
-  const now = Date.now();
-  const e = attempts.get(ip);
-  if (!e || now > e.reset) { attempts.set(ip, { count: 1, reset: now + 60_000 }); return true; }
-  if (e.count >= 60) return false;
-  e.count++;
-  return true;
-}
 
 /* تنقية الخصائص: قيم بسيطة فقط، حد أقصى 20 مفتاح، نصوص ≤ 500 حرف */
 function sanitizeProps(raw: unknown): Record<string, string | number | boolean | null> {
@@ -43,7 +34,8 @@ function sanitizeProps(raw: unknown): Record<string, string | number | boolean |
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (!allow(ip)) {
+  /* M-4/M-6: محدّد معدّل دائم عبر كل instances — 60/دقيقة لكل IP */
+  if (!(await checkRateLimit("events_" + ip, 60, 60_000))) {
     return NextResponse.json({ ok: false, error: "محاولات كثيرة" }, { status: 429 });
   }
 

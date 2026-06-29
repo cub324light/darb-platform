@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb, authorizeAdmin, getVerifiedUid } from "@/lib/server/firebaseAdmin";
 import { recordAudit } from "@/lib/server/audit";
+import { checkRateLimit } from "@/lib/server/rateLimit";
+import { cleanId, safeInternalPath } from "@/lib/server/sanitize";
 import { matchesAudience, validateAudience, describeAudience, type TargetProfile } from "@/lib/broadcast/audience";
 import { BROADCAST_TYPES, type Broadcast, type BroadcastType, type AudienceFilter, type BroadcastStatus } from "@/lib/broadcast/types";
 
@@ -8,17 +10,6 @@ export const runtime = "nodejs";
 
 const TYPES = new Set<string>(BROADCAST_TYPES.map((t) => t.id));
 const str = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
-
-/* حدّ إساءة لتبليغات العميل: 60/دقيقة لكل IP */
-const reportHits = new Map<string, { count: number; reset: number }>();
-function allowReport(ip: string): boolean {
-  const now = Date.now();
-  const e = reportHits.get(ip);
-  if (!e || now > e.reset) { reportHits.set(ip, { count: 1, reset: now + 60_000 }); return true; }
-  if (e.count >= 60) return false;
-  e.count++;
-  return true;
-}
 
 /* يشتق ملف الاستهداف من وثيقة المستخدم (الحقول العليا + نسخة backup) */
 function profileFromDoc(data: FirebaseFirestore.DocumentData): TargetProfile {
@@ -108,10 +99,10 @@ export async function POST(req: NextRequest) {
   /* report: تبليغ إحصاءة (delivered/opened/dismissed) */
   if (mode === "report") {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-    if (!allowReport(ip)) return NextResponse.json({ ok: false }, { status: 429 });
+    if (!(await checkRateLimit("bcreport_" + ip, 60, 60_000))) return NextResponse.json({ ok: false }, { status: 429 }); // M-6
     const uid = await getVerifiedUid(req);
     if (!uid) return NextResponse.json({ error: "يجب تسجيل الدخول" }, { status: 401 });
-    const id = str((body as { id?: unknown }).id, 80);
+    const id = cleanId((body as { id?: unknown }).id, 80); // M-1
     const ev = str((body as { event?: unknown }).event, 12);
     const field = ev === "opened" ? "stats.opened" : ev === "dismissed" ? "stats.dismissed" : ev === "delivered" ? "stats.delivered" : null;
     if (!id || !field) return NextResponse.json({ error: "بيانات ناقصة" }, { status: 400 });
@@ -150,14 +141,14 @@ export async function POST(req: NextRequest) {
       const aErr = validateAudience(audience);
       if (aErr) return NextResponse.json({ error: aErr }, { status: 400 });
 
-      const id = str(b.id, 80) || db.collection("broadcasts").doc().id;
+      const id = cleanId(b.id, 80) || db.collection("broadcasts").doc().id;
       const existing = (await db.collection("broadcasts").doc(id).get()).data() as Broadcast | undefined;
       const status: BroadcastStatus = (b.status === "scheduled" ? "scheduled" : "draft");
       const scheduledAt = status === "scheduled" && typeof b.scheduledAt === "number" ? b.scheduledAt : null;
 
       const doc: Broadcast = {
         id, type: type as BroadcastType, title, body: bodyText,
-        targetPage: str(b.targetPage, 60) || undefined,
+        targetPage: safeInternalPath(b.targetPage) ?? undefined,
         audience, status, scheduledAt, sentAt: existing?.sentAt ?? null,
         createdBy: existing?.createdBy ?? (caller.email ?? caller.uid),
         createdAt: existing?.createdAt ?? now, updatedAt: now,
@@ -175,7 +166,7 @@ export async function POST(req: NextRequest) {
 
     /* send: إرسال فوري — يحسب المستهدفين ويعلّمه «sent» */
     if (mode === "send") {
-      const id = str((body as { id?: unknown }).id, 80);
+      const id = cleanId((body as { id?: unknown }).id, 80);
       const ref = db.collection("broadcasts").doc(id);
       const snap = await ref.get();
       if (!snap.exists) return NextResponse.json({ error: "الإشعار غير موجود" }, { status: 404 });
@@ -193,7 +184,7 @@ export async function POST(req: NextRequest) {
 
     /* schedule: جدولة الإرسال */
     if (mode === "schedule") {
-      const id = str((body as { id?: unknown }).id, 80);
+      const id = cleanId((body as { id?: unknown }).id, 80);
       const at = (body as { scheduledAt?: unknown }).scheduledAt;
       if (typeof at !== "number" || at <= now) return NextResponse.json({ error: "اختر وقتاً مستقبلياً" }, { status: 400 });
       const ref = db.collection("broadcasts").doc(id);
@@ -208,7 +199,7 @@ export async function POST(req: NextRequest) {
 
     /* cancel: إلغاء (مجدول/مرسَل يتوقف ظهوره للجدد) */
     if (mode === "cancel") {
-      const id = str((body as { id?: unknown }).id, 80);
+      const id = cleanId((body as { id?: unknown }).id, 80);
       await db.collection("broadcasts").doc(id).set({ status: "canceled" }, { merge: true });
       await recordAudit(db, req, caller, { area: "broadcast", action: "broadcast_cancel", targetType: "broadcast", targetId: id, summary: "إلغاء إشعار" });
       return NextResponse.json({ ok: true });
@@ -216,7 +207,7 @@ export async function POST(req: NextRequest) {
 
     /* duplicate: إعادة استخدام إشعار سابق كمسودة جديدة */
     if (mode === "duplicate") {
-      const id = str((body as { id?: unknown }).id, 80);
+      const id = cleanId((body as { id?: unknown }).id, 80);
       const snap = await db.collection("broadcasts").doc(id).get();
       if (!snap.exists) return NextResponse.json({ error: "الإشعار غير موجود" }, { status: 404 });
       const src = snap.data() as Broadcast;
@@ -233,7 +224,7 @@ export async function POST(req: NextRequest) {
 
     /* delete: حذف مسودة/ملغى */
     if (mode === "delete") {
-      const id = str((body as { id?: unknown }).id, 80);
+      const id = cleanId((body as { id?: unknown }).id, 80);
       await db.collection("broadcasts").doc(id).delete().catch(() => {});
       await recordAudit(db, req, caller, { area: "broadcast", action: "broadcast_delete", targetType: "broadcast", targetId: id, summary: "حذف إشعار" });
       return NextResponse.json({ ok: true });

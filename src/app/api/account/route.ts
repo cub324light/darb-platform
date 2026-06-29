@@ -1,28 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminApp, getVerifiedRole } from "@/lib/server/firebaseAdmin";
+import { checkRateLimit } from "@/lib/server/rateLimit";
 
 /* firebase-admin يحتاج Node APIs — نمنع تجميعه على Edge */
 export const runtime = "nodejs";
-
-/* حماية من الإساءة: ١٠ طلبات بالدقيقة لكل IP */
-const attempts = new Map<string, { count: number; reset: number }>();
-function allowAttempt(ip: string): boolean {
-  const now = Date.now();
-  const e = attempts.get(ip);
-  if (!e || now > e.reset) {
-    attempts.set(ip, { count: 1, reset: now + 60_000 });
-    return true;
-  }
-  if (e.count >= 10) return false;
-  e.count++;
-  return true;
-}
 
 /* حذف الحساب نهائياً: مستند Firestore + قائمة الأصدقاء + حساب المصادقة.
    المالك لا يُحذف أبداً (حماية صريحة). الهوية تُتحقَّق عبر ID Token. */
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (!allowAttempt(ip)) {
+  /* M-6: محدّد معدّل دائم — ١٠/دقيقة لكل IP */
+  if (!(await checkRateLimit("account_" + ip, 10, 60_000))) {
     return NextResponse.json({ error: "محاولات كثيرة — انتظر دقيقة" }, { status: 429 });
   }
 

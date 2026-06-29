@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { recordAiUsage } from "@/lib/aiUsage";
 import { getVerifiedUid, getAdminDbOptional } from "@/lib/server/firebaseAdmin";
-import { checkUserRateLimit } from "@/lib/server/rateLimit";
+import { checkUserRateLimit, checkDailyLimit } from "@/lib/server/rateLimit";
 import { isUserBlocked } from "@/lib/server/moderation";
 
 /* المصادقة + تسجيل الاستهلاك يحتاجان Node APIs */
@@ -154,6 +154,10 @@ export async function POST(req: NextRequest) {
   /* تحديد المعدّل لكل مستخدم (دائم عبر Firestore — يعمل عبر كل instances) */
   if (!(await checkUserRateLimit(uid, ANALYZE_LIMIT))) {
     return NextResponse.json({ error: "طلبات كثيرة، انتظر دقيقة" }, { status: 429 });
+  }
+  /* M-5: حدّ يومي لتحليل الملفات لكل مستخدم (التحليل أثقل — حتى ٩ نداءات Groq) */
+  if (!(await checkDailyLimit("analyze_" + uid, 30))) {
+    return NextResponse.json({ error: "وصلت حدّك اليومي من تحليل الملفات — عُد غداً" }, { status: 429 });
   }
 
   const body = await req.json().catch(() => null);

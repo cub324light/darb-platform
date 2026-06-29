@@ -178,6 +178,11 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // عدّادات تحديد المعدّل الدائمة — من الخادم فقط (Admin SDK)، لا يلمسها العميل.
+    match /rateLimits/{id} {
+      allow read, write: if false;
+    }
+
     // Everything else: denied
     match /{document=**} {
       allow read, write: if false;

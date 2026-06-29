@@ -6,6 +6,7 @@
 import { useEffect, useState } from "react";
 import { fetchActiveBroadcasts, reportBroadcast, loadSeen, markSeen, type ActiveBroadcast } from "@/lib/broadcast/client";
 import { BROADCAST_TYPES } from "@/lib/broadcast/types";
+import { safeInternalPath } from "@/lib/server/sanitize";
 
 const ICON: Record<string, string> = Object.fromEntries(BROADCAST_TYPES.map((t) => [t.id, t.icon]));
 const ACCENT: Record<string, string> = {
@@ -47,7 +48,11 @@ export default function BroadcastHost() {
       emit({ eventType: opened ? "NotificationOpened" : "NotificationDismissed", source: "ui", actor: { kind: "student" }, metadata: { notificationId: b.id } })
     ).catch(() => {});
     setQueue((q) => q.filter((x) => x.id !== b.id));
-    if (opened && b.targetPage) { try { window.location.assign(b.targetPage); } catch { /* ignore */ } }
+    /* M-2: لا ننتقل إلا لمسار داخلي آمن (يبدأ بـ«/»، بلا scheme/host خارجي) */
+    if (opened) {
+      const dest = safeInternalPath(b.targetPage);
+      if (dest) { try { window.location.assign(dest); } catch { /* ignore */ } }
+    }
   };
 
   if (queue.length === 0) return null;

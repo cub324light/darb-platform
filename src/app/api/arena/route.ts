@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb, getVerifiedUid } from "@/lib/server/firebaseAdmin";
 import { isUserBlocked } from "@/lib/server/moderation";
+import { checkRateLimit } from "@/lib/server/rateLimit";
+import { cleanId } from "@/lib/server/sanitize";
 import {
   pickOpponent, scoreAnswers, decideWinner, seedFromMatchId,
   type QueueTicket,
@@ -16,17 +18,6 @@ export const runtime = "nodejs";
 const PER_QUESTION_MS = 18_000;          // 15s إجابة + هامش
 const PLAY_BUFFER_MS = 10_000;           // مهلة سماح بعد آخر سؤال
 const MATCH_TTL_MS = 10 * 60_000;        // مباراة أقدم من هذا تُهمَل
-
-/* حدّ إساءة: 40 طلب بالدقيقة لكل IP (المطابقة تتطلب نبضات متكررة) */
-const attempts = new Map<string, { count: number; reset: number }>();
-function allow(ip: string): boolean {
-  const now = Date.now();
-  const e = attempts.get(ip);
-  if (!e || now > e.reset) { attempts.set(ip, { count: 1, reset: now + 60_000 }); return true; }
-  if (e.count >= 40) return false;
-  e.count++;
-  return true;
-}
 
 const KNOWN_TRACKS = new Set<string>([
   "قدرات", "تحصيلي", "تحصيلي مبكر", "CPC", "ITC", "ايلتس", "ستيب", "توفل", "دوليقو", "مدرسه",
@@ -47,7 +38,8 @@ function readStreak(data: FirebaseFirestore.DocumentData | undefined): number {
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (!allow(ip)) {
+  /* M-6: محدّد معدّل دائم عبر كل instances — 40/دقيقة لكل IP */
+  if (!(await checkRateLimit("arena_" + ip, 40, 60_000))) {
     return NextResponse.json({ error: "محاولات كثيرة — انتظر دقيقة" }, { status: 429 });
   }
 
@@ -200,8 +192,8 @@ export async function POST(req: NextRequest) {
 
     /* ─────────── submit / leave: حسم المباراة (مرة واحدة، خادمي) ─────────── */
     if (mode === "submit" || mode === "leave") {
-      const matchId = (body as { matchId?: unknown }).matchId;
-      if (typeof matchId !== "string" || !matchId) {
+      const matchId = cleanId((body as { matchId?: unknown }).matchId, 80); // M-1
+      if (!matchId) {
         return NextResponse.json({ error: "matchId مفقود" }, { status: 400 });
       }
       const rawAnswers = (body as { answers?: unknown }).answers;

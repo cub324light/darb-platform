@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { recordAiUsage } from "@/lib/aiUsage";
 import { getVerifiedUid, getAdminDbOptional } from "@/lib/server/firebaseAdmin";
-import { checkUserRateLimit } from "@/lib/server/rateLimit";
+import { checkUserRateLimit, checkDailyLimit } from "@/lib/server/rateLimit";
 import { isUserBlocked } from "@/lib/server/moderation";
 import { chatComplete, LLMError, type LLMUserContent } from "@/lib/server/llm";
 import { formatProfileBlock, sessionIntervalRule, type DuwairbProfile, type DuwairbExam } from "@/lib/duwairb";
@@ -324,6 +324,10 @@ export async function POST(req: NextRequest) {
   /* تحديد المعدّل لكل مستخدم (دائم عبر Firestore — يعمل عبر كل instances) */
   if (!(await checkUserRateLimit(uid))) {
     return NextResponse.json({ error: "طلبات كثيرة، انتظر دقيقة" }, { status: 429 });
+  }
+  /* M-5: حدّ يومي لكل مستخدم — يحدّ من استنزاف الميزانية لكل حساب */
+  if (!(await checkDailyLimit("chat_" + uid, 150))) {
+    return NextResponse.json({ error: "وصلت حدّك اليومي من دويرب — عُد غداً" }, { status: 429 });
   }
 
   const body = await req.json().catch(() => null);

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkAdminPassword, authorizeAdmin, getVerifiedRole, isOwnerEmail } from "@/lib/server/firebaseAdmin";
 import { recordAudit } from "@/lib/server/audit";
+import { checkRateLimit } from "@/lib/server/rateLimit";
 import { ACTION_MIN_ROLE, ASSIGNABLE_ROLES, isRole, atLeast, type AdminAction, type Role } from "@/lib/roles";
 
 /* ربط كل وضع بأقل صلاحية مطلوبة (مصدر القرار في lib/roles) */
@@ -23,19 +24,6 @@ const ACTION_BY_MODE: Record<string, AdminAction> = {
    لأن مسح كل المستخدمين (Auth + Firestore) قد يتجاوز الافتراضي */
 export const runtime = "nodejs";
 
-/* حماية من تخمين كلمة السر: 5 محاولات بالدقيقة لكل IP */
-const attempts = new Map<string, { count: number; reset: number }>();
-function allowAttempt(ip: string): boolean {
-  const now = Date.now();
-  const e = attempts.get(ip);
-  if (!e || now > e.reset) {
-    attempts.set(ip, { count: 1, reset: now + 60_000 });
-    return true;
-  }
-  if (e.count >= 5) return false;
-  e.count++;
-  return true;
-}
 
 /* تهيئة firebase-admin عبر استيراد ديناميكي — أي فشل في تحميل المكتبة
    أو غياب المفتاح يصبح خطأً قابلاً للالتقاط (JSON) بدل انهيار الموديول (500). */
@@ -71,8 +59,15 @@ async function adminAuth() {
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-    if (!allowAttempt(ip)) {
+    /* H-1: حماية تخمين كلمة سرّ الأدمن — محدّد دائم (Firestore) عبر كل instances:
+       ① لكل IP (5/دقيقة، يحفظ السلوك الحالي لكن لا يُصفَّر مع instance)،
+       ② حدّ عالمي احتياطي (200/دقيقة) كي لا يُتجاوَز بتدوير الـ IP/الـ XFF.
+       المقارنة تبقى ثابتة الوقت في checkAdminPassword. */
+    if (!(await checkRateLimit("adminusers_ip_" + ip, 5, 60_000))) {
       return NextResponse.json({ error: "محاولات كثيرة — انتظر دقيقة" }, { status: 429 });
+    }
+    if (!(await checkRateLimit("adminusers_global", 200, 60_000))) {
+      return NextResponse.json({ error: "النظام مشغول — حاول بعد قليل" }, { status: 429 });
     }
 
     const body = await req.json().catch(() => null);

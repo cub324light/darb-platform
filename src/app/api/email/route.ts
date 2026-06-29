@@ -3,23 +3,10 @@ import { sendEmail, sendTemplate, isEmailConfigured } from "@/lib/email";
 import { TEMPLATES, type TemplateName, type TemplateProps } from "@/lib/email/templates";
 import { authorizeAdmin, getAdminDb } from "@/lib/server/firebaseAdmin";
 import { recordAudit } from "@/lib/server/audit";
+import { checkRateLimit } from "@/lib/server/rateLimit";
 
 /* Resend SDK يعمل على Node */
 export const runtime = "nodejs";
-
-/* منع إساءة الإرسال: 10 طلبات بالدقيقة لكل IP */
-const attempts = new Map<string, { count: number; reset: number }>();
-function allowAttempt(ip: string): boolean {
-  const now = Date.now();
-  const e = attempts.get(ip);
-  if (!e || now > e.reset) {
-    attempts.set(ip, { count: 1, reset: now + 60_000 });
-    return true;
-  }
-  if (e.count >= 10) return false;
-  e.count++;
-  return true;
-}
 
 /* جسم الطلب: إمّا قالب نوعي، أو بريد خام — كلاهما يتطلب كلمة الأدمن */
 interface EmailRequestBody {
@@ -36,7 +23,8 @@ interface EmailRequestBody {
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (!allowAttempt(ip)) {
+  /* M-6: محدّد معدّل دائم — ١٠/دقيقة لكل IP */
+  if (!(await checkRateLimit("email_" + ip, 10, 60_000))) {
     return NextResponse.json({ ok: false, error: "محاولات كثيرة — انتظر دقيقة" }, { status: 429 });
   }
 
