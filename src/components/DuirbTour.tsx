@@ -5,6 +5,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
+import { loadUser } from "@/lib/storage";
 
 const TOUR_KEY = "darb_tour_done";
 
@@ -35,11 +36,33 @@ export default function DuirbTour() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    /* أظهر فقط في الداشبورد وللمستخدم الذي لم يرَ الجولة */
+    /* أظهر فقط فوق لوحة جاهزة فعلاً: المسار /dashboard + مستخدم مصادَق (أو زائر) أكمل
+       الإعداد + لم يرَ الجولة. لا تظهر أبداً فوق شاشة الدخول أو التحميل (كانت تفرش
+       خلفية سوداء فوق شاشة غير جاهزة فتبدو سوداء، والتخطّي يكشف شاشة الدخول = «رجوع»). */
     if (pathname !== "/dashboard") return;
-    try {
-      if (!localStorage.getItem(TOUR_KEY)) setVisible(true);
-    } catch { /* localStorage غير متاح */ }
+    let cancelled = false;
+    let unsub: (() => void) | undefined;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try { if (localStorage.getItem(TOUR_KEY)) return; } catch { return; }
+
+    import("@/lib/cloud").then(({ onAuth }) => {
+      if (cancelled) return;
+      unsub = onAuth((u) => {
+        if (cancelled) return;
+        let onboarded = false, guest = false, seen = false;
+        try {
+          onboarded = !!loadUser()?.onboarded;
+          guest = localStorage.getItem("darb_guest_mode") === "1";
+          seen = !!localStorage.getItem(TOUR_KEY);
+        } catch { /* تجاهل */ }
+        if (seen || (!u && !guest) || !onboarded) return;
+        /* مهلة بسيطة كي تُرسَم اللوحة قبل ظهور الجولة (تفادي وميض الخلفية السوداء) */
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => { if (!cancelled) setVisible(true); }, 900);
+      });
+    });
+
+    return () => { cancelled = true; unsub?.(); if (timer) clearTimeout(timer); };
   }, [pathname]);
 
   const finish = () => {
@@ -47,7 +70,7 @@ export default function DuirbTour() {
     setVisible(false);
   };
 
-  if (!visible) return null;
+  if (!visible || pathname !== "/dashboard") return null;
 
   const current = STEPS[step];
   const isLast = step === STEPS.length - 1;
