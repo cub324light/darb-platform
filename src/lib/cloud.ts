@@ -194,8 +194,12 @@ export function authErrorMsg(code: string): string {
 /* ─── المزامنة الأولية: مرة واحدة بعد ثبوت تسجيل الدخول ─── */
 /* تُستدعى من البوابة بعد تسجيل الدخول:
    اسحب من السحابة؛ وإن لم توجد نسخة وعندك بيانات محلية ارفعها (ترحيل حساب مجهول قديم). */
-export async function initialSync(): Promise<void> {
-  /* timeout 6 ثواني — لو Firestore ما ردّ (قواعد غير منشورة مثلاً) نكمل بدونه */
+export async function initialSync(): Promise<boolean> {
+  /* timeout 6 ثواني — لو Firestore ما ردّ (قواعد غير منشورة مثلاً) نكمل بدونه.
+     نُعيد confirmed=true فقط لو اكتمل السحب فعلاً قبل المهلة؛ فلو سبقتنا المهلة
+     (Firestore بطيء/بارد على Preview) نُعيد false كي لا تَفترض البوابة أن المستخدم
+     العائد «بلا حساب» فترميه إلى onboarding وتطمس بياناته السحابية. */
+  let confirmed = false;
   const timeout = new Promise<void>((resolve) => setTimeout(resolve, 6000));
   try {
     await Promise.race([
@@ -205,6 +209,7 @@ export async function initialSync(): Promise<void> {
         /* مزامنة حالة المحرّكات (ذاكرة/أحداث) على مستوى الكيان بدمج */
         const { pullEngineState } = await import("./engineSync");
         await pullEngineState();
+        confirmed = true; // وصلنا للنهاية فعلاً (لم تسبقنا المهلة)
       })(),
       timeout,
     ]);
@@ -213,6 +218,7 @@ export async function initialSync(): Promise<void> {
   } finally {
     markInitialSyncDone();
   }
+  return confirmed;
 }
 
 /* ─── جمع البيانات من localStorage ─── */

@@ -15,6 +15,10 @@ import DesktopSidebar from "./DesktopSidebar";
    «/» و«/privacy» تسويقية، و«/admin» له حماية كلمة سر خاصة على الخادم. */
 const PUBLIC_PATHS = ["/", "/privacy", "/terms", "/subscription", "/admin"];
 
+/* أقصى إعادات لمحاولة استرجاع ملف المستخدم قبل اعتباره «بلا حساب» (يمنع رمي العائد
+   إلى onboarding على أصل Preview البطيء/البارد قبل اكتمال السحب السحابي) */
+const MAX_SYNC_RETRIES = 3;
+
 /* تحميل SignInScreen ديناميكياً — يُبعدها وما تستورده من Firebase عن الحزمة المبدئية.
    المستخدمون العائدون لا يحتاجون شاشة الدخول على الإطلاق. */
 const SignInScreen = dynamic(() => import("./SignInScreen"), { ssr: false });
@@ -68,6 +72,9 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [authResolved, setAuthResolved] = useState(false);
   const [synced, setSynced] = useState(isInitialSyncDone());
+  /* هل تأكّد السحب الأولي فعلاً (لم تسبقه المهلة)؟ + عدّاد إعادات المحاولة */
+  const [syncConfirmed, setSyncConfirmed] = useState(false);
+  const [syncTries, setSyncTries] = useState(0);
   const [redirectErr, setRedirectErr] = useState<string | null>(null);
   /* وضع الزائر — يتجاوز تسجيل الدخول ويحفظ البيانات محلياً فقط */
   const [guestMode, setGuestMode] = useState(() =>
@@ -119,20 +126,40 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     if (user && !isInitialSyncDone()) {
       import("@/lib/cloud").then(({ initialSync }) => {
         if (!cancelled) {
-          initialSync().finally(() => { if (!cancelled) setSynced(true); });
+          initialSync().then((confirmed) => {
+            if (!cancelled) { setSyncConfirmed(confirmed); setSynced(true); }
+          });
         }
       });
     } else if (!user) {
-      const id = setTimeout(() => { if (!cancelled) setSynced(false); }, 0);
+      const id = setTimeout(() => {
+        if (!cancelled) { setSynced(false); setSyncConfirmed(false); setSyncTries(0); }
+      }, 0);
       return () => { cancelled = true; clearTimeout(id); };
     }
     return () => { cancelled = true; };
-  }, [user]);
+  }, [user, syncTries]);
+
+  /* مستخدم مصادَق بلا ملف محلي ولم تتأكّد المزامنة (Firestore بطيء/بارد على Preview) →
+     أعِد محاولة السحب بدل رميه إلى onboarding. محدودة بـ MAX_SYNC_RETRIES ثم نستسلم. */
+  useEffect(() => {
+    if (user && synced && !syncConfirmed && syncTries < MAX_SYNC_RETRIES && !loadUser()?.onboarded) {
+      const id = setTimeout(() => {
+        resetInitialSyncDone();
+        setSynced(false);
+        setSyncTries((n) => n + 1);
+      }, 1200);
+      return () => clearTimeout(id);
+    }
+  }, [user, synced, syncConfirmed, syncTries]);
 
   /* مسجّل لكنه لم يُكمل onboarding → وجّهه لصفحة الإعداد */
   const authed = !!user || guestMode;
   const onboarded = (synced || guestMode) && authed ? !!loadUser()?.onboarded : false;
-  const needsOnboarding = (synced || guestMode) && authed && !onboarded && pathname !== "/onboarding";
+  /* لا نُرسل المصادَق إلى onboarding إلا إذا تأكّدت المزامنة (عرفنا يقيناً أنه بلا حساب)،
+     أو كان زائراً، أو استُنفدت إعادات المحاولة — يمنع رمي العائد للبداية وطمس بياناته */
+  const onboardingReady = guestMode || syncConfirmed || syncTries >= MAX_SYNC_RETRIES;
+  const needsOnboarding = (synced || guestMode) && authed && !onboarded && onboardingReady && pathname !== "/onboarding";
 
   useEffect(() => {
     if (needsOnboarding) router.replace("/onboarding");
@@ -157,5 +184,10 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   if (!synced && !guestMode && !hasLocal) return <Splash label="جارٍ استرجاع بياناتك..." />;
   if (isAccountBlocked()) return <BlockedScreen />;
   if (needsOnboarding) return <Splash />;
+  /* مصادَق على أصل نظيف (Preview) وملفه لم يُسترجَع بعد ولم تتأكّد المزامنة → أظهر شاشة
+     الاسترجاع (تتم إعادة المحاولة)، بدل رميه إلى onboarding أو عرض لوحة فارغة */
+  if (authed && !guestMode && !syncConfirmed && syncTries < MAX_SYNC_RETRIES && !loadUser()?.onboarded) {
+    return <Splash label="جارٍ استرجاع بياناتك..." />;
+  }
   return <>{children}{showNav && <><BottomNav /><DesktopSidebar /></>}</>;
 }
