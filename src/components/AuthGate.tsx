@@ -156,9 +156,10 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   /* مسجّل لكنه لم يُكمل onboarding → وجّهه لصفحة الإعداد */
   const authed = !!user || guestMode;
   const onboarded = (synced || guestMode) && authed ? !!loadUser()?.onboarded : false;
-  /* لا نُرسل المصادَق إلى onboarding إلا إذا تأكّدت المزامنة (عرفنا يقيناً أنه بلا حساب)،
-     أو كان زائراً، أو استُنفدت إعادات المحاولة — يمنع رمي العائد للبداية وطمس بياناته */
-  const onboardingReady = guestMode || syncConfirmed || syncTries >= MAX_SYNC_RETRIES;
+  /* لا نُرسل المصادَق إلى onboarding إلا إذا تأكّدت حالة ملف السحابة (قراءة نجحت: استُرجِع
+     ملفه أو لا حساب له فعلاً) أو كان زائراً. عند تعذّر القراءة (غير مؤكّد) لا نرميه أبداً
+     للبداية — نُبقي شاشة الاسترجاع ونعيد المحاولة، حمايةً لبياناته السحابية من الطمس. */
+  const onboardingReady = guestMode || syncConfirmed;
   const needsOnboarding = (synced || guestMode) && authed && !onboarded && onboardingReady && pathname !== "/onboarding";
 
   useEffect(() => {
@@ -184,9 +185,9 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   if (!synced && !guestMode && !hasLocal) return <Splash label="جارٍ استرجاع بياناتك..." />;
   if (isAccountBlocked()) return <BlockedScreen />;
   if (needsOnboarding) return <Splash />;
-  /* مصادَق على أصل نظيف (Preview) وملفه لم يُسترجَع بعد ولم تتأكّد المزامنة → أظهر شاشة
-     الاسترجاع (تتم إعادة المحاولة)، بدل رميه إلى onboarding أو عرض لوحة فارغة */
-  if (authed && !guestMode && !syncConfirmed && syncTries < MAX_SYNC_RETRIES && !loadUser()?.onboarded) {
+  /* مصادَق وملفه لم يُسترجَع ولم تتأكّد حالة السحابة (قراءة فاشلة/بطيئة) → أظهر شاشة
+     الاسترجاع (تُعاد المحاولة)؛ لا تَعرض لوحة فارغة ولا ترمِه إلى onboarding على «غياب» غير مؤكّد */
+  if (authed && !guestMode && !syncConfirmed && !loadUser()?.onboarded) {
     return <Splash label="جارٍ استرجاع بياناتك..." />;
   }
   return <>{children}{showNav && <><BottomNav /><DesktopSidebar /></>}</>;

@@ -89,7 +89,7 @@ export default function SettingsButton() {
         setAuthOpen(false);
       } else {
         await signIn(authEmail, authPass);
-        const restored = await pullBackup();
+        const { restored } = await pullBackup();
         if (restored) { window.location.reload(); return; }
         await pushBackup();
         setSyncMsg("تم تسجيل الدخول ☁️");

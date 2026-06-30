@@ -195,23 +195,26 @@ export function authErrorMsg(code: string): string {
 /* تُستدعى من البوابة بعد تسجيل الدخول:
    اسحب من السحابة؛ وإن لم توجد نسخة وعندك بيانات محلية ارفعها (ترحيل حساب مجهول قديم). */
 export async function initialSync(): Promise<boolean> {
-  /* timeout 6 ثواني — لو Firestore ما ردّ (قواعد غير منشورة مثلاً) نكمل بدونه.
-     نُعيد confirmed=true فقط لو اكتمل السحب فعلاً قبل المهلة؛ فلو سبقتنا المهلة
-     (Firestore بطيء/بارد على Preview) نُعيد false كي لا تَفترض البوابة أن المستخدم
-     العائد «بلا حساب» فترميه إلى onboarding وتطمس بياناته السحابية. */
+  /* confirmed = هل عرفنا يقيناً حالة ملف السحابة (قراءة نجحت أو الوثيقة غائبة فعلاً)؟
+     قراءة pullBackup الفاشلة أو تجاوز المهلة → confirmed=false، فلا ترمي البوابة
+     المستخدمَ العائد إلى onboarding بناءً على «غياب» غير مؤكّد (وتطمس بياناته). */
   let confirmed = false;
-  const timeout = new Promise<void>((resolve) => setTimeout(resolve, 6000));
   try {
+    /* استرجاع ملف السحابة (getDoc واحد) بمهلته الخاصة — هو ما يحسم onboarding */
+    const pull = await Promise.race([
+      pullBackup(),
+      new Promise<{ ok: boolean; restored: boolean }>((resolve) =>
+        setTimeout(() => resolve({ ok: false, restored: false }), 6000)),
+    ]);
+    confirmed = pull.ok;
+    if (!pull.restored && hasLocalData()) await pushBackup();
+    /* مزامنة حالة المحرّكات (أثقل) خلف مهلة منفصلة — لا تؤثّر على قرار onboarding */
     await Promise.race([
       (async () => {
-        const restored = await pullBackup();
-        if (!restored && hasLocalData()) await pushBackup();
-        /* مزامنة حالة المحرّكات (ذاكرة/أحداث) على مستوى الكيان بدمج */
         const { pullEngineState } = await import("./engineSync");
         await pullEngineState();
-        confirmed = true; // وصلنا للنهاية فعلاً (لم تسبقنا المهلة)
       })(),
-      timeout,
+      new Promise<void>((resolve) => setTimeout(resolve, 6000)),
     ]);
   } catch {
     /* نكمل في كل الأحوال */
@@ -269,12 +272,13 @@ export async function pushBackup(): Promise<boolean> {
 }
 
 /* ─── استرجاع النسخة من السحابة إلى localStorage ─── */
-export async function pullBackup(): Promise<boolean> {
+export async function pullBackup(): Promise<{ ok: boolean; restored: boolean }> {
   const u = auth.currentUser;
-  if (!u || typeof window === "undefined") return false;
+  if (!u || typeof window === "undefined") return { ok: false, restored: false };
   try {
     const snap = await getDoc(doc(db, "users", u.uid));
-    if (!snap.exists()) return false;
+    /* قراءة ناجحة بلا وثيقة = مستخدم جديد فعلاً (ok=true)، تختلف عن فشل القراءة أدناه */
+    if (!snap.exists()) return { ok: true, restored: false };
     const data = snap.data();
 
     /* حالة الإيقاف والباقة محفوظتان كحقول عُليا يضبطها الأدمن — تُقرأ دائماً */
@@ -297,9 +301,10 @@ export async function pullBackup(): Promise<boolean> {
       if (local) saveUser({ ...local, plan: normalizePlan(cloudPlan) });
     }
 
-    return hasBackup;
+    return { ok: true, restored: hasBackup };
   } catch {
-    return false;
+    /* فشل القراءة (شبكة/قواعد/تعذّر) → حالة غير مؤكّدة؛ لا نَبني عليها قرار onboarding */
+    return { ok: false, restored: false };
   }
 }
 
