@@ -8,7 +8,8 @@
     "prebuild": "npm run copy-pdf-worker",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed:content": "node scripts/seed-firestore.js"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.58.0",

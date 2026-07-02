@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { TRACKS } from "@/lib/tracks";
 import Logo from "@/components/Logo";
@@ -10,6 +11,9 @@ import { Sparkles } from "@/components/ui/sparkles";
 import { Meteors } from "@/components/ui/meteors";
 import { AnimatedGradientText } from "@/components/ui/animated-gradient-text";
 import { BorderBeam } from "@/components/ui/border-beam";
+
+/* شريط قصص النجاح — ديناميكي: يُبقي بذرة المحتوى خارج حزمة الهبوط الحرجة */
+const SuccessStoriesStrip = dynamic(() => import("@/components/SuccessStoriesStrip"));
 
 function useReveal(active: boolean) {
   const ref = useRef<HTMLDivElement>(null);
@@ -160,6 +164,19 @@ export default function LandingPage() {
                   <span>{item.label}</span>
                   <span style={{ color: "var(--text-muted)" }}>↓</span>
                 </button>
+              ))}
+              {/* صفحات المحتوى التعليمي العامة */}
+              {[
+                { label: "الأسئلة الشائعة", href: "/faq" },
+                { label: "حقائق التحصيلي", href: "/tahsili/flashcards" },
+                { label: "قصص نجاح", href: "/success-stories" },
+              ].map((item) => (
+                <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)}
+                  className="flex items-center justify-between px-5 py-4 rounded-2xl font-bold text-base text-right"
+                  style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)", textDecoration: "none" }}>
+                  <span>{item.label}</span>
+                  <span style={{ color: "var(--text-muted)" }}>←</span>
+                </Link>
               ))}
             </div>
           </div>
@@ -385,6 +402,11 @@ export default function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════════ */}
+      {/* ═══ قصص نجاح (social proof) ═══ */}
+      {/* ══════════════════════════════════════════ */}
+      <SuccessStoriesStrip />
+
+      {/* ══════════════════════════════════════════ */}
       {/* ═══ CTA الختام ═══ */}
       {/* ══════════════════════════════════════════ */}
       <section className="px-5 py-16 pb-24 max-w-lg mx-auto text-center">
@@ -408,6 +430,15 @@ export default function LandingPage() {
           <p className="text-xs mt-6 relative z-10" style={{ color: "var(--text-muted)" }}>صُنع في السعودية · مجاني بالكامل</p>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 mt-8 text-xs">
+          <Link href="/faq" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+            الأسئلة الشائعة
+          </Link>
+          <Link href="/tahsili/flashcards" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+            حقائق التحصيلي
+          </Link>
+          <Link href="/success-stories" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+            قصص نجاح
+          </Link>
           <Link href="/privacy" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
             سياسة الخصوصية
           </Link>

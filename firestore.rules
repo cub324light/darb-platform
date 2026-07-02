@@ -183,6 +183,40 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // ───── المحتوى التعليمي العام ─────
+    // أسئلة القبول الشائعة، قوائم مرجعية، نصائح، بطاقات حقائق التحصيلي،
+    // استراتيجيات المذاكرة، وقصص النجاح — تُعرض في صفحات عامة بدون تسجيل دخول
+    // (/faq و/tahsili/flashcards و/success-stories)، فالقراءة عامة.
+    // الكتابة من الخادم فقط (Admin SDK عبر scripts/seed-firestore.js).
+    match /faq_general/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /faq_qubool/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /reference_lists/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /tips/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /tahsili_flashcards/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /study_strategies/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /success_stories/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Everything else: denied
     match /{document=**} {
       allow read, write: if false;

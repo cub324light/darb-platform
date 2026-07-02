@@ -20,7 +20,11 @@ const DuirbHub = dynamic(() => import("@/components/DuirbHub"), {
   ),
 });
 
-const HIDDEN_ON = ["/onboarding", "/admin", "/pricing", "/privacy", "/terms", "/subscription", "/parent"];
+const HIDDEN_ON = [
+  "/onboarding", "/admin", "/pricing", "/privacy", "/terms", "/subscription", "/parent",
+  // صفحات المحتوى العامة — زوارها بلا حساب ودويرب يتطلب مصادقة
+  "/faq", "/tahsili/flashcards", "/success-stories",
+];
 
 export default function DuirbFloat() {
   const pathname = usePathname();

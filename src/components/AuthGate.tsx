@@ -12,8 +12,12 @@ import BottomNav from "./BottomNav";
 import DesktopSidebar from "./DesktopSidebar";
 
 /* المسارات العامة — تُعرض بدون تسجيل دخول للطالب:
-   «/» و«/privacy» تسويقية، و«/admin» له حماية كلمة سر خاصة على الخادم. */
-const PUBLIC_PATHS = ["/", "/privacy", "/terms", "/subscription", "/admin"];
+   «/» و«/privacy» تسويقية، و«/admin» له حماية كلمة سر خاصة على الخادم،
+   وصفحات المحتوى التعليمي (faq/flashcards/success-stories) عامة للفهرسة. */
+const PUBLIC_PATHS = [
+  "/", "/privacy", "/terms", "/subscription", "/admin",
+  "/faq", "/tahsili/flashcards", "/success-stories",
+];
 
 /* أقصى إعادات لمحاولة استرجاع ملف المستخدم قبل اعتباره «بلا حساب» (يمنع رمي العائد
    إلى onboarding على أصل Preview البطيء/البارد قبل اكتمال السحب السحابي) */

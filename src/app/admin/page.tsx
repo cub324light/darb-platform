@@ -6,8 +6,13 @@ import { BorderBeam } from "@/components/ui/border-beam";
 import { authedFetch } from "@/lib/authFetch";
 import { onAuth } from "@/lib/cloud";
 import { ROLE_LABEL, ROLE_COLOR, ASSIGNABLE_ROLES, ROLE_RANK, canDo, type Role } from "@/lib/roles";
+import { annualReviewLists } from "@/lib/content";
 
 import AdminShell, { type AdminSection } from "@/components/admin/AdminShell";
+
+/* القوائم المرجعية التي تتغير كل موسم قبول — من بذرة المحتوى المحلية مباشرة
+   (بلا استعلامات Firestore ولا راوت جديد) */
+const ANNUAL_REVIEW = annualReviewLists();
 
 /* لوحة إدارة المصادر (قاعدة المعرفة) + سجلّ التدقيق — تُحمَّل عند فتحها فقط */
 const SourcesManager = dynamic(() => import("@/components/admin/SourcesManager"), { ssr: false });
@@ -756,6 +761,34 @@ export default function AdminPage() {
           </div>
         ))}
       </div>
+
+      {/* تنبيه المراجعة السنوية — قوائم /faq المرجعية تتغير كل موسم قبول */}
+      {ANNUAL_REVIEW.length > 0 && (
+        <div className="max-w-7xl mx-auto mb-6 rounded-2xl p-4"
+          style={{
+            background: "color-mix(in srgb, var(--gold) 7%, var(--surface))",
+            border: "1.5px solid color-mix(in srgb, var(--gold) 35%, var(--border))",
+          }}>
+          <div className="flex items-center gap-2 mb-1.5">
+            <p className="font-black text-[15px]" style={{ color: "var(--text)" }}>⚠️ مراجعة سنوية — القوائم المرجعية</p>
+            <span className="text-[11px] font-black px-2 py-0.5 rounded-full font-mono-nums"
+              style={{ background: "color-mix(in srgb, var(--gold) 16%, transparent)", color: "var(--gold)" }}>
+              {ANNUAL_REVIEW.length}
+            </span>
+          </div>
+          <p className="text-[12.5px] leading-relaxed mb-2.5" style={{ color: "var(--text-muted)" }}>
+            هذه القوائم في صفحة الأسئلة الشائعة تتغير كل موسم قبول — حدّث بياناتها قبل فتح التقديم ثم ارفعها بـ npm run seed:content.
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {ANNUAL_REVIEW.map((r) => (
+              <span key={r.id} className="text-[12px] font-bold px-2.5 py-1 rounded-lg"
+                style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-dim)" }}>
+                {r.title}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* قسم إدارة المصادر (قاعدة المعرفة) */}
       <div className="max-w-7xl mx-auto mb-6">
