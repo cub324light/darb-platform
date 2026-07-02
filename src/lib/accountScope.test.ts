@@ -60,6 +60,18 @@ test("تسجيل الخروج يمسح البيانات المحلية ويزي�
   } finally { uninstall(); }
 });
 
+test("الزائر (uid=null مع darb_guest_mode): لا تُمسح بياناته — لا حلقة onboarding", () => {
+  const { map, uninstall } = installMockStorage();
+  try {
+    map["darb_guest_mode"] = "1";
+    map["darb_user"] = JSON.stringify({ name: "زائر", onboarded: true });
+    // إقلاع البوابة يُطلق onAuth بـ null للزائر (بلا جلسة Firebase)
+    const cleared = ensureLocalOwnership(null);
+    assert.equal(cleared, false, "لا مسح للزائر");
+    assert.ok(map["darb_user"], "بيانات الزائر باقية (onboarded=true) فلا يرجع لـ onboarding");
+  } finally { uninstall(); }
+});
+
 test("بيانات الزائر تُرحَّل لحسابه (سلوك قائم) — بلا مسح", () => {
   const { map, uninstall } = installMockStorage();
   try {

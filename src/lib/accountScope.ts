@@ -52,7 +52,8 @@ export function clearLocalUserData(): void {
 }
 
 /* يُلزم أن البيانات المحلية تخصّ uid الحالي. يُستدعى عند كل تغيّر هوية:
-   - تسجيل خروج (uid=null): امسح البيانات وأزل المالك.
+   - تسجيل خروج (uid=null وليس وضع زائر): امسح البيانات وأزل المالك.
+   - وضع الزائر (uid=null مع darb_guest_mode): لا تمسح — null حالته الطبيعية وبياناته له.
    - دخول مستخدم مختلف عن مالك البيانات: امسح بيانات الحساب الآخر ثم اربط الملكية.
    - دخول مالك مجهول وبيانات موجودة وليست لزائر: امسح احتياطاً (قد تكون لحساب سابق
      قبل هذا الإصلاح) ليُعاد سحبها من السحابة.
@@ -62,6 +63,11 @@ export function ensureLocalOwnership(uid: string | null): boolean {
   const s = ls(); if (!s) return false;
 
   if (!uid) {
+    /* وضع الزائر: null هو حالته الطبيعية (بلا جلسة Firebase) وبياناته المحلية له —
+       لا تمسح، وإلا يفقد بياناته عند كل إقلاع ويدور في حلقة onboarding لا نهائية.
+       تسجيل الخروج الحقيقي (بلا علم زائر) يبقى يمسح — فيُحفَظ ضمان C2. */
+    const isGuest = (() => { try { return s.getItem("darb_guest_mode") === "1"; } catch { return false; } })();
+    if (isGuest) return false;
     const had = hasAnyLocalUserData() || !!localDataOwner();
     clearLocalUserData();
     setLocalDataOwner(null);
