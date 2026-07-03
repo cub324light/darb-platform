@@ -13,10 +13,10 @@ import DesktopSidebar from "./DesktopSidebar";
 
 /* المسارات العامة — تُعرض بدون تسجيل دخول للطالب:
    «/» و«/privacy» تسويقية، و«/admin» له حماية كلمة سر خاصة على الخادم،
-   وصفحات المحتوى التعليمي (faq/flashcards/success-stories) عامة للفهرسة. */
+   وصفحات المحتوى التعليمي (faq/flashcards/success-stories/uni-gear) عامة للفهرسة. */
 const PUBLIC_PATHS = [
   "/", "/privacy", "/terms", "/subscription", "/admin",
-  "/faq", "/tahsili/flashcards", "/success-stories",
+  "/faq", "/tahsili/flashcards", "/success-stories", "/uni-gear",
 ];
 
 /* أقصى إعادات لمحاولة استرجاع ملف المستخدم قبل اعتباره «بلا حساب» (يمنع رمي العائد

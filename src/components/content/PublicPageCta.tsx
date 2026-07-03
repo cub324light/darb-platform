@@ -7,6 +7,7 @@ const SIBLINGS = [
   { href: "/faq",                 label: "الأسئلة الشائعة",   icon: "❓" },
   { href: "/tahsili/flashcards",  label: "حقائق التحصيلي",    icon: "🃏" },
   { href: "/success-stories",     label: "قصص نجاح",          icon: "🏆" },
+  { href: "/uni-gear",            label: "أجهزة الجامعة",     icon: "💻" },
 ] as const;
 
 export default function PublicPageCta({ current }: { current: string }) {
@@ -16,10 +17,11 @@ export default function PublicPageCta({ current }: { current: string }) {
       {/* روابط شقيقة */}
       <div>
         <p className="eyebrow mb-2.5" style={{ color: "var(--accent-light)" }}>شوف أيضاً</p>
-        <div className="grid grid-cols-2 gap-2.5">
+        {/* flex-wrap: عنصران بالصف على الجوال (والفردي يتمدد بأناقة)، وثلاثة على المتوسطة+ */}
+        <div className="flex flex-wrap gap-2.5">
           {others.map((s) => (
             <Link key={s.href} href={s.href}
-              className="rounded-2xl p-4 flex items-center gap-2.5 glow-card-hover"
+              className="grow basis-[45%] md:basis-[30%] rounded-2xl p-4 flex items-center gap-2.5 glow-card-hover"
               style={{ background: "var(--surface)", border: "1.5px solid var(--border)", textDecoration: "none" }}>
               <span className="text-[18px]" aria-hidden="true">{s.icon}</span>
               <span className="font-bold text-[13.5px]" style={{ color: "var(--text)" }}>{s.label}</span>
