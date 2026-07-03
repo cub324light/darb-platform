@@ -115,8 +115,8 @@ export default function FlashcardsClient({ cards }: { cards: TahsiliFlashcardDoc
         </button>
       </div>
 
-      {/* شبكة البطاقات */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {/* شبكة البطاقات — عمودان على المتوسطة وثلاثة على سطح المكتب (≥1100px) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 desk-grid-3 gap-3">
         {visible.map((card) => {
           const meta = subjectMeta(card.subject);
           const isFlipped = flipped.has(card.id);

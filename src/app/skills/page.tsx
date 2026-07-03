@@ -114,7 +114,7 @@ export default function SkillsPage() {
   const weakSkills = weakIds.map((id) => skills.find((s) => s.id === id)).filter(Boolean) as GlobalSkill[];
 
   return (
-    <div className="min-h-screen pb-32" style={{ background: "var(--bg)" }}>
+    <div className="min-h-screen pb-32 desk-wide" style={{ background: "var(--bg)" }}>
       <Dome compact>
         <div className="flex items-center gap-3">
           <Link href="/roadmap" className="rounded-full p-1.5 transition active:scale-95" style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)" }}>
@@ -207,7 +207,9 @@ export default function SkillsPage() {
             {domains.map(({ domain, skills: ds }) => (
               <div key={domain} className="flex flex-col gap-2">
                 <p className="text-[12px] font-bold px-1" style={{ color: "var(--accent-light)" }}>{domain}</p>
-                <div className="flex flex-col gap-2">
+                {/* عمود واحد على الجوال، عمودان على سطح المكتب — items-start حتى لا
+                    يتمدد الجار عند فتح أزرار التقييم في بطاقة */}
+                <div className="grid gap-2 desk-grid-2 items-start">
                   {ds.map((skill) => (
                     <SkillCard
                       key={skill.id}

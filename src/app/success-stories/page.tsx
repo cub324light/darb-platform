@@ -111,13 +111,14 @@ export default async function SuccessStoriesPage() {
         </div>
       </Dome>
 
-      <main className="px-5 py-6 max-w-2xl mx-auto flex flex-col gap-10 pb-20">
+      {/* حاوية أوسع على سطح المكتب — تتيح ثلاثة أعمدة للقصص دون تضييقها */}
+      <main className="px-5 py-6 max-w-2xl min-[1100px]:max-w-5xl mx-auto flex flex-col gap-10 pb-20">
         <p className="text-[14.5px] leading-relaxed -mb-4" style={{ color: "var(--text-muted)" }}>
           طلاب حقيقيون وصلوا لدرجات عالية في القدرات والتحصيلي وستيب — أرقامهم وطريقتهم، عشان تعرف إن الوصول ممكن.
         </p>
 
-        {/* ═══ القصص ═══ */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {/* ═══ القصص — عمودان على المتوسطة وثلاثة على سطح المكتب ═══ */}
+        <section className="grid grid-cols-1 md:grid-cols-2 desk-grid-3 gap-3">
           {snap.successStories.map((story) => (
             <StoryCard key={story.id} story={story} />
           ))}
@@ -127,7 +128,8 @@ export default async function SuccessStoriesPage() {
         <section>
           <p className="eyebrow mb-1" style={{ color: "var(--accent-light)" }}>كيف وصلوا؟</p>
           <h2 className="font-black text-[19px] mb-4" style={{ color: "var(--text)" }}>استراتيجيات من تجاربهم</h2>
-          <div className="flex flex-col gap-3">
+          {/* عمود واحد على الجوال، ثلاثة أعمدة على سطح المكتب */}
+          <div className="grid gap-3 desk-grid-3">
             {snap.studyStrategies.map((s, i) => (
               <div key={s.id} className="rounded-2xl p-5 glow-card-hover"
                 style={{

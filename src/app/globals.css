@@ -545,6 +545,7 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
   .page-content { padding: 0 28px; gap: 20px; }
 
   /* شبكات متجاوبة — أكثر كثافة على سطح المكتب */
+  .desk-grid-2 { grid-template-columns: repeat(2, 1fr) !important; }
   .desk-grid-3 { grid-template-columns: repeat(3, 1fr) !important; }
   .desk-grid-4 { grid-template-columns: repeat(4, 1fr) !important; }
 
@@ -558,7 +559,8 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
     padding-inline-start: var(--desk-sw, 248px);
     transition: padding-inline-start 0.18s ease;
   }
-  .desk-wide.page, .desk-wide.pb-nav { max-width: 1280px; }
+  /* ‎.desk-wide تعمل مع .page/.pb-nav أو وحدها (صفحات بلا صنف حاوية مثل المهارات) */
+  .desk-wide { max-width: 1280px; margin-inline: auto; width: 100%; }
 
   /* ─── تخفيف الضبابية (تكلفة الرسم ترتفع مع عرض 920px) ─── */
   .landing-nav {
@@ -873,6 +875,20 @@ html[data-sidebar="collapsed"] { --desk-sw: 76px;  }
   }
 }
 
+/* ═══════════════════════════════════════════════════════
+   القبول الجامعي — أقسام مستقلة في عمودين على سطح المكتب (≥1100px)
+   .uni-grid تحوّل page-content إلى شبكة (الفجوة تبقى من .page-content)،
+   و.uni-span للعناصر العريضة. شفّافة تماماً على الجوال.
+   ═══════════════════════════════════════════════════════ */
+@media (min-width: 1100px) {
+  .uni-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+  .uni-span { grid-column: 1 / -1; }
+}
+
 /* ═══════ شريط التنقل العائم — كبسولة ═══════ */
 .float-nav {
   position: fixed;
@@ -1049,6 +1065,17 @@ body[data-nav-hidden="1"] .float-nav { display: none; }
 .reveal-d1 { transition-delay: 0.1s; }
 .reveal-d2 { transition-delay: 0.2s; }
 .reveal-d3 { transition-delay: 0.3s; }
+
+/* حركة مخفّضة: عناصر الكشف تظهر فوراً — لا انتظار لمراقب التمرير ولا انزلاق.
+   بقية الأنيميشن الزخرفية (card-reveal/rise/btn-shimmer...) يكبحها المعطّل
+   العام في أسفل الملف (مدة 0.01ms وتكرار واحد) فتستقر على حالتها النهائية. */
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal-right, .reveal-left {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
 
 @keyframes heroFloat {
   0%, 100% { transform: translateY(0); }
@@ -1227,14 +1254,16 @@ body[data-nav-hidden="1"] .float-nav { display: none; }
 .btn-shimmer:hover  { transform: translateY(-2px); box-shadow: 0 8px 32px color-mix(in srgb, var(--accent) 45%, transparent); }
 .btn-shimmer:active { transform: scale(0.97); }
 
-/* بطاقة توهج عند hover */
+/* بطاقة توهج عند hover — محصور بأجهزة المؤشر حتى لا يعلق التأثير بعد اللمس على الجوال */
 .glow-card-hover {
   transition: box-shadow 0.3s ease, transform 0.2s ease;
 }
-.glow-card-hover:hover {
-  will-change: transform;
-  transform: translateY(-3px);
-  box-shadow: 0 12px 40px color-mix(in srgb, var(--accent) 22%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .glow-card-hover:hover {
+    will-change: transform;
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
 }
 
 /* ضبابية الشريط العلوي (صفحة الهبوط) والتبويبات — قابلة للتخفيف باستعلام 1100px */

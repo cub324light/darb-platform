@@ -235,7 +235,7 @@ export default function ReviewPage() {
 
   /* ── عرض القائمة ── */
   return (
-    <div className="min-h-dvh pb-nav relative z-[1]">
+    <div className="min-h-dvh pb-nav relative z-[1] desk-wide">
       <PageGuide pageKey="review" steps={[
         { title: "بطاقاتي", desc: "هنا تحفظ المعلومات اللي تبي ترسخ — قوانين، تعاريف، معادلات — على شكل بطاقات سؤال وجواب. أخطاءك من (أخطائي) ممكن تحولها لبطاقات." },
         { title: "النظام يحسب عنك", desc: "نستخدم نظام التكرار المتباعد العلمي: كل ما قيّمت بطاقة (سهلة أو صعبة)، النظام يحدد متى تراجعها المرة الجاية بالضبط." },
@@ -367,7 +367,8 @@ export default function ReviewPage() {
       {dueCards.length > 0 && (
         <div className="px-5 mb-6 rise rise-4">
           <h3 className="font-black text-lg text-[var(--text)] mb-4">مستحقة الآن</h3>
-          <div className="flex flex-col gap-4">
+          {/* عمود واحد على الجوال، عمودان على سطح المكتب (desk-grid-2 عند ≥1100px) */}
+          <div className="grid gap-4 desk-grid-2">
             {dueCards.map((card) => {
               const color = colorOf(card.subject);
               return (
@@ -390,7 +391,8 @@ export default function ReviewPage() {
       {upcomingCards.length > 0 && (
         <div className="px-5 mb-6 rise rise-5">
           <h3 className="font-black text-lg text-[var(--text-dim)] mb-4">قادم</h3>
-          <div className="flex flex-col gap-4">
+          {/* عمود واحد على الجوال، عمودان على سطح المكتب */}
+          <div className="grid gap-4 desk-grid-2">
             {upcomingCards.map((card) => {
               const color = colorOf(card.subject);
               return (

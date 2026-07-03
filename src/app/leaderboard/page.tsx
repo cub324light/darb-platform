@@ -56,7 +56,8 @@ export default function LeaderboardPage() {
         </div>
       </Dome>
 
-      <div className="px-5 py-5 max-w-lg mx-auto flex flex-col gap-4">
+      {/* حاوية أوسع على سطح المكتب — الصفوف تبقى صفوفاً */}
+      <div className="px-5 py-5 max-w-lg min-[1100px]:max-w-3xl mx-auto flex flex-col gap-4">
         {/* مبدّل المقياس */}
         <div className="flex gap-2 p-1 rounded-2xl" style={{ background: "var(--surface)" }}>
           {([["rp", "⚔️ الرتبة"], ["hours", "⏱️ ساعات"], ["streak", "🔥 ستريك"]] as const).map(([m, label]) => (

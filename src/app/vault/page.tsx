@@ -165,7 +165,7 @@ export default function VaultPage() {
   };
 
   return (
-    <div className="page">
+    <div className="page desk-wide">
 
       <PageGuide pageKey="vault" steps={[
         { title: "أخطائي", desc: "أي سؤال تغلط فيه — احفظه هنا فوراً. الهدف: تراجع كل خطأ مرتين قبل الاختبار حتى ما يتكرر." },
@@ -377,10 +377,12 @@ export default function VaultPage() {
         </div>
 
       {/* ── القائمة ── */}
-      <div className="px-5 flex flex-col gap-5 rise rise-5">
+      {/* عمود واحد على الجوال، عمودان على سطح المكتب — items-start حتى لا يتمدد
+          الجار عند توسيع بطاقة (البطاقات قابلة للفتح والإغلاق) */}
+      <div className="px-5 grid gap-5 desk-grid-2 items-start rise rise-5">
 
         {filtered.length === 0 && (
-          <div className="text-center py-14 px-4">
+          <div className="text-center py-14 px-4 col-span-full">
             <p className="title-md text-[var(--text)] mb-2">ما في أخطاء بعد</p>
             <p className="body-sm mb-1">هنا تحفظ أي سؤال تغلط فيه — مع سبب الغلط.</p>
             <p className="body-sm mb-4">دويرب يقدر يشرح لك كل خطأ بالضبط فين غلطت.</p>

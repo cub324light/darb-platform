@@ -62,7 +62,7 @@ export default function ChallengesPage() {
   };
 
   return (
-    <div className="min-h-dvh pb-nav">
+    <div className="min-h-dvh pb-nav desk-wide">
       <Dome compact>
         <div className="flex items-center gap-3">
           <BackButton />
@@ -70,7 +70,8 @@ export default function ChallengesPage() {
         </div>
       </Dome>
 
-      <div className="px-5 py-5 max-w-lg mx-auto flex flex-col gap-5">
+      {/* حاوية أوسع على سطح المكتب — الشبكات ثلاثية عند ≥1100px */}
+      <div className="px-5 py-5 max-w-lg min-[1100px]:max-w-none mx-auto flex flex-col gap-5">
         <p className="text-[14px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
           أكمل التحديات واكسب فضة. الأسبوعية تتجدّد كل أسبوع.
         </p>
@@ -78,13 +79,13 @@ export default function ChallengesPage() {
         {weekly.length > 0 && (
           <div>
             <p className="text-[13px] font-black mb-3" style={{ color: "var(--accent-light)" }}>🔄 تحديات أسبوعية</p>
-            <div className="flex flex-col gap-3">{weekly.map(card)}</div>
+            <div className="grid gap-3 desk-grid-3">{weekly.map(card)}</div>
           </div>
         )}
 
         <div>
           <p className="text-[13px] font-black mb-3" style={{ color: "var(--gold)" }}>🏅 تحديات دائمة</p>
-          <div className="flex flex-col gap-3">{once.map(card)}</div>
+          <div className="grid gap-3 desk-grid-3">{once.map(card)}</div>
         </div>
       </div>
 

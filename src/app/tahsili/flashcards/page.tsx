@@ -45,7 +45,8 @@ export default async function TahsiliFlashcardsPage() {
         </div>
       </Dome>
 
-      <main className="px-5 py-6 max-w-2xl mx-auto flex flex-col gap-10 pb-20">
+      {/* حاوية أوسع على سطح المكتب — تتيح ثلاثة أعمدة للبطاقات دون تضييقها */}
+      <main className="px-5 py-6 max-w-2xl min-[1100px]:max-w-5xl mx-auto flex flex-col gap-10 pb-20">
         <p className="text-[14.5px] leading-relaxed -mb-4" style={{ color: "var(--text-muted)" }}>
           حقائق تتكرر في التحصيلي بصيغة «مفهوم ← تطبيق». اضغط البطاقة لقلبها، أو فعّل «اختبر نفسك» وحاول تتذكر قبل ما تكشف الإجابة.
         </p>

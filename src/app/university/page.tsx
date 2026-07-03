@@ -111,7 +111,7 @@ export default function UniversityPage() {
   /* ── حارس الأهلية ── */
   if (!eligible) {
     return (
-      <div className="page">
+      <div className="page desk-wide">
         <Dome compact>
           <div className="flex items-center gap-3">
             <BackButton />
@@ -139,7 +139,7 @@ export default function UniversityPage() {
   }
 
   return (
-    <div className="page">
+    <div className="page desk-wide">
       <Dome compact>
         <div className="flex items-center gap-3">
           <BackButton />
@@ -151,9 +151,10 @@ export default function UniversityPage() {
       </Dome>
       <div className="h-4" />
 
-      <div className="page-content">
+      {/* على سطح المكتب: شبكة عمودين للأقسام المستقلة (uni-grid ≥1100px) */}
+      <div className="page-content uni-grid">
         {/* ═══ موسم القبول ═══ */}
-        <div className="rounded-2xl px-4 py-3 flex items-start gap-3"
+        <div className="rounded-2xl px-4 py-3 flex items-start gap-3 uni-span"
           style={{
             background: season.status === "open"
               ? "color-mix(in srgb, var(--success) 9%, var(--surface))"
@@ -167,7 +168,7 @@ export default function UniversityPage() {
         </div>
 
         {/* ═══ وش تقدر تقدم عليه؟ — الفرص المصنّفة حسب بياناتك ═══ */}
-        <Link href="/opportunities" className="rounded-2xl px-4 py-3.5 flex items-center gap-3 transition active:scale-[0.99]"
+        <Link href="/opportunities" className="rounded-2xl px-4 py-3.5 flex items-center gap-3 transition active:scale-[0.99] uni-span"
           style={{
             background: "color-mix(in srgb, var(--accent) 10%, var(--surface))",
             border: "1px solid color-mix(in srgb, var(--accent) 30%, transparent)",
@@ -329,7 +330,7 @@ export default function UniversityPage() {
         </section>
 
         {/* ═══ نتائج القبول ═══ */}
-        <section className="rounded-2xl p-4 flex flex-col gap-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+        <section className="rounded-2xl p-4 flex flex-col gap-3 uni-span" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <div className="flex items-center gap-2">
             <span className="text-[18px]">🗂️</span>
             <p className="text-[14px] font-black flex-1" style={{ color: "var(--text)" }}>نتائج القبول</p>

@@ -127,7 +127,7 @@ export default function PlanPage() {
     window.dispatchEvent(new CustomEvent("darb:openDuirb", { detail: { tab: "schedule" } }));
 
   return (
-    <div className="page">
+    <div className="page desk-wide">
       <PageGuide pageKey="plan" steps={[
         { title: "خطتي", desc: "شاشة التخطيط الموحّدة — يومك وأسبوعك وشهرك وأدوات التخطيط كلها في مكان واحد." },
         { title: "اليوم بمخطط زمني", desc: "تبويب «اليوم» يعرض جلساتك على خط زمني، ويبرز الجلسة الجارية الآن." },
@@ -328,9 +328,9 @@ export default function PlanPage() {
         )}
       </div>
 
-      {/* ── روابط سريعة ── */}
+      {/* ── روابط سريعة — ثلاثة أعمدة على سطح المكتب ── */}
       <div className="px-5 mb-5 rise rise-6">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 desk-grid-3 gap-3">
           {[
             { href: "/study-plan", icon: "📊", label: "مخطط الدراسة", desc: "وزّع ساعاتك الأسبوعية" },
             { href: "/roadmap",    icon: "🗺️", label: "مساري",         desc: "الخريطة الدراسية" },
