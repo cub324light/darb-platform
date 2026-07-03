@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
@@ -41,7 +41,7 @@ const FEATURES = [
   { icon: "⏱", title: "أوربت", tag: "تركيز", desc: "تايمر 50 دقيقة تركيز + 10 راحة. كل جلسة تنتهي تكسب فضة وتبني ستريكك.", color: "#2563EB" },
   { icon: "🗃", title: "أخطائي", tag: "مراجعة", desc: "أي سؤال تغلط فيه احفظه. دويرب يشرح لك كل خطأ بالضبط — النظام يتابع كم مرة راجعته.", color: "#F59E0B" },
   { icon: "🧠", title: "بطاقاتي", tag: "تكرار متباعد", desc: "بطاقات سؤال/جواب بخوارزمية Ebbinghaus. النظام يحسب متى تحتاج كل بطاقة بالضبط.", color: "#10B981" },
-  { icon: "🤖", title: "المساعد الذكي", tag: "AI", desc: "أعطه مشاغيلك ويبني جدول يومك. يعرف مسارك ومواده ويوزع وقتك بذكاء.", color: "#8B5CF6" },
+  { icon: "🤖", title: "دويرب — المساعد الذكي", tag: "AI", desc: "يعرف مسارك ومستواك وتقدمك: يشرح أخطاءك خطوة بخطوة، يبني جدول يومك حول مشاغيلك، ويجاوبك من داخل التطبيق وقت ما تحتاج.", color: "#8B5CF6" },
   { icon: "🗺", title: "خريطة المسار", tag: "تقدم", desc: "كل درس من تأسيس لتدريب لتسريبات — مرتّب ومقفول حتى تكمل ما قبله.", color: "#06B6D4" },
   { icon: "⚔", title: "الأرينا", tag: "تحدي", desc: "1v1 ضد منافس يجاوب بنفسه. أسئلة حقيقية من مسارك، 15 ثانية للسؤال. الفوز = فضة.", color: "#EF4444" },
 ];
@@ -64,6 +64,111 @@ const STATS = [
   { n: "AI", l: "جدول ذكي", c: "#10B981" },
 ];
 
+/* ─── الخدمات: أقسام درب الرئيسية — البطاقة تتوسع لشرح كامل عند الضغط ─── */
+const SERVICES: {
+  icon: string; title: string; brief: string; full: string;
+  color: string; href?: string; linkLabel?: string;
+}[] = [
+  {
+    icon: "📘", title: "القدرات", color: "#8B5CF6",
+    brief: "تأسيس لفظي وكمي من الصفر، خريطة دروس، تدريب وتسريبات، ومتابعة جاهزية.",
+    full: "خريطة مسار كاملة للفظي والكمي تبدأ من التأسيس وتتدرج للتدريب ثم التسريبات — كل درس مقفول حتى تتقن اللي قبله. أخطاؤك تنحفظ في «أخطائي» ودويرب يشرح لك سبب كل غلطة، وبطاقات التكرار المتباعد تثبّت القوانين والمعاني قبل ما تنساها. ولوحتك توريك جاهزيتك الفعلية قبل موعد الاختبار.",
+  },
+  {
+    icon: "📗", title: "التحصيلي", color: "#3B82F6",
+    brief: "المواد الأربع — فيزياء وكيمياء ورياضيات وأحياء — بخريطة مرتبة ومراجعة ذكية.",
+    full: "كل مادة بخريطة مرتبة من أساسيات المنهج إلى نماذج الأسئلة، والمراجعة الذكية بالتكرار المتباعد تحدد متى تراجع كل معلومة قبل ما تنساها. ولطلاب أول وثاني ثانوي مسار تحصيلي مبكر يخليهم يسبقون دفعتهم. وحقائق التحصيلي السريعة متاحة للجميع حتى بدون تسجيل.",
+    href: "/tahsili/flashcards", linkLabel: "تصفح حقائق التحصيلي",
+  },
+  {
+    icon: "📙", title: "STEP", color: "#10B981",
+    brief: "كفايات الإنجليزية: قراءة، قواعد، استماع، كتابة.",
+    full: "مسار كامل لاختبار ستيب بكفاياته الأربع: القراءة والاستيعاب، القواعد والتراكيب، الاستماع، وتحليل الكتابة. تتدرب على نمط أسئلة الاختبار الفعلي، وتتابع تقدمك في كل كفاية على حدة — فتعرف نقاط ضعفك بالضبط وتشتغل عليها قبل موعدك.",
+  },
+  {
+    icon: "🎓", title: "القبول الجامعي", color: "#F59E0B",
+    brief: "حاسبة الموزونة، مقارنة الجامعات، الأسئلة الشائعة، ومتابعة مواعيد القبول.",
+    full: "حاسبة موزونة تحسب نسبتك بمعادلة كل جامعة، وتحليل فجوة يوريك كم تحتاج ترفع درجاتك للتخصص اللي تبغاه. تقارن بين الجامعات جنباً إلى جنب، وتتابع حالة طلباتك ومواعيد موسم القبول بمكان واحد. وإجابات الأسئلة الشائعة عن القبول ومنصة قبول متاحة للجميع.",
+    href: "/faq", linkLabel: "الأسئلة الشائعة للقبول",
+  },
+  {
+    icon: "🏛", title: "الجامعات", color: "#06B6D4",
+    brief: "استكشاف الجامعات والتخصصات ومتطلباتها.",
+    full: "تستكشف الجامعات السعودية وتخصصاتها ومتطلبات كل تخصص: النسب المطلوبة، نوع القبول، السكن الجامعي، وحتى بُعد الجامعة عن منطقتك. كل اللي تحتاجه عشان تختار جامعتك وتخصصك بوعي — قبل ما تقدّم.",
+  },
+  {
+    icon: "🤖", title: "دويرب", color: "#EF4444",
+    brief: "المساعد الذكي: يشرح أخطاءك، يبني جدولك، ويجاوب أسئلتك.",
+    full: "مساعد درب الذكي — يعرف مسارك ومستواك وتقدمك، فما يعطيك إجابات عامة. يشرح لك سبب أخطائك خطوة بخطوة، يبني جدول يومك حول مشاغيلك ومواعيدك، ويجاوب أسئلتك الدراسية من داخل التطبيق وقت ما تحتاجه.",
+  },
+];
+
+/* ترويسة قسم موحّدة — عنوان أكبر بوضوح (clamp) مع سطر تمهيدي اختياري */
+function SectionHead({ eyebrow, title, sub }: { eyebrow: string; title: ReactNode; sub?: string }) {
+  return (
+    <div className="reveal text-center mb-10">
+      <p className="eyebrow mb-2.5" style={{ color: "var(--accent-light)" }}>{eyebrow}</p>
+      <h2 className="font-black leading-tight" style={{ color: "var(--text)", fontSize: "clamp(1.6rem, 4vw, 2.3rem)", letterSpacing: "-0.5px" }}>
+        {title}
+      </h2>
+      {sub && (
+        <p className="text-base mt-3 max-w-xl mx-auto leading-relaxed" style={{ color: "var(--text-dim)" }}>{sub}</p>
+      )}
+    </div>
+  );
+}
+
+/* بطاقة خدمة — تتوسع لشرح كامل بانتقال grid-template-rows (نفس نمط FaqBrowser) */
+function ServiceCard({ s, open, onToggle, delay }: {
+  s: (typeof SERVICES)[number]; open: boolean; onToggle: () => void; delay: number;
+}) {
+  return (
+    <div className={`reveal reveal-d${delay} rounded-2xl landing-card overflow-hidden`}
+      style={{
+        background: "var(--surface)",
+        border: `1.5px solid color-mix(in srgb, ${s.color} ${open ? 45 : 22}%, var(--border))`,
+        boxShadow: open
+          ? `0 8px 32px color-mix(in srgb, ${s.color} 16%, transparent)`
+          : "0 2px 12px rgba(0,0,0,0.1)",
+        ["--card-glow" as string]: s.color,
+      }}>
+      <button onClick={onToggle} aria-expanded={open} className="w-full text-right p-5 cursor-pointer">
+        <div className="flex items-center gap-3 mb-2.5">
+          <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+            style={{
+              background: `color-mix(in srgb, ${s.color} 14%, transparent)`,
+              border: `1.5px solid color-mix(in srgb, ${s.color} 28%, transparent)`,
+              boxShadow: `0 0 12px color-mix(in srgb, ${s.color} 20%, transparent)`,
+            }}
+            aria-hidden="true">
+            {s.icon}
+          </div>
+          <p className="flex-1 font-black text-lg leading-tight" style={{ color: s.color }}>{s.title}</p>
+          <span aria-hidden="true" className="flex-shrink-0 text-xs"
+            style={{ color: "var(--text-muted)", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.25s ease" }}>
+            ▼
+          </span>
+        </div>
+        <p className="text-sm leading-relaxed" style={{ color: "var(--text-dim)" }}>{s.brief}</p>
+      </button>
+      <div className="grid" style={{ gridTemplateRows: open ? "1fr" : "0fr", transition: "grid-template-rows 0.3s ease" }}>
+        <div className="overflow-hidden">
+          <div className="px-5 pb-5">
+            <div className="h-px mb-4" style={{ background: `color-mix(in srgb, ${s.color} 25%, var(--border))` }} />
+            <p className="text-sm leading-relaxed" style={{ color: "var(--text-dim)" }}>{s.full}</p>
+            {s.href && (
+              <Link href={s.href} className="inline-flex items-center gap-1.5 mt-4 text-sm font-bold"
+                style={{ color: s.color, textDecoration: "none" }}>
+                {s.linkLabel} ←
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function LandingPage() {
   const router = useRouter();
   const [onboarded] = useState(() => {
@@ -74,6 +179,8 @@ export default function LandingPage() {
     } catch { return false; }
   });
   const [menuOpen, setMenuOpen] = useState(false);
+  /* البطاقة المفتوحة في قسم الخدمات — واحدة فقط في أي لحظة */
+  const [openService, setOpenService] = useState<string | null>(null);
   const [theme, setTheme] = useState<Theme>(() =>
     typeof window !== "undefined" ? loadTheme() : "dark"
   );
@@ -186,39 +293,37 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════ */}
       {/* ═══ الهيرو ═══ */}
       {/* ══════════════════════════════════════════ */}
-      <section className="relative min-h-dvh flex flex-col items-center justify-center px-5 text-center pt-20 pb-12 max-w-2xl mx-auto overflow-hidden">
+      <section className="relative min-h-dvh flex flex-col items-center justify-center px-5 text-center pt-20 pb-12 max-w-2xl landing-hero-max mx-auto overflow-hidden">
 
-        {/* خلفية جسيمات — أقل على سطح المكتب (العرض الأكبر يرفع تكلفة الرسم) */}
-        <Sparkles count={isDesktop ? 12 : 28} color="var(--accent-hi)" />
-        <Meteors number={isDesktop ? 4 : 8} />
+        {/* خلفية جسيمات — في الوضع الليلي فقط (نفس نمط أيقونة الثيم)، وأقل على سطح المكتب */}
+        {theme === "dark" && (
+          <>
+            <Sparkles count={isDesktop ? 12 : 28} color="var(--accent-hi)" />
+            <Meteors number={isDesktop ? 4 : 8} />
+          </>
+        )}
 
         {/* دائرة توهج خلفية */}
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full hero-pulse pointer-events-none"
           style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--accent) 12%, transparent) 0%, transparent 70%)", filter: "blur(40px)" }} />
 
-        {/* شارة */}
-        <div className="relative inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-7 text-sm font-bold"
-          style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--accent) 28%, transparent)", color: "var(--accent-light)" }}>
-          <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "var(--success)" }} />
-          مجاني تماماً · صُنع في السعودية
-        </div>
-
         {/* العنوان الرئيسي */}
         <h1 className="font-black leading-tight mb-5 relative z-10"
-          style={{ fontSize: "clamp(2.2rem, 8vw, 3.6rem)", letterSpacing: "-1px" }}>
+          style={{ fontSize: "clamp(2.3rem, 8vw, 3.9rem)", letterSpacing: "-1px" }}>
           <span style={{
             background: "linear-gradient(145deg, var(--text) 30%, var(--accent-light) 65%, var(--accent-hi))",
             WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent",
           }}>
-            منصة التحضير الذكية
+            مذاكرتك كلها
           </span>
           <br />
-          <AnimatedGradientText>للطلاب</AnimatedGradientText>
+          <AnimatedGradientText>في درب واحد</AnimatedGradientText>
         </h1>
 
-        <p className="text-lg leading-relaxed max-w-md mb-8 relative z-10" style={{ color: "var(--text-dim)" }}>
-          تأسيس حقيقي للتحصيلي والقدرات وأرامكو CPC وايلتس وستيب وتوفل ودوليقو.
-          خطة واضحة، جدول ذكي، ومتابعة لحظة بلحظة.
+        <p className="leading-relaxed max-w-xl mb-8 relative z-10"
+          style={{ color: "var(--text-dim)", fontSize: "clamp(1.05rem, 2.2vw, 1.2rem)" }}>
+          منصة واحدة تبني خطتك من مستواك الفعلي، ترتّب دروسك خطوة بخطوة،
+          وتتابع تقدمك يوم بيوم — من أول درس تأسيس إلى الاختبار والقبول الجامعي.
         </p>
 
         {/* إحصاءات */}
@@ -256,21 +361,35 @@ export default function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════════ */}
+      {/* ═══ الخدمات — أقسام درب الرئيسية ═══ */}
+      {/* ══════════════════════════════════════════ */}
+      <section id="services" className="px-5 py-16 landing-section-pad max-w-2xl landing-max mx-auto">
+        <SectionHead eyebrow="الخدمات"
+          title={<>كل اللي تحتاجه — <AnimatedGradientText>قسم بقسم</AnimatedGradientText></>}
+          sub="اضغط أي بطاقة وشف بالضبط وش يقدمه لك درب فيها." />
+        <div className="grid grid-cols-1 md:grid-cols-2 landing-grid-3 gap-3 items-start">
+          {SERVICES.map((s, i) => (
+            <ServiceCard key={s.title} s={s} delay={(i % 3) + 1}
+              open={openService === s.title}
+              onToggle={() => setOpenService(openService === s.title ? null : s.title)} />
+          ))}
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════ */}
       {/* ═══ المشكلة ═══ */}
       {/* ══════════════════════════════════════════ */}
-      <section className="px-5 py-16 max-w-2xl mx-auto">
-        <div className="reveal text-center mb-8">
-          <p className="eyebrow mb-2" style={{ color: "var(--accent-light)" }}>المشكلة</p>
-          <h2 className="font-black text-2xl" style={{ color: "var(--text)" }}>وش يخلّي الطالب يفشل؟</h2>
-        </div>
-        <div className="flex flex-col gap-3">
+      <section className="px-5 py-16 landing-section-pad max-w-2xl landing-max mx-auto">
+        <SectionHead eyebrow="المشكلة" title="وش يخلّي الطالب يفشل؟" />
+        <div className="grid grid-cols-1 landing-grid-3 gap-3">
           {PAIN.map((p, i) => (
             <div key={i}
-              className={`reveal reveal-d${i + 1} rounded-2xl p-5 flex items-start gap-4 glow-card-hover`}
+              className={`reveal reveal-d${i + 1} rounded-2xl p-5 flex items-start gap-4 landing-card`}
               style={{
                 background: "var(--surface)",
                 border: "1.5px solid color-mix(in srgb, #EF4444 20%, var(--border))",
                 boxShadow: "0 2px 12px rgba(0,0,0,0.1)",
+                ["--card-glow" as string]: "#EF4444",
               }}>
               <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-black"
                 style={{ background: "color-mix(in srgb, #EF4444 12%, transparent)", color: "#EF4444", border: "1px solid color-mix(in srgb, #EF4444 25%, transparent)" }}>
@@ -291,22 +410,19 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════ */}
       {/* ═══ الأدوات ═══ */}
       {/* ══════════════════════════════════════════ */}
-      <section id="features" className="px-5 py-16 max-w-2xl mx-auto">
-        <div className="reveal text-center mb-8">
-          <p className="eyebrow mb-2" style={{ color: "var(--accent-light)" }}>أدواتك</p>
-          <h2 className="font-black text-2xl" style={{ color: "var(--text)" }}>
-            <AnimatedGradientText>٦ أدوات</AnimatedGradientText>
-            {" "}تحصّلها بمكان واحد
-          </h2>
-        </div>
+      <section id="features" className="px-5 py-16 landing-section-pad max-w-2xl landing-max mx-auto">
+        <SectionHead eyebrow="أدواتك"
+          title={<><AnimatedGradientText>٦ أدوات</AnimatedGradientText>{" "}تحصّلها بمكان واحد</>}
+          sub="كل أداة تشتغل مع الثانية — جلساتك وأخطاؤك وبطاقاتك كلها تصب في تقدمك." />
         <div className="grid grid-cols-1 md:grid-cols-2 desk-grid-3 gap-3">
           {FEATURES.map((f, i) => (
             <div key={f.title}
-              className={`reveal reveal-d${(i % 3) + 1} rounded-2xl p-5 glow-card-hover group relative overflow-hidden`}
+              className={`reveal reveal-d${(i % 3) + 1} rounded-2xl p-5 landing-card group relative overflow-hidden`}
               style={{
                 background: "var(--surface)",
                 border: `1.5px solid color-mix(in srgb, ${f.color} 22%, var(--border))`,
                 boxShadow: `0 2px 12px rgba(0,0,0,0.1)`,
+                ["--card-glow" as string]: f.color,
               }}>
               {/* subtle gradient bg on hover */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl"
@@ -337,18 +453,16 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════ */}
       {/* ═══ المسارات ═══ */}
       {/* ══════════════════════════════════════════ */}
-      <section id="tracks" className="px-5 py-16 max-w-2xl mx-auto">
-        <div className="reveal text-center mb-8">
-          <p className="eyebrow mb-2" style={{ color: "var(--accent-light)" }}>المسارات</p>
-          <h2 className="font-black text-2xl" style={{ color: "var(--text)" }}>وش تستعد له؟</h2>
-        </div>
+      <section id="tracks" className="px-5 py-16 landing-section-pad max-w-2xl landing-max mx-auto">
+        <SectionHead eyebrow="المسارات" title="وش تستعد له؟" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-5">
           {TRACKS.map((t, i) => (
             <div key={t.id}
-              className={`reveal reveal-d${(i % 3) + 1} rounded-2xl p-4 glow-card-hover group relative overflow-hidden`}
+              className={`reveal reveal-d${(i % 3) + 1} rounded-2xl p-4 landing-card group relative overflow-hidden`}
               style={{
                 background: "var(--surface)",
                 border: `1.5px solid color-mix(in srgb, ${t.color} 18%, var(--border))`,
+                ["--card-glow" as string]: t.color,
               }}>
               <div className="absolute top-0 left-0 w-full h-0.5 rounded-t-2xl"
                 style={{ background: `linear-gradient(90deg, ${t.color}, transparent)` }} />
@@ -373,15 +487,12 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════ */}
       {/* ═══ كيف تبدأ ═══ */}
       {/* ══════════════════════════════════════════ */}
-      <section id="steps" className="px-5 py-16 max-w-2xl mx-auto">
-        <div className="reveal text-center mb-8">
-          <p className="eyebrow mb-2" style={{ color: "var(--accent-light)" }}>البداية</p>
-          <h2 className="font-black text-2xl" style={{ color: "var(--text)" }}>ثلاث خطوات وتكون في دربك</h2>
-        </div>
-        <div className="flex flex-col gap-3">
+      <section id="steps" className="px-5 py-16 landing-section-pad max-w-2xl landing-max mx-auto">
+        <SectionHead eyebrow="البداية" title="ثلاث خطوات وتكون في دربك" />
+        <div className="grid grid-cols-1 landing-grid-3 gap-3">
           {STEPS.map((s, i) => (
             <div key={i}
-              className={`reveal reveal-d${i + 1} rounded-2xl p-5 flex items-start gap-4 glow-card-hover`}
+              className={`reveal reveal-d${i + 1} rounded-2xl p-5 flex items-start gap-4 landing-card`}
               style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
               <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl flex-shrink-0"
                 style={{
@@ -409,14 +520,14 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════ */}
       {/* ═══ CTA الختام ═══ */}
       {/* ══════════════════════════════════════════ */}
-      <section className="px-5 py-16 pb-24 max-w-lg mx-auto text-center">
+      <section className="px-5 py-16 pb-24 max-w-lg landing-cta-max mx-auto text-center">
         <div className="reveal relative rounded-3xl p-8 overflow-hidden"
           style={{
             background: "linear-gradient(145deg, color-mix(in srgb, var(--accent) 8%, transparent), var(--surface))",
             border: "1.5px solid color-mix(in srgb, var(--accent) 22%, transparent)",
           }}>
           <BorderBeam size={250} duration={12} colorFrom="var(--accent-hi)" colorTo="var(--gold)" />
-          <Sparkles count={isDesktop ? 5 : 10} color="var(--accent-hi)" />
+          {theme === "dark" && <Sparkles count={isDesktop ? 5 : 10} color="var(--accent-hi)" />}
 
           <h2 className="font-black text-2xl mb-3 relative z-10" style={{ color: "var(--text)" }}>جاهز تبدأ دربك؟</h2>
           <p className="text-base mb-7 leading-relaxed relative z-10" style={{ color: "var(--text-dim)" }}>
@@ -427,7 +538,6 @@ export default function LandingPage() {
             style={{ textDecoration: "none", minWidth: "220px", justifyContent: "center" }}>
             سجّل الآن ←
           </Link>
-          <p className="text-xs mt-6 relative z-10" style={{ color: "var(--text-muted)" }}>صُنع في السعودية · مجاني بالكامل</p>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 mt-8 text-xs">
           <Link href="/faq" style={{ color: "var(--text-muted)", textDecoration: "none" }}>

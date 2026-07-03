@@ -1272,3 +1272,32 @@ body[data-nav-hidden="1"] .float-nav { display: none; }
 .card-reveal-d4 { animation-delay: 0.26s; }
 .card-reveal-d5 { animation-delay: 0.33s; }
 .card-reveal-d6 { animation-delay: 0.40s; }
+
+/* ═══════ صفحة الهبوط: أصناف جديدة خاصة بها — لا تمسّ صفحات أخرى ═══════ */
+
+/* بطاقة الهبوط: انتقالات ناعمة دائمة (حدود/ظل عند فتح البطاقة على كل الأجهزة)
+   + رفع وتوهج حدود عند المرور لأجهزة المؤشر فقط.
+   لون التوهج لكل بطاقة عبر المتغير --card-glow (الافتراضي: لون الهوية). */
+.landing-card {
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.25s ease,
+    opacity 0.6s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .landing-card:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in srgb, var(--card-glow, var(--accent)) 45%, var(--border)) !important;
+    box-shadow: 0 14px 44px color-mix(in srgb, var(--card-glow, var(--accent)) 18%, transparent);
+  }
+}
+
+/* سطح المكتب ≥1100px: حاويات أوسع، شبكات ٣ أعمدة، وتباعد أقسام أرحب */
+@media (min-width: 1100px) {
+  .landing-max      { max-width: 64rem !important; }  /* الأقسام العامة */
+  .landing-hero-max { max-width: 58rem !important; }  /* الهيرو */
+  .landing-cta-max  { max-width: 40rem !important; }  /* بطاقة الختام */
+  .landing-grid-3   { grid-template-columns: repeat(3, 1fr) !important; }
+  .landing-section-pad { padding-block: 5.5rem; }
+}
