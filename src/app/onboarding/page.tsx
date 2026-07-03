@@ -119,7 +119,7 @@ export default function OnboardingPage() {
 
     /* H3: تحقّق برمجي من الحقول الرقمية (لا نعتمد على min/max المتصفح) */
     const numErr = (() => {
-      if (age) { const a = parseInt(age); if (!Number.isFinite(a) || a < 10 || a > 80) return "العمر يجب أن يكون بين ١٠ و٨٠"; }
+      if (age) { const a = Number(age); if (!Number.isInteger(a) || a <= 0) return "العمر يجب أن يكون رقماً صحيحاً موجباً"; }
       if (studyHours) { const h = parseInt(studyHours); if (!Number.isFinite(h) || h < 1 || h > 16) return "ساعات المذاكرة بين ١ و١٦"; }
       if (status === "جامعي" && universityGpa) { const g = parseFloat(universityGpa); if (!Number.isFinite(g) || g < 0 || g > 5) return "المعدل الجامعي بين ٠ و٥"; }
       const showsHs = (status === "ثانوي" && grade === "ثالث ثانوي") || status === "خريج";
@@ -149,7 +149,7 @@ export default function OnboardingPage() {
       track: primaryTrack,
       activeTracks: tracks,
       onboarded: true,
-      age: age ? parseInt(age) : undefined, // step 0 requires age — fallback for safety
+      age: age ? parseInt(age) : undefined, // اختياري — بلا حد أدنى أو أعلى
       studyLevel: status || undefined,
       grade: status === "ثانوي" && grade ? grade : undefined,
       gradStage: status === "خريج" && gradStage ? gradStage : undefined,
@@ -314,9 +314,9 @@ export default function OnboardingPage() {
         </div>
 
         <div>
-          <p className="label mb-3">عمرك؟</p>
+          <p className="label mb-3">عمرك؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
           <input type="number" value={age} onChange={(e) => setAge(e.target.value)}
-            placeholder="مثال: 18" min={13} max={60}
+            placeholder="مثال: 18"
             className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
             style={inputStyle}
             onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
@@ -336,8 +336,8 @@ export default function OnboardingPage() {
           </div>
         </div>
 
-        <button className="btn-primary glow-blue" onClick={() => { if (name.trim() && status && age) setStep(1); }}
-          disabled={!name.trim() || !status || !age} style={{ opacity: name.trim() && status && age ? 1 : 0.4 }}>
+        <button className="btn-primary glow-blue" onClick={() => { if (name.trim() && status) setStep(1); }}
+          disabled={!name.trim() || !status} style={{ opacity: name.trim() && status ? 1 : 0.4 }}>
           التالي ←
         </button>
       </div>
@@ -351,6 +351,43 @@ export default function OnboardingPage() {
       status === "خريج"  ? (!!gradStage && !!gapYear) :
       status === "جامعي" ? (!!universityId && !!majorId && !!universityYear) :
       false;
+
+    /* قائمة «اختبرت من قبل؟» — مشتركة بين الثانوي والخريج (تُحفَظ عبر saveResults في finish) */
+    const prevExamsList = (
+      <>
+        <div className="flex flex-col gap-2.5">
+          {PREV_EXAMS.map((exam) => {
+            const r = prevResults[exam];
+            const range = scoreRangeForTitle(exam);
+            return (
+              <div key={exam} className="rounded-2xl px-4 py-3"
+                style={{ background: "var(--surface)", border: "2px solid var(--border)" }}>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPrevResults((p) => ({ ...p, [exam]: { ...p[exam], tested: !p[exam].tested } }))}
+                    className="w-6 h-6 rounded-lg flex items-center justify-center text-[13px] font-black flex-shrink-0 transition"
+                    style={{
+                      background: r.tested ? "var(--accent)" : "var(--surface2)",
+                      border: `1.5px solid ${r.tested ? "var(--accent)" : "var(--border)"}`,
+                      color: r.tested ? "#fff" : "transparent",
+                    }}>✓</button>
+                  <span className="font-bold text-[15px] flex-1" style={{ color: "var(--text)" }}>{exam}</span>
+                  <input value={r.score} inputMode="decimal" disabled={!r.tested}
+                    onChange={(e) => { setPrevErr(""); setPrevResults((p) => ({ ...p, [exam]: { ...p[exam], score: e.target.value } })); }}
+                    placeholder="الدرجة" maxLength={6}
+                    className="w-20 rounded-xl px-3 py-2 text-base text-center text-[var(--text)] placeholder-[var(--text-muted)] outline-none disabled:opacity-30"
+                    style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
+                </div>
+                {r.tested && range && (
+                  <p className="text-[11px] mt-1.5 px-1" style={{ color: "var(--text-muted)" }}>الدرجة: {range.hint}</p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {prevErr && <p className="text-[12px] mt-2 font-bold" style={{ color: "var(--danger)" }}>{prevErr}</p>}
+      </>
+    );
 
     return (
       <div className="min-h-dvh flex flex-col app-col">
@@ -373,6 +410,15 @@ export default function OnboardingPage() {
                   ))}
                 </div>
               </div>
+              {/* أول ثانوي: التحصيلي يبدأ من ثاني ثانوي — نطمئنه على ما نفعّله له */}
+              {grade === "أول ثانوي" && (
+                <div className="rounded-2xl px-4 py-3"
+                  style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
+                  <p className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>
+                    🌱 التحصيلي يبدأ من ثاني ثانوي — نفعّل لك القدرات ومواد المدرسة لتأسيس قوي.
+                  </p>
+                </div>
+              )}
               <div>
                 <p className="label mb-1">مسارك الدراسي؟</p>
                 <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>يساعدنا نرتّب أولوياتك تلقائياً</p>
@@ -391,6 +437,12 @@ export default function OnboardingPage() {
                 <p className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>
                   🎯 نفعّل لك تلقائياً اختبارات قياس المناسبة لمرحلتك — تقدر تضيف غيرها لاحقاً.
                 </p>
+              </div>
+              {/* نتائج سابقة للثانوي — اختيارية، لا تمنع التقدم */}
+              <div>
+                <p className="label mb-1">اختبرت من قبل؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+                <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>لو دخلت أياً منها سابقاً، أدخل درجتك — نستخدمها لتخصيص خطتك وجاهزيتك</p>
+                {prevExamsList}
               </div>
             </>
           )}
@@ -498,37 +550,7 @@ export default function OnboardingPage() {
                     ? "ندخلها لحساب نسبتك الموزونة ومقارنة الجامعات — مهمة لخطة القبول"
                     : "نستخدمها لحساب جاهزيتك وتخصيص خطتك"}
                 </p>
-                <div className="flex flex-col gap-2.5">
-                  {PREV_EXAMS.map((exam) => {
-                    const r = prevResults[exam];
-                    const range = scoreRangeForTitle(exam);
-                    return (
-                      <div key={exam} className="rounded-2xl px-4 py-3"
-                        style={{ background: "var(--surface)", border: "2px solid var(--border)" }}>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => setPrevResults((p) => ({ ...p, [exam]: { ...p[exam], tested: !p[exam].tested } }))}
-                            className="w-6 h-6 rounded-lg flex items-center justify-center text-[13px] font-black flex-shrink-0 transition"
-                            style={{
-                              background: r.tested ? "var(--accent)" : "var(--surface2)",
-                              border: `1.5px solid ${r.tested ? "var(--accent)" : "var(--border)"}`,
-                              color: r.tested ? "#fff" : "transparent",
-                            }}>✓</button>
-                          <span className="font-bold text-[15px] flex-1" style={{ color: "var(--text)" }}>{exam}</span>
-                          <input value={r.score} inputMode="decimal" disabled={!r.tested}
-                            onChange={(e) => { setPrevErr(""); setPrevResults((p) => ({ ...p, [exam]: { ...p[exam], score: e.target.value } })); }}
-                            placeholder="الدرجة" maxLength={6}
-                            className="w-20 rounded-xl px-3 py-2 text-base text-center text-[var(--text)] placeholder-[var(--text-muted)] outline-none disabled:opacity-30"
-                            style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
-                        </div>
-                        {r.tested && range && (
-                          <p className="text-[11px] mt-1.5 px-1" style={{ color: "var(--text-muted)" }}>الدرجة: {range.hint}</p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-                {prevErr && <p className="text-[12px] mt-2 font-bold" style={{ color: "var(--danger)" }}>{prevErr}</p>}
+                {prevExamsList}
               </div>
             </>
           )}
@@ -547,6 +569,10 @@ export default function OnboardingPage() {
   /* ════════ الخطوة 2 — الهدف + إضافات ════════ */
   const needsUniPicker = (goal === "university" && !universityId) || (goal === "major" && !majorId);
   const primaryTrack = computedTracks[0];
+  /* أول ثانوي: لا تحصيلي إطلاقاً — نخفي هدف «رفع درجة التحصيلي» (فلترة عرض فقط) */
+  const visibleGoals = status === "ثانوي" && grade === "أول ثانوي"
+    ? STUDY_GOALS.filter((g) => g.id !== "tahsili")
+    : STUDY_GOALS;
 
   return (
     <div className="min-h-dvh flex flex-col app-col">
@@ -558,7 +584,7 @@ export default function OnboardingPage() {
           <p className="label mb-1">ما هدفك الحالي؟</p>
           <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>نبني خطتك وجدولك وأولوياتك حوله تلقائياً</p>
           <div className="flex flex-col gap-2.5">
-            {STUDY_GOALS.map((g) => {
+            {visibleGoals.map((g) => {
               const on = goal === g.id;
               return (
                 <button key={g.id} onClick={() => setGoal(on ? "" : g.id)}
@@ -627,8 +653,8 @@ export default function OnboardingPage() {
         {/* درجة الثانوية — لطالب ثالث ثانوي أو خريج (مهمة لحساب الموزونة والقبول) */}
         {((status === "ثانوي" && grade === "ثالث ثانوي") || status === "خريج") && (
           <div>
-            <p className="label mb-1">📊 درجة الثانوية العامة (النسبة المئوية)</p>
-            <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>مهمة لحساب الموزونة ومقارنة فرص القبول</p>
+            <p className="label mb-1">📊 درجة الثانوية العامة (النسبة المئوية) <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+            <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>ننصح بإدخالها — مهمة لحساب الموزونة ومقارنة فرص القبول</p>
             <input type="number" value={highschoolPct} onChange={(e) => setHighschoolPct(e.target.value)}
               placeholder="مثال: 94.5" min={50} max={100} step={0.1}
               className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
@@ -638,11 +664,11 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* معلومات شخصية */}
+        {/* معلومات إضافية — كلها اختيارية، تساعدنا نخصّص المنصة */}
         <div className="flex flex-col gap-4">
-          <p className="label">معلومات شخصية</p>
+          <p className="label">معلومات إضافية <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
           <div>
-            <p className="text-[13px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>اسم المدرسة / الجامعة</p>
+            <p className="text-[13px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>اسم المدرسة / الجامعة (اختياري)</p>
             <input type="text" value={school} onChange={(e) => setSchool(e.target.value)}
               placeholder="مثال: ثانوية الملك فهد"
               className="w-full rounded-2xl px-5 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
@@ -651,7 +677,7 @@ export default function OnboardingPage() {
               onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
           </div>
           <div>
-            <p className="text-[13px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>المدينة</p>
+            <p className="text-[13px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>المدينة (اختياري)</p>
             <input type="text" value={city} onChange={(e) => setCity(e.target.value)}
               placeholder="مثال: الرياض، جدة..."
               className="w-full rounded-2xl px-5 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
@@ -660,7 +686,7 @@ export default function OnboardingPage() {
               onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
           </div>
           <div>
-            <p className="text-[13px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>رقم الجوال</p>
+            <p className="text-[13px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>رقم الجوال (اختياري)</p>
             <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
               placeholder="05xxxxxxxx"
               className="w-full rounded-2xl px-5 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
@@ -669,7 +695,7 @@ export default function OnboardingPage() {
               onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
           </div>
           <div>
-            <p className="text-[13px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>المنطقة</p>
+            <p className="text-[13px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>المنطقة (اختياري)</p>
             <select value={region} onChange={(e) => setRegion(e.target.value)} aria-label="المنطقة"
               className="w-full rounded-2xl px-5 py-3.5 text-base text-[var(--text)] outline-none"
               style={inputStyle}>
@@ -679,23 +705,23 @@ export default function OnboardingPage() {
           </div>
         </div>
 
-        {/* نتائج ناقصة */}
-        {((!goal || !studyHours || needsUniPicker || !school.trim() || !city.trim() || !phone.trim() || !region ||
-          ((status === "ثانوي" && grade === "ثالث ثانوي" || status === "خريج") && !highschoolPct))) && (
+        {/* الإلزامي فقط: الهدف + ساعات المذاكرة + منتقي الجامعة/التخصص عند الحاجة */}
+        {(!goal || !studyHours || needsUniPicker) && (
           <p className="text-[12px] text-center" style={{ color: "var(--text-muted)" }}>
-            أكمل جميع الحقول أعلاه للمتابعة
+            أكمل الحقول الإلزامية أعلاه للمتابعة
           </p>
         )}
 
+        {prevErr && (
+          <p className="text-[13px] text-center font-bold" style={{ color: "var(--danger)" }}>{prevErr}</p>
+        )}
         {submitErr && (
           <p className="text-[13px] text-center font-bold" style={{ color: "var(--danger)" }}>{submitErr}</p>
         )}
 
         <button className="btn-primary glow-blue" onClick={finish}
-          disabled={isSubmitting || !goal || !studyHours || needsUniPicker || !school.trim() || !city.trim() || !phone.trim() || !region ||
-            ((status === "ثانوي" && grade === "ثالث ثانوي" || status === "خريج") && !highschoolPct)}
-          style={{ opacity: !isSubmitting && goal && studyHours && !needsUniPicker && school.trim() && city.trim() && phone.trim() && region &&
-            !((status === "ثانوي" && grade === "ثالث ثانوي" || status === "خريج") && !highschoolPct) ? 1 : 0.4 }}>
+          disabled={isSubmitting || !goal || !studyHours || needsUniPicker}
+          style={{ opacity: !isSubmitting && goal && studyHours && !needsUniPicker ? 1 : 0.4 }}>
           {isSubmitting ? "جارٍ الحفظ…" : "يلا نبدأ ←"}
         </button>
         <button onClick={() => setStep(1)} className="text-[15px] font-semibold w-full text-center py-1"

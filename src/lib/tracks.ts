@@ -51,7 +51,7 @@ export const TRACKS: Track[] = [
   {
     id: "تحصيلي مبكر",
     title: "التحصيلي المبكر",
-    sub: "لطلاب أول وثاني ثانوي",
+    sub: "لطلاب ثاني وثالث ثانوي",
     icon: "",
     color: "#6366F1",
     subjects: TAHSILI_SUBJECTS,
@@ -266,7 +266,8 @@ export const goalLabel = (id?: StudyGoalType): string | undefined =>
 /* يحدّد المسارات النشطة تلقائياً من الحالة التعليمية + الصف + الهدف.
    نقيّة وحتمية — تُستعمل في التسجيل وعند تغيير الهدف لاحقاً. */
 export function basicTracksFor(opts: { status?: string; grade?: string; goal?: StudyGoalType; gapYear?: boolean }): TrackId[] {
-  const early = opts.grade === "أول ثانوي" || opts.grade === "ثاني ثانوي";
+  /* التحصيلي المبكر لثاني ثانوي فقط — ثالث ثانوي على التحصيلي العادي، وأول ثانوي بلا تحصيلي إطلاقاً */
+  const early = opts.grade === "ثاني ثانوي";
   const tahsiliTrack: TrackId = early ? "تحصيلي مبكر" : "تحصيلي";
 
   const primary: TrackId | null =
@@ -302,6 +303,11 @@ export function basicTracksFor(opts: { status?: string; grade?: string; goal?: S
   /* ثانوي + هدف القبول: مسار المدرسة فقط (بدون قدرات أو تحصيلي) */
   if (isUniGoal) {
     return ["مدرسه"];
+  }
+  /* أول ثانوي: لا تحصيلي إطلاقاً (المدارس لا تبدأه قبل ثاني ثانوي) —
+     الحزمة الأساسية قدرات + مدرسة، وهدف tahsili يُعامل كهدف عام */
+  if (opts.grade === "أول ثانوي") {
+    return opts.goal === "step" ? ["ستيب", "قدرات", "مدرسه"] : ["قدرات", "مدرسه"];
   }
   const core: TrackId[] = ["قدرات", tahsiliTrack];
   if (opts.goal === "step") core.unshift("ستيب");

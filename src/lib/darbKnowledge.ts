@@ -213,16 +213,16 @@ export const TAHSILI_RULES: ExamRule = {
   bands: TAHSILI_BANDS,
 };
 
-/** التحصيلي المبكر — نسخة التحصيلي المتاحة لطلاب الأول والثاني ثانوي فقط (مصدر القاعدة: examProvider). */
+/** التحصيلي المبكر — لطلاب الثاني والثالث ثانوي (كثير من المدارس لا تبدأ التحصيلي في أول ثانوي). */
 export const EARLY_TAHSILI_RULES: ExamRule = {
   id: "تحصيلي مبكر",
   nameEn: "Early SAAT",
   scale: 100,
-  eligibleStages: ["أول ثانوي", "ثاني ثانوي"],
+  eligibleStages: ["ثاني ثانوي", "ثالث ثانوي"],
   graduatesEligible: false,
   recommendedStart: "ثاني ثانوي",
   validityYears: 5,
-  description: "التحصيلي المبكر لطلاب الأول والثاني ثانوي — يبني التحصيل مبكراً قبل ثالث ثانوي.",
+  description: "التحصيلي المبكر لطلاب الثاني والثالث ثانوي — يبني التحصيل مبكراً ويسبق به الطالب دفعته.",
   bands: TAHSILI_BANDS,
 };
 
@@ -266,11 +266,11 @@ export function canTakeTahsili(u?: DarbUser | null): boolean {
   return stageOf(u) === "ثالث ثانوي";
 }
 
-/** هل يحقّ له دخول التحصيلي المبكر؟ (أول/ثاني ثانوي فقط) */
+/** هل يحقّ له دخول التحصيلي المبكر؟ (ثاني/ثالث ثانوي فقط — لا يظهر أبداً لأول ثانوي) */
 export function canTakeEarlyTahsili(u?: DarbUser | null): boolean {
   if (getStudentPhase(u) !== "secondary") return false;
   const stage = stageOf(u);
-  return stage === "أول ثانوي" || stage === "ثاني ثانوي";
+  return stage === "ثاني ثانوي" || stage === "ثالث ثانوي";
 }
 
 /* أنماط الوجهات التي تتطلب إثبات لغة إنجليزية (SSoT — يستهلكها المسار الذهبي وغيره) */

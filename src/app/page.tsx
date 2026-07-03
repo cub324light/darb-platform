@@ -77,7 +77,7 @@ const SERVICES: {
   {
     icon: "📗", title: "التحصيلي", color: "#3B82F6",
     brief: "المواد الأربع — فيزياء وكيمياء ورياضيات وأحياء — بخريطة مرتبة ومراجعة ذكية.",
-    full: "كل مادة بخريطة مرتبة من أساسيات المنهج إلى نماذج الأسئلة، والمراجعة الذكية بالتكرار المتباعد تحدد متى تراجع كل معلومة قبل ما تنساها. ولطلاب أول وثاني ثانوي مسار تحصيلي مبكر يخليهم يسبقون دفعتهم. وحقائق التحصيلي السريعة متاحة للجميع حتى بدون تسجيل.",
+    full: "كل مادة بخريطة مرتبة من أساسيات المنهج إلى نماذج الأسئلة، والمراجعة الذكية بالتكرار المتباعد تحدد متى تراجع كل معلومة قبل ما تنساها. ولطلاب ثاني ثانوي مسار تحصيلي مبكر يخليهم يسبقون دفعتهم. وحقائق التحصيلي السريعة متاحة للجميع حتى بدون تسجيل.",
     href: "/tahsili/flashcards", linkLabel: "تصفح حقائق التحصيلي",
   },
   {
@@ -456,7 +456,8 @@ export default function LandingPage() {
       <section id="tracks" className="px-5 py-16 landing-section-pad max-w-2xl landing-max mx-auto">
         <SectionHead eyebrow="المسارات" title="وش تستعد له؟" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-5">
-          {TRACKS.map((t, i) => (
+          {/* التحصيلي المبكر مسار مشتق لا يُعرض للجميع — يُفعَّل من التسجيل لثاني ثانوي */}
+          {TRACKS.filter((t) => t.id !== "تحصيلي مبكر").map((t, i) => (
             <div key={t.id}
               className={`reveal reveal-d${(i % 3) + 1} rounded-2xl p-4 landing-card group relative overflow-hidden`}
               style={{
