@@ -5,12 +5,14 @@ import {
   SEED_CONTENT, CONTENT_COLLECTIONS,
   mergeContentById, sortByOrder, buildContentSnapshot, annualReviewLists,
   subjectMeta, scoreColor,
+  FAQ_CATEGORIES, FAQ_OTHER_CATEGORY,
+  faqCategoryKey, faqCategoryMeta, presentFaqCategories,
   type FaqDoc,
 } from "./index";
 
 test("البذرة تحوي المجموعات السبع كلها وبأعداد صحيحة", () => {
   assert.equal(CONTENT_COLLECTIONS.length, 7);
-  assert.equal(SEED_CONTENT.faq_general.length, 10);
+  assert.equal(SEED_CONTENT.faq_general.length, 32);
   assert.equal(SEED_CONTENT.faq_qubool.length, 25);
   assert.equal(SEED_CONTENT.reference_lists.length, 6);
   assert.equal(SEED_CONTENT.tips.length, 2);
@@ -89,6 +91,55 @@ test("كل حقائق بطاقات التحصيلي بصيغة «مفهوم → 
       assert.ok(fact.includes("→"), `حقيقة في ${card.id} تحوي سهماً: ${fact}`);
     }
   }
+});
+
+test("خريطة تصنيفات الأسئلة تغطي التصنيفات العشرة بالترتيب المعتمد", () => {
+  assert.deepEqual(Object.keys(FAQ_CATEGORIES), [
+    "admissions", "qubool_platform", "qudurat", "tahsili", "step",
+    "universities", "rewards", "housing", "tajseer", "gap_year",
+  ]);
+  for (const def of Object.values(FAQ_CATEGORIES)) {
+    assert.ok(def.label.trim() !== "" && def.icon.trim() !== "");
+  }
+});
+
+test("كل سؤال في البذرة له تصنيف غير فارغ ومعرَّف في خريطة العرض", () => {
+  for (const f of [...SEED_CONTENT.faq_general, ...SEED_CONTENT.faq_qubool]) {
+    assert.ok(f.category.trim() !== "", `سؤال ${f.id} له تصنيف`);
+    assert.ok(Object.hasOwn(FAQ_CATEGORIES, f.category), `تصنيف ${f.category} (${f.id}) معرَّف في FAQ_CATEGORIES`);
+  }
+});
+
+test("ترقيم order متسلسل تصاعدياً داخل كل تصنيف في faq_general", () => {
+  const byCat = new Map<string, number[]>();
+  for (const f of SEED_CONTENT.faq_general) {
+    const orders = byCat.get(f.category) ?? [];
+    orders.push(f.order);
+    byCat.set(f.category, orders);
+  }
+  for (const [cat, orders] of byCat) {
+    const sorted = [...orders].sort((a, b) => a - b);
+    for (let i = 1; i < sorted.length; i++) {
+      assert.equal(sorted[i], sorted[i - 1] + 1, `ترقيم ${cat} متسلسل بلا فجوات`);
+    }
+  }
+});
+
+test("استخراج التصنيفات يحافظ على ترتيب الخريطة ويجمع المجهول في «أخرى»", () => {
+  const faqs = [
+    { category: "gap_year" },
+    { category: "mystery" },
+    { category: "admissions" },
+    { category: "qudurat" },
+  ];
+  assert.deepEqual(presentFaqCategories(faqs), ["admissions", "qudurat", "gap_year", FAQ_OTHER_CATEGORY]);
+  // بلا مجهول → لا «أخرى»
+  assert.deepEqual(presentFaqCategories([{ category: "step" }]), ["step"]);
+  // مفاتيح prototype لا تتسرب كتصنيفات معروفة
+  assert.equal(faqCategoryKey("constructor"), FAQ_OTHER_CATEGORY);
+  assert.equal(faqCategoryKey("tahsili"), "tahsili");
+  assert.equal(faqCategoryMeta("mystery").label, "أخرى");
+  assert.equal(faqCategoryMeta("step").label, "ستيب STEP");
 });
 
 test("تعريفات العرض: مادة معروفة ومجهولة ولون درجة معروف ومجهول", () => {

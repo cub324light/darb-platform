@@ -104,6 +104,47 @@ export function subjectMeta(subject: string): SubjectDef {
   return SUBJECT_META[subject] ?? { label: subject, color: "#06B6D4", icon: "📚" };
 }
 
+/* ─── تصنيفات الأسئلة الشائعة — خريطة عرض بترتيب ثابت (بنمط SUBJECT_META) ───
+   ترتيب المفاتيح هنا هو ترتيب العرض المعتمد في شرائح صفحة /faq. */
+export interface FaqCategoryDef { label: string; icon: string; }
+
+export const FAQ_CATEGORIES: Record<string, FaqCategoryDef> = {
+  admissions:      { label: "الأسئلة العامة", icon: "🎓" },
+  qubool_platform: { label: "منصة قبول",      icon: "🏛️" },
+  qudurat:         { label: "القدرات",         icon: "🧠" },
+  tahsili:         { label: "التحصيلي",        icon: "📚" },
+  step:            { label: "ستيب STEP",       icon: "🔤" },
+  universities:    { label: "الجامعات",        icon: "🏫" },
+  rewards:         { label: "المكافآت",        icon: "💰" },
+  housing:         { label: "السكن",           icon: "🏠" },
+  tajseer:         { label: "التجسير",         icon: "🌉" },
+  gap_year:        { label: "سنة الفراغ",      icon: "⏳" },
+};
+
+/* سلة «أخرى» — لأي تصنيف غير معروف يصل من overlay قديم في Firestore */
+export const FAQ_OTHER_CATEGORY = "other";
+
+/* مفتاح العرض لتصنيف وثيقة — Object.hasOwn تتحاشى مفاتيح prototype الخبيثة */
+export function faqCategoryKey(category: string): string {
+  return Object.hasOwn(FAQ_CATEGORIES, category) ? category : FAQ_OTHER_CATEGORY;
+}
+
+/* تعريف عرض التصنيف — المجهول يُعرض «أخرى» بأمان */
+export function faqCategoryMeta(category: string): FaqCategoryDef {
+  return Object.hasOwn(FAQ_CATEGORIES, category)
+    ? FAQ_CATEGORIES[category]
+    : { label: "أخرى", icon: "❔" };
+}
+
+/* التصنيفات الموجودة فعلاً في قائمة أسئلة — بترتيب الخريطة الثابت،
+   وأي تصنيف غير معروف يُجمع في «أخرى» آخر القائمة (دالة نقية حتمية) */
+export function presentFaqCategories(faqs: readonly Pick<FaqDoc, "category">[]): string[] {
+  const present = new Set(faqs.map((f) => faqCategoryKey(f.category)));
+  const ordered = Object.keys(FAQ_CATEGORIES).filter((c) => present.has(c));
+  if (present.has(FAQ_OTHER_CATEGORY)) ordered.push(FAQ_OTHER_CATEGORY);
+  return ordered;
+}
+
 /* ألوان شارات الدرجات في قصص النجاح — نفس عائلة ألوان بطاقات الصفحة الرئيسية */
 export const SCORE_COLORS: Record<string, string> = {
   "قدرات":   "#3B82F6",

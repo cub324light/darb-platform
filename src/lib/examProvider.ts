@@ -156,7 +156,7 @@ export const EXAM_PROVIDER: ExamProviderEntry[] = [
         registrationEnd:   "2025-10-31",
         examStart:         "2025-11-10",
         examEnd:           "2025-12-20",
-        note:              "لطلاب الصف الأول والثاني ثانوي فقط",
+        note:              "لطلاب الصف الثاني والثالث ثانوي فقط",
       },
       {
         id: "early-1448",
