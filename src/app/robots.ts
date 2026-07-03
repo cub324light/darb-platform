@@ -6,7 +6,7 @@ const PRIVATE_PATHS = [
   "/admin", "/api/",
   "/dashboard", "/profile", "/vault", "/council", "/arena", "/orbit",
   "/roadmap", "/review", "/skills", "/challenges", "/leaderboard",
-  "/study-plan", "/plan", "/university", "/parent", "/onboarding",
+  "/study-plan", "/plan", "/university", "/opportunities", "/parent", "/onboarding",
 ];
 
 export default function robots(): MetadataRoute.Robots {

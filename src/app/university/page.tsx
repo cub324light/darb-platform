@@ -166,6 +166,21 @@ export default function UniversityPage() {
           <p className="text-[13px] font-bold" style={{ color: "var(--text)" }}>{season.label}</p>
         </div>
 
+        {/* ═══ وش تقدر تقدم عليه؟ — الفرص المصنّفة حسب بياناتك ═══ */}
+        <Link href="/opportunities" className="rounded-2xl px-4 py-3.5 flex items-center gap-3 transition active:scale-[0.99]"
+          style={{
+            background: "color-mix(in srgb, var(--accent) 10%, var(--surface))",
+            border: "1px solid color-mix(in srgb, var(--accent) 30%, transparent)",
+          }}>
+          <span className="text-[22px] flex-shrink-0">🧭</span>
+          <span className="flex-1 min-w-0">
+            <span className="block text-[14px] font-black" style={{ color: "var(--text)" }}>وش تقدر تقدم عليه؟ ←</span>
+            <span className="block text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+              جامعات، ابتعاث، دبلومات، منح وبرامج — مصنّفة حسب درجاتك ووجهتك
+            </span>
+          </span>
+        </Link>
+
         {/* ═══ ماذا أحتاج؟ + تحليل الفجوة ═══ */}
         <section className="rounded-2xl p-4 flex flex-col gap-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <div className="flex items-center gap-2">
