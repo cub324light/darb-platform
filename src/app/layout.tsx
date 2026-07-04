@@ -69,8 +69,11 @@ try {
 `;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  /* لا نكتب data-theme في JSX: الـ hydration كان يعيدها إلى "dark" فيطمس
+     ثيم المستخدم المحفوظ (النهاري). الافتراضي في CSS داكن بلا سمة،
+     وthemeScript يضبط القيمة المخزنة قبل أول رسم — وReact لا يمسّ سمة لا يرسمها. */
   return (
-    <html lang="ar" dir="rtl" data-theme="dark" className={`${cairo.variable} ${plexMono.variable}`} suppressHydrationWarning>
+    <html lang="ar" dir="rtl" className={`${cairo.variable} ${plexMono.variable}`} suppressHydrationWarning>
       <head>
         {/* تهيئة اتصال مبكرة بخوادم Firebase — يسرّع تسجيل الدخول والمزامنة */}
         <link rel="preconnect" href="https://firestore.googleapis.com" crossOrigin="" />
