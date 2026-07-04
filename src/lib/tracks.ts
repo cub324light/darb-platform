@@ -319,6 +319,103 @@ export function basicTracksFor(opts: { status?: string; grade?: string; goal?: S
 }
 
 
+/* ─── محرّك أهلية المسارات — لوحة «وش متاح ووش مقفل وليش» ───
+   يعيد حالة كل مسار للطالب: متاح/مقفل + سبب القفل + نجمة «مهم لمرحلتك» السياقية.
+   نفس القواعد الحاكمة في darbKnowledge (EXAM_RULES/canTake*) — معرَّفة هنا محلياً
+   لتفادي الاستيراد الدائري (darbKnowledge → storage → tracks). نقي وحتمي:
+   يستهلكه التسجيل وأي واجهة تعرض للطالب طريقه كاملاً بدل «هدف» مجرّد. */
+export interface TrackEligibility {
+  id: TrackId;
+  status: "available" | "locked";
+  important: boolean;   // نجمة «مهم لمرحلتك» — سياقية حسب الصف لا عامة
+  reason?: string;      // سبب القفل الدقيق — موجود لكل مسار مقفل
+}
+
+export function trackEligibilityFor(opts: {
+  status?: string; grade?: string; gradStage?: string; gapYear?: boolean;
+}): TrackEligibility[] {
+  const st = opts.status ?? "ثانوي";
+  const sec  = st === "ثانوي";
+  const grad = st === "خريج";
+  const g1 = sec && opts.grade === "أول ثانوي";
+  const g2 = sec && opts.grade === "ثاني ثانوي";
+  const g3 = sec && opts.grade === "ثالث ثانوي";
+  /* سنة الاستدراك: خريج ينوي إعادة قياس — القدرات والتحصيلي جوهر سنته */
+  const gap = grad && opts.gapYear === true;
+
+  const available = (important = false): Omit<TrackEligibility, "id"> =>
+    ({ status: "available", important });
+  const locked = (reason: string): Omit<TrackEligibility, "id"> =>
+    ({ status: "locked", important: false, reason });
+
+  const ADMISSION_ONLY = "لمرحلة القبول (ثالث ثانوي أو خريج)";
+
+  return TRACKS.map((t): TrackEligibility => {
+    switch (t.id) {
+      /* القدرات: كل صفوف الثانوي + الخريج — نجمة لثالث ثانوي (سنة الاختبارات) وسنة الاستدراك */
+      case "قدرات":
+        return { id: t.id, ...(sec || grad ? available(g3 || gap) : locked("لطلاب الثانوي والخريجين")) };
+      /* التحصيلي العادي: ثالث ثانوي + الخريج فقط */
+      case "تحصيلي":
+        if (g3 || grad) return { id: t.id, ...available(g3 || gap) };
+        if (g1) return { id: t.id, ...locked("يبدأ من ثالث ثانوي — وتقدر تسبق دفعتك بالتحصيلي المبكر من ثاني ثانوي") };
+        if (g2) return { id: t.id, ...locked("لثالث ثانوي والخريجين — التحصيلي المبكر هو المتاح لصفّك الآن") };
+        return { id: t.id, ...locked("لطلاب ثالث ثانوي والخريجين") };
+      /* التحصيلي المبكر: ثاني وثالث ثانوي فقط (لا خريجين) — نجمة لثاني ثانوي (جوهر مرحلته) */
+      case "تحصيلي مبكر":
+        if (g2 || g3) return { id: t.id, ...available(g2) };
+        if (g1) return { id: t.id, ...locked("يبدأ من ثاني ثانوي") };
+        return { id: t.id, ...locked("لطلاب ثاني وثالث ثانوي فقط") };
+      /* CPC/ITC: برامج قبول متقدمة — لمن هو على أعتاب القبول فقط */
+      case "CPC":
+      case "ITC":
+        return { id: t.id, ...(g3 || grad ? available() : locked(ADMISSION_ONLY)) };
+      /* الإنجليزية المهنية (آيلتس/توفل/دوليقو) + ستيب + المدرسة: بلا تقييد صفّي وبلا نجمة */
+      default:
+        return { id: t.id, ...available() };
+    }
+  });
+}
+
+/* ترتيب المسارات المختارة ترتيباً قانونياً: نجوم المرحلة أولاً، ثم ترتيب TRACKS،
+   والمدرسة دائماً أخيراً — يضمن أن المسار الأساسي (أول عنصر) اختبار فعلي إن وُجد. */
+export function orderSelectedTracks(selected: TrackId[], eligibility: TrackEligibility[]): TrackId[] {
+  const impById = new Map(eligibility.map((e) => [e.id, e.important]));
+  const idx = (id: TrackId) => TRACKS.findIndex((t) => t.id === id);
+  return [...new Set(selected)].sort((a, b) => {
+    if ((a === "مدرسه") !== (b === "مدرسه")) return a === "مدرسه" ? 1 : -1;
+    const ia = impById.get(a) ? 0 : 1;
+    const ib = impById.get(b) ? 0 : 1;
+    if (ia !== ib) return ia - ib;
+    return idx(a) - idx(b);
+  });
+}
+
+/* اشتقاق الهدف تلقائياً من أبرز مسار مختار — حتى لا يُعرض على الطالب «هدف تحسين
+   درجة» لاختبار ما دخله. «مدرسة فقط» → undefined (كل المستهلكين يتقبّلونه). */
+const TRACK_GOAL: Partial<Record<TrackId, StudyGoalType>> = {
+  "قدرات": "qudurat", "تحصيلي": "tahsili", "تحصيلي مبكر": "tahsili", "ستيب": "step",
+};
+export function deriveGoalFromTracks(selected: TrackId[], eligibility: TrackEligibility[]): StudyGoalType | undefined {
+  for (const id of orderSelectedTracks(selected, eligibility)) {
+    const g = TRACK_GOAL[id];
+    if (g) return g;
+  }
+  return undefined;
+}
+
+/* المبدئيات المنطقية للوحة الاختبارات: نجوم المرحلة + القدرات + المدرسة (dedupe).
+   أول: قدرات+مدرسة · ثاني: مبكر+قدرات+مدرسة · ثالث: قدرات+تحصيلي+مدرسة.
+   حدّ الاختبارات MAX_BASIC_TRACKS — والمدرسة لا تُحسب منه (نفس سلوك basicTracksFor). */
+export function defaultTracksFromEligibility(eligibility: TrackEligibility[]): TrackId[] {
+  const avail = (id: TrackId) => eligibility.some((e) => e.id === id && e.status === "available");
+  const starred = eligibility.filter((e) => e.status === "available" && e.important).map((e) => e.id);
+  const base = [...starred];
+  if (avail("قدرات")) base.push("قدرات");
+  const exams = [...new Set(base)].filter((id) => id !== "مدرسه").slice(0, MAX_BASIC_TRACKS);
+  return avail("مدرسه") ? [...exams, "مدرسه"] : exams;
+}
+
 /* نطاق درجة اختبار من عنوانه — undefined لو غير معروف، null لو بلا درجة */
 export function scoreRangeForTitle(title: string): ScoreRange | null | undefined {
   const tr = trackByTitle(title);

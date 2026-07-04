@@ -2,7 +2,9 @@
 import { useState, useEffect } from "react";
 import {
   TRACKS, basicTracksFor, STUDY_GOALS, scoreRangeForTitle, validateScore,
-  type StudyGoalType,
+  trackEligibilityFor, defaultTracksFromEligibility, orderSelectedTracks,
+  deriveGoalFromTracks, goalLabel, MAX_BASIC_TRACKS,
+  type StudyGoalType, type TrackId, type TrackEligibility,
 } from "@/lib/tracks";
 import { UNIVERSITIES, MAJORS, findUniversity, findMajor } from "@/lib/university";
 import { saveUser, saveExamDate, saveResults, saveTrackExamDates, loadGoals, saveGoals } from "@/lib/storage";
@@ -14,7 +16,16 @@ import Logo from "@/components/Logo";
 
 const STATUSES = ["ثانوي", "جامعي", "خريج"] as const;
 type Status = (typeof STATUSES)[number];
-const GRADES = ["أول ثانوي", "ثاني ثانوي", "ثالث ثانوي"];
+/* «وين أنت بالضبط؟» — مواضع أوضح من «أي صف؟» المجرّد. الإجازة بين صفّين تُحسب
+   على الصف القادم (يستعد له)، والصف القياسي يبقى مصدر الحقيقة الوحيد للأهلية. */
+const GRADE_POSITIONS: { label: string; grade: string }[] = [
+  { label: "إجازة — ببدأ أول ثانوي",  grade: "أول ثانوي" },
+  { label: "في أول ثانوي",            grade: "أول ثانوي" },
+  { label: "إجازة — بين أول وثاني",   grade: "ثاني ثانوي" },
+  { label: "في ثاني ثانوي",           grade: "ثاني ثانوي" },
+  { label: "إجازة — بين ثاني وثالث",  grade: "ثالث ثانوي" },
+  { label: "في ثالث ثانوي",           grade: "ثالث ثانوي" },
+];
 const TRACK_TYPES = ["عام", "صحي", "هندسي", "حاسب", "إداري"] as const;
 const GRAD_STAGES = ["خريج ثانوي", "خريج جامعة"];
 const UNI_YEARS = ["الأولى", "الثانية", "الثالثة", "الرابعة", "الخامسة+"];
@@ -40,7 +51,8 @@ export default function OnboardingPage() {
   const [status, setStatus] = useState<Status | "">("");
 
   /* ── تفاصيل المرحلة ── */
-  const [grade, setGrade] = useState("");                 // ثانوي
+  const [grade, setGrade] = useState("");                 // ثانوي (مشتق من الموضع)
+  const [gradePos, setGradePos] = useState("");           // ثانوي: «وين أنت بالضبط؟»
   const [trackType, setTrackType] = useState("");         // ثانوي: المسار
   const [gradStage, setGradStage] = useState("");         // خريج
   const [universityYear, setUniversityYear] = useState(""); // جامعي
@@ -66,7 +78,12 @@ export default function OnboardingPage() {
   const [gradSchoolInterest, setGradSchoolInterest] = useState<boolean | undefined>(undefined);
 
   /* ── الهدف + إضافات ── */
-  const [goal, setGoal] = useState<StudyGoalType | "">("");
+  const [goal, setGoal] = useState<StudyGoalType | "">(""); // الجامعي/الخريج (قائمة الأهداف)
+  /* ── لوحة اختبارات الثانوي (بدل الهدف المجرّد) ── */
+  const [selectedTracks, setSelectedTracks] = useState<TrackId[]>([]);
+  const [seedGrade, setSeedGrade] = useState("");   // آخر صف بُذرت له المبدئيات — لا نمسح تخصيص الطالب عند الرجوع
+  const [uniOpen, setUniOpen] = useState(false);    // «عندك وجهة جامعية؟» — بارز لثالث، مطوي لغيره
+  const [extrasOpen, setExtrasOpen] = useState(false); // «معلومات إضافية» مطوية افتراضياً
   const [studyHours, setStudyHours] = useState("");
   const [examDate, setExamDate] = useState("");
   const [school, setSchool] = useState("");
@@ -75,10 +92,21 @@ export default function OnboardingPage() {
   const [phone, setPhone] = useState("");
   const [highschoolPct, setHighschoolPct] = useState("");
 
-  /* المسارات المُفعّلة تلقائياً من الحالة + الصف + الهدف + سنة الاستدراك */
+  /* المسارات المُفعّلة تلقائياً (الجامعي/الخريج) من الحالة + الهدف + سنة الاستدراك */
   const computedTracks = basicTracksFor({
     status: status || undefined, grade, goal: goal || undefined, gapYear: gapYear === "yes",
   });
+
+  /* لوحة أهلية الاختبارات للثانوي — وش متاح ووش مقفل وليش (نقية ورخيصة) */
+  const eligibility = status === "ثانوي" ? trackEligibilityFor({ status, grade }) : [];
+  /* المسارات النهائية: الثانوي من اختياره على اللوحة (بترتيب قانوني)، وغيره من الحزم التلقائية */
+  const finalTracks = status === "ثانوي" ? orderSelectedTracks(selectedTracks, eligibility) : computedTracks;
+  /* اشتقاق هدف الثانوي تلقائياً من أبرز مسار مختار — الوجهة الجامعية لثالث ثانوي لها الأولوية */
+  const derivedGoal: StudyGoalType | "" =
+    status !== "ثانوي" ? "" :
+    grade === "ثالث ثانوي" && universityId ? "university" :
+    grade === "ثالث ثانوي" && majorId ? "major" :
+    (deriveGoalFromTracks(selectedTracks, eligibility) ?? "");
 
   const pickUni = (id: string) => {
     const u = findUniversity(id);
@@ -103,8 +131,11 @@ export default function OnboardingPage() {
   const finish = async () => {
     /* H1: امنع الدخول المتزامن/المكرر */
     if (isSubmitting) return;
-    if (!goal) return;
-    const tracks = computedTracks;
+    /* الثانوي: هدفه مشتق من اللوحة (قد يكون فارغاً لمدرسة فقط) — غيره: الهدف إلزامي */
+    const isSecondary = status === "ثانوي";
+    const effectiveGoal: StudyGoalType | "" = isSecondary ? derivedGoal : goal;
+    if (!isSecondary && !goal) return;
+    const tracks = finalTracks;
     if (!tracks.length) return;
     const primaryTrack = tracks[0];
 
@@ -154,7 +185,7 @@ export default function OnboardingPage() {
       grade: status === "ثانوي" && grade ? grade : undefined,
       gradStage: status === "خريج" && gradStage ? gradStage : undefined,
       universityYear: status === "جامعي" && universityYear ? universityYear : undefined,
-      goal: goal || undefined,
+      goal: effectiveGoal || undefined,
       gapYear: status === "خريج" ? gapYear === "yes" : undefined,
       studyHours: studyHours ? parseInt(studyHours) : undefined,
       trackType: resolvedTrackType,
@@ -196,7 +227,7 @@ export default function OnboardingPage() {
     }
 
     import("@/lib/firestore").then(({ registerUser }) => { registerUser(trimmedName, primaryTrack, extras); });
-    trackEvent("onboarding_completed", { track: primaryTrack, tracks: tracks.length, goal, status });
+    trackEvent("onboarding_completed", { track: primaryTrack, tracks: tracks.length, goal: effectiveGoal || null, status });
     import("@/lib/cloud").then(({ pushBackup }) => { pushBackup().catch(() => {}); });
     await redeemPendingRef().catch(() => 0);
     window.location.assign("/dashboard");
@@ -399,15 +430,20 @@ export default function OnboardingPage() {
           {status === "ثانوي" && (
             <>
               <div>
-                <p className="label mb-3">أي صف أنت؟</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {GRADES.map((g) => (
-                    <button key={g} onClick={() => setGrade(grade === g ? "" : g)}
-                      className="rounded-2xl py-3 font-bold text-[14px] transition active:scale-[0.98]"
-                      style={chipStyle(grade === g)}>
-                      {g}
-                    </button>
-                  ))}
+                <p className="label mb-1">وين أنت بالضبط؟</p>
+                <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>حتى لو في إجازة — نحسب لك الصف اللي تستعد له</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {GRADE_POSITIONS.map((p) => {
+                    const on = gradePos === p.label;
+                    return (
+                      <button key={p.label}
+                        onClick={() => { setGradePos(on ? "" : p.label); setGrade(on ? "" : p.grade); }}
+                        className="rounded-2xl py-3 px-2 font-bold text-[13px] transition active:scale-[0.98] leading-snug"
+                        style={chipStyle(on)}>
+                        {p.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
               {/* أول ثانوي: التحصيلي يبدأ من ثاني ثانوي — نطمئنه على ما نفعّله له */}
@@ -435,7 +471,7 @@ export default function OnboardingPage() {
               <div className="rounded-2xl px-4 py-3"
                 style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
                 <p className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>
-                  🎯 نفعّل لك تلقائياً اختبارات قياس المناسبة لمرحلتك — تقدر تضيف غيرها لاحقاً.
+                  🗺️ بالخطوة الجاية: لوحة اختباراتك كاملة — وش متاح لصفّك الآن، ووش مقفل ومتى يفتح وليش.
                 </p>
               </div>
               {/* نتائج سابقة للثانوي — اختيارية، لا تمنع التقدم */}
@@ -555,7 +591,16 @@ export default function OnboardingPage() {
             </>
           )}
 
-          <button className="btn-primary glow-blue" onClick={() => { if (canProceed) setStep(2); }}
+          <button className="btn-primary glow-blue" onClick={() => {
+            if (!canProceed) return;
+            /* الثانوي: بذر مبدئيات اللوحة مرة لكل صف — لا نمسح تخصيص الطالب عند الرجوع بلا تغيير */
+            if (status === "ثانوي" && grade !== seedGrade) {
+              setSelectedTracks(defaultTracksFromEligibility(trackEligibilityFor({ status, grade })));
+              setUniOpen(grade === "ثالث ثانوي");
+              setSeedGrade(grade);
+            }
+            setStep(2);
+          }}
             disabled={!canProceed} style={{ opacity: canProceed ? 1 : 0.4 }}>
             التالي ←
           </button>
@@ -566,13 +611,31 @@ export default function OnboardingPage() {
     );
   }
 
-  /* ════════ الخطوة 2 — الهدف + إضافات ════════ */
-  const needsUniPicker = (goal === "university" && !universityId) || (goal === "major" && !majorId);
-  const primaryTrack = computedTracks[0];
-  /* أول ثانوي: لا تحصيلي إطلاقاً — نخفي هدف «رفع درجة التحصيلي» (فلترة عرض فقط) */
-  const visibleGoals = status === "ثانوي" && grade === "أول ثانوي"
-    ? STUDY_GOALS.filter((g) => g.id !== "tahsili")
-    : STUDY_GOALS;
+  /* ════════ الخطوة 2 — لوحة اختبارات الثانوي / هدف الجامعي والخريج ════════ */
+  const isSecondary = status === "ثانوي";
+  /* منتقي الجامعة إلزامي فقط لهدفَي الجامعة/التخصص عند الجامعي والخريج */
+  const needsUniPicker = !isSecondary && ((goal === "university" && !universityId) || (goal === "major" && !majorId));
+  const primaryTrack = finalTracks[0];
+
+  /* لوحة الثانوي: المتاح أولاً (النجوم في الصدارة) ثم المقفل — ترتيب مستقر */
+  const boardSorted = [...eligibility].sort((a, b) => {
+    const rank = (e: TrackEligibility) => (e.status === "locked" ? 2 : e.important ? 0 : 1);
+    return rank(a) - rank(b);
+  });
+  const examCount = selectedTracks.filter((t) => t !== "مدرسه").length;
+  const toggleTrack = (id: TrackId) => {
+    setSelectedTracks((prev) => {
+      if (prev.includes(id)) return prev.filter((t) => t !== id);
+      /* حد الاختبارات MAX_BASIC_TRACKS — المدرسة لا تُحسب منه (نفس سلوك basicTracksFor) */
+      if (id !== "مدرسه" && prev.filter((t) => t !== "مدرسه").length >= MAX_BASIC_TRACKS) return prev;
+      return [...prev, id];
+    });
+  };
+
+  /* شروط الإكمال: الثانوي → اختبار واحد على الأقل + ساعات · غيره → هدف + ساعات (+ جامعة عند الحاجة) */
+  const canFinish = isSecondary
+    ? finalTracks.length > 0 && !!studyHours
+    : !!goal && !!studyHours && !needsUniPicker;
 
   return (
     <div className="min-h-dvh flex flex-col app-col">
@@ -580,34 +643,119 @@ export default function OnboardingPage() {
       <div className="flex-1 px-6 py-8 max-w-sm mx-auto w-full flex flex-col gap-6">
         {stepDots}
 
-        <div>
-          <p className="label mb-1">ما هدفك الحالي؟</p>
-          <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>نبني خطتك وجدولك وأولوياتك حوله تلقائياً</p>
-          <div className="flex flex-col gap-2.5">
-            {visibleGoals.map((g) => {
-              const on = goal === g.id;
-              return (
-                <button key={g.id} onClick={() => setGoal(on ? "" : g.id)}
-                  className="rounded-2xl px-4 py-3.5 flex items-center gap-3 text-right transition active:scale-[0.98]"
-                  style={chipStyle(on)}>
-                  <span className="text-[20px]">{g.icon}</span>
-                  <span className="font-bold text-[15px] flex-1">{g.label}</span>
-                  {on && <span className="text-[16px] font-black" style={{ color: "var(--accent-light)" }}>✓</span>}
-                </button>
-              );
-            })}
+        {/* ── الثانوي: لوحة الاختبارات — يشوف الطريق كاملاً بدل هدف مجرّد ── */}
+        {isSecondary ? (
+          <div>
+            <p className="label mb-1">وش تجهّز له؟</p>
+            <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>
+              هذي خريطتك كاملة: المتاح لصفّك تختاره الآن، والمقفل بيّنّا متى يفتح وليش
+            </p>
+            <div className="flex flex-col gap-2.5">
+              {boardSorted.map((e) => {
+                const t = TRACKS.find((tr) => tr.id === e.id)!;
+                if (e.status === "locked") return (
+                  <div key={e.id} className="rounded-2xl px-4 py-3"
+                    style={{ background: "var(--surface)", border: "2px solid var(--border)", opacity: 0.55 }}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[14px] flex-shrink-0">🔒</span>
+                      <span className="font-bold text-[15px] flex-1" style={{ color: "var(--text)" }}>{t.title}</span>
+                    </div>
+                    <p className="text-[12px] mt-1 pr-6" style={{ color: "var(--text-muted)" }}>{e.reason}</p>
+                  </div>
+                );
+                const on = selectedTracks.includes(e.id);
+                const atLimit = !on && e.id !== "مدرسه" && examCount >= MAX_BASIC_TRACKS;
+                return (
+                  <button key={e.id} onClick={() => toggleTrack(e.id)} aria-pressed={on}
+                    className="rounded-2xl px-4 py-3 text-right transition active:scale-[0.98]"
+                    style={{ ...chipStyle(on), opacity: atLimit ? 0.5 : 1 }}>
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-md flex items-center justify-center text-[12px] font-black flex-shrink-0"
+                        style={{
+                          background: on ? "var(--accent)" : "var(--surface2)",
+                          border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}`,
+                          color: on ? "#fff" : "transparent",
+                        }}>✓</span>
+                      <span className="font-bold text-[15px] flex-1">{t.title}</span>
+                      {e.important && (
+                        <span className="text-[11px] font-black px-2 py-0.5 rounded-full flex-shrink-0"
+                          style={{ background: "color-mix(in srgb, var(--gold) 16%, transparent)", color: "var(--gold)" }}>
+                          ⭐ مهم لمرحلتك
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[12px] mt-1 pr-7" style={{ color: on ? "var(--accent-light)" : "var(--text-muted)" }}>{t.sub}</p>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[11.5px] mt-2" style={{ color: "var(--text-muted)" }}>
+              تختار حتى {MAX_BASIC_TRACKS} اختبارات — والمدرسة ما تُحسب من الحد. تقدر تعدّلها لاحقاً من ملفك.
+            </p>
+            {derivedGoal && (
+              <p className="text-[12px] mt-1.5 font-bold" style={{ color: "var(--accent-light)" }}>
+                🎯 هدفك الحالي: {goalLabel(derivedGoal)} — اشتقيناه تلقائياً من اختيارك.
+              </p>
+            )}
           </div>
-        </div>
+        ) : (
+          <div>
+            <p className="label mb-1">ما هدفك الحالي؟</p>
+            <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>نبني خطتك وجدولك وأولوياتك حوله تلقائياً</p>
+            <div className="flex flex-col gap-2.5">
+              {STUDY_GOALS.map((g) => {
+                const on = goal === g.id;
+                return (
+                  <button key={g.id} onClick={() => setGoal(on ? "" : g.id)}
+                    className="rounded-2xl px-4 py-3.5 flex items-center gap-3 text-right transition active:scale-[0.98]"
+                    style={chipStyle(on)}>
+                    <span className="text-[20px]">{g.icon}</span>
+                    <span className="font-bold text-[15px] flex-1">{g.label}</span>
+                    {on && <span className="text-[16px] font-black" style={{ color: "var(--accent-light)" }}>✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-        {/* منتقي الجامعة/التخصص عند الحاجة */}
+        {/* منتقي الجامعة/التخصص عند الحاجة (الجامعي/الخريج) */}
         {needsUniPicker && (
           <div className="rounded-2xl p-4" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
             {uniMajorPicker}
           </div>
         )}
 
-        {/* الاختبارات المُفعّلة تلقائياً — شفافية */}
-        {goal && computedTracks.length > 0 && (
+        {/* الثانوي: الطموح الجامعي اختياري وغير حاجز — بارز لثالث ثانوي، مطوي لأول وثاني */}
+        {isSecondary && (
+          uniOpen ? (
+            <div className="rounded-2xl p-4" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+              <div className="flex items-center gap-2 mb-3">
+                <p className="label flex-1">عندك وجهة جامعية؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+                <button onClick={() => setUniOpen(false)} className="text-[13px] font-bold px-1" style={{ color: "var(--text-muted)" }}>إخفاء ▴</button>
+              </div>
+              {grade === "ثالث ثانوي" && (
+                <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>
+                  سنة القبول — تحديد وجهتك يخلينا نحسب موزونتك ونرسم طريقك لها
+                </p>
+              )}
+              {uniMajorPicker}
+            </div>
+          ) : (
+            <button onClick={() => setUniOpen(true)}
+              className="rounded-2xl px-4 py-3.5 w-full flex items-center gap-2 text-right transition active:scale-[0.98]"
+              style={inputStyle}>
+              <span className="text-[16px]">🏛️</span>
+              <span className="font-bold text-[14px] flex-1" style={{ color: "var(--text)" }}>
+                عندك وجهة جامعية؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span>
+              </span>
+              <span className="text-[13px] font-bold" style={{ color: "var(--text-muted)" }}>▾</span>
+            </button>
+          )
+        )}
+
+        {/* الاختبارات المُفعّلة تلقائياً — شفافية (الجامعي/الخريج) */}
+        {!isSecondary && goal && computedTracks.length > 0 && (
           <div>
             <p className="label mb-2.5">فعّلنا لك هذه الاختبارات</p>
             <div className="flex flex-wrap gap-2">
@@ -629,7 +777,7 @@ export default function OnboardingPage() {
         )}
 
         {/* موعد الاختبار القادم (اختياري) */}
-        {goal && primaryTrack && (
+        {(isSecondary ? finalTracks.length > 0 : (goal && primaryTrack)) && (
           <div>
             <p className="label mb-3">📅 موعد اختبارك القادم؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
             <input type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)}
@@ -664,9 +812,15 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* معلومات إضافية — كلها اختيارية، تساعدنا نخصّص المنصة */}
+        {/* معلومات إضافية — كلها اختيارية، مطوية افتراضياً لتقليل الزحام */}
         <div className="flex flex-col gap-4">
-          <p className="label">معلومات إضافية <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+          <button onClick={() => setExtrasOpen((o) => !o)}
+            className="flex items-center gap-2 w-full text-right"
+            aria-expanded={extrasOpen}>
+            <span className="label flex-1">معلومات إضافية <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></span>
+            <span className="text-[13px] font-bold" style={{ color: "var(--text-muted)" }}>{extrasOpen ? "▴" : "▾"}</span>
+          </button>
+          {extrasOpen && (<>
           <div>
             <p className="text-[13px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>اسم المدرسة / الجامعة (اختياري)</p>
             <input type="text" value={school} onChange={(e) => setSchool(e.target.value)}
@@ -703,12 +857,13 @@ export default function OnboardingPage() {
               {SAUDI_REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
             </select>
           </div>
+          </>)}
         </div>
 
-        {/* الإلزامي فقط: الهدف + ساعات المذاكرة + منتقي الجامعة/التخصص عند الحاجة */}
-        {(!goal || !studyHours || needsUniPicker) && (
+        {/* الإلزامي فقط: الثانوي → اختبار + ساعات · غيره → هدف + ساعات (+ الجامعة عند الحاجة) */}
+        {!canFinish && (
           <p className="text-[12px] text-center" style={{ color: "var(--text-muted)" }}>
-            أكمل الحقول الإلزامية أعلاه للمتابعة
+            {isSecondary ? "اختر اختباراً واحداً على الأقل وحدّد ساعات مذاكرتك للمتابعة" : "أكمل الحقول الإلزامية أعلاه للمتابعة"}
           </p>
         )}
 
@@ -720,8 +875,8 @@ export default function OnboardingPage() {
         )}
 
         <button className="btn-primary glow-blue" onClick={finish}
-          disabled={isSubmitting || !goal || !studyHours || needsUniPicker}
-          style={{ opacity: !isSubmitting && goal && studyHours && !needsUniPicker ? 1 : 0.4 }}>
+          disabled={isSubmitting || !canFinish}
+          style={{ opacity: !isSubmitting && canFinish ? 1 : 0.4 }}>
           {isSubmitting ? "جارٍ الحفظ…" : "يلا نبدأ ←"}
         </button>
         <button onClick={() => setStep(1)} className="text-[15px] font-semibold w-full text-center py-1"
