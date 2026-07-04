@@ -12,6 +12,7 @@ import Logo from "./Logo";
 import { ThemeToggle } from "./Profile";
 import SettingsButton from "./SettingsPanel";
 import { loadUser, showsUniversityUI, type DarbUser } from "@/lib/storage";
+import { isUniversityPhase } from "@/lib/phase";
 
 /* عدّاد البطاقات المستحقّة — نفس منطق BottomNav */
 function calcDue(): number {
@@ -45,6 +46,12 @@ const I = {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.3 : 1.8} className="w-5 h-5">
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 3 2 8.5l10 5.5 10-5.5L12 3z" />
       <path strokeLinecap="round" strokeLinejoin="round" d="M6 10.8v5.2a8 8 0 0 0 12 0v-5.2" />
+    </svg>
+  ),
+  uniTools: (a: boolean) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.3 : 1.8} className="w-5 h-5">
+      <rect x="5.5" y="3" width="13" height="18" rx="2.5" />
+      <path strokeLinecap="round" d="M8.5 7h7M8.5 11h0M12 11h0M15.5 11h0M8.5 14.5h0M12 14.5h0M15.5 14.5h0M8.5 18h0M12 18h3.5" />
     </svg>
   ),
   plan: (a: boolean) => (
@@ -128,9 +135,12 @@ export default function DesktopSidebar() {
   const primary: NavLink[] = [
     { href: "/dashboard", label: "الرئيسية", icon: I.home },
     { href: "/orbit", label: "أوربت", icon: I.orbit },
-    uniMode
-      ? { href: "/university", label: "القبول الجامعي", icon: I.university }
-      : { href: "/roadmap", label: "مساري", icon: I.roadmap },
+    /* العنصر الأوسط حسب المرحلة: جامعي → أدوات الجامعة، ثالث ثانوي/خريج → القبول، وإلا مساري */
+    isUniversityPhase(user)
+      ? { href: "/uni-tools", label: "أدوات الجامعة", icon: I.uniTools }
+      : uniMode
+        ? { href: "/university", label: "القبول الجامعي", icon: I.university }
+        : { href: "/roadmap", label: "مساري", icon: I.roadmap },
     { href: "/plan", label: "خطتي", icon: I.plan },
     { href: "/study-plan", label: "مخطط الدراسة", icon: I.study },
     { href: "/review", label: "بطاقاتي", icon: I.cards, badge: true },

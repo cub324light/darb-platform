@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { loadUser, showsUniversityUI } from "@/lib/storage";
+import { isUniversityPhase } from "@/lib/phase";
 
 function calcDue(): number {
   if (typeof window === "undefined") return 0;
@@ -41,6 +42,18 @@ const ADMISSION_ITEM: NavItem = {
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 3 2 8.5l10 5.5 10-5.5L12 3z" />
       <path strokeLinecap="round" strokeLinejoin="round" d="M2 8.5v7M22 8.5v3" />
       <path strokeLinecap="round" strokeLinejoin="round" d="M6 10.8v5.2a8 8 0 0 0 12 0v-5.2" />
+    </svg>
+  ),
+};
+
+/* أدوات الجامعة — العنصر الأوسط للجامعي (حاسبة المعدل/الغياب/الفاينل) */
+const UNI_TOOLS_ITEM: NavItem = {
+  href: "/uni-tools",
+  label: "الأدوات",
+  icon: (a: boolean) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
+      <rect x="5.5" y="3" width="13" height="18" rx="2.5" />
+      <path strokeLinecap="round" d="M8.5 7h7M8.5 11h0M12 11h0M15.5 11h0M8.5 14.5h0M12 14.5h0M15.5 14.5h0M8.5 18h0M12 18h3.5" />
     </svg>
   ),
 };
@@ -88,13 +101,15 @@ const BASE_ITEMS: (NavItem | "MID")[] = [
 export default function BottomNav() {
   const pathname = usePathname();
   const dueCount = useDueCards();
-  const [uniMode, setUniMode] = useState(false);
+  /* العنصر الأوسط حسب المرحلة (نفس المنطق الثلاثي في DesktopSidebar):
+     جامعي → أدوات الجامعة، ثالث ثانوي/خريج → القبول، وإلا مساري.
+     تهيئة كسولة بنمط DesktopSidebar — لا setState داخل effect. */
+  const [midItem] = useState<NavItem>(() => {
+    if (typeof window === "undefined") return ROADMAP_ITEM;
+    const u = loadUser();
+    return isUniversityPhase(u) ? UNI_TOOLS_ITEM : showsUniversityUI(u) ? ADMISSION_ITEM : ROADMAP_ITEM;
+  });
 
-  useEffect(() => {
-    setUniMode(showsUniversityUI(loadUser()));
-  }, []);
-
-  const midItem = uniMode ? ADMISSION_ITEM : ROADMAP_ITEM;
   const navItems: NavItem[] = BASE_ITEMS.map((it) => it === "MID" ? midItem : it) as NavItem[];
 
   return (

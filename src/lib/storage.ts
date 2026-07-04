@@ -355,7 +355,7 @@ export function resetAll() {
      "darb_track_exam_dates","darb_results","darb_skills","darb_skill_progress",
      "darb_session_log","darb_leaks_plan","darb_exam_coord","darb_dash_config","darb_dash_sched_v2",
      "darb_prefs","darb_goals","darb_daily","darb_retention","darb_coach_memory","darb_calendar",
-     "darb_study_plan","darb_admissions"].forEach((k) =>
+     "darb_study_plan","darb_admissions","darb_uni_tools"].forEach((k) =>
       localStorage.removeItem(k)
     );
     /* تعليمات أول زيارة تظهر من جديد بعد الضبط */
@@ -790,4 +790,30 @@ export function saveStudyPlan(plan: StudyPlanOverride) {
 }
 export function clearStudyPlan() {
   try { localStorage.removeItem(STUDY_PLAN_KEY); } catch {}
+}
+
+/* ── أدوات الجامعة (/uni-tools): مدخلات الحاسبات — حفظ محلي فقط (لا مزامنة سحابية)
+   القيم الرقمية تُخزَّن نصاً خاماً كما كتبها الطالب في الحقول، والحساب كله
+   في src/lib/uniTools النقي. ── */
+export interface UniToolsCourseRow { name: string; hours: string; letter: string }
+export interface UniToolsState {
+  system?: 4 | 5;                // نظام المعدل المختار (افتراضي 5)
+  courses?: UniToolsCourseRow[]; // مواد الفصل (حاسبة المعدل)
+  prevGpa?: string;              // التراكمي الحالي
+  prevHours?: string;            // الساعات المنجزة
+  targetGpa?: string;            // الهدف («وش أحتاج؟»)
+  absence?: { weeklyHours?: string; weeks?: string; limitPct?: string; absent?: string };
+  final?: { currentScore?: string; currentOutOf?: string; finalWeight?: string; targetTotal?: string };
+  convert?: { value?: string; from?: 4 | 5 | 100; to?: 4 | 5 | 100 };
+}
+const UNI_TOOLS_KEY = "darb_uni_tools";
+export function loadUniTools(): UniToolsState {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(UNI_TOOLS_KEY);
+    return raw ? (JSON.parse(raw) as UniToolsState) : {};
+  } catch { return {}; }
+}
+export function saveUniTools(s: UniToolsState) {
+  try { localStorage.setItem(UNI_TOOLS_KEY, JSON.stringify(s)); } catch {}
 }
