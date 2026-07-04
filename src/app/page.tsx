@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { TRACKS } from "@/lib/tracks";
 import Logo from "@/components/Logo";
@@ -11,9 +10,6 @@ import { Sparkles } from "@/components/ui/sparkles";
 import { Meteors } from "@/components/ui/meteors";
 import { AnimatedGradientText } from "@/components/ui/animated-gradient-text";
 import { BorderBeam } from "@/components/ui/border-beam";
-
-/* شريط قصص النجاح — ديناميكي: يُبقي بذرة المحتوى خارج حزمة الهبوط الحرجة */
-const SuccessStoriesStrip = dynamic(() => import("@/components/SuccessStoriesStrip"));
 
 function useReveal(active: boolean) {
   const ref = useRef<HTMLDivElement>(null);
@@ -89,7 +85,7 @@ const SERVICES: {
     icon: "🎓", title: "القبول الجامعي", color: "#F59E0B",
     brief: "حاسبة الموزونة، مقارنة الجامعات، الأسئلة الشائعة، ومتابعة مواعيد القبول.",
     full: "حاسبة موزونة تحسب نسبتك بمعادلة كل جامعة، وتحليل فجوة يوريك كم تحتاج ترفع درجاتك للتخصص اللي تبغاه. تقارن بين الجامعات جنباً إلى جنب، وتتابع حالة طلباتك ومواعيد موسم القبول بمكان واحد. وإجابات الأسئلة الشائعة عن القبول ومنصة قبول متاحة للجميع.",
-    href: "/faq", linkLabel: "الأسئلة الشائعة للقبول",
+    href: "/faq", linkLabel: "الأسئلة الشائعة",
   },
   {
     icon: "🏛", title: "الجامعات", color: "#06B6D4",
@@ -512,11 +508,6 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
-
-      {/* ══════════════════════════════════════════ */}
-      {/* ═══ قصص نجاح (social proof) ═══ */}
-      {/* ══════════════════════════════════════════ */}
-      <SuccessStoriesStrip />
 
       {/* ══════════════════════════════════════════ */}
       {/* ═══ CTA الختام ═══ */}

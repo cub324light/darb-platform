@@ -7,7 +7,6 @@ const SIBLINGS = [
   { href: "/faq",                 label: "الأسئلة الشائعة",   icon: "❓" },
   { href: "/tahsili/flashcards",  label: "حقائق التحصيلي",    icon: "🃏" },
   { href: "/success-stories",     label: "قصص نجاح",          icon: "🏆" },
-  { href: "/uni-gear",            label: "أجهزة الجامعة",     icon: "💻" },
 ] as const;
 
 export default function PublicPageCta({ current }: { current: string }) {

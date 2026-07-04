@@ -1,12 +1,11 @@
-/* ─── أفضل أجهزة الجامعة (صفحة عامة، ثابتة بالكامل) ───
+/* ─── أفضل أجهزة الجامعة (صفحة داخل المنصة، ثابتة بالكامل) ───
    Server Component: البيانات ثابتة من src/lib/gear — لا revalidate ولا
    Firestore ولا firebase على العميل. التفاعل (فلترة الفئة/التخصص/الميزانية
-   والتخصيص اللطيف) في GearBrowser. */
+   والتخصيص اللطيف) في GearBrowser. صفحة تطبيق فلا تُفهرَس (robots index:false). */
 import type { Metadata } from "next";
 import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import { ThemeToggle } from "@/components/Profile";
-import PublicPageCta from "@/components/content/PublicPageCta";
 import GearBrowser from "./GearBrowser";
 
 export const metadata: Metadata = {
@@ -27,6 +26,7 @@ export const metadata: Metadata = {
     title: "أفضل أجهزة الجامعة — حسب تخصصك وميزانيتك | درب",
     description: "لابتوبات ولوحية وطابعات وإكسسوارات حسب التخصص والميزانية — توصيات مواصفات محايدة.",
   },
+  robots: { index: false },
 };
 
 export default function UniGearPage() {
@@ -34,7 +34,7 @@ export default function UniGearPage() {
     <div className="min-h-dvh">
       <Dome compact hideControls>
         <div className="flex items-center gap-3">
-          <BackButton href="/" />
+          <BackButton href="/university" />
           <h1 className="title-lg grad-title flex-1">أجهزة الجامعة</h1>
           <ThemeToggle />
         </div>
@@ -46,8 +46,6 @@ export default function UniGearPage() {
         </p>
 
         <GearBrowser />
-
-        <PublicPageCta current="/uni-gear" />
       </main>
     </div>
   );

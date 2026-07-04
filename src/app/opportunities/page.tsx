@@ -34,7 +34,7 @@ const STATUS_META: Record<OpportunityStatus, { color: string }> = {
 const LINK_LABELS: Record<string, string> = {
   "/university": "لوحة القبول",
   "/profile": "الملف",
-  "/faq": "الأسئلة الشائعة",
+  "/guide": "دليل القبول",
   "/dashboard": "الرئيسية",
 };
 

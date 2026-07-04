@@ -42,16 +42,15 @@ function StoryCard({ story }: { story: SuccessStoryDoc }) {
   return (
     <div className="rounded-2xl p-5 glow-card-hover"
       style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-      {/* الاسم + شارة التوثيق */}
+      {/* الاسم + شارة التوثيق — التسميات مجهولة فالأفاتار أيقونة ثابتة 🎓 */}
       <div className="flex items-center gap-3 mb-4">
-        <span className="w-11 h-11 rounded-2xl flex items-center justify-center font-black text-[17px] flex-shrink-0"
+        <span className="w-11 h-11 rounded-2xl flex items-center justify-center text-[19px] flex-shrink-0"
           style={{
             background: "color-mix(in srgb, var(--gold) 14%, transparent)",
             border: "1.5px solid color-mix(in srgb, var(--gold) 35%, transparent)",
-            color: "var(--gold)",
           }}
           aria-hidden="true">
-          {story.name.trim().charAt(0)}
+          🎓
         </span>
         <p className="font-black text-[16px] flex-1" style={{ color: "var(--text)" }}>{story.name}</p>
         {story.verified && (

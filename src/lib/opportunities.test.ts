@@ -130,7 +130,7 @@ test("الابتعاث: بطاقة إمداد بلا أرقام + جاهزية �
   const emdad = abroad.items.find((i) => i.id === "abroad-emdad");
   assert.ok(emdad);
   assert.match(emdad.title, /إمداد/);
-  assert.equal(emdad.linkTo, "/faq");
+  assert.equal(emdad.linkTo, "/guide");
   const lang = buildOpportunities({ ...FULL, step: null })[2].items.find((i) => i.id === "abroad-language");
   assert.ok(lang);
   assert.equal(lang.status, "يحتاج شرط");

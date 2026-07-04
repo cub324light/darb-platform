@@ -298,7 +298,7 @@ function abroadGroup(inp: OpportunityInputs, user: DarbUser, phase: StudentPhase
     hint: applyNow
       ? "غالباً يتطلب درجات عالية وإثبات لغة إنجليزية — لا تعتمد إلا الإعلان الرسمي."
       : "يفتح لخريجي الثانوية — وقتك الآن لبناء الدرجات واللغة.",
-    linkTo: "/faq",
+    linkTo: "/guide",
   };
 
   /* جاهزية اللغة من نطاقات STEP (بلا عتبات مخترعة) */

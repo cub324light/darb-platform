@@ -1,25 +1,24 @@
-/* ─── الأسئلة الشائعة (صفحة عامة، ISR كل ساعة) ───
-   Server Component: يجلب المحتوى خادمياً عبر getContentSnapshot (بذرة + overlay
-   من Firestore، offline-first) — لا يصل firebase إلى العميل أبداً.
-   يبني JSON-LD من نوع FAQPage للفهرسة الغنية في محركات البحث. */
+/* ─── الأسئلة الشائعة عن درب (صفحة عامة تسويقية) ───
+   سؤال لكل مسار اختبار «كيف يساعدني درب في X؟» + سؤال «وش هو درب؟» — عشرة فقط
+   من PRODUCT_FAQ (ثابتة، بلا getContentSnapshot). Server Component يبني JSON-LD
+   من نوع FAQPage للفهرسة الغنية، والأكورديون في ProductFaqList (عميل).
+   المحتوى المعرفي الكامل (تصنيفات + بحث + قوائم مرجعية) انتقل إلى /guide. */
 import type { Metadata } from "next";
 import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import { ThemeToggle } from "@/components/Profile";
 import PublicPageCta from "@/components/content/PublicPageCta";
-import { getContentSnapshot } from "@/lib/content/server";
-import FaqBrowser from "./FaqBrowser";
-
-export const revalidate = 3600;
+import { PRODUCT_FAQ } from "@/lib/productFaq";
+import ProductFaqList from "./ProductFaqList";
 
 export const metadata: Metadata = {
-  title: "الأسئلة الشائعة — القبول الجامعي ومنصة قبول | درب",
+  title: "الأسئلة الشائعة عن درب",
   description:
-    "إجابات موثوقة عن القبول الجامعي في السعودية بعشرة تصنيفات: منصة قبول، القدرات، التحصيلي، اختبار STEP، الجامعات، المكافآت، السكن، التجسير، وسنة الفراغ — مع بحث فوري وقوائم مرجعية ونصائح تقديم.",
+    "كيف يساعدك درب في القدرات والتحصيلي وستيب وآيلتس وتوفل ودووليجو واختبارات القبول أرامكو CPC وITC — سؤال لكل اختبار، وسؤال: وش هو درب؟",
   alternates: { canonical: "/faq" },
   openGraph: {
-    title: "الأسئلة الشائعة — القبول الجامعي ومنصة قبول | درب",
-    description: "إجابات موثوقة بعشرة تصنيفات: منصة قبول، القدرات، التحصيلي، STEP، الجامعات، المكافآت، السكن، التجسير، وسنة الفراغ — مع بحث فوري.",
+    title: "الأسئلة الشائعة عن درب",
+    description: "كيف يساعدك درب في كل اختبار — القدرات والتحصيلي وستيب واختبارات اللغة والقبول.",
     url: "/faq",
     siteName: "درب",
     locale: "ar_SA",
@@ -27,19 +26,17 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "الأسئلة الشائعة — القبول الجامعي ومنصة قبول | درب",
-    description: "إجابات موثوقة عن القبول الجامعي والقياس في السعودية — بحث فوري وعشرة تصنيفات.",
+    title: "الأسئلة الشائعة عن درب",
+    description: "كيف يساعدك درب في كل اختبار — سؤال لكل مسار، وسؤال: وش هو درب؟",
   },
 };
 
-export default async function FaqPage() {
-  const snap = await getContentSnapshot();
-
-  /* JSON-LD (FAQPage) — كل الأسئلة بإجاباتها الكاملة، مع تعقيم < ضد الحقن */
+export default function FaqPage() {
+  /* JSON-LD (FAQPage) — العشرة أسئلة بإجاباتها، مع تعقيم < ضد الحقن */
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: [...snap.faqGeneral, ...snap.faqQubool].map((f) => ({
+    mainEntity: PRODUCT_FAQ.map((f) => ({
       "@type": "Question",
       name: f.question,
       acceptedAnswer: { "@type": "Answer", text: f.answer },
@@ -63,15 +60,10 @@ export default async function FaqPage() {
 
       <main className="px-5 py-6 max-w-2xl min-[1100px]:max-w-3xl mx-auto flex flex-col gap-10 pb-20">
         <p className="text-[14.5px] leading-relaxed -mb-4" style={{ color: "var(--text-muted)" }}>
-          كل اللي تحتاج تعرفه عن القبول والاختبارات — ابحث فورياً أو تصفح بالتصنيفات، مع قوائم مرجعية ونصائح من تجارب حقيقية.
+          سؤال لكل اختبار: وش المشكلة فيه بالضبط، وكيف يحلّها درب — من القدرات والتحصيلي إلى اختبارات اللغة والقبول.
         </p>
 
-        <FaqBrowser
-          general={snap.faqGeneral}
-          qubool={snap.faqQubool}
-          referenceLists={snap.referenceLists}
-          tips={snap.tips}
-        />
+        <ProductFaqList />
 
         <PublicPageCta current="/faq" />
       </main>

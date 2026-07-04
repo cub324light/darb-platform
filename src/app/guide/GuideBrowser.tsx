@@ -1,5 +1,5 @@
 "use client";
-/* ─── متصفح الأسئلة الشائعة ───
+/* ─── متصفح دليل القبول والاختبارات ───
    بحث فوري عبر كل الأسئلة (العام + منصة قبول معاً)، وشرائح تصنيفات أفقية
    قابلة للتمرير (الكل + التصنيفات العشرة الموجودة فعلاً)، وأسفلها القوائم
    المرجعية (مع تنبيه «تتغير سنوياً» للموسومة) ثم النصائح. البيانات تصل props
@@ -78,7 +78,7 @@ function AccordionItem({
   );
 }
 
-export default function FaqBrowser({
+export default function GuideBrowser({
   general, qubool, referenceLists, tips,
 }: {
   general: FaqDoc[];

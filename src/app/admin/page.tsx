@@ -777,7 +777,7 @@ export default function AdminPage() {
             </span>
           </div>
           <p className="text-[12.5px] leading-relaxed mb-2.5" style={{ color: "var(--text-muted)" }}>
-            هذه القوائم في صفحة الأسئلة الشائعة تتغير كل موسم قبول — حدّث بياناتها قبل فتح التقديم ثم ارفعها بـ npm run seed:content.
+            هذه القوائم في دليل القبول تتغير كل موسم قبول — حدّث بياناتها قبل فتح التقديم ثم ارفعها بـ npm run seed:content.
           </p>
           <div className="flex flex-wrap gap-1.5">
             {ANNUAL_REVIEW.map((r) => (
