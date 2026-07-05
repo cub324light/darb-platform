@@ -263,6 +263,43 @@ export const STUDY_GOALS: { id: StudyGoalType; label: string; icon: string }[] =
 export const goalLabel = (id?: StudyGoalType): string | undefined =>
   id ? STUDY_GOALS.find((g) => g.id === id)?.label : undefined;
 
+/* الهدف الأساسي من قائمة أهداف متعددة — أول عنصر (SSoT للتوافق مع كل المستهلكين
+   القائمين الذين يقرؤون goal مفرداً: goldenPath/duwairb/goalReality). */
+export function primaryGoal(goals?: StudyGoalType[]): StudyGoalType | undefined {
+  return goals && goals.length ? goals[0] : undefined;
+}
+
+/* ─── اختبارات اللغة: قسم إضافي اختياري متعدد بلا حد في تسجيل الثانوي/الخريج ───
+   كلها بلا تقييد صفّي (available في trackEligibilityFor) ولا تُحسب بأي حد
+   (MAX_BASIC_TRACKS لا يُطبَّق عليها) — للطالب أن يضيف أكثر من واحد بنفس الوقت. */
+export const LANGUAGE_TESTS: TrackId[] = ["ستيب", "ايلتس", "توفل", "دوليقو"];
+
+/* النواة الثابتة لطلاب الثانوي — تظهر دائماً بترتيب [القدرات · التحصيلي · المدرسة].
+   شقّ «التحصيلي» يتبدّل حسب الصف: ثاني ثانوي → التحصيلي المبكر (المتاح لصفّه)،
+   وأول/ثالث ثانوي → التحصيلي العادي (أول ثانوي يُعرض مقفلاً حسب الأهلية).
+   نقيّة وحتمية — تُستهلَك في التسجيل لعرض النواة الثابتة وتفعيل المتاح منها. */
+export function secondaryCoreTracks(grade?: string): TrackId[] {
+  const tahsili: TrackId = grade === "ثاني ثانوي" ? "تحصيلي مبكر" : "تحصيلي";
+  return ["قدرات", tahsili, "مدرسه"];
+}
+
+/* المسارات النهائية لطالب الثانوي: النواة المتاحة (المفعّلة تلقائياً) + اختبارات
+   اللغة المختارة — بترتيب ثابت: القدرات (أو أول نواة متاحة) أولاً، ثم بقية النواة،
+   ثم اختبارات اللغة (بترتيب LANGUAGE_TESTS)، ثم المدرسة أخيراً.
+   لا حدّ على اختبارات اللغة إطلاقاً. المقفل من النواة (تحصيلي أول ثانوي) يُستبعَد. */
+export function secondaryActiveTracks(
+  grade: string | undefined,
+  eligibility: TrackEligibility[],
+  selectedLanguages: TrackId[],
+): TrackId[] {
+  const isAvail = (id: TrackId) => eligibility.some((e) => e.id === id && e.status === "available");
+  const core = secondaryCoreTracks(grade).filter(isAvail);
+  const langs = LANGUAGE_TESTS.filter((id) => selectedLanguages.includes(id) && isAvail(id));
+  const head = core.filter((id) => id !== "مدرسه");             // القدرات + شقّ التحصيلي المتاح
+  const school: TrackId[] = core.includes("مدرسه") ? ["مدرسه"] : [];
+  return [...new Set([...head, ...langs, ...school])];
+}
+
 /* يحدّد المسارات النشطة تلقائياً من الحالة التعليمية + الصف + الهدف.
    نقيّة وحتمية — تُستعمل في التسجيل وعند تغيير الهدف لاحقاً. */
 export function basicTracksFor(opts: { status?: string; grade?: string; goal?: StudyGoalType; gapYear?: boolean }): TrackId[] {

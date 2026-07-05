@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   trackEligibilityFor, orderSelectedTracks, deriveGoalFromTracks,
   defaultTracksFromEligibility, basicTracksFor, MAX_BASIC_TRACKS,
+  secondaryCoreTracks, secondaryActiveTracks, LANGUAGE_TESTS, primaryGoal,
   type TrackEligibility, type TrackId,
 } from "./tracks";
 
@@ -198,4 +199,54 @@ test("deriveGoalFromTracks: أبرز مسار مختار يحدّد الهدف �
   /* مدرسة فقط: لا هدف مجرّد يُفرض على الطالب */
   assert.equal(deriveGoalFromTracks(["مدرسه"], elig1), undefined);
   assert.equal(deriveGoalFromTracks([], elig1), undefined);
+});
+
+/* ════════ الأهداف المتعددة: الهدف الأساسي ════════ */
+test("primaryGoal: أول عنصر هو الأساسي، والفارغ/غير المعرّف undefined", () => {
+  assert.equal(primaryGoal(["qudurat", "step", "university"]), "qudurat");
+  assert.equal(primaryGoal(["university"]), "university");
+  assert.equal(primaryGoal([]), undefined);
+  assert.equal(primaryGoal(undefined), undefined);
+});
+
+/* ════════ النواة الثابتة لطلاب الثانوي ════════ */
+test("secondaryCoreTracks: القدرات والمدرسة ثابتتان، وشقّ التحصيلي يتبدّل مع الصف", () => {
+  assert.deepEqual(secondaryCoreTracks("أول ثانوي"),  ["قدرات", "تحصيلي", "مدرسه"]);
+  assert.deepEqual(secondaryCoreTracks("ثاني ثانوي"), ["قدرات", "تحصيلي مبكر", "مدرسه"]);
+  assert.deepEqual(secondaryCoreTracks("ثالث ثانوي"), ["قدرات", "تحصيلي", "مدرسه"]);
+  /* ثانوي بلا صف محدّد: التحصيلي العادي (الأكثر تحفّظاً) */
+  assert.deepEqual(secondaryCoreTracks(undefined),    ["قدرات", "تحصيلي", "مدرسه"]);
+  /* اختبارات اللغة الأربعة */
+  assert.deepEqual(LANGUAGE_TESTS, ["ستيب", "ايلتس", "توفل", "دوليقو"]);
+});
+
+/* ════════ المسارات النهائية للثانوي: نواة متاحة + لغات بلا حد ════════ */
+test("secondaryActiveTracks: النواة المتاحة فقط بلا لغات، والقدرات دائماً أولاً والمدرسة أخيراً", () => {
+  const e1 = trackEligibilityFor({ status: "ثانوي", grade: "أول ثانوي" });
+  /* أول ثانوي: التحصيلي مقفل → يُستبعَد من النواة المتاحة */
+  assert.deepEqual(secondaryActiveTracks("أول ثانوي", e1, []), ["قدرات", "مدرسه"]);
+
+  const e2 = trackEligibilityFor({ status: "ثانوي", grade: "ثاني ثانوي" });
+  assert.deepEqual(secondaryActiveTracks("ثاني ثانوي", e2, []), ["قدرات", "تحصيلي مبكر", "مدرسه"]);
+
+  const e3 = trackEligibilityFor({ status: "ثانوي", grade: "ثالث ثانوي" });
+  assert.deepEqual(secondaryActiveTracks("ثالث ثانوي", e3, []), ["قدرات", "تحصيلي", "مدرسه"]);
+});
+
+test("secondaryActiveTracks: اختبارات اللغة متعددة بلا حد — تتجاوز MAX_BASIC_TRACKS", () => {
+  const e3 = trackEligibilityFor({ status: "ثانوي", grade: "ثالث ثانوي" });
+
+  /* اختباران لغة → 5 مسارات (يتجاوز الحد ٣) والقدرات أولاً والمدرسة أخيراً */
+  const two = secondaryActiveTracks("ثالث ثانوي", e3, ["ايلتس", "توفل"]);
+  assert.deepEqual(two, ["قدرات", "تحصيلي", "ايلتس", "توفل", "مدرسه"]);
+  assert.ok(two.filter((t) => t !== "مدرسه").length > MAX_BASIC_TRACKS, "لا يُطبَّق أي حد على اختبارات اللغة");
+
+  /* كل اختبارات اللغة الأربعة معاً — بترتيب LANGUAGE_TESTS بغضّ النظر عن ترتيب الاختيار */
+  const all = secondaryActiveTracks("ثالث ثانوي", e3, ["دوليقو", "توفل", "ايلتس", "ستيب"]);
+  assert.deepEqual(all, ["قدرات", "تحصيلي", "ستيب", "ايلتس", "توفل", "دوليقو", "مدرسه"]);
+  for (const t of LANGUAGE_TESTS) assert.ok(all.includes(t), `${t} مضاف`);
+
+  /* الأساسي دائماً القدرات (أول نواة متاحة) والمدرسة أخيراً */
+  assert.equal(all[0], "قدرات");
+  assert.equal(all[all.length - 1], "مدرسه");
 });
