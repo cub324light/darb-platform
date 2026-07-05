@@ -14,7 +14,10 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
-      allow: "/",
+      /* «/universities» (الدليل العام + ملفات الجامعات) مسموح صراحةً: بادئة المنع
+         «/university» (الأداة الخاصة) تغطّي «/universities» أيضاً، والسماح الأطول
+         يتغلّب (قاعدة أطول تطابق) فلا يُحجب كنز البحث العضوي. */
+      allow: ["/", "/universities"],
       disallow: PRIVATE_PATHS,
     },
     sitemap: "https://usedarb.com/sitemap.xml",

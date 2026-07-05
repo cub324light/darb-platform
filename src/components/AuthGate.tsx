@@ -71,7 +71,12 @@ function BlockedScreen() {
 export default function AuthGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const isPublic = PUBLIC_PATHS.includes(pathname);
+  /* عام: القائمة الثابتة + دليل الجامعات وكل ملف جامعة (/universities و /universities/[id]).
+     نطابق «/universities» بدقّة و«/universities/» كبادئة فقط، فلا نفتح غيرها بالخطأ. */
+  const isPublic =
+    PUBLIC_PATHS.includes(pathname) ||
+    pathname === "/universities" ||
+    pathname.startsWith("/universities/");
 
   const [user, setUser] = useState<User | null>(null);
   const [authResolved, setAuthResolved] = useState(false);

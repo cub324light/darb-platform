@@ -1026,7 +1026,7 @@ export default function DashboardPage() {
               </div>
             )}
             {exp.admission === "explore" && (
-              <Link href="/university"
+              <Link href="/universities"
                 className="rounded-2xl px-4 py-2.5 mb-3 flex items-center justify-between gap-2 no-underline transition active:scale-[0.97]"
                 style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 24%, transparent)" }}>
                 <span className="flex items-center gap-2">

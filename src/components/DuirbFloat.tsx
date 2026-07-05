@@ -23,7 +23,7 @@ const DuirbHub = dynamic(() => import("@/components/DuirbHub"), {
 const HIDDEN_ON = [
   "/onboarding", "/admin", "/pricing", "/privacy", "/terms", "/subscription", "/parent",
   // صفحات المحتوى العامة — زوارها بلا حساب ودويرب يتطلب مصادقة
-  "/faq", "/tahsili/flashcards", "/success-stories",
+  "/faq", "/tahsili/flashcards", "/success-stories", "/universities",
 ];
 
 export default function DuirbFloat() {

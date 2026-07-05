@@ -5,6 +5,7 @@ import Link from "next/link";
 
 const SIBLINGS = [
   { href: "/faq",                 label: "الأسئلة الشائعة",   icon: "❓" },
+  { href: "/universities",        label: "دليل الجامعات",     icon: "🏛" },
   { href: "/tahsili/flashcards",  label: "حقائق التحصيلي",    icon: "🃏" },
   { href: "/success-stories",     label: "قصص نجاح",          icon: "🏆" },
 ] as const;
