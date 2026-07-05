@@ -20,7 +20,8 @@ export interface StatsData {
   monthlyDeltaPct: number | null;
 }
 
-function hoursLabel(mins: number): { val: string; unit: string } {
+/* مُصدَّر ليعيد استخدامه ProfileQuickStats — تنسيق واحد للرقم في كل مكان */
+export function hoursLabel(mins: number): { val: string; unit: string } {
   if (mins < 60) return { val: mins.toLocaleString("ar"), unit: "دقيقة" };
   const h = Math.round((mins / 60) * 10) / 10; // خانة عشرية واحدة
   return { val: h.toLocaleString("ar"), unit: "ساعة" };

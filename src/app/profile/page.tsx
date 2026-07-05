@@ -32,6 +32,8 @@ import ProfileInsights from "@/components/profile/ProfileInsights";
 import ProfileTimeline, { type JourneyItem } from "@/components/profile/ProfileTimeline";
 import ProfileSocial from "@/components/profile/ProfileSocial";
 import ProfileStats from "@/components/profile/ProfileStats";
+import ProfileQuickStats from "@/components/profile/ProfileQuickStats";
+import ProfileGoalsSummary from "@/components/profile/ProfileGoalsSummary";
 import ProfileGoals from "@/components/profile/ProfileGoals";
 import GoldenPathCard from "@/components/GoldenPathCard";
 import RankBadge from "@/components/RankBadge";
@@ -241,24 +243,54 @@ export default function ProfilePage() {
         {tab === "overview" && (
           <div id="profile-panel-overview" role="tabpanel" aria-labelledby="profile-tab-overview"
             className="flex flex-col gap-5 profile-tab-panel profile-overview-grid">
-            {arena && (
-              <div className="rounded-2xl px-4 py-3.5 flex items-center justify-between gap-3"
-                style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-                <div className="min-w-0">
-                  <p className="font-bold text-[15px]" style={{ color: "var(--text)" }}>⚔️ رتبة الأرينا</p>
-                  <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-                    {arena.wins}ف · {arena.losses}خ · أعلى {arena.peakRp} RP
-                  </p>
-                </div>
-                <RankBadge rp={arena.rp} size="lg" showRp />
+            {/* العمود الجانبي (الخلاصة) — على الجوال يذوب في العمود الواحد عبر order */}
+            <div className="profile-overview-side">
+              <div className="profile-ov-item order-1">
+                <ProfileQuickStats data={statsData} onOpenStats={() => setTab("stats")} />
               </div>
-            )}
-            <GoldenPathCard />
-            <ProfileMotivation quote={quoteOfToday()} weekly={weekly} level={level} nextBadge={nextBadge} />
-            {showUni && <UniversityFutureCard onOpenTab={() => setTab("future")} />}
-            <ProfileInsights data={insights} />
-            <ProfileSocial />
-            <ProfileTimeline items={journey} />
+              <div className="profile-ov-item order-2">
+                <ProfileGoalsSummary daysLeft={insights.daysLeft} examTitle={getTrack(user.track).title}
+                  university={goals.university} major={goals.major} onOpenGoals={() => setTab("goals")} />
+              </div>
+              {arena && (
+                <div className="profile-ov-item order-7">
+                  <div className="rounded-2xl px-4 py-3.5 flex items-center justify-between gap-3"
+                    style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                    <div className="min-w-0">
+                      <p className="font-bold text-[15px]" style={{ color: "var(--text)" }}>⚔️ رتبة الأرينا</p>
+                      <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+                        {arena.wins}ف · {arena.losses}خ · أعلى {arena.peakRp} RP
+                      </p>
+                    </div>
+                    <RankBadge rp={arena.rp} size="lg" showRp />
+                  </div>
+                </div>
+              )}
+              <div className="profile-ov-item order-8">
+                <ProfileSocial />
+              </div>
+            </div>
+
+            {/* العمود الرئيسي — الرحلة آخر شيء (أرشيفية) */}
+            <div className="profile-overview-main">
+              <div className="profile-ov-item order-3">
+                <GoldenPathCard />
+              </div>
+              <div className="profile-ov-item order-4">
+                <ProfileMotivation quote={quoteOfToday()} weekly={weekly} level={level} nextBadge={nextBadge} />
+              </div>
+              {showUni && (
+                <div className="profile-ov-item order-5">
+                  <UniversityFutureCard onOpenTab={() => setTab("future")} />
+                </div>
+              )}
+              <div className="profile-ov-item order-6">
+                <ProfileInsights data={insights} />
+              </div>
+              <div className="profile-ov-item order-9">
+                <ProfileTimeline items={journey} />
+              </div>
+            </div>
           </div>
         )}
 
@@ -270,10 +302,11 @@ export default function ProfilePage() {
 
         {tab === "goals" && (
           <div id="profile-panel-goals" role="tabpanel" aria-labelledby="profile-tab-goals" className="profile-tab-panel flex flex-col gap-4">
+            {/* التنبيه أولاً (حسّاس زمنياً ومضغوط)، ثم الأهداف القابلة للتعديل، ثم قراءة الواقعية المشتقة منها */}
             <ExamRegistrationAlert />
-            <GoalRealityCard />
             <ProfileGoals goals={goals} onGoalsChange={updateGoals}
               results={results} onAddResult={addResult} onDeleteResult={deleteResult} />
+            <GoalRealityCard />
           </div>
         )}
 

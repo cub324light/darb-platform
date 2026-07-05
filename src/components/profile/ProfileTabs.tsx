@@ -5,10 +5,11 @@ import { memo } from "react";
 
 export type ProfileTab = "overview" | "stats" | "goals" | "future" | "prefs" | "achievements" | "coach";
 
+/* الترتيب حسب الأولوية: النظرة العامة ثم الأهداف ثم الإحصائيات — المعرّفات ثابتة */
 export const PROFILE_TABS: { id: ProfileTab; label: string; icon: string }[] = [
   { id: "overview",     label: "نظرة عامة", icon: "🧭" },
-  { id: "stats",        label: "الإحصائيات", icon: "📊" },
   { id: "goals",        label: "الأهداف",    icon: "🎯" },
+  { id: "stats",        label: "الإحصائيات", icon: "📊" },
   { id: "future",       label: "مستقبلي الجامعي", icon: "🎓" },
   { id: "coach",        label: "مدرّبي",     icon: "🤖" },
   { id: "prefs",        label: "التفضيلات",  icon: "⚙️" },

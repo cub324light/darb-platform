@@ -775,20 +775,33 @@ html[data-sidebar="collapsed"] { --desk-sw: 76px;  }
 }
 
 /* ═══════════════════════════════════════════════════════
-   الملف الشخصي — عمودان (Masonry) على سطح المكتب
-   تبويب «نظرة عامة» يعرض البطاقات في عمودين فلا حاجة لتمرير طويل.
+   الملف الشخصي — «نظرة عامة» بعمودين حقيقيين على سطح المكتب
+   الجوال: غلافا العمودين شفّافان (display: contents) فتبقى البطاقات
+   عموداً واحداً يُرتَّب عبر order (الخلاصة: الأرقام ثم الأهداف أولاً).
    ═══════════════════════════════════════════════════════ */
+.profile-overview-side,
+.profile-overview-main { display: contents; }
+/* غلاف بطاقة واحدة — يخفي نفسه إن أعاد المكوّن داخله null (لا فجوة فارغة) */
+.profile-ov-item { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.profile-ov-item:empty { display: none; }
+
 @media (min-width: 1100px) {
   .desk-wide .profile-shell { max-width: 1040px; }
   .profile-overview-grid {
-    display: block !important;
-    column-count: 2;
-    column-gap: 18px;
+    display: grid !important;
+    /* RTL: الخلاصة (الأضيق) تبدأ يميناً والعمود الرئيسي الأعرض يساراً */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.45fr);
+    gap: 18px;
+    align-items: start;
   }
-  .profile-overview-grid > * {
-    break-inside: avoid;
-    margin-bottom: 18px;
+  .profile-overview-side,
+  .profile-overview-main {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-width: 0;
   }
+  .profile-ov-item { gap: 18px; }
 }
 
 /* ═══════════════════════════════════════════════════════
