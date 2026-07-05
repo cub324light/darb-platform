@@ -11,6 +11,7 @@ import ProgressTool from "@/components/ProgressTool";
 import TopicsTool from "@/components/TopicsTool";
 import { loadUser } from "@/lib/storage";
 import { subjectsForTracks, type TrackId } from "@/lib/tracks";
+import { phaseExperience } from "@/lib/experience";
 import { buildDuwairbProfile } from "@/lib/duwairb";
 import { loadCoachMemory, formatMemoryHint } from "@/lib/coachMemory";
 import { trackEvent } from "@/lib/analytics";
@@ -52,6 +53,10 @@ export default function DuirbHub({ subjects: propSubjects, defaultView = "schedu
   /* جملة هدف الطالب — تجعل التخصيص مرئياً في رأس الهَب */
   const goalLine = useMemo(() => buildDuwairbProfile().goalLine, []);
 
+  /* اقتراح دويرب الافتتاحي المختلف لكل مرحلة (من مصدر الحقيقة phaseExperience):
+     أول ثانوي «ابدأ بالقدرات» · ثالث «نحسب موزونتك» · جامعي «جهّز سيرتك». */
+  const phaseHint = useMemo(() => phaseExperience(loadUser()).duwairbHint, []);
+
   /* تذكير الذاكرة القصيرة */
   const memoryHint = useMemo(() => {
     const m = loadCoachMemory();
@@ -74,14 +79,15 @@ export default function DuirbHub({ subjects: propSubjects, defaultView = "schedu
           مساعدك الذكي
         </span>
       </div>
+      {/* اقتراح افتتاحي سياقي حسب المرحلة — دائم الظهور (يجعل دويرب يعرف الطالب) */}
+      <p className="text-[12.5px] font-bold mr-10" style={{ color: "var(--accent-light)" }}>🧭 {phaseHint}</p>
       {goalLine && (
-        <p className="text-[12px] font-bold mr-10" style={{ color: "var(--accent-light)" }}>🎯 {goalLine} — دويرب يخصّص لك كل شيء حسب هدفك</p>
+        <p className="text-[12px] font-bold mr-10 mt-1" style={{ color: "var(--accent-light)" }}>🎯 {goalLine} — دويرب يخصّص لك كل شيء حسب هدفك</p>
       )}
       {memoryHint && (
-        <p className="text-[12px] font-semibold mr-10 mt-1 mb-2" style={{ color: "var(--text-muted)" }}>💬 {memoryHint}</p>
+        <p className="text-[12px] font-semibold mr-10 mt-1" style={{ color: "var(--text-muted)" }}>💬 {memoryHint}</p>
       )}
-      {!goalLine && !memoryHint && <div className="mb-4" />}
-      {(goalLine || memoryHint) && <div className="mb-3" />}
+      <div className="mb-3" />
 
       {/* صف التبويبات — ست قدرات في صفّين */}
       <div className="grid grid-cols-3 gap-1.5 mb-4 p-1.5 rounded-2xl" style={{ background: "var(--surface2)" }}>

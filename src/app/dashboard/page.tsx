@@ -5,6 +5,8 @@ import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import { getTrack, TRACKS, type TrackId } from "@/lib/tracks";
+import { phaseExperience } from "@/lib/experience";
+import DashUniActions from "@/components/DashUniActions";
 import { fmtHour } from "@/lib/utils";
 import { quoteOfToday } from "@/lib/quotes";
 import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, saveExamDate, loadDashConfig, saveDashConfig, loadTrackExamDates, saveTrackExamDates, DASH_SECTION_META, localDayKey, showsUniversityUI, type DarbUser, type ScheduleEvent, type DashItem, type DashSectionId, saveEvents } from "@/lib/storage";
@@ -215,6 +217,9 @@ export default function DashboardPage() {
   }, []);
 
   const track = getTrack(user?.track);
+  /* تجربة المرحلة — بوابة العرض الواحدة (لا شروط studyLevel مبعثرة).
+     نقيّة حتمية: تُحسب أثناء العرض من المستخدم المحمَّل. */
+  const exp = phaseExperience(user);
   // كل مواد المسارات النشطة للمستخدم
   const activeTrackIds: TrackId[] = (user?.activeTracks?.length ? user.activeTracks : [user?.track]).filter(Boolean) as TrackId[];
   const allSubjects = Array.from(
@@ -978,23 +983,62 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* ── البطل: عدّاد الاختبار الأقرب — يُعرض هنا مرة واحدة فقط ── */}
-        <div className="rounded-2xl px-4 py-3 mb-3 text-right"
-          style={{
-            background: `color-mix(in srgb, ${examUrgentColor} 12%, transparent)`,
-            border: `1px solid color-mix(in srgb, ${examUrgentColor} 30%, transparent)`,
-          }}>
-          {nearestExam !== null && nearestExam.days > 1 ? (
-            <div className="flex items-baseline justify-end gap-2">
-              <span className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>
-                يوم على {nearestExam.label || "اختبارك"}
-              </span>
-              <span className="num-hero text-[30px] leading-none" style={{ color: examUrgentColor }}>{nearestExam.days}</span>
+        {/* ── البطل يتكيّف مع المرحلة (بوابة exp الواحدة) ──
+             الجامعي: عالم مهني (أدوات/أجهزة/سيرة) بلا أي عدّاد قياس أو قبول.
+             غيره: عدّاد الاختبار الأقرب + إجراءات القبول حسب أهلية المرحلة. */}
+        {exp.showsUniLife ? (
+          <DashUniActions hint={exp.duwairbHint} />
+        ) : (
+          <>
+            {/* عدّاد الاختبار الأقرب — يُعرض هنا مرة واحدة فقط */}
+            <div className="rounded-2xl px-4 py-3 mb-3 text-right"
+              style={{
+                background: `color-mix(in srgb, ${examUrgentColor} 12%, transparent)`,
+                border: `1px solid color-mix(in srgb, ${examUrgentColor} 30%, transparent)`,
+              }}>
+              {nearestExam !== null && nearestExam.days > 1 ? (
+                <div className="flex items-baseline justify-end gap-2">
+                  <span className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>
+                    يوم على {nearestExam.label || "اختبارك"}
+                  </span>
+                  <span className="num-hero text-[30px] leading-none" style={{ color: examUrgentColor }}>{nearestExam.days}</span>
+                </div>
+              ) : (
+                <p className="text-[16px] font-black" style={{ color: examUrgentColor }}>{heroMsg}</p>
+              )}
             </div>
-          ) : (
-            <p className="text-[16px] font-black" style={{ color: examUrgentColor }}>{heroMsg}</p>
-          )}
-        </div>
+
+            {/* إجراءات القبول حسب المرحلة — ثالث/خريج: مفاضلة وتقديم · أول/ثاني: استكشاف تعريفي */}
+            {exp.admission === "full" && (
+              <div className="grid grid-cols-2 gap-2.5 mb-3">
+                <Link href="/opportunities"
+                  className="rounded-2xl px-3.5 py-2.5 flex items-center gap-2 no-underline transition active:scale-[0.97]"
+                  style={{ background: "color-mix(in srgb, var(--gold) 10%, var(--surface))", border: "1px solid color-mix(in srgb, var(--gold) 28%, transparent)" }}>
+                  <span className="text-[18px] leading-none">🎓</span>
+                  <span className="font-bold text-[13.5px]" style={{ color: "var(--text)" }}>وش تقدر تقدم عليه</span>
+                </Link>
+                <Link href="/university"
+                  className="rounded-2xl px-3.5 py-2.5 flex items-center gap-2 no-underline transition active:scale-[0.97]"
+                  style={{ background: "color-mix(in srgb, var(--accent) 10%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 28%, transparent)" }}>
+                  <span className="text-[18px] leading-none">🏛️</span>
+                  <span className="font-bold text-[13.5px]" style={{ color: "var(--text)" }}>القبول والمفاضلة</span>
+                </Link>
+              </div>
+            )}
+            {exp.admission === "explore" && (
+              <Link href="/university"
+                className="rounded-2xl px-4 py-2.5 mb-3 flex items-center justify-between gap-2 no-underline transition active:scale-[0.97]"
+                style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 24%, transparent)" }}>
+                <span className="flex items-center gap-2">
+                  <span className="text-[18px] leading-none">🧭</span>
+                  <span className="font-bold text-[13.5px]" style={{ color: "var(--text)" }}>استكشف التخصصات والقبول</span>
+                </span>
+                <span className="text-[10.5px] font-bold px-2 py-0.5 rounded-full"
+                  style={{ background: "color-mix(in srgb, var(--accent) 14%, transparent)", color: "var(--accent-light)" }}>تعريفي</span>
+              </Link>
+            )}
+          </>
+        )}
 
         {/* ثلاث دوائر متساوية: الفضة · الستريك · اليوم */}
         <div className="grid grid-cols-3 gap-2.5">
