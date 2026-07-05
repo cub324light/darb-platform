@@ -137,15 +137,15 @@ export default async function UniversityProfilePage({ params }: { params: Promis
         </div>
       </Dome>
 
-      {/* ds-stack: إيقاع رأسي موحّد بين الأقسام (الصفحة تتنفّس) */}
+      {/* الإيقاع الرأسي موحّد، لكن الوزن غير متساوٍ: بطل → القبول (الأهم) → الكليات → تفاصيل */}
       <main className="px-5 py-6 max-w-2xl min-[1100px]:max-w-3xl mx-auto ds-stack pb-20">
-        {/* ═══ رأس الملف (Hero): خلفية متدرّجة + الحرف الأول + المعطيات الأساسية ═══ */}
+        {/* ═══ الهوية (Hero): من أنا؟ — النبذة مدموجة، والروابط الثانوية أيقونات صغيرة ═══ */}
         <section className="relative rounded-3xl p-6 overflow-hidden"
           style={{
             background: `linear-gradient(145deg, color-mix(in srgb, ${c} 16%, var(--surface)), var(--surface))`,
             border: `1.5px solid color-mix(in srgb, ${c} 30%, var(--border))`,
           }}>
-          <div className="flex items-center gap-4">
+          <div className="flex items-start gap-4">
             <span className="w-16 h-16 rounded-3xl flex items-center justify-center text-[27px] font-black flex-shrink-0"
               style={{ background: `color-mix(in srgb, ${c} 20%, transparent)`, border: `1.5px solid color-mix(in srgb, ${c} 42%, transparent)`, color: c }}
               aria-hidden="true">
@@ -153,7 +153,6 @@ export default async function UniversityProfilePage({ params }: { params: Promis
             </span>
             <div className="flex-1 min-w-0">
               <p className="t-h2" style={{ color: "var(--text)" }}>{u.name}</p>
-              {/* سطر معطيات موحّد الحجم (t-caption) */}
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 {u.kind && (
                   <span className="t-caption px-2 py-0.5 rounded-full"
@@ -167,92 +166,102 @@ export default async function UniversityProfilePage({ params }: { params: Promis
             </div>
           </div>
 
-          {/* روابط الرأس: الموقع الرسمي + الخرائط */}
-          <div className="flex flex-wrap gap-2.5 mt-5">
+          {/* النبذة مدموجة في الرأس (سياق ثانوي، لا بطاقة مستقلة تنافس المحتوى) */}
+          {u.description && (
+            <p className="t-body mt-4" style={{ color: "var(--text-dim)" }}>{u.description}</p>
+          )}
+
+          {/* روابط ثانوية — أيقونات مدمجة صغيرة لا شريطان كبيران */}
+          <div className="flex items-center gap-2 mt-4">
             {u.website && (
               <a href={u.website} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[13px] font-bold no-underline"
-                style={{ background: `color-mix(in srgb, ${c} 14%, transparent)`, color: c, border: `1px solid color-mix(in srgb, ${c} 32%, transparent)` }}>
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg t-caption no-underline"
+                style={{ background: "color-mix(in srgb, var(--text) 6%, transparent)", color: "var(--text-dim)", border: "1px solid var(--border)" }}>
                 🌐 الموقع الرسمي
               </a>
             )}
             <a href={mapUrl} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[13px] font-bold no-underline"
-              style={{ background: "var(--surface)", color: "var(--text)", border: "1px solid var(--border)" }}>
-              🗺️ الموقع على الخرائط
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg t-caption no-underline"
+              style={{ background: "color-mix(in srgb, var(--text) 6%, transparent)", color: "var(--text-dim)", border: "1px solid var(--border)" }}>
+              🗺️ الخرائط
             </a>
           </div>
         </section>
 
-        {/* ═══ نبذة ═══ */}
-        {u.description && (
-          <section className="ds-card">
-            <p className="t-body" style={{ color: "var(--text-dim)" }}>{u.description}</p>
+        {/* ═══ العنصر الرئيسي: هل أقدر أدخلها؟ — القبول + احسب موزونتك (مُبرز بلون الهوية) ═══ */}
+        {(u.formulas?.length || u.admissionNote) && (
+          <section className="rounded-3xl p-5 ds-section"
+            style={{
+              background: "color-mix(in srgb, var(--accent) 7%, var(--surface))",
+              border: "1.5px solid color-mix(in srgb, var(--accent) 30%, var(--border))",
+            }}>
+            <div>
+              <p className="eyebrow mb-1" style={{ color: "var(--accent-light)" }}>القبول</p>
+              <h2 className="t-h3" style={{ color: "var(--text)" }}>هل أقدر أدخلها؟ احسب نسبتك بمعادلتها</h2>
+            </div>
+
+            {u.formulas && u.formulas.length > 0 && (
+              <CardGrid cols={2}>
+                {u.formulas.map((f) => {
+                  const weights = [
+                    { label: "الثانوية", w: f.highschool },
+                    { label: "القدرات", w: f.qudurat },
+                    { label: "التحصيلي", w: f.tahsili },
+                  ].filter((x) => x.w > 0);
+                  return (
+                    <div key={f.id + f.label} className="ds-card flex flex-col gap-[var(--sp-3)]">
+                      <div className="flex items-center gap-2">
+                        <span className="t-caption px-2 py-0.5 rounded-full"
+                          style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>
+                          {f.track}
+                        </span>
+                        <p className="t-body font-bold" style={{ color: "var(--text)" }}>{f.label}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {weights.map((x) => (
+                          <span key={x.label} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl"
+                            style={{ background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--accent) 22%, transparent)" }}>
+                            <span className="t-caption" style={{ color: "var(--text-dim)" }}>{x.label}</span>
+                            <span className="text-[14px] font-black font-mono-nums" style={{ color: "var(--accent-light)" }}>{x.w}٪</span>
+                          </span>
+                        ))}
+                      </div>
+                      {f.note && <p className="t-caption" style={{ color: "var(--text-muted)" }}>ℹ️ {f.note}</p>}
+                    </div>
+                  );
+                })}
+              </CardGrid>
+            )}
+
+            {u.admissionNote && (
+              <p className="t-body" style={{ color: "var(--text-dim)" }}>{u.admissionNote}</p>
+            )}
+
+            {/* الفعل الرئيسي — في الأعلى حيث يبحث عنه الطالب، لا في القاع */}
+            <Link href="/university" className="btn-shimmer inline-flex items-center justify-center gap-2 px-6 font-black text-[15px] w-full sm:w-auto"
+              style={{ textDecoration: "none", height: "var(--btn-h)" }}>
+              احسب موزونتك في هذه الجامعة ←
+            </Link>
+
+            {u.formulas && u.formulas.length > 0 && (
+              <p className="t-caption" style={{ color: "var(--text-muted)" }}>
+                ⚠️ الأوزان إرشادية وتتغيّر سنوياً — راجع الموقع الرسمي للأرقام المعتمدة.
+              </p>
+            )}
           </section>
         )}
 
-        {/* ═══ الكليات ═══ */}
+        {/* ═══ ماذا أدرس؟ — الكليات ═══ */}
         {u.colleges && u.colleges.length > 0 && (
           <section className="ds-section">
-            <SectionHead title="الكليات" />
+            <SectionHead title="ماذا أدرس؟ — الكليات" />
             <div className="flex flex-wrap gap-2">
               {u.colleges.map((col) => <Chip key={col} label={col} color={c} />)}
             </div>
           </section>
         )}
 
-        {/* ═══ معادلات القبول (الموزونة) ═══ */}
-        {u.formulas && u.formulas.length > 0 && (
-          <section className="ds-section">
-            <SectionHead title="معادلات القبول (النسبة الموزونة)" />
-            <CardGrid cols={2}>
-              {u.formulas.map((f) => {
-                const weights = [
-                  { label: "الثانوية", w: f.highschool },
-                  { label: "القدرات", w: f.qudurat },
-                  { label: "التحصيلي", w: f.tahsili },
-                ].filter((x) => x.w > 0);
-                return (
-                  <div key={f.id + f.label} className="ds-card flex flex-col gap-[var(--sp-3)]">
-                    <div className="flex items-center gap-2">
-                      <span className="t-caption px-2 py-0.5 rounded-full"
-                        style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>
-                        {f.track}
-                      </span>
-                      <p className="t-body font-bold" style={{ color: "var(--text)" }}>{f.label}</p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {weights.map((x) => (
-                        <span key={x.label} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl"
-                          style={{ background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--accent) 22%, transparent)" }}>
-                          <span className="t-caption" style={{ color: "var(--text-dim)" }}>{x.label}</span>
-                          <span className="text-[14px] font-black font-mono-nums" style={{ color: "var(--accent-light)" }}>{x.w}٪</span>
-                        </span>
-                      ))}
-                    </div>
-                    {f.note && (
-                      <p className="t-caption" style={{ color: "var(--text-muted)" }}>ℹ️ {f.note}</p>
-                    )}
-                  </div>
-                );
-              })}
-            </CardGrid>
-            <p className="t-caption" style={{ color: "var(--text-muted)" }}>
-              ⚠️ الأوزان إرشادية وتتغيّر سنوياً — راجع الموقع الرسمي للجامعة للأرقام المعتمدة.
-            </p>
-          </section>
-        )}
-
-        {/* ═══ ملاحظة قبول (للأهلية غالباً) ═══ */}
-        {u.admissionNote && (
-          <section className="ds-card flex flex-col gap-[var(--sp-2)]"
-            style={{ borderColor: "color-mix(in srgb, var(--gold) 25%, var(--border))" }}>
-            <p className="t-body font-black" style={{ color: "var(--gold)" }}>ملاحظة القبول</p>
-            <p className="t-body" style={{ color: "var(--text-dim)" }}>{u.admissionNote}</p>
-          </section>
-        )}
-
-        {/* ═══ السكن الجامعي ═══ */}
+        {/* ═══ تفاصيل ثانوية: السكن + المميزات/الاعتبارات + التميّز ═══ */}
         <section className="ds-card flex items-center gap-3">
           <span className="text-[22px] flex-shrink-0" aria-hidden="true">🏠</span>
           <div>
@@ -261,7 +270,6 @@ export default async function UniversityProfilePage({ params }: { params: Promis
           </div>
         </section>
 
-        {/* ═══ المميزات والاعتبارات — بطاقتان متساويتا الارتفاع ═══ */}
         {((u.pros && u.pros.length > 0) || (u.cons && u.cons.length > 0)) && (
           <CardGrid cols={2}>
             {u.pros && u.pros.length > 0 && (
@@ -273,7 +281,6 @@ export default async function UniversityProfilePage({ params }: { params: Promis
           </CardGrid>
         )}
 
-        {/* ═══ مجالات التميز ═══ */}
         {u.strengths && u.strengths.length > 0 && (
           <section className="ds-section">
             <SectionHead title="مجالات التميّز" />
@@ -283,45 +290,20 @@ export default async function UniversityProfilePage({ params }: { params: Promis
           </section>
         )}
 
-        {/* ═══ روابط رسمية + آخر الأخبار (يفتح الموقع الرسمي) ═══ */}
-        {u.website && (
-          <section className="ds-card flex flex-col gap-[var(--sp-3)]">
-            <p className="t-body font-black" style={{ color: "var(--text)" }}>روابط رسمية</p>
-            <div className="flex flex-wrap gap-2.5">
-              <a href={u.website} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[13px] font-bold no-underline"
-                style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", color: "var(--accent-light)", border: "1px solid color-mix(in srgb, var(--accent) 26%, transparent)" }}>
-                🌐 الموقع الرسمي
-              </a>
-              <a href={u.website} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[13px] font-bold no-underline"
-                style={{ background: "var(--surface)", color: "var(--text)", border: "1px solid var(--border)" }}>
-                📰 آخر الأخبار
-              </a>
-            </div>
-          </section>
-        )}
-
-        {/* ═══ دعوة: احسب موزونتك + استكشف بقية الجامعات ═══ */}
-        <section className="relative rounded-3xl p-6 text-center overflow-hidden"
-          style={{
-            background: "linear-gradient(145deg, color-mix(in srgb, var(--accent) 8%, transparent), var(--surface))",
-            border: "1.5px solid color-mix(in srgb, var(--accent) 22%, transparent)",
-          }}>
-          <h2 className="t-h2 mb-2" style={{ color: "var(--text)" }}>احسب موزونتك وقارن</h2>
-          <p className="t-body mb-5" style={{ color: "var(--text-dim)" }}>
-            احسب نسبتك بمعادلة {u.name}، وقارنها بجامعات أخرى، وشوف كم تحتاج ترفع درجاتك.
-          </p>
-          <div className="flex flex-wrap justify-center gap-2.5">
-            <Link href="/university" className="btn-shimmer inline-flex items-center gap-2 px-7 py-3 font-black text-[15px]" style={{ textDecoration: "none" }}>
-              احسب موزونتك ←
-            </Link>
-            <Link href="/universities"
-              className="inline-flex items-center gap-2 px-7 py-3 rounded-2xl font-bold text-[14px] no-underline"
-              style={{ background: "var(--surface)", color: "var(--text)", border: "1.5px solid var(--border)" }}>
-              استكشف بقية الجامعات
-            </Link>
-          </div>
+        {/* ═══ ذيل خفيف: استكشف بقية الجامعات + آخر الأخبار الرسمية ═══ */}
+        <section className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <Link href="/universities"
+            className="inline-flex items-center gap-2 t-body font-bold no-underline"
+            style={{ color: "var(--accent-light)" }}>
+            ← استكشف بقية الجامعات
+          </Link>
+          {u.website && (
+            <a href={u.website} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 t-caption no-underline"
+              style={{ color: "var(--text-muted)" }}>
+              📰 آخر الأخبار على الموقع الرسمي
+            </a>
+          )}
         </section>
       </main>
     </div>
