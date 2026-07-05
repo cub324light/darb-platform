@@ -8,7 +8,7 @@ import Link from "next/link";
 /* رابطان بارزان لعالم الجامعي — وجهات قائمة في المنصة */
 const LINKS = [
   { href: "/uni-tools", icon: "🧮", label: "أدوات الجامعة", desc: "معدّلك والغياب والفاينل", accent: "var(--accent)" },
-  { href: "/uni-gear",  icon: "💻", label: "أجهزة تخصصك",   desc: "أفضل جهاز لمجالك",     accent: "var(--gold)" },
+  { href: "/uni-gear",  icon: "💻", label: "عُدّة تخصصك",    desc: "أجهزة وبرامج وأدوات AI", accent: "var(--gold)" },
 ] as const;
 
 export default function DashUniActions({ hint }: { hint: string }) {

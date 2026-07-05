@@ -290,8 +290,8 @@ export default function CareerCenter() {
             className="rounded-xl px-3.5 py-3 flex flex-col gap-1 text-right no-underline transition active:scale-[0.97]"
             style={{ background: "color-mix(in srgb, var(--gold) 8%, var(--surface2))", border: "1.5px solid color-mix(in srgb, var(--gold) 26%, transparent)" }}>
             <span className="text-[20px] leading-none">💻</span>
-            <span className="font-extrabold text-[13.5px]" style={{ color: "var(--text)" }}>أجهزة تخصصك</span>
-            <span className="text-[11.5px] leading-snug" style={{ color: "var(--text-muted)" }}>أفضل جهاز لمجالك</span>
+            <span className="font-extrabold text-[13.5px]" style={{ color: "var(--text)" }}>عُدّة تخصصك</span>
+            <span className="text-[11.5px] leading-snug" style={{ color: "var(--text-muted)" }}>أجهزة وبرامج وأدوات AI</span>
           </Link>
         </div>
       </section>

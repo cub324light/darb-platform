@@ -42,9 +42,9 @@ export default function CareerPage() {
             <Link href="/uni-tools" className="font-black" style={{ color: "var(--accent-light)" }}>
               أدوات الجامعة ←
             </Link>
-            {" "}· وأفضل جهاز لتخصصك في{" "}
+            {" "}· وأجهزة وبرامج وأدوات تخصصك في{" "}
             <Link href="/uni-gear" className="font-black" style={{ color: "var(--accent-light)" }}>
-              أجهزة الجامعة ←
+              عُدّة تخصصك ←
             </Link>
           </p>
         </section>

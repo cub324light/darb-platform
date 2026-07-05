@@ -199,7 +199,7 @@ export default function UniversityPage() {
             </span>
           </Link>
 
-          {/* أفضل أجهزة الجامعة — توصيات حسب التخصص والميزانية */}
+          {/* عُدّة تخصصك — أجهزة وبرامج وأدوات AI حسب التخصص والميزانية */}
           <Link href="/uni-gear" className="rounded-2xl px-4 py-3.5 flex items-center gap-3 transition active:scale-[0.99]"
             style={{
               background: "color-mix(in srgb, var(--accent) 10%, var(--surface))",
@@ -207,9 +207,9 @@ export default function UniversityPage() {
             }}>
             <span className="text-[22px] flex-shrink-0">💻</span>
             <span className="flex-1 min-w-0">
-              <span className="block text-[14px] font-black" style={{ color: "var(--text)" }}>أفضل أجهزة الجامعة ←</span>
+              <span className="block text-[14px] font-black" style={{ color: "var(--text)" }}>عُدّة تخصصك ←</span>
               <span className="block text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>
-                لابتوب وأجهزة حسب تخصصك وميزانيتك — توصيات محايدة
+                أجهزة وبرامج وأدوات AI حسب تخصصك وميزانيتك — توصيات محايدة
               </span>
             </span>
           </Link>

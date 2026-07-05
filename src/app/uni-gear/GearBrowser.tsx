@@ -71,6 +71,9 @@ function GearCard({ item }: { item: GearItem }) {
   const cat = gearCategoryMeta(item.category);
   /* أسماء التخصصات الملائمة بترتيب العرض الثابت */
   const fitLabels = GEAR_MAJORS.filter((m) => item.fitsMajors.includes(m.id)).map((m) => m.label);
+  /* البرامج وأدوات AI أسعارها اشتراك شهري؛ {0,0} = مجاني (كثير منها مجاني/طلابي) */
+  const isSoftware = item.category === "software" || item.category === "ai";
+  const isFree = item.priceRangeSAR.max === 0;
   return (
     <article className="rounded-2xl p-5 flex flex-col gap-3 glow-card-hover"
       style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
@@ -116,10 +119,18 @@ function GearCard({ item }: { item: GearItem }) {
       )}
 
       <div className="mt-auto pt-1 flex items-baseline gap-1.5">
-        <span className="font-mono-nums font-black text-[14.5px]" style={{ color: "var(--text)" }} dir="ltr">
-          {formatPriceRange(item.priceRangeSAR)}
-        </span>
-        <span className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>ريال</span>
+        {isFree ? (
+          <span className="font-black text-[14.5px]" style={{ color: "var(--success)" }}>مجاني</span>
+        ) : (
+          <>
+            <span className="font-mono-nums font-black text-[14.5px]" style={{ color: "var(--text)" }} dir="ltr">
+              {formatPriceRange(item.priceRangeSAR)}
+            </span>
+            <span className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>
+              {isSoftware ? "ريال/شهر" : "ريال"}
+            </span>
+          </>
+        )}
       </div>
     </article>
   );
@@ -154,6 +165,21 @@ export default function GearBrowser() {
         <ChipRow title="الميزانية" value={budget} onChange={setBudget} options={BUDGET_TIERS} />
       </div>
 
+      {/* تنويه أخلاقي — يظهر عند اختيار فئة أدوات AI: مساعدة للفهم لا غش */}
+      {category === "ai" && (
+        <div className="rounded-2xl p-4 flex items-start gap-2.5"
+          style={{
+            background: "color-mix(in srgb, var(--gold) 10%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--gold) 34%, transparent)",
+          }}>
+          <span className="text-[18px] flex-shrink-0" aria-hidden="true">⚖️</span>
+          <p className="text-[12.5px] leading-relaxed font-bold" style={{ color: "var(--text-dim)" }}>
+            استخدمها للفهم والمساعدة لا للغش — النزاهة الأكاديمية مسؤوليتك.
+            خلّها تشرح لك لتتعلّم، وسلّم شغلك بيدك أنت.
+          </p>
+        </div>
+      )}
+
       <p className="text-[12.5px] font-bold -mb-3 font-mono-nums" style={{ color: "var(--text-muted)" }}>
         {shown.length} توصية
       </p>
@@ -172,9 +198,9 @@ export default function GearBrowser() {
         </div>
       )}
 
-      {/* تنويه ثابت — الأسعار للعرض التعليمي فقط */}
+      {/* تنويه ثابت — الأسعار والاشتراكات للعرض التعليمي فقط */}
       <p className="text-[12px] text-center" style={{ color: "var(--text-muted)" }}>
-        ⚠️ الأسعار استرشادية وتتغير — قارن قبل الشراء.
+        ⚠️ الأسعار والاشتراكات استرشادية وتتغير — كثير من البرامج مجاني أو له نسخة طلابية، تحقّق قبل الشراء.
       </p>
     </div>
   );
