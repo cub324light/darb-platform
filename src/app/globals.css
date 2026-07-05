@@ -38,6 +38,11 @@
   --glass-bg: rgba(18,18,27,0.72);
   --card-shadow: 0 6px 24px rgba(0,0,0,0.35);
   --accent-glow: 0 8px 32px rgba(37,99,235,0.35);
+
+  /* ── سُلّم الارتفاع (Elevation) — الليلي: ظلال عميقة هادئة ── */
+  --elev-1: 0 1px 2px rgba(0,0,0,0.24), 0 2px 6px rgba(0,0,0,0.26);
+  --elev-2: 0 4px 14px rgba(0,0,0,0.32), 0 8px 24px rgba(0,0,0,0.28);
+  --elev-3: 0 12px 36px rgba(0,0,0,0.44);
 }
 
 [data-theme="light"] {
@@ -70,6 +75,31 @@
   --glass-bg: rgba(255,255,255,0.72);
   --card-shadow: 0 6px 20px rgba(120,90,30,0.10);
   --accent-glow: 0 8px 28px rgba(217,119,6,0.30);
+
+  /* ── سُلّم الارتفاع (Elevation) — النهاري: ظلال دافئة رفيعة ── */
+  --elev-1: 0 1px 2px rgba(120,90,30,0.06), 0 2px 6px rgba(120,90,30,0.08);
+  --elev-2: 0 4px 14px rgba(120,90,30,0.10), 0 8px 22px rgba(120,90,30,0.09);
+  --elev-3: 0 12px 34px rgba(120,90,30,0.16);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   درب — رموز نظام التصميم (Design System Tokens) · لا تُلوّن، ثابتة عبر الثيمين
+   المصدر الواحد لكل مسافة/حافة/ارتفاع زر في المشروع. أي عنصر جديد يستهلكها.
+   ─ المسافات: شبكة 4/8 · الحواف: سُلّم · الأزرار: ارتفاع ثابت (Fitts) ─
+═══════════════════════════════════════════════════════════════ */
+:root {
+  /* المسافات — شبكة 4/8pt (استخدمها للحشو والفجوات والهوامش) */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 24px; --sp-6: 32px; --sp-7: 48px; --sp-8: 64px;
+
+  /* الحواف — سُلّم موحّد (البطاقة القياسية = lg) */
+  --r-sm: 10px; --r-md: 14px; --r-lg: 18px; --r-xl: 24px; --r-pill: 999px;
+
+  /* ارتفاع الأزرار ومناطق اللمس (≥44px قاعدة Fitts) */
+  --btn-h: 48px; --btn-h-sm: 38px;
+
+  /* الحشو القياسي داخل البطاقة */
+  --card-pad: 18px;
 }
 
 @layer base {
@@ -1343,3 +1373,62 @@ body[data-nav-hidden="1"] .float-nav { display: none; }
   .landing-grid-3   { grid-template-columns: repeat(3, 1fr) !important; }
   .landing-section-pad { padding-block: 5.5rem; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   درب — نظام التصميم: الطباعة والمكوّنات الأساسية (Design System)
+   ───────────────────────────────────────────────────────────────
+   سُلّم طباعة واحد + بطاقة/شبكة/مكدّس قياسية. القاعدة: استخدم هذه الأصناف
+   بدل قيم text-[..]/rounded-[..]/gap-[..] المتناثرة، فيتّحد الإيقاع البصري.
+   ─ الطباعة: Display > H1 > H2 > H3 > Body-lg > Body > Caption ─
+═══════════════════════════════════════════════════════════════ */
+
+/* سُلّم الطباعة — الحجم/السطر/الوزن فقط (اللون يُضاف عبر var المناسب) */
+.t-display  { font-size: clamp(2.05rem, 6vw, 2.7rem); line-height: 1.14; font-weight: 800; letter-spacing: -0.02em; }
+.t-h1       { font-size: clamp(1.5rem, 4.2vw, 1.9rem); line-height: 1.24; font-weight: 800; letter-spacing: -0.01em; }
+.t-h2       { font-size: 1.25rem;  line-height: 1.3;  font-weight: 800; letter-spacing: -0.01em; }
+.t-h3       { font-size: 1.06rem;  line-height: 1.4;  font-weight: 700; }
+.t-body-lg  { font-size: 1rem;     line-height: 1.7;  font-weight: 400; }
+.t-body     { font-size: 0.88rem;  line-height: 1.6;  font-weight: 400; }
+.t-caption  { font-size: 0.78rem;  line-height: 1.5;  font-weight: 600; letter-spacing: 0.01em; }
+
+/* البطاقة القياسية — نفس الحواف/الحشو/الحد/الارتفاع لكل بطاقات المنتج.
+   لوّنها عند الحاجة بتمرير --tint (لون مميّز) دون كسر الاتساق البنيوي. */
+.ds-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--card-pad);
+  box-shadow: var(--elev-1);
+}
+.ds-card-lg    { padding: var(--sp-5); }
+.ds-card-tight { padding: var(--sp-3); }
+
+/* بطاقة تفاعلية (رابط/زر) — رفع وارتفاع عند المرور لأجهزة المؤشر فقط */
+.ds-card-interactive { transition: transform 0.2s ease, box-shadow 0.25s ease, border-color 0.2s ease; }
+@media (hover: hover) and (pointer: fine) {
+  a.ds-card:hover, button.ds-card:hover, .ds-card-interactive:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--elev-2);
+    border-color: color-mix(in srgb, var(--tint, var(--accent)) 40%, var(--border));
+  }
+}
+
+/* شبكة بطاقات متساوية الارتفاع — فجوة موحّدة وأعمدة متجاوبة.
+   البطاقات تتمدد لكامل ارتفاع الصف (مبدأ التساوي البصري). */
+.ds-grid    { display: grid; gap: var(--sp-3); grid-template-columns: 1fr; align-items: stretch; }
+.ds-grid > * { height: 100%; }
+@media (min-width: 480px) {
+  .ds-grid-2, .ds-grid-3, .ds-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1100px) {
+  .ds-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ds-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* الإيقاع الرأسي — مسافات موحّدة بين الأقسام والعناصر (الصفحة تتنفّس) */
+.ds-stack       { display: flex; flex-direction: column; gap: var(--sp-5); }
+.ds-stack-tight { display: flex; flex-direction: column; gap: var(--sp-3); }
+.ds-section     { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+/* بطاقة أداة/عنصر داخلية — توزيع أيقونة/عنوان/وصف موحّد */
+.ds-tile { display: flex; flex-direction: column; gap: var(--sp-2); }
