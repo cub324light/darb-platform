@@ -4,10 +4,10 @@
    الجامعة المستقل /universities/[id]. مصدر الحقيقة الوحيد: src/lib/university.ts.
    الهدف: كنز بحث عضوي (SEO) + وضع الاستكشاف للطلاب بلا حساب. */
 import type { Metadata } from "next";
-import Link from "next/link";
 import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import { ThemeToggle } from "@/components/Profile";
+import { Card, SectionHeader, CardGrid } from "@/components/ds";
 import PublicPageCta from "@/components/content/PublicPageCta";
 import {
   UNIVERSITIES,
@@ -50,43 +50,44 @@ function kindColor(u: UniversityOption): string {
   return u.kind === "أهلية" ? "var(--gold)" : "var(--accent)";
 }
 
-/* بطاقة جامعة واحدة — Link إلى ملفها المستقل */
+/* بطاقة جامعة واحدة — Card تفاعلية (لبنة النظام) إلى ملفها المستقل */
 function UniCard({ u }: { u: UniversityOption }) {
   const c = kindColor(u);
   const city = universityCity(u);
   return (
-    <Link href={`/universities/${u.id}`}
-      className="rounded-2xl p-4 flex items-center gap-3 glow-card-hover no-underline"
-      style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-      {/* الأفاتار: الحرف الأول فوق تدرّج بلون النوع (لا صور خارجية — CSP) */}
-      <span className="w-12 h-12 rounded-2xl flex items-center justify-center text-[19px] font-black flex-shrink-0"
-        style={{
-          background: `color-mix(in srgb, ${c} 16%, transparent)`,
-          border: `1.5px solid color-mix(in srgb, ${c} 38%, transparent)`,
-          color: c,
-        }}
-        aria-hidden="true">
-        {uniInitial(u.name)}
-      </span>
-      <div className="flex-1 min-w-0">
-        <p className="font-black text-[15px] leading-tight truncate" style={{ color: "var(--text)" }}>{u.name}</p>
-        <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-          {u.kind && (
-            <span className="text-[10.5px] font-bold px-1.5 py-0.5 rounded-md"
-              style={{ background: `color-mix(in srgb, ${c} 12%, transparent)`, color: c }}>
-              {u.kind}
-            </span>
-          )}
-          {city && (
-            <span className="text-[12px] font-semibold" style={{ color: "var(--text-muted)" }}>{city}</span>
-          )}
-          {u.foundedYear && (
-            <span className="text-[11.5px] font-mono-nums" style={{ color: "var(--text-dim)" }}>· {u.foundedYear}</span>
-          )}
+    <Card href={`/universities/${u.id}`} tint={c} ariaLabel={u.name}>
+      <div className="flex items-center gap-3">
+        {/* الأفاتار: الحرف الأول فوق تدرّج بلون النوع (لا صور خارجية — CSP) */}
+        <span className="w-12 h-12 rounded-2xl flex items-center justify-center text-[19px] font-black flex-shrink-0"
+          style={{
+            background: `color-mix(in srgb, ${c} 16%, transparent)`,
+            border: `1.5px solid color-mix(in srgb, ${c} 38%, transparent)`,
+            color: c,
+          }}
+          aria-hidden="true">
+          {uniInitial(u.name)}
+        </span>
+        <div className="flex-1 min-w-0">
+          <p className="t-body font-black truncate" style={{ color: "var(--text)" }}>{u.name}</p>
+          {/* سطر معطيات موحّد الحجم (t-caption) — يزيل تفاوت أحجام البادجات */}
+          <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+            {u.kind && (
+              <span className="t-caption px-1.5 py-0.5 rounded-md"
+                style={{ background: `color-mix(in srgb, ${c} 12%, transparent)`, color: c }}>
+                {u.kind}
+              </span>
+            )}
+            {city && (
+              <span className="t-caption" style={{ color: "var(--text-muted)" }}>{city}</span>
+            )}
+            {u.foundedYear && (
+              <span className="t-caption font-mono-nums" style={{ color: "var(--text-dim)" }}>· {u.foundedYear}</span>
+            )}
+          </div>
         </div>
+        <span className="t-body flex-shrink-0" style={{ color: "var(--text-muted)" }} aria-hidden="true">←</span>
       </div>
-      <span className="text-[15px] flex-shrink-0" style={{ color: "var(--text-muted)" }} aria-hidden="true">←</span>
-    </Link>
+    </Card>
   );
 }
 
@@ -125,21 +126,22 @@ export default function UniversitiesDirectoryPage() {
         </div>
       </Dome>
 
-      {/* حاوية أوسع على سطح المكتب — تتيح ثلاثة أعمدة للبطاقات */}
-      <main className="px-5 py-6 max-w-2xl min-[1100px]:max-w-5xl mx-auto flex flex-col gap-10 pb-20">
-        <p className="text-[14.5px] leading-relaxed -mb-4" style={{ color: "var(--text-muted)" }}>
+      {/* حاوية أوسع على سطح المكتب — تتيح ثلاثة أعمدة للبطاقات.
+          ds-stack: إيقاع رأسي موحّد بين المناطق (تتنفّس بلا فجوات عشوائية) */}
+      <main className="px-5 py-6 max-w-2xl min-[1100px]:max-w-5xl mx-auto ds-stack pb-20">
+        <p className="t-body" style={{ color: "var(--text-muted)" }}>
           الجامعات السعودية الحكومية والأهلية — الكليات ومعادلات القبول الموزونة والسكن الجامعي لكل جامعة، مرتبة حسب المنطقة. اضغط أي جامعة لملفها الكامل.
         </p>
 
         {regions.map((region) => (
-          <section key={region}>
-            <p className="eyebrow mb-1" style={{ color: "var(--accent-light)" }}>المنطقة</p>
-            <h2 className="font-black text-[19px] mb-4" style={{ color: "var(--text)" }}>{region}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 desk-grid-3 gap-3">
+          /* ds-section: ترويسة المنطقة قريبة من شبكتها (تسلسل بصري) */
+          <section key={region} className="ds-section">
+            <SectionHeader eyebrow="المنطقة" title={region} />
+            <CardGrid cols={3}>
               {groups[region].map((u) => (
                 <UniCard key={u.id} u={u} />
               ))}
-            </div>
+            </CardGrid>
           </section>
         ))}
 

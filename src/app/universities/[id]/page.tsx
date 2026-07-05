@@ -9,6 +9,7 @@ import { notFound } from "next/navigation";
 import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import { ThemeToggle } from "@/components/Profile";
+import { CardGrid } from "@/components/ds";
 import {
   UNIVERSITIES,
   findUniversity,
@@ -66,29 +67,30 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 /* ── عناصر عرض صغيرة (نقية) ── */
 
-/* ترويسة قسم موحّدة */
+/* ترويسة قسم موحّدة — t-h3 قريبة من محتواها (الفجوة من ds-section) */
 function SectionHead({ title }: { title: string }) {
-  return <h2 className="font-black text-[17px] mb-3" style={{ color: "var(--text)" }}>{title}</h2>;
+  return <h2 className="t-h3" style={{ color: "var(--text)" }}>{title}</h2>;
 }
 
-/* شريحة (كلية/مجال تميز) */
+/* شريحة (كلية/مجال تميز) — حجم موحّد (t-caption) */
 function Chip({ label, color }: { label: string; color: string }) {
   return (
-    <span className="text-[12.5px] font-bold px-2.5 py-1.5 rounded-xl"
+    <span className="t-caption px-2.5 py-1.5 rounded-xl"
       style={{ background: `color-mix(in srgb, ${color} 12%, transparent)`, border: `1px solid color-mix(in srgb, ${color} 28%, transparent)`, color: "var(--text)" }}>
       {label}
     </span>
   );
 }
 
-/* قائمة نقطية قصيرة (مميزات/اعتبارات) */
+/* قائمة نقطية قصيرة (مميزات/اعتبارات) — بطاقة نظام موحّدة بحدّ ملوّن */
 function BulletCard({ title, items, color, mark }: { title: string; items: string[]; color: string; mark: string }) {
   return (
-    <div className="rounded-2xl p-5" style={{ background: "var(--surface)", border: `1.5px solid color-mix(in srgb, ${color} 22%, var(--border))` }}>
-      <p className="font-black text-[15px] mb-3" style={{ color }}>{title}</p>
+    <div className="ds-card flex flex-col gap-[var(--sp-3)]"
+      style={{ borderColor: `color-mix(in srgb, ${color} 22%, var(--border))` }}>
+      <p className="t-body font-black" style={{ color }}>{title}</p>
       <ul className="flex flex-col gap-2">
         {items.map((it, i) => (
-          <li key={i} className="flex items-start gap-2 text-[13.5px] leading-relaxed" style={{ color: "var(--text-dim)" }}>
+          <li key={i} className="flex items-start gap-2 t-body" style={{ color: "var(--text-dim)" }}>
             <span className="flex-shrink-0" style={{ color }} aria-hidden="true">{mark}</span>
             <span>{it}</span>
           </li>
@@ -135,8 +137,9 @@ export default async function UniversityProfilePage({ params }: { params: Promis
         </div>
       </Dome>
 
-      <main className="px-5 py-6 max-w-2xl min-[1100px]:max-w-3xl mx-auto flex flex-col gap-6 pb-20">
-        {/* ═══ رأس الملف: خلفية متدرّجة + الحرف الأول + المعطيات الأساسية ═══ */}
+      {/* ds-stack: إيقاع رأسي موحّد بين الأقسام (الصفحة تتنفّس) */}
+      <main className="px-5 py-6 max-w-2xl min-[1100px]:max-w-3xl mx-auto ds-stack pb-20">
+        {/* ═══ رأس الملف (Hero): خلفية متدرّجة + الحرف الأول + المعطيات الأساسية ═══ */}
         <section className="relative rounded-3xl p-6 overflow-hidden"
           style={{
             background: `linear-gradient(145deg, color-mix(in srgb, ${c} 16%, var(--surface)), var(--surface))`,
@@ -149,16 +152,17 @@ export default async function UniversityProfilePage({ params }: { params: Promis
               {uniInitial(u.name)}
             </span>
             <div className="flex-1 min-w-0">
-              <p className="font-black text-[20px] leading-tight" style={{ color: "var(--text)" }}>{u.name}</p>
+              <p className="t-h2" style={{ color: "var(--text)" }}>{u.name}</p>
+              {/* سطر معطيات موحّد الحجم (t-caption) */}
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 {u.kind && (
-                  <span className="text-[11.5px] font-black px-2 py-0.5 rounded-full"
+                  <span className="t-caption px-2 py-0.5 rounded-full"
                     style={{ background: `color-mix(in srgb, ${c} 14%, transparent)`, color: c, border: `1px solid color-mix(in srgb, ${c} 35%, transparent)` }}>
                     {u.kind}
                   </span>
                 )}
-                {city && <span className="text-[13px] font-semibold" style={{ color: "var(--text-muted)" }}>📍 {city}</span>}
-                {u.foundedYear && <span className="text-[13px] font-mono-nums" style={{ color: "var(--text-dim)" }}>· تأسست {u.foundedYear}</span>}
+                {city && <span className="t-caption" style={{ color: "var(--text-muted)" }}>📍 {city}</span>}
+                {u.foundedYear && <span className="t-caption font-mono-nums" style={{ color: "var(--text-dim)" }}>· تأسست {u.foundedYear}</span>}
               </div>
             </div>
           </div>
@@ -182,14 +186,14 @@ export default async function UniversityProfilePage({ params }: { params: Promis
 
         {/* ═══ نبذة ═══ */}
         {u.description && (
-          <section className="rounded-2xl p-5" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-            <p className="text-[14px] leading-relaxed" style={{ color: "var(--text-dim)" }}>{u.description}</p>
+          <section className="ds-card">
+            <p className="t-body" style={{ color: "var(--text-dim)" }}>{u.description}</p>
           </section>
         )}
 
         {/* ═══ الكليات ═══ */}
         {u.colleges && u.colleges.length > 0 && (
-          <section>
+          <section className="ds-section">
             <SectionHead title="الكليات" />
             <div className="flex flex-wrap gap-2">
               {u.colleges.map((col) => <Chip key={col} label={col} color={c} />)}
@@ -199,9 +203,9 @@ export default async function UniversityProfilePage({ params }: { params: Promis
 
         {/* ═══ معادلات القبول (الموزونة) ═══ */}
         {u.formulas && u.formulas.length > 0 && (
-          <section>
+          <section className="ds-section">
             <SectionHead title="معادلات القبول (النسبة الموزونة)" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <CardGrid cols={2}>
               {u.formulas.map((f) => {
                 const weights = [
                   { label: "الثانوية", w: f.highschool },
@@ -209,32 +213,31 @@ export default async function UniversityProfilePage({ params }: { params: Promis
                   { label: "التحصيلي", w: f.tahsili },
                 ].filter((x) => x.w > 0);
                 return (
-                  <div key={f.id + f.label} className="rounded-2xl p-4"
-                    style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-[11px] font-black px-2 py-0.5 rounded-full"
+                  <div key={f.id + f.label} className="ds-card flex flex-col gap-[var(--sp-3)]">
+                    <div className="flex items-center gap-2">
+                      <span className="t-caption px-2 py-0.5 rounded-full"
                         style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>
                         {f.track}
                       </span>
-                      <p className="font-bold text-[14px]" style={{ color: "var(--text)" }}>{f.label}</p>
+                      <p className="t-body font-bold" style={{ color: "var(--text)" }}>{f.label}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {weights.map((x) => (
                         <span key={x.label} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl"
                           style={{ background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--accent) 22%, transparent)" }}>
-                          <span className="text-[11.5px] font-bold" style={{ color: "var(--text-dim)" }}>{x.label}</span>
+                          <span className="t-caption" style={{ color: "var(--text-dim)" }}>{x.label}</span>
                           <span className="text-[14px] font-black font-mono-nums" style={{ color: "var(--accent-light)" }}>{x.w}٪</span>
                         </span>
                       ))}
                     </div>
                     {f.note && (
-                      <p className="text-[12px] leading-relaxed mt-3" style={{ color: "var(--text-muted)" }}>ℹ️ {f.note}</p>
+                      <p className="t-caption" style={{ color: "var(--text-muted)" }}>ℹ️ {f.note}</p>
                     )}
                   </div>
                 );
               })}
-            </div>
-            <p className="text-[12px] leading-relaxed mt-3" style={{ color: "var(--text-muted)" }}>
+            </CardGrid>
+            <p className="t-caption" style={{ color: "var(--text-muted)" }}>
               ⚠️ الأوزان إرشادية وتتغيّر سنوياً — راجع الموقع الرسمي للجامعة للأرقام المعتمدة.
             </p>
           </section>
@@ -242,36 +245,37 @@ export default async function UniversityProfilePage({ params }: { params: Promis
 
         {/* ═══ ملاحظة قبول (للأهلية غالباً) ═══ */}
         {u.admissionNote && (
-          <section className="rounded-2xl p-5" style={{ background: "var(--surface)", border: "1.5px solid color-mix(in srgb, var(--gold) 25%, var(--border))" }}>
-            <p className="font-black text-[15px] mb-2" style={{ color: "var(--gold)" }}>ملاحظة القبول</p>
-            <p className="text-[13.5px] leading-relaxed" style={{ color: "var(--text-dim)" }}>{u.admissionNote}</p>
+          <section className="ds-card flex flex-col gap-[var(--sp-2)]"
+            style={{ borderColor: "color-mix(in srgb, var(--gold) 25%, var(--border))" }}>
+            <p className="t-body font-black" style={{ color: "var(--gold)" }}>ملاحظة القبول</p>
+            <p className="t-body" style={{ color: "var(--text-dim)" }}>{u.admissionNote}</p>
           </section>
         )}
 
         {/* ═══ السكن الجامعي ═══ */}
-        <section className="rounded-2xl p-5 flex items-center gap-3" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+        <section className="ds-card flex items-center gap-3">
           <span className="text-[22px] flex-shrink-0" aria-hidden="true">🏠</span>
           <div>
-            <p className="font-black text-[14px]" style={{ color: "var(--text)" }}>السكن الجامعي</p>
-            <p className="text-[13px] leading-relaxed mt-0.5" style={{ color: "var(--text-dim)" }}>{housing} — تأكّد من الحالة الحالية من عمادة شؤون الطلاب.</p>
+            <p className="t-body font-black" style={{ color: "var(--text)" }}>السكن الجامعي</p>
+            <p className="t-caption mt-0.5" style={{ color: "var(--text-dim)" }}>{housing} — تأكّد من الحالة الحالية من عمادة شؤون الطلاب.</p>
           </div>
         </section>
 
-        {/* ═══ المميزات والاعتبارات ═══ */}
+        {/* ═══ المميزات والاعتبارات — بطاقتان متساويتا الارتفاع ═══ */}
         {((u.pros && u.pros.length > 0) || (u.cons && u.cons.length > 0)) && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <CardGrid cols={2}>
             {u.pros && u.pros.length > 0 && (
               <BulletCard title="المميزات" items={u.pros} color="var(--success)" mark="✓" />
             )}
             {u.cons && u.cons.length > 0 && (
               <BulletCard title="اعتبارات قبل القرار" items={u.cons} color="var(--gold)" mark="•" />
             )}
-          </div>
+          </CardGrid>
         )}
 
         {/* ═══ مجالات التميز ═══ */}
         {u.strengths && u.strengths.length > 0 && (
-          <section>
+          <section className="ds-section">
             <SectionHead title="مجالات التميّز" />
             <div className="flex flex-wrap gap-2">
               {u.strengths.map((s) => <Chip key={s} label={`⭐ ${s}`} color="var(--gold)" />)}
@@ -281,8 +285,8 @@ export default async function UniversityProfilePage({ params }: { params: Promis
 
         {/* ═══ روابط رسمية + آخر الأخبار (يفتح الموقع الرسمي) ═══ */}
         {u.website && (
-          <section className="rounded-2xl p-5" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-            <p className="font-black text-[14px] mb-3" style={{ color: "var(--text)" }}>روابط رسمية</p>
+          <section className="ds-card flex flex-col gap-[var(--sp-3)]">
+            <p className="t-body font-black" style={{ color: "var(--text)" }}>روابط رسمية</p>
             <div className="flex flex-wrap gap-2.5">
               <a href={u.website} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[13px] font-bold no-underline"
@@ -304,8 +308,8 @@ export default async function UniversityProfilePage({ params }: { params: Promis
             background: "linear-gradient(145deg, color-mix(in srgb, var(--accent) 8%, transparent), var(--surface))",
             border: "1.5px solid color-mix(in srgb, var(--accent) 22%, transparent)",
           }}>
-          <h2 className="font-black text-[19px] mb-2" style={{ color: "var(--text)" }}>احسب موزونتك وقارن</h2>
-          <p className="text-[13.5px] mb-5 leading-relaxed" style={{ color: "var(--text-dim)" }}>
+          <h2 className="t-h2 mb-2" style={{ color: "var(--text)" }}>احسب موزونتك وقارن</h2>
+          <p className="t-body mb-5" style={{ color: "var(--text-dim)" }}>
             احسب نسبتك بمعادلة {u.name}، وقارنها بجامعات أخرى، وشوف كم تحتاج ترفع درجاتك.
           </p>
           <div className="flex flex-wrap justify-center gap-2.5">

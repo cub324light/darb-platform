@@ -5,6 +5,7 @@
    تخصيص لطيف: لو للمستخدم تخصص محفوظ (هدف الجامعة أو نوع المسار) يصير فلتر
    التخصص الافتراضي بتهيئة كسولة — الزائر بلا بيانات يرى «الكل». */
 import { useState } from "react";
+import { CardGrid } from "@/components/ds";
 import type { MajorCategory } from "@/lib/university";
 import { findMajor } from "@/lib/university";
 import { loadGoals, loadUser } from "@/lib/storage";
@@ -42,7 +43,7 @@ function ChipRow<T extends string>({ title, value, onChange, options }: {
   ];
   return (
     <div>
-      <p className="text-[11px] font-black mb-1.5" style={{ color: "var(--text-muted)" }}>{title}</p>
+      <p className="t-caption mb-1.5" style={{ color: "var(--text-muted)" }}>{title}</p>
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-5 px-5" style={{ scrollbarWidth: "thin" }}>
         {chips.map((chip) => {
           const active = value === chip.id;
@@ -75,8 +76,8 @@ function GearCard({ item }: { item: GearItem }) {
   const isSoftware = item.category === "software" || item.category === "ai";
   const isFree = item.priceRangeSAR.max === 0;
   return (
-    <article className="rounded-2xl p-5 flex flex-col gap-3 glow-card-hover"
-      style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+    /* بطاقة نظام موحّدة — متساوية الارتفاع داخل CardGrid (السعر يلتصق بالأسفل عبر mt-auto) */
+    <article className="ds-card flex flex-col gap-3">
       <div className="flex items-start gap-2.5">
         <span className="w-9 h-9 rounded-xl flex items-center justify-center text-[16px] flex-shrink-0"
           style={{
@@ -87,19 +88,19 @@ function GearCard({ item }: { item: GearItem }) {
           {cat.icon}
         </span>
         <div className="flex-1 min-w-0">
-          <h3 className="font-black text-[15px] leading-snug" style={{ color: "var(--text)" }}>{item.title}</h3>
-          <p className="text-[11px] mt-1 font-bold" style={{ color: "var(--text-muted)" }}>
+          <h3 className="t-body font-black leading-snug" style={{ color: "var(--text)" }}>{item.title}</h3>
+          <p className="t-caption mt-1" style={{ color: "var(--text-muted)" }}>
             يناسب: {fitLabels.join(" · ")}
           </p>
         </div>
         <BudgetBadge tier={item.budget} />
       </div>
 
-      <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-dim)" }}>{item.reason}</p>
+      <p className="t-body" style={{ color: "var(--text-dim)" }}>{item.reason}</p>
 
       <ul className="flex flex-col gap-1.5">
         {item.specs.map((s) => (
-          <li key={s} className="flex items-start gap-2 text-[12.5px] leading-relaxed" style={{ color: "var(--text-dim)" }}>
+          <li key={s} className="flex items-start gap-2 t-caption" style={{ color: "var(--text-dim)" }}>
             <span className="w-1.5 h-1.5 rounded-full mt-[7px] flex-shrink-0" style={{ background: "var(--accent)" }} aria-hidden="true" />
             {s}
           </li>
@@ -108,7 +109,7 @@ function GearCard({ item }: { item: GearItem }) {
 
       {item.examples && item.examples.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[11px] font-bold" style={{ color: "var(--text-muted)" }}>أمثلة:</span>
+          <span className="t-caption" style={{ color: "var(--text-muted)" }}>أمثلة:</span>
           {item.examples.map((e) => (
             <span key={e} className="text-[11px] font-bold px-2 py-0.5 rounded-lg"
               style={{ background: "var(--surface2)", color: "var(--text-dim)", border: "1px solid var(--border)" }}>
@@ -157,9 +158,10 @@ export default function GearBrowser() {
   });
 
   return (
-    <div className="flex flex-col gap-6">
+    /* ds-stack: إيقاع رأسي موحّد بين الفلاتر والنتائج (الصفحة تتنفّس) */
+    <div className="ds-stack">
       {/* ── صفوف الفلترة ── */}
-      <div className="flex flex-col gap-3">
+      <div className="ds-stack-tight">
         <ChipRow title="الجهاز" value={category} onChange={setCategory} options={GEAR_CATEGORIES} />
         <ChipRow title="التخصص" value={major} onChange={setMajor} options={GEAR_MAJORS} />
         <ChipRow title="الميزانية" value={budget} onChange={setBudget} options={BUDGET_TIERS} />
@@ -167,39 +169,41 @@ export default function GearBrowser() {
 
       {/* تنويه أخلاقي — يظهر عند اختيار فئة أدوات AI: مساعدة للفهم لا غش */}
       {category === "ai" && (
-        <div className="rounded-2xl p-4 flex items-start gap-2.5"
+        <div className="ds-card flex items-start gap-2.5"
           style={{
             background: "color-mix(in srgb, var(--gold) 10%, transparent)",
-            border: "1px solid color-mix(in srgb, var(--gold) 34%, transparent)",
+            borderColor: "color-mix(in srgb, var(--gold) 34%, transparent)",
           }}>
           <span className="text-[18px] flex-shrink-0" aria-hidden="true">⚖️</span>
-          <p className="text-[12.5px] leading-relaxed font-bold" style={{ color: "var(--text-dim)" }}>
+          <p className="t-body" style={{ color: "var(--text-dim)" }}>
             استخدمها للفهم والمساعدة لا للغش — النزاهة الأكاديمية مسؤوليتك.
             خلّها تشرح لك لتتعلّم، وسلّم شغلك بيدك أنت.
           </p>
         </div>
       )}
 
-      <p className="text-[12.5px] font-bold -mb-3 font-mono-nums" style={{ color: "var(--text-muted)" }}>
-        {shown.length} توصية
-      </p>
+      {/* العدد ملاصق لشبكته (ds-stack-tight) — التسمية قرب محتواها */}
+      <div className="ds-stack-tight">
+        <p className="t-caption font-mono-nums" style={{ color: "var(--text-muted)" }}>
+          {shown.length} توصية
+        </p>
 
-      {shown.length === 0 ? (
-        <div className="rounded-2xl p-8 text-center"
-          style={{ background: "var(--surface)", border: "1.5px dashed var(--border)" }}>
-          <p className="text-[15px] font-black mb-1" style={{ color: "var(--text)" }}>ما فيه توصية تطابق كل الفلاتر</p>
-          <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
-            وسّع الميزانية أو رجّع أحد الفلاتر إلى «الكل».
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 desk-grid-3 gap-3">
-          {shown.map((it) => <GearCard key={it.id} item={it} />)}
-        </div>
-      )}
+        {shown.length === 0 ? (
+          <div className="ds-card ds-card-lg text-center" style={{ borderStyle: "dashed" }}>
+            <p className="t-body font-black mb-1" style={{ color: "var(--text)" }}>ما فيه توصية تطابق كل الفلاتر</p>
+            <p className="t-caption" style={{ color: "var(--text-muted)" }}>
+              وسّع الميزانية أو رجّع أحد الفلاتر إلى «الكل».
+            </p>
+          </div>
+        ) : (
+          <CardGrid cols={3}>
+            {shown.map((it) => <GearCard key={it.id} item={it} />)}
+          </CardGrid>
+        )}
+      </div>
 
       {/* تنويه ثابت — الأسعار والاشتراكات للعرض التعليمي فقط */}
-      <p className="text-[12px] text-center" style={{ color: "var(--text-muted)" }}>
+      <p className="t-caption text-center" style={{ color: "var(--text-muted)" }}>
         ⚠️ الأسعار والاشتراكات استرشادية وتتغير — كثير من البرامج مجاني أو له نسخة طلابية، تحقّق قبل الشراء.
       </p>
     </div>

@@ -5,6 +5,7 @@
    شبكة ولا setState في effect. الفئة قابلة للتغيير بشريحة. */
 import { useState } from "react";
 import Link from "next/link";
+import { CardGrid } from "@/components/ds";
 import { loadUser, loadGoals } from "@/lib/storage";
 import { type MajorCategory } from "@/lib/university";
 import {
@@ -51,18 +52,17 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
   );
 }
 
-/* غلاف قسم موحّد */
+/* غلاف قسم موحّد — بطاقة نظام + عنوان t-h3 + إيقاع داخلي موحّد */
 function Section({ icon, title, badge, children }: {
   icon: string; title: string; badge?: string; children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl p-4 flex flex-col gap-3"
-      style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+    <section className="ds-card ds-stack-tight">
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-[18px]" aria-hidden="true">{icon}</span>
-        <p className="text-[14px] font-black flex-1" style={{ color: "var(--text)" }}>{title}</p>
+        <h2 className="t-h3 flex-1" style={{ color: "var(--text)" }}>{title}</h2>
         {badge && (
-          <span className="text-[10.5px] font-black px-2.5 py-1 rounded-full flex-shrink-0"
+          <span className="t-caption px-2.5 py-1 rounded-full flex-shrink-0"
             style={{ background: "color-mix(in srgb, var(--gold) 14%, transparent)", color: "var(--gold)" }}>
             {badge}
           </span>
@@ -78,7 +78,7 @@ function SubCard({ title, children }: { title: string; children: React.ReactNode
   return (
     <div className="rounded-xl px-3.5 py-3 flex flex-col gap-2"
       style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-      <p className="text-[12.5px] font-black" style={{ color: "var(--text)" }}>{title}</p>
+      <p className="t-body font-black" style={{ color: "var(--text)" }}>{title}</p>
       {children}
     </div>
   );
@@ -89,7 +89,7 @@ function Bullets({ items, mark = "•" }: { items: string[]; mark?: string }) {
   return (
     <ul className="flex flex-col gap-1.5">
       {items.map((t, i) => (
-        <li key={i} className="text-[12.5px] leading-relaxed flex gap-2" style={{ color: "var(--text-muted)" }}>
+        <li key={i} className="t-caption flex gap-2" style={{ color: "var(--text-muted)" }}>
           <span className="flex-shrink-0" style={{ color: "var(--accent-light)" }} aria-hidden="true">{mark}</span>
           <span>{t}</span>
         </li>
@@ -113,13 +113,13 @@ export default function CareerCenter() {
   const linkedinFocus = linkedinFocusForMajor(cat);
 
   return (
-    <div className="flex flex-col gap-3">
+    /* ds-section: إيقاع رأسي موحّد بين التخصيص والتبويبات والمحتوى (يتنفّس) */
+    <div className="ds-section">
       {/* ── شريحة التخصص: التخصيص الظاهر للطالب ── */}
-      <section className="rounded-2xl p-4 flex flex-col gap-2.5"
-        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+      <section className="ds-card flex flex-col gap-2.5">
         <div className="flex items-center gap-2">
           <span className="text-[18px]" aria-hidden="true">🎯</span>
-          <p className="text-[13.5px] font-black flex-1" style={{ color: "var(--text)" }}>خصّص المركز لتخصصك</p>
+          <p className="t-body font-black flex-1" style={{ color: "var(--text)" }}>خصّص المركز لتخصصك</p>
         </div>
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: "thin" }}
           role="group" aria-label="اختيار فئة التخصص">
@@ -127,7 +127,7 @@ export default function CareerCenter() {
             <Chip key={c} active={cat === c} onClick={() => setCat(c)}>{c}</Chip>
           ))}
         </div>
-        <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+        <p className="t-caption" style={{ color: "var(--text-muted)" }}>
           الشهادات ونصائح السيرة ولينكدإن تتكيّف مع فئتك. حدّد تخصصك من{" "}
           <Link href="/profile" className="font-black" style={{ color: "var(--accent-light)" }}>ملفك</Link>
           {" "}ليأتي مختاراً تلقائياً.
@@ -148,17 +148,17 @@ export default function CareerCenter() {
       {/* ═══ التدريب (تعاوني / صيفي) ═══ */}
       {tab === "training" && (
         <Section icon="🧭" title="التدريب التعاوني والصيفي">
-          <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+          <p className="t-caption" style={{ color: "var(--text-muted)" }}>
             التدريب أسرع طريق لخبرة حقيقية قبل التخرّج — يبني سيرتك ويفتح لك أبواب التوظيف.
           </p>
           {TRAINING_KINDS.map((k) => (
             <SubCard key={k.id} title={k.title}>
-              <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{k.what}</p>
-              <span className="text-[11px] font-black px-2.5 py-1 rounded-full self-start"
+              <p className="t-caption" style={{ color: "var(--text-muted)" }}>{k.what}</p>
+              <span className="t-caption px-2.5 py-1 rounded-full self-start"
                 style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", color: "var(--accent-light)" }}>
                 🗓 {k.when}
               </span>
-              <p className="text-[11.5px] font-black mt-0.5" style={{ color: "var(--text)" }}>كيف تجهّز نفسك؟</p>
+              <p className="t-caption font-black mt-0.5" style={{ color: "var(--text)" }}>كيف تجهّز نفسك؟</p>
               <Bullets items={k.prep} mark="✓" />
             </SubCard>
           ))}
@@ -192,8 +192,8 @@ export default function CareerCenter() {
                 <li key={it.id} className="flex gap-2">
                   <span className="flex-shrink-0 text-[13px]" style={{ color: "var(--success)" }} aria-hidden="true">☑</span>
                   <div className="flex flex-col">
-                    <span className="text-[12.5px] font-bold" style={{ color: "var(--text)" }}>{it.label}</span>
-                    <span className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{it.hint}</span>
+                    <span className="t-caption" style={{ color: "var(--text)" }}>{it.label}</span>
+                    <span className="t-caption" style={{ color: "var(--text-muted)" }}>{it.hint}</span>
                   </div>
                 </li>
               ))}
@@ -208,40 +208,40 @@ export default function CareerCenter() {
       {/* ═══ الشهادات (مفلترة بالتخصص) ═══ */}
       {tab === "certs" && (
         <Section icon="🎓" title={`شهادات احترافية · ${cat}`}>
-          <p className="text-[11.5px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+          <p className="t-caption" style={{ color: "var(--text-muted)" }}>
             أسماء معروفة ودائمة — التفاصيل والرسوم على المصدر الرسمي لكل شهادة. غيّر الفئة من الأعلى.
           </p>
-          <div className="grid gap-2.5 desk-grid-2">
+          <CardGrid cols={2}>
             {certs.map((c) => (
               <div key={c.id} className="rounded-xl px-3.5 py-3 flex flex-col gap-1.5"
                 style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
                 <div className="flex items-start gap-2">
-                  <p className="text-[13px] font-black flex-1 leading-snug" style={{ color: "var(--text)" }}>{c.name}</p>
+                  <p className="t-body font-black flex-1 leading-snug" style={{ color: "var(--text)" }}>{c.name}</p>
                   <span className="text-[10px] font-black px-2 py-1 rounded-full flex-shrink-0"
                     style={{ background: `color-mix(in srgb, ${LEVEL_COLOR[c.level]} 14%, transparent)`, color: LEVEL_COLOR[c.level] }}>
                     {c.level}
                   </span>
                 </div>
-                <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{c.forWhat}</p>
+                <p className="t-caption" style={{ color: "var(--text-muted)" }}>{c.forWhat}</p>
               </div>
             ))}
-          </div>
+          </CardGrid>
         </Section>
       )}
 
       {/* ═══ الفرص (روابط رسمية — تبويب جديد) ═══ */}
       {tab === "opportunities" && (
         <Section icon="💼" title="جهات وبرامج التوظيف">
-          <p className="text-[11.5px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+          <p className="t-caption" style={{ color: "var(--text-muted)" }}>
             بوابات رسمية موثوقة — الفرص تُعلن دورياً، فتابع المواقع مباشرة للتقديم.
           </p>
-          <div className="grid gap-2.5 desk-grid-2">
+          <CardGrid cols={2}>
             {opportunitiesAll().map((o) => (
               <a key={o.id} href={o.officialUrl} target="_blank" rel="noopener noreferrer"
                 className="rounded-xl px-3.5 py-3 flex flex-col gap-1.5 no-underline transition active:scale-[0.98]"
                 style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-                <p className="text-[13px] font-black leading-snug" style={{ color: "var(--text)" }}>{o.title}</p>
-                <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{o.what}</p>
+                <p className="t-body font-black leading-snug" style={{ color: "var(--text)" }}>{o.title}</p>
+                <p className="t-caption" style={{ color: "var(--text-muted)" }}>{o.what}</p>
                 <div className="flex flex-wrap gap-1.5 mt-0.5">
                   {o.tags.map((t) => (
                     <span key={t} className="text-[10px] font-bold px-2 py-0.5 rounded-full"
@@ -250,12 +250,12 @@ export default function CareerCenter() {
                     </span>
                   ))}
                 </div>
-                <span className="text-[11.5px] font-black mt-0.5" style={{ color: "var(--accent-light)" }}>
+                <span className="t-caption mt-auto" style={{ color: "var(--accent-light)" }}>
                   زيارة الموقع الرسمي ↗
                 </span>
               </a>
             ))}
-          </div>
+          </CardGrid>
         </Section>
       )}
 
@@ -268,36 +268,35 @@ export default function CareerCenter() {
           <SubCard title="المتطلبات العامة">
             <Bullets items={GRAD_REQUIREMENTS} mark="✓" />
           </SubCard>
-          <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+          <p className="t-caption" style={{ color: "var(--text-muted)" }}>
             المتطلبات تختلف بين الجامعات والبرامج — راجع الموقع الرسمي لكل برنامج قبل التقديم.
           </p>
         </Section>
       )}
 
       {/* ── جسر إلى أدوات الجامعة والأجهزة (ربط داخلي لا تكرار) ── */}
-      <section className="rounded-2xl p-4 flex flex-col gap-2.5"
-        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-        <p className="text-[12.5px] font-black" style={{ color: "var(--text)" }}>يكمّل مسيرتك</p>
-        <div className="grid grid-cols-2 gap-2.5">
+      <section className="ds-card flex flex-col gap-2.5">
+        <p className="t-body font-black" style={{ color: "var(--text)" }}>يكمّل مسيرتك</p>
+        <CardGrid cols={2}>
           <Link href="/uni-tools"
             className="rounded-xl px-3.5 py-3 flex flex-col gap-1 text-right no-underline transition active:scale-[0.97]"
             style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface2))", border: "1.5px solid color-mix(in srgb, var(--accent) 26%, transparent)" }}>
             <span className="text-[20px] leading-none">🧮</span>
-            <span className="font-extrabold text-[13.5px]" style={{ color: "var(--text)" }}>أدوات الجامعة</span>
-            <span className="text-[11.5px] leading-snug" style={{ color: "var(--text-muted)" }}>معدّلك والغياب والفاينل</span>
+            <span className="t-body font-black" style={{ color: "var(--text)" }}>أدوات الجامعة</span>
+            <span className="t-caption" style={{ color: "var(--text-muted)" }}>معدّلك والغياب والفاينل</span>
           </Link>
           <Link href="/uni-gear"
             className="rounded-xl px-3.5 py-3 flex flex-col gap-1 text-right no-underline transition active:scale-[0.97]"
             style={{ background: "color-mix(in srgb, var(--gold) 8%, var(--surface2))", border: "1.5px solid color-mix(in srgb, var(--gold) 26%, transparent)" }}>
             <span className="text-[20px] leading-none">💻</span>
-            <span className="font-extrabold text-[13.5px]" style={{ color: "var(--text)" }}>عُدّة تخصصك</span>
-            <span className="text-[11.5px] leading-snug" style={{ color: "var(--text-muted)" }}>أجهزة وبرامج وأدوات AI</span>
+            <span className="t-body font-black" style={{ color: "var(--text)" }}>عُدّة تخصصك</span>
+            <span className="t-caption" style={{ color: "var(--text-muted)" }}>أجهزة وبرامج وأدوات AI</span>
           </Link>
-        </div>
+        </CardGrid>
       </section>
 
       {/* تنويه استرشادي موحّد */}
-      <p className="text-[10.5px] font-bold leading-relaxed px-1" style={{ color: "var(--text-muted)" }}>
+      <p className="t-caption px-1" style={{ color: "var(--text-muted)" }}>
         ⚖️ {CAREER_DISCLAIMER} — هذه نسخة أولى إرشادية، نعمّق أدواتها تِباعاً.
       </p>
     </div>

@@ -7,6 +7,7 @@
    قراءة التخزين بتهيئة كسولة والحفظ في معالجات الأحداث — لا setState في effect. */
 import { useState } from "react";
 import ToolTile from "@/components/ToolTile";
+import { CardGrid } from "@/components/ds";
 import {
   loadUser, loadUniTools, saveUniTools,
   type UniToolsState, type UniToolsCourseRow,
@@ -200,14 +201,14 @@ export default function UniTools() {
 
   return (
     <>
-      {/* ── لوحة البطاقات: نقطة الدخول — أربع أدوات مستقلة كبطاقات كبيرة ── */}
+      {/* ── لوحة البطاقات: نقطة الدخول — أربع أدوات بحجم موحّد (CardGrid متساوي الارتفاع) ── */}
       {tab === null && (
-        <div className="grid grid-cols-2 gap-3">
+        <CardGrid cols={2}>
           {TOOLS.map((t) => (
             <ToolTile key={t.id} icon={t.icon} title={t.label} desc={t.desc} color={t.color}
               ariaLabel={`افتح ${t.label}`} onClick={() => setTab(t.id)} />
           ))}
-        </div>
+        </CardGrid>
       )}
 
       {/* ── زر الرجوع للوحة البطاقات عند فتح أداة ── */}
@@ -221,11 +222,10 @@ export default function UniTools() {
 
       {/* ═══ حاسبة المعدل ═══ */}
       {tab === "gpa" && (
-        <section className="rounded-2xl p-4 flex flex-col gap-3"
-          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+        <section className="ds-card ds-stack-tight">
           <div className="flex items-center gap-2">
             <span className="text-[18px]" aria-hidden="true">🧮</span>
-            <p className="text-[14px] font-black flex-1" style={{ color: "var(--text)" }}>حاسبة المعدل</p>
+            <p className="t-body font-black flex-1" style={{ color: "var(--text)" }}>حاسبة المعدل</p>
             <div className="flex gap-1.5">
               {([5, 4] as const).map((sys) => (
                 <Chip key={sys} active={system === sys} onClick={() => update({ system: sys })}>
@@ -338,11 +338,10 @@ export default function UniTools() {
 
       {/* ═══ حاسبة الغياب ═══ */}
       {tab === "absence" && (
-        <section className="rounded-2xl p-4 flex flex-col gap-3"
-          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+        <section className="ds-card ds-stack-tight">
           <div className="flex items-center gap-2">
             <span className="text-[18px]" aria-hidden="true">📅</span>
-            <p className="text-[14px] font-black flex-1" style={{ color: "var(--text)" }}>حاسبة الغياب</p>
+            <p className="t-body font-black flex-1" style={{ color: "var(--text)" }}>حاسبة الغياب</p>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -389,11 +388,10 @@ export default function UniTools() {
 
       {/* ═══ حاسبة الفاينل ═══ */}
       {tab === "final" && (
-        <section className="rounded-2xl p-4 flex flex-col gap-3"
-          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+        <section className="ds-card ds-stack-tight">
           <div className="flex items-center gap-2">
             <span className="text-[18px]" aria-hidden="true">📝</span>
-            <p className="text-[14px] font-black flex-1" style={{ color: "var(--text)" }}>حاسبة الفاينل</p>
+            <p className="t-body font-black flex-1" style={{ color: "var(--text)" }}>حاسبة الفاينل</p>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -434,11 +432,10 @@ export default function UniTools() {
 
       {/* ═══ تحويل المعدل ═══ */}
       {tab === "convert" && (
-        <section className="rounded-2xl p-4 flex flex-col gap-3"
-          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+        <section className="ds-card ds-stack-tight">
           <div className="flex items-center gap-2">
             <span className="text-[18px]" aria-hidden="true">🔄</span>
-            <p className="text-[14px] font-black flex-1" style={{ color: "var(--text)" }}>تحويل المعدل</p>
+            <p className="t-body font-black flex-1" style={{ color: "var(--text)" }}>تحويل المعدل</p>
           </div>
 
           <Field label="معدلك" value={cvIn.value ?? ""} onChange={(v) => setCv({ value: v })} placeholder="مثال: 4.3" />
