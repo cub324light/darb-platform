@@ -156,6 +156,18 @@ test("المبدئيات متّسقة مع basicTracksFor حيث تتطابق ا
   );
 });
 
+/* ════════ الجامعي: مسار محايد لا قياس ════════ */
+test("basicTracksFor الجامعي: مسار محايد واحد بلا قدرات/تحصيلي/ستيب مهما كان الهدف", () => {
+  const neutral = basicTracksFor({ status: "جامعي" });
+  assert.deepEqual(neutral, ["مدرسه"]);
+  /* حتى لو مُرِّر هدف قياس (لن يحدث في التسجيل الجديد) لا نفعّل اختبار قياس للجامعي */
+  for (const goal of ["qudurat", "tahsili", "step", "university", "major"] as const) {
+    const t = basicTracksFor({ status: "جامعي", goal });
+    assert.ok(!t.includes("قدرات") && !t.includes("تحصيلي") && !t.includes("تحصيلي مبكر") && !t.includes("ستيب"),
+      `الجامعي لا يُفعّل اختبار قياس مع الهدف ${goal}`);
+  }
+});
+
 /* ════════ الترتيب القانوني واشتقاق الهدف ════════ */
 test("orderSelectedTracks: نجمة المرحلة أولاً والمدرسة أخيراً", () => {
   const elig2 = trackEligibilityFor({ status: "ثانوي", grade: "ثاني ثانوي" });

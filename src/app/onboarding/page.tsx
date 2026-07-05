@@ -14,17 +14,15 @@ import { redeemPendingRef } from "@/lib/referral";
 import Dome from "@/components/Dome";
 import Logo from "@/components/Logo";
 
-const STATUSES = ["ثانوي", "جامعي", "خريج"] as const;
-type Status = (typeof STATUSES)[number];
-/* «وين أنت بالضبط؟» — مواضع أوضح من «أي صف؟» المجرّد. الإجازة بين صفّين تُحسب
-   على الصف القادم (يستعد له)، والصف القياسي يبقى مصدر الحقيقة الوحيد للأهلية. */
-const GRADE_POSITIONS: { label: string; grade: string }[] = [
-  { label: "إجازة — ببدأ أول ثانوي",  grade: "أول ثانوي" },
-  { label: "في أول ثانوي",            grade: "أول ثانوي" },
-  { label: "إجازة — بين أول وثاني",   grade: "ثاني ثانوي" },
-  { label: "في ثاني ثانوي",           grade: "ثاني ثانوي" },
-  { label: "إجازة — بين ثاني وثالث",  grade: "ثالث ثانوي" },
-  { label: "في ثالث ثانوي",           grade: "ثالث ثانوي" },
+type Status = "ثانوي" | "جامعي" | "خريج";
+/* مرحلة واحدة بخمسة خيارات صريحة (تحلّ محل «الحالة» ثم قائمة المواضع) — أبسط وأقل
+   نقرات، ويشتقّ منها studyLevel + grade مباشرةً. الصف القياسي يبقى مصدر الأهلية. */
+const STAGES: { key: string; label: string; status: Status; grade: string }[] = [
+  { key: "g1",   label: "أول ثانوي",   status: "ثانوي", grade: "أول ثانوي" },
+  { key: "g2",   label: "ثاني ثانوي",  status: "ثانوي", grade: "ثاني ثانوي" },
+  { key: "g3",   label: "ثالث ثانوي",  status: "ثانوي", grade: "ثالث ثانوي" },
+  { key: "uni",  label: "طالب جامعي",  status: "جامعي", grade: "" },
+  { key: "grad", label: "خريج",        status: "خريج",  grade: "" },
 ];
 const TRACK_TYPES = ["عام", "صحي", "هندسي", "حاسب", "إداري"] as const;
 const GRAD_STAGES = ["خريج ثانوي", "خريج جامعة"];
@@ -51,8 +49,7 @@ export default function OnboardingPage() {
   const [status, setStatus] = useState<Status | "">("");
 
   /* ── تفاصيل المرحلة ── */
-  const [grade, setGrade] = useState("");                 // ثانوي (مشتق من الموضع)
-  const [gradePos, setGradePos] = useState("");           // ثانوي: «وين أنت بالضبط؟»
+  const [grade, setGrade] = useState("");                 // ثانوي (مشتق من خيار المرحلة)
   const [trackType, setTrackType] = useState("");         // ثانوي: المسار
   const [gradStage, setGradStage] = useState("");         // خريج
   const [universityYear, setUniversityYear] = useState(""); // جامعي
@@ -72,10 +69,9 @@ export default function OnboardingPage() {
   const [submitErr, setSubmitErr] = useState("");
 
   const [gapYear, setGapYear] = useState<"" | "yes" | "no">(""); // خريج: إعادة الاختبارات؟
-  /* ── حقول الجامعي (Phase Engine) ── */
+  /* ── حقول الجامعي (Phase Engine) — المعدل فقط في التسجيل؛ التدريب/الدراسات العليا
+     تُضبط لاحقاً من المنصة لا هنا (أقل أسئلة، لا سؤال قياس للجامعي إطلاقاً) ── */
   const [universityGpa, setUniversityGpa] = useState("");
-  const [coopDone, setCoopDone] = useState<boolean | undefined>(undefined);
-  const [gradSchoolInterest, setGradSchoolInterest] = useState<boolean | undefined>(undefined);
 
   /* ── الهدف + إضافات ── */
   const [goal, setGoal] = useState<StudyGoalType | "">(""); // الجامعي/الخريج (قائمة الأهداف)
@@ -131,10 +127,13 @@ export default function OnboardingPage() {
   const finish = async () => {
     /* H1: امنع الدخول المتزامن/المكرر */
     if (isSubmitting) return;
-    /* الثانوي: هدفه مشتق من اللوحة (قد يكون فارغاً لمدرسة فقط) — غيره: الهدف إلزامي */
+    /* الثانوي: هدفه مشتق من اللوحة (قد يكون فارغاً لمدرسة فقط).
+       الجامعي: بلا هدف قياس إطلاقاً (goal محايد = undefined).
+       الخريج: الهدف إلزامي (قائمة الأهداف). */
     const isSecondary = status === "ثانوي";
-    const effectiveGoal: StudyGoalType | "" = isSecondary ? derivedGoal : goal;
-    if (!isSecondary && !goal) return;
+    const isUniversity = status === "جامعي";
+    const effectiveGoal: StudyGoalType | "" = isSecondary ? derivedGoal : isUniversity ? "" : goal;
+    if (!isSecondary && !isUniversity && !goal) return;
     const tracks = finalTracks;
     if (!tracks.length) return;
     const primaryTrack = tracks[0];
@@ -189,10 +188,8 @@ export default function OnboardingPage() {
       gapYear: status === "خريج" ? gapYear === "yes" : undefined,
       studyHours: studyHours ? parseInt(studyHours) : undefined,
       trackType: resolvedTrackType,
-      /* حقول الجامعي */
+      /* حقول الجامعي — المعدل فقط (التدريب/الدراسات العليا تُضاف لاحقاً من المنصة) */
       universityGpa: status === "جامعي" && universityGpa ? parseFloat(universityGpa) : undefined,
-      coopDone: status === "جامعي" ? coopDone : undefined,
-      gradSchoolInterest: status === "جامعي" ? gradSchoolInterest : undefined,
       ...extras,
     });
 
@@ -355,15 +352,23 @@ export default function OnboardingPage() {
         </div>
 
         <div>
-          <p className="label mb-3">مرحلتك الدراسية؟</p>
-          <div className="grid grid-cols-3 gap-2.5">
-            {STATUSES.map((s) => (
-              <button key={s} onClick={() => setStatus(status === s ? "" : s)}
-                className="rounded-2xl py-3.5 font-bold text-[16px] transition active:scale-[0.98]"
-                style={chipStyle(status === s)}>
-                {s}
-              </button>
-            ))}
+          <p className="label mb-3">وش مرحلتك؟</p>
+          <div className="grid grid-cols-2 gap-2.5">
+            {STAGES.map((s) => {
+              const on = status === s.status && (s.status !== "ثانوي" || grade === s.grade);
+              return (
+                <button key={s.key}
+                  onClick={() => {
+                    if (on) { setStatus(""); setGrade(""); return; }
+                    setStatus(s.status);
+                    setGrade(s.grade);
+                  }}
+                  className={`rounded-2xl py-3.5 font-bold text-[15px] transition active:scale-[0.98] ${s.key === "grad" ? "col-span-2" : ""}`}
+                  style={chipStyle(on)}>
+                  {s.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -429,23 +434,6 @@ export default function OnboardingPage() {
           {/* ── ثانوي ── */}
           {status === "ثانوي" && (
             <>
-              <div>
-                <p className="label mb-1">وين أنت بالضبط؟</p>
-                <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>حتى لو في إجازة — نحسب لك الصف اللي تستعد له</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {GRADE_POSITIONS.map((p) => {
-                    const on = gradePos === p.label;
-                    return (
-                      <button key={p.label}
-                        onClick={() => { setGradePos(on ? "" : p.label); setGrade(on ? "" : p.grade); }}
-                        className="rounded-2xl py-3 px-2 font-bold text-[13px] transition active:scale-[0.98] leading-snug"
-                        style={chipStyle(on)}>
-                        {p.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
               {/* أول ثانوي: التحصيلي يبدأ من ثاني ثانوي — نطمئنه على ما نفعّله له */}
               {grade === "أول ثانوي" && (
                 <div className="rounded-2xl px-4 py-3"
@@ -500,7 +488,9 @@ export default function OnboardingPage() {
                 </div>
               </div>
 
-              {/* المعدل الجامعي — اختياري */}
+              {/* المعدل الجامعي — اختياري (السؤال الوحيد بعد الجامعة/التخصص/السنة).
+                 لا سؤال قياس/تحصيلي/step للجامعي؛ التدريب والدراسات العليا تُضبط
+                 لاحقاً من المنصة لا في التسجيل (أقل أسئلة). */}
               <div>
                 <p className="label mb-1">معدلك الجامعي الحالي؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
                 <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>من 5 — يساعدنا نخصّص توصياتك وأولوياتك</p>
@@ -510,40 +500,6 @@ export default function OnboardingPage() {
                   style={inputStyle}
                   onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
                   onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
-              </div>
-
-              {/* التدريب التعاوني — اختياري */}
-              <div>
-                <p className="label mb-1">التدريب التعاوني أو الصيفي؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <button onClick={() => setCoopDone(coopDone === true ? undefined : true)}
-                    className="rounded-2xl py-3.5 px-3 font-bold text-[14px] transition active:scale-[0.98] text-center leading-snug"
-                    style={chipStyle(coopDone === true)}>
-                    أنجزته ✅
-                  </button>
-                  <button onClick={() => setCoopDone(coopDone === false ? undefined : false)}
-                    className="rounded-2xl py-3.5 px-3 font-bold text-[14px] transition active:scale-[0.98] text-center leading-snug"
-                    style={chipStyle(coopDone === false)}>
-                    لم أنجزه بعد ⏳
-                  </button>
-                </div>
-              </div>
-
-              {/* الدراسات العليا — اختياري */}
-              <div>
-                <p className="label mb-1">هل تفكر في الدراسات العليا؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <button onClick={() => setGradSchoolInterest(gradSchoolInterest === true ? undefined : true)}
-                    className="rounded-2xl py-3.5 px-3 font-bold text-[14px] transition active:scale-[0.98] text-center leading-snug"
-                    style={chipStyle(gradSchoolInterest === true)}>
-                    نعم، مهتم 🎓
-                  </button>
-                  <button onClick={() => setGradSchoolInterest(gradSchoolInterest === false ? undefined : false)}
-                    className="rounded-2xl py-3.5 px-3 font-bold text-[14px] transition active:scale-[0.98] text-center leading-snug"
-                    style={chipStyle(gradSchoolInterest === false)}>
-                    لا، أركّز على سوق العمل 💼
-                  </button>
-                </div>
               </div>
             </>
           )}
@@ -611,10 +567,11 @@ export default function OnboardingPage() {
     );
   }
 
-  /* ════════ الخطوة 2 — لوحة اختبارات الثانوي / هدف الجامعي والخريج ════════ */
+  /* ════════ الخطوة 2 — لوحة اختبارات الثانوي / ملخّص الجامعي / هدف الخريج ════════ */
   const isSecondary = status === "ثانوي";
-  /* منتقي الجامعة إلزامي فقط لهدفَي الجامعة/التخصص عند الجامعي والخريج */
-  const needsUniPicker = !isSecondary && ((goal === "university" && !universityId) || (goal === "major" && !majorId));
+  const isUniversity = status === "جامعي";
+  /* منتقي الجامعة إلزامي فقط لهدفَي الجامعة/التخصص عند الخريج (الجامعي بلا هدف قياس) */
+  const needsUniPicker = !isSecondary && !isUniversity && ((goal === "university" && !universityId) || (goal === "major" && !majorId));
   const primaryTrack = finalTracks[0];
 
   /* لوحة الثانوي: المتاح أولاً (النجوم في الصدارة) ثم المقفل — ترتيب مستقر */
@@ -632,10 +589,13 @@ export default function OnboardingPage() {
     });
   };
 
-  /* شروط الإكمال: الثانوي → اختبار واحد على الأقل + ساعات · غيره → هدف + ساعات (+ جامعة عند الحاجة) */
+  /* شروط الإكمال: الثانوي → اختبار واحد على الأقل + ساعات · الجامعي → ساعات فقط
+     (الجامعة/التخصص/السنة تحقّقت في الخطوة 1) · الخريج → هدف + ساعات (+ جامعة عند الحاجة) */
   const canFinish = isSecondary
     ? finalTracks.length > 0 && !!studyHours
-    : !!goal && !!studyHours && !needsUniPicker;
+    : isUniversity
+      ? !!studyHours
+      : !!goal && !!studyHours && !needsUniPicker;
 
   return (
     <div className="min-h-dvh flex flex-col app-col">
@@ -697,6 +657,25 @@ export default function OnboardingPage() {
                 🎯 هدفك الحالي: {goalLabel(derivedGoal)} — اشتقيناه تلقائياً من اختيارك.
               </p>
             )}
+          </div>
+        ) : isUniversity ? (
+          /* ── الجامعي: بلا سؤال قياس/هدف — ملخّص تأكيدي فقط ثم ساعات المذاكرة ── */
+          <div>
+            <p className="label mb-1">جاهز يا طالب الجامعة 🎓</p>
+            <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>
+              ركّزنا لك على عالمك الجامعي — معدلك وتدريبك ومهاراتك وسوق العمل. بلا قدرات ولا تحصيلي ولا قبول.
+            </p>
+            <div className="rounded-2xl px-4 py-3 flex flex-wrap gap-2"
+              style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+              {([universityName, findMajor(majorId)?.name, universityYear ? `السنة ${universityYear}` : ""]
+                .filter(Boolean) as string[])
+                .map((chip) => (
+                  <span key={chip} className="px-3 py-1.5 rounded-full text-[13px] font-bold"
+                    style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)", border: "1.5px solid color-mix(in srgb, var(--accent) 28%, transparent)" }}>
+                    {chip}
+                  </span>
+                ))}
+            </div>
           </div>
         ) : (
           <div>
@@ -860,10 +839,12 @@ export default function OnboardingPage() {
           </>)}
         </div>
 
-        {/* الإلزامي فقط: الثانوي → اختبار + ساعات · غيره → هدف + ساعات (+ الجامعة عند الحاجة) */}
+        {/* الإلزامي فقط: الثانوي → اختبار + ساعات · الجامعي → ساعات · الخريج → هدف + ساعات (+ الجامعة) */}
         {!canFinish && (
           <p className="text-[12px] text-center" style={{ color: "var(--text-muted)" }}>
-            {isSecondary ? "اختر اختباراً واحداً على الأقل وحدّد ساعات مذاكرتك للمتابعة" : "أكمل الحقول الإلزامية أعلاه للمتابعة"}
+            {isSecondary ? "اختر اختباراً واحداً على الأقل وحدّد ساعات مذاكرتك للمتابعة"
+              : isUniversity ? "حدّد ساعات مذاكرتك للمتابعة"
+              : "أكمل الحقول الإلزامية أعلاه للمتابعة"}
           </p>
         )}
 
