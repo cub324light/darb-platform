@@ -1,9 +1,12 @@
 "use client";
-/* ─── أدوات الجامعة (client): أربع حاسبات بتبويب شرائح ───
+/* ─── أدوات الجامعة (client): أربع حاسبات كبطاقات دخول مستقلة ───
    عرض فقط — الحساب كله في src/lib/uniTools النقي. المدخلات تُحفظ محلياً في
    darb_uni_tools (بلا مزامنة سحابية) حتى لا يعيد الطالب إدخال مواده كل مرة.
+   نقطة الدخول لوحة بطاقات (ToolTile) لا شريط علوي: عند الفتح يرى المستخدم
+   أربع بطاقات كبيرة، والضغط على واحدة يعرض أداتها مع زر «رجوع للأدوات».
    قراءة التخزين بتهيئة كسولة والحفظ في معالجات الأحداث — لا setState في effect. */
 import { useState } from "react";
+import ToolTile from "@/components/ToolTile";
 import {
   loadUser, loadUniTools, saveUniTools,
   type UniToolsState, type UniToolsCourseRow,
@@ -24,11 +27,13 @@ const num = (s?: string): number | null => {
 };
 
 type ToolId = "gpa" | "absence" | "final" | "convert";
-const TOOLS: { id: ToolId; label: string; icon: string }[] = [
-  { id: "gpa",     label: "حاسبة المعدل", icon: "🎓" },
-  { id: "absence", label: "الغياب",       icon: "🪑" },
-  { id: "final",   label: "الفاينل",      icon: "📝" },
-  { id: "convert", label: "تحويل المعدل", icon: "🔁" },
+/* بطاقات الدخول الأربع — كل واحدة أيقونة + اسم + وصف سطر واحد + لون مميز.
+   الوصف والأيقونة يُشتقّان منها للعنوان داخل الأداة أيضاً (مصدر واحد). */
+const TOOLS: { id: ToolId; label: string; desc: string; icon: string; color: string }[] = [
+  { id: "gpa",     label: "حاسبة المعدل",  desc: "فصلي وتراكمي وكم تحتاج لهدفك", icon: "🧮", color: "var(--accent)" },
+  { id: "absence", label: "حاسبة الغياب",  desc: "سقف الحرمان والمتبقي لك",      icon: "📅", color: "var(--gold)" },
+  { id: "final",   label: "حاسبة الفاينل", desc: "كم تحتاج في الاختبار النهائي", icon: "📝", color: "var(--success)" },
+  { id: "convert", label: "تحويل المعدل",  desc: "بين سلالم ٤ و٥ و١٠٠",          icon: "🔄", color: "var(--danger)" },
 ];
 
 const SCALES: { id: GpaScaleId; label: string }[] = [
@@ -107,7 +112,8 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
 }
 
 export default function UniTools() {
-  const [tab, setTab] = useState<ToolId>("gpa");
+  /* null = لوحة البطاقات (نقطة الدخول)؛ أي id = الأداة المفتوحة */
+  const [tab, setTab] = useState<ToolId | null>(null);
   /* تهيئة كسولة: قراءة واحدة من التخزين + تعبئة مبدئية من ملف الطالب إن وُجد */
   const [state, setState] = useState<UniToolsState>(() => {
     if (typeof window === "undefined") return {};
@@ -194,23 +200,31 @@ export default function UniTools() {
 
   return (
     <>
-      {/* ── شرائح التبويب بين الأدوات الأربع ── */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: "thin" }}
-        role="tablist" aria-label="أدوات الجامعة">
-        {TOOLS.map((t) => (
-          <Chip key={t.id} active={tab === t.id} onClick={() => setTab(t.id)}>
-            <span aria-hidden="true">{t.icon}</span>
-            {t.label}
-          </Chip>
-        ))}
-      </div>
+      {/* ── لوحة البطاقات: نقطة الدخول — أربع أدوات مستقلة كبطاقات كبيرة ── */}
+      {tab === null && (
+        <div className="grid grid-cols-2 gap-3">
+          {TOOLS.map((t) => (
+            <ToolTile key={t.id} icon={t.icon} title={t.label} desc={t.desc} color={t.color}
+              ariaLabel={`افتح ${t.label}`} onClick={() => setTab(t.id)} />
+          ))}
+        </div>
+      )}
+
+      {/* ── زر الرجوع للوحة البطاقات عند فتح أداة ── */}
+      {tab !== null && (
+        <button onClick={() => setTab(null)}
+          className="flex items-center gap-2 self-start px-3.5 py-2 rounded-xl text-[13px] font-black transition active:scale-95"
+          style={{ background: "var(--surface)", color: "var(--accent-light)", border: "1px solid var(--border)" }}>
+          <span aria-hidden="true">←</span> رجوع للأدوات
+        </button>
+      )}
 
       {/* ═══ حاسبة المعدل ═══ */}
       {tab === "gpa" && (
         <section className="rounded-2xl p-4 flex flex-col gap-3"
           style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <div className="flex items-center gap-2">
-            <span className="text-[18px]" aria-hidden="true">🎓</span>
+            <span className="text-[18px]" aria-hidden="true">🧮</span>
             <p className="text-[14px] font-black flex-1" style={{ color: "var(--text)" }}>حاسبة المعدل</p>
             <div className="flex gap-1.5">
               {([5, 4] as const).map((sys) => (
@@ -327,7 +341,7 @@ export default function UniTools() {
         <section className="rounded-2xl p-4 flex flex-col gap-3"
           style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <div className="flex items-center gap-2">
-            <span className="text-[18px]" aria-hidden="true">🪑</span>
+            <span className="text-[18px]" aria-hidden="true">📅</span>
             <p className="text-[14px] font-black flex-1" style={{ color: "var(--text)" }}>حاسبة الغياب</p>
           </div>
 
@@ -423,7 +437,7 @@ export default function UniTools() {
         <section className="rounded-2xl p-4 flex flex-col gap-3"
           style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <div className="flex items-center gap-2">
-            <span className="text-[18px]" aria-hidden="true">🔁</span>
+            <span className="text-[18px]" aria-hidden="true">🔄</span>
             <p className="text-[14px] font-black flex-1" style={{ color: "var(--text)" }}>تحويل المعدل</p>
           </div>
 
