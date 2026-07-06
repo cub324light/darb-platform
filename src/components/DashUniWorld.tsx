@@ -14,7 +14,8 @@ import { findMajor } from "@/lib/university";
 import { hasMajorWorld } from "@/lib/majors";
 import {
   semesterInfo, gradProgress, buildUniJourney, aiThisWeek, AI_INTEGRITY_NOTE,
-  type JourneyStep, type JourneyState,
+  uniStage, stageGuidance,
+  type JourneyStep, type JourneyState, type StageGuidance,
 } from "@/lib/uniJourney";
 
 /* هدف تميّز مرجعي على سُلّم الـ٥ (تقدير ممتاز) — يوجّه لمخطّط «وش أحتاج» في /uni-tools */
@@ -112,6 +113,32 @@ function Head({ icon, title, sub }: { icon: string; title: string; sub: string }
   );
 }
 
+/* «خطوتك القادمة» — العنوان والإجراءات تتحوّل مع مرحلة الطالب، وكل بطاقة تقود
+   إلى قسمها في عالمه (سيرة→career، STEP→عُدّتك...). لا معلومة معزولة. */
+function StageBlock({ g }: { g: StageGuidance }) {
+  return (
+    <div className="flex flex-col gap-2.5">
+      <Head icon="🧭" title={g.title} sub={g.sub} />
+      <div className="flex flex-col gap-2">
+        {g.actions.map((a) => (
+          <Link key={a.title} href={a.href}
+            className="ds-card ds-card-tight flex items-center gap-3 text-right no-underline transition active:scale-[0.98]"
+            style={{ borderInlineStartWidth: "3px", borderInlineStartColor: a.color }}>
+            <span className="w-9 h-9 rounded-xl flex items-center justify-center text-[17px] leading-none flex-shrink-0"
+              style={{ background: `color-mix(in srgb, ${a.color} 14%, transparent)` }}
+              aria-hidden="true">{a.icon}</span>
+            <span className="flex-1 min-w-0">
+              <span className="block t-body font-black" style={{ color: "var(--text)" }}>{a.title}</span>
+              <span className="block t-caption" style={{ color: "var(--text-muted)" }}>{a.detail}</span>
+            </span>
+            <span className="text-[15px] flex-shrink-0" style={{ color: a.color }} aria-hidden="true">←</span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function DashUniWorld({ hint }: { hint: string }) {
   /* قراءة كسولة واحدة: التخزين (المعدّل/الساعات/التخصص/السنة) + التقويم + الرحلة */
   const [w] = useState(() => {
@@ -126,13 +153,16 @@ export default function DashUniWorld({ hint }: { hint: string }) {
       majorId = g.majorId;
       year = u?.universityYear;
     }
+    const majorName = hasMajorWorld(majorId) ? (findMajor(majorId)?.name ?? null) : null;
     return {
       gpa, hours,
-      majorName: hasMajorWorld(majorId) ? (findMajor(majorId)?.name ?? null) : null,
+      majorName,
       sem: semesterInfo(now),
       grad: gradProgress(hours ?? undefined),
       journey: buildUniJourney(majorId, year),
       week: aiThisWeek(majorId),
+      /* اللوحة تتحوّل تلقائياً حسب المرحلة (بداية/منتصف/قرب تخرّج) */
+      guidance: stageGuidance(uniStage(year, hours ?? undefined), { majorName }),
     };
   });
 
@@ -175,6 +205,9 @@ export default function DashUniWorld({ hint }: { hint: string }) {
             value={HONORS_GPA} sub="تقدير ممتاز · خطّط له ←" color="var(--gold)" />
         </div>
       </div>
+
+      {/* ═══ خطوتك القادمة — تتحوّل تلقائياً حسب المرحلة، وكل إجراء يقود لقسمه ═══ */}
+      <StageBlock g={w.guidance} />
 
       {/* ═══ مستقبلك: Timeline رأسي — يرى الطريق كاملاً ═══ */}
       <div className="flex flex-col gap-2.5">

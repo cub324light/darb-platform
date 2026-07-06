@@ -146,3 +146,85 @@ export function aiThisWeek(majorId: string | undefined): WeekTask[] {
     { task: "كتابة سيرتك الذاتية", via: "صياغة وتنسيق احترافي" },
   ];
 }
+
+/* ════════ ٥) المرحلة الجامعية — اللوحة تتحوّل تلقائياً حسبها ════════
+   بداية (سنة أولى/ساعات قليلة) · منتصف (٢-٣) · قرب التخرّج (٤+ أو ساعات عالية).
+   لكل مرحلة «خطوتك القادمة» مختلفة، وكل إجراء يقود إلى قسمه في عالم الطالب
+   (سيرة→career، STEP→عُدّتك، شركات→عالم تخصصك) — لا معلومة معزولة. */
+export type UniStage = "start" | "mid" | "senior";
+
+/* عتبة الساعات التي تُدخِل الطالب مرحلة «قرب التخرّج» ولو تأخّرت سنته المسجّلة */
+const SENIOR_HOURS = 100;
+
+export function uniStage(year?: string, completedHours?: number): UniStage {
+  const y = year ? (YEAR_ORDER[year] ?? 0) : 0;
+  if (y >= 4 || (completedHours ?? 0) >= SENIOR_HOURS) return "senior";
+  if (y >= 2) return "mid";
+  return "start"; // سنة أولى أو غير محدّدة
+}
+
+export interface StageAction {
+  icon: string;
+  title: string;
+  detail: string;
+  href: string;
+  /* لون بمعنى: أزرق=إجراء أساسي · أخضر=جاهزية/تخرّج · ذهبي=إنجاز/شهادة · رمادي=استكشاف */
+  color: string;
+}
+
+export interface StageGuidance {
+  stage: UniStage;
+  title: string;   // العنوان الذي «تتحوّل» له اللوحة
+  sub: string;     // سطر واحد
+  actions: StageAction[]; // كل واحد يقود إلى قسمه
+}
+
+/* «خطوتك القادمة» حسب المرحلة — الإجراءات تربط أقسام عالم الطالب ببعضها.
+   نقيّة وحتمية: نفس المدخل ⇒ نفس المخرج. */
+export function stageGuidance(
+  stage: UniStage,
+  opts?: { majorName?: string | null; targetNeedsStep?: boolean },
+): StageGuidance {
+  const major = opts?.majorName ? ` في ${opts.majorName}` : "";
+
+  if (stage === "senior") {
+    return {
+      stage,
+      title: "أنت قريب من التخرّج 🎓",
+      sub: "جهّز نفسك لسوق العمل — خطوة خطوة",
+      actions: [
+        { icon: "📄", title: "جهّز سيرتك الذاتية", detail: "قالب ونصائح حسب تخصصك", href: "/career", color: "var(--accent)" },
+        { icon: "🔗", title: "أنشئ/حسّن لينكدإن", detail: "قائمة تحقّق للملف المهني", href: "/career", color: "var(--accent)" },
+        { icon: "🤝", title: "قدّم على التدريب والوظائف", detail: "فرص أرامكو وسابك ونيوم", href: "/career", color: "var(--success)" },
+        { icon: "🏢", title: "راجع شركات تخصصك", detail: "من يوظّف خرّيجي مجالك", href: "/career", color: "var(--text-muted)" },
+        { icon: "🔤", title: "اختبر STEP إن احتجته", detail: "بعض الجهات تطلب إثبات لغة", href: "/uni-gear", color: "var(--gold)" },
+      ],
+    };
+  }
+
+  if (stage === "mid") {
+    return {
+      stage,
+      title: "ابنِ ملفك المهني الآن",
+      sub: "المنتصف هو وقت الشهادات والتدريب",
+      actions: [
+        { icon: "📜", title: "احصل على شهادة احترافية", detail: `الأنسب${major}`, href: "/career", color: "var(--gold)" },
+        { icon: "🤝", title: "خطّط للتدريب التعاوني", detail: "متى وكيف تتقدّم", href: "/career", color: "var(--success)" },
+        { icon: "🧰", title: "أتقن برامج تخصصك", detail: "الأدوات التي يطلبها سوقك", href: "/uni-gear", color: "var(--accent)" },
+        { icon: "📊", title: "ارفع معدّلك", detail: "احسب واستهدف", href: "/uni-tools", color: "var(--accent)" },
+      ],
+    };
+  }
+
+  return {
+    stage,
+    title: "ابدأ جامعتك بقوة",
+    sub: "أساس السنة الأولى يصنع بقية رحلتك",
+    actions: [
+      { icon: "📊", title: "كيف ترفع معدّلك؟", detail: "احسب معدلك واستهدف رقماً", href: "/uni-tools", color: "var(--accent)" },
+      { icon: "⏱️", title: "نظّم وقتك", detail: "خطة أسبوعية توازن موادك", href: "/plan", color: "var(--accent)" },
+      { icon: "🧰", title: "تعرّف على برامج تخصصك", detail: `الأدوات الأساسية${major}`, href: "/uni-gear", color: "var(--gold)" },
+      { icon: "🧭", title: "استكشف مسارات تخصصك", detail: "إلى أين يقودك مجالك", href: "/career", color: "var(--text-muted)" },
+    ],
+  };
+}
