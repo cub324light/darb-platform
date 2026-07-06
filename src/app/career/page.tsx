@@ -10,23 +10,20 @@ import PageFooter from "@/components/PageFooter";
 import CareerCenter from "./CareerCenter";
 
 export const metadata: Metadata = {
-  title: "مسيرتك المهنية | درب",
+  title: "عالم تخصصك — أدوات وشهادات وشركات ومسارات | درب",
   description:
-    "دليل مهني لطالب الجامعة: التدريب التعاوني والصيفي، السيرة الذاتية، لينكدإن، الشهادات الاحترافية حسب تخصصك، فرص الجهات الكبرى، والدراسات العليا — إرشادي عملي.",
+    "عالم تخصصك الدقيق: برامجه وشهاداته الاحترافية والشركات التي توظّفه ومساراته الوظيفية وراتبه الاسترشادي وأدوات الذكاء الاصطناعي المناسبة له، إضافة إلى خطواتك المهنية (تدريب وسيرة ولينكدإن وفرص ودراسات عليا) — إرشادي عملي.",
   robots: { index: false },
 };
 
 export default function CareerPage() {
   return (
     <div className="page desk-wide">
+      {/* الترويسة شريط علوي فقط — البطل المُخصَّص «عالم تخصصك» داخل CareerCenter */}
       <Dome compact>
         <div className="flex items-center gap-3">
           <BackButton />
-          <h1 className="title-lg grad-title">مسيرتك المهنية</h1>
         </div>
-        <p className="text-[13px] mt-1" style={{ color: "var(--text-muted)" }}>
-          التدريب والسيرة ولينكدإن والشهادات والفرص — مخصّصة لتخصصك، والمصادر الرسمية أولاً
-        </p>
       </Dome>
       <div className="h-4" />
 
