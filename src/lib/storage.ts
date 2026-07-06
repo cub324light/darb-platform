@@ -655,18 +655,23 @@ export const DASH_SECTION_META: Record<DashSectionId, { label: string; desc: str
   map:         { label: "خريطة السعودية",   desc: "توزيع الطلاب على مناطق المملكة" },
 };
 
-/* الانطباع الأول — ترتيب الأقسام حسب رحلة المستخدم الجديد:
-   ١) يومك (البطل: تقدّم + إجراء واحد)  ٢) أدوات درب (اكتشاف الميزات)
-   ٣) التقدّم (الجدول/دويرب/أسبوعي/إحصائيات/مسارات)  ٤) مجتمع وإضافات */
+/* التركيز على المهمة — «يعرف الطالب ماذا يذاكر الآن ويبدأ بخطوة واحدة»:
+   يظهر افتراضياً أربعة أقسام فقط بهذا الترتيب —
+   ١) يومك (البطل: ماذا الآن + الفعل الواحد)  ٢) جدول اليوم (خطة اليوم)
+   ٣) أسرع وصول (اختصارات)  ٤) مساراتك (تقدّم موجز).
+   بقية الأقسام تبقى متاحة عبر «تخصيص» لكنها مخفيّة افتراضياً حتى لا تُشتّت المهمة. */
 const DASH_DEFAULT_ORDER: DashSectionId[] = [
-  "today", "tools",
-  "schedule", "ai", "weekly", "stats", "track",
-  "quote", "community", "certificate",
-  "studiers", "map",
+  // ظاهر افتراضياً — يخدم مهمة الصفحة الواحدة
+  "today", "schedule", "tools", "track",
+  // مخفيّ افتراضياً — متاح دائماً من «تخصيص» (لا يُحذف كوده)
+  "ai", "weekly", "stats", "quote", "community", "certificate", "studiers", "map",
 ];
 
 function defaultLayout(): DashItem[] {
-  const hidden = new Set<DashSectionId>(["studiers", "map"]);
+  // مخفيّ افتراضياً: كل ما لا يخدم «ماذا أذاكر الآن» مباشرةً — يُرجَّع من «تخصيص»
+  const hidden = new Set<DashSectionId>([
+    "ai", "weekly", "stats", "quote", "community", "certificate", "studiers", "map",
+  ]);
   return DASH_DEFAULT_ORDER.map((id) => ({ id, visible: !hidden.has(id) }));
 }
 
@@ -674,6 +679,7 @@ const DASH_CONFIG_KEY = "darb_dash_config";
 const DASH_SCHED2_KEY = "darb_dash_sched_v2"; // علم ترحيل لمرة واحدة
 const DASH_TODAY_FIRST_KEY = "darb_dash_today_first_v1"; // ترحيل: يومك أولاً + دويرب ثانياً
 const DASH_HERO_V2_KEY = "darb_dash_hero_v2"; // ترحيل: ترتيب «الانطباع الأول» الجديد
+const DASH_FOCUS_KEY = "darb_dash_focus_v1"; // ترحيل: إعادة ضبط لتخطيط «ماذا أذاكر الآن» المُنقّى (٤ أقسام)
 
 /* ترحيل لمرة واحدة: انقل «جدول اليوم» ليصير ثاني عنصر — يُحترم تخصيص المستخدم بعدها */
 function migrateScheduleSecond(layout: DashItem[]): DashItem[] {
@@ -728,11 +734,26 @@ function migrateHeroOrder(layout: DashItem[]): DashItem[] {
   }
 }
 
+/* ترحيل لمرة واحدة: إعادة ضبط تخطيط كل المستخدمين إلى الافتراضي المُنقّى الجديد —
+   «يومك ← جدول اليوم ← أسرع وصول ← مساراتك» ظاهرة، والبقية مخفيّة (متاحة عبر «تخصيص»).
+   يُطبَّق مرة واحدة فقط ثم يُحترم تخصيص المستخدم بعده — كنمط migrateTodayFirst/migrateHeroOrder. */
+function migrateFocusV1(layout: DashItem[]): DashItem[] {
+  try {
+    if (localStorage.getItem(DASH_FOCUS_KEY)) return layout;
+    localStorage.setItem(DASH_FOCUS_KEY, "1");
+    const out = defaultLayout();
+    localStorage.setItem(DASH_CONFIG_KEY, JSON.stringify({ layout: out }));
+    return out;
+  } catch {
+    return layout;
+  }
+}
+
 export function loadDashConfig(): DashConfig {
   if (typeof window === "undefined") return { layout: defaultLayout() };
   try {
     const raw = localStorage.getItem(DASH_CONFIG_KEY);
-    if (!raw) return { layout: migrateHeroOrder(migrateTodayFirst(migrateScheduleSecond(defaultLayout()))) };
+    if (!raw) return { layout: migrateFocusV1(migrateHeroOrder(migrateTodayFirst(migrateScheduleSecond(defaultLayout())))) };
     const parsed = JSON.parse(raw);
 
     // الصيغة الجديدة: { layout: [...] } — نُكمل أي قسم ناقص ونُسقط المجهول
@@ -746,7 +767,7 @@ export function loadDashConfig(): DashConfig {
         ...known,
         ...DASH_DEFAULT_ORDER.filter((id) => !seen.has(id)).map((id) => ({ id, visible: !hiddenByDefault.has(id) })),
       ];
-      return { layout: migrateHeroOrder(migrateTodayFirst(migrateScheduleSecond(merged))) };
+      return { layout: migrateFocusV1(migrateHeroOrder(migrateTodayFirst(migrateScheduleSecond(merged)))) };
     }
 
     // ترحيل من الصيغة القديمة: { showStats, showWeekly, showSchedule, showTools, showAI }
@@ -757,7 +778,7 @@ export function loadDashConfig(): DashConfig {
       tools: parsed.showTools,
       ai: parsed.showAI,
     };
-    return { layout: migrateHeroOrder(migrateTodayFirst(migrateScheduleSecond(DASH_DEFAULT_ORDER.map((id) => ({ id, visible: oldVis[id] ?? true }))))) };
+    return { layout: migrateFocusV1(migrateHeroOrder(migrateTodayFirst(migrateScheduleSecond(DASH_DEFAULT_ORDER.map((id) => ({ id, visible: oldVis[id] ?? true })))))) };
   } catch {
     return { layout: defaultLayout() };
   }

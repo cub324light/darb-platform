@@ -10,7 +10,6 @@ import DashUniActions from "@/components/DashUniActions";
 import { fmtHour } from "@/lib/utils";
 import { quoteOfToday } from "@/lib/quotes";
 import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, saveExamDate, loadDashConfig, saveDashConfig, loadTrackExamDates, saveTrackExamDates, DASH_SECTION_META, localDayKey, showsUniversityUI, type DarbUser, type ScheduleEvent, type DashItem, type DashSectionId, saveEvents } from "@/lib/storage";
-import CalendarExport from "@/components/CalendarExport";
 import { useFlag } from "@/lib/flags";
 /* syncUser مُستورَد ديناميكياً أسفل — يُبعد Firebase عن حزمة الداشبورد المبدئية */
 import DayScheduler, { getEventsForDate } from "@/components/DayScheduler";
@@ -19,7 +18,6 @@ import ExamDateButton from "@/components/ExamDateButton";
    تزامنياً ويظهر في نفس إطار الرسم بدل القفز بعد تحميل حزمة منفصلة */
 import RecommendationFeed from "@/components/RecommendationFeed";
 import dynamic from "next/dynamic";
-const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
 const RetentionHost = dynamic(() => import("@/components/retention/RetentionHost"), { ssr: false });
 const SaudiMap = dynamic(() => import("@/components/SaudiMap"), { ssr: false });
 const WeeklyReport = dynamic(() => import("@/components/WeeklyReport"), { ssr: false });
@@ -588,25 +586,6 @@ export default function DashboardPage() {
 
       case "schedule":
         return (
-          <div className="flex flex-col gap-4">
-            {/* التقويم فوق — وبينه وبين جدول اليوم فاصل */}
-            <Calendar
-              examDate={examDate}
-              onExamDateChange={(d) => { setExamDate(d); saveExamDate(d); }}
-              onDayClick={(date) => setCalDate(date)}
-              getDayInfo={(date) =>
-                getEventsForDate(date, allEvents).map((ev) => {
-                  const subj = allSubjects.find((s) => s.name === ev.subject);
-                  return {
-                    id: ev.id,
-                    label: ev.type === "study" ? (ev.subject ?? "مذاكرة") : (ev.label ?? "مشغول"),
-                    color: ev.type === "study" ? (subj?.color ?? "var(--accent-light)") : "var(--danger)",
-                    from: ev.fromHour,
-                    to: ev.toHour,
-                  };
-                })
-              }
-            />
             <section className="card">
               <div className="flex items-center justify-between mb-3">
                 <p className="title-md" style={{ color: "var(--text)" }}>جدول اليوم</p>
@@ -696,11 +675,13 @@ export default function DashboardPage() {
                   مساعد دويرب
                 </button>
               </div>
-              <div className="mt-2">
-                <CalendarExport events={allEvents} />
-              </div>
+              {/* التقويم الشهري الكامل انتقل إلى «خطتي» — رابط مضغوط بدل تكراره هنا */}
+              <Link href="/plan"
+                className="mt-3 flex items-center justify-center gap-2 rounded-2xl py-2.5 text-[14px] font-bold transition active:scale-[0.98] no-underline"
+                style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--accent-light)" }}>
+                📅 التقويم الكامل في خطتي ←
+              </Link>
             </section>
-          </div>
         );
 
 
@@ -946,6 +927,19 @@ export default function DashboardPage() {
   const visibleItems = layout.filter((l) => l.visible);
   const hiddenItems = layout.filter((l) => !l.visible);
 
+  /* توزيع الأقسام الظاهرة على أعمدة سطح المكتب — يحترم الإظهار/الإخفاء تماماً
+     (نفس visibleItems كالجوال). البطل «يومك» أعلى العمود الأيمن تحت التوصيات،
+     والبقية تتوزّع بالتناوب بادئةً من العمود الأوسط الأوسع، فأي قسم يفعّله
+     المستخدم يظهر تلقائياً دون أقسام ثابتة تتجاوز إخفاءه. */
+  const heroVisible = visibleItems.some((it) => it.id === "today");
+  const deskCols: DashSectionId[][] = (() => {
+    const cols: DashSectionId[][] = [[], [], []];
+    visibleItems
+      .filter((it) => it.id !== "today")
+      .forEach((it, i) => cols[(i + 1) % 3].push(it.id));
+    return cols;
+  })();
+
   return (
     <div className={`page${isWide ? " desk-wide" : ""}`}>
 
@@ -1080,33 +1074,33 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ═══ تخطيط سطح المكتب: ثلاثة أعمدة (≥1280px) ═══ */}
+      {/* ═══ تخطيط سطح المكتب: ثلاثة أعمدة (≥1280px) — يحترم إظهار/إخفاء الأقسام ═══ */}
       {isWide && (
         <div className="dash-desk mt-4">
-          {/* العمود الأيمن (rail لاصق): الأولوية + اليوم + الإحصاءات */}
+          {/* العمود الأيمن (rail لاصق): التوصيات + البطل + أقسام موزّعة */}
           <div className="dash-col">
             <div className="dash-col-rail flex flex-col gap-[18px]">
               <RecommendationFeed />
-              {renderSection("today")}
-              {renderSection("stats")}
+              {heroVisible && renderSection("today")}
+              {deskCols[0].map((id) => (
+                <div key={id}>{renderSection(id)}</div>
+              ))}
             </div>
           </div>
 
-          {/* العمود الأوسط: المسارات + الجدول + الأسبوع */}
+          {/* العمود الأوسط (الأوسع): أقسام موزّعة */}
           <div className="dash-col">
-            {renderSection("track")}
-            {renderSection("schedule")}
-            {renderSection("weekly")}
+            {deskCols[1].map((id) => (
+              <div key={id}>{renderSection(id)}</div>
+            ))}
           </div>
 
-          {/* العمود الأيسر (rail لاصق): دويرب دائماً ظاهر + الأدوات + المجتمع */}
+          {/* العمود الأيسر (rail لاصق): أقسام موزّعة */}
           <div className="dash-col">
             <div className="dash-col-rail flex flex-col gap-[18px]">
-              {renderSection("ai")}
-              {renderSection("tools")}
-              {renderSection("community")}
-              {renderSection("certificate")}
-              {renderSection("quote")}
+              {deskCols[2].map((id) => (
+                <div key={id}>{renderSection(id)}</div>
+              ))}
             </div>
           </div>
         </div>
