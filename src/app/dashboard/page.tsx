@@ -6,7 +6,7 @@ import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import { getTrack, TRACKS, type TrackId } from "@/lib/tracks";
 import { phaseExperience } from "@/lib/experience";
-import DashUniActions from "@/components/DashUniActions";
+import DashUniWorld from "@/components/DashUniWorld";
 import { fmtHour } from "@/lib/utils";
 import { quoteOfToday } from "@/lib/quotes";
 import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, saveExamDate, loadDashConfig, saveDashConfig, loadTrackExamDates, saveTrackExamDates, DASH_SECTION_META, localDayKey, showsUniversityUI, type DarbUser, type ScheduleEvent, type DashItem, type DashSectionId, saveEvents } from "@/lib/storage";
@@ -966,7 +966,7 @@ export default function DashboardPage() {
              الجامعي: عالم مهني (أدوات/أجهزة/سيرة) بلا أي عدّاد قياس أو قبول.
              غيره: عدّاد الاختبار الأقرب + إجراءات القبول حسب أهلية المرحلة. */}
         {exp.showsUniLife ? (
-          <DashUniActions hint={exp.duwairbHint} />
+          <DashUniWorld hint={exp.duwairbHint} />
         ) : (
           <>
             {/* عدّاد الاختبار الأقرب — يُعرض هنا مرة واحدة فقط */}
