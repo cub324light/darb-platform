@@ -60,16 +60,6 @@ export default function DashboardPage() {
     if (typeof window === "undefined") return 0;
     return computeStreak(loadStats());
   });
-  const [silver] = useState(() =>
-    typeof window !== "undefined" ? loadStats().silver : 0
-  );
-  const [statsTipSeen, setStatsTipSeen] = useState(() => {
-    try { return !!localStorage.getItem("darb_stats_tip"); } catch { return true; }
-  });
-  const dismissStatsTip = () => {
-    setStatsTipSeen(true);
-    try { localStorage.setItem("darb_stats_tip", "1"); } catch { /* */ }
-  };
   const [focusMinsTotal] = useState(() =>
     typeof window !== "undefined" ? loadStats().totalFocusMins : 0
   );
@@ -533,14 +523,9 @@ export default function DashboardPage() {
         return (
           <section className="card relative overflow-hidden">
             <BorderBeam size={180} duration={14} colorFrom="var(--accent-hi)" colorTo="var(--gold)" delay={2} />
-            <div className="flex items-center justify-between mb-3">
-              <p className="title-md" style={{ color: "var(--text)" }}>يومك</p>
-              <p className="num-hero text-[17px]" style={{ color: "var(--text-dim)" }}>
-                {time ? time.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", hour12: true }) : "--:--"}
-              </p>
-            </div>
+            <p className="title-md mb-3" style={{ color: "var(--text)" }}>يومك</p>
 
-            {/* إحصاءات الاستعداد — سطر واحد */}
+            {/* إحصاءات الاستعداد — سطر واحد (المكان الوحيد لها: بجانب الإجراء) */}
             <div className="flex gap-2 mb-3">
               {[
                 { val: streak,   label: "ستريك",   color: streak > 0 ? "var(--gold)" : "var(--text-dim)" },
@@ -1034,45 +1019,9 @@ export default function DashboardPage() {
           </>
         )}
 
-        {/* ثلاث دوائر متساوية: الفضة · الستريك · اليوم */}
-        <div className="grid grid-cols-3 gap-2.5">
-          {[
-            { icon: "🪙", val: silver, label: "فضة", color: "var(--gold-light)", fire: false },
-            { icon: "🔥", val: streak, label: "ستريك", color: streak > 0 ? "var(--gold)" : "var(--text-muted)", fire: streak > 0 },
-            { icon: "📈", val: `${todayPct}%`, label: "اليوم", color: "var(--accent-light)", fire: false },
-          ].map((s) => (
-            <div key={s.label} className="rounded-2xl py-3 flex flex-col items-center justify-center gap-0.5"
-              style={{ background: "color-mix(in srgb, var(--surface) 70%, transparent)", border: "1px solid var(--border)" }}>
-              <span className={`text-[18px] leading-none ${s.fire ? "streak-fire" : ""}`}>{s.icon}</span>
-              <span className="font-mono-nums font-black text-[22px] leading-none mt-1" style={{ color: s.color }}>{s.val}</span>
-              <span className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>{s.label}</span>
-            </div>
-          ))}
-        </div>
+        {/* الفضة والستريك والتقدّم انتقلت لقسم «يومك» والملف الشخصي — الرأس للهوية
+            والعنوان المرحلي فقط (لا إحصاءات مكرّرة تُزاحم مهمة الصفحة). */}
       </Dome>
-
-      {/* ── تلميح الفضة والستريك (أول زيارة) ── */}
-      {!statsTipSeen && (
-        <div className="mx-5 mt-3 rounded-2xl px-4 py-3 flex items-start gap-3"
-          style={{ background: "color-mix(in srgb, var(--gold) 8%, var(--surface))", border: "1px solid color-mix(in srgb, var(--gold) 25%, transparent)" }}>
-          <div className="flex-1 flex flex-col gap-1">
-            <p className="text-[13px] font-bold" style={{ color: "var(--gold-light)" }}>🪙 الفضة — ماذا تعني؟</p>
-            <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
-              الفضة تمثل دقائق التركيز والإنجاز داخل المنصة — كل دقيقة في أوربت = فضة.
-            </p>
-            <p className="text-[13px] font-bold mt-1" style={{ color: "var(--gold-light)" }}>🔥 الستريك — كيف يعمل؟</p>
-            <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
-              يزيد: كل يوم تنهي فيه جلسة تركيز واحدة على الأقل.{"\n"}
-              ينقطع: إذا مرّ يوم كامل بدون جلسة.{"\n"}
-              يتحدث: بعد منتصف الليل.
-            </p>
-          </div>
-          <button onClick={dismissStatsTip}
-            className="text-[17px] flex-shrink-0 mt-0.5 leading-none"
-            style={{ color: "var(--text-muted)" }}
-            aria-label="أغلق">✕</button>
-        </div>
-      )}
 
       {/* ═══ تخطيط سطح المكتب: ثلاثة أعمدة (≥1280px) — يحترم إظهار/إخفاء الأقسام ═══ */}
       {isWide && (
