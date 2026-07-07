@@ -10,6 +10,7 @@ import { CardGrid } from "@/components/ds";
 import { loadUser, loadGoals } from "@/lib/storage";
 import { findMajor, type MajorCategory } from "@/lib/university";
 import { getMajorWorld, hasMajorWorld, subjectFlow, coreSubjectsOf, type FlowNode } from "@/lib/majors";
+import MajorGraph from "@/components/MajorGraph";
 import {
   CAREER_DISCLAIMER, opportunitiesAll,
   resolveCategory, resumeFocusForMajor, linkedinFocusForMajor,
@@ -282,6 +283,9 @@ export default function CareerCenter() {
 
       {/* ══ أنكور الصفحة: رحلتك من المادة إلى الوظيفة (فقط لتخصص دقيق) ══ */}
       {specific && <SubjectJourney majorId={init.majorId} />}
+
+      {/* ══ شبكة تخصصك — استكشاف حر متعدّد الاتجاهات (ادخل من أي عقدة) ══ */}
+      {specific && <MajorGraph majorId={init.majorId} />}
 
       {/* ══ الراتب الاسترشادي — بطاقة واحدة بارزة خضراء (نجاح) ══ */}
       {world.salary && (

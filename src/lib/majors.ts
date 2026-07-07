@@ -986,6 +986,12 @@ export function coreSubjectsOf(id?: string | null): string[] {
   return (CORE_SUBJECTS[id ?? ""] ?? FALLBACK_SUBJECTS).map((s) => s.subject);
 }
 
+/* روابط المواد الكاملة للتخصص — يستهلكها محرّك الشبكة (graph.ts) لبناء الحواف
+   (مادة↔أداة↔مشروع↔دور). احتياطي عام إن غاب التخصص، فلا تنقطع الشبكة أبداً. */
+export function subjectLinksOf(id?: string | null): SubjectLink[] {
+  return CORE_SUBJECTS[id ?? ""] ?? FALLBACK_SUBJECTS;
+}
+
 /* السلسلة المترابطة: مادة → أداة → مشروع → جهة → شهادة → دور.
    نقية تماماً (لا IO). الجهة والشهادة تُقرآن من عالم التخصص نفسه، فتبقى العُقد
    متّسقة مع أقسام الصفحة (نفس البيانات لا معلومة جديدة معزولة). */
