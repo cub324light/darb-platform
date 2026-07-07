@@ -7,7 +7,7 @@ import PageGuide from "@/components/PageGuide";
 import { getTrack, TRACKS, type TrackId } from "@/lib/tracks";
 import { phaseExperience } from "@/lib/experience";
 import DashUniWorld from "@/components/DashUniWorld";
-import WhatNow from "@/components/WhatNow";
+import LifeBoard from "@/components/LifeBoard";
 import { fmtHour } from "@/lib/utils";
 import { quoteOfToday } from "@/lib/quotes";
 import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, saveExamDate, loadDashConfig, saveDashConfig, loadTrackExamDates, saveTrackExamDates, DASH_SECTION_META, localDayKey, showsUniversityUI, type DarbUser, type ScheduleEvent, type DashItem, type DashSectionId, saveEvents } from "@/lib/storage";
@@ -927,10 +927,10 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* ══ «ماذا أفعل الآن؟» — الإجابة الواحدة، أول ما يراه الطالب لكل مرحلة ══
-             تبدأ من المشكلة (عدّاد الاختبار الأقرب/خطوة التخرّج/رتّب رغباتك)، ثم
-             تقود لخطوات حقيقية. تُغني عن عدّاد قياس منفصل (صار داخلها). */}
-        <WhatNow />
+        {/* ══ لوحة الأولويات — واجهة العقل المركزي (Life Engine) ══
+             محرّكٌ واحد يقرأ حياة الطالب ويُخرج أولوياته مرتّبة؛ هذه اللوحة (وبقية
+             الصفحات) تقرأ منه فقط. الأولى قرارٌ كامل (سبب/فائدة/وقت/بعدها). */}
+        <LifeBoard />
 
         {/* ── تفصيل المرحلة تحت الإجابة (بوابة exp الواحدة) ──
              الجامعي: عالمه المهني الكامل · غيره: إجراءات القبول حسب أهليته. */}
