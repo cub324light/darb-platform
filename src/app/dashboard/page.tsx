@@ -7,6 +7,7 @@ import PageGuide from "@/components/PageGuide";
 import { getTrack, TRACKS, type TrackId } from "@/lib/tracks";
 import { phaseExperience } from "@/lib/experience";
 import DashUniWorld from "@/components/DashUniWorld";
+import WhatNow from "@/components/WhatNow";
 import { fmtHour } from "@/lib/utils";
 import { quoteOfToday } from "@/lib/quotes";
 import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, saveExamDate, loadDashConfig, saveDashConfig, loadTrackExamDates, saveTrackExamDates, DASH_SECTION_META, localDayKey, showsUniversityUI, type DarbUser, type ScheduleEvent, type DashItem, type DashSectionId, saveEvents } from "@/lib/storage";
@@ -104,13 +105,6 @@ export default function DashboardPage() {
   const [examDate, setExamDate] = useState<string | null>(() =>
     typeof window !== "undefined" ? loadExamDate() : null
   );
-  const [examDays] = useState<number | null>(() => {
-    if (typeof window === "undefined") return null;
-    const d = loadExamDate();
-    if (!d) return null;
-    const today = new Date().toISOString().slice(0, 10);
-    return Math.round((new Date(d + "T00:00:00").getTime() - new Date(today + "T00:00:00").getTime()) / 86400000);
-  });
   const [suggestion] = useState<{ text: string; sub: string; href: string; color: string } | null>(() => {
     if (typeof window === "undefined") return null;
     try {
@@ -219,35 +213,6 @@ export default function DashboardPage() {
     ).values()
   );
   const todayPct = Math.min(100, Math.round((todayMins / DAILY_TARGET) * 100));
-
-  /* أقرب موعد اختبار من كل المسارات — يُعرض مرة واحدة فقط (في القبة كبطل) */
-  const nearestExam = (() => {
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const cands: { days: number; label: string; color: string }[] = [];
-    if (examDays !== null && examDays >= 0) cands.push({ days: examDays, label: "", color: "var(--gold)" });
-    for (const tid of activeTrackIds) {
-      const d = trackExamDates[tid];
-      if (!d) continue;
-      const diff = Math.round((new Date(d + "T00:00:00").getTime() - new Date(todayStr + "T00:00:00").getTime()) / 86400000);
-      if (diff < 0) continue;
-      const t = TRACKS.find((tr) => tr.id === tid);
-      cands.push({ days: diff, label: t?.title ?? "", color: t?.color ?? "var(--accent)" });
-    }
-    cands.sort((a, b) => a.days - b.days);
-    return cands[0] ?? null;
-  })();
-  /* لون الإلحاح حسب قرب الموعد */
-  const examUrgentColor = nearestExam === null ? "var(--accent-light)"
-    : nearestExam.days <= 1 ? "#EF4444"
-    : nearestExam.days <= 7 ? "#F97316"
-    : nearestExam.color;
-  const heroMsg = nearestExam !== null
-    ? (nearestExam.days === 0 ? `اختبار${nearestExam.label ? " " + nearestExam.label : "ك"} اليوم — بالتوفيق!`
-      : nearestExam.days === 1 ? `اختبار${nearestExam.label ? " " + nearestExam.label : "ك"} بكرة — راجع ونم بدري`
-      : `باقي ${nearestExam.days} يوم على ${nearestExam.label || "اختبارك"}`)
-    : todayPct >= 100
-    ? `أكملت هدف المذاكرة اليومي (${DAILY_TARGET} دقيقة) ✓`
-    : `هدف اليوم ${DAILY_TARGET} دقيقة مذاكرة — باقي ${Math.max(1, DAILY_TARGET - todayMins)} دقيقة`;
 
   /* مادة الجلسة القادمة من جدول اليوم — لتلميح زر البطل */
   const nextStudySubject = (() => {
@@ -962,31 +927,17 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* ── البطل يتكيّف مع المرحلة (بوابة exp الواحدة) ──
-             الجامعي: عالم مهني (أدوات/أجهزة/سيرة) بلا أي عدّاد قياس أو قبول.
-             غيره: عدّاد الاختبار الأقرب + إجراءات القبول حسب أهلية المرحلة. */}
+        {/* ══ «ماذا أفعل الآن؟» — الإجابة الواحدة، أول ما يراه الطالب لكل مرحلة ══
+             تبدأ من المشكلة (عدّاد الاختبار الأقرب/خطوة التخرّج/رتّب رغباتك)، ثم
+             تقود لخطوات حقيقية. تُغني عن عدّاد قياس منفصل (صار داخلها). */}
+        <WhatNow />
+
+        {/* ── تفصيل المرحلة تحت الإجابة (بوابة exp الواحدة) ──
+             الجامعي: عالمه المهني الكامل · غيره: إجراءات القبول حسب أهليته. */}
         {exp.showsUniLife ? (
           <DashUniWorld hint={exp.duwairbHint} />
         ) : (
           <>
-            {/* عدّاد الاختبار الأقرب — يُعرض هنا مرة واحدة فقط */}
-            <div className="rounded-2xl px-4 py-3 mb-3 text-right"
-              style={{
-                background: `color-mix(in srgb, ${examUrgentColor} 12%, transparent)`,
-                border: `1px solid color-mix(in srgb, ${examUrgentColor} 30%, transparent)`,
-              }}>
-              {nearestExam !== null && nearestExam.days > 1 ? (
-                <div className="flex items-baseline justify-end gap-2">
-                  <span className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>
-                    يوم على {nearestExam.label || "اختبارك"}
-                  </span>
-                  <span className="num-hero text-[30px] leading-none" style={{ color: examUrgentColor }}>{nearestExam.days}</span>
-                </div>
-              ) : (
-                <p className="text-[16px] font-black" style={{ color: examUrgentColor }}>{heroMsg}</p>
-              )}
-            </div>
-
             {/* إجراءات القبول حسب المرحلة — ثالث/خريج: مفاضلة وتقديم · أول/ثاني: استكشاف تعريفي */}
             {exp.admission === "full" && (
               <div className="grid grid-cols-2 gap-2.5 mb-3">

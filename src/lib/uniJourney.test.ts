@@ -6,7 +6,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   semesterInfo, gradProgress, buildUniJourney, aiThisWeek, GRAD_TOTAL_HOURS, AI_INTEGRITY_NOTE,
-  uniStage, stageGuidance,
+  uniStage,
 } from "./uniJourney";
 
 /* ════════ semesterInfo: داخل الفصل ════════ */
@@ -142,22 +142,4 @@ test("uniStage: سنة أولى → start، ثانية/ثالثة → mid، را
   assert.equal(uniStage("الخامسة+", 140), "senior");
   /* ساعات عالية تُدخِل «قرب التخرّج» ولو تأخّرت السنة */
   assert.equal(uniStage("الثالثة", 100), "senior");
-});
-
-test("stageGuidance: قرب التخرّج تتحوّل لعنوان التخرّج وإجراءات السوق", () => {
-  const g = stageGuidance("senior", { majorName: "هندسة كهربائية" });
-  assert.match(g.title, /التخرّج/);
-  assert.ok(g.actions.length >= 4);
-  const titles = g.actions.map((a) => a.title).join(" · ");
-  assert.match(titles, /سيرت/);      // جهّز سيرتك
-  assert.match(titles, /لينكدإن/);
-  assert.match(titles, /STEP/);
-  /* كل إجراء يقود إلى قسم فعلي (href غير فارغ) */
-  assert.ok(g.actions.every((a) => a.href.startsWith("/")));
-});
-
-test("stageGuidance: البداية تركّز على المعدّل والتنظيم لا على التخرّج", () => {
-  const g = stageGuidance("start");
-  assert.doesNotMatch(g.title, /التخرّج/);
-  assert.match(g.actions.map((a) => a.title).join(" "), /معدّل/);
 });
