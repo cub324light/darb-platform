@@ -6,6 +6,8 @@
    setState في effect — النقر يعيد التمركز مباشرة. */
 import { useState } from "react";
 import { neighbors, entryGroups, type GraphNode, type NodeKind } from "@/lib/graph";
+import { loadGraphVisits, recordGraphVisit } from "@/lib/storage";
+import { rankBySeen, isFamiliar } from "@/lib/decision";
 
 /* لونٌ بمعنى لكل نوع عقدة: أزرق=أداة · ذهبي=شهادة · أخضر=وظيفة · رمادي=معلومة */
 const KIND_COLOR: Record<NodeKind, string> = {
@@ -31,7 +33,12 @@ export default function MajorGraph({ majorId }: { majorId: string | null }) {
       ?? entries[0]?.nodes[0]
       ?? { kind: "subject" as NodeKind, label: "تخصصك" },
   );
+  /* طبقة History: تاريخ ضغط الطالب — يُقرأ كسولاً ويُحدَّث عند كل تمركز */
+  const [visits, setVisits] = useState<Record<string, number>>(() => loadGraphVisits());
   if (entries.length === 0) return null;
+
+  /* التمركز على عقدة = تسجيل زيارتها (فيهبط تعريفها لاحقاً) */
+  const focus = (n: GraphNode) => { setVisits(recordGraphVisit(n.label)); setNode(n); };
 
   const nb = neighbors(majorId, node);
   const centerColor = KIND_COLOR[node.kind];
@@ -58,7 +65,7 @@ export default function MajorGraph({ majorId }: { majorId: string | null }) {
         {entries.map((g) => {
           const active = node.kind === g.kind;
           return (
-            <button key={g.kind} onClick={() => setNode(g.nodes[0])} aria-pressed={active}
+            <button key={g.kind} onClick={() => focus(g.nodes[0])} aria-pressed={active}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[12px] font-black whitespace-nowrap flex-shrink-0 transition active:scale-95"
               style={{
                 background: active ? `color-mix(in srgb, ${KIND_COLOR[g.kind]} 16%, transparent)` : "var(--surface)",
@@ -96,26 +103,32 @@ export default function MajorGraph({ majorId }: { majorId: string | null }) {
               <span className="t-caption font-black" style={{ color: "var(--text-muted)" }}>{g.title}</span>
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {g.nodes.map((n) => (
-                <button key={n.kind + n.label} onClick={() => setNode(n)}
-                  className="t-caption px-2.5 py-1.5 rounded-lg text-right transition active:scale-95"
-                  style={{
-                    background: "var(--surface2)",
-                    border: "1px solid var(--border)",
-                    borderInlineStartWidth: 3,
-                    borderInlineStartColor: `color-mix(in srgb, ${KIND_COLOR[n.kind]} 60%, transparent)`,
-                    color: "var(--text)",
-                  }}>
-                  {n.label}
-                </button>
-              ))}
+              {/* طبقة History: الأكثر مشاهدةً يهبط، والمألوف يخفت (يبقى متاحاً) */}
+              {rankBySeen(g.nodes, visits).map((n) => {
+                const familiar = isFamiliar(n.label, visits);
+                return (
+                  <button key={n.kind + n.label} onClick={() => focus(n)}
+                    className="t-caption px-2.5 py-1.5 rounded-lg text-right transition active:scale-95 flex items-center gap-1"
+                    style={{
+                      background: "var(--surface2)",
+                      border: "1px solid var(--border)",
+                      borderInlineStartWidth: 3,
+                      borderInlineStartColor: `color-mix(in srgb, ${KIND_COLOR[n.kind]} ${familiar ? 30 : 60}%, transparent)`,
+                      color: familiar ? "var(--text-muted)" : "var(--text)",
+                      opacity: familiar ? 0.7 : 1,
+                    }}>
+                    {familiar && <span className="text-[10px]" style={{ color: "var(--success)" }} aria-hidden="true">✓</span>}
+                    {n.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         ))}
       </div>
 
       <p className="t-caption px-0.5" style={{ color: "var(--text-muted)" }}>
-        اضغط أي عقدة لتُصبح المركز — وتتفرّع منها الشبكة من جديد.
+        اضغط أي عقدة لتصير المركز — وما تفتحه كثيراً يخفت (✓) ليتقدّم الجديد. الشبكة تتعلّم منك.
       </p>
     </section>
   );

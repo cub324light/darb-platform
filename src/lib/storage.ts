@@ -524,6 +524,23 @@ const SKILLS_KEY = "darb_skills";
 export function loadSkills(): string[] { return loadList<string>(SKILLS_KEY); }
 export function saveSkills(ids: string[]) { saveList(SKILLS_KEY, ids); }
 
+/* ── تاريخ شبكة التخصص (طبقة History لشبكة القرارات) ──
+   عدّاد لكل عقدة ضغطها الطالب — ما يراه كثيراً يهبط في الترتيب لاحقاً. */
+const GRAPH_VISITS_KEY = "darb_graph_visits";
+export function loadGraphVisits(): Record<string, number> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(GRAPH_VISITS_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, number>) : {};
+  } catch { return {}; }
+}
+export function recordGraphVisit(label: string): Record<string, number> {
+  const v = loadGraphVisits();
+  v[label] = (v[label] ?? 0) + 1;
+  try { localStorage.setItem(GRAPH_VISITS_KEY, JSON.stringify(v)); } catch {}
+  return v;
+}
+
 /* ── تقدم الاختبار والدرجات ── */
 export interface ExamFlow {
   grade?: number;

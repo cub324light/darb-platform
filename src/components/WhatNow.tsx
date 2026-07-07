@@ -45,6 +45,8 @@ function computeAnswer(): NowAnswer {
       termLabel: sem?.termLabel ?? null,
       majorName: hasMajorWorld(goals.majorId) && major ? major.name : null,
       coopDone: !!user?.coopDone,
+      gpa: user?.universityGpa ?? null,
+      gradInterest: !!user?.gradSchoolInterest,
     };
   }
   return whatNow({ exp, cal, uni });

@@ -9,6 +9,7 @@
 import type { PhaseExperience } from "./experience";
 import type { CalendarSnapshot, NextExamInfo } from "./academicCalendar";
 import type { UniStage } from "./uniJourney";
+import { academicPriority, type PriorityKey } from "./decision";
 
 export interface NowStep {
   icon: string;
@@ -26,13 +27,15 @@ export interface NowAnswer {
   steps: NowStep[];  // ٢–٣ خطوات مرتّبة، كلٌّ يقود للذي بعده
 }
 
-/* إشارات المرحلة الجامعية (يمرّرها المكوّن من semesterInfo/uniStage) */
+/* إشارات المرحلة الجامعية (يمرّرها المكوّن من semesterInfo/uniStage + الملف) */
 export interface NowUni {
   stage: UniStage;
   finalsInDays?: number | null; // أيام حتى اختبارات الفصل (من semesterInfo)
   termLabel?: string | null;
   majorName?: string | null;
   coopDone?: boolean;           // أنجز التدريب التعاوني (يغيّر إجابة منتصف المرحلة)
+  gpa?: number | null;          // المعدّل من ٥ — يعيد ترتيب الأولوية (متعثّر/متميّز)
+  gradInterest?: boolean;       // مهتمّ بالدراسات العليا
 }
 
 export interface NowInput {
@@ -204,14 +207,50 @@ function uniFinals(uni: NowUni): NowAnswer {
   };
 }
 
-function uniStageAnswer(uni: NowUni): NowAnswer {
+/* الإجابة الجامعية تُقرّرها شبكة القرارات (المعدّل + المرحلة + التدريب) لا المرحلة
+   وحدها: متعثّر ⇒ رفع المعدّل أولاً (لا شهادات)؛ متميّز ⇒ البحث والدراسات العليا. */
+function uniAnswer(uni: NowUni): NowAnswer {
   const major = uni.majorName ? ` — ${uni.majorName}` : "";
-  if (uni.stage === "senior") {
+  const pr = academicPriority({
+    stage: uni.stage, gpa: uni.gpa ?? null,
+    coopDone: !!uni.coopDone, gradInterest: !!uni.gradInterest,
+  });
+  const key: PriorityKey = pr.key;
+
+  if (key === "gpa") {
+    return {
+      urgency: "normal", accent: "accent",
+      eyebrow: "أولويتك الآن",
+      headline: `ارفع معدّلك أولاً${major}`,
+      sub: pr.why,
+      primary: { label: "احسب معدّلك واستهدف", href: "/uni-tools", icon: "🎛️" },
+      steps: [
+        { icon: "🎛️", text: "احسب معدّلك واستهدف رقماً", href: "/uni-tools" },
+        { icon: "🗓", text: "نظّم أسبوعك حول موادك الصعبة", href: "/plan" },
+        { icon: "📓", text: "راجع أخطاءك السابقة", href: "/vault" },
+      ],
+    };
+  }
+  if (key === "research") {
+    return {
+      urgency: "normal", accent: "success",
+      eyebrow: "معدّلك ممتاز",
+      headline: `ابدأ البحث والدراسات العليا${major}`,
+      sub: pr.why,
+      primary: { label: "خطّط لدراساتك العليا", href: "/career", icon: "🧪" },
+      steps: [
+        { icon: "🧪", text: "مسارات الدراسات العليا", href: "/career" },
+        { icon: "📄", text: "ابنِ ملفك البحثي ولينكدإن", href: "/career" },
+        { icon: "🏢", text: "مراكز الأبحاث وشركات مجالك", href: "/career#sec-companies" },
+      ],
+    };
+  }
+  if (key === "market") {
     return {
       urgency: "normal", accent: "success",
       eyebrow: "أنت قريب من التخرّج",
       headline: `ابدأ بسيرتك الذاتية${major}`,
-      sub: "السوق يبدأ قبل التخرّج بأشهر — جهّز نفسك من الآن.",
+      sub: pr.why,
       primary: { label: "جهّز سيرتك ومسارك", href: "/career", icon: "📄" },
       steps: [
         { icon: "📄", text: "جهّز سيرتك الذاتية", href: "/career" },
@@ -220,30 +259,40 @@ function uniStageAnswer(uni: NowUni): NowAnswer {
       ],
     };
   }
-  if (uni.stage === "mid") {
+  if (key === "certs") {
     return {
       urgency: "normal", accent: "accent",
       eyebrow: "ماذا أفعل الآن؟",
-      headline: uni.coopDone ? `ابدأ أول شهادة احترافية${major}` : `قدّم على التدريب وابدأ أول شهادة${major}`,
-      sub: "منتصف الطريق وقتُ بناء الخبرة: تدريب، شهادة، ومشروع حقيقي.",
-      primary: uni.coopDone
-        ? { label: "ابدأ شهادة تخصصك", href: "/career#sec-certs", icon: "🎓" }
-        : { label: "قدّم على تدريب صيفي", href: "/career", icon: "🧭" },
+      headline: `ابدأ أول شهادة احترافية${major}`,
+      sub: pr.why,
+      primary: { label: "ابدأ شهادة تخصصك", href: "/career#sec-certs", icon: "🎓" },
       steps: [
-        uni.coopDone
-          ? { icon: "🎓", text: "ابدأ أول شهادة احترافية", href: "/career#sec-certs" }
-          : { icon: "🧭", text: "قدّم على تدريب تعاوني/صيفي", href: "/career" },
+        { icon: "🎓", text: "ابدأ أول شهادة احترافية", href: "/career#sec-certs" },
         { icon: "🚀", text: "ابنِ مشروعاً من تخصصك", href: "/career#sec-projects" },
         { icon: "🎛️", text: "تابع معدّلك", href: "/uni-tools" },
       ],
     };
   }
-  // start
+  if (key === "training") {
+    return {
+      urgency: "normal", accent: "accent",
+      eyebrow: "ماذا أفعل الآن؟",
+      headline: `قدّم على التدريب التعاوني${major}`,
+      sub: pr.why,
+      primary: { label: "قدّم على تدريب صيفي", href: "/career", icon: "🧭" },
+      steps: [
+        { icon: "🧭", text: "قدّم على تدريب تعاوني/صيفي", href: "/career" },
+        { icon: "🚀", text: "ابنِ مشروعاً من تخصصك", href: "/career#sec-projects" },
+        { icon: "🎛️", text: "تابع معدّلك", href: "/uni-tools" },
+      ],
+    };
+  }
+  // foundation (البداية)
   return {
     urgency: "normal", accent: "accent",
     eyebrow: "ماذا أفعل الآن؟",
     headline: `نظّم وقتك وارفع معدّلك${major}`,
-    sub: "أساسك في أول سنتين يحدّد فرصك لاحقاً — ابدأ منظّماً.",
+    sub: pr.why,
     primary: { label: "افتح أدوات الجامعة", href: "/uni-tools", icon: "🎛️" },
     steps: [
       { icon: "🎛️", text: "تابع معدّلك وغيابك", href: "/uni-tools" },
@@ -260,7 +309,7 @@ export function whatNow({ exp, cal, uni }: NowInput): NowAnswer {
     if (uni.finalsInDays != null && uni.finalsInDays >= 0 && uni.finalsInDays <= FINALS_WINDOW) {
       return uniFinals(uni);
     }
-    return uniStageAnswer(uni);
+    return uniAnswer(uni);
   }
 
   /* الثانوي/الخريج: المشكلة الأقرب أولاً */

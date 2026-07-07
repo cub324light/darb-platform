@@ -76,6 +76,21 @@ test("جامعي منتصف — أنجز التدريب: ينتقل للشهاد
   assertRealLinks(a);
 });
 
+test("جامعي متعثّر (معدّل منخفض) → الأولوية رفع المعدّل لا الشهادات — ولو senior", () => {
+  const a = whatNow({ exp: exp("university"), cal: cal(), uni: { stage: "senior", gpa: 2.3 } });
+  assert.match(a.headline, /معدّل/);
+  assert.equal(a.primary.href, "/uni-tools");
+  assert.doesNotMatch(a.headline, /سيرت/); // المعدّل يتقدّم على السوق
+  assertRealLinks(a);
+});
+
+test("جامعي متميّز (معدّل عالٍ) → البحث والدراسات العليا لا رفع المعدّل", () => {
+  const a = whatNow({ exp: exp("university"), cal: cal(), uni: { stage: "senior", gpa: 4.8 } });
+  assert.match(a.headline, /البحث|الدراسات العليا/);
+  assert.equal(a.accent, "success");
+  assertRealLinks(a);
+});
+
 test("جامعي بداية → تنظيم الوقت والمعدّل (أدوات الجامعة)", () => {
   const a = whatNow({ exp: exp("university"), cal: cal(), uni: { stage: "start" } });
   assert.equal(a.primary.href, "/uni-tools");
