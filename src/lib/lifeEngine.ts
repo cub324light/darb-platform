@@ -46,14 +46,18 @@ export type PriorityKey =
 
 export type PriorityArea = "urgent" | "gpa" | "career" | "admission" | "study" | "growth";
 
+/* تصنيف الأولوية — لا تختلط: عاجل (وقتٌ يفوت) · مهم (يفتح أبواباً) · استراتيجي (بعيد المدى) */
+export type Tier = "urgent" | "important" | "strategic";
+
 /* قاعدة أطلقتها الأولوية — أساس التفسير */
 export interface FiredRule { id: number; label: string; weight: number; }
 
-/* أولوية = قرار كامل + تفسيره */
+/* أولوية = قرار كامل + تفسيره + تكلفته/عائده + تصنيفه */
 export interface Priority {
   rank: number;
   key: PriorityKey;
   area: PriorityArea;
+  tier: Tier;
   icon: string;
   title: string;
   why: string;
@@ -63,6 +67,9 @@ export interface Priority {
   cta: string;
   href: string;
   urgent: boolean;
+  /* التكلفة والعائد — الطالب يرى: كم سأدفع؟ وماذا سأكسب؟ */
+  costHours: number;         // ساعات تقديرية (٠ = مستمر/يومي)
+  payoff: string;            // العائد المتوقّع
   /* التفسير */
   score: number;             // مجموع أوزان القواعد التي أطلقتها
   confidence: number;        // ٠..٩٩ (دالّة رتيبة في score)
@@ -195,6 +202,31 @@ const PRIORITY_DEFS: Record<PriorityKey, PDef> = {
   },
 };
 
+/* ── تصنيف كل أولوية (عاجل/مهم/استراتيجي) — لا تختلط الأنواع ── */
+const TIER: Record<PriorityKey, Tier> = {
+  "uni-finals": "urgent", "school-finals-now": "urgent", "school-finals-soon": "urgent",
+  gpa: "important", cv: "important", coop: "important", admission: "important",
+  qiyas: "important", "study-routine": "important",
+  research: "strategic", cert: "strategic", foundation: "strategic", early: "strategic",
+};
+
+/* ── تكلفة كل قرار وعائده — كم سأدفع؟ وماذا سأكسب؟ (تقديري، قابل للمراجعة) ── */
+const COST: Record<PriorityKey, { hours: number; payoff: string }> = {
+  "uni-finals": { hours: 40, payoff: "درجات ترفع معدّلك التراكمي مباشرة" },
+  gpa: { hours: 40, payoff: "يرفع فرص التدريب والقبول بشكل كبير" },
+  research: { hours: 60, payoff: "يفتح المنح والدراسات العليا" },
+  cv: { hours: 8, payoff: "تبدأ التقديم على الوظائف مبكراً" },
+  coop: { hours: 12, payoff: "خبرة حقيقية تسبق الشهادة وتفتح التوظيف" },
+  cert: { hours: 50, payoff: "يميّز سيرتك ويفتح وظائف أكثر" },
+  foundation: { hours: 0, payoff: "أساس قوي لبقية سنواتك" },
+  "study-routine": { hours: 0, payoff: "يمنع تراكم المواد قبل الاختبارات" },
+  "school-finals-now": { hours: 30, payoff: "ترفع درجاتك المدرسية" },
+  "school-finals-soon": { hours: 30, payoff: "ترفع درجاتك ونسبتك الموزونة" },
+  qiyas: { hours: 30, payoff: "يرفع نسبتك الموزونة للقبول" },
+  admission: { hours: 6, payoff: "تعرف أين تُقبل وتقدّم بثقة" },
+  early: { hours: 0, payoff: "تسبق دفعتك وتدخل القبول متقدّماً" },
+};
+
 /* ── القواعد: صريحة، كلٌّ بمعرّف وسبب ووزن وشرط ── */
 export interface Rule {
   id: number;
@@ -242,9 +274,10 @@ export function lifeEngine(c: LifeContext): Priority[] {
     const def = PRIORITY_DEFS[key];
     const score = rules.reduce((s, r) => s + r.weight, 0);
     return {
-      key, area: def.area, icon: def.icon, urgent: !!def.urgent,
+      key, area: def.area, tier: TIER[key], icon: def.icon, urgent: !!def.urgent,
       title: def.title(c), why: def.why(c), benefit: def.benefit,
       time: def.time(c), next: def.next, cta: def.cta, href: def.href,
+      costHours: COST[key].hours, payoff: COST[key].payoff,
       score, confidence: confidenceOf(score),
       firedRules: rules, reasons: rules.map((r) => r.label),
     };
@@ -253,6 +286,82 @@ export function lifeEngine(c: LifeContext): Priority[] {
   /* رتّب بالوزن (الأعلى أولاً)، ثم بمعرّف ثابت عند التساوي */
   built.sort((a, b) => b.score - a.score || a.key.localeCompare(b.key));
   return built.map((p, i) => ({ rank: i + 1, ...p }));
+}
+
+/* ════════ Timeline Intelligence — العقل يرى المستقبل ════════
+   لا يقول «افعل» فقط، بل يرسم أثر القرار: اليوم ← ثم ← ثم ← النتيجة. */
+export interface TimelineNode { horizon: string; title: string; note?: string; }
+
+export function projectTimeline(c: LifeContext): TimelineNode[] {
+  const key = lifeEngine(c)[0]?.key;
+
+  if (c.stage === "university") {
+    if (key === "gpa") {
+      const target = c.gpa != null ? Math.min(5, c.gpa + 0.5).toFixed(1) : "2.8";
+      return [
+        { horizon: "الآن", title: `ارفع معدّلك إلى ${target}`, note: "ركّز على موادك الصعبة" },
+        { horizon: "الفصل القادم", title: "يفتح لك التدريب التعاوني" },
+        { horizon: "قبل التخرّج", title: "جهّز سيرتك الذاتية" },
+        { horizon: "التخرّج", title: "التقديم على الوظائف" },
+        { horizon: "بعده", title: "أول وظيفة" },
+      ];
+    }
+    if (c.uniStage === "senior") {
+      return [
+        { horizon: "الآن", title: "جهّز سيرتك الذاتية" },
+        { horizon: "هذا الشهر", title: "حدّث لينكدإن وابنِ مشروعاً" },
+        { horizon: "قبل التخرّج", title: "التقديم على الشركات والتدريب" },
+        { horizon: "التخرّج", title: "أول وظيفة" },
+      ];
+    }
+    return [
+      { horizon: "الآن", title: c.uniStage === "start" ? "ثبّت أساسك ومعدّلك" : "ابنِ خبرتك" },
+      { horizon: "هذا العام", title: c.coopDone ? "ابدأ أول شهادة احترافية" : "قدّم على التدريب التعاوني" },
+      { horizon: "السنة الأخيرة", title: "السيرة والتقديم على الوظائف" },
+      { horizon: "التخرّج", title: "أول وظيفة" },
+    ];
+  }
+
+  if (c.stage === "first" || c.stage === "second") {
+    return [
+      { horizon: c.stage === "first" ? "أول ثانوي" : "الآن", title: "أتقن القدرات" },
+      { horizon: "ثاني/ثالث ثانوي", title: "التحصيلي" },
+      { horizon: "التخرّج", title: "احسب نسبتك الموزونة" },
+      { horizon: "القبول", title: "اختر جامعتك وتخصصك" },
+      { horizon: "بعدها", title: "رحلتك الجامعية" },
+    ];
+  }
+  return [
+    { horizon: "الآن", title: "أكمل القدرات والتحصيلي" },
+    { horizon: "هذا الموسم", title: "احسب موزونتك ورتّب رغباتك" },
+    { horizon: "القبول", title: "قدّم على جامعتك وتخصصك" },
+    { horizon: "بعدها", title: "رحلتك الجامعية" },
+  ];
+}
+
+/* ════════ Life Score — مؤشرات جاهزية (لا منافسة، بل موقع) ════════
+   ليست Gamification: يعرف الطالب أين هو، والعقل يسعى لرفعها مع الوقت.
+   صيغٌ شفّافة من إشارات حقيقية (تُعرَض في أداة التحقّق لمراجعتها). */
+export interface LifeScore { key: string; label: string; pct: number; hint: string; }
+const pctOf = (n: number) => clamp(Math.round(n), 0, 100);
+
+export function lifeScore(c: LifeContext): LifeScore[] {
+  const hoursPct = c.hours != null ? c.hours / 132 : 0;
+  const gpaPct = c.gpa != null ? c.gpa / 5 : 0;
+  const seniorW = c.uniStage === "senior" ? 1 : c.uniStage === "mid" ? 0.5 : 0;
+
+  if (c.stage === "university") {
+    return [
+      { key: "academic", label: "جاهزيتك الأكاديمية", pct: pctOf(gpaPct * 100), hint: "من معدّلك التراكمي" },
+      { key: "graduation", label: "جاهزية التخرّج", pct: pctOf(hoursPct * 100), hint: "من الساعات المنجزة (÷ ١٣٢)" },
+      { key: "job", label: "جاهزية سوق العمل", pct: pctOf(25 * hoursPct + 25 * gpaPct + 25 * (c.coopDone ? 1 : 0) + 25 * seniorW), hint: "الساعات + المعدّل + التدريب + قرب التخرّج (٢٥٪ لكلٍّ)" },
+    ];
+  }
+  const stageBase: Record<string, number> = { first: 25, second: 45, third: 70, graduate: 80 };
+  const uni = Math.min(95, (stageBase[c.stage] ?? 25) + (c.qiyas ? 5 : 0));
+  return [
+    { key: "university", label: "جاهزية القبول الجامعي", pct: pctOf(uni), hint: "من مرحلتك وبدء رحلة القياس" },
+  ];
 }
 
 /* ════════ قارئ السياق — يجمّع كل الإشارات من الأنظمة القائمة ════════

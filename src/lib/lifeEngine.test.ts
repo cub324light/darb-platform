@@ -4,7 +4,7 @@
    قابل للتفسير: قواعد مُطلَقة بأوزان + ثقة + أسباب. لا قرار بلا تفسير. */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { lifeEngine, RULES, type LifeContext, type Priority } from "./lifeEngine";
+import { lifeEngine, lifeScore, projectTimeline, RULES, type LifeContext, type Priority } from "./lifeEngine";
 
 function ctx(o: Partial<LifeContext> = {}): LifeContext {
   return {
@@ -108,6 +108,61 @@ test("معرّفات القواعد فريدة (لا تعارض في التفس�
   const ids = RULES.map((r) => r.id);
   assert.equal(new Set(ids).size, ids.length, "معرّف قاعدة مكرّر");
   for (const r of RULES) assert.ok(r.label.trim() !== "" && r.weight > 0, "قاعدة بلا سبب/وزن");
+});
+
+/* ════════ التصنيف + التكلفة/العائد ════════ */
+test("التصنيف لا يختلط: العاجل urgent، رفع المعدّل important، البحث strategic", () => {
+  assert.equal(lifeEngine(ctx({ uniFinalsInDays: 5 }))[0].tier, "urgent");
+  assert.equal(lifeEngine(ctx({ gpa: 2.3 }))[0].tier, "important");
+  assert.equal(lifeEngine(ctx({ gpa: 4.8, uniStage: "mid" }))[0].tier, "strategic");
+});
+
+test("كل أولوية تكشف تكلفتها وعائدها", () => {
+  for (const p of lifeEngine(ctx({ gpa: 2.3, uniStage: "senior", coopDone: false }))) {
+    assert.ok(p.costHours >= 0, "تكلفة سالبة");
+    assert.ok(p.payoff.trim() !== "", "بلا عائد");
+  }
+  const gpa = lifeEngine(ctx({ gpa: 2.3 })).find((p) => p.key === "gpa")!;
+  assert.equal(gpa.costHours, 40);
+  assert.match(gpa.payoff, /التدريب|القبول/);
+});
+
+/* ════════ Life Score ════════ */
+test("lifeScore: الجامعي ثلاثة مؤشرات في [0,100]؛ الساعات ترفع جاهزية التخرّج", () => {
+  const low = lifeScore(ctx({ hours: 30, gpa: 3, uniStage: "mid" }));
+  const high = lifeScore(ctx({ hours: 120, gpa: 3, uniStage: "mid" }));
+  assert.equal(low.length, 3);
+  for (const s of low) assert.ok(s.pct >= 0 && s.pct <= 100);
+  const g = (arr: typeof low) => arr.find((s) => s.key === "graduation")!.pct;
+  assert.ok(g(high) > g(low), "الساعات لم ترفع جاهزية التخرّج");
+});
+
+test("lifeScore: إنجاز التدريب يرفع جاهزية سوق العمل", () => {
+  const j = (coop: boolean) => lifeScore(ctx({ hours: 90, gpa: 3.5, uniStage: "senior", coopDone: coop })).find((s) => s.key === "job")!.pct;
+  assert.ok(j(true) > j(false));
+});
+
+test("lifeScore: الثانوي محور القبول الجامعي، ويتقدّم بالمرحلة", () => {
+  const first = lifeScore(ctx({ stage: "first", uniStage: null }))[0].pct;
+  const third = lifeScore(ctx({ stage: "third", uniStage: null }))[0].pct;
+  assert.ok(third > first);
+});
+
+/* ════════ Timeline ════════ */
+test("projectTimeline: متعثّر يرى الطريق حتى الوظيفة (لا «افعل» فقط)", () => {
+  const t = projectTimeline(ctx({ gpa: 2.3, uniStage: "senior" }));
+  assert.ok(t.length >= 4);
+  assert.match(t[0].title, /ارفع معدّلك/);
+  assert.match(t.map((n) => n.title).join(" "), /التدريب/);
+  assert.match(t[t.length - 1].title, /وظيفة/);
+  for (const n of t) assert.ok(n.horizon.trim() !== "" && n.title.trim() !== "");
+});
+
+test("projectTimeline: أول ثانوي يرى الطريق للتحصيلي فالجامعة", () => {
+  const t = projectTimeline(ctx({ stage: "first", uniStage: null }));
+  const titles = t.map((n) => n.title).join(" ");
+  assert.match(titles, /القدرات/);
+  assert.match(titles, /التحصيلي/);
 });
 
 test("كل الحالات تُنتج أولويات مرتّبة كاملة القرار ومُفسَّرة", () => {
