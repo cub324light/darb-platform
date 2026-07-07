@@ -53,7 +53,7 @@ function PriorityRow({ p }: { p: Priority }) {
 }
 
 export default function LifeBoard() {
-  const [priorities] = useState<Priority[]>(() => lifeEngine(readLifeContext()));
+  const [priorities] = useState<Priority[]>(() => lifeEngine(readLifeContext()).slice(0, 4));
   if (priorities.length === 0) return null;
 
   const [top, ...rest] = priorities;

@@ -1,16 +1,16 @@
 /* ═══════════════ Life Engine — العقل المركزي الواحد ═══════════════
    درب لا يجعل كل صفحة تقرّر لنفسها. محرّكٌ واحد يقرأ حياة الطالب كلها (المرحلة،
-   المعدّل، السنة، التخصص، الساعات، الاختبارات، التدريب، السيرة، الشهادات، نشاطه)
-   ويُخرج شيئاً واحداً فقط: أولوياته مرتّبة. كل صفحات درب (الرئيسية، دويرب، شبكة
-   التخصص، الجامعة، الأدوات) تقرأ هذه الأولويات — لا تعيد الحساب.
+   المعدّل، السنة، التخصص، الساعات، الاختبارات، التدريب، نشاطه) ويُخرج شيئاً
+   واحداً: أولوياته مرتّبة. كل صفحات درب تقرأ هذه الأولويات — لا تعيد الحساب.
 
-   إذا تغيّر شيء واحد (نجح في التدريب، ارتفع معدّله، اقترب تخرّجه، أنهى STEP)
-   يُعيد المحرّك الحساب فتتغيّر المنصة كلها — بلا كتابة شروط جديدة في الصفحات.
+   ▓▓ قابلية التفسير أولاً ▓▓
+   «العقل الذي لا يمكن تفسيره لا يمكن الوثوق به». لذلك القرار ليس شروطاً مخفية،
+   بل قواعد صريحة: لكل قاعدة معرّفٌ وسببٌ ووزن. كل أولوية تُراكِم أوزان القواعد
+   التي أطلقتها، فتُرتَّب بالوزن، وتُحسب لها ثقة. الأولوية تكشف: لماذا ظهرت (القواعد
+   التي أطلقتها بأوزانها)، وسببها وفائدتها ووقتها وما بعدها. نراجع العقل لا النتيجة.
 
-   وكل أولوية ليست نصاً فقط، بل قرار كامل: سببها، فائدتها، وقتها، وما بعدها
-   مباشرة. فلا يقول درب «ذاكِر»، بل «لماذا تذاكر، وماذا يحدث بعدها».
-
-   دالّة نقيّة حتمية: نفس السياق ⇒ نفس الأولويات. لا IO (readLifeContext منفصلة). */
+   إذا وُجد قرار غريب، نعدّل قاعدةً هنا — لا صفحة. دالّة نقيّة حتمية (readLifeContext
+   منفصلة تقرأ التخزين). */
 import type { Stage } from "./experience";
 import { phaseExperience } from "./experience";
 import type { UniStage } from "./uniJourney";
@@ -40,217 +40,224 @@ export interface LifeContext {
   inStudyTerm: boolean;
 }
 
+export type PriorityKey =
+  | "uni-finals" | "gpa" | "research" | "cv" | "coop" | "cert" | "foundation" | "study-routine"
+  | "school-finals-now" | "school-finals-soon" | "qiyas" | "admission" | "early";
+
 export type PriorityArea = "urgent" | "gpa" | "career" | "admission" | "study" | "growth";
 
-/* أولوية واحدة = قرار كامل، لا نص */
-export interface Priority {
-  rank: number;        // ١، ٢، ٣...
-  key: string;         // معرّف ثابت (تقرؤه الصفحات)
-  area: PriorityArea;  // لونٌ بمعنى + تجميع
-  icon: string;
-  title: string;       // «رفع المعدّل»
-  why: string;         // سبب ظهورها الآن
-  benefit: string;     // ماذا تستفيد إن أنجزتها
-  time: string;        // كم تأخذ
-  next: string;        // ماذا بعدها مباشرة
-  cta: string;         // نصّ الإجراء
-  href: string;        // وجهة حقيقية
-  urgent: boolean;
-}
+/* قاعدة أطلقتها الأولوية — أساس التفسير */
+export interface FiredRule { id: number; label: string; weight: number; }
 
-/* مرشّح داخلي قبل الترتيب (order أصغر = أهمّ) */
-type Cand = { order: number } & Omit<Priority, "rank">;
+/* أولوية = قرار كامل + تفسيره */
+export interface Priority {
+  rank: number;
+  key: PriorityKey;
+  area: PriorityArea;
+  icon: string;
+  title: string;
+  why: string;
+  benefit: string;
+  time: string;
+  next: string;
+  cta: string;
+  href: string;
+  urgent: boolean;
+  /* التفسير */
+  score: number;             // مجموع أوزان القواعد التي أطلقتها
+  confidence: number;        // ٠..٩٩ (دالّة رتيبة في score)
+  firedRules: FiredRule[];   // القواعد التي أطلقتها هذه الأولوية بأوزانها
+  reasons: string[];         // «لماذا؟» = تسميات القواعد نفسها
+}
 
 const fmtGpa = (g: number) => g.toFixed(2).replace(/\.?0+$/, "");
-const MAX_PRIORITIES = 4;
+const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
+/* الثقة: دالّة رتيبة موثّقة في الوزن المتراكم — قابلة للمراجعة، لا سحر */
+const confidenceOf = (score: number) => clamp(Math.round(45 + 0.6 * score), 5, 99);
 
-/* ════════ مرشّحات الجامعي ════════ */
-function uniCandidates(c: LifeContext): Cand[] {
-  const out: Cand[] = [];
-  const major = c.majorName ? ` في ${c.majorName}` : "";
-  const gpaTxt = c.gpa != null ? fmtGpa(c.gpa) : null;
+/* ── تعريف ثابت لكل أولوية (المحتوى) — منفصل عن القواعد (متى تظهر) ── */
+interface PDef {
+  area: PriorityArea; icon: string; urgent?: boolean;
+  title: (c: LifeContext) => string;
+  why: (c: LifeContext) => string;
+  benefit: string;
+  time: (c: LifeContext) => string;
+  next: string;
+  cta: string;
+  href: string;
+}
+const major = (c: LifeContext) => (c.majorName ? ` — ${c.majorName}` : "");
 
-  /* اختبارات الفصل قريبة → عاجل يتصدّر */
-  if (c.uniFinalsInDays != null && c.uniFinalsInDays >= 0 && c.uniFinalsInDays <= 21) {
-    const term = c.termLabel ? ` ${c.termLabel}` : "";
-    out.push({
-      order: 0, key: "uni-finals", area: "urgent", icon: "⏳",
-      title: `مذاكرة اختبارات${term}`,
-      why: `باقي ${c.uniFinalsInDays} يوم على اختبارات فصلك.`,
-      benefit: "درجاتك الآن ترفع معدّلك التراكمي مباشرة.",
-      time: `${c.uniFinalsInDays} يوم`,
-      next: "راجع أخطاءك ونظّم الفصل القادم.",
-      cta: "راجع خطتك", href: "/plan", urgent: true,
-    });
-  }
+const PRIORITY_DEFS: Record<PriorityKey, PDef> = {
+  "uni-finals": {
+    area: "urgent", icon: "⏳", urgent: true,
+    title: (c) => `مذاكرة اختبارات${c.termLabel ? ` ${c.termLabel}` : ""}`,
+    why: (c) => `باقي ${c.uniFinalsInDays} يوم على اختبارات فصلك.`,
+    benefit: "درجاتك الآن ترفع معدّلك التراكمي مباشرة.",
+    time: (c) => `${c.uniFinalsInDays} يوم`,
+    next: "راجع أخطاءك ونظّم الفصل القادم.", cta: "راجع خطتك", href: "/plan",
+  },
+  gpa: {
+    area: "gpa", icon: "📊",
+    title: () => "رفع المعدّل",
+    why: (c) => `لأن معدّلك (${c.gpa != null ? fmtGpa(c.gpa) : "—"}) أقل من ٢٫٧٥.`,
+    benefit: "يفتح لك التدريب التعاوني والقبول والوظائف لاحقاً.",
+    time: () => "هذا الفصل",
+    next: "التقديم على التدريب التعاوني.", cta: "احسب معدّلك واستهدف", href: "/uni-tools",
+  },
+  research: {
+    area: "growth", icon: "🧪",
+    title: (c) => `البحث والدراسات العليا${major(c)}`,
+    why: (c) => `معدّلك ممتاز (${c.gpa != null ? fmtGpa(c.gpa) : "—"}) — استثمره.`,
+    benefit: "منح ومؤتمرات وتبادل وقبول للدراسات العليا.",
+    time: () => "مستمر",
+    next: "ابنِ ملفك البحثي ولينكدإن.", cta: "خطّط لدراساتك العليا", href: "/career",
+  },
+  cv: {
+    area: "career", icon: "📄",
+    title: (c) => `تجهيز سيرتك الذاتية${major(c)}`,
+    why: () => "أنت قريب من التخرّج والسوق يبدأ قبله بأشهر.",
+    benefit: "تبدأ التقديم على الوظائف مبكراً وبثقة.",
+    time: () => "أسبوع",
+    next: "حدّث لينكدإن وقدّم على الشركات.", cta: "جهّز سيرتك ومسارك", href: "/career",
+  },
+  coop: {
+    area: "career", icon: "🧭",
+    title: () => "التقديم على التدريب التعاوني",
+    why: () => "لم تُنجز تدريبك بعد — وهو أسرع طريق للخبرة.",
+    benefit: "خبرة حقيقية تسبق الشهادة وتفتح باب التوظيف.",
+    time: () => "قدّم الآن للفصل القادم",
+    next: "ابدأ أول شهادة احترافية.", cta: "استكشف التدريب", href: "/career",
+  },
+  cert: {
+    area: "growth", icon: "🎓",
+    title: () => "بدء أول شهادة احترافية",
+    why: () => "أنجزت تدريبك — الوقت مناسب لشهادة تخصصك.",
+    benefit: "تثبّت مهارتك وتميّز سيرتك عن أقرانك.",
+    time: () => "٤–٨ أسابيع",
+    next: "ابنِ مشروعاً يطبّقها.", cta: "ابدأ شهادة تخصصك", href: "/career#sec-certs",
+  },
+  foundation: {
+    area: "study", icon: "🎛️",
+    title: () => "بناء أساسك: معدّلك وتنظيمك",
+    why: () => "أول سنتين تحدّدان فرصك لاحقاً.",
+    benefit: "معدّل قوي مبكّر يفتح كل الأبواب بعده.",
+    time: () => "مستمر",
+    next: "استكشف عالم تخصصك.", cta: "افتح أدوات الجامعة", href: "/uni-tools",
+  },
+  "study-routine": {
+    area: "study", icon: "📚",
+    title: () => "مذاكرة موادك بانتظام",
+    why: () => "أنت داخل الفصل الدراسي الآن.",
+    benefit: "الانتظام يمنع تراكم المواد قبل الاختبارات.",
+    time: () => "يومياً",
+    next: "راجع أخطاءك أسبوعياً.", cta: "نظّم خطتك", href: "/plan",
+  },
+  "school-finals-now": {
+    area: "urgent", icon: "⏳", urgent: true,
+    title: () => "مراجعة اختباراتك النهائية",
+    why: () => "اختباراتك بدأت الآن.",
+    benefit: "كل مراجعة قبل المادة ترفع درجتك.",
+    time: () => "أيام الاختبارات",
+    next: "بعد كل مادة: راجع أخطاءك للتي بعدها.", cta: "راجع أخطائي", href: "/vault",
+  },
+  "school-finals-soon": {
+    area: "urgent", icon: "⏳", urgent: true,
+    title: () => "الاستعداد لاختبارات الفصل",
+    why: (c) => `باقي ${c.daysToSchoolFinals} يوم على اختباراتك.`,
+    benefit: "درجاتك المدرسية جزء من نسبتك الموزونة.",
+    time: (c) => `${c.daysToSchoolFinals} يوم`,
+    next: "احسب موزونتك ورتّب رغباتك.", cta: "راجع خطتك", href: "/plan",
+  },
+  qiyas: {
+    area: "study", icon: "🧭",
+    title: (c) => `الاستعداد لـ${c.qiyas?.label ?? "اختبار القياس"}`,
+    why: (c) => `باقي ${c.qiyas?.weeks ?? "—"} أسبوع${c.qiyas?.approximate ? " تقريباً" : ""} على موعده.`,
+    benefit: "درجتك ترفع نسبتك الموزونة للقبول.",
+    time: (c) => `${c.qiyas?.weeks ?? "—"} أسبوع`,
+    next: "بطاقات ومحاكاة أسبوعية.", cta: "ابدأ مذاكرة مساري", href: "/roadmap",
+  },
+  admission: {
+    area: "admission", icon: "🏛️",
+    title: () => "ترتيب رغباتك وحساب موزونتك",
+    why: (c) => (c.stage === "graduate" ? "أنت في مرحلة التقديم للقبول." : "أنت في سنة القبول الجامعي."),
+    benefit: "تعرف أين تُقبل وما الذي تقدّم عليه.",
+    time: () => "هذا الموسم",
+    next: "قدّم على ما يناسبك.", cta: "احسب موزونتك وقدّم", href: "/university",
+  },
+  early: {
+    area: "study", icon: "🧭",
+    title: (c) => (c.stage === "second" ? "اسبق دفعتك — القدرات والتحصيلي المبكر" : "ابدأ القدرات وابنِ عادتك"),
+    why: () => "أنت مبكّر — كل أسبوع تبدأ فيه اليوم يسبقك خطوة.",
+    benefit: "تدخل سنة القبول وأنت متقدّم على دفعتك.",
+    time: () => "مستمر",
+    next: "نظّم جدول مذاكرتك.", cta: "ابدأ من مساري", href: "/roadmap",
+  },
+};
 
-  /* متعثّر → رفع المعدّل يتقدّم على كل شيء */
-  if (c.gpa != null && c.gpa < 2.75) {
-    out.push({
-      order: 1, key: "gpa", area: "gpa", icon: "📊",
-      title: "رفع المعدّل",
-      why: `لأن معدّلك (${gpaTxt}) أقل من ٢٫٧٥.`,
-      benefit: "يفتح لك التدريب التعاوني والقبول والوظائف لاحقاً.",
-      time: "هذا الفصل",
-      next: "التقديم على التدريب التعاوني.",
-      cta: "احسب معدّلك واستهدف", href: "/uni-tools", urgent: false,
-    });
-  }
-
-  /* متميّز في المنتصف/قرب التخرّج → البحث والدراسات العليا */
-  if (c.gpa != null && c.gpa >= 4.5 && (c.uniStage === "mid" || c.uniStage === "senior")) {
-    out.push({
-      order: 1, key: "research", area: "growth", icon: "🧪",
-      title: "البحث والدراسات العليا",
-      why: `معدّلك ممتاز (${gpaTxt}) — استثمره.`,
-      benefit: "منح ومؤتمرات وتبادل وقبول للدراسات العليا.",
-      time: "مستمر",
-      next: "ابنِ ملفك البحثي ولينكدإن.",
-      cta: "خطّط لدراساتك العليا", href: "/career", urgent: false,
-    });
-  }
-
-  /* قرب التخرّج → السوق: السيرة والتقديم */
-  if (c.uniStage === "senior") {
-    out.push({
-      order: 2, key: "cv", area: "career", icon: "📄",
-      title: `تجهيز سيرتك الذاتية${major}`,
-      why: "أنت قريب من التخرّج والسوق يبدأ قبله بأشهر.",
-      benefit: "تبدأ التقديم على الوظائف مبكراً وبثقة.",
-      time: "أسبوع",
-      next: "حدّث لينكدإن وقدّم على الشركات.",
-      cta: "جهّز سيرتك ومسارك", href: "/career", urgent: false,
-    });
-  }
-
-  /* المنتصف/قرب التخرّج بلا تدريب → التدريب التعاوني */
-  if ((c.uniStage === "mid" || c.uniStage === "senior") && !c.coopDone) {
-    out.push({
-      order: 3, key: "coop", area: "career", icon: "🧭",
-      title: "التقديم على التدريب التعاوني",
-      why: "لم تُنجز تدريبك بعد — وهو أسرع طريق للخبرة.",
-      benefit: "خبرة حقيقية تسبق الشهادة وتفتح باب التوظيف.",
-      time: "قدّم الآن للفصل القادم",
-      next: "ابدأ أول شهادة احترافية.",
-      cta: "استكشف التدريب", href: "/career", urgent: false,
-    });
-  }
-
-  /* المنتصف مع تدريب مُنجَز → أول شهادة */
-  if (c.uniStage === "mid" && c.coopDone) {
-    out.push({
-      order: 3, key: "cert", area: "growth", icon: "🎓",
-      title: "بدء أول شهادة احترافية",
-      why: "أنجزت تدريبك — الوقت مناسب لشهادة تخصصك.",
-      benefit: "تثبّت مهارتك وتميّز سيرتك عن أقرانك.",
-      time: "٤–٨ أسابيع",
-      next: "ابنِ مشروعاً يطبّقها.",
-      cta: "ابدأ شهادة تخصصك", href: "/career#sec-certs", urgent: false,
-    });
-  }
-
-  /* البداية → الأساس: المعدّل والتنظيم */
-  if (c.uniStage === "start") {
-    out.push({
-      order: 3, key: "foundation", area: "study", icon: "🎛️",
-      title: "بناء أساسك: معدّلك وتنظيمك",
-      why: "أول سنتين تحدّدان فرصك لاحقاً.",
-      benefit: "معدّل قوي مبكّر يفتح كل الأبواب بعده.",
-      time: "مستمر",
-      next: "استكشف عالم تخصصك.",
-      cta: "افتح أدوات الجامعة", href: "/uni-tools", urgent: false,
-    });
-  }
-
-  /* خلفية دائمة: مذاكرة منتظمة داخل الفصل (أقلّ أولوية) */
-  if (c.inStudyTerm && (c.uniFinalsInDays == null || c.uniFinalsInDays > 21)) {
-    out.push({
-      order: 5, key: "study-routine", area: "study", icon: "📚",
-      title: "مذاكرة موادك بانتظام",
-      why: "أنت داخل الفصل الدراسي الآن.",
-      benefit: "الانتظام يمنع تراكم المواد قبل الاختبارات.",
-      time: "يومياً",
-      next: "راجع أخطاءك أسبوعياً.",
-      cta: "نظّم خطتك", href: "/plan", urgent: false,
-    });
-  }
-
-  return out;
+/* ── القواعد: صريحة، كلٌّ بمعرّف وسبب ووزن وشرط ── */
+export interface Rule {
+  id: number;
+  label: string;         // السبب المقروء («المعدّل أقل من ٢٫٧٥»)
+  priority: PriorityKey; // الأولوية التي تدعمها
+  weight: number;
+  when: (c: LifeContext) => boolean;
 }
 
-/* ════════ مرشّحات الثانوي/الخريج ════════ */
-function schoolCandidates(c: LifeContext): Cand[] {
-  const out: Cand[] = [];
+const inRange = (n: number | null, lo: number, hi: number) => n != null && n >= lo && n <= hi;
 
-  /* اختبارات مدرسية الآن أو قريبة → عاجل */
-  if (c.inSchoolFinals) {
-    out.push({
-      order: 0, key: "school-finals-now", area: "urgent", icon: "⏳",
-      title: "مراجعة اختباراتك النهائية",
-      why: "اختباراتك بدأت الآن.",
-      benefit: "كل مراجعة قبل المادة ترفع درجتك.",
-      time: "أيام الاختبارات",
-      next: "بعد كل مادة: راجع أخطاءك للتي بعدها.",
-      cta: "راجع أخطائي", href: "/vault", urgent: true,
-    });
-  } else if (c.daysToSchoolFinals != null && c.daysToSchoolFinals >= 0 && c.daysToSchoolFinals <= 21) {
-    out.push({
-      order: 0, key: "school-finals-soon", area: "urgent", icon: "⏳",
-      title: "الاستعداد لاختبارات الفصل",
-      why: `باقي ${c.daysToSchoolFinals} يوم على اختباراتك.`,
-      benefit: "درجاتك المدرسية جزء من نسبتك الموزونة.",
-      time: `${c.daysToSchoolFinals} يوم`,
-      next: "احسب موزونتك ورتّب رغباتك.",
-      cta: "راجع خطتك", href: "/plan", urgent: true,
-    });
+export const RULES: Rule[] = [
+  /* ── الجامعي ── */
+  { id: 10, label: "اختبارات الفصل خلال ٢١ يوماً", priority: "uni-finals", weight: 100, when: (c) => c.stage === "university" && inRange(c.uniFinalsInDays, 0, 21) },
+  { id: 11, label: "المعدّل أقل من ٢٫٧٥", priority: "gpa", weight: 50, when: (c) => c.stage === "university" && c.gpa != null && c.gpa < 2.75 },
+  { id: 12, label: "تعثّر شديد (المعدّل أقل من ٢٫٠)", priority: "gpa", weight: 20, when: (c) => c.stage === "university" && c.gpa != null && c.gpa < 2.0 },
+  { id: 13, label: "معدّل منخفض قرب التخرّج", priority: "gpa", weight: 20, when: (c) => c.stage === "university" && c.gpa != null && c.gpa < 2.75 && c.uniStage === "senior" },
+  { id: 14, label: "معدّل ممتاز (≥ ٤٫٥) في مرحلة متقدّمة", priority: "research", weight: 45, when: (c) => c.stage === "university" && c.gpa != null && c.gpa >= 4.5 && (c.uniStage === "mid" || c.uniStage === "senior") },
+  { id: 15, label: "قرب التخرّج", priority: "cv", weight: 40, when: (c) => c.uniStage === "senior" },
+  { id: 16, label: "لا يوجد تدريب تعاوني", priority: "coop", weight: 35, when: (c) => (c.uniStage === "mid" || c.uniStage === "senior") && !c.coopDone },
+  { id: 17, label: "أنجز التدريب (وقت الشهادة)", priority: "cert", weight: 30, when: (c) => c.uniStage === "mid" && c.coopDone },
+  { id: 18, label: "بداية المشوار الجامعي", priority: "foundation", weight: 30, when: (c) => c.uniStage === "start" },
+  { id: 19, label: "داخل الفصل الدراسي (بلا اختبارات قريبة)", priority: "study-routine", weight: 15, when: (c) => c.stage === "university" && c.inStudyTerm && !inRange(c.uniFinalsInDays, 0, 21) },
+  /* ── الثانوي/الخريج ── */
+  { id: 30, label: "اختبارات مدرسية جارية الآن", priority: "school-finals-now", weight: 100, when: (c) => c.stage !== "university" && c.inSchoolFinals },
+  { id: 31, label: "اختبارات مدرسية خلال ٢١ يوماً", priority: "school-finals-soon", weight: 90, when: (c) => c.stage !== "university" && !c.inSchoolFinals && inRange(c.daysToSchoolFinals, 0, 21) },
+  { id: 32, label: "قياس قادم يراه الطالب خلال ٤٥ يوماً", priority: "qiyas", weight: 40, when: (c) => c.stage !== "university" && c.qiyas != null && c.qiyas.days <= 45 },
+  { id: 33, label: "سنة القبول (ثالث ثانوي/خريج)", priority: "admission", weight: 45, when: (c) => c.stage === "third" || c.stage === "graduate" },
+  { id: 34, label: "مرحلة مبكّرة (أول/ثاني ثانوي)", priority: "early", weight: 30, when: (c) => c.stage === "first" || c.stage === "second" },
+];
+
+/* ════════ العقل: أولويات الطالب مرتّبة ومُفسَّرة ════════ */
+export function lifeEngine(c: LifeContext): Priority[] {
+  /* أطلِق كل القواعد، وجمّع أوزانها حسب الأولوية */
+  const fired = new Map<PriorityKey, FiredRule[]>();
+  for (const r of RULES) {
+    if (!r.when(c)) continue;
+    const arr = fired.get(r.priority) ?? [];
+    arr.push({ id: r.id, label: r.label, weight: r.weight });
+    fired.set(r.priority, arr);
   }
 
-  /* قياس قادم يراه الطالب */
-  if (c.qiyas && c.qiyas.days <= 45) {
-    const approx = c.qiyas.approximate ? " تقريباً" : "";
-    out.push({
-      order: 1, key: "qiyas", area: "study", icon: "🧭",
-      title: `الاستعداد لـ${c.qiyas.label}`,
-      why: `باقي ${c.qiyas.weeks} أسبوع${approx} على موعده.`,
-      benefit: "درجتك ترفع نسبتك الموزونة للقبول.",
-      time: `${c.qiyas.weeks} أسبوع`,
-      next: "بطاقات ومحاكاة أسبوعية.",
-      cta: "ابدأ مذاكرة مساري", href: "/roadmap", urgent: false,
-    });
-  }
+  /* ابنِ أولوية لكل مفتاح أطلق قاعدة، مع score/confidence/التفسير */
+  const built = [...fired.entries()].map(([key, rules]) => {
+    const def = PRIORITY_DEFS[key];
+    const score = rules.reduce((s, r) => s + r.weight, 0);
+    return {
+      key, area: def.area, icon: def.icon, urgent: !!def.urgent,
+      title: def.title(c), why: def.why(c), benefit: def.benefit,
+      time: def.time(c), next: def.next, cta: def.cta, href: def.href,
+      score, confidence: confidenceOf(score),
+      firedRules: rules, reasons: rules.map((r) => r.label),
+    };
+  });
 
-  /* ثالث ثانوي/خريج → القبول */
-  if (c.stage === "third" || c.stage === "graduate") {
-    out.push({
-      order: 2, key: "admission", area: "admission", icon: "🏛️",
-      title: "ترتيب رغباتك وحساب موزونتك",
-      why: c.stage === "graduate" ? "أنت في مرحلة التقديم للقبول." : "أنت في سنة القبول الجامعي.",
-      benefit: "تعرف أين تُقبل وما الذي تقدّم عليه.",
-      time: "هذا الموسم",
-      next: "قدّم على ما يناسبك.",
-      cta: "احسب موزونتك وقدّم", href: "/university", urgent: false,
-    });
-  }
-
-  /* أول/ثاني ثانوي → التبكير */
-  if (c.stage === "first" || c.stage === "second") {
-    out.push({
-      order: 3, key: "early", area: "study", icon: "🧭",
-      title: c.stage === "second" ? "اسبق دفعتك — القدرات والتحصيلي المبكر" : "ابدأ القدرات وابنِ عادتك",
-      why: "أنت مبكّر — كل أسبوع تبدأ فيه اليوم يسبقك خطوة.",
-      benefit: "تدخل سنة القبول وأنت متقدّم على دفعتك.",
-      time: "مستمر",
-      next: "نظّم جدول مذاكرتك.",
-      cta: "ابدأ من مساري", href: "/roadmap", urgent: false,
-    });
-  }
-
-  return out;
+  /* رتّب بالوزن (الأعلى أولاً)، ثم بمعرّف ثابت عند التساوي */
+  built.sort((a, b) => b.score - a.score || a.key.localeCompare(b.key));
+  return built.map((p, i) => ({ rank: i + 1, ...p }));
 }
 
 /* ════════ قارئ السياق — يجمّع كل الإشارات من الأنظمة القائمة ════════
-   آمن على الخادم (كل المُحمِّلات تُعيد فراغاً، وphaseExperience يقبل null). نقطة
-   الدخول الموحّدة التي تستهلكها كل الصفحات: readLifeContext ثم lifeEngine. */
+   آمن على الخادم (المُحمِّلات تُعيد فراغاً، وphaseExperience يقبل null). نقطة
+   الدخول الموحّدة التي تستهلكها الصفحات: readLifeContext ثم lifeEngine. */
 export function readLifeContext(now: Date = new Date()): LifeContext {
   const user = loadUser();
   const goals = loadGoals();
@@ -260,7 +267,6 @@ export function readLifeContext(now: Date = new Date()): LifeContext {
     config: loadCalendarConfig<CalendarConfig>(),
   });
 
-  /* قياس يراه الطالب فقط (لا نُبرِز تحصيلياً لمن لا يراه) */
   const seesExam = (k: NextExamInfo["kind"]) =>
     k === "qudurat" ? exp.showsQudurat : k === "tahsili" ? exp.showsTahsili : k === "step" ? exp.showsStep : false;
   const e = cal.nextExam;
@@ -270,7 +276,7 @@ export function readLifeContext(now: Date = new Date()): LifeContext {
 
   const isUni = exp.stage === "university";
   const sem = isUni ? semesterInfo(now) : null;
-  const major = findMajor(goals.majorId ?? undefined);
+  const m = findMajor(goals.majorId ?? undefined);
 
   return {
     stage: exp.stage,
@@ -279,7 +285,7 @@ export function readLifeContext(now: Date = new Date()): LifeContext {
     hours: user?.creditHoursCompleted ?? null,
     year: user?.universityYear ?? null,
     majorId: goals.majorId ?? null,
-    majorName: hasMajorWorld(goals.majorId) && major ? major.name : null,
+    majorName: hasMajorWorld(goals.majorId) && m ? m.name : null,
     coopDone: !!user?.coopDone,
     gradInterest: !!user?.gradSchoolInterest,
     inSchoolFinals: cal.inSchoolFinals,
@@ -289,20 +295,4 @@ export function readLifeContext(now: Date = new Date()): LifeContext {
     termLabel: sem?.termLabel ?? null,
     inStudyTerm: cal.inStudyTerm,
   };
-}
-
-/* ════════ العقل: أولويات الطالب مرتّبة ════════ */
-export function lifeEngine(c: LifeContext): Priority[] {
-  const cands = c.stage === "university" ? uniCandidates(c) : schoolCandidates(c);
-  /* ترتيب ثابت: الأهمّ (order أصغر) أولاً، ثم ترتيب الإضافة */
-  const sorted = cands
-    .map((cand, i) => ({ cand, i }))
-    .sort((a, b) => a.cand.order - b.cand.order || a.i - b.i)
-    .slice(0, MAX_PRIORITIES)
-    .map(({ cand }, idx) => {
-      const { order: _order, ...rest } = cand;
-      void _order;
-      return { rank: idx + 1, ...rest } as Priority;
-    });
-  return sorted;
 }
