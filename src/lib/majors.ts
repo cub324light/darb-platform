@@ -823,3 +823,187 @@ export function hasMajorWorld(id?: string | null): boolean {
 export function getMajorWorld(id?: string | null): MajorWorld {
   return (id ? WORLD_INDEX.get(id) : undefined) ?? FALLBACK_WORLD;
 }
+
+/* ════════ الربط: من المادة إلى الوظيفة (لا معلومة معزولة) ════════
+   نواة رؤية «كل شيء يقود إلى الذي بعده»: لكل تخصص موادُّه الأساسية كما تُدرَّس
+   فعلاً، ولكل مادة أداتها التي تتقنها بها، وناتجها الملموس، والدور الذي تقود
+   إليه. تُقرأ الجهة (أبرز شركة) والشهادة (أول شهادة) من عالم التخصص نفسه؛ فتكتمل
+   السلسلة: مادة → أداة → مشروع → جهة → شهادة → دور. كلٌّ مرتبط بالذي بعده. */
+export interface SubjectLink {
+  subject: string; // المادة كما تُدرَّس
+  via: string;     // البرنامج/الأداة التي تتقنها بها (من برامج التخصص نفسه)
+  builds: string;  // ناتج/مشروع ملموس تصنعه بها
+  role: string;    // الدور الوظيفي الذي تقود إليه هذه المادة
+}
+
+/* مواد كل تخصص الأساسية — معرّفات تطابق MAJOR_WORLDS. via من برامج التخصص نفسه
+   (يحفظ العزل: مواد الكهرباء تشير لـ ETAP لا لـ Wireshark، والعكس). */
+const CORE_SUBJECTS: Record<string, SubjectLink[]> = {
+  /* ─── صحي ─── */
+  medicine: [
+    { subject: "علم التشريح", via: "Complete Anatomy", builds: "أطلس تشريحي تفاعلي لجهاز في الجسم", role: "طبيب" },
+    { subject: "علم الأدوية", via: "UpToDate", builds: "جدول تفاعلات دوائية لحالة سريرية", role: "طبيب سريري" },
+    { subject: "علم الأمراض", via: "AMBOSS", builds: "دراسة حالة مرضية موثّقة", role: "أخصائي" },
+    { subject: "المهارات السريرية", via: "Anki", builds: "بطاقات تشخيص تفريقي", role: "طبيب مقيم" },
+  ],
+  dentistry: [
+    { subject: "تعويضات الأسنان", via: "Exocad", builds: "تصميم تاج/جسر رقمي", role: "أخصائي تعويضات" },
+    { subject: "أشعة الأسنان", via: "برامج الأشعة الرقمية", builds: "قراءة بانوراما وتشخيص", role: "طبيب أسنان" },
+    { subject: "طب الأسنان الوقائي", via: "Dentrix / Open Dental", builds: "خطة علاجية لمريض", role: "طبيب أسنان عام" },
+  ],
+  pharmacy: [
+    { subject: "علم الأدوية السريري", via: "Lexicomp", builds: "مراجعة دوائية لحالة", role: "صيدلي سريري" },
+    { subject: "التفاعلات الدوائية", via: "Micromedex", builds: "تقرير تفاعلات لمريض متعدّد الأدوية", role: "صيدلي مستشفى" },
+    { subject: "الصيدلة المجتمعية", via: "أنظمة صرف ومخزون الأدوية", builds: "خطة صرف وإرشاد للمريض", role: "صيدلي مجتمعي" },
+  ],
+  nursing: [
+    { subject: "التمريض السريري", via: "أنظمة السجلات الصحية الإلكترونية (EHR)", builds: "خطة رعاية تمريضية لمريض", role: "ممرض سريري" },
+    { subject: "العناية المركزة", via: "مراجع الأدوية السريرية", builds: "بروتوكول متابعة حالة حرجة", role: "ممرض عناية مركزة" },
+    { subject: "مكافحة العدوى", via: "أدوات التوثيق التمريضي", builds: "خطة مكافحة عدوى لقسم", role: "مشرف مكافحة عدوى" },
+  ],
+  "applied-medical": [
+    { subject: "علم المختبرات", via: "أنظمة معلومات المختبرات (LIS)", builds: "دراسة ضبط جودة لمختبر", role: "أخصائي مختبرات" },
+    { subject: "الأشعة والتصوير الطبي", via: "أنظمة أرشفة الصور الطبية (PACS/RIS)", builds: "تقييم جرعات وسلامة أشعة", role: "تقني أشعة" },
+    { subject: "العلاج الطبيعي", via: "أدوات التحليل الإحصائي الصحي", builds: "برنامج تأهيل حركي لحالة", role: "أخصائي علاج طبيعي" },
+  ],
+
+  /* ─── حاسب ─── */
+  cs: [
+    { subject: "هياكل البيانات والخوارزميات", via: "Python", builds: "محرّك بحث مصغّر", role: "مطوّر برمجيات" },
+    { subject: "قواعد البيانات", via: "قواعد بيانات SQL", builds: "نظام إدارة قاعدة بيانات", role: "مهندس بيانات" },
+    { subject: "أنظمة التشغيل والشبكات", via: "Linux", builds: "خدمة خلفية موزّعة", role: "مهندس أنظمة" },
+    { subject: "تطوير الويب", via: "Git / GitHub", builds: "تطبيق ويب متكامل (Full-stack)", role: "مطوّر Full-stack" },
+  ],
+  swe: [
+    { subject: "هندسة المتطلبات", via: "Jira", builds: "وثيقة متطلبات ونماذج أولية", role: "محلل نظم" },
+    { subject: "بناء البرمجيات", via: "Docker", builds: "تطبيق بمعمارية خدمات مصغّرة", role: "مطوّر خلفي" },
+    { subject: "اختبار البرمجيات", via: "أطر الاختبار الآلي", builds: "مجموعة اختبارات آلية لمشروع", role: "مهندس ضمان جودة (QA)" },
+    { subject: "التكامل المستمر", via: "أنظمة CI/CD", builds: "خط CI/CD متكامل", role: "مهندس DevOps" },
+  ],
+  cybersec: [
+    { subject: "أمن الشبكات", via: "Wireshark", builds: "تحليل حركة شبكة واكتشاف اختراق", role: "محلل مركز عمليات أمنية (SOC)" },
+    { subject: "اختبار الاختراق", via: "Metasploit", builds: "مختبر اختبار اختراق معزول", role: "مختبر اختراق" },
+    { subject: "أمن تطبيقات الويب", via: "Burp Suite", builds: "تقرير ثغرات تطبيق ومعالجتها", role: "مهندس أمن تطبيقات" },
+    { subject: "الاستجابة للحوادث", via: "Kali Linux", builds: "محاكاة استجابة لحادث أمني", role: "محلل استجابة للحوادث" },
+  ],
+  ai: [
+    { subject: "تعلّم الآلة", via: "scikit-learn", builds: "نموذج تنبؤ من بيانات واقعية", role: "مهندس تعلّم آلي" },
+    { subject: "التعلّم العميق", via: "PyTorch", builds: "نموذج تصنيف صور", role: "باحث ذكاء اصطناعي" },
+    { subject: "معالجة اللغة الطبيعية", via: "TensorFlow", builds: "معالج لغة طبيعية للعربية", role: "مهندس معالجة لغة" },
+    { subject: "علم البيانات", via: "pandas / NumPy", builds: "لوحة تحليل بيانات", role: "عالم بيانات" },
+  ],
+  is: [
+    { subject: "تحليل النظم", via: "أدوات نمذجة العمليات", builds: "نظام معلومات إداري متكامل", role: "محلل نظم" },
+    { subject: "ذكاء الأعمال", via: "Power BI", builds: "لوحة مؤشرات أعمال (BI)", role: "محلل ذكاء أعمال" },
+    { subject: "إدارة قواعد البيانات", via: "قواعد بيانات SQL", builds: "قاعدة بيانات وتقارير لجهة", role: "مدير قواعد بيانات" },
+    { subject: "أنظمة تخطيط الموارد", via: "أنظمة تخطيط الموارد (SAP / ERP)", builds: "أتمتة عملية إدارية", role: "محلل ERP" },
+  ],
+
+  /* ─── هندسي ─── */
+  ee: [
+    { subject: "أنظمة القوى", via: "ETAP", builds: "تصميم شبكة توزيع كهربائي", role: "مهندس قوى" },
+    { subject: "الإلكترونيات والدوائر", via: "Proteus", builds: "محاكاة وتصميم دائرة إلكترونية", role: "مهندس إلكترونيات" },
+    { subject: "أنظمة التحكّم", via: "برمجة المتحكّمات (PLC)", builds: "نظام تحكّم آلي بـ PLC", role: "مهندس تحكّم" },
+    { subject: "التصميم الكهربائي", via: "AutoCAD Electrical", builds: "مخطط كهربائي لمبنى", role: "مهندس تصميم كهربائي" },
+  ],
+  me: [
+    { subject: "التصميم الميكانيكي", via: "SolidWorks", builds: "تصميم آلة أو جهاز ميكانيكي", role: "مهندس تصميم" },
+    { subject: "تحليل العناصر المحدودة", via: "ANSYS", builds: "دراسة تحليل إجهادات لقطعة", role: "مهندس تحليل" },
+    { subject: "الديناميكا الحرارية", via: "MATLAB", builds: "نظام تكييف وتبريد (HVAC)", role: "مهندس حراري" },
+    { subject: "الرسم والنمذجة", via: "CATIA", builds: "نموذج تجميعي ثلاثي الأبعاد", role: "مهندس تصميم منتجات" },
+  ],
+  ce: [
+    { subject: "التحليل الإنشائي", via: "SAP2000 / ETABS", builds: "تصميم منشأ خرساني مسلّح", role: "مهندس إنشائي" },
+    { subject: "نمذجة معلومات البناء", via: "Revit", builds: "نموذج BIM لمبنى", role: "مهندس BIM" },
+    { subject: "إدارة المشاريع الإنشائية", via: "Primavera P6", builds: "خطة إدارة مشروع إنشائي", role: "مدير مشاريع إنشاء" },
+    { subject: "هندسة الطرق", via: "AutoCAD / Civil 3D", builds: "تصميم طريق أو جسر", role: "مهندس طرق ونقل" },
+  ],
+  industrial: [
+    { subject: "تحسين العمليات والجودة", via: "Minitab", builds: "تحسين خط إنتاج وزيادة إنتاجيته", role: "مهندس تحسين" },
+    { subject: "محاكاة الأنظمة", via: "Arena", builds: "نمذجة محاكاة لطابور خدمة", role: "مهندس محاكاة" },
+    { subject: "إدارة سلاسل الإمداد", via: "أنظمة ERP", builds: "نظام إدارة مخزون وسلسلة إمداد", role: "مخطّط سلاسل إمداد" },
+    { subject: "بحوث العمليات", via: "Microsoft Excel المتقدم", builds: "نموذج تحسين بـ Solver", role: "محلل عمليات" },
+  ],
+
+  /* ─── إداري ─── */
+  business: [
+    { subject: "الإدارة الاستراتيجية", via: "PowerPoint", builds: "خطة عمل لمشروع ناشئ", role: "مدير عمليات" },
+    { subject: "تحليل الأعمال", via: "Power BI", builds: "تحليل سوق وتنافسية", role: "محلل أعمال" },
+    { subject: "ريادة الأعمال", via: "أدوات إدارة المشاريع", builds: "دراسة جدوى اقتصادية", role: "رائد أعمال" },
+    { subject: "إدارة الموارد البشرية", via: "أنظمة ERP", builds: "خطة إعادة هيكلة تنظيمية", role: "أخصائي موارد بشرية" },
+  ],
+  accounting: [
+    { subject: "المحاسبة المالية", via: "SAP", builds: "إعداد وتحليل قوائم مالية", role: "محاسب مالي" },
+    { subject: "محاسبة التكاليف", via: "Microsoft Excel المتقدم", builds: "نظام محاسبة تكاليف", role: "محاسب إداري" },
+    { subject: "التدقيق والمراجعة", via: "Oracle Financials", builds: "دراسة تدقيق داخلي لعملية", role: "مدقق داخلي" },
+    { subject: "الضرائب والزكاة", via: "QuickBooks", builds: "تحليل أثر ضريبة القيمة المضافة", role: "أخصائي ضرائب" },
+  ],
+  finance: [
+    { subject: "التمويل المؤسسي", via: "Microsoft Excel المتقدم", builds: "نموذج تقييم شركة (DCF)", role: "محلل مالي" },
+    { subject: "إدارة المحافظ والاستثمار", via: "Bloomberg Terminal", builds: "بناء وتحليل محفظة استثمارية", role: "مدير محافظ" },
+    { subject: "إدارة المخاطر", via: "أنظمة التداول والتحليل المالي", builds: "دراسة مخاطر مالية", role: "محلل مخاطر" },
+    { subject: "التحليل المالي", via: "Power BI", builds: "خطة تمويل مشروع", role: "محلل مالي" },
+  ],
+  marketing: [
+    { subject: "التسويق الرقمي", via: "منصات الإعلانات (Google / Meta Ads)", builds: "حملة تسويق رقمي متكاملة", role: "أخصائي تسويق رقمي" },
+    { subject: "تحليلات التسويق", via: "Google Analytics", builds: "تحليل أداء حملة إعلانية بالبيانات", role: "محلل تسويق" },
+    { subject: "إدارة العلامة التجارية", via: "Canva", builds: "خطة بناء علامة تجارية", role: "مدير علامة تجارية" },
+    { subject: "تحسين محركات البحث", via: "أدوات تحسين محركات البحث (SEO)", builds: "تحسين ظهور موقع في نتائج البحث", role: "أخصائي SEO" },
+  ],
+
+  /* ─── قانوني ─── */
+  law: [
+    { subject: "الأنظمة التجارية", via: "منصات البحث القانوني والسوابق", builds: "بحث قانوني في نظام تجاري", role: "مستشار قانوني" },
+    { subject: "صياغة العقود", via: "أدوات إدارة القضايا والعقود", builds: "صياغة نموذج عقد متكامل", role: "صائغ عقود" },
+    { subject: "الترافع والمرافعات", via: "البوابات النظامية الرسمية", builds: "مذكرة قانونية في قضية افتراضية", role: "محامٍ" },
+    { subject: "الالتزام والامتثال", via: "أدوات مراجعة الوثائق (PDF)", builds: "سياسة امتثال لجهة", role: "أخصائي امتثال" },
+  ],
+};
+
+/* مواد احتياطية عامة — لأي تخصص غير مُعرَّف (يبقى الربط حيّاً بلا تلفيق) */
+const FALLBACK_SUBJECTS: SubjectLink[] = [
+  { subject: "مواد تخصصك الأساسية", via: "أدوات تخصصك الأساسية", builds: "مشروع تطبيقي لمشكلة واقعية", role: "التوظيف في مجالك" },
+  { subject: "مهارات البحث العلمي", via: "أدوات تدوين وتنظيم الملاحظات", builds: "دراسة تطبيقية لمشكلة", role: "باحث/متخصص" },
+  { subject: "المهارات الرقمية", via: "حزمة مكتب (Word / Excel / PowerPoint)", builds: "تقرير احترافي أو عرض تقديمي", role: "التطوير المهني" },
+];
+
+/* عقدة في سلسلة الربط — كلٌّ يسلّم للذي بعده */
+export interface FlowNode {
+  kind: "subject" | "tool" | "project" | "company" | "cert" | "role";
+  icon: string;
+  lead: string;  // الجملة الرابطة قبل العنصر («تدرس»، «تتقنها بـ»...)
+  label: string; // العنصر نفسه
+}
+
+/* سلسلة «من المادة إلى الوظيفة» لمادة واحدة */
+export interface SubjectFlow {
+  subject: string;
+  nodes: FlowNode[];
+}
+
+/* أسماء المواد الأساسية للتخصص — لأزرار الاختيار (احتياطي عام إن غاب التخصص) */
+export function coreSubjectsOf(id?: string | null): string[] {
+  return (CORE_SUBJECTS[id ?? ""] ?? FALLBACK_SUBJECTS).map((s) => s.subject);
+}
+
+/* السلسلة المترابطة: مادة → أداة → مشروع → جهة → شهادة → دور.
+   نقية تماماً (لا IO). الجهة والشهادة تُقرآن من عالم التخصص نفسه، فتبقى العُقد
+   متّسقة مع أقسام الصفحة (نفس البيانات لا معلومة جديدة معزولة). */
+export function subjectFlow(id?: string | null, subject?: string): SubjectFlow {
+  const links = CORE_SUBJECTS[id ?? ""] ?? FALLBACK_SUBJECTS;
+  const link = (subject && links.find((s) => s.subject === subject)) || links[0];
+  const world = getMajorWorld(id);
+  const company = world.companies[0];
+  const cert = world.certs[0]?.name;
+
+  const nodes: FlowNode[] = [
+    { kind: "subject", icon: "📖", lead: "تدرس", label: link.subject },
+    { kind: "tool", icon: "🧰", lead: "تتقنها بـ", label: link.via },
+    { kind: "project", icon: "🚀", lead: "تبني بها", label: link.builds },
+  ];
+  if (company) nodes.push({ kind: "company", icon: "🏢", lead: "تشتغل بها في", label: company });
+  if (cert) nodes.push({ kind: "cert", icon: "🎓", lead: "وتُثبِتها بشهادة", label: cert });
+  nodes.push({ kind: "role", icon: "🎯", lead: "فتصير", label: link.role });
+
+  return { subject: link.subject, nodes };
+}

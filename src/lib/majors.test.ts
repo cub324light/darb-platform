@@ -5,7 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { MAJORS } from "./university";
 import type { MajorWorld } from "./majors";
-import { MAJOR_WORLDS, getMajorWorld, hasMajorWorld } from "./majors";
+import { MAJOR_WORLDS, getMajorWorld, hasMajorWorld, subjectFlow, coreSubjectsOf } from "./majors";
 
 /* يجمع كل النصوص القابلة للبحث في عالم — لاختبار العزل بلا افتراض عن مكان الأداة */
 function worldText(w: MajorWorld): string {
@@ -98,4 +98,56 @@ test("كل عالم يحوي أدواته المميّزة (تأكيد الهو�
   assert.ok(worldText(getMajorWorld("ee")).includes("etap"), "ee بلا ETAP");
   assert.ok(worldText(getMajorWorld("cybersec")).includes("wireshark"), "cybersec بلا Wireshark");
   assert.ok(worldText(getMajorWorld("accounting")).includes("socpa"), "accounting بلا SOCPA");
+});
+
+/* ════════ الربط: من المادة إلى الوظيفة (لا معلومة معزولة) ════════ */
+test("كل تخصص دقيق له موادُّ أساسية غير فارغة (لا سلسلة بلا مادة)", () => {
+  for (const m of MAJORS) {
+    if (m.id === "other") continue;
+    const subs = coreSubjectsOf(m.id);
+    assert.ok(subs.length >= 2, `${m.id}: مواد أساسية قليلة/غائبة`);
+    for (const s of subs) assert.ok(s.trim() !== "", `${m.id}: مادة فارغة`);
+  }
+});
+
+test("subjectFlow: سلسلة من ٦ عقد مترابطة كلها بعنوان وأيقونة وجملة رابطة", () => {
+  const f = subjectFlow("ee", "أنظمة القوى");
+  assert.equal(f.subject, "أنظمة القوى");
+  assert.equal(f.nodes.length, 6);
+  assert.deepEqual(f.nodes.map((n) => n.kind), [
+    "subject", "tool", "project", "company", "cert", "role",
+  ]);
+  for (const n of f.nodes) {
+    assert.ok(n.label.trim() !== "", "عقدة بلا عنوان");
+    assert.ok(n.icon.trim() !== "", "عقدة بلا أيقونة");
+    assert.ok(n.lead.trim() !== "", "عقدة بلا جملة رابطة");
+  }
+});
+
+test("subjectFlow(ee/أنظمة القوى): كل عقدة تسلّم للتي بعدها بمحتوى التخصص نفسه", () => {
+  const f = subjectFlow("ee", "أنظمة القوى");
+  const by = (k: string) => f.nodes.find((n) => n.kind === k)!.label;
+  assert.equal(by("tool"), "ETAP");                       // أداة المادة
+  assert.match(by("project"), /شبكة توزيع/);              // ناتجها
+  assert.equal(by("company"), getMajorWorld("ee").companies[0]); // أبرز جهة من العالم
+  assert.equal(by("cert"), getMajorWorld("ee").certs[0].name);   // أول شهادة من العالم
+  assert.match(by("role"), /مهندس قوى/);
+});
+
+test("subjectFlow: مادة مجهولة/غائبة → يسقط للمادة الأولى (لا يرمي)", () => {
+  const first = subjectFlow("cs").subject;
+  assert.equal(subjectFlow("cs", "مادة-لا-توجد").subject, first);
+});
+
+test("subjectFlow: عزل التخصص محفوظ في السلسلة (كهرباء ETAP لا Wireshark)", () => {
+  const eeTools = subjectFlow("ee", "أنظمة القوى").nodes.map((n) => n.label).join(" ").toLowerCase();
+  assert.ok(!eeTools.includes("wireshark"), "تسرّبت أداة أمن لسلسلة كهرباء");
+  const cyTools = subjectFlow("cybersec", "أمن الشبكات").nodes.map((n) => n.label).join(" ").toLowerCase();
+  assert.ok(cyTools.includes("wireshark") && !cyTools.includes("etap"), "سلسلة الأمن غير سليمة");
+});
+
+test("subjectFlow: تخصص بلا تعريف يستعمل الاحتياطي (سلسلة حيّة لا فراغ)", () => {
+  const f = subjectFlow("other");
+  assert.ok(f.nodes.length >= 4);
+  for (const n of f.nodes) assert.ok(n.label.trim() !== "", "عقدة احتياطية فارغة");
 });

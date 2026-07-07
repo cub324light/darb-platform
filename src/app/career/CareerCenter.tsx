@@ -9,7 +9,7 @@ import Link from "next/link";
 import { CardGrid } from "@/components/ds";
 import { loadUser, loadGoals } from "@/lib/storage";
 import { findMajor, type MajorCategory } from "@/lib/university";
-import { getMajorWorld, hasMajorWorld } from "@/lib/majors";
+import { getMajorWorld, hasMajorWorld, subjectFlow, coreSubjectsOf, type FlowNode } from "@/lib/majors";
 import {
   CAREER_DISCLAIMER, opportunitiesAll,
   resolveCategory, resumeFocusForMajor, linkedinFocusForMajor,
@@ -53,12 +53,13 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
   );
 }
 
-/* غلاف قسم موحّد — بطاقة نظام + عنوان t-h3 + إيقاع داخلي موحّد */
-function Section({ icon, title, badge, children }: {
-  icon: string; title: string; badge?: string; children: React.ReactNode;
+/* غلاف قسم موحّد — بطاقة نظام + عنوان t-h3 + إيقاع داخلي موحّد.
+   id اختياري: يجعل القسم هدف تنقّل للسلسلة (كل عقدة تقفز لتفصيلها هنا). */
+function Section({ id, icon, title, badge, children }: {
+  id?: string; icon: string; title: string; badge?: string; children: React.ReactNode;
 }) {
   return (
-    <section className="ds-card ds-stack-tight">
+    <section id={id} className="ds-card ds-stack-tight" style={id ? { scrollMarginTop: 76 } : undefined}>
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-[18px]" aria-hidden="true">{icon}</span>
         <h2 className="t-h3 flex-1" style={{ color: "var(--text)" }}>{title}</h2>
@@ -91,12 +92,12 @@ function WorldCard({ name, note, color }: { name: string; note?: string; color: 
 }
 
 /* قسم بطاقي من عالم التخصص — يُخفى تماماً إن غاب حقله (لا عناوين فارغة) */
-function WorldGrid({ icon, title, color, items }: {
-  icon: string; title: string; color: string; items: WorldItem[];
+function WorldGrid({ id, icon, title, color, items }: {
+  id?: string; icon: string; title: string; color: string; items: WorldItem[];
 }) {
   if (!items.length) return null;
   return (
-    <Section icon={icon} title={title}>
+    <Section id={id} icon={icon} title={title}>
       <CardGrid cols={2}>
         {items.map((it, i) => <WorldCard key={i} name={it.name} note={it.note} color={color} />)}
       </CardGrid>
@@ -126,6 +127,99 @@ function Bullets({ items, mark = "•" }: { items: string[]; mark?: string }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+/* لون ومقصد كل عقدة — لونٌ بمعنى، ومقصدٌ يقفز لتفصيلها بالأسفل (لا معلومة معزولة) */
+const NODE_META: Record<FlowNode["kind"], { color: string; anchor?: string }> = {
+  subject: { color: C_INFO },
+  tool:    { color: C_ACTION, anchor: "#sec-programs" },
+  project: { color: C_INFO,   anchor: "#sec-projects" },
+  company: { color: C_INFO,   anchor: "#sec-companies" },
+  cert:    { color: C_CERT,   anchor: "#sec-certs" },
+  role:    { color: "var(--success)", anchor: "#sec-paths" },
+};
+
+/* عقدة واحدة في السلسلة — بطاقة تحمل الجملة الرابطة + العنصر، وتقفز لتفصيله */
+function FlowNodeRow({ node, last }: { node: FlowNode; last: boolean }) {
+  const meta = NODE_META[node.kind];
+  const isDest = node.kind === "role";
+  const inner = (
+    <div className="rounded-xl px-3.5 py-2.5 flex items-center gap-3 transition active:scale-[0.99]"
+      style={{
+        background: isDest ? "color-mix(in srgb, var(--success) 12%, transparent)" : "var(--surface2)",
+        border: `1px solid ${isDest ? "color-mix(in srgb, var(--success) 34%, transparent)" : "var(--border)"}`,
+        borderInlineStartWidth: 3,
+        borderInlineStartColor: `color-mix(in srgb, ${meta.color} 62%, transparent)`,
+      }}>
+      <span className="text-[17px] flex-shrink-0" aria-hidden="true">{node.icon}</span>
+      <div className="flex-1 min-w-0 flex flex-col">
+        <span className="t-caption" style={{ color: "var(--text-muted)" }}>{node.lead}</span>
+        <span className="t-body font-black leading-snug"
+          style={{ color: isDest ? "var(--success)" : "var(--text)" }}>{node.label}</span>
+      </div>
+      {meta.anchor && (
+        <span className="text-[13px] flex-shrink-0" style={{ color: "var(--text-muted)" }} aria-hidden="true">↓</span>
+      )}
+    </div>
+  );
+  return (
+    <div className="flex flex-col">
+      {meta.anchor
+        ? <a href={meta.anchor} className="no-underline">{inner}</a>
+        : inner}
+      {/* واصل رأسي بين العُقد — يجسّد «كلٌّ يقود للذي بعده» */}
+      {!last && (
+        <div className="flex justify-center" aria-hidden="true">
+          <span className="text-[12px] leading-none py-0.5" style={{ color: "var(--accent-light)" }}>↓</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ══ رحلتك من المادة إلى الوظيفة — السلسلة المترابطة (أنكور الصفحة) ══
+   يختار الطالب مادة، فترتسم أمامه رحلتها كاملة: مادة → أداة → مشروع → جهة →
+   شهادة → دور. كل عقدة تسلّم للتي بعدها، وتقفز لتفصيلها بالأسفل. */
+function SubjectJourney({ majorId }: { majorId: string | null }) {
+  const subjects = coreSubjectsOf(majorId);
+  const [subject, setSubject] = useState(() => subjects[0] ?? "");
+  if (subjects.length === 0) return null;
+  const flow = subjectFlow(majorId, subject);
+
+  return (
+    <section className="ds-card ds-stack-tight"
+      style={{
+        background: "linear-gradient(160deg, color-mix(in srgb, var(--accent) 7%, var(--surface)) 0%, var(--surface) 78%)",
+        borderColor: "color-mix(in srgb, var(--accent) 20%, var(--border))",
+      }}>
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-[18px]" aria-hidden="true">🧭</span>
+        <div className="flex-1">
+          <h2 className="t-h3" style={{ color: "var(--text)" }}>رحلتك من المادة إلى الوظيفة</h2>
+          <p className="t-caption" style={{ color: "var(--text-muted)" }}>
+            اختر مادة — نُريك كيف تقودك خطوة بخطوة حتى العمل. لا معلومة معزولة.
+          </p>
+        </div>
+      </div>
+
+      {/* اختيار المادة — كل مادة ترسم رحلتها */}
+      {subjects.length > 1 && (
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: "thin" }}
+          role="tablist" aria-label="مواد تخصصك">
+          {subjects.map((s) => (
+            <Chip key={s} active={s === subject} onClick={() => setSubject(s)}>{s}</Chip>
+          ))}
+        </div>
+      )}
+
+      {/* السلسلة */}
+      <div className="flex flex-col">
+        {flow.nodes.map((n, i) => (
+          <FlowNodeRow key={`${subject}-${i}`} node={n} last={i === flow.nodes.length - 1} />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -186,6 +280,9 @@ export default function CareerCenter() {
         </Link>
       )}
 
+      {/* ══ أنكور الصفحة: رحلتك من المادة إلى الوظيفة (فقط لتخصص دقيق) ══ */}
+      {specific && <SubjectJourney majorId={init.majorId} />}
+
       {/* ══ الراتب الاسترشادي — بطاقة واحدة بارزة خضراء (نجاح) ══ */}
       {world.salary && (
         <div className="ds-card flex items-start gap-3"
@@ -209,13 +306,13 @@ export default function CareerCenter() {
       )}
 
       {/* 🧭 المسارات الوظيفية (رمادي = معلومة) */}
-      <WorldGrid icon="🧭" title="مساراتك الوظيفية" color={C_INFO} items={asItems(world.careerPaths)} />
+      <WorldGrid id="sec-paths" icon="🧭" title="مساراتك الوظيفية" color={C_INFO} items={asItems(world.careerPaths)} />
 
       {/* 🧰 برامج تخصصك (أزرق = أدوات) */}
-      <WorldGrid icon="🧰" title="برامج تخصصك" color={C_ACTION} items={world.programs} />
+      <WorldGrid id="sec-programs" icon="🧰" title="برامج تخصصك" color={C_ACTION} items={world.programs} />
 
       {/* 🎓 الشهادات الاحترافية (ذهبي) */}
-      <WorldGrid icon="🎓" title="الشهادات الاحترافية" color={C_CERT} items={world.certs} />
+      <WorldGrid id="sec-certs" icon="🎓" title="الشهادات الاحترافية" color={C_CERT} items={world.certs} />
 
       {/* 🤖 أدوات ذكاء اصطناعي لتخصصك (أزرق) + تنويه نزاهة (بنفس روح uni-gear) */}
       {world.aiTools.length > 0 && (
@@ -237,11 +334,11 @@ export default function CareerCenter() {
       )}
 
       {/* 🚀 أفكار مشاريع التخرّج (رمادي = معلومة) */}
-      <WorldGrid icon="🚀" title="أفكار مشاريع تخرّج" color={C_INFO} items={asItems(world.projects)} />
+      <WorldGrid id="sec-projects" icon="🚀" title="أفكار مشاريع تخرّج" color={C_INFO} items={asItems(world.projects)} />
 
       {/* 🏢 شركات توظّف تخصصك (رمادي = معلومة — شرائح مضغوطة) */}
       {world.companies.length > 0 && (
-        <Section icon="🏢" title="شركات توظّف تخصصك">
+        <Section id="sec-companies" icon="🏢" title="شركات توظّف تخصصك">
           <div className="flex flex-wrap gap-1.5">
             {world.companies.map((c) => (
               <span key={c} className="t-caption px-2.5 py-1.5 rounded-lg"
