@@ -1013,24 +1013,22 @@ export default function DashboardPage() {
         {/* ── منطقة التوصيات — مدفوعة بمحرّك التوصيات المركزي (المسار الذهبي + التنبيهات + القبول) ── */}
         {!editMode && <RecommendationFeed />}
 
-        {/* شريط التخصيص — واضح: من ما عجبه الترتيب يغيّره */}
+        {/* شريط التخصيص — هادئ خارج وضع الترتيب: ميزةٌ للمتمكّن لا تُزاحم مهمة الصفحة */}
         <div className="flex justify-between items-center gap-3">
           {editMode ? (
             <p className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>
               اسحب ⠿ للترتيب · اضغط ✕ للإخفاء
             </p>
-          ) : (
-            <p className="text-[13px] font-semibold" style={{ color: "var(--text-muted)" }}>
-              ما عجبك الترتيب؟ رتّب صفحتك على ذوقك
-            </p>
-          )}
+          ) : <span />}
           <button onClick={() => { if (editMode) saveDashConfig({ layout }); setEditMode((v) => !v); }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[14px] font-bold transition active:scale-95 flex-shrink-0"
+            className={editMode
+              ? "flex items-center gap-2 px-4 py-2.5 rounded-xl text-[14px] font-bold transition active:scale-95 flex-shrink-0"
+              : "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12.5px] font-semibold transition active:scale-95 flex-shrink-0"}
             style={editMode
               ? { background: "var(--accent)", color: "white", border: "none" }
-              : { background: "color-mix(in srgb, var(--accent) 12%, var(--surface2))", color: "var(--accent-light)", border: "1px solid color-mix(in srgb, var(--accent) 30%, transparent)" }}>
+              : { background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
             <span>{editMode ? "✓" : "⚙"}</span>
-            <span>{editMode ? "تم" : "تخصيص"}</span>
+            <span>{editMode ? "تم" : "ترتيب الصفحة"}</span>
           </button>
         </div>
 
