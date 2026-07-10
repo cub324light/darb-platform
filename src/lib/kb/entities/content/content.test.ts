@@ -184,6 +184,8 @@ test("قالب الدرس: قانون أوم يحمل تشبيهاً و«متى 
   const types = new Set((lesson.blocks ?? []).map((b) => b.type));
   assert.ok(types.has("analogy"), "بلا تشبيهٍ للمبتدئ (س١)");
   assert.ok(types.has("whenToUse"), "بلا «متى تستخدمه» (س٦) — الدرس ناقص");
+  assert.ok(lesson.diagnostic?.prompt && lesson.diagnostic.answer, "بلا سؤال «اختبر نفسك» قبل/بعد الشرح");
+  assert.ok((lesson.outcomes?.length ?? 0) >= 2, "بلا مخرجات «أنت الآن تستطيع»");
   assert.ok(lesson.nextTeaser && lesson.nextTeaser.trim() !== "", "بلا جسرٍ سرديّ للدرس التالي (س٧)");
   assert.ok((lesson.durationMin ?? 99) <= 8, "الدرس أطول من ٨ دقائق (س٨)");
   /* «أصبحت مستعداً لـ» تُشتقّ من الرسم — على الأقل كيرشوف + ثلاثة مسارات */

@@ -14,11 +14,13 @@ export interface LessonViewData {
   durationMin?: number;
   level?: "easy" | "medium" | "hard";
   nextTeaser?: string;
+  diagnostic?: { prompt: string; answer: string };
+  outcomes: string[];
   blocks: LessonBlock[];
   concept?: { id: string; name: string; definition?: string; whyImportant?: string };
   questions: { id: string; prompt: string; answer?: string; difficulty?: string }[];
   resources: { id: string; name: string; summary: string; format?: string }[];
-  /* «أصبحت مستعداً لـ» — مُشتقّة من علاقات leads_to للمفهوم (يربط لدرسها إن وُجد) */
+  /* «الخطوة التالية» — مُشتقّة من علاقات leads_to للمفهوم (مرتّبة بالأهمية، تربط لدرسها إن وُجد) */
   leadsTo: { id: string; name: string; lessonId?: string | null }[];
 }
 
@@ -163,6 +165,12 @@ function QuestionCard({ q }: { q: LessonViewData["questions"][number] }) {
 
 export default function LessonView({ data }: { data: LessonViewData }) {
   const askDuwairb = () => window.dispatchEvent(new CustomEvent("darb:openDuirb", { detail: { tab: "explain" } }));
+  /* تخمين الطالب لسؤال البداية يُرفَع هنا ليُقارَن به في النهاية (بلا درجات) */
+  const [guess, setGuess] = useState("");
+  const [revealed, setRevealed] = useState(false);
+  const primary = data.leadsTo[0];
+  const rest = data.leadsTo.slice(1);
+
   return (
     <div className="flex flex-col gap-3">
       {/* ترويسة الدرس */}
@@ -177,6 +185,21 @@ export default function LessonView({ data }: { data: LessonViewData }) {
         <p className="t-body" style={{ color: "var(--text-dim)", lineHeight: 1.8 }}>{data.summary}</p>
         <button onClick={askDuwairb} className="t-caption font-black self-start px-3.5 py-2 rounded-xl transition hover:brightness-110 mt-1" style={{ background: "var(--accent)", color: "white" }}>🤖 اسأل دويرب عن هذا الدرس</button>
       </header>
+
+      {/* اختبر نفسك — قبل الشرح (تحديد نقطة البداية، بلا درجات) */}
+      {data.diagnostic && (
+        <div className="ds-card ds-stack-tight" style={{ borderColor: "color-mix(in srgb, var(--accent) 26%, var(--border))" }}>
+          <p className="t-body font-black" style={{ color: "var(--text)" }}>🧭 قبل أن نبدأ</p>
+          <p className="t-body" style={{ color: "var(--text-dim)", lineHeight: 1.8 }}>{data.diagnostic.prompt}</p>
+          <input
+            value={guess} onChange={(e) => setGuess(e.target.value)}
+            placeholder="اكتب تخمينك (اختياري)…"
+            className="w-full rounded-xl px-3.5 py-2.5 t-body outline-none"
+            style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}
+          />
+          <p className="t-caption" style={{ color: "var(--text-muted)" }}>خمّن الآن — سنعود لهذا السؤال في النهاية لترى تقدّمك بنفسك. لا درجات.</p>
+        </div>
+      )}
 
       {/* كتل الدرس */}
       <section className="flex flex-col gap-3">
@@ -209,31 +232,55 @@ export default function LessonView({ data }: { data: LessonViewData }) {
         </section>
       )}
 
-      {/* الإنجاز + الاستعداد للتالي — خاتمة تشعر الطالب بالتقدّم */}
-      <section className="ds-card ds-card-lg flex flex-col gap-3" style={{ background: "color-mix(in srgb, var(--success) 10%, var(--surface))", borderColor: "color-mix(in srgb, var(--success) 32%, var(--border))" }}>
-        <div className="flex items-center gap-2.5">
-          <span className="flex items-center justify-center rounded-full flex-shrink-0" style={{ width: 40, height: 40, background: "var(--success)", color: "white", fontSize: "1.2rem" }}>✓</span>
-          <h2 className="t-h2" style={{ color: "var(--text)" }}>أتقنت {data.concept?.name ?? "الدرس"}</h2>
+      {/* اختبر نفسك — بعد الشرح: نفس سؤال البداية ليرى الطالب أنه تعلّم */}
+      {data.diagnostic && (
+        <div className="ds-card ds-stack-tight" style={{ borderColor: "color-mix(in srgb, var(--accent) 26%, var(--border))" }}>
+          <p className="t-body font-black" style={{ color: "var(--text)" }}>🔁 عُد لسؤال البداية</p>
+          <p className="t-body" style={{ color: "var(--text-dim)", lineHeight: 1.8 }}>{data.diagnostic.prompt}</p>
+          {guess.trim() && <p className="t-caption" style={{ color: "var(--text-muted)" }}>تخمينك في البداية: {guess}</p>}
+          {revealed ? (
+            <p className="t-body" style={{ color: "var(--success)", lineHeight: 1.8 }}>✓ {data.diagnostic.answer}</p>
+          ) : (
+            <button onClick={() => setRevealed(true)} className="t-caption font-black self-start px-3 py-1.5 rounded-lg transition hover:brightness-110" style={{ background: "color-mix(in srgb, var(--accent) 14%, transparent)", color: "var(--accent-light)" }}>حلّها الآن</button>
+          )}
+          {revealed && <p className="t-caption" style={{ color: "var(--text-muted)" }}>تحلّها بسهولة الآن؟ هذا هو تقدّمك في هذا الدرس.</p>}
         </div>
-        {data.nextTeaser && <p className="t-body" style={{ color: "var(--text-dim)", lineHeight: 1.9 }}>{data.nextTeaser}</p>}
-        {data.leadsTo.length > 0 && (
+      )}
+
+      {/* الخاتمة — «أنت الآن تستطيع» + الخطوة التالية (تشعر الطالب بالتقدّم) */}
+      <section className="ds-card ds-card-lg flex flex-col gap-4" style={{ background: "color-mix(in srgb, var(--success) 10%, var(--surface))", borderColor: "color-mix(in srgb, var(--success) 32%, var(--border))" }}>
+        {data.outcomes.length > 0 && (
           <div className="flex flex-col gap-2">
-            <p className="t-body font-black" style={{ color: "var(--text)" }}>الآن أصبحت مستعداً لـ:</p>
-            <div className="flex flex-col gap-2">
-              {data.leadsTo.map((c) => c.lessonId ? (
-                <Link key={c.id} href={`/lesson/${c.lessonId.replace(/^lesson:/, "")}`} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 transition hover:brightness-110" style={{ background: "var(--surface)" }}>
-                  <span style={{ color: "var(--success)" }}>◆</span>
-                  <span className="t-body font-black flex-1 min-w-0" style={{ color: "var(--text)" }}>{c.name}</span>
-                  <span className="t-caption" style={{ color: "var(--accent-light)" }}>ابدأ الدرس ↗</span>
-                </Link>
-              ) : (
-                <div key={c.id} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5" style={{ background: "var(--surface)" }}>
-                  <span style={{ color: "var(--success)" }}>◆</span>
-                  <span className="t-body font-black flex-1 min-w-0" style={{ color: "var(--text-dim)" }}>{c.name}</span>
-                  <span className="t-caption" style={{ color: "var(--text-muted)" }}>قريباً</span>
-                </div>
+            <h2 className="t-h3" style={{ color: "var(--text)" }}>🎯 أنت الآن تستطيع:</h2>
+            <ul className="flex flex-col gap-1.5">
+              {data.outcomes.map((o, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span style={{ color: "var(--success)" }}>✓</span>
+                  <span className="t-body" style={{ color: "var(--text)", lineHeight: 1.7 }}>{o}</span>
+                </li>
               ))}
-            </div>
+            </ul>
+          </div>
+        )}
+        {data.nextTeaser && <p className="t-body" style={{ color: "var(--text-dim)", lineHeight: 1.9 }}>{data.nextTeaser}</p>}
+        {primary && (
+          <div className="flex flex-col gap-2">
+            <p className="t-body font-black" style={{ color: "var(--text)" }}>🔓 الخطوة التالية:</p>
+            {primary.lessonId ? (
+              <Link href={`/lesson/${primary.lessonId.replace(/^lesson:/, "")}`} className="flex items-center gap-2.5 rounded-xl px-3.5 py-3 transition hover:brightness-110" style={{ background: "var(--accent)", color: "white" }}>
+                <span className="t-body font-black flex-1 min-w-0">{primary.name}</span>
+                <span className="t-caption">ابدأ الدرس ↗</span>
+              </Link>
+            ) : (
+              <div className="flex items-center gap-2.5 rounded-xl px-3.5 py-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                <span style={{ color: "var(--success)" }}>◆</span>
+                <span className="t-body font-black flex-1 min-w-0" style={{ color: "var(--text)" }}>{primary.name}</span>
+                <span className="t-caption" style={{ color: "var(--text-muted)" }}>قريباً</span>
+              </div>
+            )}
+            {rest.length > 0 && (
+              <p className="t-caption" style={{ color: "var(--text-muted)" }}>ثم: {rest.map((c) => c.name).join(" · ")}</p>
+            )}
           </div>
         )}
       </section>

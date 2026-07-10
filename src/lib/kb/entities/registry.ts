@@ -222,6 +222,7 @@ export class KnowledgeBase {
             case "image": f.push(`رسم: ${bl.caption ?? bl.alt}`); break;
           }
         }
+        if (e.outcomes?.length) f.push(`أنت الآن تستطيع: ${e.outcomes.join("، ")}`);
         break;
       }
       case "concept": {

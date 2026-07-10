@@ -33,18 +33,23 @@ function buildData(lessonId: string): LessonViewData | null {
   const resources = KB.neighbors(lessonId, { type: "supported_by", dir: "out", kind: "resource" })
     .map((r) => ({ id: r.id, name: r.name, summary: r.summary, format: r.kind === "resource" ? r.format : undefined }));
 
-  /* «أصبحت مستعداً لـ» يُشتقّ من علاقات leads_to للمفهوم — يربط لدرسها إن وُجد */
+  /* «الخطوة التالية» تُشتقّ من علاقات leads_to للمفهوم، مرتّبةً بالأهمية (الأهمّ أولاً)
+     — يربط لدرس المفهوم إن وُجد، وإلا «قريباً» */
   const leadsTo = conceptNode
-    ? KB.neighbors(conceptNode.id, { type: "leads_to", dir: "out", kind: "concept" }).map((c) => {
-        const lesson = KB.neighbors(c.id, { type: "teaches", dir: "in", kind: "lesson" })[0];
-        return { id: c.id, name: c.name, lessonId: lesson?.id ?? null };
-      })
+    ? KB.neighbors(conceptNode.id, { type: "leads_to", dir: "out", kind: "concept" })
+        .map((c) => {
+          const lesson = KB.neighbors(c.id, { type: "teaches", dir: "in", kind: "lesson" })[0];
+          return { id: c.id, name: c.name, lessonId: lesson?.id ?? null, importance: KB.meta(c.id).importance ?? 50 };
+        })
+        .sort((a, b) => b.importance - a.importance)
+        .map(({ id, name, lessonId }) => ({ id, name, lessonId }))
     : [];
 
   return {
     id: e.id, name: e.name, summary: e.summary,
-    durationMin: e.durationMin, level: e.level, nextTeaser: e.nextTeaser, blocks: e.blocks ?? [],
-    concept, questions, resources, leadsTo,
+    durationMin: e.durationMin, level: e.level, nextTeaser: e.nextTeaser,
+    diagnostic: e.diagnostic, outcomes: e.outcomes ?? [],
+    blocks: e.blocks ?? [], concept, questions, resources, leadsTo,
   };
 }
 
