@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" role="img" aria-label="دائرة كهربائية بسيطة: بطارية جهدها V ومقاومة R يمر بها تيار I">
+  <rect x="0" y="0" width="400" height="240" fill="none"/>
+  <!-- wire loop -->
+  <rect x="70" y="50" width="260" height="140" rx="6" fill="none" stroke="#7c9cff" stroke-width="4"/>
+  <!-- battery (left side) -->
+  <line x1="70" y1="105" x2="70" y2="120" stroke="#0b1020" stroke-width="0"/>
+  <line x1="55" y1="98" x2="85" y2="98" stroke="#f2b53c" stroke-width="6"/>
+  <line x1="62" y1="112" x2="78" y2="112" stroke="#f2b53c" stroke-width="4"/>
+  <line x1="55" y1="126" x2="85" y2="126" stroke="#f2b53c" stroke-width="6"/>
+  <line x1="62" y1="140" x2="78" y2="140" stroke="#f2b53c" stroke-width="4"/>
+  <text x="30" y="123" font-family="sans-serif" font-size="22" font-weight="700" fill="#f2b53c">V</text>
+  <!-- resistor (right side, zigzag) -->
+  <polyline points="330,95 314,101 346,109 314,117 346,125 314,133 346,141 330,147"
+    fill="none" stroke="#5fd08a" stroke-width="4" stroke-linejoin="round"/>
+  <text x="356" y="127" font-family="sans-serif" font-size="22" font-weight="700" fill="#5fd08a">R</text>
+  <!-- current arrow (top) -->
+  <line x1="170" y1="50" x2="230" y2="50" stroke="#7c9cff" stroke-width="0"/>
+  <polygon points="196,42 214,50 196,58" fill="#7c9cff"/>
+  <text x="188" y="34" font-family="sans-serif" font-size="20" font-weight="700" fill="#7c9cff">I</text>
+</svg>

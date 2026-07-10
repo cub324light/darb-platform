@@ -202,9 +202,26 @@ export class KnowledgeBase {
       case "goal":
         if (e.metric) f.push(`معيار النجاح: ${e.metric}`);
         break;
-      case "lesson":
+      case "lesson": {
         if (e.durationMin) f.push(`المدة: ${e.durationMin} دقيقة`);
+        if (e.level) f.push(`المستوى: ${e.level === "easy" ? "سهل" : e.level === "hard" ? "صعب" : "متوسط"}`);
+        /* نحوّل كتل الدرس إلى حقائق نصّية ليشرحها دويرب من الرسم */
+        for (const bl of e.blocks ?? []) {
+          switch (bl.type) {
+            case "heading": f.push(`— ${bl.text}`); break;
+            case "text": f.push(bl.text); break;
+            case "equation": f.push(`المعادلة: ${bl.latex}${bl.caption ? ` (${bl.caption})` : ""}`); break;
+            case "steps": f.push(`${bl.title ?? "الخطوات"}: ${bl.items.join(" ← ")}`); break;
+            case "example": f.push(`مثال — ${bl.problem} الحل: ${bl.solution}`); break;
+            case "note": f.push(`تنبيه: ${bl.text}`); break;
+            case "warning": f.push(`خطأ شائع: ${bl.text}`); break;
+            case "keypoints": f.push(`نقاط: ${bl.items.join("، ")}`); break;
+            case "video": if (bl.title) f.push(`فيديو: ${bl.title}`); break;
+            case "image": f.push(`رسم: ${bl.caption ?? bl.alt}`); break;
+          }
+        }
         break;
+      }
       case "concept": {
         if (e.category) f.push(`المجال: ${e.category}`);
         if (e.cefr) f.push(`المستوى (CEFR): ${e.cefr}`);

@@ -154,18 +154,24 @@ test("لوحة القيادة: مجال الإنجليزية يجمع مفاهي
 });
 
 /* ════════ تغطية المعرفة — نضج طبقة المفاهيم ════════ */
-test("تغطية المعرفة: الشرائح الخمس متّسقة، والأماكن فارغة الآن (لا طبقة ثانية بعد)", () => {
+test("تغطية المعرفة: «قانون أوم» مكتملٌ (أول Vertical Slice)، والبقية تنتظر الطبقة الثانية", () => {
   const r = knowledgeCoverage(KB);
   assert.equal(r.total, KB.all("concept").length);
   assert.equal(r.concepts.length, r.total);
   /* مرتّبة تنازلياً بالأهمية */
   for (let i = 1; i < r.concepts.length; i++) assert.ok(r.concepts[i - 1].importance >= r.concepts[i].importance, "غير مرتّبة");
-  /* لم نبدأ الطبقة الثانية: لا مفهوم مكتمل، ولا شرحٌ ولا أمثلة في أيّ body بعد */
-  const bySlice = (k: string) => r.slices.find((s) => s.key === k)!.count;
-  assert.equal(r.complete, 0, "مفهومٌ مكتملٌ دون طبقةٍ ثانية؟");
-  assert.equal(bySlice("no-explanation"), r.total, "body مملوءٌ قبل الطبقة الثانية");
-  assert.equal(bySlice("no-examples"), r.total, "أمثلةٌ مملوءةٌ قبل الطبقة الثانية");
-  /* الأسئلة والمصادر: تقريباً الكلّ ناقص (عدا عقد إثبات seed القليلة) */
-  assert.ok(bySlice("no-questions") >= r.total - 2, "أسئلةٌ أكثر من المتوقّع");
-  assert.ok(bySlice("no-resources") >= r.total - 2, "مصادرٌ أكثر من المتوقّع");
+  const bySlice = (k: string) => r.slices.find((s) => s.key === k)!;
+  /* أول درسٍ كامل: قانون أوم مكتمل عبر أبعاده الأربعة */
+  assert.equal(r.complete, 1, "يجب أن يكون قانون أوم وحده مكتملاً");
+  const ohm = r.concepts.find((c) => c.id === "concept:ohms-law")!;
+  assert.ok(ohm.complete && ohm.hasExplanation && ohm.hasExamples && ohm.hasQuestions && ohm.hasResources, "قانون أوم غير مكتمل");
+  assert.ok(bySlice("complete").ids.includes("concept:ohms-law"), "قانون أوم غائبٌ عن شريحة المكتمل");
+  /* الشرح/الأمثلة يأتيان من الدرس الذي يُدرّس المفهوم — قانون أوم وحده الآن */
+  assert.equal(bySlice("no-explanation").count, r.total - 1, "شرحٌ في غير قانون أوم");
+  assert.equal(bySlice("no-examples").count, r.total - 1, "أمثلةٌ في غير قانون أوم");
+  /* درسٌ مرتبطٌ (related_to) لا يُدرّس المفهوم لا يُحتسَب شرحاً له (كيرشوف) */
+  const kirchhoff = r.concepts.find((c) => c.id === "concept:kirchhoff")!;
+  assert.ok(!kirchhoff.hasExplanation && !kirchhoff.hasExamples, "درسٌ مرتبطٌ احتُسِب شرحاً خطأً");
+  assert.ok(bySlice("no-questions").count >= r.total - 3, "أسئلةٌ أكثر من المتوقّع");
+  assert.ok(bySlice("no-resources").count >= r.total - 3, "مصادرٌ أكثر من المتوقّع");
 });

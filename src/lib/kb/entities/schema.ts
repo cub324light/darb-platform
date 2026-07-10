@@ -127,7 +127,27 @@ export interface CourseEntity extends EntityBase {
   kind: "course";
   code?: string; credits?: number;
 }
-export type LessonEntity = EntityBase & { kind: "lesson"; durationMin?: number };
+/* ─── محتوى الدرس المرن: كتلٌ مرتّبة (بلا تعقيد على المستخدم) ───
+   الدرس ليس نصّاً واحداً: تسلسلٌ من كتلٍ مُصنّفة يعرضها LessonView بمكوّنٍ لكل نوع.
+   الأسئلة/المفاهيم/المصادر المرتبطة علاقاتٌ في الرسم لا كتل — مصدر الحقيقة واحد. */
+export type LessonBlock =
+  | { type: "heading"; text: string }                                   // عنوان قسم
+  | { type: "text"; text: string }                                      // شرح
+  | { type: "equation"; latex: string; caption?: string }               // معادلة (تُعرض LTR)
+  | { type: "image"; src: string; alt: string; caption?: string }       // صورة/رسم
+  | { type: "video"; url: string; title?: string }                      // فيديو
+  | { type: "steps"; title?: string; items: string[] }                  // خطوات
+  | { type: "example"; title?: string; problem: string; solution: string } // مثال محلول
+  | { type: "note"; text: string }                                      // تنبيه
+  | { type: "warning"; text: string }                                   // خطأ شائع
+  | { type: "keypoints"; items: string[] };                             // خلاصة/نقاط
+
+export interface LessonEntity extends EntityBase {
+  kind: "lesson";
+  durationMin?: number;
+  level?: "easy" | "medium" | "hard";
+  blocks?: LessonBlock[];   // محتوى الدرس المرن — يُقرأ من الرسم ويُعرض للطالب
+}
 
 /* سؤال — كيان مستقل يُعاد استخدامه؛ صعوبته ومستواه المعرفي حقول ذاتية،
    وارتباطه بالمفهوم/الدرس/المادة/الاختبار/المهارة علاقاتٌ لا نسخٌ. */

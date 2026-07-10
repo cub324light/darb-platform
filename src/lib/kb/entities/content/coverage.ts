@@ -3,7 +3,7 @@
    وكم ينقصه كلٌّ منها؟ بنينا أماكن المحتوى أولاً، فالأرقام هنا تكشف الفراغ الحقيقي
    وتُرتّب المفاهيم حسب الأهمية لنعرف من أين نبدأ الطبقة الثانية. نقرأ الرسم فقط. */
 import type { KnowledgeBase } from "../registry";
-import type { ConceptEntity } from "../schema";
+import type { ConceptEntity, LessonEntity } from "../schema";
 
 /* شريحة تغطية: عددٌ ومعرّفاتٌ للمفاهيم التي تنطبق عليها الحالة */
 export interface CoverageSlice { key: string; label: string; icon: string; count: number; ids: string[]; }
@@ -26,9 +26,16 @@ export interface CoverageReport {
 export function knowledgeCoverage(kb: KnowledgeBase): CoverageReport {
   const rows: ConceptCoverage[] = (kb.all("concept") as ConceptEntity[]).map((e) => {
     const b = e.body;
-    const hasExplanation = !!(b?.definition || b?.simpleExplanation || b?.advancedExplanation);
-    const hasExamples = !!(b?.examples?.length);
     const linked = kb.edges(e.id);
+    /* الطبقة الثانية: الدرس الذي «يُدرّس» المفهوم (teaches) يُغطّي الشرح والأمثلة
+       أيضاً — لا مجرّد درسٍ مرتبطٍ به (related_to) */
+    const lessonBlocks = linked
+      .filter((x) => x.entity.kind === "lesson" && x.type === "teaches")
+      .flatMap((x) => (x.entity as LessonEntity).blocks ?? []);
+    const hasExplanation = !!(b?.definition || b?.simpleExplanation || b?.advancedExplanation)
+      || lessonBlocks.some((bl) => bl.type === "text" || bl.type === "heading");
+    const hasExamples = !!(b?.examples?.length)
+      || lessonBlocks.some((bl) => bl.type === "example");
     const hasQuestions = linked.some((x) => x.entity.kind === "question");
     const hasResources = linked.some((x) => x.entity.kind === "resource");
     return {

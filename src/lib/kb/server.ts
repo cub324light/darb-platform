@@ -4,6 +4,7 @@
    إن غابت بيئة Admin SDK تعمل بالبذرة فقط (offline-first). خادمية فقط. */
 import { getAdminDbOptional } from "@/lib/server/firebaseAdmin";
 import { buildSnapshot, searchKB, type KBSnapshot, type KBResult } from "./index";
+import { KB } from "./entities";
 import type { Source, KBEntry, SourceCategory } from "./types";
 
 let cache: { snap: KBSnapshot; at: number } | null = null;
@@ -36,11 +37,19 @@ export async function getKBSnapshot(now: number): Promise<KBSnapshot> {
   return snap;
 }
 
-/* تأريض دويرب من قاعدة المعرفة (offline-first) لاستعلام نصّي */
+/* تأريض دويرب من قاعدة المعرفة (offline-first) لاستعلام نصّي.
+   جسرٌ لنموذج العالم: نضمّ حقائق الرسم (المفاهيم/الدروس وعلاقاتها) إلى التأريض،
+   فيشرح دويرب أي مفهومٍ أو درسٍ بُني في KB دون إعادة هيكلة — مصدر الحقيقة واحد. */
 export async function kbGroundingFor(
   query: string,
   opts: { category?: SourceCategory; now: number; limit?: number },
 ): Promise<KBResult> {
   const snap = await getKBSnapshot(opts.now);
-  return searchKB(query, snap, opts);
+  const result = searchKB(query, snap, opts);
+
+  const worldFacts = KB.groundingFor(query, 2);
+  if (worldFacts) {
+    result.grounding = [result.grounding, `حقائق من معرفة درب:\n${worldFacts}`].filter(Boolean).join("\n\n");
+  }
+  return result;
 }

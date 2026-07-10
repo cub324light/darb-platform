@@ -277,7 +277,17 @@ export const SEED_ENTITIES: KBEntity[] = [
   {
     kind: "concept", id: E("concept", "ohms-law"), name: "قانون أوم", nameEn: "Ohm's Law", category: "فيزياء/كهرباء",
     summary: "العلاقة بين الجهد والتيار والمقاومة (V = IR).", aliases: ["أوم"],
-    meta: { version: 1, lastUpdated: "2026-07-01", confidence: 1, importance: 100 },
+    difficulty: "easy", examFrequency: 70,
+    meta: { version: 1, lastUpdated: "2026-07-10", confidence: 1, importance: 100 },
+    /* عقدةٌ ذاتية الوصف: حقائقها المضغوطة يقرؤها دويرب، والدرس يقدّمها تربوياً */
+    body: {
+      definition: "قانون أوم ينصّ على أن التيار المارّ في موصلٍ يتناسب طردياً مع الجهد بين طرفيه وعكسياً مع مقاومته: V = I × R.",
+      whyImportant: "أساس تحليل كل دائرةٍ كهربائية — منه تُشتقّ القدرة والطاقة وتصميم الدارات.",
+      commonMistakes: ["عدم توحيد الوحدات قبل التعويض (مللي أمبير مع أمبير)", "الخلط بين المقاومة والمقاومية", "افتراض ثبات المقاومة في العناصر غير الأومية"],
+      examples: ["جهد ١٢ فولت ومقاومة ٤ أوم ⟵ التيار = ٣ أمبير", "تيار ٢ أمبير عبر مقاومة ٥ أوم ⟵ الجهد = ١٠ فولت"],
+      simpleExplanation: "تخيّل الماء في أنبوب: الجهد هو الضغط، والتيار هو كمية الماء المتدفّقة، والمقاومة هي ضيق الأنبوب. كلّما زاد الضغط زاد التدفّق، وكلّما ضاق الأنبوب قلّ.",
+      advancedExplanation: "V = IR صيغةٌ خطّية تصف العناصر الأومية عند ثبات الحرارة. في العناصر غير الأومية (كالثنائيات) تتغيّر R مع الجهد فتنكسر الخطّية، وتُعمَّم العلاقة إلى R = dV/dI.",
+    },
     relations: [{ type: "related_to", to: E("concept", "kirchhoff") }],
   },
   {
@@ -327,6 +337,7 @@ export const SEED_ENTITIES: KBEntity[] = [
     difficulty: "easy", bloom: "apply", answer: "٣ أمبير",
     relations: [
       { type: "requires", to: E("concept", "ohms-law") },
+      { type: "belongs_to", to: E("lesson", "ohms-law") },
       { type: "belongs_to", to: E("subject", "circuits") },
       { type: "used_in", to: E("exam", "tahsili") },
       { type: "requires", to: E("skill", "power-systems-analysis") },
