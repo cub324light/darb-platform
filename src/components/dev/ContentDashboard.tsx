@@ -3,7 +3,7 @@
    عدد العقد لكل نوع، مجموع العلاقات، ونسبة اكتمال كل مجال. البناء بالدفعات:
    نراقب هنا نموّ المحتوى مجالاً مجالاً بالترتيب الرسمي. للمطوّر فقط. */
 import { KB, KIND_META, type EntityKind } from "@/lib/kb/entities";
-import { domainProgress, conceptsByImportance } from "@/lib/kb/entities/content/domains";
+import { domainProgress, conceptsByImportance, topConcepts } from "@/lib/kb/entities/content/domains";
 
 /* شريط تقدّم نصّي (١٠ خانات) — كأمثلة المالك */
 function bar(pct: number): string {
@@ -33,9 +33,26 @@ export default function ContentDashboard() {
   const stats = KB.stats();
   const domains = domainProgress(KB);
   const quduratTiers = conceptsByImportance(KB, "exam:qudurat");
+  const top20 = topConcepts(KB, 20);
 
   return (
     <div className="flex flex-col gap-4">
+      {/* أعلى ٢٠ مفهوماً عبر المنصة — أين نركّز المحتوى أولاً */}
+      <section className="ds-card ds-stack-tight">
+        <h2 className="t-h3" style={{ color: "var(--text)" }}>Top 20 — أعلى المفاهيم أهميةً (كل المنصة)</h2>
+        <div className="flex flex-col gap-1">
+          {top20.map((c, i) => (
+            <div key={c.id} className="flex items-center gap-2 rounded-lg px-2.5 py-1"
+              style={{ background: i % 2 ? "transparent" : "var(--surface2)" }}>
+              <span className="t-caption font-black font-mono-nums w-6 flex-shrink-0" style={{ color: "var(--text-muted)" }}>{i + 1}</span>
+              <span className="t-body font-black flex-1 min-w-0" style={{ color: "var(--text)" }}>{c.name}</span>
+              {c.category && <span className="t-caption px-2 py-0.5 rounded-full" style={{ background: "var(--surface)", color: "var(--text-muted)" }}>{c.category}</span>}
+              {c.examFrequency != null && <span className="t-caption font-mono-nums" style={{ color: "var(--text-muted)" }}>↻{c.examFrequency}</span>}
+              <span className="t-caption font-black font-mono-nums px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: "color-mix(in srgb, var(--accent) 14%, transparent)", color: "var(--accent-light)" }}>{c.importance}</span>
+            </div>
+          ))}
+        </div>
+      </section>
       {/* اكتمال المجالات — لوحة القيادة الأساسية */}
       <section className="ds-card ds-stack-tight">
         <h2 className="t-h3" style={{ color: "var(--text)" }}>اكتمال المجالات (طبقة المفاهيم أولاً)</h2>

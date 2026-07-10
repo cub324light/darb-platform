@@ -112,11 +112,14 @@ export interface ConceptBody {
   simpleExplanation?: string;   // شرح مبسّط
   advancedExplanation?: string; // شرح متقدّم
 }
-/* مفهوم — يظهر عبر عدّة مواد/كتب/اختبارات؛ يُشار إليه بعلاقات لا يُنسَخ */
+/* مفهوم — يظهر عبر عدّة مواد/كتب/اختبارات؛ يُشار إليه بعلاقات لا يُنسَخ.
+   نفكّر بالمفهوم لا المادة: «التفاضل» عقدةٌ واحدة قد تنتمي لعدّة اختبارات/مجالات. */
 export interface ConceptEntity extends EntityBase {
   kind: "concept";
-  category?: string; // فيزياء/رياضيات/نحو...
-  body?: ConceptBody; // أماكن المحتوى الغنيّ — فارغة الآن، جاهزة للملء
+  category?: string;                          // فيزياء/رياضيات/نحو...
+  difficulty?: "easy" | "medium" | "hard";    // صعوبة المفهوم
+  examFrequency?: number;                      // 0..100 تقدير تكرار ظهوره في الاختبارات
+  body?: ConceptBody;                          // أماكن المحتوى الغنيّ — فارغة الآن
 }
 export interface CourseEntity extends EntityBase {
   kind: "course";

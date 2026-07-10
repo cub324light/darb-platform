@@ -5,7 +5,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { KB } from "../index";
 import { QUDURAT_CONCEPTS } from "./qudurat";
-import { domainProgress, conceptsByImportance } from "./domains";
+import { TAHSILI_CONCEPTS } from "./tahsili";
+import { domainProgress, conceptsByImportance, topConcepts } from "./domains";
 
 test("الرسم يبقى سليماً بعد دمج دفعة المحتوى (لا حواف معلّقة)", () => {
   assert.deepEqual(KB.validate(), []);
@@ -60,4 +61,39 @@ test("لكل مفهوم أماكن حقوله الثابتة (body اختيار�
   /* الحقول اختيارية بالنوع؛ نتأكّد أن المخطّط يقبلها دون إعادة هيكلة */
   const withBody = { ...QUDURAT_CONCEPTS[0], body: { definition: "تعريف تجريبي" } };
   assert.equal(withBody.body.definition, "تعريف تجريبي");
+});
+
+/* ════════ دفعة التحصيلي ════════ */
+test("دفعة التحصيلي: كلها مفاهيم بأهمية وصعوبة وتكرارٍ في الاختبارات، بلا تكرار معرّف", () => {
+  const ids = TAHSILI_CONCEPTS.map((c) => c.id);
+  assert.equal(new Set(ids).size, ids.length, "معرّف مكرّر");
+  for (const c of TAHSILI_CONCEPTS) {
+    assert.equal(c.kind, "concept");
+    assert.ok(c.relations?.some((r) => r.type === "belongs_to" && r.to === "exam:tahsili"), `${c.id}: غير مربوط بالتحصيلي`);
+    assert.ok(c.difficulty, `${c.id}: بلا صعوبة`);
+    assert.ok(c.examFrequency != null, `${c.id}: بلا تكرار`);
+    assert.ok(c.meta?.importance != null, `${c.id}: بلا أهمية`);
+  }
+});
+
+test("لا تكرار للمفهوم: «التكامل» و«الجبر» عقدةٌ واحدة تنتمي للاختبارين", () => {
+  /* التكامل: عقدة seed واحدة تظهر في تحصيلي (belongs_to) */
+  const tahsiliConcepts = KB.neighbors("exam:tahsili", { type: "belongs_to", dir: "in", kind: "concept" }).map((c) => c.id);
+  assert.ok(tahsiliConcepts.includes("concept:integration"), "التكامل لم يُعَد استخدامه");
+  assert.ok(tahsiliConcepts.includes("concept:q-algebra"), "الجبر لم يُشارَك");
+  /* ولا توجد عقدة تكامل ثانية */
+  const integrals = KB.all("concept").filter((c) => c.name === "التكامل");
+  assert.equal(integrals.length, 1, "أُنشئ تكاملٌ مكرّر");
+  /* الجبر يظهر في القدرات والتحصيلي معاً بعقدةٍ واحدة */
+  const algebraExams = (KB.get("concept:q-algebra")?.relations ?? []).filter((r) => r.type === "belongs_to").map((r) => r.to);
+  assert.ok(algebraExams.includes("exam:qudurat") && algebraExams.includes("exam:tahsili"));
+});
+
+test("Top 20: أعلى المفاهيم أهميةً عبر المنصة كلها، مرتّبة تنازلياً", () => {
+  const top = topConcepts(KB, 20);
+  assert.equal(top.length, 20);
+  for (let i = 1; i < top.length; i++) assert.ok(top[i - 1].importance >= top[i].importance, "غير مرتّب");
+  /* يخلط مجالات مختلفة (لا مادة واحدة) */
+  const cats = new Set(top.map((t) => t.category));
+  assert.ok(cats.size >= 3, "Top 20 من مادة واحدة فقط");
 });

@@ -39,12 +39,25 @@ export function domainProgress(kb: KnowledgeBase): DomainProgress[] {
 
   return [
     examDomain("qudurat", "القدرات",   "🧠", "exam:qudurat", 26),
-    examDomain("tahsili", "التحصيلي",  "📚", "exam:tahsili", 48),
+    examDomain("tahsili", "التحصيلي",  "📚", "exam:tahsili", 33),
     examDomain("step",    "STEP",       "🔤", "exam:step",    22),
     entityDomain("universities", "الجامعات",  "🏛️", kb.all("university").length, 30),
     entityDomain("majors",       "التخصصات", "📚", kb.all("major").length,      30),
     entityDomain("jobs",         "الوظائف",  "💼", kb.all("job").length,        50),
   ];
+}
+
+/* أعلى المفاهيم أهميةً عبر المنصة كلها — أين نركّز المحتوى أولاً */
+export interface TopConcept { id: string; name: string; category?: string; importance: number; examFrequency?: number; }
+export function topConcepts(kb: KnowledgeBase, n = 20): TopConcept[] {
+  return kb.all("concept")
+    .map((c) => ({
+      id: c.id, name: c.name, category: c.kind === "concept" ? c.category : undefined,
+      importance: kb.meta(c.id).importance ?? 50,
+      examFrequency: c.kind === "concept" ? c.examFrequency : undefined,
+    }))
+    .sort((a, b) => b.importance - a.importance || (b.examFrequency ?? 0) - (a.examFrequency ?? 0))
+    .slice(0, n);
 }
 
 /* المفاهيم مرتّبة حسب الأهمية (ماذا يبدأ به دويرب) — مجمّعة في شرائح */

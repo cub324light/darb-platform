@@ -207,6 +207,8 @@ export class KnowledgeBase {
         break;
       case "concept": {
         if (e.category) f.push(`المجال: ${e.category}`);
+        if (e.difficulty) f.push(`الصعوبة: ${e.difficulty === "easy" ? "سهل" : e.difficulty === "hard" ? "صعب" : "متوسط"}`);
+        if (e.examFrequency != null) f.push(`تكراره في الاختبارات: ${e.examFrequency}٪`);
         const b = e.body;
         if (b?.definition) f.push(`التعريف: ${b.definition}`);
         if (b?.whyImportant) f.push(`أهميته: ${b.whyImportant}`);

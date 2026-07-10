@@ -291,9 +291,12 @@ export const SEED_ENTITIES: KBEntity[] = [
     meta: { version: 1, lastUpdated: "2026-07-01", importance: 70 },
   },
   {
+    /* «التكامل» عقدةٌ واحدة تنتمي لتخصص الحاسب الجامعي واختبار التحصيلي معاً (لا تكرار) */
     kind: "concept", id: E("concept", "integration"), name: "التكامل", nameEn: "Integration", category: "رياضيات",
     summary: "العملية العكسية للاشتقاق — أساس رياضي واسع الاستخدام.",
+    difficulty: "hard", examFrequency: 78,
     meta: { version: 1, lastUpdated: "2026-07-01", importance: 95 },
+    relations: [{ type: "belongs_to", to: E("exam", "tahsili") }],
   },
   {
     kind: "concept", id: E("concept", "passive-voice"), name: "المبني للمجهول (Passive Voice)", category: "لغة إنجليزية",

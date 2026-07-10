@@ -8,12 +8,16 @@ import { entityId as E, type ConceptEntity } from "../schema";
 const SOURCE = "مواصفات اختبار القدرات العامة — هيئة تقويم التعليم والتدريب (قياس)";
 const UPDATED = "2026-07-10";
 
-/* بانٍ مضغوط: مفهوم قدرات ينتمي للاختبار، بوزنٍ وثقة (افتراضها ٠٫٩ لا ١٫٠) */
-function c(slug: string, name: string, category: "كمي" | "لفظي", importance: number, summary: string, confidence = 0.9): ConceptEntity {
+/* بانٍ مضغوط: مفهوم قدرات ينتمي للاختبار، بوزنٍ وثقة (افتراضها ٠٫٩ لا ١٫٠).
+   alsoExams: اختبارات إضافية ينتمي لها نفس المفهوم (لا نُكرّر العقدة — نضيف علاقة). */
+function c(slug: string, name: string, category: "كمي" | "لفظي", importance: number, summary: string, alsoExams: string[] = [], confidence = 0.9): ConceptEntity {
   return {
     kind: "concept", id: E("concept", slug), name, category, summary,
     meta: { version: 1, lastUpdated: UPDATED, source: SOURCE, confidence, importance },
-    relations: [{ type: "belongs_to", to: E("exam", "qudurat") }],
+    relations: [
+      { type: "belongs_to", to: E("exam", "qudurat") },
+      ...alsoExams.map((ex) => ({ type: "belongs_to" as const, to: ex })),
+    ],
   };
 }
 
@@ -26,9 +30,10 @@ export const QUDURAT_CONCEPTS: ConceptEntity[] = [
   c("q-probability", "الاحتمالات", "كمي", 70, "حساب احتمال وقوع حدث في فضاء عيّنة."),
   c("q-permutations", "التباديل", "كمي", 55, "عدّ الترتيبات المختلفة حين يهمّ الترتيب."),
   c("q-combinations", "التوافيق", "كمي", 55, "عدّ الاختيارات حين لا يهمّ الترتيب."),
-  c("q-geometry", "الهندسة", "كمي", 85, "المساحات والمحيطات والزوايا وخصائص الأشكال."),
-  c("q-algebra", "الجبر والمعادلات", "كمي", 90, "حلّ المعادلات والمتباينات والتعبيرات الجبرية."),
-  c("q-functions", "الدوال", "كمي", 70, "مفهوم الدالة وقيمها وتمثيلها."),
+  /* مفاهيم مُشترَكة مع التحصيلي — عقدةٌ واحدة تنتمي للاختبارين (لا تكرار) */
+  c("q-geometry", "الهندسة", "كمي", 85, "المساحات والمحيطات والزوايا وخصائص الأشكال.", ["exam:tahsili"]),
+  c("q-algebra", "الجبر", "كمي", 90, "المعادلات والمتباينات والتعبيرات الجبرية.", ["exam:tahsili"]),
+  c("q-functions", "الدوال", "كمي", 70, "مفهوم الدالة وقيمها وتمثيلها.", ["exam:tahsili"]),
   c("q-sequences", "المتتاليات", "كمي", 65, "المتتاليات الحسابية والهندسية وإيجاد حدودها."),
   c("q-number-operations", "الأعداد والعمليات", "كمي", 80, "خصائص الأعداد وترتيب العمليات والقابلية للقسمة."),
   c("q-exponents-roots", "الأسس والجذور", "كمي", 75, "قوانين الأسس والجذور وتبسيطها."),
