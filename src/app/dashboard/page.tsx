@@ -7,7 +7,8 @@ import PageGuide from "@/components/PageGuide";
 import { getTrack, TRACKS, type TrackId } from "@/lib/tracks";
 import { phaseExperience } from "@/lib/experience";
 import DashUniWorld from "@/components/DashUniWorld";
-import LifeBoard from "@/components/LifeBoard";
+import DashHero from "@/components/DashHero";
+import DashCards from "@/components/DashCards";
 import { fmtHour } from "@/lib/utils";
 import { quoteOfToday } from "@/lib/quotes";
 import { loadUser, loadStats, computeStreak, loadEvents, loadExamDate, saveExamDate, loadDashConfig, saveDashConfig, loadTrackExamDates, saveTrackExamDates, DASH_SECTION_META, localDayKey, showsUniversityUI, type DarbUser, type ScheduleEvent, type DashItem, type DashSectionId, saveEvents } from "@/lib/storage";
@@ -928,9 +929,9 @@ export default function DashboardPage() {
         </div>
 
         {/* ══ لوحة الأولويات — واجهة العقل المركزي (Life Engine) ══
-             محرّكٌ واحد يقرأ حياة الطالب ويُخرج أولوياته مرتّبة؛ هذه اللوحة (وبقية
-             الصفحات) تقرأ منه فقط. الأولى قرارٌ كامل (سبب/فائدة/وقت/بعدها). */}
-        <LifeBoard />
+             محرّكٌ واحد يقرأ حياة الطالب ويُخرج أولوياته مرتّبة؛ البطل يعرض القرار
+             الأول فقط (بلا جدار نصوص) + أقرب اختبار + تقدّم اليوم + زرٌّ واحد. */}
+        <DashHero />
 
         {/* ── تفصيل المرحلة تحت الإجابة (بوابة exp الواحدة) ──
              الجامعي: عالمه المهني الكامل · غيره: إجراءات القبول حسب أهليته. */}
@@ -1009,8 +1010,13 @@ export default function DashboardPage() {
       {/* ═══ المحتوى (الجوال + اللوحات الأضيق) ═══ */}
       {!isWide && (
       <div className="page-content mt-4">
+        {/* الجسم الموجز (Product Polish): البطل في القبة + بطاقاتٌ مختصرة فقط —
+            لا قائمة أقسامٍ طويلة. التفاصيل تظهر بعد دخول البطاقة. */}
+        <DashCards />
 
-        {/* ── منطقة التوصيات — مدفوعة بمحرّك التوصيات المركزي (المسار الذهبي + التنبيهات + القبول) ── */}
+        {/* الأقسام القابلة للترتيب — مُبقاةٌ (غير مُفعّلة على الجوال) لسهولة التراجع
+            قبل اعتماد التصميم الجديد. تُزال لاحقاً عند الاعتماد النهائي. */}
+        {false && (<>
         {!editMode && <RecommendationFeed />}
 
         {/* شريط التخصيص — هادئ خارج وضع الترتيب: ميزةٌ للمتمكّن لا تُزاحم مهمة الصفحة */}
@@ -1135,6 +1141,7 @@ export default function DashboardPage() {
             )}
           </section>
         )}
+        </>)}
 
       </div>
       )}
