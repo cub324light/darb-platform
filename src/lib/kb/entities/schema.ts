@@ -133,6 +133,7 @@ export interface CourseEntity extends EntityBase {
 export type LessonBlock =
   | { type: "heading"; text: string }                                   // عنوان قسم
   | { type: "text"; text: string }                                      // شرح
+  | { type: "analogy"; text: string }                                   // تشبيهٌ حدسي للمبتدئ
   | { type: "equation"; latex: string; caption?: string }               // معادلة (تُعرض LTR)
   | { type: "image"; src: string; alt: string; caption?: string }       // صورة/رسم
   | { type: "video"; url: string; title?: string }                      // فيديو
@@ -140,6 +141,7 @@ export type LessonBlock =
   | { type: "example"; title?: string; problem: string; solution: string } // مثال محلول
   | { type: "note"; text: string }                                      // تنبيه
   | { type: "warning"; text: string }                                   // خطأ شائع
+  | { type: "whenToUse"; exam: string; life: string }                   // متى تستخدمه (اختبار/حياة)
   | { type: "keypoints"; items: string[] };                             // خلاصة/نقاط
 
 export interface LessonEntity extends EntityBase {
@@ -147,6 +149,9 @@ export interface LessonEntity extends EntityBase {
   durationMin?: number;
   level?: "easy" | "medium" | "hard";
   blocks?: LessonBlock[];   // محتوى الدرس المرن — يُقرأ من الرسم ويُعرض للطالب
+  /* جسرٌ سرديّ للدرس التالي (لا زرّ «التالي» فقط) — «الاستعداد لـ» يُشتقّ من علاقات
+     leads_to للمفهوم، وهذه الجملة تربطهما تربوياً */
+  nextTeaser?: string;
 }
 
 /* سؤال — كيان مستقل يُعاد استخدامه؛ صعوبته ومستواه المعرفي حقول ذاتية،

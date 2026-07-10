@@ -210,11 +210,13 @@ export class KnowledgeBase {
           switch (bl.type) {
             case "heading": f.push(`— ${bl.text}`); break;
             case "text": f.push(bl.text); break;
+            case "analogy": f.push(`تشبيه: ${bl.text}`); break;
             case "equation": f.push(`المعادلة: ${bl.latex}${bl.caption ? ` (${bl.caption})` : ""}`); break;
             case "steps": f.push(`${bl.title ?? "الخطوات"}: ${bl.items.join(" ← ")}`); break;
             case "example": f.push(`مثال — ${bl.problem} الحل: ${bl.solution}`); break;
             case "note": f.push(`تنبيه: ${bl.text}`); break;
             case "warning": f.push(`خطأ شائع: ${bl.text}`); break;
+            case "whenToUse": f.push(`متى تستخدمه — في الاختبار: ${bl.exam} · في الحياة: ${bl.life}`); break;
             case "keypoints": f.push(`نقاط: ${bl.items.join("، ")}`); break;
             case "video": if (bl.title) f.push(`فيديو: ${bl.title}`); break;
             case "image": f.push(`رسم: ${bl.caption ?? bl.alt}`); break;

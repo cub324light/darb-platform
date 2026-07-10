@@ -4,6 +4,7 @@
    مثال/تنبيه/خطأ شائع/نقاط) تُعرض بمكوّنٍ لكل نوع، ثم الأسئلة والمصادر والمفاهيم
    المرتبطة — كلّها من الرسم. لا مصطلحات، لا تعقيد. */
 import { useState } from "react";
+import Link from "next/link";
 import type { LessonBlock } from "@/lib/kb/entities/schema";
 
 export interface LessonViewData {
@@ -12,11 +13,13 @@ export interface LessonViewData {
   summary: string;
   durationMin?: number;
   level?: "easy" | "medium" | "hard";
+  nextTeaser?: string;
   blocks: LessonBlock[];
   concept?: { id: string; name: string; definition?: string; whyImportant?: string };
   questions: { id: string; prompt: string; answer?: string; difficulty?: string }[];
   resources: { id: string; name: string; summary: string; format?: string }[];
-  related: { id: string; name: string }[];
+  /* «أصبحت مستعداً لـ» — مُشتقّة من علاقات leads_to للمفهوم (يربط لدرسها إن وُجد) */
+  leadsTo: { id: string; name: string; lessonId?: string | null }[];
 }
 
 const LEVEL_AR: Record<string, string> = { easy: "سهل", medium: "متوسط", hard: "صعب" };
@@ -30,6 +33,16 @@ function Block({ b }: { b: LessonBlock }) {
       return <h2 className="t-h3 mt-2" style={{ color: "var(--text)" }}>{b.text}</h2>;
     case "text":
       return <p className="t-body" style={{ color: "var(--text-dim)", lineHeight: 1.9 }}>{b.text}</p>;
+    case "analogy":
+      return (
+        <div className="ds-card flex items-start gap-2.5" style={{ background: "color-mix(in srgb, var(--accent) 6%, var(--surface))", borderColor: "color-mix(in srgb, var(--accent) 22%, var(--border))" }}>
+          <span style={{ fontSize: "1.2rem" }}>💧</span>
+          <div className="flex flex-col gap-0.5 flex-1">
+            <span className="t-caption font-black" style={{ color: "var(--accent-light)" }}>تشبيه يقرّب الفكرة</span>
+            <p className="t-body" style={{ color: "var(--text-dim)", lineHeight: 1.9 }}>{b.text}</p>
+          </div>
+        </div>
+      );
     case "equation":
       return (
         <div className="ds-card flex flex-col items-center gap-1 py-4" style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface))", borderColor: "color-mix(in srgb, var(--accent) 24%, var(--border))" }}>
@@ -96,6 +109,20 @@ function Block({ b }: { b: LessonBlock }) {
         <div className="ds-card flex items-start gap-2.5" style={{ background: "color-mix(in srgb, var(--gold) 8%, var(--surface))", borderColor: "color-mix(in srgb, var(--gold) 30%, var(--border))" }}>
           <span style={{ fontSize: "1.1rem" }}>⚠️</span>
           <p className="t-body flex-1" style={{ color: "var(--text-dim)", lineHeight: 1.8 }}>{b.text}</p>
+        </div>
+      );
+    case "whenToUse":
+      return (
+        <div className="ds-card ds-stack-tight" style={{ background: "color-mix(in srgb, var(--success) 7%, var(--surface))", borderColor: "color-mix(in srgb, var(--success) 26%, var(--border))" }}>
+          <p className="t-body font-black" style={{ color: "var(--text)" }}>🎯 متى تستخدم قانون أوم؟</p>
+          <div className="flex items-start gap-2">
+            <span className="t-caption font-black px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: "color-mix(in srgb, var(--accent) 16%, transparent)", color: "var(--accent-light)" }}>في الاختبار</span>
+            <p className="t-body flex-1" style={{ color: "var(--text-dim)", lineHeight: 1.8 }}>{b.exam}</p>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="t-caption font-black px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: "color-mix(in srgb, var(--gold) 18%, transparent)", color: "var(--gold)" }}>في الحياة</span>
+            <p className="t-body flex-1" style={{ color: "var(--text-dim)", lineHeight: 1.8 }}>{b.life}</p>
+          </div>
         </div>
       );
     case "keypoints":
@@ -182,17 +209,34 @@ export default function LessonView({ data }: { data: LessonViewData }) {
         </section>
       )}
 
-      {/* مفاهيم مرتبطة */}
-      {data.related.length > 0 && (
-        <section className="ds-card ds-stack-tight">
-          <h2 className="t-h3" style={{ color: "var(--text)" }}>مفاهيم مرتبطة</h2>
-          <div className="flex flex-wrap gap-2">
-            {data.related.map((c) => (
-              <span key={c.id} className="t-caption px-3 py-1.5 rounded-lg" style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-dim)" }}>{c.name}</span>
-            ))}
+      {/* الإنجاز + الاستعداد للتالي — خاتمة تشعر الطالب بالتقدّم */}
+      <section className="ds-card ds-card-lg flex flex-col gap-3" style={{ background: "color-mix(in srgb, var(--success) 10%, var(--surface))", borderColor: "color-mix(in srgb, var(--success) 32%, var(--border))" }}>
+        <div className="flex items-center gap-2.5">
+          <span className="flex items-center justify-center rounded-full flex-shrink-0" style={{ width: 40, height: 40, background: "var(--success)", color: "white", fontSize: "1.2rem" }}>✓</span>
+          <h2 className="t-h2" style={{ color: "var(--text)" }}>أتقنت {data.concept?.name ?? "الدرس"}</h2>
+        </div>
+        {data.nextTeaser && <p className="t-body" style={{ color: "var(--text-dim)", lineHeight: 1.9 }}>{data.nextTeaser}</p>}
+        {data.leadsTo.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <p className="t-body font-black" style={{ color: "var(--text)" }}>الآن أصبحت مستعداً لـ:</p>
+            <div className="flex flex-col gap-2">
+              {data.leadsTo.map((c) => c.lessonId ? (
+                <Link key={c.id} href={`/lesson/${c.lessonId.replace(/^lesson:/, "")}`} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 transition hover:brightness-110" style={{ background: "var(--surface)" }}>
+                  <span style={{ color: "var(--success)" }}>◆</span>
+                  <span className="t-body font-black flex-1 min-w-0" style={{ color: "var(--text)" }}>{c.name}</span>
+                  <span className="t-caption" style={{ color: "var(--accent-light)" }}>ابدأ الدرس ↗</span>
+                </Link>
+              ) : (
+                <div key={c.id} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5" style={{ background: "var(--surface)" }}>
+                  <span style={{ color: "var(--success)" }}>◆</span>
+                  <span className="t-body font-black flex-1 min-w-0" style={{ color: "var(--text-dim)" }}>{c.name}</span>
+                  <span className="t-caption" style={{ color: "var(--text-muted)" }}>قريباً</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </section>
-      )}
+        )}
+      </section>
     </div>
   );
 }

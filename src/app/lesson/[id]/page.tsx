@@ -33,13 +33,18 @@ function buildData(lessonId: string): LessonViewData | null {
   const resources = KB.neighbors(lessonId, { type: "supported_by", dir: "out", kind: "resource" })
     .map((r) => ({ id: r.id, name: r.name, summary: r.summary, format: r.kind === "resource" ? r.format : undefined }));
 
-  const related = KB.neighbors(lessonId, { type: "related_to", kind: "concept" })
-    .map((c) => ({ id: c.id, name: c.name }));
+  /* «أصبحت مستعداً لـ» يُشتقّ من علاقات leads_to للمفهوم — يربط لدرسها إن وُجد */
+  const leadsTo = conceptNode
+    ? KB.neighbors(conceptNode.id, { type: "leads_to", dir: "out", kind: "concept" }).map((c) => {
+        const lesson = KB.neighbors(c.id, { type: "teaches", dir: "in", kind: "lesson" })[0];
+        return { id: c.id, name: c.name, lessonId: lesson?.id ?? null };
+      })
+    : [];
 
   return {
     id: e.id, name: e.name, summary: e.summary,
-    durationMin: e.durationMin, level: e.level, blocks: e.blocks ?? [],
-    concept, questions, resources, related,
+    durationMin: e.durationMin, level: e.level, nextTeaser: e.nextTeaser, blocks: e.blocks ?? [],
+    concept, questions, resources, leadsTo,
   };
 }
 

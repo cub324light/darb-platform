@@ -175,3 +175,21 @@ test("تغطية المعرفة: «قانون أوم» مكتملٌ (أول Vert
   assert.ok(bySlice("no-questions").count >= r.total - 3, "أسئلةٌ أكثر من المتوقّع");
   assert.ok(bySlice("no-resources").count >= r.total - 3, "مصادرٌ أكثر من المتوقّع");
 });
+
+/* ════════ قالب الدرس الرسمي — معايير التجربة التعليمية (مراجعة المالك) ════════ */
+test("قالب الدرس: قانون أوم يحمل تشبيهاً و«متى تستخدمه» وجسراً للتالي وسؤالاً مفاهيمياً واستعداداً", () => {
+  const lesson = KB.get("lesson:ohms-law");
+  assert.ok(lesson && lesson.kind === "lesson");
+  if (!lesson || lesson.kind !== "lesson") return;
+  const types = new Set((lesson.blocks ?? []).map((b) => b.type));
+  assert.ok(types.has("analogy"), "بلا تشبيهٍ للمبتدئ (س١)");
+  assert.ok(types.has("whenToUse"), "بلا «متى تستخدمه» (س٦) — الدرس ناقص");
+  assert.ok(lesson.nextTeaser && lesson.nextTeaser.trim() !== "", "بلا جسرٍ سرديّ للدرس التالي (س٧)");
+  assert.ok((lesson.durationMin ?? 99) <= 8, "الدرس أطول من ٨ دقائق (س٨)");
+  /* «أصبحت مستعداً لـ» تُشتقّ من الرسم — على الأقل كيرشوف + ثلاثة مسارات */
+  const leadsTo = KB.neighbors("concept:ohms-law", { type: "leads_to", dir: "out", kind: "concept" }).map((c) => c.id);
+  assert.ok(leadsTo.includes("concept:kirchhoff") && leadsTo.length >= 3, "بلا «أصبحت مستعداً لـ» كافية (س٩)");
+  /* سؤالٌ مفاهيمي يقيس الفهم لا الحفظ (س٥) */
+  const qs = KB.neighbors("lesson:ohms-law", { type: "belongs_to", dir: "in", kind: "question" });
+  assert.ok(qs.some((q) => q.kind === "question" && q.bloom === "understand"), "بلا سؤالٍ مفاهيمي يقيس الفهم (س٥)");
+});

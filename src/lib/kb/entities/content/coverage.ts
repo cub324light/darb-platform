@@ -33,7 +33,7 @@ export function knowledgeCoverage(kb: KnowledgeBase): CoverageReport {
       .filter((x) => x.entity.kind === "lesson" && x.type === "teaches")
       .flatMap((x) => (x.entity as LessonEntity).blocks ?? []);
     const hasExplanation = !!(b?.definition || b?.simpleExplanation || b?.advancedExplanation)
-      || lessonBlocks.some((bl) => bl.type === "text" || bl.type === "heading");
+      || lessonBlocks.some((bl) => bl.type === "text" || bl.type === "heading" || bl.type === "analogy");
     const hasExamples = !!(b?.examples?.length)
       || lessonBlocks.some((bl) => bl.type === "example");
     const hasQuestions = linked.some((x) => x.entity.kind === "question");

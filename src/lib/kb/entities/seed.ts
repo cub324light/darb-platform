@@ -288,7 +288,13 @@ export const SEED_ENTITIES: KBEntity[] = [
       simpleExplanation: "تخيّل الماء في أنبوب: الجهد هو الضغط، والتيار هو كمية الماء المتدفّقة، والمقاومة هي ضيق الأنبوب. كلّما زاد الضغط زاد التدفّق، وكلّما ضاق الأنبوب قلّ.",
       advancedExplanation: "V = IR صيغةٌ خطّية تصف العناصر الأومية عند ثبات الحرارة. في العناصر غير الأومية (كالثنائيات) تتغيّر R مع الجهد فتنكسر الخطّية، وتُعمَّم العلاقة إلى R = dV/dI.",
     },
-    relations: [{ type: "related_to", to: E("concept", "kirchhoff") }],
+    /* related_to: صلةٌ أفقية · leads_to: تدرّجٌ تعليمي (يُغذّي «أصبحت مستعداً لـ» في الدرس) */
+    relations: [
+      { type: "related_to", to: E("concept", "kirchhoff") },
+      { type: "leads_to", to: E("concept", "kirchhoff") },
+      { type: "leads_to", to: E("concept", "electric-power") },
+      { type: "leads_to", to: E("concept", "resistors") },
+    ],
   },
   {
     kind: "concept", id: E("concept", "kirchhoff"), name: "قانون كيرشوف", nameEn: "Kirchhoff's Laws", category: "فيزياء/كهرباء",
@@ -299,6 +305,21 @@ export const SEED_ENTITIES: KBEntity[] = [
     kind: "concept", id: E("concept", "parallel-connection"), name: "التوصيل على التوازي", category: "فيزياء/كهرباء",
     summary: "توصيل العناصر بحيث يتساوى الجهد عليها.",
     meta: { version: 1, lastUpdated: "2026-07-01", importance: 70 },
+  },
+  /* مفهومان يقود إليهما قانون أوم — يغذّيان «أصبحت مستعداً لـ» (بلا درسٍ بعد) */
+  {
+    kind: "concept", id: E("concept", "electric-power"), name: "القدرة الكهربائية", nameEn: "Electric Power", category: "فيزياء/كهرباء",
+    summary: "معدّل استهلاك الطاقة الكهربائية: P = V × I — امتدادٌ مباشر لقانون أوم.",
+    difficulty: "medium", examFrequency: 65,
+    meta: { version: 1, lastUpdated: "2026-07-10", importance: 80 },
+    relations: [{ type: "related_to", to: E("concept", "ohms-law") }],
+  },
+  {
+    kind: "concept", id: E("concept", "resistors"), name: "المقاومات", nameEn: "Resistors", category: "فيزياء/كهرباء",
+    summary: "عناصرٌ تُقاوم مرور التيار، وتُوصَّل على التوالي أو التوازي لتغيير المقاومة الكلّية.",
+    difficulty: "easy", examFrequency: 60,
+    meta: { version: 1, lastUpdated: "2026-07-10", importance: 75 },
+    relations: [{ type: "related_to", to: E("concept", "ohms-law") }],
   },
   {
     /* «التكامل» عقدةٌ واحدة تنتمي لتخصص الحاسب الجامعي واختبار التحصيلي معاً (لا تكرار) */
