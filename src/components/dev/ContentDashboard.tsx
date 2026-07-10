@@ -3,7 +3,7 @@
    عدد العقد لكل نوع، مجموع العلاقات، ونسبة اكتمال كل مجال. البناء بالدفعات:
    نراقب هنا نموّ المحتوى مجالاً مجالاً بالترتيب الرسمي. للمطوّر فقط. */
 import { KB, KIND_META, type EntityKind } from "@/lib/kb/entities";
-import { domainProgress } from "@/lib/kb/entities/content/domains";
+import { domainProgress, conceptsByImportance } from "@/lib/kb/entities/content/domains";
 
 /* شريط تقدّم نصّي (١٠ خانات) — كأمثلة المالك */
 function bar(pct: number): string {
@@ -16,16 +16,30 @@ const KIND_ORDER: EntityKind[] = [
   "job", "career_path", "company", "skill", "tool", "ai_tool", "project", "certification", "exam", "exam_session",
 ];
 
+/* تفصيل مجال (كم مفهوم/درس/سؤال/كتاب/مصدر) — لنعرف أين النقص */
+function Breakdown({ c }: { c: { concepts: number; lessons: number; questions: number; books: number; resources: number } }) {
+  const cells: [string, number][] = [["📖 مفاهيم", c.concepts], ["📝 دروس", c.lessons], ["❓ أسئلة", c.questions], ["📕 كتب", c.books], ["🎬 مصادر", c.resources]];
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {cells.map(([label, n]) => (
+        <span key={label} className="t-caption font-mono-nums px-2 py-0.5 rounded-full"
+          style={{ background: "var(--surface2)", color: n > 0 ? "var(--text-dim)" : "var(--text-muted)" }}>{label} {n}</span>
+      ))}
+    </div>
+  );
+}
+
 export default function ContentDashboard() {
   const stats = KB.stats();
   const domains = domainProgress(KB);
+  const quduratTiers = conceptsByImportance(KB, "exam:qudurat");
 
   return (
     <div className="flex flex-col gap-4">
       {/* اكتمال المجالات — لوحة القيادة الأساسية */}
       <section className="ds-card ds-stack-tight">
-        <h2 className="t-h3" style={{ color: "var(--text)" }}>اكتمال المجالات</h2>
-        <div className="flex flex-col gap-2.5">
+        <h2 className="t-h3" style={{ color: "var(--text)" }}>اكتمال المجالات (طبقة المفاهيم أولاً)</h2>
+        <div className="flex flex-col gap-3">
           {domains.map((d) => (
             <div key={d.key} className="flex flex-col gap-1">
               <div className="flex items-baseline justify-between gap-2">
@@ -37,6 +51,28 @@ export default function ContentDashboard() {
                 <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "var(--surface2)" }}>
                   <div className="h-full rounded-full" style={{ width: `${d.pct}%`, background: "var(--accent)" }} />
                 </div>
+              </div>
+              {d.counts && <Breakdown c={d.counts} />}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* المفاهيم حسب الأهمية — ماذا يشرح دويرب أولاً */}
+      <section className="ds-card ds-stack-tight">
+        <h2 className="t-h3" style={{ color: "var(--text)" }}>مفاهيم القدرات حسب الأولوية</h2>
+        <div className="flex flex-col gap-2.5">
+          {quduratTiers.map((t) => (
+            <div key={t.label} className="flex flex-col gap-1">
+              <p className="t-caption font-black" style={{ color: "var(--accent-light)" }}>{t.label} · {t.items.length}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {t.items.map((c) => (
+                  <span key={c.id} className="t-caption px-2.5 py-1 rounded-lg flex items-center gap-1.5"
+                    style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>
+                    {c.name}
+                    <span className="font-mono-nums" style={{ color: "var(--text-muted)" }}>{c.importance}</span>
+                  </span>
+                ))}
               </div>
             </div>
           ))}

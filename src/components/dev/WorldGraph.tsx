@@ -4,8 +4,42 @@
    (meta) و«كما يقرؤها دويرب». عليها تُبنى كل ميزة مستقبلية. الرسم هو الحقيقة. */
 import { useState } from "react";
 import {
-  KB, KIND_META, RELATION_LABEL, type EntityKind, type RelationType, type ResolvedEdge,
+  KB, KIND_META, RELATION_LABEL, type EntityKind, type RelationType, type ResolvedEdge, type KBEntity,
 } from "@/lib/kb/entities";
+
+/* حقول المفهوم الثابتة — تُعرَض دائماً ولو فارغة (أماكنها مُنشأة من البداية) */
+const CONCEPT_SLOTS: { key: string; label: string }[] = [
+  { key: "definition", label: "التعريف" },
+  { key: "whyImportant", label: "لماذا هو مهم" },
+  { key: "commonMistakes", label: "الأخطاء الشائعة" },
+  { key: "examples", label: "أمثلة" },
+  { key: "simpleExplanation", label: "شرح مبسّط" },
+  { key: "advancedExplanation", label: "شرح متقدّم" },
+];
+function ConceptSlots({ entity }: { entity: KBEntity }) {
+  if (entity.kind !== "concept") return null;
+  const body = (entity.body ?? {}) as Record<string, unknown>;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p className="t-caption font-black" style={{ color: "var(--text-muted)" }}>حقول المفهوم (تُملأ لاحقاً)</p>
+      <div className="flex flex-col gap-1">
+        {CONCEPT_SLOTS.map((s) => {
+          const v = body[s.key];
+          const filled = Array.isArray(v) ? v.length > 0 : !!v;
+          return (
+            <div key={s.key} className="flex items-start gap-2 t-caption">
+              <span className="font-black flex-shrink-0" style={{ color: filled ? "var(--success)" : "var(--text-muted)" }}>{filled ? "✓" : "○"} {s.label}:</span>
+              <span style={{ color: filled ? "var(--text-dim)" : "var(--text-muted)" }}>
+                {filled ? (Array.isArray(v) ? v.join("، ") : String(v)) : "— فارغ"}
+              </span>
+            </div>
+          );
+        })}
+        <p className="t-caption" style={{ color: "var(--text-muted)" }}>«يرتبط بـ» و«يستخدم في» ضمن الروابط أعلاه.</p>
+      </div>
+    </div>
+  );
+}
 
 const KIND_ORDER: EntityKind[] = [
   "goal", "university", "college", "major", "subject", "concept", "course", "lesson", "book", "resource", "question",
@@ -116,6 +150,7 @@ export default function WorldGraph() {
               <EdgeGroup title="➡ العلاقات الداخلة" edges={inc} onGo={setId} />
               <EdgeGroup title="🔧 أين تُستخدَم" edges={usedBy} onGo={setId} />
               <EdgeGroup title="⚓ من يعتمد عليها" edges={dependents} onGo={setId} />
+              <ConceptSlots entity={entity} />
             </div>
           )}
           <div className="ds-card ds-stack-tight">

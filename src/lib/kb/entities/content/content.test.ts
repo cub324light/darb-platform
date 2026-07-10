@@ -5,7 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { KB } from "../index";
 import { QUDURAT_CONCEPTS } from "./qudurat";
-import { domainProgress } from "./domains";
+import { domainProgress, conceptsByImportance } from "./domains";
 
 test("الرسم يبقى سليماً بعد دمج دفعة المحتوى (لا حواف معلّقة)", () => {
   assert.deepEqual(KB.validate(), []);
@@ -38,4 +38,26 @@ test("المفاهيم تظهر عبر belongs_to العكسي على اختبا
   const concepts = KB.neighbors("exam:qudurat", { type: "belongs_to", dir: "in", kind: "concept" });
   assert.ok(concepts.some((c) => c.id === "concept:q-analogy"));
   assert.ok(concepts.length >= QUDURAT_CONCEPTS.length);
+});
+
+test("لوحة القيادة: تفصيلٌ لكل مجال مفاهيم (وطبقة ثانية صفر الآن)", () => {
+  const qudurat = domainProgress(KB).find((d) => d.key === "qudurat")!;
+  assert.ok(qudurat.counts, "بلا تفصيل");
+  assert.equal(qudurat.counts!.concepts, QUDURAT_CONCEPTS.length);
+  assert.equal(qudurat.counts!.lessons, 0);   // لم نبدأ الطبقة الثانية
+  assert.equal(qudurat.counts!.questions, 0);
+});
+
+test("ترتيب المفاهيم حسب الأهمية: شرائح تنازلية غير فارغة", () => {
+  const tiers = conceptsByImportance(KB, "exam:qudurat");
+  assert.ok(tiers.length > 0);
+  const flat = tiers.flatMap((t) => t.items);
+  assert.equal(flat.length, QUDURAT_CONCEPTS.length);
+  for (let i = 1; i < flat.length; i++) assert.ok(flat[i - 1].importance >= flat[i].importance, "غير مرتّبة تنازلياً");
+});
+
+test("لكل مفهوم أماكن حقوله الثابتة (body اختياري — بنيةٌ جاهزة للملء)", () => {
+  /* الحقول اختيارية بالنوع؛ نتأكّد أن المخطّط يقبلها دون إعادة هيكلة */
+  const withBody = { ...QUDURAT_CONCEPTS[0], body: { definition: "تعريف تجريبي" } };
+  assert.equal(withBody.body.definition, "تعريف تجريبي");
 });

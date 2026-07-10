@@ -205,9 +205,17 @@ export class KnowledgeBase {
       case "lesson":
         if (e.durationMin) f.push(`المدة: ${e.durationMin} دقيقة`);
         break;
-      case "concept":
+      case "concept": {
         if (e.category) f.push(`المجال: ${e.category}`);
+        const b = e.body;
+        if (b?.definition) f.push(`التعريف: ${b.definition}`);
+        if (b?.whyImportant) f.push(`أهميته: ${b.whyImportant}`);
+        if (b?.simpleExplanation) f.push(`شرح مبسّط: ${b.simpleExplanation}`);
+        if (b?.advancedExplanation) f.push(`شرح متقدّم: ${b.advancedExplanation}`);
+        if (b?.commonMistakes?.length) f.push(`أخطاء شائعة: ${b.commonMistakes.join("، ")}`);
+        if (b?.examples?.length) f.push(`أمثلة: ${b.examples.join("، ")}`);
         break;
+      }
       case "question":
         if (e.difficulty) f.push(`الصعوبة: ${e.difficulty === "easy" ? "سهل" : e.difficulty === "hard" ? "صعب" : "متوسط"}`);
         if (e.bloom) f.push(`المستوى المعرفي: ${e.bloom}`);

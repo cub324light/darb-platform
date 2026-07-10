@@ -102,10 +102,21 @@ export interface SubjectEntity extends EntityBase {
   kind: "subject";
   code?: string; category?: string; level?: "secondary" | "university";
 }
+/* حقول محتوى المفهوم الثابتة — تُنشأ أماكنها من البداية وتُملأ لاحقاً (لا نعيد
+   الهيكلة عند بدء المحتوى الحقيقي). «يرتبط بـ» و«يستخدم في» علاقاتٌ لا حقول. */
+export interface ConceptBody {
+  definition?: string;          // التعريف
+  whyImportant?: string;        // لماذا هو مهم
+  commonMistakes?: string[];    // الأخطاء الشائعة
+  examples?: string[];          // أمثلة
+  simpleExplanation?: string;   // شرح مبسّط
+  advancedExplanation?: string; // شرح متقدّم
+}
 /* مفهوم — يظهر عبر عدّة مواد/كتب/اختبارات؛ يُشار إليه بعلاقات لا يُنسَخ */
 export interface ConceptEntity extends EntityBase {
   kind: "concept";
   category?: string; // فيزياء/رياضيات/نحو...
+  body?: ConceptBody; // أماكن المحتوى الغنيّ — فارغة الآن، جاهزة للملء
 }
 export interface CourseEntity extends EntityBase {
   kind: "course";

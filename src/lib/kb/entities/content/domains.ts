@@ -1,26 +1,64 @@
-/* ═══════════ لوحة قيادة المحتوى — تقدّم كل مجال ═══════════
-   لكل مجال هدفٌ تقديري (عدد العقد لاكتماله) نقيس تقدّمه إليه. الأهداف أرقام تخطيط
-   تُراجَع، لا وعود. تُستهلك في /dev/content. لا تعتمد على مثيلٍ — تأخذ الرسم. */
+/* ═══════════ لوحة قيادة المحتوى — تقدّم كل مجال وتفصيله ═══════════
+   لكل مجال: هدفٌ تقديري + تفصيلٌ (مفاهيم/دروس/أسئلة/كتب/مصادر) لنعرف أين النقص،
+   وترتيبٌ للمفاهيم حسب الأهمية (ماذا يشرح دويرب أولاً). الأهداف أرقام تخطيط تُراجَع.
+   لا تعتمد على مثيلٍ — تأخذ الرسم. لا بنية جديدة. */
 import type { KnowledgeBase } from "../registry";
 
+export interface DomainCounts {
+  concepts: number; lessons: number; questions: number; books: number; resources: number;
+}
 export interface DomainProgress {
   key: string; label: string; icon: string;
   actual: number; target: number; pct: number;
+  layer: "concept" | "entity";
+  counts?: DomainCounts;
 }
 
-/* عدد المفاهيم المنتمية لاختبارٍ عبر belongs_to العكسي */
-function conceptsOfExam(kb: KnowledgeBase, examId: string): number {
-  return kb.neighbors(examId, { type: "belongs_to", dir: "in", kind: "concept" }).length;
+/* عدد عقدٍ من نوعٍ مرتبطة باختبارٍ عبر علاقةٍ (belongs_to/used_in العكسية) */
+const rel = (kb: KnowledgeBase, examId: string, type: "belongs_to" | "used_in", kind: "concept" | "book" | "question") =>
+  kb.neighbors(examId, { type, dir: "in", kind }).length;
+
+function examBreakdown(kb: KnowledgeBase, examId: string): DomainCounts {
+  return {
+    concepts: rel(kb, examId, "belongs_to", "concept"),
+    books: rel(kb, examId, "belongs_to", "book"),
+    questions: rel(kb, examId, "used_in", "question"),
+    lessons: 0,   // الدروس تأتي في الطبقة الثانية
+    resources: 0, // كذلك المصادر
+  };
 }
 
 export function domainProgress(kb: KnowledgeBase): DomainProgress[] {
-  const rows: Omit<DomainProgress, "pct">[] = [
-    { key: "qudurat", label: "القدرات",       icon: "🧠", actual: conceptsOfExam(kb, "exam:qudurat"), target: 40 },
-    { key: "tahsili", label: "التحصيلي",      icon: "📚", actual: conceptsOfExam(kb, "exam:tahsili"), target: 60 },
-    { key: "step",    label: "STEP",          icon: "🔤", actual: conceptsOfExam(kb, "exam:step"),    target: 25 },
-    { key: "universities", label: "الجامعات", icon: "🏛️", actual: kb.all("university").length,         target: 30 },
-    { key: "majors",  label: "التخصصات",      icon: "📚", actual: kb.all("major").length,             target: 30 },
-    { key: "jobs",    label: "الوظائف",       icon: "💼", actual: kb.all("job").length,               target: 50 },
+  const examDomain = (key: string, label: string, icon: string, examId: string, target: number): DomainProgress => {
+    const counts = examBreakdown(kb, examId);
+    return { key, label, icon, layer: "concept", counts, actual: counts.concepts, target,
+      pct: target ? Math.min(100, Math.round((counts.concepts / target) * 100)) : 0 };
+  };
+  const entityDomain = (key: string, label: string, icon: string, actual: number, target: number): DomainProgress =>
+    ({ key, label, icon, layer: "entity", actual, target, pct: target ? Math.min(100, Math.round((actual / target) * 100)) : 0 });
+
+  return [
+    examDomain("qudurat", "القدرات",   "🧠", "exam:qudurat", 26),
+    examDomain("tahsili", "التحصيلي",  "📚", "exam:tahsili", 48),
+    examDomain("step",    "STEP",       "🔤", "exam:step",    22),
+    entityDomain("universities", "الجامعات",  "🏛️", kb.all("university").length, 30),
+    entityDomain("majors",       "التخصصات", "📚", kb.all("major").length,      30),
+    entityDomain("jobs",         "الوظائف",  "💼", kb.all("job").length,        50),
   ];
-  return rows.map((r) => ({ ...r, pct: r.target ? Math.min(100, Math.round((r.actual / r.target) * 100)) : 0 }));
+}
+
+/* المفاهيم مرتّبة حسب الأهمية (ماذا يبدأ به دويرب) — مجمّعة في شرائح */
+export interface ImportanceTier { min: number; label: string; items: { id: string; name: string; importance: number }[]; }
+export function conceptsByImportance(kb: KnowledgeBase, examId: string): ImportanceTier[] {
+  const tiers: ImportanceTier[] = [
+    { min: 90, label: "الأعلى (٩٠+)", items: [] },
+    { min: 75, label: "عالية (٧٥–٨٩)", items: [] },
+    { min: 60, label: "متوسطة (٦٠–٧٤)", items: [] },
+    { min: 0, label: "أساسية (<٦٠)", items: [] },
+  ];
+  const concepts = kb.neighbors(examId, { type: "belongs_to", dir: "in", kind: "concept" })
+    .map((c) => ({ id: c.id, name: c.name, importance: kb.meta(c.id).importance ?? 50 }))
+    .sort((a, b) => b.importance - a.importance);
+  for (const c of concepts) (tiers.find((t) => c.importance >= t.min) ?? tiers[tiers.length - 1]).items.push(c);
+  return tiers.filter((t) => t.items.length > 0);
 }
