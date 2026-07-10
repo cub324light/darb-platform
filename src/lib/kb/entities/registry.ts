@@ -17,6 +17,13 @@ export interface ResolvedEdge {
   note?: string;
 }
 
+/* إحصاءات الرسم — لِلوحة قيادة المحتوى */
+export interface KBStats {
+  total: number;
+  byKind: Record<EntityKind, number>;
+  relations: number;
+}
+
 /* عبارة العلاقة حسب الاتجاه — لصياغة حقائق طبيعية */
 const PHRASE: Record<RelationType, { out: string; in: string }> = {
   requires:     { out: "يتطلّب", in: "مطلوب لـ" },
@@ -64,6 +71,17 @@ export class KnowledgeBase {
 
   /* نسخنة العقدة — تُضمَن دائماً (افتراضٌ حين تغيب) */
   meta(id: EntityId): NodeMeta { return this.byId.get(id)?.meta ?? DEFAULT_META; }
+
+  /* إحصاءات المحتوى — لِلوحة القيادة (عدد لكل نوع + مجموع الحواف) */
+  stats(): KBStats {
+    const byKind = {} as Record<EntityKind, number>;
+    let relations = 0;
+    for (const e of this.byId.values()) {
+      byKind[e.kind] = (byKind[e.kind] ?? 0) + 1;
+      relations += this.outEdges.get(e.id)?.length ?? 0;
+    }
+    return { total: this.byId.size, byKind, relations };
+  }
 
   /* كل جِوار عقدة (خارج + داخل)، محلولاً لكيانات فعلية */
   edges(id: EntityId): ResolvedEdge[] {
