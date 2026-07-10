@@ -82,8 +82,8 @@ export default function LifeBoard() {
           <h2 className="t-h2 leading-tight flex-1" style={{ color: "var(--text)" }}>{top.title}</h2>
         </div>
 
-        {/* أربعة حقول القرار */}
-        <div className="rounded-xl p-3 flex flex-col gap-2" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+        {/* أربعة حقول القرار — عمودان على الشاشات الأوسع فلا تبدو جداراً نصّياً */}
+        <div className="rounded-xl p-3 grid grid-cols-1 min-[400px]:grid-cols-2 gap-x-4 gap-y-2" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
           <DecisionField icon="🔎" label="السبب" value={top.why} />
           <DecisionField icon="🎯" label="الفائدة" value={top.benefit} />
           <DecisionField icon="⏱" label="الوقت" value={top.time} />
@@ -91,7 +91,7 @@ export default function LifeBoard() {
         </div>
 
         <Link href={top.href}
-          className="inline-flex items-center justify-center gap-2 rounded-xl px-4 no-underline font-black transition active:scale-[0.98] self-start"
+          className="inline-flex items-center justify-center gap-2 rounded-xl px-4 no-underline font-black transition active:scale-[0.98] self-stretch sm:self-start"
           style={{
             height: "var(--btn-h)", background: c,
             color: top.area === "admission" ? "#1a1400" : "#fff",
