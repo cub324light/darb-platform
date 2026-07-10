@@ -10,7 +10,7 @@ function ctx(o: Partial<LifeContext> = {}): LifeContext {
   return {
     stage: "university", uniStage: "senior", gpa: null, hours: 115, year: "الرابعة",
     majorId: "ee", majorName: "هندسة كهربائية", coopDone: false, gradInterest: false,
-    inSchoolFinals: false, daysToSchoolFinals: null, qiyas: null,
+    highschoolPct: null, inSchoolFinals: false, daysToSchoolFinals: null, qiyas: null,
     uniFinalsInDays: null, termLabel: null, inStudyTerm: false, ...o,
   };
 }

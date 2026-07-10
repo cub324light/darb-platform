@@ -7,6 +7,7 @@ import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import PageFooter from "@/components/PageFooter";
 import UniTools from "./UniTools";
+import PriorityHint from "@/components/PriorityHint";
 
 export const metadata: Metadata = {
   title: "أدوات الجامعة | درب",
@@ -30,6 +31,7 @@ export default function UniToolsPage() {
       <div className="h-4" />
 
       <div className="page-content">
+        <PriorityHint />
         <UniTools />
 
         {/* جسر إلى الخطة القائمة — إعادة استخدام لا تكرار */}

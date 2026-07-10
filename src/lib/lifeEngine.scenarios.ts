@@ -7,13 +7,13 @@ import type { LifeContext, PriorityKey } from "./lifeEngine";
 const uni = (o: Partial<LifeContext>): LifeContext => ({
   stage: "university", uniStage: "mid", gpa: 3.0, hours: 60, year: "الثانية",
   majorId: "ee", majorName: "هندسة كهربائية", coopDone: false, gradInterest: false,
-  inSchoolFinals: false, daysToSchoolFinals: null, qiyas: null,
+  highschoolPct: null, inSchoolFinals: false, daysToSchoolFinals: null, qiyas: null,
   uniFinalsInDays: null, termLabel: "الفصل الثاني", inStudyTerm: true, ...o,
 });
 const sec = (o: Partial<LifeContext>): LifeContext => ({
   stage: "first", uniStage: null, gpa: null, hours: null, year: null,
   majorId: null, majorName: null, coopDone: false, gradInterest: false,
-  inSchoolFinals: false, daysToSchoolFinals: null, qiyas: null,
+  highschoolPct: null, inSchoolFinals: false, daysToSchoolFinals: null, qiyas: null,
   uniFinalsInDays: null, termLabel: null, inStudyTerm: true, ...o,
 });
 const q = (days: number, kind: "qudurat" | "tahsili" | "step" = "qudurat", label = "القدرات العامة") =>
@@ -31,12 +31,12 @@ export const SCENARIOS: Scenario[] = [
   { id: "s01", name: "أول ثانوي — بلا ضغط", ctx: sec({ stage: "first" }), expectTop: "early" },
   { id: "s02", name: "أول ثانوي — قدرات بعد ٦ أسابيع", ctx: sec({ stage: "first", qiyas: q(42) }), expectTop: "qiyas" },
   { id: "s03", name: "ثاني ثانوي — بلا ضغط", ctx: sec({ stage: "second" }), expectTop: "early" },
-  { id: "s04", name: "ثاني ثانوي — تحصيلي مبكر بعد ٣ أسابيع", ctx: sec({ stage: "second", qiyas: q(21, "tahsili", "التحصيلي") }), expectTop: "qiyas" },
-  { id: "s05", name: "ثالث ثانوي — درجاته ممتازة", ctx: sec({ stage: "third" }), expectTop: "admission" },
-  { id: "s06", name: "ثالث ثانوي — درجاته منخفضة", ctx: sec({ stage: "third" }), expectTop: "admission" },
+  { id: "s04", name: "ثاني ثانوي — تحصيلي مبكر بعد ٣ أسابيع", ctx: sec({ stage: "second", qiyas: q(21, "tahsili", "التحصيلي") }), expectTop: "qiyas-soon" },
+  { id: "s05", name: "ثالث ثانوي — درجاته ممتازة (٩٦٪)", ctx: sec({ stage: "third", highschoolPct: 96 }), expectTop: "admission" },
+  { id: "s06", name: "ثالث ثانوي — درجاته منخفضة (٧٢٪)", ctx: sec({ stage: "third", highschoolPct: 72 }), expectTop: "school-grades" },
   { id: "s07", name: "ثالث ثانوي — اختبارات مدرسية بعد ١٠ أيام", ctx: sec({ stage: "third", daysToSchoolFinals: 10 }), expectTop: "school-finals-soon" },
   { id: "s08", name: "ثالث ثانوي — اختبارات مدرسية الآن", ctx: sec({ stage: "third", inSchoolFinals: true }), expectTop: "school-finals-now" },
-  { id: "s09", name: "ثالث ثانوي — قدرات بعد أسبوعين", ctx: sec({ stage: "third", qiyas: q(14) }) },
+  { id: "s09", name: "ثالث ثانوي — قدرات بعد أسبوعين (عاجل)", ctx: sec({ stage: "third", qiyas: q(14) }), expectTop: "qiyas-soon" },
   { id: "s10", name: "خريج ثانوي — ينتظر القبول", ctx: sec({ stage: "graduate" }), expectTop: "admission" },
   { id: "s11", name: "خريج — سنة استدراك + قدرات قريبة", ctx: sec({ stage: "graduate", qiyas: q(30) }) },
 

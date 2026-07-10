@@ -8,6 +8,7 @@ import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import PageFooter from "@/components/PageFooter";
 import CareerCenter from "./CareerCenter";
+import PriorityHint from "@/components/PriorityHint";
 
 export const metadata: Metadata = {
   title: "عالم تخصصك — أدوات وشهادات وشركات ومسارات | درب",
@@ -28,6 +29,7 @@ export default function CareerPage() {
       <div className="h-4" />
 
       <div className="page-content">
+        <PriorityHint />
         <CareerCenter />
 
         {/* جسر إلى أدوات الجامعة والأجهزة — ربط داخلي، لا تكرار */}

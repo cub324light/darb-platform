@@ -8,6 +8,7 @@ import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import { type DuirbView } from "@/components/DuirbHub";
 import { suggestedTabForPath, contextHintForPath } from "@/lib/duwairb";
+import { readLifeContext, lifeEngine } from "@/lib/lifeEngine";
 import { trackEvent } from "@/lib/analytics";
 
 /* تحميل دويرب عند فتحه فقط — يبعد قدراته الخمس (وStorage) عن حزمة كل صفحة */
@@ -30,6 +31,12 @@ export default function DuirbFloat() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<DuirbView>("menu");
+  /* اقتراح دويرب الافتتاحي = أولوية الطالب الأولى (من العقل المركزي، بلا أي مصطلح) */
+  const [topHint] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    const p = lifeEngine(readLifeContext())[0];
+    return p ? `${p.title} — ${p.cta}` : null;
+  });
 
   /* فتح دويرب — مع دعم قدرة محددة عبر detail.tab (وإلا حسب سياق الصفحة) */
   useEffect(() => {
@@ -55,7 +62,8 @@ export default function DuirbFloat() {
   /* لا يظهر في صفحة الهبوط */
   if (pathname === "/") return null;
 
-  const hint = contextHintForPath(pathname);
+  /* أولوية الطالب أولاً، وإلا تلميح سياق الصفحة */
+  const hint = topHint ?? contextHintForPath(pathname);
   const modal = (
     <div className="fixed inset-0 z-[9980] flex flex-col overflow-y-auto" style={{ background: "var(--bg)" }}>
       <div className="sticky top-0 z-10 px-5 pt-safe pt-4 pb-3 flex items-center gap-3"

@@ -31,6 +31,7 @@ export interface LifeContext {
   majorName: string | null;
   coopDone: boolean;
   gradInterest: boolean;
+  highschoolPct: number | null;  // نسبة الثانوية العامة (لتفريق ثالث ثانوي)
   /* التقويم */
   inSchoolFinals: boolean;
   daysToSchoolFinals: number | null;
@@ -42,7 +43,7 @@ export interface LifeContext {
 
 export type PriorityKey =
   | "uni-finals" | "gpa" | "research" | "cv" | "coop" | "cert" | "foundation" | "study-routine"
-  | "school-finals-now" | "school-finals-soon" | "qiyas" | "admission" | "early";
+  | "school-finals-now" | "school-finals-soon" | "qiyas-soon" | "qiyas" | "school-grades" | "admission" | "early";
 
 export type PriorityArea = "urgent" | "gpa" | "career" | "admission" | "study" | "growth";
 
@@ -176,6 +177,14 @@ const PRIORITY_DEFS: Record<PriorityKey, PDef> = {
     time: (c) => `${c.daysToSchoolFinals} يوم`,
     next: "احسب موزونتك ورتّب رغباتك.", cta: "راجع خطتك", href: "/plan",
   },
+  "qiyas-soon": {
+    area: "urgent", icon: "⏳", urgent: true,
+    title: (c) => `اقترب ${c.qiyas?.label ?? "اختبار القياس"} — استعد الآن`,
+    why: (c) => `باقي ${c.qiyas?.days ?? "—"} يوم على موعده${c.qiyas?.approximate ? " (تقديري)" : ""}.`,
+    benefit: "درجتك ترفع نسبتك الموزونة للقبول — والوقت يضيق.",
+    time: (c) => `${c.qiyas?.days ?? "—"} يوم`,
+    next: "بطاقات ومحاكاة مكثّفة قبل الموعد.", cta: "ذاكر لاختبارك الآن", href: "/roadmap",
+  },
   qiyas: {
     area: "study", icon: "🧭",
     title: (c) => `الاستعداد لـ${c.qiyas?.label ?? "اختبار القياس"}`,
@@ -183,6 +192,14 @@ const PRIORITY_DEFS: Record<PriorityKey, PDef> = {
     benefit: "درجتك ترفع نسبتك الموزونة للقبول.",
     time: (c) => `${c.qiyas?.weeks ?? "—"} أسبوع`,
     next: "بطاقات ومحاكاة أسبوعية.", cta: "ابدأ مذاكرة مساري", href: "/roadmap",
+  },
+  "school-grades": {
+    area: "gpa", icon: "📈",
+    title: () => "قوِّ درجاتك ونسبتك",
+    why: (c) => `نسبتك المدرسية (${c.highschoolPct != null ? `${c.highschoolPct}%` : "—"}) تحسّن موزونتك — وكل درجة تفتح تخصصات أكثر.`,
+    benefit: "ترفع نسبتك الموزونة وتوسّع خياراتك في القبول.",
+    time: () => "هذا الفصل",
+    next: "ثم رتّب رغباتك واحسب موزونتك.", cta: "نظّم مذاكرتك", href: "/plan",
   },
   admission: {
     area: "admission", icon: "🏛️",
@@ -204,9 +221,9 @@ const PRIORITY_DEFS: Record<PriorityKey, PDef> = {
 
 /* ── تصنيف كل أولوية (عاجل/مهم/استراتيجي) — لا تختلط الأنواع ── */
 const TIER: Record<PriorityKey, Tier> = {
-  "uni-finals": "urgent", "school-finals-now": "urgent", "school-finals-soon": "urgent",
+  "uni-finals": "urgent", "school-finals-now": "urgent", "school-finals-soon": "urgent", "qiyas-soon": "urgent",
   gpa: "important", cv: "important", coop: "important", admission: "important",
-  qiyas: "important", "study-routine": "important",
+  qiyas: "important", "study-routine": "important", "school-grades": "important",
   research: "strategic", cert: "strategic", foundation: "strategic", early: "strategic",
 };
 
@@ -222,7 +239,9 @@ const COST: Record<PriorityKey, { hours: number; payoff: string }> = {
   "study-routine": { hours: 0, payoff: "يمنع تراكم المواد قبل الاختبارات" },
   "school-finals-now": { hours: 30, payoff: "ترفع درجاتك المدرسية" },
   "school-finals-soon": { hours: 30, payoff: "ترفع درجاتك ونسبتك الموزونة" },
+  "qiyas-soon": { hours: 30, payoff: "يرفع نسبتك الموزونة قبل فوات الموعد" },
   qiyas: { hours: 30, payoff: "يرفع نسبتك الموزونة للقبول" },
+  "school-grades": { hours: 40, payoff: "توسّع خياراتك في القبول" },
   admission: { hours: 6, payoff: "تعرف أين تُقبل وتقدّم بثقة" },
   early: { hours: 0, payoff: "تسبق دفعتك وتدخل القبول متقدّماً" },
 };
@@ -253,8 +272,10 @@ export const RULES: Rule[] = [
   /* ── الثانوي/الخريج ── */
   { id: 30, label: "اختبارات مدرسية جارية الآن", priority: "school-finals-now", weight: 100, when: (c) => c.stage !== "university" && c.inSchoolFinals },
   { id: 31, label: "اختبارات مدرسية خلال ٢١ يوماً", priority: "school-finals-soon", weight: 90, when: (c) => c.stage !== "university" && !c.inSchoolFinals && inRange(c.daysToSchoolFinals, 0, 21) },
-  { id: 32, label: "قياس قادم يراه الطالب خلال ٤٥ يوماً", priority: "qiyas", weight: 40, when: (c) => c.stage !== "university" && c.qiyas != null && c.qiyas.days <= 45 },
+  { id: 32, label: "قياس قادم يراه الطالب خلال ٤٥ يوماً", priority: "qiyas", weight: 40, when: (c) => c.stage !== "university" && c.qiyas != null && c.qiyas.days > 21 && c.qiyas.days <= 45 },
+  { id: 35, label: "قياس عاجل يراه الطالب خلال ٢١ يوماً", priority: "qiyas-soon", weight: 88, when: (c) => c.stage !== "university" && c.qiyas != null && inRange(c.qiyas.days, 0, 21) },
   { id: 33, label: "سنة القبول (ثالث ثانوي/خريج)", priority: "admission", weight: 45, when: (c) => c.stage === "third" || c.stage === "graduate" },
+  { id: 36, label: "ثالث ثانوي بدرجات منخفضة (تحت ٨٥٪)", priority: "school-grades", weight: 50, when: (c) => c.stage === "third" && c.highschoolPct != null && c.highschoolPct < 85 },
   { id: 34, label: "مرحلة مبكّرة (أول/ثاني ثانوي)", priority: "early", weight: 30, when: (c) => c.stage === "first" || c.stage === "second" },
 ];
 
@@ -397,6 +418,7 @@ export function readLifeContext(now: Date = new Date()): LifeContext {
     majorName: hasMajorWorld(goals.majorId) && m ? m.name : null,
     coopDone: !!user?.coopDone,
     gradInterest: !!user?.gradSchoolInterest,
+    highschoolPct: goals.highschoolPct ?? null,
     inSchoolFinals: cal.inSchoolFinals,
     daysToSchoolFinals: cal.nextSchoolFinals ? cal.nextSchoolFinals.daysUntil : null,
     qiyas,

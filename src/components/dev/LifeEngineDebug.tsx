@@ -21,7 +21,7 @@ const TIER_META: Record<Tier, { label: string; color: string }> = {
 const BASE: LifeContext = {
   stage: "university", uniStage: "senior", gpa: 2.31, hours: 91, year: "الثالثة",
   majorId: "ee", majorName: "هندسة كهربائية", coopDone: false, gradInterest: false,
-  inSchoolFinals: false, daysToSchoolFinals: null, qiyas: null,
+  highschoolPct: null, inSchoolFinals: false, daysToSchoolFinals: null, qiyas: null,
   uniFinalsInDays: null, termLabel: "الفصل الثالث", inStudyTerm: true,
 };
 const PRESETS: { label: string; patch: Partial<LifeContext> }[] = [
@@ -29,7 +29,9 @@ const PRESETS: { label: string; patch: Partial<LifeContext> }[] = [
   { label: "جامعي متميّز", patch: { stage: "university", uniStage: "senior", gpa: 4.8 } },
   { label: "جامعي بداية", patch: { stage: "university", uniStage: "start", gpa: 3.4, year: "الأولى", hours: 18 } },
   { label: "اختبارات الفصل", patch: { stage: "university", uniStage: "mid", gpa: 3.2, uniFinalsInDays: 6 } },
-  { label: "ثالث ثانوي", patch: { stage: "third", uniStage: null } },
+  { label: "ثالث — درجات ممتازة", patch: { stage: "third", uniStage: null, highschoolPct: 96 } },
+  { label: "ثالث — درجات منخفضة", patch: { stage: "third", uniStage: null, highschoolPct: 72 } },
+  { label: "ثالث — قدرات عاجلة", patch: { stage: "third", uniStage: null, qiyas: { kind: "qudurat", label: "القدرات العامة", days: 12, weeks: 2, approximate: true } } },
   { label: "أول ثانوي", patch: { stage: "first", uniStage: null, qiyas: { kind: "qudurat", label: "القدرات العامة", days: 30, weeks: 5, approximate: true } } },
 ];
 
@@ -126,6 +128,10 @@ export default function LifeEngineDebug() {
               <input className={inputCls} style={inputStyle} type="text" value={c.majorName ?? ""}
                 onChange={(e) => set("majorName", e.target.value || null)} />
             </Ctrl>
+            <Ctrl label="نسبة الثانوية %">
+              <input className={inputCls} style={inputStyle} type="number" min="0" max="100" value={c.highschoolPct ?? ""}
+                onChange={(e) => set("highschoolPct", num(e.target.value))} />
+            </Ctrl>
           </div>
           <div className="flex flex-wrap gap-3 pt-1">
             <label className="flex items-center gap-2 t-caption font-black" style={{ color: "var(--text-dim)" }}>
@@ -150,6 +156,7 @@ export default function LifeEngineDebug() {
             <Field k="المعدّل" v={c.gpa != null ? String(c.gpa) : "—"} />
             <Field k="الساعات" v={c.hours != null ? String(c.hours) : "—"} />
             <Field k="التخصص" v={c.majorName ?? "—"} />
+            <Field k="نسبة الثانوية" v={c.highschoolPct != null ? `${c.highschoolPct}%` : "—"} />
             <Field k="التدريب" v={c.coopDone ? "أنجزه" : "لا يوجد"} />
             <Field k="اختبارات الجامعة" v={c.uniFinalsInDays != null ? `بعد ${c.uniFinalsInDays} يوم` : "—"} />
             <Field k="اختبارات المدرسة" v={c.inSchoolFinals ? "الآن" : c.daysToSchoolFinals != null ? `بعد ${c.daysToSchoolFinals} يوم` : "—"} />
