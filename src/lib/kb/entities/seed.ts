@@ -22,8 +22,8 @@ export const SEED_ENTITIES: KBEntity[] = [
   {
     kind: "major", id: E("major", "electrical-engineering"), name: "الهندسة الكهربائية", nameEn: "Electrical Engineering",
     summary: "تصميم وتشغيل أنظمة الكهرباء والطاقة والتحكّم والإلكترونيات.",
-    category: "هندسي", degreeYears: 5,
-    coreSubjects: ["أنظمة القوى", "الدوائر", "التحكّم"], aliases: ["كهرباء", "EE"],
+    category: "هندسي", degreeYears: 5, aliases: ["كهرباء", "EE"],
+    meta: { version: 1, lastUpdated: "2026-07-01", confidence: 0.95, importance: 80 },
     relations: [
       { type: "part_of", to: E("college", "ksu-engineering") },
       { type: "leads_to", to: E("job", "power-systems-engineer") },
@@ -40,6 +40,7 @@ export const SEED_ENTITIES: KBEntity[] = [
     relations: [
       { type: "belongs_to", to: E("major", "electrical-engineering") },
       { type: "teaches", to: E("skill", "power-systems-analysis") },
+      { type: "teaches", to: E("concept", "ohms-law") },       // مفهوم مُشترَك مع «الدوائر»
       { type: "uses", to: E("tool", "etap") },
       { type: "prerequisite", to: E("subject", "circuits") },
       { type: "recommends", to: E("ai_tool", "claude") },
@@ -51,6 +52,9 @@ export const SEED_ENTITIES: KBEntity[] = [
     relations: [
       { type: "belongs_to", to: E("major", "electrical-engineering") },
       { type: "prerequisite", to: E("subject", "calculus") },
+      { type: "teaches", to: E("concept", "ohms-law") },
+      { type: "teaches", to: E("concept", "kirchhoff") },
+      { type: "teaches", to: E("concept", "parallel-connection") },
     ],
   },
   {
@@ -58,6 +62,7 @@ export const SEED_ENTITIES: KBEntity[] = [
     summary: "أساس رياضي لكل التخصصات الهندسية.", level: "university",
     relations: [
       { type: "belongs_to", to: E("major", "electrical-engineering") },
+      { type: "teaches", to: E("concept", "integration") },
       { type: "recommends", to: E("ai_tool", "chatgpt") },
     ],
   },
@@ -79,7 +84,11 @@ export const SEED_ENTITIES: KBEntity[] = [
   {
     kind: "book", id: E("book", "sadiku"), name: "Fundamentals of Electric Circuits", author: "Sadiku",
     summary: "مرجع أساسي في الدوائر الكهربائية.",
-    relations: [{ type: "belongs_to", to: E("subject", "circuits") }],
+    relations: [
+      { type: "belongs_to", to: E("subject", "circuits") },
+      { type: "teaches", to: E("concept", "ohms-law") },   // نفس المفهوم في مادة وكتاب واختبار
+      { type: "teaches", to: E("concept", "kirchhoff") },
+    ],
   },
   {
     kind: "book", id: E("book", "barrons-step"), name: "Barron's — STEP/TOEFL", publisher: "Barron's", forExam: true,
@@ -103,8 +112,8 @@ export const SEED_ENTITIES: KBEntity[] = [
     summary: "يصمّم ويحلّل شبكات توليد ونقل وتوزيع الكهرباء.",
     tasks: ["تصميم شبكات التوزيع", "دراسات الأحمال والحماية", "محاكاة الأعطال"],
     salary: { entrySar: "8,000–14,000 ريال/شهر", seniorSar: "18,000+ ريال/شهر", note: "استرشادي" },
-    demand: "high", learnPath: ["إتقان أنظمة القوى", "ETAP", "شهادة FE"], aliases: ["مهندس قوى"],
-    meta: { version: 1, lastUpdated: "2026-07-01", confidence: 0.85 },
+    demand: "high", aliases: ["مهندس قوى"],
+    meta: { version: 1, lastUpdated: "2026-07-01", confidence: 0.85, importance: 70 },
     relations: [
       { type: "requires", to: E("skill", "power-systems-analysis") },
       { type: "uses", to: E("tool", "etap") },
@@ -119,7 +128,7 @@ export const SEED_ENTITIES: KBEntity[] = [
     kind: "job", id: E("job", "control-engineer"), name: "مهندس تحكّم", nameEn: "Control Engineer",
     summary: "يصمّم أنظمة التحكّم الآلي ويبرمج المتحكّمات.",
     tasks: ["برمجة PLC", "ضبط حلقات التحكّم", "أتمتة الإنتاج"],
-    salary: { entrySar: "8,000–13,000 ريال/شهر" }, demand: "medium", learnPath: ["أنظمة التحكّم", "PLC", "MATLAB"],
+    salary: { entrySar: "8,000–13,000 ريال/شهر" }, demand: "medium",
     relations: [
       { type: "uses", to: E("tool", "matlab") },
       { type: "uses", to: E("tool", "plc") },
@@ -160,6 +169,7 @@ export const SEED_ENTITIES: KBEntity[] = [
   {
     kind: "tool", id: E("tool", "etap"), name: "ETAP", category: "محاكاة كهربائية", platform: "سطح المكتب",
     summary: "برنامج تحليل ومحاكاة أنظمة القوى.", aliases: ["إيتاب"],
+    relations: [{ type: "related_to", to: E("tool", "matlab"), note: "صلة غير مباشرة" }],
   },
   {
     kind: "tool", id: E("tool", "matlab"), name: "MATLAB", category: "حساب ومحاكاة",
@@ -240,8 +250,9 @@ export const SEED_ENTITIES: KBEntity[] = [
 
   /* ═══ الأهداف — أهمّ عقدة يقرؤها Life Engine ═══ */
   {
-    kind: "goal", id: E("goal", "enter-ee"), name: "هدف: دخول الهندسة الكهربائية", target: E("major", "electrical-engineering"),
+    kind: "goal", id: E("goal", "enter-ee"), name: "هدف: دخول الهندسة الكهربائية",
     summary: "القبول في تخصص الهندسة الكهربائية.",
+    meta: { version: 1, lastUpdated: "2026-07-01", importance: 90 },
     relations: [
       { type: "leads_to", to: E("major", "electrical-engineering") },
       { type: "requires", to: E("exam", "qudurat") },
@@ -249,16 +260,78 @@ export const SEED_ENTITIES: KBEntity[] = [
     ],
   },
   {
-    kind: "goal", id: E("goal", "step-85"), name: "هدف: STEP 85", target: E("exam", "step"), metric: "STEP 85",
+    kind: "goal", id: E("goal", "step-85"), name: "هدف: STEP 85", metric: "STEP 85",
     summary: "تحقيق ٨٥ في اختبار STEP للإنجليزية.",
     relations: [{ type: "requires", to: E("exam", "step") }],
   },
   {
-    kind: "goal", id: E("goal", "work-aramco"), name: "هدف: العمل في أرامكو", target: E("company", "aramco"),
+    kind: "goal", id: E("goal", "work-aramco"), name: "هدف: العمل في أرامكو",
     summary: "الوصول إلى وظيفة في أرامكو السعودية.",
     relations: [
       { type: "works_at", to: E("company", "aramco") },
       { type: "depends_on", to: E("major", "electrical-engineering") },
+    ],
+  },
+
+  /* ═══ المفاهيم (تظهر عبر عدّة مواد/كتب/اختبارات — لا تُنسَخ) ═══ */
+  {
+    kind: "concept", id: E("concept", "ohms-law"), name: "قانون أوم", nameEn: "Ohm's Law", category: "فيزياء/كهرباء",
+    summary: "العلاقة بين الجهد والتيار والمقاومة (V = IR).", aliases: ["أوم"],
+    meta: { version: 1, lastUpdated: "2026-07-01", confidence: 1, importance: 100 },
+    relations: [{ type: "related_to", to: E("concept", "kirchhoff") }],
+  },
+  {
+    kind: "concept", id: E("concept", "kirchhoff"), name: "قانون كيرشوف", nameEn: "Kirchhoff's Laws", category: "فيزياء/كهرباء",
+    summary: "قوانين حفظ التيار والجهد في الدوائر.", aliases: ["كيرشوف"],
+    meta: { version: 1, lastUpdated: "2026-07-01", importance: 85 },
+  },
+  {
+    kind: "concept", id: E("concept", "parallel-connection"), name: "التوصيل على التوازي", category: "فيزياء/كهرباء",
+    summary: "توصيل العناصر بحيث يتساوى الجهد عليها.",
+    meta: { version: 1, lastUpdated: "2026-07-01", importance: 70 },
+  },
+  {
+    kind: "concept", id: E("concept", "integration"), name: "التكامل", nameEn: "Integration", category: "رياضيات",
+    summary: "العملية العكسية للاشتقاق — أساس رياضي واسع الاستخدام.",
+    meta: { version: 1, lastUpdated: "2026-07-01", importance: 95 },
+  },
+  {
+    kind: "concept", id: E("concept", "passive-voice"), name: "المبني للمجهول (Passive Voice)", category: "لغة إنجليزية",
+    summary: "بناء الجملة الإنجليزية بصيغة المجهول.",
+    meta: { version: 1, lastUpdated: "2026-07-01", importance: 60 },
+  },
+
+  /* ═══ ربط المفاهيم بالمواد/الكتب/الاختبارات (عبر العلاقات فقط) ═══ */
+  /* نُضيفها كحواف على المواد/الكتب أدناه ليست ممكنة رجعياً — نُمثّلها بعقدٍ رابطة:
+     المادة والكتاب يشيران للمفهوم بعلاقة teaches. */
+  {
+    kind: "resource", id: E("resource", "ohms-law-article"), name: "مقال: شرح قانون أوم", format: "article", lang: "ar",
+    summary: "شرح نصّي مبسّط لقانون أوم.",
+    relations: [{ type: "teaches", to: E("concept", "ohms-law") }],
+  },
+
+  /* ═══ الأسئلة (كيانات مستقلة يُعاد استخدامها) ═══ */
+  {
+    kind: "question", id: E("question", "ohm-basic"), name: "سؤال: حساب التيار بقانون أوم",
+    summary: "إذا كان الجهد ١٢ فولت والمقاومة ٤ أوم، فما التيار؟",
+    difficulty: "easy", bloom: "apply", answer: "٣ أمبير",
+    relations: [
+      { type: "requires", to: E("concept", "ohms-law") },
+      { type: "belongs_to", to: E("subject", "circuits") },
+      { type: "used_in", to: E("exam", "tahsili") },
+      { type: "requires", to: E("skill", "power-systems-analysis") },
+    ],
+  },
+
+  /* ═══ محاولة اختبار (الطالب لا الاختبار) ═══ */
+  {
+    kind: "exam_session", id: E("exam_session", "demo-tahsili-1"), name: "محاولة تحصيلي — الطالب",
+    summary: "محاولة تجريبية: الدرجة ٧٢، ضعفٌ في التكامل.",
+    score: 72, timeMin: 90, errors: 8, takenAt: "2026-06-20",
+    meta: { version: 1, lastUpdated: "2026-06-20", confidence: 1, importance: 40 },
+    relations: [
+      { type: "belongs_to", to: E("exam", "tahsili") },
+      { type: "related_to", to: E("concept", "integration"), note: "مفهوم ضعيف" },
     ],
   },
 ];

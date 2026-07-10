@@ -8,8 +8,8 @@ import {
 } from "@/lib/kb/entities";
 
 const KIND_ORDER: EntityKind[] = [
-  "goal", "university", "college", "major", "subject", "course", "lesson", "book", "resource",
-  "job", "career_path", "company", "skill", "tool", "ai_tool", "project", "certification", "exam",
+  "goal", "university", "college", "major", "subject", "concept", "course", "lesson", "book", "resource", "question",
+  "job", "career_path", "company", "skill", "tool", "ai_tool", "project", "certification", "exam", "exam_session",
 ];
 const USE_TYPES: RelationType[] = ["uses", "used_in"];
 const DEP_TYPES: RelationType[] = ["requires", "depends_on", "prerequisite"];

@@ -11,10 +11,10 @@ test("لا أخطاء بنيوية (معرّفات فريدة/مطابقة لل�
   assert.deepEqual(KB.validate(), []);
 });
 
-test("تغطية الأنواع الـ١٨ كلها ممثّلة في البذرة", () => {
+test("تغطية الأنواع الـ٢١ كلها ممثّلة في البذرة", () => {
   const kinds: EntityKind[] = [
-    "university", "college", "major", "subject", "course", "lesson", "book", "resource",
-    "job", "career_path", "company", "skill", "tool", "ai_tool", "project", "certification", "exam", "goal",
+    "university", "college", "major", "subject", "concept", "course", "lesson", "book", "resource", "question",
+    "job", "career_path", "company", "skill", "tool", "ai_tool", "project", "certification", "exam", "exam_session", "goal",
   ];
   for (const k of kinds) assert.ok(KB.all(k).length > 0, `النوع بلا عقدة: ${k}`);
 });
@@ -77,6 +77,56 @@ test("الهدف يربط عقدته الهدف ومتطلّباته (STEP 85 ي
   assert.match(facts, /يتطلّب/);                           // العلاقة
   const enter = KB.neighbors("goal:enter-ee", { type: "leads_to", dir: "out", kind: "major" });
   assert.equal(enter[0]?.id, "major:electrical-engineering");
+});
+
+/* ════════ المفهوم يُعاد استخدامه (لا تكرار) ════════ */
+test("المفهوم الواحد يظهر عبر عدّة مواد وكتاب (يُشار إليه بعلاقات لا يُنسَخ)", () => {
+  const sources = KB.neighbors("concept:ohms-law", { type: "teaches", dir: "in" }).map((e) => e.id);
+  assert.ok(sources.includes("subject:circuits"), "لا يظهر في الدوائر");
+  assert.ok(sources.includes("subject:power-systems"), "لا يظهر في أنظمة القوى (إعادة استخدام)");
+  assert.ok(sources.includes("book:sadiku"), "لا يظهر في الكتاب");
+});
+
+/* ════════ السؤال كيانٌ مستقل ════════ */
+test("السؤال مستقل ويرتبط بمفهوم ومادة واختبار", () => {
+  const q = KB.get("question:ohm-basic");
+  assert.equal(q?.kind, "question");
+  const to = KB.edges("question:ohm-basic").filter((e) => e.dir === "out").map((e) => e.entity.id);
+  assert.ok(to.includes("concept:ohms-law") && to.includes("subject:circuits") && to.includes("exam:tahsili"));
+});
+
+/* ════════ محاولة الاختبار (الطالب لا الاختبار) ════════ */
+test("محاولة الاختبار تحمل الدرجة/الأخطاء وتربط اختبارها ومفهومها الضعيف", () => {
+  const s = KB.get("exam_session:demo-tahsili-1");
+  assert.equal(s?.kind, "exam_session");
+  const facts = KB.describe("exam_session:demo-tahsili-1");
+  assert.match(facts, /الدرجة: 72/);
+  const rel = KB.edges("exam_session:demo-tahsili-1").map((e) => e.entity.id);
+  assert.ok(rel.includes("exam:tahsili") && rel.includes("concept:integration"));
+});
+
+/* ════════ RELATED_TO (صلة غير مباشرة) ════════ */
+test("related_to يربط ما لا علاقة مباشرة بينه (ETAP↔MATLAB · أوم↔كيرشوف)", () => {
+  assert.ok(KB.neighbors("tool:etap", { type: "related_to" }).some((e) => e.id === "tool:matlab"));
+  assert.ok(KB.neighbors("concept:ohms-law", { type: "related_to" }).some((e) => e.id === "concept:kirchhoff"));
+});
+
+/* ════════ Importance ════════ */
+test("لكل عقدة أهمية؛ المفهوم الأساسي أعلى من الثانوي", () => {
+  assert.equal(KB.meta("concept:ohms-law").importance, 100);
+  assert.ok((KB.meta("concept:parallel-connection").importance ?? 0) < 100);
+  assert.equal(KB.meta("skill:power-systems-analysis").importance, 50); // افتراضي حين يغيب
+});
+
+/* ════════ لا كيان يخزّن تفاصيل كيان آخر (العلاقة وحدها تعرف) ════════ */
+test("التخصص لا يخزّن قائمة موادّه، والوظيفة لا تخزّن قائمة أدواتها — تُشتقّ من العلاقات", () => {
+  const major = KB.get("major:electrical-engineering") as unknown as Record<string, unknown>;
+  assert.equal(major.coreSubjects, undefined, "التخصص كرّر المواد");
+  const job = KB.get("job:power-systems-engineer") as unknown as Record<string, unknown>;
+  assert.equal(job.learnPath, undefined, "الوظيفة كرّرت مسار التعلّم");
+  /* موادّ التخصص تُشتقّ من belongs_to العكسي */
+  const subjects = KB.neighbors("major:electrical-engineering", { type: "belongs_to", dir: "in", kind: "subject" });
+  assert.ok(subjects.length >= 3, "لم تُشتقّ المواد من العلاقات");
 });
 
 /* ════════ قراءة الرسم كنصّ (View) ════════ */

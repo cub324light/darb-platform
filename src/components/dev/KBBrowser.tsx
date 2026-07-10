@@ -6,8 +6,8 @@ import { useState } from "react";
 import { KB, KIND_META, RELATION_LABEL, type EntityKind, type KBEntity } from "@/lib/kb/entities";
 
 const KIND_ORDER: EntityKind[] = [
-  "university", "college", "major", "subject", "course", "lesson", "book", "resource",
-  "job", "career_path", "company", "skill", "tool", "ai_tool", "project", "certification", "exam", "goal",
+  "university", "college", "major", "subject", "concept", "course", "lesson", "book", "resource", "question",
+  "job", "career_path", "company", "skill", "tool", "ai_tool", "project", "certification", "exam", "exam_session", "goal",
 ];
 
 export default function KBBrowser() {

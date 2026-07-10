@@ -34,6 +34,7 @@ const PHRASE: Record<RelationType, { out: string; in: string }> = {
   teaches:      { out: "يُكسِب", in: "يُكتسَب في" },
   depends_on:   { out: "يعتمد على", in: "يعتمد عليه" },
   supported_by: { out: "مدعوم بـ", in: "يدعم" },
+  related_to:   { out: "مرتبط بـ", in: "مرتبط بـ" },
 };
 
 export class KnowledgeBase {
@@ -107,8 +108,10 @@ export class KnowledgeBase {
   describe(id: EntityId): string {
     const e = this.byId.get(id);
     if (!e) return "";
+    const m = this.meta(id);
     const lines: string[] = [`# ${KIND_META[e.kind].icon} ${e.name} (${KIND_META[e.kind].label})`, e.summary];
     if (e.description) lines.push(e.description);
+    if (m.importance != null) lines.push(`الأهمية (٠–١٠٠): ${m.importance}`);
 
     /* حقول قياسية حسب النوع */
     const f: string[] = [];
@@ -117,12 +120,10 @@ export class KnowledgeBase {
         if (e.tasks?.length) f.push(`المهام: ${e.tasks.join("، ")}`);
         if (e.salary) f.push(`الراتب: ${e.salary.entrySar}${e.salary.seniorSar ? ` — ${e.salary.seniorSar} بالخبرة` : ""}`);
         if (e.demand) f.push(`الطلب في السوق: ${e.demand === "high" ? "مرتفع" : e.demand === "medium" ? "متوسط" : "منخفض"}`);
-        if (e.learnPath?.length) f.push(`للوصول إليها تتعلّم: ${e.learnPath.join("، ")}`);
         break;
       case "major":
         if (e.category) f.push(`الفئة: ${e.category}`);
         if (e.degreeYears) f.push(`مدة الدرجة: ${e.degreeYears} سنوات`);
-        if (e.coreSubjects?.length) f.push(`موادّه الأساسية: ${e.coreSubjects.join("، ")}`);
         break;
       case "university":
         if (e.city) f.push(`المدينة: ${e.city}`);
@@ -185,6 +186,19 @@ export class KnowledgeBase {
         break;
       case "lesson":
         if (e.durationMin) f.push(`المدة: ${e.durationMin} دقيقة`);
+        break;
+      case "concept":
+        if (e.category) f.push(`المجال: ${e.category}`);
+        break;
+      case "question":
+        if (e.difficulty) f.push(`الصعوبة: ${e.difficulty === "easy" ? "سهل" : e.difficulty === "hard" ? "صعب" : "متوسط"}`);
+        if (e.bloom) f.push(`المستوى المعرفي: ${e.bloom}`);
+        if (e.answer) f.push(`الإجابة: ${e.answer}`);
+        break;
+      case "exam_session":
+        if (e.score != null) f.push(`الدرجة: ${e.score}`);
+        if (e.timeMin != null) f.push(`الوقت: ${e.timeMin} دقيقة`);
+        if (e.errors != null) f.push(`عدد الأخطاء: ${e.errors}`);
         break;
     }
     if (f.length) lines.push(...f);
