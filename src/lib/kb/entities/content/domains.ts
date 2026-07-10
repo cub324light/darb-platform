@@ -37,10 +37,23 @@ export function domainProgress(kb: KnowledgeBase): DomainProgress[] {
   const entityDomain = (key: string, label: string, icon: string, actual: number, target: number): DomainProgress =>
     ({ key, label, icon, layer: "entity", actual, target, pct: target ? Math.min(100, Math.round((actual / target) * 100)) : 0 });
 
+  /* الإنجليزية معرفةٌ واحدة: نجمع مفاهيم STEP وIELTS بلا تكرار (STEP مجرّد اختبار يقيسها) */
+  const englishConcepts = new Set<string>([
+    ...kb.neighbors("exam:step",  { type: "belongs_to", dir: "in", kind: "concept" }).map((c) => c.id),
+    ...kb.neighbors("exam:ielts", { type: "belongs_to", dir: "in", kind: "concept" }).map((c) => c.id),
+  ]);
+  const englishTarget = 24;
+  const englishDomain: DomainProgress = {
+    key: "english", label: "STEP / الإنجليزية", icon: "🔤", layer: "concept",
+    actual: englishConcepts.size, target: englishTarget,
+    pct: Math.min(100, Math.round((englishConcepts.size / englishTarget) * 100)),
+    counts: { concepts: englishConcepts.size, lessons: 0, questions: 0, books: 0, resources: 0 },
+  };
+
   return [
     examDomain("qudurat", "القدرات",   "🧠", "exam:qudurat", 26),
     examDomain("tahsili", "التحصيلي",  "📚", "exam:tahsili", 33),
-    examDomain("step",    "STEP",       "🔤", "exam:step",    22),
+    englishDomain,
     entityDomain("universities", "الجامعات",  "🏛️", kb.all("university").length, 30),
     entityDomain("majors",       "التخصصات", "📚", kb.all("major").length,      30),
     entityDomain("jobs",         "الوظائف",  "💼", kb.all("job").length,        50),

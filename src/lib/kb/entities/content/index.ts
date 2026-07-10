@@ -4,8 +4,10 @@
 import type { KBEntity } from "../schema";
 import { QUDURAT_CONCEPTS } from "./qudurat";
 import { TAHSILI_CONCEPTS } from "./tahsili";
+import { ENGLISH_CONCEPTS } from "./english";
 
 export const CONTENT_ENTITIES: KBEntity[] = [
   ...QUDURAT_CONCEPTS,
   ...TAHSILI_CONCEPTS,
+  ...ENGLISH_CONCEPTS,
 ];

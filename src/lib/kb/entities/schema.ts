@@ -116,9 +116,11 @@ export interface ConceptBody {
    نفكّر بالمفهوم لا المادة: «التفاضل» عقدةٌ واحدة قد تنتمي لعدّة اختبارات/مجالات. */
 export interface ConceptEntity extends EntityBase {
   kind: "concept";
-  category?: string;                          // فيزياء/رياضيات/نحو...
+  category?: string;                          // المجال/المهارة: رياضيات/فيزياء/Grammar/Reading...
   difficulty?: "easy" | "medium" | "hard";    // صعوبة المفهوم
   examFrequency?: number;                      // 0..100 تقدير تكرار ظهوره في الاختبارات
+  cefr?: "A1" | "A2" | "B1" | "B2" | "C1" | "C2"; // مستوى الإطار المرجعي (لمفاهيم اللغة)
+  examWeights?: Record<string, number>;        // وزن المفهوم في كل اختبار (exam:step→95, exam:ielts→90)
   body?: ConceptBody;                          // أماكن المحتوى الغنيّ — فارغة الآن
 }
 export interface CourseEntity extends EntityBase {

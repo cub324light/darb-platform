@@ -6,7 +6,9 @@ import assert from "node:assert/strict";
 import { KB } from "../index";
 import { QUDURAT_CONCEPTS } from "./qudurat";
 import { TAHSILI_CONCEPTS } from "./tahsili";
+import { ENGLISH_CONCEPTS } from "./english";
 import { domainProgress, conceptsByImportance, topConcepts } from "./domains";
+import { knowledgeCoverage } from "./coverage";
 
 test("الرسم يبقى سليماً بعد دمج دفعة المحتوى (لا حواف معلّقة)", () => {
   assert.deepEqual(KB.validate(), []);
@@ -19,13 +21,14 @@ test("دفعة القدرات: حجمها ضمن ٢٠–٣٠، كلها مفاه
   for (const c of QUDURAT_CONCEPTS) assert.equal(c.kind, "concept");
 });
 
-test("كل مفهوم ينتمي لاختبار القدرات وله مصدرٌ وثقةٌ ووزن", () => {
+test("كل مفهوم ينتمي لاختبار القدرات وله مصدرٌ وثقةٌ ووزنٌ وتكرار", () => {
   for (const c of QUDURAT_CONCEPTS) {
     assert.ok(c.relations?.some((r) => r.type === "belongs_to" && r.to === "exam:qudurat"), `${c.id}: غير مربوط بالقدرات`);
     const m = c.meta!;
     assert.ok(m.source && m.source.trim() !== "", `${c.id}: بلا مصدر`);
     assert.ok(m.importance != null, `${c.id}: بلا أهمية`);
     assert.ok(m.confidence != null && m.confidence < 1, `${c.id}: ثقة ١٠٠٪ غير مبرّرة`);
+    assert.ok(c.examFrequency != null && c.examFrequency >= 0 && c.examFrequency <= 100, `${c.id}: تكرارٌ مفقود أو خارج المدى`);
   }
 });
 
@@ -96,4 +99,73 @@ test("Top 20: أعلى المفاهيم أهميةً عبر المنصة كله�
   /* يخلط مجالات مختلفة (لا مادة واحدة) */
   const cats = new Set(top.map((t) => t.category));
   assert.ok(cats.size >= 3, "Top 20 من مادة واحدة فقط");
+});
+
+/* ════════ دفعة الإنجليزية — النموذج المُدمَج (STEP مجرّد اختبار) ════════ */
+test("دفعة الإنجليزية: كل مفهوم يحمل مهارةً ومستوى CEFR ووزنَي STEP وIELTS وتكراراً وأهمية", () => {
+  const ids = ENGLISH_CONCEPTS.map((c) => c.id);
+  assert.equal(new Set(ids).size, ids.length, "معرّف مكرّر");
+  const skills = new Set(["Grammar", "Vocabulary", "Reading", "Listening", "Writing"]);
+  for (const c of ENGLISH_CONCEPTS) {
+    assert.equal(c.kind, "concept");
+    assert.ok(c.category && skills.has(c.category), `${c.id}: مهارة غير صحيحة (${c.category})`);
+    assert.ok(c.cefr, `${c.id}: بلا مستوى CEFR`);
+    assert.ok(c.examWeights && "exam:step" in c.examWeights && "exam:ielts" in c.examWeights, `${c.id}: وزنا الاختبارين غير مكتملين`);
+    assert.ok(c.examFrequency != null, `${c.id}: بلا تكرار`);
+    assert.ok(c.meta?.importance != null, `${c.id}: بلا أهمية`);
+  }
+});
+
+test("المعرفة مشتركة: المفهوم ينتمي للاختبار الذي وزنه فيه > 0 فقط (الكتابة في IELTS لا STEP)", () => {
+  for (const c of ENGLISH_CONCEPTS) {
+    const belongs = new Set((c.relations ?? []).filter((r) => r.type === "belongs_to").map((r) => r.to));
+    const w = c.examWeights!;
+    assert.equal(belongs.has("exam:step"), w["exam:step"] > 0, `${c.id}: انتماء STEP لا يطابق وزنه`);
+    assert.equal(belongs.has("exam:ielts"), w["exam:ielts"] > 0, `${c.id}: انتماء IELTS لا يطابق وزنه`);
+  }
+  /* الكتابة: تظهر في IELTS دون STEP */
+  const writing = ENGLISH_CONCEPTS.filter((c) => c.category === "Writing");
+  assert.ok(writing.length >= 1, "لا مفاهيم كتابة");
+  for (const c of writing) assert.equal(c.examWeights!["exam:step"], 0, `${c.id}: للكتابة وزنٌ في STEP`);
+});
+
+test("«المبني للمجهول» عقدةٌ واحدة (seed) مُثراة تنتمي للاختبارين — لا تكرار", () => {
+  const passives = KB.all("concept").filter((c) => c.id === "concept:passive-voice");
+  assert.equal(passives.length, 1, "تكرار للمبني للمجهول");
+  const p = KB.get("concept:passive-voice")!;
+  assert.equal(p.kind, "concept");
+  if (p.kind === "concept") {
+    assert.equal(p.category, "Grammar");
+    assert.ok(p.cefr && p.examWeights, "المبني للمجهول لم يُثرَ بالنموذج المُدمَج");
+  }
+  const stepEnglish = KB.neighbors("exam:step", { type: "belongs_to", dir: "in", kind: "concept" });
+  assert.ok(stepEnglish.some((c) => c.id === "concept:passive-voice"), "المبني للمجهول غير مربوط بـSTEP");
+});
+
+test("لوحة القيادة: مجال الإنجليزية يجمع مفاهيم STEP وIELTS بلا تكرار", () => {
+  const english = domainProgress(KB).find((d) => d.key === "english")!;
+  assert.ok(english, "لا مجال إنجليزية");
+  const union = new Set([
+    ...KB.neighbors("exam:step", { type: "belongs_to", dir: "in", kind: "concept" }).map((c) => c.id),
+    ...KB.neighbors("exam:ielts", { type: "belongs_to", dir: "in", kind: "concept" }).map((c) => c.id),
+  ]);
+  assert.equal(english.actual, union.size);
+  assert.ok(english.pct > 0 && english.pct <= 100);
+});
+
+/* ════════ تغطية المعرفة — نضج طبقة المفاهيم ════════ */
+test("تغطية المعرفة: الشرائح الخمس متّسقة، والأماكن فارغة الآن (لا طبقة ثانية بعد)", () => {
+  const r = knowledgeCoverage(KB);
+  assert.equal(r.total, KB.all("concept").length);
+  assert.equal(r.concepts.length, r.total);
+  /* مرتّبة تنازلياً بالأهمية */
+  for (let i = 1; i < r.concepts.length; i++) assert.ok(r.concepts[i - 1].importance >= r.concepts[i].importance, "غير مرتّبة");
+  /* لم نبدأ الطبقة الثانية: لا مفهوم مكتمل، ولا شرحٌ ولا أمثلة في أيّ body بعد */
+  const bySlice = (k: string) => r.slices.find((s) => s.key === k)!.count;
+  assert.equal(r.complete, 0, "مفهومٌ مكتملٌ دون طبقةٍ ثانية؟");
+  assert.equal(bySlice("no-explanation"), r.total, "body مملوءٌ قبل الطبقة الثانية");
+  assert.equal(bySlice("no-examples"), r.total, "أمثلةٌ مملوءةٌ قبل الطبقة الثانية");
+  /* الأسئلة والمصادر: تقريباً الكلّ ناقص (عدا عقد إثبات seed القليلة) */
+  assert.ok(bySlice("no-questions") >= r.total - 2, "أسئلةٌ أكثر من المتوقّع");
+  assert.ok(bySlice("no-resources") >= r.total - 2, "مصادرٌ أكثر من المتوقّع");
 });

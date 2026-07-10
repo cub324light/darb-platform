@@ -299,9 +299,16 @@ export const SEED_ENTITIES: KBEntity[] = [
     relations: [{ type: "belongs_to", to: E("exam", "tahsili") }],
   },
   {
-    kind: "concept", id: E("concept", "passive-voice"), name: "المبني للمجهول (Passive Voice)", category: "لغة إنجليزية",
-    summary: "بناء الجملة الإنجليزية بصيغة المجهول.",
-    meta: { version: 1, lastUpdated: "2026-07-01", importance: 60 },
+    /* مفهوم إنجليزي مُدمَج: المعرفة واحدة، وSTEP وIELTS مجرّد اختباران يقيسانها بوزنٍ مختلف */
+    kind: "concept", id: E("concept", "passive-voice"), name: "المبني للمجهول (Passive Voice)", nameEn: "Passive Voice",
+    category: "Grammar", cefr: "B1", difficulty: "medium", examFrequency: 75,
+    examWeights: { [E("exam", "step")]: 80, [E("exam", "ielts")]: 70 },
+    summary: "بناء الجملة الإنجليزية بصيغة المجهول (be + past participle).",
+    meta: { version: 1, lastUpdated: "2026-07-10", importance: 80 },
+    relations: [
+      { type: "belongs_to", to: E("exam", "step") },
+      { type: "belongs_to", to: E("exam", "ielts") },
+    ],
   },
 
   /* ═══ ربط المفاهيم بالمواد/الكتب/الاختبارات (عبر العلاقات فقط) ═══ */

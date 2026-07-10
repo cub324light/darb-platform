@@ -207,8 +207,13 @@ export class KnowledgeBase {
         break;
       case "concept": {
         if (e.category) f.push(`المجال: ${e.category}`);
+        if (e.cefr) f.push(`المستوى (CEFR): ${e.cefr}`);
         if (e.difficulty) f.push(`الصعوبة: ${e.difficulty === "easy" ? "سهل" : e.difficulty === "hard" ? "صعب" : "متوسط"}`);
         if (e.examFrequency != null) f.push(`تكراره في الاختبارات: ${e.examFrequency}٪`);
+        if (e.examWeights) {
+          const parts = Object.entries(e.examWeights).map(([ex, w]) => `${this.byId.get(ex)?.name?.split("—")[0].trim() ?? ex}: ${w}`);
+          if (parts.length) f.push(`وزنه في الاختبارات — ${parts.join(" · ")}`);
+        }
         const b = e.body;
         if (b?.definition) f.push(`التعريف: ${b.definition}`);
         if (b?.whyImportant) f.push(`أهميته: ${b.whyImportant}`);
