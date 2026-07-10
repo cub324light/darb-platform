@@ -5,8 +5,8 @@
    نقيّ تماماً (لا IO). يعيد استخدام تطبيع البحث العربي من طبقة الاسترجاع القائمة. */
 import { normalizeAr } from "../retrieval";
 import {
-  KIND_META, type EntityKind, type EntityId, type KBEntity,
-  type Relation, type RelationType,
+  KIND_META, DEFAULT_META, type EntityKind, type EntityId, type KBEntity,
+  type Relation, type RelationType, type NodeMeta,
 } from "./schema";
 
 /* حافّة محلولة: النوع + الاتجاه + الكيان الآخر */
@@ -19,15 +19,21 @@ export interface ResolvedEdge {
 
 /* عبارة العلاقة حسب الاتجاه — لصياغة حقائق طبيعية */
 const PHRASE: Record<RelationType, { out: string; in: string }> = {
-  part_of:      { out: "جزء من", in: "يضمّ" },
-  offers:       { out: "يطرح", in: "يُطرَح في" },
-  leads_to:     { out: "يقود إلى", in: "يُوصَل إليه من" },
   requires:     { out: "يتطلّب", in: "مطلوب لـ" },
+  leads_to:     { out: "يقود إلى", in: "يُوصَل إليه من" },
+  uses:         { out: "يستخدم", in: "مُستخدَم في" },
+  belongs_to:   { out: "ينتمي إلى", in: "يضمّ" },
+  recommends:   { out: "يُنصَح بـ", in: "يُنصَح به في" },
+  similar_to:   { out: "مشابه لـ", in: "مشابه لـ" },
+  part_of:      { out: "جزء من", in: "يتضمّن" },
+  next_step:    { out: "الخطوة التالية", in: "يسبقه" },
+  prerequisite: { out: "متطلّبه السابق", in: "متطلّب لـ" },
+  used_in:      { out: "يُستخدَم في", in: "يستخدم" },
+  works_at:     { out: "يُمارَس في", in: "يوظّف على" },
+  certified_by: { out: "مُعتمَد من", in: "يعتمد" },
   teaches:      { out: "يُكسِب", in: "يُكتسَب في" },
-  employs:      { out: "يوظّف على", in: "توظّفه" },
-  hires_from:   { out: "يوظّف من", in: "توظّف خرّيجيه" },
-  prepares_for: { out: "يهيّئ لـ", in: "يُهيّأ له بـ" },
-  related_to:   { out: "مرتبط بـ", in: "مرتبط بـ" },
+  depends_on:   { out: "يعتمد على", in: "يعتمد عليه" },
+  supported_by: { out: "مدعوم بـ", in: "يدعم" },
 };
 
 export class KnowledgeBase {
@@ -54,6 +60,9 @@ export class KnowledgeBase {
     return kind ? list.filter((e) => e.kind === kind) : list;
   }
   count(): number { return this.byId.size; }
+
+  /* نسخنة العقدة — تُضمَن دائماً (افتراضٌ حين تغيب) */
+  meta(id: EntityId): NodeMeta { return this.byId.get(id)?.meta ?? DEFAULT_META; }
 
   /* كل جِوار عقدة (خارج + داخل)، محلولاً لكيانات فعلية */
   edges(id: EntityId): ResolvedEdge[] {
@@ -142,6 +151,40 @@ export class KnowledgeBase {
         break;
       case "skill":
         if (e.category) f.push(`النوع: ${e.category}`);
+        break;
+      case "subject":
+        if (e.code) f.push(`الرمز: ${e.code}`);
+        if (e.level) f.push(`المستوى: ${e.level === "secondary" ? "ثانوي" : "جامعي"}`);
+        break;
+      case "course":
+        if (e.code) f.push(`الرمز: ${e.code}`);
+        if (e.credits) f.push(`الساعات: ${e.credits}`);
+        break;
+      case "book":
+        if (e.author) f.push(`المؤلّف: ${e.author}`);
+        if (e.publisher) f.push(`الناشر: ${e.publisher}`);
+        break;
+      case "resource":
+        if (e.format) f.push(`الصيغة: ${e.format}`);
+        if (e.lang) f.push(`اللغة: ${e.lang === "ar" ? "عربي" : "إنجليزي"}`);
+        break;
+      case "tool":
+        if (e.category) f.push(`النوع: ${e.category}`);
+        if (e.platform) f.push(`المنصّة: ${e.platform}`);
+        break;
+      case "ai_tool":
+        if (e.vendor) f.push(`المزوّد: ${e.vendor}`);
+        if (e.bestFor?.length) f.push(`أفضل لـ: ${e.bestFor.join("، ")}`);
+        break;
+      case "project":
+        if (e.difficulty) f.push(`المستوى: ${e.difficulty}`);
+        if (e.deliverables?.length) f.push(`المخرجات: ${e.deliverables.join("، ")}`);
+        break;
+      case "goal":
+        if (e.metric) f.push(`معيار النجاح: ${e.metric}`);
+        break;
+      case "lesson":
+        if (e.durationMin) f.push(`المدة: ${e.durationMin} دقيقة`);
         break;
     }
     if (f.length) lines.push(...f);

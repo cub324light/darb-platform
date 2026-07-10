@@ -1,185 +1,191 @@
-/* ═══════════ قاعدة المعرفة الموحّدة — مخطّط الكيانات (Entity Schema) ═══════════
-   مصدر الحقيقة الواحد لكل معرفة درب: الجامعات، الكليات، التخصصات، الوظائف،
-   المسارات، الشركات، المهارات، الشهادات، الاختبارات. لا بيانات متفرقة — كل شيء
-   كيانٌ واحد في رسمٍ (Graph) واحد، تربطه علاقات مُصنَّفة، ويقرؤه دويرب والوكلاء.
+/* ═══════════ نموذج عالم درب (World Model) — مخطّط العقد ═══════════
+   ليست مجرد قاعدة معرفة: كل شيء في حياة الطالب عقدةٌ (Node) في رسمٍ واحد. الرسم
+   هو الحقيقة الوحيدة؛ والنصّ الذي يقرؤه دويرب مجرّد View مُشتقّ منه (registry.describe).
 
-   ▓ مبادئ ثابتة (تغييرها لاحقاً مكلف — لذا نضبطها الآن):
-   1) هوية ثابتة: كل كيان معرّفه «النوع:الاسم-اللطيف» (kind:slug) — لا يتغيّر.
-   2) عُقَدٌ مُطبَّعة + حوافٌ مُصنَّفة: الحقول القياسية داخل الكيان، وكل رابط لكيان
-      آخر يُعبَّر عنه بعلاقة مُصنَّفة (Relation) — فالرسم موحّد وقابل للاجتياز.
-   3) قابل لقراءة دويرب: لكل كيان ما يكفي لتوليد «حقائق» نصّية (registry.describe).
-   4) قابل للتوسّع: إضافة نوع/حقل/كيان لا تكسر ما قبله؛ إضافة الكيانات = بياناتٌ فقط.
-   5) موصولٌ بطبقة المصادر: sourceIds تربط الكيان بمصادره الموثّقة (اقتباس دويرب).
-   6) ثنائي اللغة عند الحاجة: name (عربي) + nameEn اختياري.
+   ▓ مبادئ ثابتة (تغييرها لاحقاً مكلف):
+   1) هوية ثابتة: كل عقدة «kind:slug».
+   2) عُقَدٌ مُطبَّعة + حوافٌ مُصنَّفة: لا علاقة عامة — لكل رابط نوعٌ واضح.
+   3) قابل لقراءة الرسم: الحقيقة في العقد والحواف؛ النص يُولَّد عند الطلب.
+   4) نسخنة لكل عقدة: meta (version/lastUpdated/source/confidence) لمعرفة متى تُحدَّث.
+   5) قابل للتوسّع: إضافة نوع/حقل/عقدة لا تكسر ما قبله.
 
-   هذا الملف أنواعٌ نقية فقط — لا اعتماد على المتصفح ولا IO. */
+   أنواعٌ نقية فقط — لا IO. */
 
-/* الأنواع التسعة — قائمة المالك حرفياً */
+/* ─── الأنواع (Node kinds) — ٩ أساسية + ١٠ جديدة ─── */
 export type EntityKind =
-  | "university"    // جامعة
-  | "college"       // كلية
-  | "major"         // تخصص
-  | "job"           // وظيفة
-  | "career_path"   // مسار مهني
-  | "company"       // شركة/جهة توظيف
-  | "skill"         // مهارة
-  | "certification" // شهادة احترافية
-  | "exam";         // اختبار (قدرات/تحصيلي/STEP/IELTS/CEFR...)
+  /* البنية الأكاديمية */
+  | "university" | "college" | "major"
+  | "subject"       // مادة (كيان مستقل: تربط التخصص بالمهارات/الأدوات/المشاريع/الوظائف)
+  | "course"        // مقرّر (EE301)
+  | "lesson"        // درس
+  | "book"          // كتاب
+  | "resource"      // مصدر (فيديو/مقال/بودكاست/PDF)
+  /* المهني */
+  | "job" | "career_path" | "company"
+  | "skill"         // مهارة (قدرة مجرّدة)
+  | "tool"          // أداة/برنامج (ETAP/AutoCAD) — غير المهارة
+  | "ai_tool"       // أداة ذكاء اصطناعي (تتغيّر باستمرار — نوعٌ خاص)
+  | "project"       // مشروع
+  | "certification" // شهادة
+  | "exam"          // اختبار (قدرات/تحصيلي/STEP/IELTS/CEFR)
+  | "goal";         // هدف الطالب — أهمّ عقدة يقرؤها Life Engine
 
-/* معرّف كيان: «kind:slug» — ثابت وفريد ومقروء */
-export type EntityId = string;
+export type EntityId = string; // «kind:slug»
 
-/* أنواع العلاقات — حوافٌ مُصنَّفة موجّهة (المصدر → الهدف) */
+/* ─── العلاقات (Edges) — مفردات صريحة مغلقة، لا علاقة عامة ─── */
 export type RelationType =
-  | "part_of"       // كلية ⊂ جامعة · تخصص ⊂ كلية
-  | "offers"        // جامعة/كلية تطرح تخصصاً
-  | "leads_to"      // تخصص → وظيفة · وظيفة → وظيفة (الخطوة التالية) · مسار → وظيفة
-  | "requires"      // وظيفة تتطلّب مهارة/شهادة · تخصص يتطلّب اختباراً
-  | "teaches"       // تخصص يُكسِب مهارة
-  | "employs"       // شركة توظّف على وظيفة
-  | "hires_from"    // شركة توظّف من تخصص
-  | "prepares_for"  // اختبار يهيّئ لقبول/تخصص
-  | "related_to";   // علاقة عامة
+  | "requires"      // يتطلّب
+  | "leads_to"      // يقود إلى
+  | "uses"          // يستخدم (وظيفة/مشروع → أداة)
+  | "belongs_to"    // ينتمي إلى (مادة → تخصص · مقرّر → مادة)
+  | "recommends"    // يُنصَح بـ (مادة → أداة ذكاء · مصدر)
+  | "similar_to"    // مشابه لـ
+  | "part_of"       // جزء من (كلية → جامعة · درس → مقرّر)
+  | "next_step"     // الخطوة التالية (وظيفة → وظيفة · مادة → مادة)
+  | "prerequisite"  // متطلّب سابق (مادة تحتاج مادة قبلها)
+  | "used_in"       // يُستخدَم في (مشروع → شركة · أداة ذكاء → مادة)
+  | "works_at"      // يُمارَس في (وظيفة → شركة)
+  | "certified_by"  // مُعتمَد من (اختبار/شهادة → جهة)
+  | "teaches"       // يُكسِب (مادة/مصدر → مهارة)
+  | "depends_on"    // يعتمد على
+  | "supported_by"; // مدعوم بـ (درس → مصدر)
 
-/* حافّة واحدة: نوعٌ + كيانٌ هدف + ملاحظة اختيارية */
-export interface Relation {
-  type: RelationType;
-  to: EntityId;
-  note?: string;
+export interface Relation { type: RelationType; to: EntityId; note?: string; }
+
+/* نسخنة العقدة — لمعرفة متى تحتاج تحديثاً */
+export interface NodeMeta {
+  version: number;
+  lastUpdated: string;   // ISO (YYYY-MM-DD)
+  source?: string;       // من أين جاءت المعلومة
+  confidence?: number;   // 0..1 ثقة المحتوى
 }
 
-/* حقول مشتركة لكل كيان */
+/* حقول مشتركة لكل عقدة */
 export interface EntityBase {
   kind: EntityKind;
   id: EntityId;
-  name: string;            // الاسم العربي المعروض
+  name: string;
   nameEn?: string;
-  summary: string;         // سطرٌ واحد يُعرّف الكيان
-  description?: string;    // وصفٌ أغنى (اختياري)
-  aliases?: string[];      // أسماء بديلة للبحث/المطابقة (دويرب)
+  summary: string;
+  description?: string;
+  aliases?: string[];
   tags?: string[];
-  relations?: Relation[];  // الحواف إلى كيانات أخرى (الرسم)
-  sourceIds?: string[];    // ربطٌ بطبقة المصادر الموثّقة (kb/types Source)
+  relations?: Relation[];
+  sourceIds?: string[];  // ربطٌ بطبقة المصادر الموثّقة
+  meta?: NodeMeta;
 }
 
-/* مدى راتب استرشادي موحّد */
-export interface SalaryRange {
-  entrySar: string;        // راتب مبتدئ (نص تقريبي)
-  seniorSar?: string;      // بعد الخبرة
-  note?: string;
-}
-
+export interface SalaryRange { entrySar: string; seniorSar?: string; note?: string; }
 export type Demand = "high" | "medium" | "low";
 
-/* ─────────────── الكيانات المتخصّصة (Node types) ───────────────
-   القاعدة: الحقول القياسية (قوائم/أرقام) داخل الكيان، والروابط لكيانات أخرى
-   في relations[] (مهاراتٌ/شركاتٌ/شهاداتٌ/تخصصاتٌ = علاقات، لا نصوص مكرّرة). */
-
-/* جامعة */
+/* ─── العقد المتخصّصة ─── */
 export interface UniversityEntity extends EntityBase {
   kind: "university";
-  city?: string;
-  type?: "government" | "private";
-  founded?: number;
-  ranking?: { scope: string; rank: string }[]; // تصنيفات (محلي/عالمي)
-  stats?: { label: string; value: string }[];   // إحصاءات (طلاب/كليات...)
+  city?: string; type?: "government" | "private"; founded?: number;
+  ranking?: { scope: string; rank: string }[];
+  stats?: { label: string; value: string }[];
   website?: string;
 }
+export type CollegeEntity = EntityBase & { kind: "college" };
 
-/* كلية */
-export interface CollegeEntity extends EntityBase {
-  kind: "college";
-}
-
-/* تخصص */
 export interface MajorEntity extends EntityBase {
   kind: "major";
-  category?: string;         // الفئة العامة (صحي/هندسي/حاسب...)
-  degreeYears?: number;      // سنوات الدرجة
-  coreSubjects?: string[];   // المواد الأساسية
+  category?: string; degreeYears?: number; coreSubjects?: string[];
 }
+export interface SubjectEntity extends EntityBase {
+  kind: "subject";
+  code?: string; category?: string; level?: "secondary" | "university";
+}
+export interface CourseEntity extends EntityBase {
+  kind: "course";
+  code?: string; credits?: number;
+}
+export type LessonEntity = EntityBase & { kind: "lesson"; durationMin?: number };
 
-/* وظيفة — مثال المالك الكامل */
+export interface BookEntity extends EntityBase {
+  kind: "book";
+  author?: string; publisher?: string; forExam?: boolean;
+}
+export interface ResourceEntity extends EntityBase {
+  kind: "resource";
+  format?: "video" | "article" | "podcast" | "pdf" | "course";
+  url?: string; lang?: "ar" | "en";
+}
 export interface JobEntity extends EntityBase {
   kind: "job";
-  tasks: string[];              // المهام
-  salary?: SalaryRange;         // الراتب
-  demand?: Demand;              // الطلب في السوق
-  learnPath?: string[];         // ماذا يتعلّم الطالب للوصول إليها
-  // المهارات/الشركات/التخصصات/الشهادات/«ماذا بعدها» = علاقات في relations[]
+  tasks: string[]; salary?: SalaryRange; demand?: Demand; learnPath?: string[];
 }
-
-/* مسار مهني */
-export interface CareerPathEntity extends EntityBase {
-  kind: "career_path";
-  stages?: string[];            // مراحل المسار من مبتدئ إلى متقدّم
-}
-
-/* شركة/جهة توظيف */
+export interface CareerPathEntity extends EntityBase { kind: "career_path"; stages?: string[]; }
 export interface CompanyEntity extends EntityBase {
   kind: "company";
-  sector?: string;              // القطاع
-  locations?: string[];         // مدن/مواقع
-  official?: boolean;           // جهة حكومية/رسمية
+  sector?: string; locations?: string[]; official?: boolean;
 }
-
-/* مهارة */
-export interface SkillEntity extends EntityBase {
-  kind: "skill";
-  category?: string;            // تقنية/لغوية/تحليلية...
-  toolFor?: string;             // إن كانت أداة/برنامجاً
+export interface SkillEntity extends EntityBase { kind: "skill"; category?: string; }
+export interface ToolEntity extends EntityBase {
+  kind: "tool";
+  category?: string; platform?: string;
 }
-
-/* شهادة احترافية */
+export interface AiToolEntity extends EntityBase {
+  kind: "ai_tool";
+  vendor?: string; bestFor?: string[];
+}
+export interface ProjectEntity extends EntityBase {
+  kind: "project";
+  difficulty?: "beginner" | "intermediate" | "advanced"; deliverables?: string[];
+}
 export interface CertificationEntity extends EntityBase {
   kind: "certification";
-  provider?: string;            // الجهة المانحة
-  level?: string;               // مبتدئ/متقدّم
-  costNote?: string;            // تكلفة تقريبية
-  validityNote?: string;        // مدة الصلاحية
+  provider?: string; level?: string; costNote?: string; validityNote?: string;
 }
-
-/* اختبار — قدرات/تحصيلي/STEP/IELTS/CEFR */
 export interface ExamEntity extends EntityBase {
   kind: "exam";
-  provider?: string;                          // قياس / بريطاني ...
-  sections?: { name: string; note?: string }[]; // الأقسام
-  levels?: string[];                          // مستويات (CEFR: A1..C2)
-  scoreScale?: string;                        // سلّم الدرجات
-  validityNote?: string;
-  tips?: string[];
+  provider?: string; sections?: { name: string; note?: string }[];
+  levels?: string[]; scoreScale?: string; validityNote?: string; tips?: string[];
+}
+export interface GoalEntity extends EntityBase {
+  kind: "goal";
+  target?: EntityId;   // العقدة الهدف (تخصص/شركة/اختبار...)
+  metric?: string;     // معيار النجاح (مثل «STEP 85»)
 }
 
-/* اتحاد كل الكيانات — مُميَّز بـ kind */
+/* اتحاد كل العقد — مُميَّز بـ kind */
 export type KBEntity =
-  | UniversityEntity | CollegeEntity | MajorEntity | JobEntity | CareerPathEntity
-  | CompanyEntity | SkillEntity | CertificationEntity | ExamEntity;
+  | UniversityEntity | CollegeEntity | MajorEntity | SubjectEntity | CourseEntity
+  | LessonEntity | BookEntity | ResourceEntity | JobEntity | CareerPathEntity
+  | CompanyEntity | SkillEntity | ToolEntity | AiToolEntity | ProjectEntity
+  | CertificationEntity | ExamEntity | GoalEntity;
 
-/* تسمية/أيقونة كل نوع (لعرضٍ موحّد وحقائق دويرب) */
+/* تسمية/أيقونة كل نوع */
 export const KIND_META: Record<EntityKind, { label: string; icon: string }> = {
-  university:    { label: "جامعة",     icon: "🏛️" },
-  college:       { label: "كلية",      icon: "🏫" },
-  major:         { label: "تخصص",      icon: "📚" },
-  job:           { label: "وظيفة",     icon: "💼" },
-  career_path:   { label: "مسار مهني", icon: "🧭" },
-  company:       { label: "شركة",      icon: "🏢" },
-  skill:         { label: "مهارة",     icon: "🛠️" },
-  certification: { label: "شهادة",     icon: "🎓" },
-  exam:          { label: "اختبار",    icon: "📝" },
+  university:    { label: "جامعة",           icon: "🏛️" },
+  college:       { label: "كلية",            icon: "🏫" },
+  major:         { label: "تخصص",            icon: "📚" },
+  subject:       { label: "مادة",            icon: "📖" },
+  course:        { label: "مقرّر",           icon: "🗂️" },
+  lesson:        { label: "درس",             icon: "📝" },
+  book:          { label: "كتاب",            icon: "📕" },
+  resource:      { label: "مصدر",            icon: "🎬" },
+  job:           { label: "وظيفة",           icon: "💼" },
+  career_path:   { label: "مسار مهني",       icon: "🧭" },
+  company:       { label: "شركة",            icon: "🏢" },
+  skill:         { label: "مهارة",           icon: "🛠️" },
+  tool:          { label: "أداة",            icon: "🧰" },
+  ai_tool:       { label: "أداة ذكاء",       icon: "🤖" },
+  project:       { label: "مشروع",           icon: "🚀" },
+  certification: { label: "شهادة",           icon: "🎓" },
+  exam:          { label: "اختبار",          icon: "🧪" },
+  goal:          { label: "هدف",             icon: "🎯" },
 };
 
-/* تسمية العلاقة بالعربية — تُستعمل في توليد حقائق دويرب */
+/* تسمية العلاقة (اتجاه الخروج) — لعرضٍ موحّد */
 export const RELATION_LABEL: Record<RelationType, string> = {
-  part_of: "جزء من",
-  offers: "يطرح",
-  leads_to: "يقود إلى",
-  requires: "يتطلّب",
-  teaches: "يُكسِب",
-  employs: "يوظّف على",
-  hires_from: "يوظّف من",
-  prepares_for: "يهيّئ لـ",
-  related_to: "مرتبط بـ",
+  requires: "يتطلّب", leads_to: "يقود إلى", uses: "يستخدم", belongs_to: "ينتمي إلى",
+  recommends: "يُنصَح بـ", similar_to: "مشابه لـ", part_of: "جزء من", next_step: "الخطوة التالية",
+  prerequisite: "متطلّب سابق", used_in: "يُستخدَم في", works_at: "يُمارَس في",
+  certified_by: "مُعتمَد من", teaches: "يُكسِب", depends_on: "يعتمد على", supported_by: "مدعوم بـ",
 };
 
-/* بانٍ للمعرّف الثابت */
 export const entityId = (kind: EntityKind, slug: string): EntityId => `${kind}:${slug}`;
+
+/* نسخنة افتراضية حين تغيب — فتبقى لكل عقدة meta عند القراءة */
+export const DEFAULT_META: NodeMeta = { version: 1, lastUpdated: "2026-07-01", confidence: 0.9 };
