@@ -56,6 +56,9 @@ export type RelationType =
 
 export interface Relation { type: RelationType; to: EntityId; note?: string; }
 
+/* دورة حياة المحتوى — لا يُعرض للطلاب إلا Published */
+export type ContentStatus = "draft" | "review" | "published" | "archived";
+
 /* نسخنة العقدة + وزنها — لمعرفة متى تحتاج تحديثاً وما الذي يبدأ به دويرب */
 export interface NodeMeta {
   version: number;
@@ -63,6 +66,7 @@ export interface NodeMeta {
   source?: string;       // من أين جاءت المعلومة
   confidence?: number;   // 0..1 ثقة المحتوى
   importance?: number;   // 0..100 أهمية العقدة (قانون أوم=100 · قانون ثانوي=25)
+  status?: ContentStatus; // دورة الحياة (افتراض: published لمحتوى البذرة)
 }
 
 /* حقول مشتركة لكل عقدة */

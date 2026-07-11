@@ -18,6 +18,7 @@ const ANNUAL_REVIEW = annualReviewLists();
 const SourcesManager = dynamic(() => import("@/components/admin/SourcesManager"), { ssr: false });
 const AuditLog = dynamic(() => import("@/components/admin/AuditLog"), { ssr: false });
 const BroadcastCenter = dynamic(() => import("@/components/admin/BroadcastCenter"), { ssr: false });
+const ContentManager = dynamic(() => import("@/components/admin/ContentManager"), { ssr: false });
 
 type PlanId = "free" | "shaheen" | "anqa";
 
@@ -707,6 +708,7 @@ export default function AdminPage() {
 
   return (
     <AdminShell role={myRole} active={section} onNavigate={setSection}>
+      {section === "content" && <ContentManager />}
       {section === "audit" && <AuditLog pass={pass} />}
       {section === "broadcast" && <BroadcastCenter pass={pass} />}
       {section === "overview" && (

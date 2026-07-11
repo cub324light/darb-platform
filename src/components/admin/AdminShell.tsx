@@ -5,12 +5,13 @@
 import { ROLE_RANK, ROLE_LABEL, ROLE_COLOR, type Role } from "@/lib/roles";
 
 export type AdminSection =
-  | "overview" | "audit" | "broadcast" | "ranked" | "duwairb" | "settings";
+  | "overview" | "content" | "audit" | "broadcast" | "ranked" | "duwairb" | "settings";
 
 interface NavItem { id: AdminSection; label: string; icon: string; min: Role; ready: boolean; }
 
 const NAV: NavItem[] = [
   { id: "overview",  label: "نظرة عامة",        icon: "📊", min: "moderator", ready: true },
+  { id: "content",   label: "إدارة المحتوى",     icon: "📚", min: "admin",     ready: true },
   { id: "audit",     label: "سجلّ التدقيق",      icon: "🛡️", min: "moderator", ready: true },
   { id: "broadcast", label: "مركز الإشعارات",    icon: "📢", min: "admin",     ready: true },
   { id: "ranked",    label: "الرتب و1v1",        icon: "🏆", min: "admin",     ready: false },
