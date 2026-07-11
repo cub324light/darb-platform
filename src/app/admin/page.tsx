@@ -19,6 +19,9 @@ const SourcesManager = dynamic(() => import("@/components/admin/SourcesManager")
 const AuditLog = dynamic(() => import("@/components/admin/AuditLog"), { ssr: false });
 const BroadcastCenter = dynamic(() => import("@/components/admin/BroadcastCenter"), { ssr: false });
 const ContentManager = dynamic(() => import("@/components/admin/ContentManager"), { ssr: false });
+const AdminDashboard = dynamic(() => import("@/components/admin/AdminDashboard"), { ssr: false });
+const AdminReview = dynamic(() => import("@/components/admin/AdminReview"), { ssr: false });
+const AdminQuality = dynamic(() => import("@/components/admin/AdminQuality"), { ssr: false });
 
 type PlanId = "free" | "shaheen" | "anqa";
 
@@ -300,7 +303,7 @@ export default function AdminPage() {
   const [showSources, setShowSources] = useState(false);
 
   /* ── القسم النشط في الهيكل الموحّد ── */
-  const [section, setSection] = useState<AdminSection>("overview");
+  const [section, setSection] = useState<AdminSection>("dashboard");
   const loadReports = async () => {
     setReportsBusy(true);
     try {
@@ -708,7 +711,10 @@ export default function AdminPage() {
 
   return (
     <AdminShell role={myRole} active={section} onNavigate={setSection}>
+      {section === "dashboard" && <AdminDashboard onGoto={setSection} />}
       {section === "content" && <ContentManager />}
+      {section === "review" && <AdminReview />}
+      {section === "quality" && <AdminQuality />}
       {section === "audit" && <AuditLog pass={pass} />}
       {section === "broadcast" && <BroadcastCenter pass={pass} />}
       {section === "overview" && (

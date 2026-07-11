@@ -73,6 +73,8 @@ export default function ContentManager() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const toggleSel = (id: string) => setSelected((s) => { const nx = new Set(s); if (nx.has(id)) nx.delete(id); else nx.add(id); return nx; });
 
   const reload = async () => {
     setErr(null);
@@ -102,6 +104,15 @@ export default function ContentManager() {
     finally { setBusy(false); }
   };
   const saveDraft = () => draft && mutate(async () => { await repo.save(draftToEntity(draft), { status: draft.isNew ? "draft" : undefined }); setDraft(null); });
+
+  /* تنفيذ جماعي على المحدَّد — عبر المستودع (History يسجّل كلاً منها) */
+  const bulk = (fn: (id: string) => Promise<unknown>) => mutate(async () => { for (const id of [...selected]) await fn(id); setSelected(new Set()); });
+  const bulkImportance = () => {
+    const v = prompt("الأهمية الجديدة (٠–١٠٠):");
+    const num = v == null ? NaN : Number(v);
+    if (!Number.isFinite(num)) return;
+    void bulk(async (id) => { const rec = await repo.get(id); if (rec) await repo.save({ ...rec.entity, meta: { ...(rec.entity.meta ?? { version: 1, lastUpdated: "" }), importance: Math.max(0, Math.min(100, num)) } }, { status: rec.status }); });
+  };
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
@@ -143,11 +154,26 @@ export default function ContentManager() {
         <p className="t-caption" style={{ color: "var(--text-muted)" }}>جارٍ التحميل…</p>
       ) : (
         <div className="flex flex-col gap-1.5">
-          <p className="t-caption" style={{ color: "var(--text-muted)" }}>{filtered.length} عنصر</p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="t-caption flex-1" style={{ color: "var(--text-muted)" }}>{filtered.length} عنصر</p>
+            <button onClick={() => setSelected((s) => s.size ? new Set() : new Set(filtered.slice(0, 100).map((r) => r.entity.id)))} className="t-caption font-bold" style={{ color: "var(--accent-light)" }}>{selected.size ? "إلغاء التحديد" : "تحديد الظاهر"}</button>
+          </div>
+          {/* شريط التنفيذ الجماعي */}
+          {selected.size > 0 && (
+            <div className="ds-card ds-card-tight flex items-center gap-1.5 flex-wrap sticky top-2 z-10" style={{ background: "color-mix(in srgb, var(--accent) 10%, var(--surface))", borderColor: "var(--accent)" }}>
+              <span className="t-caption font-black" style={{ color: "var(--accent-light)" }}>{selected.size} محدَّد</span>
+              <button disabled={busy} onClick={() => bulk((id) => repo.setStatus(id, "published"))} className="t-caption font-bold px-2.5 py-1 rounded-lg" style={{ background: "color-mix(in srgb, var(--success) 16%, transparent)", color: "var(--success)" }}>نشر</button>
+              <button disabled={busy} onClick={() => bulk((id) => repo.setStatus(id, "review"))} className="t-caption font-bold px-2.5 py-1 rounded-lg" style={{ background: "color-mix(in srgb, var(--gold) 16%, transparent)", color: "var(--gold)" }}>مراجعة</button>
+              <button disabled={busy} onClick={() => bulk((id) => repo.setStatus(id, "archived"))} className="t-caption font-bold px-2.5 py-1 rounded-lg" style={{ background: "var(--surface2)", color: "var(--text-dim)" }}>أرشفة</button>
+              <button disabled={busy} onClick={bulkImportance} className="t-caption font-bold px-2.5 py-1 rounded-lg" style={{ background: "var(--surface2)", color: "var(--text-dim)" }}>الأهمية</button>
+              <button disabled={busy} onClick={() => { if (confirm(`حذف ${selected.size} عنصراً؟`)) void bulk((id) => repo.remove(id)); }} className="t-caption font-bold px-2.5 py-1 rounded-lg" style={{ background: "color-mix(in srgb, var(--danger) 14%, transparent)", color: "var(--danger)" }}>حذف</button>
+            </div>
+          )}
           {filtered.slice(0, 100).map((r) => {
             const nx = nextStatus(r.status);
             return (
               <div key={r.entity.id} className="ds-card ds-card-tight flex items-center gap-2.5">
+                <input type="checkbox" checked={selected.has(r.entity.id)} onChange={() => toggleSel(r.entity.id)} className="flex-shrink-0 w-4 h-4" aria-label="تحديد" />
                 <span className="text-[18px] flex-shrink-0">{KIND_META[r.entity.kind].icon}</span>
                 <div className="flex flex-col min-w-0 flex-1">
                   <span className="t-title" style={{ color: "var(--text)" }}>{r.entity.name}</span>

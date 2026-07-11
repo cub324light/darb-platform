@@ -5,10 +5,12 @@
 import type { ContentRepository } from "./repository";
 import { LocalContentRepository } from "./localRepository";
 import { FirestoreContentRepository } from "./firestoreRepository";
+import { withHistory } from "./history";
 
 export * from "./repository";
 export { LocalContentRepository } from "./localRepository";
 export { FirestoreContentRepository } from "./firestoreRepository";
+export { loadHistory, recordHistory, ACTION_LABEL, type HistoryEntry, type HistoryAction } from "./history";
 
 let cached: ContentRepository | null = null;
 
@@ -18,7 +20,8 @@ export function getContentRepository(): ContentRepository {
   if (typeof window !== "undefined") {
     try { useLocal = localStorage.getItem("darb_content_backend") === "local"; } catch { /* تجاهل */ }
   }
-  cached = useLocal ? new LocalContentRepository() : new FirestoreContentRepository();
+  /* كل تعديلٍ يُسجَّل في History تلقائياً عبر الغلاف */
+  cached = withHistory(useLocal ? new LocalContentRepository() : new FirestoreContentRepository());
   return cached;
 }
 
