@@ -22,6 +22,7 @@ const ContentManager = dynamic(() => import("@/components/admin/ContentManager")
 const AdminDashboard = dynamic(() => import("@/components/admin/AdminDashboard"), { ssr: false });
 const AdminReview = dynamic(() => import("@/components/admin/AdminReview"), { ssr: false });
 const AdminQuality = dynamic(() => import("@/components/admin/AdminQuality"), { ssr: false });
+const AdminGraph = dynamic(() => import("@/components/admin/AdminGraph"), { ssr: false });
 
 type PlanId = "free" | "shaheen" | "anqa";
 
@@ -331,7 +332,7 @@ export default function AdminPage() {
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsErr, setStatsErr] = useState("");
 
-  const loadAnalytics = async () => {
+  async function loadAnalytics() {
     setStatsLoading(true); setStatsErr("");
     try {
       const { ok, data } = await callApi("analytics");
@@ -339,7 +340,7 @@ export default function AdminPage() {
       else setStatsErr((data.error as string) ?? "تعذّر الجلب");
     } catch { setStatsErr("خطأ في الاتصال"); }
     finally { setStatsLoading(false); }
-  };
+  }
 
   /* ── تكلفة الذكاء الاصطناعي ── */
   const [aiDays, setAiDays] = useState<AiUsageDay[]>([]);
@@ -393,7 +394,7 @@ export default function AdminPage() {
   };
 
   /* جلب الإعلانات السابقة (قراءة عامة، بلا كلمة سر) */
-  const loadAnnouncements = async () => {
+  async function loadAnnouncements() {
     try {
       const res = await fetch("/api/social", {
         method: "POST",
@@ -403,7 +404,7 @@ export default function AdminPage() {
       const data = await res.json() as { announcements?: Announcement[] };
       setAnnList(data.announcements ?? []);
     } catch { /* تجاهل */ }
-  };
+  }
 
   const startEdit = (a: Announcement) => {
     setEditingId(a.id);
@@ -713,6 +714,7 @@ export default function AdminPage() {
     <AdminShell role={myRole} active={section} onNavigate={setSection}>
       {section === "dashboard" && <AdminDashboard onGoto={setSection} />}
       {section === "content" && <ContentManager />}
+      {section === "graph" && <AdminGraph />}
       {section === "review" && <AdminReview />}
       {section === "quality" && <AdminQuality />}
       {section === "audit" && <AuditLog pass={pass} />}
