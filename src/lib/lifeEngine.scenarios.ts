@@ -8,13 +8,15 @@ const uni = (o: Partial<LifeContext>): LifeContext => ({
   stage: "university", uniStage: "mid", gpa: 3.0, hours: 60, year: "الثانية",
   majorId: "ee", majorName: "هندسة كهربائية", coopDone: false, gradInterest: false,
   highschoolPct: null, inSchoolFinals: false, daysToSchoolFinals: null, qiyas: null,
-  uniFinalsInDays: null, termLabel: "الفصل الثاني", inStudyTerm: true, ...o,
+  uniFinalsInDays: null, termLabel: "الفصل الثاني", inStudyTerm: true,
+  hwOverdue: 0, hwDueToday: 0, hwPending: 0, ...o,
 });
 const sec = (o: Partial<LifeContext>): LifeContext => ({
   stage: "first", uniStage: null, gpa: null, hours: null, year: null,
   majorId: null, majorName: null, coopDone: false, gradInterest: false,
   highschoolPct: null, inSchoolFinals: false, daysToSchoolFinals: null, qiyas: null,
-  uniFinalsInDays: null, termLabel: null, inStudyTerm: true, ...o,
+  uniFinalsInDays: null, termLabel: null, inStudyTerm: true,
+  hwOverdue: 0, hwDueToday: 0, hwPending: 0, ...o,
 });
 const q = (days: number, kind: "qudurat" | "tahsili" | "step" = "qudurat", label = "القدرات العامة") =>
   ({ kind, label, days, weeks: Math.ceil(days / 7), approximate: true });

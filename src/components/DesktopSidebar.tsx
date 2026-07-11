@@ -32,6 +32,11 @@ const I = {
       <path strokeLinecap="round" strokeLinejoin="round" d="M3.5 10.5 12 3l8.5 7.5V20a1.5 1.5 0 0 1-1.5 1.5h-4.5V14h-5v7.5H5A1.5 1.5 0 0 1 3.5 20v-9.5z" />
     </svg>
   ),
+  school: (a: boolean) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.3 : 1.8} className="w-5 h-5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.5 3.5 4v13.5L12 20m0-13.5L20.5 4v13.5L12 20m0-13.5V20" />
+    </svg>
+  ),
   orbit: (a: boolean) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.3 : 1.8} className="w-5 h-5">
       <circle cx="12" cy="13" r="8" /><path strokeLinecap="round" d="M12 9.5V13l2.5 2M10 2h4" />
@@ -134,6 +139,7 @@ export default function DesktopSidebar() {
 
   const primary: NavLink[] = [
     { href: "/dashboard", label: "الرئيسية", icon: I.home },
+    { href: "/school", label: "المدرسة", icon: I.school },
     { href: "/orbit", label: "أوربت", icon: I.orbit },
     /* العنصر الأوسط حسب المرحلة: جامعي → أدوات الجامعة، ثالث ثانوي/خريج → القبول، وإلا مساري */
     isUniversityPhase(user)

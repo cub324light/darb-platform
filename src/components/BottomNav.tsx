@@ -69,6 +69,15 @@ const BASE_ITEMS: (NavItem | "MID")[] = [
     ),
   },
   {
+    href: "/school",
+    label: "المدرسة",
+    icon: (a: boolean) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.5 3.5 4v13.5L12 20m0-13.5L20.5 4v13.5L12 20m0-13.5V20" />
+      </svg>
+    ),
+  },
+  {
     href: "/orbit",
     label: "أوربت",
     icon: (a: boolean) => (

@@ -18,7 +18,8 @@ import { semesterInfo, uniStage } from "./uniJourney";
 import { resolveCalendar, type CalendarConfig, type NextExamInfo } from "./academicCalendar";
 import { findMajor } from "./university";
 import { hasMajorWorld } from "./majors";
-import { loadUser, loadGoals, loadTrackExamDates, loadCalendarConfig } from "./storage";
+import { loadUser, loadGoals, loadTrackExamDates, loadCalendarConfig, localDayKey } from "./storage";
+import { loadHomework, homeworkPressure } from "./homework";
 
 /* ── سياق الطالب الكامل — يُجمَّع مرّة من كل الأنظمة القائمة ── */
 export interface LifeContext {
@@ -39,11 +40,16 @@ export interface LifeContext {
   uniFinalsInDays: number | null;
   termLabel: string | null;
   inStudyTerm: boolean;
+  /* ضغط الواجبات الحقيقي — من مذكرة الواجبات (لا الاختبارات وحدها) */
+  hwOverdue: number;
+  hwDueToday: number;
+  hwPending: number;
 }
 
 export type PriorityKey =
   | "uni-finals" | "gpa" | "research" | "cv" | "coop" | "cert" | "foundation" | "study-routine"
-  | "school-finals-now" | "school-finals-soon" | "qiyas-soon" | "qiyas" | "school-grades" | "admission" | "early";
+  | "school-finals-now" | "school-finals-soon" | "qiyas-soon" | "qiyas" | "school-grades" | "admission" | "early"
+  | "homework";
 
 export type PriorityArea = "urgent" | "gpa" | "career" | "admission" | "study" | "growth";
 
@@ -97,6 +103,16 @@ interface PDef {
 const major = (c: LifeContext) => (c.majorName ? ` — ${c.majorName}` : "");
 
 const PRIORITY_DEFS: Record<PriorityKey, PDef> = {
+  homework: {
+    area: "study", icon: "📝", urgent: false,
+    title: () => "إنجاز واجباتك المدرسية",
+    why: (c) => c.hwOverdue > 0
+      ? `عندك ${c.hwOverdue} واجب متأخّر${c.hwDueToday > 0 ? ` و${c.hwDueToday} مستحق اليوم` : ""}.`
+      : c.hwDueToday > 0 ? `${c.hwDueToday} واجب مستحق اليوم.` : `${c.hwPending} واجب بلا إنجاز.`,
+    benefit: "درجات الواجبات والمشاركة جزءٌ من معدّلك — ولا تتراكم عليك.",
+    time: () => "اليوم",
+    next: "راجع مذكرتك وابدأ بالأقرب تسليماً.", cta: "افتح مذكرة الواجبات", href: "/school",
+  },
   "uni-finals": {
     area: "urgent", icon: "⏳", urgent: true,
     title: (c) => `مذاكرة اختبارات${c.termLabel ? ` ${c.termLabel}` : ""}`,
@@ -223,7 +239,7 @@ const PRIORITY_DEFS: Record<PriorityKey, PDef> = {
 const TIER: Record<PriorityKey, Tier> = {
   "uni-finals": "urgent", "school-finals-now": "urgent", "school-finals-soon": "urgent", "qiyas-soon": "urgent",
   gpa: "important", cv: "important", coop: "important", admission: "important",
-  qiyas: "important", "study-routine": "important", "school-grades": "important",
+  qiyas: "important", "study-routine": "important", "school-grades": "important", homework: "important",
   research: "strategic", cert: "strategic", foundation: "strategic", early: "strategic",
 };
 
@@ -244,6 +260,7 @@ const COST: Record<PriorityKey, { hours: number; payoff: string }> = {
   "school-grades": { hours: 40, payoff: "توسّع خياراتك في القبول" },
   admission: { hours: 6, payoff: "تعرف أين تُقبل وتقدّم بثقة" },
   early: { hours: 0, payoff: "تسبق دفعتك وتدخل القبول متقدّماً" },
+  homework: { hours: 0, payoff: "درجات الواجبات محفوظة ولا تتراكم عليك" },
 };
 
 /* ── القواعد: صريحة، كلٌّ بمعرّف وسبب ووزن وشرط ── */
@@ -277,6 +294,10 @@ export const RULES: Rule[] = [
   { id: 33, label: "سنة القبول (ثالث ثانوي/خريج)", priority: "admission", weight: 45, when: (c) => c.stage === "third" || c.stage === "graduate" },
   { id: 36, label: "ثالث ثانوي بدرجات منخفضة (تحت ٨٥٪)", priority: "school-grades", weight: 50, when: (c) => c.stage === "third" && c.highschoolPct != null && c.highschoolPct < 85 },
   { id: 34, label: "مرحلة مبكّرة (أول/ثاني ثانوي)", priority: "early", weight: 30, when: (c) => c.stage === "first" || c.stage === "second" },
+  /* ── الواجبات المدرسية (الضغط الحقيقي، لكل المراحل) ── */
+  { id: 40, label: "واجبات متأخّرة", priority: "homework", weight: 68, when: (c) => c.hwOverdue > 0 },
+  { id: 41, label: "واجبات مستحقة اليوم", priority: "homework", weight: 52, when: (c) => c.hwDueToday > 0 },
+  { id: 42, label: "واجبات قادمة بلا إنجاز", priority: "homework", weight: 26, when: (c) => c.hwPending > 0 },
 ];
 
 /* ════════ العقل: أولويات الطالب مرتّبة ومُفسَّرة ════════ */
@@ -407,6 +428,7 @@ export function readLifeContext(now: Date = new Date()): LifeContext {
   const isUni = exp.stage === "university";
   const sem = isUni ? semesterInfo(now) : null;
   const m = findMajor(goals.majorId ?? undefined);
+  const hw = homeworkPressure(loadHomework(), localDayKey(now));
 
   return {
     stage: exp.stage,
@@ -425,5 +447,8 @@ export function readLifeContext(now: Date = new Date()): LifeContext {
     uniFinalsInDays: sem?.daysToFinals ?? null,
     termLabel: sem?.termLabel ?? null,
     inStudyTerm: cal.inStudyTerm,
+    hwOverdue: hw.overdue,
+    hwDueToday: hw.dueToday,
+    hwPending: hw.pending,
   };
 }
