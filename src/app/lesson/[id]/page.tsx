@@ -73,7 +73,7 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
       </Dome>
       <div className="h-4" />
       <div className="page-content flex flex-col gap-3">
-        <LessonView data={data} />
+        <LessonView key={data.id} data={data} />
       </div>
       <div className="h-6" />
       <PageFooter />

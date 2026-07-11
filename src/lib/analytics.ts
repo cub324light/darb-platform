@@ -24,6 +24,8 @@ export type EventName =
   | "skill_rated"
   | "skill_improved"
   | "lesson_completed"
+  | "lesson_started"
+  | "lesson_abandoned"
   | "card_reviewed"
   | "vault_error_added"
   | "file_uploaded"

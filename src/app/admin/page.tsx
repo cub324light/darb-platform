@@ -78,6 +78,13 @@ interface AnalyticsData {
   totalUsers: number;
   activeToday: number;
   eventsScanned: number;
+  lessonsStarted: number;
+  lessonsCompleted: number;
+  lessonCompletionRate: number | null;
+  topLessons: { key: string; name: string; count: number }[];
+  examsCompleted: number;
+  topExams: { exam: string; count: number }[];
+  funnel: { key: string; label: string; count: number }[];
 }
 
 /* ── تكلفة الذكاء الاصطناعي ── */
@@ -1094,6 +1101,88 @@ export default function AdminPage() {
             <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
               زوار اليوم = أجهزة فريدة سجّلت زيارة · نسبة التحويل = المسجّلون ÷ الزوار · متوسط المدة من جلسات أوربت المكتملة · بتوقيت UTC.
             </p>
+
+            {/* ── التعلّم: الدروس والاختبارات والقمع (من أحداث اليوم) ── */}
+            {stats.eventsScanned === 0 ? (
+              <div className="rounded-2xl px-4 py-6 text-center" style={{ background: "var(--surface)", border: "1px dashed var(--border)" }}>
+                <p className="font-black text-[14px]" style={{ color: "var(--text-dim)" }}>لا توجد بيانات أحداث كافية بعد</p>
+                <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>يبدأ قياس الدروس والاختبارات والقمع مع أول استخدامٍ حقيقي.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {/* بطاقات التعلّم */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  {[
+                    { label: "إكمال الدروس اليوم", val: String(stats.lessonsCompleted), color: "#5fd08a", empty: false, sub: `${stats.lessonsStarted} بدأوا` },
+                    { label: "معدّل إكمال الدرس", val: stats.lessonCompletionRate === null ? "—" : `${stats.lessonCompletionRate}%`, color: "#f2b53c", empty: stats.lessonCompletionRate === null, sub: "اكتمل ÷ بدأ (Drop-off)" },
+                    { label: "إكمال الاختبارات اليوم", val: String(stats.examsCompleted), color: "#7c9cff", empty: false, sub: "نتائج مُسجّلة اليوم" },
+                    { label: "أكثر المفاهيم زيارة", val: "—", color: "var(--text-muted)", empty: true, sub: "يحتاج تتبّعاً لم يُضَف" },
+                  ].map((c) => (
+                    <div key={c.label} className="rounded-2xl p-4 flex flex-col gap-1" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                      {c.empty ? (
+                        <p className="font-black text-[13px] leading-tight" style={{ color: "var(--text-dim)" }}>لا توجد بيانات كافية بعد</p>
+                      ) : (
+                        <p className="font-black text-2xl font-mono-nums" style={{ color: c.color }}>{c.val}</p>
+                      )}
+                      <p className="text-[12px] leading-tight" style={{ color: "var(--text-muted)" }}>{c.label}</p>
+                      <p className="text-[10px] leading-tight" style={{ color: "var(--text-muted)" }}>{c.sub}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* القمع — رحلة الطالب اليوم (مستخدمون فريدون لكل خطوة) */}
+                <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+                  <div className="px-4 py-2.5" style={{ background: "var(--surface2)" }}>
+                    <span className="text-[13px] font-bold" style={{ color: "var(--text)" }}>قمع الرحلة اليوم</span>
+                    <span className="text-[11px] mr-2" style={{ color: "var(--text-muted)" }}>مستخدمون فريدون لكل خطوة</span>
+                  </div>
+                  {stats.funnel.every((s) => s.count === 0) ? (
+                    <p className="text-[13px] px-4 py-4 text-center" style={{ color: "var(--text-muted)" }}>لا توجد بيانات كافية بعد</p>
+                  ) : (() => {
+                    const maxF = Math.max(...stats.funnel.map((s) => s.count), 1);
+                    return stats.funnel.map((s, i) => (
+                      <div key={s.key} className="flex items-center gap-3 px-4 py-2" style={{ borderTop: i > 0 ? "1px solid var(--border)" : "none", background: i % 2 === 0 ? "var(--surface)" : "var(--bg)" }}>
+                        <span className="text-[13px] flex-shrink-0 w-20" style={{ color: "var(--text-dim)" }}>{s.label}</span>
+                        <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
+                          <div className="h-full rounded-full" style={{ width: `${Math.round((s.count / maxF) * 100)}%`, background: "var(--accent)" }} />
+                        </div>
+                        <span className="font-mono-nums text-[13px] font-bold w-10 text-left flex-shrink-0" style={{ color: "var(--accent-light)" }}>{s.count}</span>
+                      </div>
+                    ));
+                  })()}
+                </div>
+
+                {/* أكثر الدروس إكمالاً + أكثر الاختبارات */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+                    <div className="px-4 py-2.5" style={{ background: "var(--surface2)" }}>
+                      <span className="text-[13px] font-bold" style={{ color: "var(--text)" }}>أكثر الدروس إكمالاً</span>
+                    </div>
+                    {stats.topLessons.length === 0 ? (
+                      <p className="text-[13px] px-4 py-4 text-center" style={{ color: "var(--text-muted)" }}>لا توجد بيانات كافية بعد</p>
+                    ) : stats.topLessons.map((l, i) => (
+                      <div key={l.key} className="flex items-center gap-3 px-4 py-2.5" style={{ borderTop: i > 0 ? "1px solid var(--border)" : "none" }}>
+                        <span className="text-[13px] flex-1 truncate" style={{ color: "var(--text-dim)" }}>{l.name}</span>
+                        <span className="font-mono-nums text-[13px] font-bold" style={{ color: "#5fd08a" }}>{l.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+                    <div className="px-4 py-2.5" style={{ background: "var(--surface2)" }}>
+                      <span className="text-[13px] font-bold" style={{ color: "var(--text)" }}>أكثر الاختبارات تسجيلاً</span>
+                    </div>
+                    {stats.topExams.length === 0 ? (
+                      <p className="text-[13px] px-4 py-4 text-center" style={{ color: "var(--text-muted)" }}>لا توجد بيانات كافية بعد</p>
+                    ) : stats.topExams.map((x, i) => (
+                      <div key={x.exam} className="flex items-center gap-3 px-4 py-2.5" style={{ borderTop: i > 0 ? "1px solid var(--border)" : "none" }}>
+                        <span className="text-[13px] flex-1 truncate" style={{ color: "var(--text-dim)" }}>{x.exam}</span>
+                        <span className="font-mono-nums text-[13px] font-bold" style={{ color: "#7c9cff" }}>{x.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

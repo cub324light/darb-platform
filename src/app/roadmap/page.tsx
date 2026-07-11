@@ -21,6 +21,7 @@ import {
   loadResults, saveResults, recordTrackProgress,
   type ScheduleEvent, type ExamFlow, type StageReviews, type TrainingItem,
 } from "@/lib/storage";
+import { trackEvent } from "@/lib/analytics";
 /* syncUser مُستورَد ديناميكياً أسفل — يُبعد Firebase عن حزمة الخريطة المبدئية */
 import dynamic from "next/dynamic";
 const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
@@ -1135,11 +1136,15 @@ export default function RoadmapPage() {
                   if (!isNaN(g)) {
                     updFlow({ grade: g });
                     /* سجّل النتيجة في «نتائجي» تلقائياً */
+                    const examName = primaryTrack?.title ?? "اختبار";
+                    const prev = loadResults();
                     saveResults([
-                      { id: `${Date.now()}`, exam: primaryTrack?.title ?? "اختبار",
+                      { id: `${Date.now()}`, exam: examName,
                         score: String(g), date: loadExamDate() ?? new Date().toISOString().slice(0, 10) },
-                      ...loadResults(),
+                      ...prev,
                     ]);
+                    /* حدث الاختبار (لوحة الأدمن) — إدخال درجة يوم الاختبار */
+                    trackEvent("exam_completed", { exam: examName, attemptNumber: prev.filter((r) => r.exam.trim() === examName).length + 1 });
                     setShowNextStep(true);
                   }
                 }}

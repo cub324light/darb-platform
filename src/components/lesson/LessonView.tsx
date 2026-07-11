@@ -3,9 +3,10 @@
    أول تجربة تعليمية حقيقية في درب: الدرس كتلٌ مرنة (شرح/معادلة/صورة/فيديو/خطوات/
    مثال/تنبيه/خطأ شائع/نقاط) تُعرض بمكوّنٍ لكل نوع، ثم الأسئلة والمصادر والمفاهيم
    المرتبطة — كلّها من الرسم. لا مصطلحات، لا تعقيد. */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { LessonBlock } from "@/lib/kb/entities/schema";
+import { trackEvent } from "@/lib/analytics";
 
 export interface LessonViewData {
   id: string;
@@ -171,6 +172,34 @@ export default function LessonView({ data }: { data: LessonViewData }) {
   const primary = data.leadsTo[0];
   const rest = data.leadsTo.slice(1);
 
+  /* دورة حياة الدرس للتحليلات (لوحة الأدمن): بدء عند الفتح، إكمال عند بلوغ
+     الخاتمة «أنت الآن تستطيع»، هجر عند المغادرة قبلها. الإكمال معرّف على بلوغ
+     الخاتمة (تُعرض دائماً) لا على التشخيص الاختياري — فيعمل لكل الدروس.
+     نقرأ حالة الإكمال عبر ref لتفادي الإغلاق القديم في cleanup الهجر. */
+  const endRef = useRef<HTMLElement | null>(null);
+  const completedRef = useRef(false);
+  useEffect(() => {
+    completedRef.current = false;
+    const props = { lessonKey: data.id, lessonName: data.name, concept: data.concept?.name ?? null };
+    trackEvent("lesson_started", props);
+    const el = endRef.current;
+    let obs: IntersectionObserver | undefined;
+    if (el && typeof IntersectionObserver !== "undefined") {
+      obs = new IntersectionObserver((entries) => {
+        if (!completedRef.current && entries.some((e) => e.isIntersecting)) {
+          completedRef.current = true;
+          trackEvent("lesson_completed", props);
+          obs?.disconnect();
+        }
+      }, { threshold: 0.4 });
+      obs.observe(el);
+    }
+    return () => {
+      obs?.disconnect();
+      if (!completedRef.current) trackEvent("lesson_abandoned", props);
+    };
+  }, [data.id, data.name, data.concept?.name]);
+
   return (
     <div className="flex flex-col gap-3">
       {/* ترويسة الدرس */}
@@ -248,7 +277,7 @@ export default function LessonView({ data }: { data: LessonViewData }) {
       )}
 
       {/* الخاتمة — «أنت الآن تستطيع» + الخطوة التالية (تشعر الطالب بالتقدّم) */}
-      <section className="ds-card ds-card-lg flex flex-col gap-4" style={{ background: "color-mix(in srgb, var(--success) 10%, var(--surface))", borderColor: "color-mix(in srgb, var(--success) 32%, var(--border))" }}>
+      <section ref={endRef} className="ds-card ds-card-lg flex flex-col gap-4" style={{ background: "color-mix(in srgb, var(--success) 10%, var(--surface))", borderColor: "color-mix(in srgb, var(--success) 32%, var(--border))" }}>
         {data.outcomes.length > 0 && (
           <div className="flex flex-col gap-2">
             <h2 className="t-h3" style={{ color: "var(--text)" }}>🎯 أنت الآن تستطيع:</h2>

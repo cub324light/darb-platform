@@ -3,6 +3,7 @@ import { checkAdminPassword, authorizeAdmin, getVerifiedRole, isOwnerEmail } fro
 import { recordAudit } from "@/lib/server/audit";
 import { checkRateLimit } from "@/lib/server/rateLimit";
 import { ACTION_MIN_ROLE, ASSIGNABLE_ROLES, isRole, atLeast, type AdminAction, type Role } from "@/lib/roles";
+import { eventAggregates, type EventRow } from "@/lib/eventAnalytics";
 
 /* ربط كل وضع بأقل صلاحية مطلوبة (مصدر القرار في lib/roles) */
 const ACTION_BY_MODE: Record<string, AdminAction> = {
@@ -299,12 +300,15 @@ export async function POST(req: NextRequest) {
         const pageCounts: Record<string, number> = {};
         const aiUsers = new Set<string>();
         let durSum = 0, durCount = 0;
+        /* صفوف المسح نفسه تُغذّي مُجمِّع الدروس/الاختبارات/القمع النقي (بلا قراءات إضافية) */
+        const rows: EventRow[] = [];
 
         for (const d of evSnap.docs) {
           const e = d.data();
           const name = e.name as string;
           const props = (e.props ?? {}) as Record<string, unknown>;
           const uid = (e.uid ?? null) as string | null;
+          rows.push({ name, props, uid });
 
           if (name === "page_view") {
             const vid = (props.visitorId as string) || uid || "";
@@ -331,12 +335,22 @@ export async function POST(req: NextRequest) {
           ? Math.min(100, Math.round((registeredToday / visitorsToday) * 100))
           : 0;
 
+        /* تجميع الدروس/الاختبارات/القمع/Drop-off (دالة نقية مُختبَرة) */
+        const agg = eventAggregates(rows);
+
         return NextResponse.json({
           analytics: {
             visitorsToday, registeredToday, conversion,
             avgSessionMins, aiUsersToday, topPages,
             totalUsers, activeToday,
             eventsScanned: evSnap.size,
+            lessonsStarted: agg.lessonsStarted,
+            lessonsCompleted: agg.lessonsCompleted,
+            lessonCompletionRate: agg.lessonCompletionRate,
+            topLessons: agg.topLessons,
+            examsCompleted: agg.examsCompleted,
+            topExams: agg.topExams,
+            funnel: agg.funnel,
           },
         });
       } catch (e) {

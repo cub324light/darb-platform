@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 const ALLOWED = new Set([
   "user_registered", "onboarding_completed", "session_started", "session_completed",
   "exam_started", "exam_completed", "question_answered", "skill_rated", "skill_improved",
-  "lesson_completed", "card_reviewed", "vault_error_added", "file_uploaded",
+  "lesson_completed", "lesson_started", "lesson_abandoned", "card_reviewed", "vault_error_added", "file_uploaded",
   "ai_plan_generated", "ai_explain_requested", "ai_quiz_generated", "page_view",
   "duwairb_opened", "ai_progress_analyzed",
   "daily_checkin", "weekly_report_viewed", "streak_recovered", "milestone_reached", "comeback_shown",

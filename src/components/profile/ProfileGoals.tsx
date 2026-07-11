@@ -3,6 +3,7 @@
 import { memo, useState } from "react";
 import type { DarbGoals, ExamResult } from "@/lib/storage";
 import { TRACKS, scoreRangeForTitle, validateScore } from "@/lib/tracks";
+import { trackEvent } from "@/lib/analytics";
 
 interface Props {
   goals: DarbGoals;
@@ -42,6 +43,8 @@ function ProfileGoalsBase({ goals, onGoalsChange, results, onAddResult, onDelete
     const err = validateScore(exam, resScore);
     if (err) { setResErr(err); return; }
     onAddResult({ id: `${Date.now()}`, exam, score: noScore ? undefined : (resScore.trim() || undefined), date: resDate || undefined });
+    /* حدث الاختبار (لوحة الأدمن: عدد الإكمالات + أكثر الاختبارات) — تسجيل يدوي لنتيجة جديدة */
+    trackEvent("exam_completed", { exam, attemptNumber: results.filter((r) => r.exam.trim() === exam).length + 1 });
     setResExam(""); setResScore(""); setResDate(""); setResErr("");
   };
 
