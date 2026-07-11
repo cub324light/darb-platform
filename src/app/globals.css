@@ -144,11 +144,12 @@ html[data-theme="light"] { color-scheme: light; }
 body {
   background: var(--body-bg);
   color: var(--text);
-  font-family: var(--font-cairo), 'Cairo', sans-serif;
+  font-family: var(--font-sans), 'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif;
   min-height: 100dvh;
   overflow-x: hidden;
   direction: rtl;
-  line-height: 1.7;
+  line-height: 1.75;
+  font-variant-numeric: lining-nums;
   -webkit-font-smoothing: antialiased;
   transition: background 0.35s ease, color 0.35s ease;
   overflow-wrap: break-word;
@@ -159,7 +160,8 @@ h1, h2, h3, h4, .title-xl, .title-lg, .title-md {
   text-wrap: balance;
 }
 
-.font-mono-nums { font-family: var(--font-mono), 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; }
+/* الأرقام بنفس الخط (لا مونو منفصل) مع محاذاةٍ جدولية — تناسقٌ عربي/إنجليزي/أرقام */
+.font-mono-nums { font-variant-numeric: tabular-nums lining-nums; font-feature-settings: "tnum" 1, "lnum" 1; }
 
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -377,7 +379,7 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
   min-height: 58px;
   padding: 16px 26px;
   border-radius: 20px;
-  font-weight: 800;
+  font-weight: 700;
   font-size: 18px;
   font-family: inherit;
   color: var(--accent-light);
@@ -386,7 +388,7 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.15s ease;
   box-shadow: var(--accent-glow), 0 4px 18px color-mix(in srgb, var(--accent) 30%, transparent);
-  letter-spacing: 0.01em;
+  
 }
 .btn-primary:hover { background: color-mix(in srgb, var(--accent) 14%, transparent); transform: translateY(-1px); box-shadow: var(--accent-glow), 0 8px 28px color-mix(in srgb, var(--accent) 40%, transparent); }
 .btn-primary:active { transform: scale(0.97); opacity: 0.9; }
@@ -397,7 +399,7 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
   min-height: 58px;
   padding: 16px 26px;
   border-radius: 20px;
-  font-weight: 800;
+  font-weight: 700;
   font-size: 18px;
   font-family: inherit;
   color: #F59E0B;
@@ -477,22 +479,23 @@ a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: 0 8px
 .btn-icon-solid:active { transform: scale(0.9); }
 
 /* ═══════ الخط ═══════ */
-.title-xl { font-size: 32px; font-weight: 900; line-height: 1.25; letter-spacing: -0.01em; }
-.title-lg { font-size: 25px; font-weight: 900; line-height: 1.3; }
-.title-md { font-size: 19px; font-weight: 800; }
-.body-lg  { font-size: 17px; line-height: 1.75; color: var(--text-dim); }
-.body-sm  { font-size: 15px; line-height: 1.6; color: var(--text-muted); }
+/* أسماء قديمة موحّدة على السلّم نفسه (لتتناسق الصفحات القديمة دون لمسها) */
+.title-xl { font-size: 1.9rem;  font-weight: 700; line-height: 1.22; }
+.title-lg { font-size: 1.5rem;  font-weight: 700; line-height: 1.3; }
+.title-md { font-size: 1.2rem;  font-weight: 700; line-height: 1.35; }
+.body-lg  { font-size: 1rem;    line-height: 1.8;  color: var(--text-dim); }
+.body-sm  { font-size: 0.86rem; line-height: 1.65; color: var(--text-muted); }
 
 /* عين السطر — تسمية صغيرة متباعدة */
 .eyebrow {
-  font-size: 11.5px;
-  font-weight: 800;
+  font-size: 0.74rem;
+  font-weight: 600;
   color: var(--text-muted);
-  letter-spacing: 0.14em;
+  /* بلا letter-spacing: العربية مُتّصلة والتباعد يكسر وصل الحروف */
 }
-.label { font-size: 13px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.05em; }
+.label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); }
 
-.num-hero { font-family: var(--font-mono), 'IBM Plex Mono', monospace; font-weight: 700; font-variant-numeric: tabular-nums; }
+.num-hero { font-weight: 700; font-variant-numeric: tabular-nums lining-nums; font-feature-settings: "tnum" 1, "lnum" 1; }
 
 /* ═══════ تخطيط الصفحة ═══════ */
 .page {
@@ -694,7 +697,7 @@ html[data-sidebar="collapsed"] { --desk-sw: 76px;  }
     display: flex; align-items: center; justify-content: center;
     border-radius: 9999px;
     background: #EF4444; color: #fff;
-    font-size: 9px; font-weight: 800; line-height: 1;
+    font-size: 9px; font-weight: 700; line-height: 1;
   }
 
   /* فاصل مجموعة */
@@ -703,7 +706,7 @@ html[data-sidebar="collapsed"] { --desk-sw: 76px;  }
     padding: 12px 11px 4px;
   }
   .desk-nav-grouplabel {
-    font-size: 11px; font-weight: 800; letter-spacing: 0.04em;
+    font-size: 11px; font-weight: 700; 
     color: var(--text-muted);
     text-transform: none;
     white-space: nowrap;
@@ -722,7 +725,7 @@ html[data-sidebar="collapsed"] { --desk-sw: 76px;  }
     display: flex; align-items: center; gap: 12px;
     padding: 9px 11px;
     border-radius: 11px;
-    font-weight: 800; font-size: 14.5px;
+    font-weight: 700; font-size: 14.5px;
     white-space: nowrap;
     border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--ring));
     background: color-mix(in srgb, var(--accent) 10%, transparent);
@@ -748,11 +751,11 @@ html[data-sidebar="collapsed"] { --desk-sw: 76px;  }
     width: 36px; height: 36px;
     display: flex; align-items: center; justify-content: center;
     border-radius: 10px;
-    font-weight: 900; font-size: 16px; color: #fff;
+    font-weight: 700; font-size: 16px; color: #fff;
     background: linear-gradient(135deg, var(--accent-2), var(--accent-light));
   }
   .desk-profile-meta { display: flex; flex-direction: column; overflow: hidden; }
-  .desk-profile-name { font-weight: 800; font-size: 14px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .desk-profile-name { font-weight: 700; font-size: 14px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .desk-profile-sub  { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; }
 
   /* ─── الحالة المطويّة ─── */
@@ -1275,7 +1278,7 @@ body[data-nav-hidden="1"] .float-nav { display: none; }
   overflow: hidden;
   background: var(--accent);
   color: white;
-  font-weight: 800;
+  font-weight: 700;
   border-radius: 16px;
   border: none;
   cursor: pointer;
@@ -1383,13 +1386,21 @@ body[data-nav-hidden="1"] .float-nav { display: none; }
 ═══════════════════════════════════════════════════════════════ */
 
 /* سُلّم الطباعة — الحجم/السطر/الوزن فقط (اللون يُضاف عبر var المناسب) */
-.t-display  { font-size: clamp(2.05rem, 6vw, 2.7rem); line-height: 1.14; font-weight: 800; letter-spacing: -0.02em; }
-.t-h1       { font-size: clamp(1.5rem, 4.2vw, 1.9rem); line-height: 1.24; font-weight: 800; letter-spacing: -0.01em; }
-.t-h2       { font-size: 1.25rem;  line-height: 1.3;  font-weight: 800; letter-spacing: -0.01em; }
-.t-h3       { font-size: 1.06rem;  line-height: 1.4;  font-weight: 700; }
-.t-body-lg  { font-size: 1rem;     line-height: 1.7;  font-weight: 400; }
-.t-body     { font-size: 0.88rem;  line-height: 1.6;  font-weight: 400; }
-.t-caption  { font-size: 0.78rem;  line-height: 1.5;  font-weight: 600; letter-spacing: 0.01em; }
+/* ═══════════ سلّم الخطوط الرسمي (Type Scale) — مصدرٌ واحد لكل الأحجام ═══════════
+   خطٌّ واحد (IBM Plex Sans Arabic) · أربعة أوزان فقط (400/500/600/700) · بلا تباعد
+   حروفٍ على العربية (يكسر الوصل) · ارتفاع سطرٍ مريح. لا تضع أحجاماً عشوائية في
+   الصفحات — استخدم هذا السلّم:
+     Display → t-display · H1 → t-h1 · H2 → t-h2 · H3 → t-h3 · Title → t-title
+     Body(L) → t-body-lg · Body → t-body · Small → t-small · Caption → t-caption */
+.t-display  { font-size: clamp(2.2rem, 6.2vw, 3rem); line-height: 1.12; font-weight: 700; }
+.t-h1       { font-size: clamp(1.6rem, 4.4vw, 2rem);  line-height: 1.22; font-weight: 700; }
+.t-h2       { font-size: 1.3rem;    line-height: 1.34; font-weight: 700; }
+.t-h3       { font-size: 1.08rem;   line-height: 1.45; font-weight: 600; }
+.t-title    { font-size: 0.98rem;   line-height: 1.5;  font-weight: 600; }
+.t-body-lg  { font-size: 1rem;      line-height: 1.8;  font-weight: 400; }
+.t-body     { font-size: 0.9rem;    line-height: 1.75; font-weight: 400; }
+.t-small    { font-size: 0.82rem;   line-height: 1.65; font-weight: 400; }
+.t-caption  { font-size: 0.76rem;   line-height: 1.55; font-weight: 500; }
 
 /* البطاقة القياسية — نفس الحواف/الحشو/الحد/الارتفاع لكل بطاقات المنتج.
    لوّنها عند الحاجة بتمرير --tint (لون مميّز) دون كسر الاتساق البنيوي. */

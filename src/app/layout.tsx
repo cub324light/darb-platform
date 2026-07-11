@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Cairo, IBM_Plex_Mono } from "next/font/google";
+import { IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import AnalyticsGate from "@/components/AnalyticsGate";
 import CloudSync from "@/components/CloudSync";
@@ -10,17 +10,14 @@ import DuirbFloat from "@/components/DuirbFloat";
 import DuirbTour from "@/components/DuirbTour";
 import BroadcastHost from "@/components/BroadcastHost";
 
-/* الخطوط تُستضاف ذاتياً عبر next/font — صفر طلبات خارجية، بلا انزياح، وتحميل أسرع بكثير */
-const cairo = Cairo({
+/* خطٌّ واحدٌ للهوية كلها: IBM Plex Sans Arabic — يُستضاف ذاتياً عبر next/font (صفر
+   طلبات خارجية، بلا انزياح). أربعة أوزانٍ فقط (Regular/Medium/SemiBold/Bold) —
+   أيّ وزنٍ أثقل يُثبَّت تلقائياً على Bold. يخدم العربية والإنجليزية والأرقام بخطٍّ
+   واحد متناسق (الأرقام تُحاذى عبر tabular-nums، بلا خطٍّ مونو منفصل). */
+const plexArabic = IBM_Plex_Sans_Arabic({
   subsets: ["arabic", "latin"],
-  variable: "--font-cairo",
-  display: "swap",
-});
-
-const plexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-  variable: "--font-mono",
+  variable: "--font-sans",
   display: "swap",
 });
 
@@ -73,7 +70,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
      ثيم المستخدم المحفوظ (النهاري). الافتراضي في CSS داكن بلا سمة،
      وthemeScript يضبط القيمة المخزنة قبل أول رسم — وReact لا يمسّ سمة لا يرسمها. */
   return (
-    <html lang="ar" dir="rtl" className={`${cairo.variable} ${plexMono.variable}`} suppressHydrationWarning>
+    <html lang="ar" dir="rtl" className={plexArabic.variable} suppressHydrationWarning>
       <head>
         {/* تهيئة اتصال مبكرة بخوادم Firebase — يسرّع تسجيل الدخول والمزامنة */}
         <link rel="preconnect" href="https://firestore.googleapis.com" crossOrigin="" />

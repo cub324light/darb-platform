@@ -35,11 +35,11 @@ export default function DashHero() {
           <span className="text-[26px] leading-none flex-shrink-0 mt-0.5" aria-hidden="true">{d.top.icon}</span>
           <div className="flex flex-col gap-0.5 flex-1 min-w-0">
             <span className="eyebrow" style={{ color: c }}>{d.top.urgent ? "⏳ الأهمّ الآن" : "✦ الأهمّ الآن"}</span>
-            <h1 className="t-h2 leading-tight" style={{ color: "var(--text)" }}>{d.top.title}</h1>
+            <h1 className="t-h1 leading-tight" style={{ color: "var(--text)" }}>{d.top.title}</h1>
           </div>
         </div>
       ) : (
-        <h1 className="t-h2 leading-tight" style={{ color: "var(--text)" }}>ابدأ يومك بجلسة تركيز 🎯</h1>
+        <h1 className="t-h1 leading-tight" style={{ color: "var(--text)" }}>ابدأ يومك بجلسة تركيز 🎯</h1>
       )}
 
       {/* أقرب اختبار + تقدّم اليوم — إشارتان موجزتان (بلا لونٍ ثالث) */}
