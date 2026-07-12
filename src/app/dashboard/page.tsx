@@ -10,6 +10,7 @@ import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import DashHero from "@/components/DashHero";
 import PhaseHome from "@/components/dash/PhaseHome";
+import DefCard from "@/components/DefCard";
 import { loadUser, loadStats, computeStreak, type DarbUser } from "@/lib/storage";
 import dynamic from "next/dynamic";
 const RetentionHost = dynamic(() => import("@/components/retention/RetentionHost"), { ssr: false });
@@ -90,8 +91,11 @@ export default function DashboardPage() {
       </Dome>
 
       {/* ═══ اللوحة المرحلية — تُبنى على مرحلة الطالب، تجيب «وش أسوي الحين؟» ═══ */}
-      <div className="page-content mt-4">
+      <div className="page-content mt-4 flex flex-col gap-3">
         <PhaseHome />
+        {/* تعريف «درب» — صغير قابل للطيّ (يظهر مرّة للجديد ثم يُطوى) */}
+        <DefCard id="darb" q="ما هي درب؟"
+          a="منصة ترافقك من الثانوية حتى الوظيفة، وتبني لك خطة تناسب مرحلتك الدراسية." />
       </div>
 
       <PageFooter />

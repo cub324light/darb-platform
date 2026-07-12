@@ -5,6 +5,7 @@ import Link from "next/link";
 import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
+import DefCard from "@/components/DefCard";
 import { RAKAN_SCHEDULE } from "@/lib/constants";
 import { getTrack, subjectColor, TRACKS, type Track, type TrackId } from "@/lib/tracks";
 import { fmtHour } from "@/lib/utils";
@@ -852,6 +853,14 @@ export default function RoadmapPage() {
         </div>
       </Dome>
       <div className="h-4" />
+
+      {/* تعريفات الاختبارات — صغيرة قابلة للطيّ (تظهر مرّة ثم تُطوى) */}
+      <div className="px-5 mb-4 flex flex-col gap-2">
+        <DefCard id="qudurat" q="ما هو اختبار القدرات؟"
+          a="يقيس مهارات التفكير والتحليل، وتستخدمه معظم الجامعات السعودية في القبول." />
+        <DefCard id="tahsili" q="ما هو التحصيلي؟"
+          a="يقيس فهمك لمواد المرحلة الثانوية، ويستخدم خصوصاً في التخصصات العلمية والصحية." />
+      </div>
 
       {/* خطتي — وجهة التخطيط الموحّدة */}
       <div className="px-5 mb-4">

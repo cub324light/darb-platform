@@ -8,6 +8,7 @@ import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import PageFooter from "@/components/PageFooter";
 import PriorityHint from "@/components/PriorityHint";
+import DefCard from "@/components/DefCard";
 import {
   loadUser, loadGoals, currentScoreMap, loadTrackExamDates,
   loadAdmissions, saveAdmissions, showsUniversityUI,
@@ -155,6 +156,9 @@ export default function UniversityPage() {
       {/* على سطح المكتب: شبكة عمودين للأقسام المستقلة (uni-grid ≥1100px) */}
       <div className="page-content uni-grid">
         <div className="uni-span"><PriorityHint /></div>
+        {/* تعريف «الموزونة» — صغير قابل للطيّ */}
+        <div className="uni-span"><DefCard id="weighted" q="ما هي النسبة الموزونة؟"
+          a="هي معادلة تجمع الثانوية والقدرات والتحصيلي، وتختلف من جامعة لأخرى." /></div>
         {/* ═══ موسم القبول ═══ */}
         <div className="rounded-2xl px-4 py-3 flex items-start gap-3 uni-span"
           style={{
