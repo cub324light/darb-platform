@@ -12,7 +12,7 @@ import Logo from "./Logo";
 import { ThemeToggle } from "./Profile";
 import SettingsButton from "./SettingsPanel";
 import { loadUser, showsUniversityUI, type DarbUser } from "@/lib/storage";
-import { isUniversityPhase } from "@/lib/phase";
+import { isUniversityPhase, isGraduatePhase } from "@/lib/phase";
 
 /* عدّاد البطاقات المستحقّة — نفس منطق BottomNav */
 function calcDue(): number {
@@ -99,6 +99,12 @@ const I = {
       <circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="12" r="4.5" /><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
     </svg>
   ),
+  future: (a: boolean) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.3 : 1.8} className="w-5 h-5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c3.5 1.5 5.5 4.5 5.5 8.5 0 2-.6 3.6-1.5 4.8L12 21l-4-4.7c-.9-1.2-1.5-2.8-1.5-4.8C6.5 7.5 8.5 4.5 12 3z" />
+      <circle cx="12" cy="10.5" r="2" />
+    </svg>
+  ),
   robot: () => <span className="text-[20px] leading-none">🤖</span>,
 };
 
@@ -139,7 +145,10 @@ export default function DesktopSidebar() {
 
   const primary: NavLink[] = [
     { href: "/dashboard", label: "الرئيسية", icon: I.home },
-    { href: "/school", label: "المدرسة", icon: I.school },
+    /* المدرسة للثانوي فقط — الجامعي/الخريج يرون «المستقبل» بدلاً منها */
+    (isUniversityPhase(user) || isGraduatePhase(user))
+      ? { href: "/future", label: "المستقبل", icon: I.future }
+      : { href: "/school", label: "المدرسة", icon: I.school },
     { href: "/orbit", label: "أوربت", icon: I.orbit },
     /* العنصر الأوسط حسب المرحلة: جامعي → أدوات الجامعة، ثالث ثانوي/خريج → القبول، وإلا مساري */
     isUniversityPhase(user)
