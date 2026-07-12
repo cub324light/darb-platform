@@ -6,6 +6,7 @@ import PageFooter from "@/components/PageFooter";
 import { postSocial } from "@/lib/authFetch";
 import { fetchLeaderboard, type LeaderRow } from "@/lib/arena/client";
 import RankBadge from "@/components/RankBadge";
+import ProfileSocial from "@/components/profile/ProfileSocial";
 import { getTrack } from "@/lib/tracks";
 
 type Row = { uid: string; name: string; track: string; value: number };
@@ -58,6 +59,9 @@ export default function LeaderboardPage() {
 
       {/* حاوية أوسع على سطح المكتب — الصفوف تبقى صفوفاً */}
       <div className="px-5 py-5 max-w-lg min-[1100px]:max-w-3xl mx-auto flex flex-col gap-4">
+        {/* وضعك الاجتماعي — أصدقاؤك وترتيبك ودعوة الأصدقاء (نُقل من البروفايل — موطنه الاجتماعي هنا) */}
+        <ProfileSocial />
+
         {/* مبدّل المقياس */}
         <div className="flex gap-2 p-1 rounded-2xl" style={{ background: "var(--surface)" }}>
           {([["rp", "⚔️ الرتبة"], ["hours", "⏱️ ساعات"], ["streak", "🔥 ستريك"]] as const).map(([m, label]) => (
