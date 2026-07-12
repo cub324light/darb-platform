@@ -1,22 +1,26 @@
 "use client";
-/* ─── 🎓 مستقبلي الجامعي — القسم المستقل ───
-   اختيار الجامعة والتخصص، عرض المتطلبات الإرشادية، ومؤشر الوصول الجامعي.
-   كل القرارات من محرّكات مركزية:
-     • بيانات الجامعات/المتطلبات → university.ts (مصدر واحد).
-     • مؤشر الوصول → universityReadiness() (نقي).
-     • الجاهزية/الساعات → getStrategy() (محرّك الاستراتيجية).
-   لا منطق مكرّر ولا قرار مستقل هنا. */
+/* ─── 🎓 هدفي الجامعي — بطاقة القرار في «خطتي» ───
+   «أنا»، لا «الجامعات»: أُعلن وجهتي (جامعة + تخصص)، وأرى «هل أنا قريب؟» (مؤشر
+   الوصول) و«ماذا ينقصني للوصول؟» (تحليل الفجوة). البحث/المقارنة/الموزونة/
+   المتطلبات المرجعية ليست هنا — بيتها «القبول الجامعي» (نُحيل إليها برابط).
+   كل القرارات من محرّكات مركزية في university.ts (لا منطق مكرّر). */
 import { useMemo, useState } from "react";
 import {
-  UNIVERSITIES, MAJORS, findUniversity, findMajor, requirementsText, universityReadiness,
+  UNIVERSITIES, MAJORS, findUniversity, findMajor, universityReadiness, gapAnalysis,
 } from "@/lib/university";
 import { loadGoals, saveGoals, currentScoreMap, loadUser, loadTrackExamDates, type DarbGoals } from "@/lib/storage";
 import { getStrategy } from "@/lib/strategy";
 import { daysUntil } from "@/lib/insights";
 import { getTrack, type TrackId } from "@/lib/tracks";
-import WeightedCalculator from "./WeightedCalculator";
+import Link from "next/link";
 
 const ar = (n: number) => n.toLocaleString("ar");
+
+/* أحدث درجة من خريطة النتائج حسب كلمات مفتاحية */
+function scoreOf(map: Record<string, { score: number }>, ...keys: string[]): number | null {
+  for (const k of keys) for (const mk of Object.keys(map)) if (mk.includes(k)) return map[mk].score;
+  return null;
+}
 
 /* أقرب اختبار من المسارات النشطة */
 function nearestExamDays(): { days: number; label: string } | null {
@@ -71,25 +75,46 @@ export default function UniversityFuture() {
     return UNIVERSITIES.filter((u) => u.name.includes(q) || (u.region ?? "").includes(q));
   }, [uniQuery]);
 
-  /* مؤشر الوصول — من المحرّك النقي + محرّك الاستراتيجية + النتائج */
+  /* درجاتي الحالية — من «نتائجي» */
+  const scoreMap = useMemo(() => currentScoreMap(), []);
+  const have = useMemo(() => ({
+    qudurat: scoreOf(scoreMap, "قدرات"),
+    tahsili: scoreOf(scoreMap, "تحصيلي"),
+    step: scoreOf(scoreMap, "STEP", "ستيب"),
+    gpa: goals.highschoolPct ?? null,
+  }), [scoreMap, goals.highschoolPct]);
+
+  /* أسابيع حتى أقرب اختبار — لتقدير الحاجة الأسبوعية في الفجوة */
+  const weeksUntilExam = useMemo(() => {
+    const dates = loadTrackExamDates();
+    let best: number | null = null;
+    for (const d of Object.values(dates)) {
+      const days = daysUntil(d);
+      if (days != null && days >= 0 && (best == null || days < best)) best = days;
+    }
+    return best != null ? Math.max(1, Math.round(best / 7)) : null;
+  }, []);
+
+  /* مؤشر الوصول — «هل أنا قريب؟» (من المحرّك النقي + الاستراتيجية) */
   const readiness = useMemo(() => {
     const strategy = getStrategy();
-    const scoreMap = currentScoreMap();
-    const scoreOf = (...keys: string[]) => {
-      for (const k of keys) { for (const mk of Object.keys(scoreMap)) { if (mk.includes(k)) return scoreMap[mk].score; } }
-      return null;
-    };
     return universityReadiness({
       requirements: selectedMajor?.requirements,
       readinessPct: strategy.readinessPct,
-      quduratScore: scoreOf("قدرات"),
-      tahsiliScore: scoreOf("تحصيلي"),
-      stepScore: scoreOf("STEP", "ستيب"),
+      quduratScore: have.qudurat,
+      tahsiliScore: have.tahsili,
+      stepScore: have.step,
       weeklyHours: strategy.weeklyHoursTotal,
       planProgressPct: null,
       majorName: selectedMajor?.name,
     });
-  }, [selectedMajor, goals.majorId]);
+  }, [selectedMajor, have]);
+
+  /* تحليل الفجوة — «ماذا ينقصني للوصول؟» */
+  const gap = useMemo(
+    () => (selectedMajor ? gapAnalysis(selectedMajor.requirements, have, weeksUntilExam) : null),
+    [selectedMajor, have, weeksUntilExam],
+  );
 
   const exam = useMemo(() => nearestExamDays(), []);
 
@@ -106,13 +131,13 @@ export default function UniversityFuture() {
       {/* مقدّمة القسم */}
       <div className="rounded-3xl p-5"
         style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
-        <p className="t-h3 mb-1" style={{ color: "var(--text)" }}>🎓 مستقبلي الجامعي</p>
+        <p className="t-h3 mb-1" style={{ color: "var(--text)" }}>🎓 هدفي الجامعي</p>
         <p className="t-body font-semibold" style={{ color: "var(--text-muted)" }}>
-          حدّد وجهتك الجامعية ليخصّص دويرب خطتك وتوصياته نحوها — الموزونة والمقارنة وتحليل الفجوة بالأسفل.
+          قرارك: وين رايح؟ حدّد وجهتك، وشوف قربك منها وما ينقصك للوصول.
         </p>
       </div>
 
-      {/* اختيار الجامعة */}
+      {/* اختيار الجامعة المستهدفة */}
       <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
         <p className="text-[15px] font-black" style={{ color: "var(--text)" }}>🏛️ الجامعة المستهدفة</p>
         {selectedUni && (
@@ -154,12 +179,7 @@ export default function UniversityFuture() {
         )}
       </div>
 
-      {/* حاسبة الموزونة — تظهر بعد اختيار الجامعة */}
-      {selectedUni && selectedUni.id !== "other" && (
-        <WeightedCalculator universityId={selectedUni.id} />
-      )}
-
-      {/* اختيار التخصص */}
+      {/* اختيار التخصص المستهدف */}
       <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
         <p className="text-[15px] font-black" style={{ color: "var(--text)" }}>📚 التخصص المستهدف</p>
         <div className="flex flex-wrap gap-2">
@@ -180,43 +200,13 @@ export default function UniversityFuture() {
         </div>
       </div>
 
-      {/* بطاقة المتطلبات الإرشادية */}
-      {selectedMajor && requirementsText(selectedMajor.requirements) && (
-        <div className="rounded-2xl p-4 flex flex-col gap-2.5"
-          style={{ background: "color-mix(in srgb, var(--gold) 6%, var(--surface))", border: "1px solid color-mix(in srgb, var(--gold) 20%, transparent)" }}>
-          <p className="text-[15px] font-black" style={{ color: "var(--text)" }}>
-            📋 ماذا يحتاج {selectedMajor.name}{selectedUni && selectedUni.id !== "other" ? ` — ${selectedUni.name}` : ""}؟
-          </p>
-          <div className="flex flex-col gap-1.5">
-            {([
-              ["القدرات", selectedMajor.requirements.qudurat],
-              ["التحصيلي", selectedMajor.requirements.tahsili],
-              ["STEP", selectedMajor.requirements.step],
-              ["المعدل", selectedMajor.requirements.gpa],
-            ] as const).filter(([, v]) => v).map(([label, v]) => (
-              <div key={label} className="flex items-center justify-between">
-                <span className="text-[15px] font-bold" style={{ color: "var(--text-muted)" }}>{label}</span>
-                <span className="text-[14px] font-black px-2.5 py-0.5 rounded-full"
-                  style={{ background: "color-mix(in srgb, var(--gold) 14%, transparent)", color: "var(--gold)" }}>{v}</span>
-              </div>
-            ))}
-          </div>
-          {selectedMajor.focusHint && (
-            <p className="text-[14px] font-semibold" style={{ color: "var(--text-muted)" }}>💡 {selectedMajor.focusHint}</p>
-          )}
-          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-            معلومات إرشادية تعليمية فقط — ليست شروط قبول رسمية.
-          </p>
-        </div>
-      )}
-
-      {/* مؤشر الوصول الجامعي */}
+      {/* «هل أنا قريب؟» — مؤشر الوصول الجامعي */}
       {selectedMajor && (
         <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <div className="flex items-center gap-3">
             <span className="text-[29px]">{readiness.icon}</span>
             <div className="flex-1 min-w-0">
-              <p className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>مؤشر الوصول الجامعي</p>
+              <p className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>هل أنا قريب من هدفي؟</p>
               <p className="text-[20px] font-black" style={{ color: levelColor }}>{readiness.level}</p>
             </div>
             {readiness.hasData && (
@@ -248,6 +238,73 @@ export default function UniversityFuture() {
           </button>
         </div>
       )}
+
+      {/* «ماذا ينقصني للوصول؟» — تحليل الفجوة */}
+      {selectedMajor && (
+        <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <div className="flex items-center gap-2">
+            <span className="text-[20px]">🎯</span>
+            <p className="text-[16px] font-black flex-1" style={{ color: "var(--text)" }}>ماذا ينقصني للوصول إلى {selectedMajor.name}؟</p>
+          </div>
+          {!gap?.hasData ? (
+            <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>لا تتوفّر متطلبات مُقدّرة لهذا التخصص — راجع «القبول الجامعي».</p>
+          ) : (
+            <>
+              <div className="flex flex-col gap-2">
+                {gap.items.map((it) => {
+                  const color = it.met ? "var(--success)" : it.current == null ? "var(--text-muted)" : "var(--gold)";
+                  const pct = Math.max(0, Math.min(100, it.current == null ? 0 : (it.current / it.required) * 100));
+                  return (
+                    <div key={it.label} className="rounded-xl px-3 py-2.5" style={{ background: "var(--surface2)" }}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[15px] font-black" style={{ color: "var(--text)" }}>{it.label}</span>
+                        <span className="text-[14px] font-bold" style={{ color }}>
+                          {it.current == null ? `المطلوب ${ar(it.required)}+` :
+                            it.met ? `✅ ${ar(it.current)} (المطلوب ${ar(it.required)})` :
+                            `${ar(it.current)} / ${ar(it.required)} — ينقص ${ar(it.gap)}`}
+                        </span>
+                      </div>
+                      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
+                        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
+                      </div>
+                      {!it.met && it.weeklyNeed != null && it.weeklyNeed > 0 && (
+                        <p className="text-[12px] mt-1.5" style={{ color: "var(--text-muted)" }}>
+                          ≈ {ar(it.weeklyNeed)} نقطة/أسبوع للوصول قبل اختبارك
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="rounded-xl px-3 py-2.5 flex items-center gap-2"
+                style={{ background: gap.allMet ? "color-mix(in srgb, var(--success) 10%, transparent)" : "color-mix(in srgb, var(--accent) 8%, transparent)" }}>
+                <span className="text-[18px]">{gap.allMet ? "🟢" : "📈"}</span>
+                <p className="text-[14px] font-bold" style={{ color: "var(--text)" }}>
+                  {gap.allMet
+                    ? "درجاتك تلبّي المطلوب التقديري لهذا التخصص — ركّز على إتمام التقديم."
+                    : `إجمالي ما تحتاج رفعه ≈ ${ar(gap.remainingTotal)} نقطة موزّعة على ما سبق.`}
+                </p>
+              </div>
+              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+                الدرجات المطلوبة تقديرية إرشادية — تختلف حسب الجامعة والسنة والمنافسة.
+              </p>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* إحالة إلى المرجع — لا تتحول «خطتي» إلى دليل جامعات */}
+      <Link href="/university"
+        className="rounded-2xl px-4 py-3.5 flex items-center gap-3 transition active:scale-[0.99]"
+        style={{ background: "var(--surface)", border: "1px solid var(--border)", textDecoration: "none" }}>
+        <span className="text-[22px] flex-shrink-0">⚖️</span>
+        <span className="flex-1 min-w-0">
+          <span className="block text-[15px] font-black" style={{ color: "var(--text)" }}>قارن الجامعات واحسب موزونتك ←</span>
+          <span className="block text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+            الاستكشاف والمقارنة والموزونة والمتطلبات ومواسم القبول في «القبول الجامعي»
+          </span>
+        </span>
+      </Link>
     </div>
   );
 }

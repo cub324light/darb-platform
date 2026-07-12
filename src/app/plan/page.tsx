@@ -8,13 +8,14 @@ import CalendarExport from "@/components/CalendarExport";
 /* استيراد مباشر لتفادي انزياح التخطيط — يظهر فوراً بحالته المحسوبة تزامنياً */
 import ExamRegistrationAlert from "@/components/ExamRegistrationAlert";
 import GoalsPanel from "@/components/GoalsPanel";
+import UniversityFuture from "@/components/UniversityFuture";
 import dynamic from "next/dynamic";
 const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
 const StrategyBanner = dynamic(() => import("@/components/StrategyBanner"), { ssr: false });
 const CalendarStatusCard = dynamic(() => import("@/components/CalendarStatusCard"), { ssr: false });
 const GoalRealityCard = dynamic(() => import("@/components/GoalRealityCard"), { ssr: false });
 import { getEventsForDate } from "@/components/DayScheduler";
-import { loadUser, loadStats, loadEvents, loadExamDate, saveExamDate, loadTrackExamDates, computeStreak, type ScheduleEvent } from "@/lib/storage";
+import { loadUser, loadEvents, loadExamDate, saveExamDate, loadTrackExamDates, showsUniversityUI, type ScheduleEvent } from "@/lib/storage";
 import { getTrack, colorForSubject, type TrackId } from "@/lib/tracks";
 import { fmtHour } from "@/lib/utils";
 
@@ -51,20 +52,10 @@ export default function PlanPage() {
   }, []);
   const nowHour = now ? now.getHours() + now.getMinutes() / 60 : -1;
 
-  const [streak] = useState(() =>
-    typeof window !== "undefined" ? computeStreak(loadStats()) : 0
+  /* هل الطالب على أعتاب القبول (ثالث ثانوي/خريج)؟ — يقرّر ظهور «هدفي الجامعي» */
+  const [showUni] = useState(() =>
+    typeof window !== "undefined" ? showsUniversityUI(loadUser()) : false
   );
-  const [todayMins] = useState(() =>
-    typeof window !== "undefined" ? loadStats().todayFocusMins : 0
-  );
-  const [dueCards] = useState(() => {
-    if (typeof window === "undefined") return 0;
-    try {
-      const c = JSON.parse(localStorage.getItem("darb_cards") ?? "[]");
-      const n = Date.now();
-      return Array.isArray(c) ? c.filter((x: { dueDate: number }) => x.dueDate <= n).length : 0;
-    } catch { return 0; }
-  });
 
   /* أقرب اختبار من المسارات النشطة */
   const nearestExam = (() => {
@@ -158,27 +149,11 @@ export default function PlanPage() {
         <StrategyBanner defaultExpanded />
       </div>
 
-      {/* ── أهدافي ونتائجي + مؤشّر الرضا (نُقلت من البروفايل — قرارات لا إحصاءات) ── */}
-      <div className="px-5 mb-5 rise rise-1">
+      {/* ── قرار الطالب: أهدافي/نتائجي/الرضا ثم هدفي الجامعي (وين رايح؟) ── */}
+      <div className="px-5 mb-5 rise rise-1 flex flex-col gap-4">
         <GoalsPanel />
-      </div>
-
-      {/* ── الاستعداد ── */}
-      <div className="px-5 mb-5 rise rise-1">
-        <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-2xl p-4 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-            <p className="font-mono-nums font-black text-3xl" style={{ color: streak > 0 ? "var(--gold)" : "var(--text-muted)" }}>{streak}</p>
-            <p className="text-[14px] font-bold mt-1" style={{ color: "var(--text-muted)" }}>يوم ستريك</p>
-          </div>
-          <div className="rounded-2xl p-4 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-            <p className="font-mono-nums font-black text-3xl" style={{ color: "var(--accent-light)" }}>{todayMins}</p>
-            <p className="text-[14px] font-bold mt-1" style={{ color: "var(--text-muted)" }}>دقيقة اليوم</p>
-          </div>
-          <div className="rounded-2xl p-4 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-            <p className="font-mono-nums font-black text-3xl" style={{ color: dueCards > 0 ? "#EF4444" : "var(--success)" }}>{dueCards}</p>
-            <p className="text-[14px] font-bold mt-1" style={{ color: "var(--text-muted)" }}>بطاقة مستحقة</p>
-          </div>
-        </div>
+        {/* هدفي الجامعي — يظهر فقط لمن هم على أعتاب القبول (ثالث ثانوي/خريج) */}
+        {showUni && <UniversityFuture />}
       </div>
 
       {/* ── مبدّل العرض: يوم / أسبوع / شهر ── */}

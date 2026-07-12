@@ -9,18 +9,17 @@ import BackButton from "@/components/BackButton";
 import PageFooter from "@/components/PageFooter";
 import PriorityHint from "@/components/PriorityHint";
 import DefCard from "@/components/DefCard";
-import UniversityFuture from "@/components/UniversityFuture";
+import WeightedCalculator from "@/components/WeightedCalculator";
 import {
-  loadUser, loadGoals, currentScoreMap, loadTrackExamDates,
+  loadUser, loadGoals, currentScoreMap,
   loadAdmissions, saveAdmissions, showsUniversityUI,
   type AdmissionApplication, type AdmissionStatus,
 } from "@/lib/storage";
 import {
-  UNIVERSITIES, findUniversity, findMajor, gapAnalysis,
+  UNIVERSITIES, findUniversity,
   computeWeighted, weightedVerdict, regionDistanceKm, housingInfo, admissionType,
   admissionSeason, type WeightedFormula, type UniversityOption,
 } from "@/lib/university";
-import { daysUntil } from "@/lib/insights";
 import Link from "next/link";
 
 const ar = (n: number) => n.toLocaleString("ar-SA");
@@ -57,33 +56,16 @@ export default function UniversityPage() {
   const scoreMap = useMemo(() => currentScoreMap(), []);
   const studentTrack = trackOfType(user?.trackType);
 
-  /* درجات الطالب الحالية */
+  /* درجات الطالب الحالية — تُغذّي المقارنة والموزونة */
   const have = useMemo(() => ({
     qudurat: scoreFrom(scoreMap, "قدرات"),
     tahsili: scoreFrom(scoreMap, "تحصيلي"),
-    step: scoreFrom(scoreMap, "STEP", "ستيب"),
     gpa: goals.highschoolPct ?? null,
   }), [scoreMap, goals.highschoolPct]);
 
-  /* أقرب اختبار → أسابيع متبقية (لتقدير الحاجة الأسبوعية) */
-  const weeksUntilExam = useMemo(() => {
-    const dates = loadTrackExamDates();
-    let best: number | null = null;
-    for (const d of Object.values(dates)) {
-      const days = daysUntil(d);
-      if (days != null && days >= 0 && (best == null || days < best)) best = days;
-    }
-    if (best == null && user?.examDate) {
-      const days = daysUntil(user.examDate);
-      if (days != null && days >= 0) best = days;
-    }
-    return best != null ? Math.max(1, Math.round(best / 7)) : null;
-  }, [user]);
-
-  const targetMajor = findMajor(goals.majorId);
-  const gap = useMemo(
-    () => (targetMajor ? gapAnalysis(targetMajor.requirements, have, weeksUntilExam) : null),
-    [targetMajor, have, weeksUntilExam],
+  /* حاسبة الموزونة — الجامعة المختارة للحساب (تبدأ من هدف الطالب إن وُجد) */
+  const [calcUni, setCalcUni] = useState<string>(() =>
+    goals.universityId && goals.universityId !== "other" ? goals.universityId : "",
   );
 
   /* مقارنة الجامعات — حتى ٣ */
@@ -149,7 +131,7 @@ export default function UniversityPage() {
           <h1 className="title-lg grad-title">القبول الجامعي</h1>
         </div>
         <p className="text-[15px] mt-1" style={{ color: "var(--text-muted)" }}>
-          موزونتك، الجامعات المناسبة، وما تحتاجه للوصول لهدفك
+          استكشف الجامعات، قارنها، واحسب موزونتك — صفحة مرجعية للقبول
         </p>
       </Dome>
       <div className="h-4" />
@@ -160,8 +142,7 @@ export default function UniversityPage() {
         {/* تعريف «الموزونة» — صغير قابل للطيّ */}
         <div className="uni-span"><DefCard id="weighted" q="ما هي النسبة الموزونة؟"
           a="هي معادلة تجمع الثانوية والقدرات والتحصيلي، وتختلف من جامعة لأخرى." /></div>
-        {/* ═══ مستقبلي الجامعي — اختيار الجامعة/التخصص المستهدفين (المُحرّر الوحيد للأهداف الجامعية) ═══ */}
-        <div className="uni-span"><UniversityFuture /></div>
+        {/* «هدفي/جامعتي» ليست هنا — بيتها «خطتي». هذه صفحة مرجعية للجامعات. */}
         {/* ═══ موسم القبول ═══ */}
         <div className="rounded-2xl px-4 py-3 flex items-start gap-3 uni-span"
           style={{
@@ -224,63 +205,24 @@ export default function UniversityPage() {
           </Link>
         </div>
 
-        {/* ═══ ماذا أحتاج؟ + تحليل الفجوة ═══ */}
+        {/* ═══ حاسبة الموزونة — أداة مرجعية لأي جامعة ═══ */}
         <section className="rounded-2xl p-4 flex flex-col gap-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <div className="flex items-center gap-2">
-            <span className="text-[20px]">🎯</span>
-            <p className="text-[16px] font-black flex-1" style={{ color: "var(--text)" }}>
-              {targetMajor ? `ماذا أحتاج للوصول إلى ${targetMajor.name}؟` : "ماذا أحتاج للوصول لهدفي؟"}
-            </p>
+            <span className="text-[20px]">🧮</span>
+            <p className="text-[16px] font-black flex-1" style={{ color: "var(--text)" }}>حاسبة الموزونة</p>
           </div>
-
-          {!targetMajor ? (
-            <div className="rounded-xl px-3 py-3 text-[15px] font-semibold" style={{ background: "var(--surface2)", color: "var(--text-muted)" }}>
-              حدّد تخصصك المستهدف من قسم <span className="font-black" style={{ color: "var(--accent-light)" }}>«مستقبلي الجامعي»</span> بالأعلى لأحسب لك المطلوب وتحليل الفجوة.
-            </div>
-          ) : !gap?.hasData ? (
-            <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>لا تتوفّر متطلبات مُقدّرة لهذا التخصص.</p>
-          ) : (
-            <>
-              <div className="flex flex-col gap-2">
-                {gap.items.map((it) => {
-                  const color = it.met ? "var(--success)" : it.current == null ? "var(--text-muted)" : "var(--gold)";
-                  const pct = Math.max(0, Math.min(100, it.current == null ? 0 : (it.current / it.required) * 100));
-                  return (
-                    <div key={it.label} className="rounded-xl px-3 py-2.5" style={{ background: "var(--surface2)" }}>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[15px] font-black" style={{ color: "var(--text)" }}>{it.label}</span>
-                        <span className="text-[14px] font-bold" style={{ color }}>
-                          {it.current == null ? `المطلوب ${ar(it.required)}+` :
-                            it.met ? `✅ ${ar(it.current)} (المطلوب ${ar(it.required)})` :
-                            `${ar(it.current)} / ${ar(it.required)} — ينقص ${ar(it.gap)}`}
-                        </span>
-                      </div>
-                      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
-                        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
-                      </div>
-                      {!it.met && it.weeklyNeed != null && it.weeklyNeed > 0 && (
-                        <p className="text-[12px] mt-1.5" style={{ color: "var(--text-muted)" }}>
-                          ≈ {ar(it.weeklyNeed)} نقطة/أسبوع للوصول قبل اختبارك
-                        </p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="rounded-xl px-3 py-2.5 flex items-center gap-2"
-                style={{ background: gap.allMet ? "color-mix(in srgb, var(--success) 10%, transparent)" : "color-mix(in srgb, var(--accent) 8%, transparent)" }}>
-                <span className="text-[18px]">{gap.allMet ? "🟢" : "📈"}</span>
-                <p className="text-[14px] font-bold" style={{ color: "var(--text)" }}>
-                  {gap.allMet
-                    ? "درجاتك تلبّي المطلوب التقديري لهذا التخصص — ركّز على إتمام التقديم."
-                    : `إجمالي ما تحتاج رفعه ≈ ${ar(gap.remainingTotal)} نقطة موزّعة على ما سبق.`}
-                </p>
-              </div>
-              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-                الدرجات المطلوبة تقديرية إرشادية — تختلف حسب الجامعة والسنة والمنافسة.
-              </p>
-            </>
-          )}
+          <select value={calcUni} onChange={(e) => setCalcUni(e.target.value)}
+            aria-label="اختر الجامعة لحساب الموزونة"
+            className="w-full rounded-xl px-3 py-2.5 text-[16px] text-[var(--text)] outline-none"
+            style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }}>
+            <option value="">اختر الجامعة لحساب موزونتك...</option>
+            {UNIVERSITIES.filter((u) => u.id !== "other").map((u) => (
+              <option key={u.id} value={u.id}>{u.name}</option>
+            ))}
+          </select>
+          {calcUni
+            ? <WeightedCalculator universityId={calcUni} />
+            : <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>اختر جامعة لأحسب لك نسبتك الموزونة حسب معادلتها الرسمية.</p>}
         </section>
 
         {/* ═══ مقارنة الجامعات ═══ */}
