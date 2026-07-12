@@ -14,7 +14,6 @@ import UniBoard from "@/components/dash/UniBoard";
 import { studentPersona } from "@/lib/persona";
 import { phaseExperience } from "@/lib/experience";
 import { loadUser, loadGoals } from "@/lib/storage";
-import { readLifeContext } from "@/lib/lifeEngine";
 import { targetsFor } from "@/lib/targets";
 
 interface Tile { icon: string; title: string; desc: string; href?: string; event?: string; }
@@ -39,31 +38,12 @@ function Board({ tiles }: { tiles: Tile[] }) {
   return <div className="grid grid-cols-2 gap-2.5">{tiles.map((t) => <TileCard key={t.title} t={t} />)}</div>;
 }
 
-/* البطاقات الدراسية الأساسية — مشتركة لكل الثانوي وخريج الثانوي */
+/* البطاقات الدراسية الأساسية — إجراءان فقط. دويرب عبر الزر العائم (عالمي)،
+   وتقدّمي عبر بطاقة الاسم أعلى الصفحة (كلاهما بضغطةٍ واحدة أصلاً — لا نكرّرهما). */
 const STUDY_TILES: Tile[] = [
   { icon: "📖", title: "ابدأ المذاكرة", desc: "جلسة تركيز الآن", href: "/orbit" },
   { icon: "📝", title: "الواجبات", desc: "ما عليك هذا الأسبوع", href: "/school" },
-  { icon: "🧠", title: "دويرب", desc: "مساعدك الذكي", event: "darb:openDuirb" },
-  { icon: "📊", title: "تقدّمي", desc: "ستريكك وساعاتك", href: "/profile" },
 ];
-
-function NextExam({ qiyas }: { qiyas: { label: string; days: number; approximate?: boolean } }) {
-  const urgent = qiyas.days <= 14;
-  const c = qiyas.days <= 3 ? "var(--danger)" : qiyas.days <= 14 ? "var(--gold)" : "var(--accent-light)";
-  return (
-    <section className="ds-card ds-card-tight flex items-center gap-3"
-      style={{ borderColor: `color-mix(in srgb, ${c} ${urgent ? 34 : 22}%, var(--border))` }}>
-      <span className="text-[20px] leading-none flex-shrink-0" aria-hidden="true">⏳</span>
-      <div className="flex-1 min-w-0">
-        <p className="t-caption" style={{ color: "var(--text-muted)" }}>الاختبار القادم</p>
-        <p className="t-body font-black leading-tight" style={{ color: "var(--text)" }}>{qiyas.label}</p>
-      </div>
-      <span className="font-mono-nums font-black text-[15px] flex-shrink-0" style={{ color: c }}>
-        بعد {qiyas.approximate ? "~" : ""}{qiyas.days} يوم
-      </span>
-    </section>
-  );
-}
 
 /* بطاقة إجراءٍ عريضة — للقبول (ذهبي) أو مسار الشركة (سماوي) أو المسار المهني */
 function WideAction({ href, icon, title, desc, tone = "gold" }: {
@@ -89,13 +69,13 @@ export default function PhaseHome() {
   const [d] = useState(() => {
     if (typeof window === "undefined") return null;
     const user = loadUser();
-    return { persona: studentPersona(user, loadGoals()), exp: phaseExperience(user), qiyas: readLifeContext().qiyas, targets: user?.targets ?? [] };
+    return { persona: studentPersona(user, loadGoals()), exp: phaseExperience(user), targets: user?.targets ?? [] };
   });
   if (!d) return null;
-  const { persona, exp, qiyas, targets } = d;
+  const { persona, exp, targets } = d;
 
   /* الجامعي: لوحة تشغيلية (لا قالب عام، لا قياس/قبول/غياب). */
-  if (persona.phase === "university") return <UniBoard hint={exp.duwairbHint} />;
+  if (persona.phase === "university") return <UniBoard />;
 
   /* خريج الجامعة: لوحة مهنية بحتة. */
   if (persona.key === "grad-uni") {
@@ -105,7 +85,6 @@ export default function PhaseHome() {
           { icon: "💼", title: "الوظائف والفرص", desc: "تدرّب وتوظّف", href: "/opportunities" },
           { icon: "🌍", title: "عالم تخصصك", desc: "مساراتك المهنية", href: "/career" },
           { icon: "🧠", title: "مهاراتك", desc: "طوّر وأثبت", href: "/skills" },
-          { icon: "🤖", title: "دويرب", desc: "مساعدك الذكي", event: "darb:openDuirb" },
         ]} />
         <p className="t-caption px-0.5" style={{ color: "var(--text-dim)" }}>💼 {exp.duwairbHint}</p>
       </div>
@@ -123,8 +102,6 @@ export default function PhaseHome() {
       {persona.key === "hs-second" && (
         <TileCard t={{ icon: "🌱", title: "استعد مبكّراً", desc: "ابدأ القدرات قبل دفعتك", href: "/roadmap" }} />
       )}
-
-      {qiyas && <NextExam qiyas={qiyas} />}
 
       {showAdmission && (
         targetCards.length > 0

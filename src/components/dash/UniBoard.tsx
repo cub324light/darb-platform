@@ -46,7 +46,7 @@ function gpaColor(g: number | null): string {
   return "var(--danger)";
 }
 
-export default function UniBoard({ hint }: { hint: string }) {
+export default function UniBoard() {
   const [w] = useState(() => {
     if (typeof window === "undefined") return null;
     const u = loadUser();
@@ -88,15 +88,11 @@ export default function UniBoard({ hint }: { hint: string }) {
         </div>
       </section>
 
-      {/* ═══ بطاقات الإجراء — قليلة، كلٌّ يقود لقرار ═══ */}
+      {/* ═══ بطاقتا إجراء فقط — دويرب عبر الزر العائم، والتدريب/الوظائف داخل «المستقبل» ═══ */}
       <div className="grid grid-cols-2 gap-2.5">
         <TileCard t={{ icon: "📝", title: "الواجبات", desc: "ما عليك هذا الأسبوع", href: "/school" }} />
-        <TileCard t={{ icon: "💼", title: "التدريب والوظائف", desc: "التعاوني والفرص", href: "/opportunities" }} />
-        <TileCard t={{ icon: "🤖", title: "دويرب", desc: "مساعدك الذكي", event: "darb:openDuirb" }} />
         <TileCard t={{ icon: "🚀", title: "المستقبل", desc: "تدريب · وظائف · شهادات", href: "/future" }} />
       </div>
-
-      <p className="t-caption px-0.5" style={{ color: "var(--text-dim)" }}>💼 {hint}</p>
     </div>
   );
 }
