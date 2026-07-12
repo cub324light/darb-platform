@@ -16,7 +16,6 @@ interface Props {
   track: Track;
   level: Level & { next?: Level; progress: number };
   xp: number;
-  streak: number;
   joinLabel: string;
   planId: PlanId;
   photoURL: string | null;
@@ -39,7 +38,7 @@ function Avatar({ avatar, photoURL, name }: { avatar?: string; photoURL: string 
   );
 }
 
-function ProfileHeaderBase({ user, track, level, xp, streak, joinLabel, planId, photoURL, onUserChange }: Props) {
+function ProfileHeaderBase({ user, track, level, xp, joinLabel, planId, photoURL, onUserChange }: Props) {
   const [editingName, setEditingName] = useState(false);
   const [nameVal, setNameVal] = useState(user.name ?? "");
   const [editingBio, setEditingBio] = useState(false);
@@ -88,7 +87,6 @@ function ProfileHeaderBase({ user, track, level, xp, streak, joinLabel, planId, 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[14px]" style={{ color: "var(--text-muted)" }}>
             <span style={{ color: track.color }}>🎯 {track.title}</span>
             {joinLabel && <span>📅 {joinLabel}</span>}
-            <span>🔥 {streak} ستريك</span>
           </div>
         </div>
       </div>

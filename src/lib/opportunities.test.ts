@@ -73,7 +73,7 @@ test("غياب الدرجات: عنصر «أدخل درجاتك أولاً» ب�
   assert.equal(unis.items[0].id, "uni-need-scores");
   assert.match(unis.items[0].title, /أدخل درجاتك/);
   assert.match(unis.items[0].detail, /نسبة الثانوية/);
-  assert.equal(unis.items[0].linkTo, "/profile");
+  assert.equal(unis.items[0].linkTo, "/plan");
 });
 
 test("الجامعي يُخبَر بلطف أن القبول لمرحلة الثانوية/الخريجين (حتى مع درجات)", () => {

@@ -7,6 +7,7 @@ import PageGuide from "@/components/PageGuide";
 import CalendarExport from "@/components/CalendarExport";
 /* استيراد مباشر لتفادي انزياح التخطيط — يظهر فوراً بحالته المحسوبة تزامنياً */
 import ExamRegistrationAlert from "@/components/ExamRegistrationAlert";
+import GoalsPanel from "@/components/GoalsPanel";
 import dynamic from "next/dynamic";
 const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
 const StrategyBanner = dynamic(() => import("@/components/StrategyBanner"), { ssr: false });
@@ -14,7 +15,7 @@ const CalendarStatusCard = dynamic(() => import("@/components/CalendarStatusCard
 const GoalRealityCard = dynamic(() => import("@/components/GoalRealityCard"), { ssr: false });
 import { getEventsForDate } from "@/components/DayScheduler";
 import { loadUser, loadStats, loadEvents, loadExamDate, saveExamDate, loadTrackExamDates, computeStreak, type ScheduleEvent } from "@/lib/storage";
-import { subjectsForTracks, getTrack, colorForSubject, type TrackId } from "@/lib/tracks";
+import { getTrack, colorForSubject, type TrackId } from "@/lib/tracks";
 import { fmtHour } from "@/lib/utils";
 
 function daysUntil(dateStr: string): number {
@@ -155,6 +156,11 @@ export default function PlanPage() {
         <CalendarStatusCard />
         <GoalRealityCard />
         <StrategyBanner defaultExpanded />
+      </div>
+
+      {/* ── أهدافي ونتائجي + مؤشّر الرضا (نُقلت من البروفايل — قرارات لا إحصاءات) ── */}
+      <div className="px-5 mb-5 rise rise-1">
+        <GoalsPanel />
       </div>
 
       {/* ── الاستعداد ── */}

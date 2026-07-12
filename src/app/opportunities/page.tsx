@@ -33,6 +33,7 @@ const STATUS_META: Record<OpportunityStatus, { color: string }> = {
 /* تسمية رابط «التفاصيل» حسب الوجهة الداخلية */
 const LINK_LABELS: Record<string, string> = {
   "/university": "لوحة القبول",
+  "/plan": "خطتي",
   "/profile": "الملف",
   "/guide": "دليل القبول",
   "/dashboard": "الرئيسية",
@@ -99,7 +100,7 @@ export default function OpportunitiesPage() {
             <div className="flex items-center gap-2">
               <span className="text-[20px]">🧾</span>
               <p className="text-[16px] font-black flex-1" style={{ color: "var(--text)" }}>ملخص بياناتك</p>
-              <Link href="/profile" className="text-[14px] font-black px-3 py-1.5 rounded-full"
+              <Link href="/plan" className="text-[14px] font-black px-3 py-1.5 rounded-full"
                 style={{ background: "var(--surface2)", color: "var(--accent-light)", border: "1px solid var(--border)" }}>
                 تعديل ✎
               </Link>
@@ -114,15 +115,16 @@ export default function OpportunitiesPage() {
               ))}
               {chips.length === 0 && (
                 <span className="text-[14px] font-semibold" style={{ color: "var(--text-muted)" }}>
-                  بياناتك ناقصة — أكمل درجاتك ووجهتك من ملفك ليصير التصنيف أدق.
+                  بياناتك ناقصة — أكمل درجاتك من «خطتي» ووجهتك من «لوحة القبول» ليصير التصنيف أدق.
                 </span>
               )}
             </div>
             <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
-              الدرجات من «نتائجي» والوجهة من «مستقبلي الجامعي» في{" "}
-              <Link href="/profile" className="font-black" style={{ color: "var(--accent-light)" }}>ملفك</Link>
-              {" "}— والموزونة وتحليل الفجوة بالتفصيل في{" "}
-              <Link href="/university" className="font-black" style={{ color: "var(--accent-light)" }}>لوحة القبول</Link>.
+              الدرجات من «نتائجي» في{" "}
+              <Link href="/plan" className="font-black" style={{ color: "var(--accent-light)" }}>خطتي</Link>
+              ، والوجهة من «مستقبلي الجامعي» في{" "}
+              <Link href="/university" className="font-black" style={{ color: "var(--accent-light)" }}>لوحة القبول</Link>
+              {" "}— حيث الموزونة وتحليل الفجوة بالتفصيل.
             </p>
             <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>
               ⚖️ {OPPORTUNITIES_DISCLAIMER}
@@ -134,12 +136,12 @@ export default function OpportunitiesPage() {
             <p className="text-[45px] mb-2">🧭</p>
             <p className="text-[18px] font-black mb-2" style={{ color: "var(--text)" }}>ما عندنا بيانات نبني عليها بعد</p>
             <p className="text-[15px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
-              أضف حالتك الدراسية ونتائجك (القدرات/التحصيلي/ستيب) من «نتائجي»، وحدّد جامعتك وتخصصك
-              من «مستقبلي الجامعي» في ملفك — وارجع هنا تلقى فرصك مرتّبة ومصنّفة لك.
+              أضف نتائجك (القدرات/التحصيلي/ستيب) من «نتائجي» في «خطتي»، وحدّد جامعتك وتخصصك
+              من «مستقبلي الجامعي» في «لوحة القبول» — وارجع هنا تلقى فرصك مرتّبة ومصنّفة لك.
             </p>
-            <Link href="/profile" className="inline-block mt-4 px-5 py-2.5 rounded-2xl font-bold text-[16px]"
+            <Link href="/plan" className="inline-block mt-4 px-5 py-2.5 rounded-2xl font-bold text-[16px]"
               style={{ background: "var(--accent)", color: "#fff" }}>
-              ← أكمل بياناتك من ملفك
+              ← أكمل بياناتك من «خطتي»
             </Link>
             <p className="text-[12px] font-bold mt-4" style={{ color: "var(--text-muted)" }}>
               ⚖️ {OPPORTUNITIES_DISCLAIMER}

@@ -3,22 +3,17 @@
    تحكّم خارجي (controlled): الحالة في الصفحة الأم. */
 import { memo } from "react";
 
-export type ProfileTab = "overview" | "stats" | "goals" | "future" | "prefs" | "achievements" | "coach";
+export type ProfileTab = "achievements" | "prefs";
 
-/* الترتيب حسب الأولوية: النظرة العامة ثم الأهداف ثم الإحصائيات — المعرّفات ثابتة */
+/* البروفايل بسيط عمداً: الإنجازات + الإعدادات (والحساب داخلها). لا لوحة تحكم.
+   الإحصائيات/التقدم مكانها الرئيسية، والأهداف/النتائج مكانها «خطتي». */
 export const PROFILE_TABS: { id: ProfileTab; label: string; icon: string }[] = [
-  { id: "overview",     label: "نظرة عامة", icon: "🧭" },
-  { id: "goals",        label: "الأهداف",    icon: "🎯" },
-  { id: "stats",        label: "الإحصائيات", icon: "📊" },
-  { id: "future",       label: "مستقبلي الجامعي", icon: "🎓" },
-  { id: "coach",        label: "مدرّبي",     icon: "🤖" },
-  { id: "prefs",        label: "التفضيلات",  icon: "⚙️" },
-  { id: "achievements", label: "الإنجازات",  icon: "🏅" },
+  { id: "achievements", label: "الإنجازات",  icon: "🏆" },
+  { id: "prefs",        label: "الإعدادات",  icon: "⚙️" },
 ];
 
-function ProfileTabsBase({ active, onChange, showUniversity = true }: { active: ProfileTab; onChange: (t: ProfileTab) => void; showUniversity?: boolean }) {
-  /* تبويب «مستقبلي الجامعي» يظهر فقط للمؤهَّلين (ثالث ثانوي/خريج) */
-  const tabs = showUniversity ? PROFILE_TABS : PROFILE_TABS.filter((t) => t.id !== "future");
+function ProfileTabsBase({ active, onChange }: { active: ProfileTab; onChange: (t: ProfileTab) => void }) {
+  const tabs = PROFILE_TABS;
   return (
     <div className="profile-tabs-bar sticky top-0 z-30 -mx-5 px-5 py-2.5 mb-1"
       style={{ background: "var(--glass-bg)", borderBottom: "1px solid var(--border)" }}>

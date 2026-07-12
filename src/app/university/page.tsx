@@ -9,13 +9,14 @@ import BackButton from "@/components/BackButton";
 import PageFooter from "@/components/PageFooter";
 import PriorityHint from "@/components/PriorityHint";
 import DefCard from "@/components/DefCard";
+import UniversityFuture from "@/components/UniversityFuture";
 import {
   loadUser, loadGoals, currentScoreMap, loadTrackExamDates,
   loadAdmissions, saveAdmissions, showsUniversityUI,
   type AdmissionApplication, type AdmissionStatus,
 } from "@/lib/storage";
 import {
-  UNIVERSITIES, findUniversity, findMajor, requiredScores, gapAnalysis,
+  UNIVERSITIES, findUniversity, findMajor, gapAnalysis,
   computeWeighted, weightedVerdict, regionDistanceKm, housingInfo, admissionType,
   admissionSeason, type WeightedFormula, type UniversityOption,
 } from "@/lib/university";
@@ -159,6 +160,8 @@ export default function UniversityPage() {
         {/* تعريف «الموزونة» — صغير قابل للطيّ */}
         <div className="uni-span"><DefCard id="weighted" q="ما هي النسبة الموزونة؟"
           a="هي معادلة تجمع الثانوية والقدرات والتحصيلي، وتختلف من جامعة لأخرى." /></div>
+        {/* ═══ مستقبلي الجامعي — اختيار الجامعة/التخصص المستهدفين (المُحرّر الوحيد للأهداف الجامعية) ═══ */}
+        <div className="uni-span"><UniversityFuture /></div>
         {/* ═══ موسم القبول ═══ */}
         <div className="rounded-2xl px-4 py-3 flex items-start gap-3 uni-span"
           style={{
@@ -232,7 +235,7 @@ export default function UniversityPage() {
 
           {!targetMajor ? (
             <div className="rounded-xl px-3 py-3 text-[15px] font-semibold" style={{ background: "var(--surface2)", color: "var(--text-muted)" }}>
-              حدّد تخصصك المستهدف من <Link href="/profile" className="font-black" style={{ color: "var(--accent-light)" }}>ملفك › مستقبلي الجامعي</Link> لأحسب لك المطلوب وتحليل الفجوة.
+              حدّد تخصصك المستهدف من قسم <span className="font-black" style={{ color: "var(--accent-light)" }}>«مستقبلي الجامعي»</span> بالأعلى لأحسب لك المطلوب وتحليل الفجوة.
             </div>
           ) : !gap?.hasData ? (
             <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>لا تتوفّر متطلبات مُقدّرة لهذا التخصص.</p>

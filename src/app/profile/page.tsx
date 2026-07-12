@@ -1,113 +1,53 @@
 "use client";
-/* ─── الملف الشخصي — مركز قيادة الطالب (لا صفحة إعدادات) ───
-   صفحة منسّقة رفيعة: تحمّل البيانات مرة، وتحسب المشتقّات بـ useMemo،
-   وتوزّعها على مكوّنات مستقلة تحت components/profile. */
+/* ─── الملف الشخصي — بسيطٌ عمداً: الهوية + الإنجازات + الإعدادات (والحساب) ───
+   ليس Dashboard: الإحصائيات/التقدم مكانها الرئيسية، والأهداف/النتائج/مؤشّر الرضا
+   مكانها «خطتي» /plan. هنا فقط: مَن أنت (الترويسة)، إنجازاتك، وإعداداتك وحسابك. */
 import { useEffect, useMemo, useState } from "react";
 import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import PageFooter from "@/components/PageFooter";
 import {
-  loadUser, saveUser, loadStats, computeStreak, ensureJoinDate,
-  loadResults, saveResults, loadSessionLog, loadPrefs, savePrefs, loadGoals, saveGoals,
-  showsUniversityUI,
-  type DarbUser, type DarbStats, type ExamResult, type DarbPrefs, type DarbGoals,
+  loadUser, saveUser, loadStats, ensureJoinDate, loadPrefs, savePrefs,
+  type DarbUser, type DarbStats, type DarbPrefs,
 } from "@/lib/storage";
-import { getTrack, type TrackId } from "@/lib/tracks";
+import { getTrack } from "@/lib/tracks";
 import { getPlan } from "@/lib/plan";
 import type { PlanId } from "@/lib/types";
-import { computeXP, getLevel, getUnlockedBadgeIds, getBadgeCurrent, BADGE_DEFS } from "@/lib/xp";
-import { computeWeeklyReport } from "@/lib/weeklyReport";
-import { loadSkillProgress, overallStats } from "@/lib/skillProgress";
-import { skillsForTracks, SKILL_BY_ID } from "@/lib/globalSkills";
-import { quoteOfToday } from "@/lib/quotes";
-import {
-  mostActiveTime, mostStudiedSubject, longestStreak, monthlyDelta, estimateReadiness, daysUntil,
-} from "@/lib/insights";
+import { computeXP, getLevel, getUnlockedBadgeIds } from "@/lib/xp";
 
 import ProfileTabs, { type ProfileTab } from "@/components/profile/ProfileTabs";
 import ProfileSkeleton from "@/components/profile/ProfileSkeleton";
 import ProfileHeader from "@/components/profile/ProfileHeader";
-import ProfileMotivation, { type NextBadgeInfo } from "@/components/profile/ProfileMotivation";
-import ProfileInsights from "@/components/profile/ProfileInsights";
-import ProfileTimeline, { type JourneyItem } from "@/components/profile/ProfileTimeline";
-import ProfileSocial from "@/components/profile/ProfileSocial";
-import ProfileStats from "@/components/profile/ProfileStats";
-import ProfileQuickStats from "@/components/profile/ProfileQuickStats";
-import ProfileGoalsSummary from "@/components/profile/ProfileGoalsSummary";
-import ProfileGoals from "@/components/profile/ProfileGoals";
-import GoldenPathCard from "@/components/GoldenPathCard";
-import RankBadge from "@/components/RankBadge";
-import { fetchMyRank } from "@/lib/arena/client";
 import ProfilePreferences from "@/components/profile/ProfilePreferences";
 import ProfileAchievements from "@/components/profile/ProfileAchievements";
-/* استيراد مباشر لتفادي انزياح التخطيط عند ظهور التنبيه */
-import ExamRegistrationAlert from "@/components/ExamRegistrationAlert";
+import ProfileAccount from "@/components/profile/ProfileAccount";
 import dynamic from "next/dynamic";
-const CoachReportView = dynamic(() => import("@/components/CoachReportView"), { ssr: false });
 const CalendarSettings = dynamic(() => import("@/components/CalendarSettings"), { ssr: false });
-const GoalRealityCard = dynamic(() => import("@/components/GoalRealityCard"), { ssr: false });
-const UniversityFuture = dynamic(() => import("@/components/UniversityFuture"), { ssr: false });
-const UniversityFutureCard = dynamic(() => import("@/components/UniversityFutureCard"), { ssr: false });
 
 function fmtJoin(d: string): string {
   try { return "انضم " + new Date(d + "T12:00:00").toLocaleDateString("ar-SA", { year: "numeric", month: "long" }); }
   catch { return d; }
 }
 
-interface SkillData { avg: number | null; strong: { name: string; score: number }[]; weak: { name: string; score: number }[]; }
+function readVaultCount(): number {
+  if (typeof window === "undefined") return 0;
+  try { const v = JSON.parse(localStorage.getItem("darb_vault") ?? "[]"); return Array.isArray(v) ? v.length : 0; }
+  catch { return 0; }
+}
 
 export default function ProfilePage() {
-  const [ready, setReady] = useState(false);
-  const [tab, setTab] = useState<ProfileTab>("overview");
+  const [tab, setTab] = useState<ProfileTab>("achievements");
 
-  const [user, setUser] = useState<DarbUser | null>(null);
-  const [stats, setStats] = useState<DarbStats | null>(null);
-  const [vaultCount, setVaultCount] = useState(0);
-  const [flashcards, setFlashcards] = useState(0);
-  const [joinDate, setJoinDate] = useState("");
-  const [planId, setPlanId] = useState<PlanId>("free");
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [prefs, setPrefs] = useState<DarbPrefs>({});
-  const [goals, setGoals] = useState<DarbGoals>({});
-  const [results, setResults] = useState<ExamResult[]>([]);
-  const [log, setLog] = useState<ReturnType<typeof loadSessionLog>>([]);
-  const [skill, setSkill] = useState<SkillData>({ avg: null, strong: [], weak: [] });
+  /* تهيئة كسولة SSR-safe (لا setState متزامن في effect — يوافق React Compiler) */
+  const [user, setUser] = useState<DarbUser | null>(() => (typeof window !== "undefined" ? loadUser() : null));
+  const [stats] = useState<DarbStats | null>(() => (typeof window !== "undefined" ? loadStats() : null));
+  const [vaultCount] = useState(() => readVaultCount());
+  const [joinDate] = useState(() => (typeof window !== "undefined" ? ensureJoinDate() : ""));
+  const [planId] = useState<PlanId>(() => (typeof window !== "undefined" ? getPlan() : "free"));
+  const [isPrivate, setIsPrivate] = useState(() =>
+    typeof window !== "undefined" ? ((loadUser() as (DarbUser & { isPrivate?: boolean }))?.isPrivate ?? false) : false);
+  const [prefs, setPrefs] = useState<DarbPrefs>(() => (typeof window !== "undefined" ? loadPrefs() : {}));
   const [photoURL, setPhotoURL] = useState<string | null>(null);
-  const [arena, setArena] = useState<{ rp: number; wins: number; losses: number; peakRp: number } | null>(null);
-
-  /* ── تحميل لمرة واحدة ── */
-  useEffect(() => {
-    const u = loadUser();
-    const s = loadStats();
-    setUser(u);
-    setStats(s);
-    setJoinDate(ensureJoinDate());
-    setPlanId(getPlan());
-    setIsPrivate((u as (DarbUser & { isPrivate?: boolean }))?.isPrivate ?? false);
-    setPrefs(loadPrefs());
-    setGoals(loadGoals());
-    setResults(loadResults());
-    setLog(loadSessionLog());
-
-    try {
-      const v = JSON.parse(localStorage.getItem("darb_vault") ?? "[]");
-      setVaultCount(Array.isArray(v) ? v.length : 0);
-      const c = JSON.parse(localStorage.getItem("darb_cards") ?? "[]");
-      setFlashcards(Array.isArray(c) ? c.length : 0);
-    } catch {}
-
-    // المهارات حسب المسارات النشطة
-    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
-    const skillIds = skillsForTracks(ids).map((sk) => sk.id);
-    const progress = loadSkillProgress();
-    const os = overallStats(progress, skillIds);
-    const rated = skillIds.filter((id) => progress[id])
-      .map((id) => ({ name: SKILL_BY_ID.get(id)?.name ?? id, score: progress[id].masteryScore }))
-      .sort((a, b) => b.score - a.score);
-    setSkill({ avg: rated.length ? os.avgScore : null, strong: rated.slice(0, 2), weak: [...rated].reverse().slice(0, 2) });
-
-    setReady(true);
-  }, []);
 
   /* صورة Google (إن وُجدت) */
   useEffect(() => {
@@ -116,78 +56,10 @@ export default function ProfilePage() {
     return () => { unsub?.(); };
   }, []);
 
-  /* رتبة الأرينا (1v1) */
-  useEffect(() => {
-    let alive = true;
-    fetchMyRank().then((r) => { if (alive) setArena({ rp: r.rp, wins: r.wins, losses: r.losses, peakRp: r.peakRp }); }).catch(() => {});
-    return () => { alive = false; };
-  }, []);
-
-  /* ── مشتقّات مذكَّرة (memoized) ── */
-  const showUni = useMemo(() => showsUniversityUI(user), [user]);
+  /* ── مشتقّات مذكَّرة ── */
   const xp = useMemo(() => (stats ? computeXP(stats) : 0), [stats]);
   const level = useMemo(() => getLevel(xp), [xp]);
-  const streak = useMemo(() => (stats ? computeStreak(stats) : 0), [stats]);
-  const weekly = useMemo(() => (stats ? computeWeeklyReport(stats, log) : null), [stats, log]);
   const unlockedIds = useMemo(() => new Set(stats ? getUnlockedBadgeIds(stats, vaultCount) : []), [stats, vaultCount]);
-
-  const insights = useMemo(() => {
-    if (!stats) return null;
-    const examDate = (user?.examDate ?? null);
-    return {
-      mostActiveTime: mostActiveTime(log),
-      mostStudied: mostStudiedSubject(log),
-      strong: skill.strong,
-      weak: skill.weak,
-      weeklyDeltaPct: weekly?.deltaPct ?? null,
-      monthlyDeltaPct: monthlyDelta(stats).deltaPct,
-      readiness: estimateReadiness(stats, skill.avg ?? 0),
-      daysLeft: daysUntil(examDate),
-    };
-  }, [stats, log, skill, weekly, user]);
-
-  const nextBadge = useMemo<NextBadgeInfo | null>(() => {
-    if (!stats) return null;
-    let best: NextBadgeInfo | null = null;
-    for (const b of BADGE_DEFS) {
-      if (unlockedIds.has(b.id)) continue;
-      const current = getBadgeCurrent(b.id, stats, vaultCount);
-      const pct = Math.min(100, Math.round((current / b.goal) * 100));
-      if (!best || pct > best.pct) best = { label: b.label, icon: b.icon, current: Math.min(current, b.goal), goal: b.goal, pct, unit: b.unit };
-    }
-    return best;
-  }, [stats, unlockedIds, vaultCount]);
-
-  const statsData = useMemo(() => {
-    if (!stats) return null;
-    return {
-      focusMins: stats.totalFocusMins, sessions: stats.sessionsCount,
-      currentStreak: streak, longestStreak: longestStreak(stats),
-      plans: stats.plansCount ?? 0, mistakes: vaultCount, flashcards,
-      aiChats: stats.aiChats ?? 0, filesAnalyzed: stats.analyzedCount ?? 0, quizzes: stats.quizCount ?? 0,
-      skillAvg: skill.avg, weekly, monthlyDeltaPct: monthlyDelta(stats).deltaPct,
-    };
-  }, [stats, streak, vaultCount, flashcards, skill.avg, weekly]);
-
-  const journey = useMemo<JourneyItem[]>(() => {
-    // المعالم دائمة — لا تُحذف بالتقطيع
-    const milestones: JourneyItem[] = [];
-    if (joinDate) milestones.push({ ts: new Date(joinDate + "T12:00:00").getTime(), icon: "🌟", text: "انضممت إلى درب", milestone: true });
-    if (log.length) milestones.push({ ts: Math.min(...log.map((e) => e.ts)), icon: "🔥", text: "أول جلسة تركيز", milestone: true });
-
-    const regular: JourneyItem[] = [
-      ...log.map((e) => ({ ts: e.ts, icon: "⏱", text: `أكملت جلسة ${e.subject} · ${e.focusMins.toLocaleString("ar")} دقيقة` })),
-      ...results.filter((r) => r.date).map((r) => ({
-        ts: new Date(r.date + "T12:00:00").getTime(), icon: "📊",
-        text: `أضفت نتيجة ${r.exam}${r.score ? ` · ${r.score}` : ""}`,
-      })),
-    ].sort((a, b) => b.ts - a.ts).slice(0, 7);
-
-    // دمج: المعالم أولاً (بلا تكرار)، ثم النشاط الأخير
-    const milestoneTs = new Set(milestones.map((m) => m.ts));
-    const merged = [...milestones, ...regular.filter((r) => !milestoneTs.has(r.ts))];
-    return merged.sort((a, b) => b.ts - a.ts);
-  }, [log, results, joinDate]);
 
   /* ── أفعال التحرير ── */
   const updateUser = (partial: Partial<DarbUser>) => {
@@ -198,14 +70,9 @@ export default function ProfilePage() {
       return next;
     });
   };
-  const updateGoals = (partial: Partial<DarbGoals>) => {
-    setGoals((prev) => { const next = { ...prev, ...partial }; saveGoals(next); return next; });
-  };
   const updatePrefs = (partial: Partial<DarbPrefs>) => {
     setPrefs((prev) => { const next = { ...prev, ...partial }; savePrefs(next); return next; });
   };
-  const addResult = (r: ExamResult) => setResults((prev) => { const next = [r, ...prev]; saveResults(next); return next; });
-  const deleteResult = (id: string) => setResults((prev) => { const next = prev.filter((x) => x.id !== id); saveResults(next); return next; });
   const togglePrivacy = () => {
     setIsPrivate((prev) => {
       const next = !prev;
@@ -224,7 +91,7 @@ export default function ProfilePage() {
     </Dome>
   );
 
-  if (!ready || !user || !stats || !statsData || !insights) {
+  if (!user || !stats) {
     return <div className="min-h-dvh pb-nav">{header}<ProfileSkeleton /></div>;
   }
 
@@ -233,86 +100,16 @@ export default function ProfilePage() {
       {header}
       <div className="profile-shell px-5 py-5 max-w-lg mx-auto flex flex-col gap-5">
         <ProfileHeader
-          user={user} track={getTrack(user.track)} level={level} xp={xp} streak={streak}
+          user={user} track={getTrack(user.track)} level={level} xp={xp}
           joinLabel={joinDate ? fmtJoin(joinDate) : ""} planId={planId} photoURL={photoURL}
           onUserChange={updateUser}
         />
 
-        <ProfileTabs active={tab} onChange={setTab} showUniversity={showUni} />
+        <ProfileTabs active={tab} onChange={setTab} />
 
-        {tab === "overview" && (
-          <div id="profile-panel-overview" role="tabpanel" aria-labelledby="profile-tab-overview"
-            className="flex flex-col gap-5 profile-tab-panel profile-overview-grid">
-            {/* العمود الجانبي (الخلاصة) — على الجوال يذوب في العمود الواحد عبر order */}
-            <div className="profile-overview-side">
-              <div className="profile-ov-item order-1">
-                <ProfileQuickStats data={statsData} onOpenStats={() => setTab("stats")} />
-              </div>
-              <div className="profile-ov-item order-2">
-                <ProfileGoalsSummary daysLeft={insights.daysLeft} examTitle={getTrack(user.track).title}
-                  university={goals.university} major={goals.major} onOpenGoals={() => setTab("goals")} />
-              </div>
-              {arena && (
-                <div className="profile-ov-item order-7">
-                  <div className="rounded-2xl px-4 py-3.5 flex items-center justify-between gap-3"
-                    style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-                    <div className="min-w-0">
-                      <p className="font-bold text-[17px]" style={{ color: "var(--text)" }}>⚔️ رتبة الأرينا</p>
-                      <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>
-                        {arena.wins}ف · {arena.losses}خ · أعلى {arena.peakRp} RP
-                      </p>
-                    </div>
-                    <RankBadge rp={arena.rp} size="lg" showRp />
-                  </div>
-                </div>
-              )}
-              <div className="profile-ov-item order-8">
-                <ProfileSocial />
-              </div>
-            </div>
-
-            {/* العمود الرئيسي — الرحلة آخر شيء (أرشيفية) */}
-            <div className="profile-overview-main">
-              <div className="profile-ov-item order-3">
-                <GoldenPathCard />
-              </div>
-              <div className="profile-ov-item order-4">
-                <ProfileMotivation quote={quoteOfToday()} weekly={weekly} level={level} nextBadge={nextBadge} />
-              </div>
-              {showUni && (
-                <div className="profile-ov-item order-5">
-                  <UniversityFutureCard onOpenTab={() => setTab("future")} />
-                </div>
-              )}
-              <div className="profile-ov-item order-6">
-                <ProfileInsights data={insights} />
-              </div>
-              <div className="profile-ov-item order-9">
-                <ProfileTimeline items={journey} />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {tab === "stats" && (
-          <div id="profile-panel-stats" role="tabpanel" aria-labelledby="profile-tab-stats" className="profile-tab-panel">
-            <ProfileStats data={statsData} />
-          </div>
-        )}
-
-        {tab === "goals" && (
-          <div id="profile-panel-goals" role="tabpanel" aria-labelledby="profile-tab-goals" className="profile-tab-panel flex flex-col gap-4">
-            {/* التنبيه أولاً (حسّاس زمنياً ومضغوط)، ثم الأهداف القابلة للتعديل، ثم قراءة الواقعية المشتقة منها */}
-            <ExamRegistrationAlert />
-            <ProfileGoals goals={goals} onGoalsChange={updateGoals}
-              results={results} onAddResult={addResult} onDeleteResult={deleteResult} />
-            <GoalRealityCard />
-          </div>
-        )}
-
-        {tab === "future" && showUni && (
-          <div id="profile-panel-future" role="tabpanel" aria-labelledby="profile-tab-future" className="profile-tab-panel">
-            <UniversityFuture />
+        {tab === "achievements" && (
+          <div id="profile-panel-achievements" role="tabpanel" aria-labelledby="profile-tab-achievements" className="profile-tab-panel">
+            <ProfileAchievements unlockedIds={unlockedIds} stats={stats} vaultCount={vaultCount} />
           </div>
         )}
 
@@ -320,18 +117,7 @@ export default function ProfilePage() {
           <div id="profile-panel-prefs" role="tabpanel" aria-labelledby="profile-tab-prefs" className="profile-tab-panel flex flex-col gap-5">
             <ProfilePreferences prefs={prefs} onPrefsChange={updatePrefs} isPrivate={isPrivate} onTogglePrivacy={togglePrivacy} />
             <CalendarSettings />
-          </div>
-        )}
-
-        {tab === "coach" && (
-          <div id="profile-panel-coach" role="tabpanel" aria-labelledby="profile-tab-coach" className="profile-tab-panel">
-            <CoachReportView />
-          </div>
-        )}
-
-        {tab === "achievements" && (
-          <div id="profile-panel-achievements" role="tabpanel" aria-labelledby="profile-tab-achievements" className="profile-tab-panel">
-            <ProfileAchievements unlockedIds={unlockedIds} stats={stats} vaultCount={vaultCount} />
+            <ProfileAccount />
           </div>
         )}
       </div>
