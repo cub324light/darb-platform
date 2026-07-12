@@ -14,6 +14,7 @@ export interface DarbUser {
   universityYear?: string;  // السنة الدراسية (للجامعي): الأولى ... الخامسة+
   goal?: StudyGoalType;     // الهدف الأساسي (goals[0]) — يقود تفعيل المسارات والأولويات (SSoT لكل المستهلكين القائمين)
   goals?: StudyGoalType[];  // كل الأهداف المختارة (متعدد بلا حد) — الأساسي منها = goals[0]
+  targets?: string[];       // أهداف ما بعد الثانوية (متعدّد): جامعة/أرامكو/سابك/عسكري/ITC/تدريب — معرّفات من lib/targets
   gapYear?: boolean;        // خريج ينوي إعادة القدرات/التحصيلي (سنة استدراك)
   studyHours?: number;
   subjects?: string[];

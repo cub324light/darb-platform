@@ -15,6 +15,7 @@ import { studentPersona } from "@/lib/persona";
 import { phaseExperience } from "@/lib/experience";
 import { loadUser, loadGoals } from "@/lib/storage";
 import { readLifeContext } from "@/lib/lifeEngine";
+import { targetsFor } from "@/lib/targets";
 
 interface Tile { icon: string; title: string; desc: string; href?: string; event?: string; }
 
@@ -88,10 +89,10 @@ export default function PhaseHome() {
   const [d] = useState(() => {
     if (typeof window === "undefined") return null;
     const user = loadUser();
-    return { persona: studentPersona(user, loadGoals()), exp: phaseExperience(user), qiyas: readLifeContext().qiyas };
+    return { persona: studentPersona(user, loadGoals()), exp: phaseExperience(user), qiyas: readLifeContext().qiyas, targets: user?.targets ?? [] };
   });
   if (!d) return null;
-  const { persona, exp, qiyas } = d;
+  const { persona, exp, qiyas, targets } = d;
 
   /* الجامعي: لوحة تشغيلية (لا قالب عام، لا قياس/قبول/غياب). */
   if (persona.phase === "university") return <UniBoard hint={exp.duwairbHint} />;
@@ -111,9 +112,10 @@ export default function PhaseHome() {
     );
   }
 
-  /* الثانوي (أول/ثاني/ثالث) وخريج الثانوي: مذاكرة + الاختبار القادم،
-     والقبول لثالثٍ وخريج الثانوي فقط (بانحياز أرامكو عند وجود إشارتها). */
+  /* الثانوي (أول/ثاني/ثالث) وخريج الثانوي: مذاكرة + الاختبار القادم، والقبول
+     لثالثٍ وخريج الثانوي فقط — بطاقةٌ لكل هدفٍ اختاره الطالب (متعدّد، مرتّب). */
   const showAdmission = persona.key === "hs-third" || persona.key === "grad-hs";
+  const targetCards = targetsFor(targets);
   return (
     <div className="flex flex-col gap-4">
       <Board tiles={STUDY_TILES} />
@@ -125,12 +127,12 @@ export default function PhaseHome() {
       {qiyas && <NextExam qiyas={qiyas} />}
 
       {showAdmission && (
-        <>
-          <WideAction href="/university" icon="🎯" title="الجامعات · القبول والمفاضلة" desc="نسبتك الموزونة ومواعيد التقديم" tone="gold" />
-          {persona.companyFocus && (
-            <WideAction href="/opportunities" icon="🏆" title="مسار أرامكو · CPC / ITC" desc="اختبارات القبول ووظائف الشركة" tone="accent" />
-          )}
-        </>
+        targetCards.length > 0
+          ? targetCards.map((t) => (
+              <WideAction key={t.id} href={t.href} icon={t.icon} title={t.label} desc={t.desc}
+                tone={t.id === "university" ? "gold" : "accent"} />
+            ))
+          : <WideAction href="/university" icon="🎯" title="الجامعات · القبول والمفاضلة" desc="حدّد أهدافك من ملفّك لترتيب أولوياتك" tone="gold" />
       )}
     </div>
   );

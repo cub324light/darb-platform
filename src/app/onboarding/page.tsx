@@ -8,6 +8,7 @@ import {
 } from "@/lib/tracks";
 import { UNIVERSITIES, MAJORS, findUniversity, findMajor } from "@/lib/university";
 import { saveUser, saveExamDate, saveResults, saveTrackExamDates, loadGoals, saveGoals } from "@/lib/storage";
+import { ADMISSION_TARGETS } from "@/lib/targets";
 /* registerUser, pushBackup, currentUser مُستورَدة ديناميكياً أسفل */
 import { trackEvent } from "@/lib/analytics";
 import { redeemPendingRef } from "@/lib/referral";
@@ -75,6 +76,8 @@ export default function OnboardingPage() {
 
   /* ── الأهداف (متعدد بلا حد) — للخريج (الجامعي بلا أهداف قياس؛ الثانوي مشتقّ من نواته) ── */
   const [goals, setGoals] = useState<StudyGoalType[]>([]);
+  /* أهداف ما بعد الثانوية (متعدّد) — لثالث ثانوي وخريج الثانوي؛ الرئيسية ترتّب بطاقاتها حولها */
+  const [targets, setTargets] = useState<string[]>([]);
   /* ── اختبارات اللغة الإضافية (متعدد بلا حد) — للثانوي والخريج ── */
   const [selectedLanguages, setSelectedLanguages] = useState<TrackId[]>([]);
   const [seedGrade, setSeedGrade] = useState("");   // آخر صف ضُبط له فتح «الوجهة الجامعية» — لا نعيد ضبطه عند الرجوع بلا تغيير
@@ -190,6 +193,7 @@ export default function OnboardingPage() {
       universityYear: status === "جامعي" && universityYear ? universityYear : undefined,
       goal: effectiveGoal || undefined,
       goals: goalsToSave.length ? goalsToSave : undefined,
+      targets: targets.length ? targets : undefined,
       gapYear: status === "خريج" ? gapYear === "yes" : undefined,
       studyHours: studyHours ? parseInt(studyHours) : undefined,
       trackType: resolvedTrackType,
@@ -616,6 +620,37 @@ export default function OnboardingPage() {
     </div>
   );
 
+  /* أهداف ما بعد الثانوية (متعدّد، غير حاجز) — ثالث ثانوي وخريج الثانوي فقط.
+     الطالب يقدّم غالباً على عدّة جهات معاً؛ الرئيسية ترتّب بطاقاته حول اختياره. */
+  const targetsSection = (
+    <div>
+      <p className="label mb-1">وش أهدافك بعد الثانوية؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(تقدر تختار أكثر من واحد)</span></p>
+      <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>
+        نرتّب لك صفحتك الرئيسية حول هذي الجهات — تقدر تعدّلها لاحقاً من ملفك
+      </p>
+      <div className="grid grid-cols-2 gap-2.5">
+        {ADMISSION_TARGETS.map((t) => {
+          const on = targets.includes(t.id);
+          return (
+            <button key={t.id} onClick={() => setTargets((prev) => prev.includes(t.id) ? prev.filter((x) => x !== t.id) : [...prev, t.id])}
+              aria-pressed={on}
+              className="rounded-2xl px-3.5 py-3 flex items-center gap-2 text-right transition active:scale-[0.98]"
+              style={chipStyle(on)}>
+              <span className="w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-black flex-shrink-0"
+                style={{
+                  background: on ? "var(--accent)" : "var(--surface2)",
+                  border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}`,
+                  color: on ? "#fff" : "transparent",
+                }}>✓</span>
+              <span className="text-[18px]">{t.icon}</span>
+              <span className="font-bold text-[14px] flex-1 leading-tight">{t.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   /* شروط الإكمال: الثانوي → ساعات فقط (النواة ثابتة ومفعّلة تلقائياً، واللغات اختيارية) ·
      الجامعي → ساعات فقط (الجامعة/التخصص/السنة تحقّقت في الخطوة 1) ·
      الخريج → هدف واحد على الأقل + ساعات (منتقي الجامعة غير حاجز) */
@@ -667,6 +702,7 @@ export default function OnboardingPage() {
         {isSecondary ? (
           <>
             {goalsSection}
+            {grade === "ثالث ثانوي" && targetsSection}
             <div>
               <p className="label mb-1">اختباراتك الأساسية</p>
               <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>
@@ -734,6 +770,7 @@ export default function OnboardingPage() {
         ) : (
           <>
             {goalsSection}
+            {gradStage === "خريج ثانوي" && targetsSection}
             {languageSection}
           </>
         )}
