@@ -146,7 +146,7 @@ export default async function UniversityProfilePage({ params }: { params: Promis
             border: `1.5px solid color-mix(in srgb, ${c} 30%, var(--border))`,
           }}>
           <div className="flex items-start gap-4">
-            <span className="w-16 h-16 rounded-3xl flex items-center justify-center text-[27px] font-black flex-shrink-0"
+            <span className="w-16 h-16 rounded-3xl flex items-center justify-center text-[31px] font-black flex-shrink-0"
               style={{ background: `color-mix(in srgb, ${c} 20%, transparent)`, border: `1.5px solid color-mix(in srgb, ${c} 42%, transparent)`, color: c }}
               aria-hidden="true">
               {uniInitial(u.name)}
@@ -222,7 +222,7 @@ export default async function UniversityProfilePage({ params }: { params: Promis
                           <span key={x.label} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl"
                             style={{ background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--accent) 22%, transparent)" }}>
                             <span className="t-caption" style={{ color: "var(--text-dim)" }}>{x.label}</span>
-                            <span className="text-[14px] font-black font-mono-nums" style={{ color: "var(--accent-light)" }}>{x.w}٪</span>
+                            <span className="text-[16px] font-black font-mono-nums" style={{ color: "var(--accent-light)" }}>{x.w}٪</span>
                           </span>
                         ))}
                       </div>
@@ -238,7 +238,7 @@ export default async function UniversityProfilePage({ params }: { params: Promis
             )}
 
             {/* الفعل الرئيسي — في الأعلى حيث يبحث عنه الطالب، لا في القاع */}
-            <Link href="/university" className="btn-shimmer inline-flex items-center justify-center gap-2 px-6 font-black text-[15px] w-full sm:w-auto"
+            <Link href="/university" className="btn-shimmer inline-flex items-center justify-center gap-2 px-6 font-black text-[17px] w-full sm:w-auto"
               style={{ textDecoration: "none", height: "var(--btn-h)" }}>
               احسب موزونتك في هذه الجامعة ←
             </Link>
@@ -263,7 +263,7 @@ export default async function UniversityProfilePage({ params }: { params: Promis
 
         {/* ═══ تفاصيل ثانوية: السكن + المميزات/الاعتبارات + التميّز ═══ */}
         <section className="ds-card flex items-center gap-3">
-          <span className="text-[22px] flex-shrink-0" aria-hidden="true">🏠</span>
+          <span className="text-[25px] flex-shrink-0" aria-hidden="true">🏠</span>
           <div>
             <p className="t-body font-black" style={{ color: "var(--text)" }}>السكن الجامعي</p>
             <p className="t-caption mt-0.5" style={{ color: "var(--text-dim)" }}>{housing} — تأكّد من الحالة الحالية من عمادة شؤون الطلاب.</p>

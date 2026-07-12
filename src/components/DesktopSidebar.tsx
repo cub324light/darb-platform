@@ -99,7 +99,7 @@ const I = {
       <circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="12" r="4.5" /><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
     </svg>
   ),
-  robot: () => <span className="text-[18px] leading-none">🤖</span>,
+  robot: () => <span className="text-[20px] leading-none">🤖</span>,
 };
 
 function readCollapsed(): boolean {
@@ -181,7 +181,7 @@ export default function DesktopSidebar() {
       {/* رأس: الهوية + زر الطيّ */}
       <div className="desk-sidebar-head">
         <Link href="/dashboard" className="desk-brand no-underline" aria-label="درب — الرئيسية">
-          <Logo className="font-black text-[22px]" style={{ letterSpacing: "-0.5px" }} />
+          <Logo className="font-black text-[25px]" style={{ letterSpacing: "-0.5px" }} />
         </Link>
         <button onClick={toggle} className="desk-collapse-btn" aria-label={collapsed ? "توسيع الشريط" : "طيّ الشريط"}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">

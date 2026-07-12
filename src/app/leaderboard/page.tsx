@@ -62,14 +62,14 @@ export default function LeaderboardPage() {
         <div className="flex gap-2 p-1 rounded-2xl" style={{ background: "var(--surface)" }}>
           {([["rp", "⚔️ الرتبة"], ["hours", "⏱️ ساعات"], ["streak", "🔥 ستريك"]] as const).map(([m, label]) => (
             <button key={m} onClick={() => setMetric(m)}
-              className="flex-1 py-2.5 rounded-xl text-[14px] font-bold text-center transition"
+              className="flex-1 py-2.5 rounded-xl text-[16px] font-bold text-center transition"
               style={metric === m ? { background: "var(--accent)", color: "#fff" } : { color: "var(--text-muted)" }}>
               {label}
             </button>
           ))}
         </div>
 
-        <p className="text-[12px] text-center" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[14px] text-center" style={{ color: "var(--text-muted)" }}>
           تُعرض حسابات الطلاب غير الخاصة فقط. فعّل «بروفايل خاص» من الإعدادات لإخفاء اسمك.
         </p>
 
@@ -78,9 +78,9 @@ export default function LeaderboardPage() {
             <span className="inline-block w-7 h-7 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
           </div>
         ) : err ? (
-          <p className="text-center py-12 text-[14px]" style={{ color: "var(--text-muted)" }}>{err}</p>
+          <p className="text-center py-12 text-[16px]" style={{ color: "var(--text-muted)" }}>{err}</p>
         ) : rows.length === 0 ? (
-          <p className="text-center py-12 text-[14px]" style={{ color: "var(--text-muted)" }}>لا توجد بيانات بعد — كن أول المتصدّرين!</p>
+          <p className="text-center py-12 text-[16px]" style={{ color: "var(--text-muted)" }}>لا توجد بيانات بعد — كن أول المتصدّرين!</p>
         ) : (
           <div className="flex flex-col gap-2">
             {rows.map((r, i) => {
@@ -89,20 +89,20 @@ export default function LeaderboardPage() {
               return (
                 <div key={r.uid} className="flex items-center gap-3 rounded-2xl px-4 py-3"
                   style={{ background: top3 ? `color-mix(in srgb, var(--gold) ${9 - i * 2}%, var(--surface))` : "var(--surface)", border: top3 ? "1.5px solid color-mix(in srgb, var(--gold) 35%, transparent)" : "1px solid var(--border)" }}>
-                  <span className="w-8 text-center text-[18px] font-black flex-shrink-0" style={{ color: top3 ? "var(--gold)" : "var(--text-muted)" }}>
+                  <span className="w-8 text-center text-[20px] font-black flex-shrink-0" style={{ color: top3 ? "var(--gold)" : "var(--text-muted)" }}>
                     {top3 ? MEDALS[i] : i + 1}
                   </span>
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[15px] font-black text-white flex-shrink-0"
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[17px] font-black text-white flex-shrink-0"
                     style={{ background: `linear-gradient(135deg, ${color}, color-mix(in srgb, ${color} 60%, #fff))` }}>
                     {r.name.charAt(0) || "؟"}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-[15px] truncate" style={{ color: "var(--text)" }}>{r.name}</p>
+                    <p className="font-bold text-[17px] truncate" style={{ color: "var(--text)" }}>{r.name}</p>
                     {metric === "rp"
                       ? <div className="mt-0.5"><RankBadge rp={r.value} size="xs" /></div>
-                      : r.track && <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{r.track}</p>}
+                      : r.track && <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>{r.track}</p>}
                   </div>
-                  <span className="font-mono-nums font-black text-[16px] flex-shrink-0" style={{ color: top3 ? "var(--gold)" : "var(--accent-light)" }}>
+                  <span className="font-mono-nums font-black text-[18px] flex-shrink-0" style={{ color: top3 ? "var(--gold)" : "var(--accent-light)" }}>
                     {fmt(r.value)}
                   </span>
                 </div>

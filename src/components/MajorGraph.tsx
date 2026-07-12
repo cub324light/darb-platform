@@ -50,7 +50,7 @@ export default function MajorGraph({ majorId }: { majorId: string | null }) {
         borderColor: "color-mix(in srgb, var(--accent) 18%, var(--border))",
       }}>
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-[18px]" aria-hidden="true">🕸️</span>
+        <span className="text-[20px]" aria-hidden="true">🕸️</span>
         <div className="flex-1">
           <h2 className="t-h3" style={{ color: "var(--text)" }}>شبكة تخصصك — كل شيء متصل</h2>
           <p className="t-caption" style={{ color: "var(--text-muted)" }}>
@@ -66,7 +66,7 @@ export default function MajorGraph({ majorId }: { majorId: string | null }) {
           const active = node.kind === g.kind;
           return (
             <button key={g.kind} onClick={() => focus(g.nodes[0])} aria-pressed={active}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[12px] font-black whitespace-nowrap flex-shrink-0 transition active:scale-95"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[14px] font-black whitespace-nowrap flex-shrink-0 transition active:scale-95"
               style={{
                 background: active ? `color-mix(in srgb, ${KIND_COLOR[g.kind]} 16%, transparent)` : "var(--surface)",
                 color: active ? KIND_COLOR[g.kind] : "var(--text-muted)",
@@ -84,7 +84,7 @@ export default function MajorGraph({ majorId }: { majorId: string | null }) {
           background: `color-mix(in srgb, ${centerColor} 12%, var(--surface))`,
           border: `1.5px solid color-mix(in srgb, ${centerColor} 42%, transparent)`,
         }}>
-        <span className="w-10 h-10 rounded-xl flex items-center justify-center text-[20px] flex-shrink-0"
+        <span className="w-10 h-10 rounded-xl flex items-center justify-center text-[23px] flex-shrink-0"
           style={{ background: `color-mix(in srgb, ${centerColor} 18%, transparent)` }} aria-hidden="true">
           {KIND_ICON[node.kind]}
         </span>
@@ -99,7 +99,7 @@ export default function MajorGraph({ majorId }: { majorId: string | null }) {
         {nb.groups.map((g) => (
           <div key={g.kind} className="flex flex-col gap-1.5">
             <div className="flex items-center gap-1.5 px-0.5">
-              <span className="text-[13px]" aria-hidden="true">{g.icon}</span>
+              <span className="text-[15px]" aria-hidden="true">{g.icon}</span>
               <span className="t-caption font-black" style={{ color: "var(--text-muted)" }}>{g.title}</span>
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -117,7 +117,7 @@ export default function MajorGraph({ majorId }: { majorId: string | null }) {
                       color: familiar ? "var(--text-muted)" : "var(--text)",
                       opacity: familiar ? 0.7 : 1,
                     }}>
-                    {familiar && <span className="text-[10px]" style={{ color: "var(--success)" }} aria-hidden="true">✓</span>}
+                    {familiar && <span className="text-[11px]" style={{ color: "var(--success)" }} aria-hidden="true">✓</span>}
                     {n.label}
                   </button>
                 );

@@ -25,7 +25,7 @@ export default function AdminReview() {
   return (
     <div className="flex flex-col gap-3">
       <div className="ds-card flex items-center gap-3">
-        <span className="text-[22px]">🔎</span>
+        <span className="text-[25px]">🔎</span>
         <div className="flex flex-col flex-1">
           <span className="t-h3" style={{ color: "var(--text)" }}>قائمة المراجعة</span>
           <span className="t-caption" style={{ color: "var(--text-muted)" }}>{items.length} عنصرٌ بانتظار القرار</span>
@@ -37,7 +37,7 @@ export default function AdminReview() {
       ) : items.map((r) => (
         <section key={r.entity.id} className="ds-card ds-stack-tight">
           <div className="flex items-center gap-2.5">
-            <span className="text-[18px]">{KIND_META[r.entity.kind].icon}</span>
+            <span className="text-[20px]">{KIND_META[r.entity.kind].icon}</span>
             <div className="flex flex-col min-w-0 flex-1">
               <span className="t-title" style={{ color: "var(--text)" }}>{r.entity.name}</span>
               <span className="t-caption truncate" style={{ color: "var(--text-muted)" }}>{KIND_META[r.entity.kind].label} · {r.entity.summary}</span>

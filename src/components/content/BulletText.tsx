@@ -17,7 +17,7 @@ export default function BulletText({
   /* بلا فواصل نقطية → فقرة عادية تحافظ على الأسطر الأصلية */
   if (parts.length <= 1) {
     return (
-      <p className="text-[14px] leading-relaxed whitespace-pre-wrap" style={{ color }}>
+      <p className="text-[16px] leading-relaxed whitespace-pre-wrap" style={{ color }}>
         {text}
       </p>
     );
@@ -26,7 +26,7 @@ export default function BulletText({
   return (
     <ul className="flex flex-col gap-2">
       {parts.map((p, i) => (
-        <li key={i} className="flex items-start gap-2.5 text-[14px] leading-relaxed" style={{ color }}>
+        <li key={i} className="flex items-start gap-2.5 text-[16px] leading-relaxed" style={{ color }}>
           <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-[9px]" style={{ background: dotColor }} aria-hidden="true" />
           <span className="flex-1">{p}</span>
         </li>

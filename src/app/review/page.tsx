@@ -244,7 +244,7 @@ export default function ReviewPage() {
       <Dome compact>
         <div className="flex items-center justify-between">
           <h1 className="title-lg grad-title">بطاقاتي</h1>
-          <span className="dome-chip text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>تكرار متباعد</span>
+          <span className="dome-chip text-[19px] font-bold" style={{ color: "var(--text-dim)" }}>تكرار متباعد</span>
         </div>
       </Dome>
       <div className="h-5" />
@@ -348,17 +348,17 @@ export default function ReviewPage() {
             onClick={() => window.dispatchEvent(new CustomEvent("darb:openDuirb", { detail: { tab: "quiz" } }))}
             className="card w-full flex items-center gap-3.5 text-right transition active:scale-[0.98] glow-card-hover"
             style={{ border: "1px solid color-mix(in srgb, var(--accent) 30%, var(--ring))" }}>
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-[26px] flex-shrink-0"
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-[29px] flex-shrink-0"
               style={{ background: "color-mix(in srgb, var(--accent) 14%, transparent)" }}>
               ❓
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-extrabold text-[16px]" style={{ color: "var(--text)" }}>أسئلة تدريب من دويرب</p>
-              <p className="text-[13px] leading-snug" style={{ color: "var(--text-muted)" }}>
+              <p className="font-extrabold text-[18px]" style={{ color: "var(--text)" }}>أسئلة تدريب من دويرب</p>
+              <p className="text-[15px] leading-snug" style={{ color: "var(--text-muted)" }}>
                 خلّ دويرب يولّد لك أسئلة في مادتك للتمرين
               </p>
             </div>
-            <span className="text-[18px] font-black flex-shrink-0" style={{ color: "var(--accent-light)" }}>←</span>
+            <span className="text-[20px] font-black flex-shrink-0" style={{ color: "var(--accent-light)" }}>←</span>
           </button>
         </div>
       )}
@@ -416,7 +416,7 @@ export default function ReviewPage() {
           <p className="text-xl font-black text-[var(--text)] mb-2">ما في بطاقات بعد</p>
           <p className="text-base text-[var(--text-muted)] mb-3">أضف بطاقة سؤال+جواب، والنظام يذكّرك بها في الوقت الصح تلقائياً.</p>
           <a href="/vault"
-            className="inline-block px-5 py-2.5 rounded-2xl text-[14px] font-bold no-underline transition active:scale-[0.98]"
+            className="inline-block px-5 py-2.5 rounded-2xl text-[16px] font-bold no-underline transition active:scale-[0.98]"
             style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1.5px solid color-mix(in srgb, var(--accent) 30%, transparent)", color: "var(--accent-light)" }}>
             أو احفظ خطأً في أخطائي أولاً →
           </a>

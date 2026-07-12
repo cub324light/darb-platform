@@ -31,7 +31,7 @@ function Splash({ label }: { label?: string }) {
   return (
     <div className="min-h-dvh flex flex-col items-center justify-center gap-4 relative z-[1]">
       <Logo className="font-black text-5xl" style={{ letterSpacing: "-1px" }} />
-      {label && <p className="text-[14px] font-semibold" style={{ color: "var(--text-muted)" }}>{label}</p>}
+      {label && <p className="text-[16px] font-semibold" style={{ color: "var(--text-muted)" }}>{label}</p>}
     </div>
   );
 }
@@ -46,7 +46,7 @@ function BlockedScreen() {
       </div>
       <div>
         <p className="title-md mb-2" style={{ color: "var(--text)" }}>تم إيقاف حسابك</p>
-        <p className="text-[14px] leading-relaxed max-w-xs mx-auto" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[16px] leading-relaxed max-w-xs mx-auto" style={{ color: "var(--text-muted)" }}>
           حسابك موقوف حالياً عن استخدام درب. لو تعتقد أنه خطأ، تواصل معنا.
         </p>
       </div>

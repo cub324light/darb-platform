@@ -8,11 +8,11 @@ export default function PageFooter() {
       <div className="w-full h-px mb-3" style={{ background: "var(--border)" }} />
       <div className="flex items-center justify-center gap-3 flex-wrap">
         <FeedbackButton
-          className="text-[13px] font-bold transition active:scale-95"
+          className="text-[15px] font-bold transition active:scale-95"
           style={{ color: "var(--text-muted)", background: "transparent", border: "none", padding: 0 }}
         />
         <span style={{ color: "var(--border)" }}>·</span>
-        <a href="/changelog" className="text-[13px] font-bold transition active:scale-95" style={{ color: "var(--text-muted)" }}>
+        <a href="/changelog" className="text-[15px] font-bold transition active:scale-95" style={{ color: "var(--text-muted)" }}>
           ✨ آخر التحديثات
         </a>
       </div>

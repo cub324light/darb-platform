@@ -37,8 +37,8 @@ function ProfileAchievementsBase({ unlockedIds, stats, vaultCount }: Props) {
       <div className="rounded-2xl p-5 flex items-center gap-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
         <Ring pct={pct} />
         <div className="flex-1 min-w-0">
-          <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>{earned.toLocaleString("ar")} من {total.toLocaleString("ar")} شارة</p>
-          <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+          <p className="font-black text-[19px]" style={{ color: "var(--text)" }}>{earned.toLocaleString("ar")} من {total.toLocaleString("ar")} شارة</p>
+          <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>
             {earned === 0 ? "ابدأ رحلتك — أول شارة على بُعد جلسة واحدة." : earned === total ? "أكملت كل الشارات! أسطورة 🏆" : "استمر — كل إنجاز يقرّبك للاكتمال."}
           </p>
         </div>
@@ -46,7 +46,7 @@ function ProfileAchievementsBase({ unlockedIds, stats, vaultCount }: Props) {
 
       {/* شبكة الشارات */}
       <div>
-        <p className="text-[12px] mb-3 px-1" style={{ color: "var(--text-muted)" }}>اضغط أي شارة لتعرف كيف تكسبها وكم بقي عليك</p>
+        <p className="text-[14px] mb-3 px-1" style={{ color: "var(--text-muted)" }}>اضغط أي شارة لتعرف كيف تكسبها وكم بقي عليك</p>
         <div className="grid grid-cols-3 gap-2">
           {BADGE_DEFS.map((b) => {
             const unlocked = unlockedIds.has(b.id);
@@ -60,8 +60,8 @@ function ProfileAchievementsBase({ unlockedIds, stats, vaultCount }: Props) {
                   opacity: unlocked ? 1 : 0.48,
                 }}>
                 <span className="text-2xl" aria-hidden="true">{b.icon}</span>
-                <p className="text-[12px] font-bold leading-tight" style={{ color: unlocked ? "var(--text)" : "var(--text-muted)" }}>{b.label}</p>
-                {unlocked && <span className="absolute top-1.5 left-1.5 text-[10px] leading-none" aria-hidden="true">✓</span>}
+                <p className="text-[14px] font-bold leading-tight" style={{ color: unlocked ? "var(--text)" : "var(--text-muted)" }}>{b.label}</p>
+                {unlocked && <span className="absolute top-1.5 left-1.5 text-[11px] leading-none" aria-hidden="true">✓</span>}
               </button>
             );
           })}
@@ -77,11 +77,11 @@ function ProfileAchievementsBase({ unlockedIds, stats, vaultCount }: Props) {
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-2xl">{active.icon}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="font-black text-[15px]" style={{ color: "var(--text)" }}>{active.label}</p>
-                  <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>{active.desc}</p>
+                  <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>{active.label}</p>
+                  <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>{active.desc}</p>
                 </div>
                 {activeUnlocked && (
-                  <span className="text-[12px] font-bold px-2 py-1 rounded-full flex-shrink-0"
+                  <span className="text-[14px] font-bold px-2 py-1 rounded-full flex-shrink-0"
                     style={{ background: "color-mix(in srgb, var(--accent) 15%, transparent)", color: "var(--accent-light)" }}>✓ مكتملة</span>
                 )}
               </div>
@@ -89,7 +89,7 @@ function ProfileAchievementsBase({ unlockedIds, stats, vaultCount }: Props) {
                 role="progressbar" aria-label={`تقدّم شارة ${active.label}`} aria-valuenow={p} aria-valuemin={0} aria-valuemax={100}>
                 <div className="h-full rounded-full transition-all duration-700" style={{ width: `${p}%`, background: activeUnlocked ? "var(--gold)" : "var(--accent)" }} />
               </div>
-              <p className="font-mono-nums text-[13px] font-bold" style={{ color: "var(--text-muted)" }}>
+              <p className="font-mono-nums text-[15px] font-bold" style={{ color: "var(--text-muted)" }}>
                 {Math.min(current, active.goal).toLocaleString("ar")} / {active.goal.toLocaleString("ar")} {active.unit}
                 {!activeUnlocked && current < active.goal && (<span> — بقي {(active.goal - current).toLocaleString("ar")} {active.unit}</span>)}
               </p>

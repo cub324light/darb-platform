@@ -67,14 +67,14 @@ function ProfileSocialBase() {
           <div className="flex items-center gap-5">
             <div>
               <p className="font-mono-nums font-black text-2xl" style={{ color: "var(--accent-light)" }}>{friendsCount ?? "—"}</p>
-              <p className="text-[12px] font-semibold" style={{ color: "var(--text-muted)" }}>👥 أصدقاء</p>
+              <p className="text-[14px] font-semibold" style={{ color: "var(--text-muted)" }}>👥 أصدقاء</p>
             </div>
             <div>
               <p className="font-mono-nums font-black text-2xl" style={{ color: "var(--gold)" }}>{rank ? `#${rank}` : "—"}</p>
-              <p className="text-[12px] font-semibold" style={{ color: "var(--text-muted)" }}>🏆 ترتيبك</p>
+              <p className="text-[14px] font-semibold" style={{ color: "var(--text-muted)" }}>🏆 ترتيبك</p>
             </div>
           </div>
-          <span className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>افتح ←</span>
+          <span className="text-[15px] font-bold" style={{ color: "var(--accent-light)" }}>افتح ←</span>
         </div>
       </button>
 
@@ -82,18 +82,18 @@ function ProfileSocialBase() {
         <div className="rounded-2xl p-5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <div className="flex items-center justify-between mb-1">
             <p className="label">ادعُ أصدقاءك</p>
-            <span className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>{ref.count.toLocaleString("ar")} انضمّوا عبرك</span>
+            <span className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>{ref.count.toLocaleString("ar")} انضمّوا عبرك</span>
           </div>
-          <p className="text-[13px] mb-3" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[15px] mb-3" style={{ color: "var(--text-muted)" }}>
             شارك رابطك — تربح أنت وصديقك {REFERRAL_REWARD} فضة لكل من ينضم ويكمل التسجيل.
           </p>
-          <button onClick={copyRefLink} className="w-full py-3 rounded-2xl font-black text-[14px] transition active:scale-[0.99] mb-2"
+          <button onClick={copyRefLink} className="w-full py-3 rounded-2xl font-black text-[16px] transition active:scale-[0.99] mb-2"
             style={{ background: "var(--accent)", color: "#fff" }}>
             {copied ? "✓ تم نسخ الرابط" : "📋 انسخ رابط الدعوة"}
           </button>
           {ref.pendingReward > 0 && (
             <button onClick={claimRef} disabled={claiming}
-              className="w-full py-3 rounded-2xl font-black text-[14px] transition active:scale-[0.99] disabled:opacity-50"
+              className="w-full py-3 rounded-2xl font-black text-[16px] transition active:scale-[0.99] disabled:opacity-50"
               style={{ background: "var(--gold)", color: "#1a1205" }}>
               {claiming ? "…" : `🎁 استلم ${ref.pendingReward} فضة من إحالاتك`}
             </button>
@@ -102,7 +102,7 @@ function ProfileSocialBase() {
       )}
 
       {claimMsg && (
-        <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl shadow-xl font-black text-[15px]"
+        <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl shadow-xl font-black text-[17px]"
           style={{ background: "var(--gold)", color: "#1a1205" }}>{claimMsg}</div>
       )}
 

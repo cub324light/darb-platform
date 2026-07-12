@@ -167,7 +167,7 @@ export default function DesignSystemPage() {
         <Section title="القواعد (ملزِمة للصفحات الجديدة)">
           <ul className="flex flex-col gap-2">
             {[
-              "استخدم Tokens السلّم فقط — ممنوع text-[13px] أو أي حجمٍ مباشر في صفحةٍ جديدة.",
+              "استخدم Tokens السلّم فقط — ممنوع text-[15px] أو أي حجمٍ مباشر في صفحةٍ جديدة.",
               "أي Hero: العنوان = Display أو H1 فقط، لا حجم آخر.",
               "داخل البطاقة: Title ثم Body ثم Caption — ثلاثة مستويات لا أكثر.",
               "الأرقام من lib/format فقط (عربية-هندية · ٪ · ﷼ · تواريخ موحّدة).",

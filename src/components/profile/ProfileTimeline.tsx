@@ -19,8 +19,8 @@ function ProfileTimelineBase({ items }: { items: JourneyItem[] }) {
     return (
       <div className="rounded-2xl p-6 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
         <div className="text-4xl mb-2" aria-hidden="true">🗺️</div>
-        <p className="font-black text-[16px] mb-1" style={{ color: "var(--text)" }}>رحلتك تبدأ الآن</p>
-        <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+        <p className="font-black text-[18px] mb-1" style={{ color: "var(--text)" }}>رحلتك تبدأ الآن</p>
+        <p className="text-[15px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
           كل جلسة وخطة وإنجاز يُسجَّل هنا كمحطة في رحلتك. أول خطوة تصنع الفرق.
         </p>
       </div>
@@ -53,8 +53,8 @@ function ProfileTimelineBase({ items }: { items: JourneyItem[] }) {
                   border: t.milestone ? "1px solid color-mix(in srgb, var(--gold) 45%, transparent)" : "1px solid var(--border)",
                 }}>{t.icon}</span>
               <div className="flex-1 min-w-0 pt-0.5">
-                <p className="text-[14px] leading-snug" style={{ color: "var(--text)", fontWeight: t.milestone ? 800 : 400 }}>{t.text}</p>
-                <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>{relDay(t.ts)}</p>
+                <p className="text-[16px] leading-snug" style={{ color: "var(--text)", fontWeight: t.milestone ? 800 : 400 }}>{t.text}</p>
+                <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>{relDay(t.ts)}</p>
               </div>
             </li>
           ))}

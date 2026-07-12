@@ -21,7 +21,7 @@ export interface ToolTileProps {
 function Inner({ icon, title, desc, color }: Pick<ToolTileProps, "icon" | "title" | "desc" | "color">) {
   return (
     <>
-      <span className="w-11 h-11 rounded-2xl flex items-center justify-center text-[22px] leading-none flex-shrink-0"
+      <span className="w-11 h-11 rounded-2xl flex items-center justify-center text-[25px] leading-none flex-shrink-0"
         style={{
           background: `color-mix(in srgb, ${color} 14%, transparent)`,
           border: `1.5px solid color-mix(in srgb, ${color} 30%, transparent)`,
@@ -30,8 +30,8 @@ function Inner({ icon, title, desc, color }: Pick<ToolTileProps, "icon" | "title
         aria-hidden="true">
         {icon}
       </span>
-      <span className="font-black text-[15px] leading-tight mt-0.5" style={{ color }}>{title}</span>
-      <span className="text-[12px] leading-snug" style={{ color: "var(--text-muted)" }}>{desc}</span>
+      <span className="font-black text-[17px] leading-tight mt-0.5" style={{ color }}>{title}</span>
+      <span className="text-[14px] leading-snug" style={{ color: "var(--text-muted)" }}>{desc}</span>
     </>
   );
 }

@@ -133,7 +133,7 @@ export default function WorldGraph() {
           {entity && (
             <div className="ds-card ds-stack-tight">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[20px]" aria-hidden="true">{KIND_META[entity.kind].icon}</span>
+                <span className="text-[23px]" aria-hidden="true">{KIND_META[entity.kind].icon}</span>
                 <h2 className="t-h2 flex-1" style={{ color: "var(--text)" }}>{entity.name}</h2>
                 <code className="t-caption font-mono-nums" style={{ color: "var(--text-muted)" }}>{entity.id}</code>
               </div>

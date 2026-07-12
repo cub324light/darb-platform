@@ -20,7 +20,7 @@ const FORMATS: StudyFormat[]     = ["ورقي", "رقمي", "الاثنان"];
 function Chip({ on, onClick, children, label }: { on: boolean; onClick: () => void; children: React.ReactNode; label: string }) {
   return (
     <button onClick={onClick} aria-pressed={on} aria-label={label}
-      className="px-3.5 py-2 rounded-full text-[13px] font-bold transition active:scale-95"
+      className="px-3.5 py-2 rounded-full text-[15px] font-bold transition active:scale-95"
       style={{
         background: on ? "var(--accent)" : "var(--surface2)",
         color: on ? "#fff" : "var(--text-muted)",
@@ -34,7 +34,7 @@ function Chip({ on, onClick, children, label }: { on: boolean; onClick: () => vo
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[13px] font-bold mb-2" style={{ color: "var(--text)" }}>{title}</p>
+      <p className="text-[15px] font-bold mb-2" style={{ color: "var(--text)" }}>{title}</p>
       <div className="flex flex-wrap gap-2">{children}</div>
     </div>
   );
@@ -53,15 +53,15 @@ function AnalyticsConsentRow() {
   return (
     <div className="rounded-2xl px-4 py-4 flex items-center justify-between gap-3 mt-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
       <div className="min-w-0">
-        <p className="font-bold text-[15px]" style={{ color: "var(--text)" }}>التحليلات والقياس</p>
-        <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+        <p className="font-bold text-[17px]" style={{ color: "var(--text)" }}>التحليلات والقياس</p>
+        <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>
           {on
             ? "مفعّلة — تساعدنا على تحسين درب (PostHog وVercel ورصد الأعطال)"
             : "معطّلة — لا تُرسَل أي بيانات استخدام لجهات خارجية"}
         </p>
       </div>
       <button onClick={toggle}
-        className="px-4 py-2.5 rounded-xl font-black text-[14px] flex-shrink-0 transition active:scale-95"
+        className="px-4 py-2.5 rounded-xl font-black text-[16px] flex-shrink-0 transition active:scale-95"
         style={on
           ? { background: "var(--accent)", color: "#fff", border: "1.5px solid var(--accent)" }
           : { background: "transparent", color: "var(--text-muted)", border: "1.5px solid var(--border)" }}>
@@ -82,7 +82,7 @@ function ProfilePreferencesBase({ prefs, onPrefsChange, isPrivate, onTogglePriva
       <div className="rounded-2xl p-5 flex flex-col gap-5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
         <div>
           <p className="label mb-1">تفضيلات التعلّم</p>
-          <p className="text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>نستخدمها لاحقاً لنخصّص جدولك واقتراحاتك.</p>
+          <p className="text-[14px] mb-1" style={{ color: "var(--text-muted)" }}>نستخدمها لاحقاً لنخصّص جدولك واقتراحاتك.</p>
         </div>
 
         <Group title="⏰ وقت المذاكرة المفضّل">
@@ -122,8 +122,8 @@ function ProfilePreferencesBase({ prefs, onPrefsChange, isPrivate, onTogglePriva
         {/* ── مدخلات استراتيجية المذاكرة — تُغذّي محرّك التخطيط الموحّد ── */}
         <div className="pt-1" style={{ borderTop: "1px solid var(--border)" }} />
         <div>
-          <p className="text-[13px] font-bold" style={{ color: "var(--text)" }}>📐 استراتيجية المذاكرة</p>
-          <p className="text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>يستعملها دويرب والخطة والخريطة معاً — قرار واحد في كل مكان.</p>
+          <p className="text-[15px] font-bold" style={{ color: "var(--text)" }}>📐 استراتيجية المذاكرة</p>
+          <p className="text-[14px] mb-1" style={{ color: "var(--text-muted)" }}>يستعملها دويرب والخطة والخريطة معاً — قرار واحد في كل مكان.</p>
         </div>
 
         <Group title="🗓️ أيام المذاكرة الأسبوعية">
@@ -158,13 +158,13 @@ function ProfilePreferencesBase({ prefs, onPrefsChange, isPrivate, onTogglePriva
         <p className="label mb-3">الخصوصية</p>
         <div className="rounded-2xl px-4 py-4 flex items-center justify-between gap-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <div className="min-w-0">
-            <p className="font-bold text-[15px]" style={{ color: "var(--text)" }}>ظهورك في الترتيب</p>
-            <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+            <p className="font-bold text-[17px]" style={{ color: "var(--text)" }}>ظهورك في الترتيب</p>
+            <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>
               {isPrivate ? "خاص — لا تظهر للآخرين ولا في لوحة الشرف" : "عام — تظهر في البحث ولوحة الشرف"}
             </p>
           </div>
           <button onClick={onTogglePrivacy}
-            className="px-4 py-2.5 rounded-xl font-black text-[14px] flex-shrink-0 transition active:scale-95"
+            className="px-4 py-2.5 rounded-xl font-black text-[16px] flex-shrink-0 transition active:scale-95"
             style={isPrivate
               ? { background: "#EF4444", color: "#fff", border: "1.5px solid #EF4444" }
               : { background: "transparent", color: "var(--text-muted)", border: "1.5px solid var(--border)" }}>

@@ -369,7 +369,7 @@ export default function DashClassic() {
                     : (TRACKS.find((tr) => tr.id === trackFilter)?.title ?? track.title)}
                 </p>
               </div>
-              <Link href="/roadmap" className="text-[17px] font-bold" style={{ color: "var(--accent-light)" }}>
+              <Link href="/roadmap" className="text-[19px] font-bold" style={{ color: "var(--accent-light)" }}>
                 الخريطة ←
               </Link>
             </div>
@@ -378,7 +378,7 @@ export default function DashClassic() {
             {activeTrackIds.length > 1 && (
               <div className="flex gap-2 mb-4 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
                 <button onClick={() => setTrackFilter("all")}
-                  className="px-3.5 py-1.5 rounded-full text-[13px] font-bold whitespace-nowrap transition active:scale-95 flex-shrink-0"
+                  className="px-3.5 py-1.5 rounded-full text-[15px] font-bold whitespace-nowrap transition active:scale-95 flex-shrink-0"
                   style={trackFilter === "all"
                     ? { background: "var(--accent)", color: "white", border: "1px solid var(--accent)" }
                     : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
@@ -389,7 +389,7 @@ export default function DashClassic() {
                   const active = trackFilter === tid;
                   return (
                     <button key={tid} onClick={() => setTrackFilter(tid)}
-                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-bold whitespace-nowrap transition active:scale-95 flex-shrink-0"
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[15px] font-bold whitespace-nowrap transition active:scale-95 flex-shrink-0"
                       style={active
                         ? { background: t.color, color: "white", border: `1px solid ${t.color}` }
                         : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
@@ -436,8 +436,8 @@ export default function DashClassic() {
                     <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: c, minHeight: "36px" }} />
                     {/* الاسم والأيام */}
                     <div className="flex-1 min-w-0">
-                      <p className="font-extrabold text-[16px]" style={{ color: "var(--text)" }}>{t.title}</p>
-                      <p className="text-[13px] font-semibold mt-0.5" style={{ color: urgentColor }}>
+                      <p className="font-extrabold text-[18px]" style={{ color: "var(--text)" }}>{t.title}</p>
+                      <p className="text-[15px] font-semibold mt-0.5" style={{ color: urgentColor }}>
                         {d === null ? "تاريخ الاختبار غير محدد"
                           : d < 0   ? "انتهى الاختبار"
                           : d === 0 ? "الاختبار اليوم — بالتوفيق"
@@ -477,7 +477,7 @@ export default function DashClassic() {
                           animationDelay: `${i * 60}ms`,
                         }}>
                         <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color, boxShadow: `0 0 5px ${s.color}88` }} />
-                        <span className="font-bold text-[16px]" style={{ color: "var(--text)" }}>{s.name}</span>
+                        <span className="font-bold text-[18px]" style={{ color: "var(--text)" }}>{s.name}</span>
                       </Link>
                     ))}
                   </div>
@@ -504,7 +504,7 @@ export default function DashClassic() {
                 <div key={s.label} className="flex-1 rounded-xl py-2 text-center"
                   style={{ background: "var(--surface2)" }}>
                   <p className="font-mono-nums font-black text-xl leading-tight" style={{ color: s.color }}>{s.val}</p>
-                  <p className="text-[10px] font-bold mt-0.5" style={{ color: "var(--text-muted)" }}>{s.label}</p>
+                  <p className="text-[11px] font-bold mt-0.5" style={{ color: "var(--text-muted)" }}>{s.label}</p>
                 </div>
               ))}
             </div>
@@ -523,13 +523,13 @@ export default function DashClassic() {
             </p>
 
             {/* الإجراء الواحد — ابدأ جلسة (يلمّح لمادة الجدول إن وُجدت) */}
-            <Link href="/orbit" className="btn-primary block text-center text-[18px]" style={{ textDecoration: "none" }}>
+            <Link href="/orbit" className="btn-primary block text-center text-[20px]" style={{ textDecoration: "none" }}>
               {nextStudySubject ? `▶ ابدأ: ${nextStudySubject}` : "▶ ابدأ جلسة الآن"}
             </Link>
             {!hasTodaySchedule && (
               <button
                 onClick={() => { setSchedTab("ai"); setSchedPrefill(""); setSchedOpen(true); }}
-                className="w-full mt-2 py-2.5 rounded-2xl font-bold text-[15px] transition active:scale-[0.98]"
+                className="w-full mt-2 py-2.5 rounded-2xl font-bold text-[17px] transition active:scale-[0.98]"
                 style={{ background: "transparent", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
                 🤖 أو ابنِ خطة اليوم مع دويرب
               </button>
@@ -550,7 +550,7 @@ export default function DashClassic() {
                   return (
                     <div className="flex items-center justify-center gap-2 rounded-2xl py-5"
                       style={{ background: "var(--surface2)", border: "1.5px dashed var(--border)", minHeight: "64px" }}>
-                      <span className="text-[15px] font-bold" style={{ color: "var(--text-muted)" }}>
+                      <span className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>
                         لا يوجد جدول اليوم — اضغط «مساعد دويرب» تحت
                       </span>
                     </div>
@@ -569,19 +569,19 @@ export default function DashClassic() {
                     {(current || next) ? (
                       <div className="rounded-2xl px-4 py-3 mb-3 flex items-center gap-3"
                         style={{ background: `color-mix(in srgb, ${c} 12%, var(--surface2))`, border: `1px solid ${c}44` }}>
-                        <span className="text-[20px]">{current ? "▶️" : "⏭️"}</span>
+                        <span className="text-[23px]">{current ? "▶️" : "⏭️"}</span>
                         <div className="flex-1 text-right min-w-0">
                           {current ? (
-                            <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>الآن — حتى {fmtHour(current.toHour)}</p>
+                            <p className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>الآن — حتى {fmtHour(current.toHour)}</p>
                           ) : next ? (() => {
                             const m = Math.max(1, Math.round((next.fromHour - nowH) * 60));
                             const when = m >= 60 ? `بعد ${Math.floor(m / 60)} ساعة${m % 60 ? ` و${m % 60} د` : ""}` : `بعد ${m} دقيقة`;
-                            return <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>القادمة {when} — {fmtHour(next.fromHour)}</p>;
+                            return <p className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>القادمة {when} — {fmtHour(next.fromHour)}</p>;
                           })() : null}
-                          <p className="text-[16px] font-black truncate" style={{ color: c }}>{subj ?? "مذاكرة"}</p>
+                          <p className="text-[18px] font-black truncate" style={{ color: c }}>{subj ?? "مذاكرة"}</p>
                         </div>
                         <Link href={`/orbit?subject=${encodeURIComponent(subj ?? "")}`}
-                          className="text-[13px] font-black px-3 py-2 rounded-xl flex-shrink-0"
+                          className="text-[15px] font-black px-3 py-2 rounded-xl flex-shrink-0"
                           style={{ background: c, color: "#fff", textDecoration: "none" }}>
                           ابدأ ←
                         </Link>
@@ -589,7 +589,7 @@ export default function DashClassic() {
                     ) : (
                       <div className="rounded-2xl px-4 py-3 mb-3 text-center"
                         style={{ background: "color-mix(in srgb, var(--success) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--success) 30%, transparent)" }}>
-                        <p className="text-[15px] font-black" style={{ color: "var(--success)" }}>خلّصت جلسات اليوم 🎉</p>
+                        <p className="text-[17px] font-black" style={{ color: "var(--success)" }}>خلّصت جلسات اليوم 🎉</p>
                       </div>
                     )}
 
@@ -604,12 +604,12 @@ export default function DashClassic() {
                             className={`flex items-center gap-3 px-4 py-3 ${i < study.length - 1 ? "border-b" : ""}`}
                             style={{ borderColor: "var(--border)", background: isNow ? `color-mix(in srgb, ${ec} 10%, transparent)` : "transparent", opacity: isPast ? 0.5 : 1 }}>
                             <div className="flex flex-col items-center w-14 flex-shrink-0">
-                              <span className="text-[13px] font-black" style={{ color: isNow ? ec : "var(--text)" }}>{fmtHour(ev.fromHour)}</span>
-                              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{fmtHour(ev.toHour)}</span>
+                              <span className="text-[15px] font-black" style={{ color: isNow ? ec : "var(--text)" }}>{fmtHour(ev.fromHour)}</span>
+                              <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{fmtHour(ev.toHour)}</span>
                             </div>
                             <div className="w-1.5 self-stretch rounded-full flex-shrink-0" style={{ background: ec }} />
-                            <span className="flex-1 text-[15px] font-bold" style={{ color: "var(--text)" }}>{ev.subject ?? "مذاكرة"}</span>
-                            {isNow && <span className="text-[11px] font-black px-2 py-0.5 rounded-lg" style={{ background: ec, color: "#fff" }}>الآن</span>}
+                            <span className="flex-1 text-[17px] font-bold" style={{ color: "var(--text)" }}>{ev.subject ?? "مذاكرة"}</span>
+                            {isNow && <span className="text-[12px] font-black px-2 py-0.5 rounded-lg" style={{ background: ec, color: "#fff" }}>الآن</span>}
                           </div>
                         );
                       })}
@@ -619,19 +619,19 @@ export default function DashClassic() {
               })()}
               <div className="flex gap-2 mt-3">
                 <button onClick={() => { setSchedOpen(true); setSchedTab("manual"); }}
-                  className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
+                  className="flex-1 py-3 rounded-2xl font-bold text-[19px]"
                   style={{ background: "transparent", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
                   يدوي
                 </button>
                 <button onClick={() => { setSchedOpen(true); setSchedTab("ai"); }}
-                  className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
+                  className="flex-1 py-3 rounded-2xl font-bold text-[19px]"
                   style={{ background: "var(--accent)", color: "white", border: "none" }}>
                   مساعد دويرب
                 </button>
               </div>
               {/* التقويم الشهري الكامل انتقل إلى «خطتي» — رابط مضغوط بدل تكراره هنا */}
               <Link href="/plan"
-                className="mt-3 flex items-center justify-center gap-2 rounded-2xl py-2.5 text-[14px] font-bold transition active:scale-[0.98] no-underline"
+                className="mt-3 flex items-center justify-center gap-2 rounded-2xl py-2.5 text-[16px] font-bold transition active:scale-[0.98] no-underline"
                 style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--accent-light)" }}>
                 📅 التقويم الكامل في خطتي ←
               </Link>
@@ -645,17 +645,17 @@ export default function DashClassic() {
             onClick={() => window.dispatchEvent(new CustomEvent("darb:openDuirb"))}
             className="card w-full flex items-center gap-3.5 text-right transition active:scale-[0.98] glow-card-hover"
             style={{ border: "1px solid color-mix(in srgb, var(--accent) 30%, var(--ring))" }}>
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-[26px] flex-shrink-0"
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-[29px] flex-shrink-0"
               style={{ background: "color-mix(in srgb, var(--accent) 14%, transparent)" }}>
               🤖
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-extrabold text-[16px]" style={{ color: "var(--text)" }}>دويرب — مساعدك الذكي</p>
-              <p className="text-[13px] leading-snug" style={{ color: "var(--text-muted)" }}>
+              <p className="font-extrabold text-[18px]" style={{ color: "var(--text)" }}>دويرب — مساعدك الذكي</p>
+              <p className="text-[15px] leading-snug" style={{ color: "var(--text-muted)" }}>
                 خطط، تحليل ملفات، أسئلة، شرح أخطاء، واستخراج مواضيع — كله في مكان واحد
               </p>
             </div>
-            <span className="text-[18px] font-black flex-shrink-0" style={{ color: "var(--accent-light)" }}>←</span>
+            <span className="text-[20px] font-black flex-shrink-0" style={{ color: "var(--accent-light)" }}>←</span>
           </button>
         );
 
@@ -665,7 +665,7 @@ export default function DashClassic() {
           <section className="card">
             <div className="flex items-center justify-between mb-4">
               <p className="title-md" style={{ color: "var(--text)" }}>أسبوعك</p>
-              <p className="text-[13px] font-semibold" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[15px] font-semibold" style={{ color: "var(--text-muted)" }}>
                 {week.reduce((a, d) => a + d.mins, 0)} دقيقة
               </p>
             </div>
@@ -676,7 +676,7 @@ export default function DashClassic() {
                 return (
                   <div key={i} className="flex-1 flex flex-col items-center gap-1.5 min-w-0">
                     {d.mins > 0 && (
-                      <span className="font-mono-nums text-[10px] font-bold" style={{ color: d.isToday ? "var(--accent-light)" : "var(--text-muted)" }}>
+                      <span className="font-mono-nums text-[11px] font-bold" style={{ color: d.isToday ? "var(--accent-light)" : "var(--text-muted)" }}>
                         {d.mins}
                       </span>
                     )}
@@ -689,7 +689,7 @@ export default function DashClassic() {
                           : d.mins > 0 ? "color-mix(in srgb, var(--accent) 45%, var(--surface2))" : "var(--surface2)",
                         boxShadow: d.isToday && d.mins > 0 ? "0 0 10px color-mix(in srgb, var(--accent) 40%, transparent)" : "none",
                       }} />
-                    <span className="text-[11px] font-bold" style={{ color: d.isToday ? "var(--accent-light)" : "var(--text-muted)" }}>
+                    <span className="text-[12px] font-bold" style={{ color: d.isToday ? "var(--accent-light)" : "var(--text-muted)" }}>
                       {d.label}
                     </span>
                   </div>
@@ -710,11 +710,11 @@ export default function DashClassic() {
               border: "1px solid color-mix(in srgb, var(--gold) 18%, transparent)",
             }}>
             <button onClick={dismissQuote} aria-label="حذف الحكمة"
-              className="absolute top-2.5 left-2.5 w-6 h-6 rounded-full flex items-center justify-center text-[13px] font-bold"
+              className="absolute top-2.5 left-2.5 w-6 h-6 rounded-full flex items-center justify-center text-[15px] font-bold"
               style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
               ✕
             </button>
-            <p className="text-[15px] font-bold leading-relaxed pl-7" style={{ color: "var(--text-dim)" }}>
+            <p className="text-[17px] font-bold leading-relaxed pl-7" style={{ color: "var(--text-dim)" }}>
               &ldquo;{quoteOfToday()}&rdquo;
             </p>
           </section>
@@ -737,12 +737,12 @@ export default function DashClassic() {
                   }}>
                   <div className="absolute inset-0 opacity-[0.04] pointer-events-none"
                     style={{ background: `radial-gradient(circle at 50% 50%, ${s.glowColor}, transparent 70%)` }} />
-                  <p className="num-hero text-[34px] leading-none relative z-10" style={{ color: s.color }}>
+                  <p className="num-hero text-[38px] leading-none relative z-10" style={{ color: s.color }}>
                     {s.num > 0
-                      ? <NumberTicker value={s.num} decimalPlaces={s.isFloat ? 1 : 0} className="num-hero text-[34px] leading-none" style={{ color: s.color }} />
+                      ? <NumberTicker value={s.num} decimalPlaces={s.isFloat ? 1 : 0} className="num-hero text-[38px] leading-none" style={{ color: s.color }} />
                       : "0"}
                   </p>
-                  <p className="text-[15px] font-semibold mt-2 whitespace-nowrap relative z-10" style={{ color: "var(--text-muted)" }}>{s.unit}</p>
+                  <p className="text-[17px] font-semibold mt-2 whitespace-nowrap relative z-10" style={{ color: "var(--text-muted)" }}>{s.unit}</p>
                 </div>
               ))}
             </div>
@@ -765,9 +765,9 @@ export default function DashClassic() {
                 const style = { minHeight: "108px", border: `1px solid color-mix(in srgb, ${a.accent} 22%, var(--ring))` };
                 const inner = (
                   <>
-                    <span className="text-[26px] leading-none">{a.icon}</span>
-                    <p className="font-extrabold text-[16px] mt-0.5" style={{ color: "var(--text)" }}>{a.label}</p>
-                    <p className="text-[12.5px] leading-snug" style={{ color: "var(--text-muted)" }}>{a.desc}</p>
+                    <span className="text-[29px] leading-none">{a.icon}</span>
+                    <p className="font-extrabold text-[18px] mt-0.5" style={{ color: "var(--text)" }}>{a.label}</p>
+                    <p className="text-[14px] leading-snug" style={{ color: "var(--text-muted)" }}>{a.desc}</p>
                   </>
                 );
                 return a.href ? (
@@ -787,23 +787,23 @@ export default function DashClassic() {
               <Link href="/council" className="card flex items-center gap-3 active:scale-[0.97] transition"
                 style={{ minHeight: "74px", textDecoration: "none" }}>
                 <div>
-                  <p className="font-extrabold text-[17px]" style={{ color: "var(--text)" }}>المجلس</p>
-                  <p className="text-[17px]" style={{ color: "var(--text-muted)" }}>نقاشات الطلاب</p>
+                  <p className="font-extrabold text-[19px]" style={{ color: "var(--text)" }}>المجلس</p>
+                  <p className="text-[19px]" style={{ color: "var(--text-muted)" }}>نقاشات الطلاب</p>
                 </div>
               </Link>
             )}
             <Link href="/arena" className="card flex items-center gap-3 active:scale-[0.97] transition"
               style={{ minHeight: "74px", textDecoration: "none", borderColor: "color-mix(in srgb, var(--gold) 25%, transparent)" }}>
               <div>
-                <p className="font-extrabold text-[17px]" style={{ color: "var(--gold)" }}>الأرينا</p>
-                <p className="text-[17px]" style={{ color: "var(--text-muted)" }}>تحدي 1v1</p>
+                <p className="font-extrabold text-[19px]" style={{ color: "var(--gold)" }}>الأرينا</p>
+                <p className="text-[19px]" style={{ color: "var(--text-muted)" }}>تحدي 1v1</p>
               </div>
             </Link>
             <Link href="/leaderboard" className="card flex items-center gap-3 active:scale-[0.97] transition"
               style={{ minHeight: "74px", textDecoration: "none", borderColor: "color-mix(in srgb, var(--gold) 25%, transparent)" }}>
               <div>
-                <p className="font-extrabold text-[17px]" style={{ color: "var(--gold)" }}>لوحة الشرف</p>
-                <p className="text-[17px]" style={{ color: "var(--text-muted)" }}>المتصدّرون</p>
+                <p className="font-extrabold text-[19px]" style={{ color: "var(--gold)" }}>لوحة الشرف</p>
+                <p className="text-[19px]" style={{ color: "var(--text-muted)" }}>المتصدّرون</p>
               </div>
             </Link>
           </section>
@@ -814,12 +814,12 @@ export default function DashClassic() {
           <section className="card flex items-center gap-4"
             style={{ borderColor: "color-mix(in srgb, var(--gold) 22%, transparent)" }}>
             <div className="flex-1 min-w-0">
-              <p className="font-extrabold text-[14.5px]" style={{ color: "var(--gold)" }}>شهادة الانضباط الرقمية</p>
-              <p className="text-[17px]" style={{ color: "var(--text-muted)" }}>
+              <p className="font-extrabold text-[16px]" style={{ color: "var(--gold)" }}>شهادة الانضباط الرقمية</p>
+              <p className="text-[19px]" style={{ color: "var(--text-muted)" }}>
                 {focusHours === 0 ? "تبدأ مع أول ساعة تركيز" : `${focusHours} ساعة موثقة حتى الآن`}
               </p>
             </div>
-            <Link href="/pricing" className="text-[17px] font-bold flex-shrink-0" style={{ color: "var(--accent-light)" }}>
+            <Link href="/pricing" className="text-[19px] font-bold flex-shrink-0" style={{ color: "var(--accent-light)" }}>
               شاهين ←
             </Link>
           </section>
@@ -843,7 +843,7 @@ export default function DashClassic() {
               </div>
             </div>
             {studiersData && studiersData.count === 0 && (
-              <p className="text-[13px] mt-3" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[15px] mt-3" style={{ color: "var(--text-muted)" }}>
                 كن أول من يذاكر الآن — ابدأ جلسة أوربت
               </p>
             )}
@@ -861,14 +861,14 @@ export default function DashClassic() {
                 <p className="title-md" style={{ color: "var(--text)" }}>خريطة المملكة</p>
               </div>
               {studiersData && (
-                <span className="dome-chip text-[13px]" style={{ color: "var(--text-muted)" }}>
+                <span className="dome-chip text-[15px]" style={{ color: "var(--text-muted)" }}>
                   {studiersData.count} نشط
                 </span>
               )}
             </div>
             <SaudiMap regionCounts={regionCounts} className="w-full" />
             {Object.keys(regionCounts).length === 0 && (
-              <p className="text-[13px] mt-3 text-center" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[15px] mt-3 text-center" style={{ color: "var(--text-muted)" }}>
                 لا يوجد طلاب نشطون حالياً
               </p>
             )}
@@ -918,7 +918,7 @@ export default function DashClassic() {
               border: "1.5px solid var(--accent)",
             }}
             aria-label="افتح البروفايل">
-            <span className="w-8 h-8 rounded-xl flex items-center justify-center text-[16px] font-black text-white flex-shrink-0"
+            <span className="w-8 h-8 rounded-xl flex items-center justify-center text-[18px] font-black text-white flex-shrink-0"
               style={{ background: "linear-gradient(135deg, var(--accent-2), var(--accent-light))" }}>
               {(user?.name ?? "د").charAt(0)}
             </span>
@@ -926,7 +926,7 @@ export default function DashClassic() {
               أهلاً، {user ? user.name : <span className="skeleton" style={{ width: "70px", height: "1em", verticalAlign: "middle" }} />}
             </span>
           </Link>
-          <p className="text-[15px] font-semibold mt-1.5" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[17px] font-semibold mt-1.5" style={{ color: "var(--text-muted)" }}>
             {greeting}
           </p>
         </div>
@@ -948,14 +948,14 @@ export default function DashClassic() {
                 <Link href="/opportunities"
                   className="rounded-2xl px-3.5 py-2.5 flex items-center gap-2 no-underline transition active:scale-[0.97]"
                   style={{ background: "color-mix(in srgb, var(--gold) 10%, var(--surface))", border: "1px solid color-mix(in srgb, var(--gold) 28%, transparent)" }}>
-                  <span className="text-[18px] leading-none">🎓</span>
-                  <span className="font-bold text-[13.5px]" style={{ color: "var(--text)" }}>وش تقدر تقدم عليه</span>
+                  <span className="text-[20px] leading-none">🎓</span>
+                  <span className="font-bold text-[15px]" style={{ color: "var(--text)" }}>وش تقدر تقدم عليه</span>
                 </Link>
                 <Link href="/university"
                   className="rounded-2xl px-3.5 py-2.5 flex items-center gap-2 no-underline transition active:scale-[0.97]"
                   style={{ background: "color-mix(in srgb, var(--accent) 10%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 28%, transparent)" }}>
-                  <span className="text-[18px] leading-none">🏛️</span>
-                  <span className="font-bold text-[13.5px]" style={{ color: "var(--text)" }}>القبول والمفاضلة</span>
+                  <span className="text-[20px] leading-none">🏛️</span>
+                  <span className="font-bold text-[15px]" style={{ color: "var(--text)" }}>القبول والمفاضلة</span>
                 </Link>
               </div>
             )}
@@ -964,10 +964,10 @@ export default function DashClassic() {
                 className="rounded-2xl px-4 py-2.5 mb-3 flex items-center justify-between gap-2 no-underline transition active:scale-[0.97]"
                 style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 24%, transparent)" }}>
                 <span className="flex items-center gap-2">
-                  <span className="text-[18px] leading-none">🧭</span>
-                  <span className="font-bold text-[13.5px]" style={{ color: "var(--text)" }}>استكشف التخصصات والقبول</span>
+                  <span className="text-[20px] leading-none">🧭</span>
+                  <span className="font-bold text-[15px]" style={{ color: "var(--text)" }}>استكشف التخصصات والقبول</span>
                 </span>
-                <span className="text-[10.5px] font-bold px-2 py-0.5 rounded-full"
+                <span className="text-[12px] font-bold px-2 py-0.5 rounded-full"
                   style={{ background: "color-mix(in srgb, var(--accent) 14%, transparent)", color: "var(--accent-light)" }}>تعريفي</span>
               </Link>
             )}
@@ -1025,14 +1025,14 @@ export default function DashClassic() {
         {/* شريط التخصيص — هادئ خارج وضع الترتيب: ميزةٌ للمتمكّن لا تُزاحم مهمة الصفحة */}
         <div className="flex justify-between items-center gap-3">
           {editMode ? (
-            <p className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>
+            <p className="text-[15px] font-bold" style={{ color: "var(--accent-light)" }}>
               اسحب ⠿ للترتيب · اضغط ✕ للإخفاء
             </p>
           ) : <span />}
           <button onClick={() => { if (editMode) saveDashConfig({ layout }); setEditMode((v) => !v); }}
             className={editMode
-              ? "flex items-center gap-2 px-4 py-2.5 rounded-xl text-[14px] font-bold transition active:scale-95 flex-shrink-0"
-              : "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12.5px] font-semibold transition active:scale-95 flex-shrink-0"}
+              ? "flex items-center gap-2 px-4 py-2.5 rounded-xl text-[16px] font-bold transition active:scale-95 flex-shrink-0"
+              : "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[14px] font-semibold transition active:scale-95 flex-shrink-0"}
             style={editMode
               ? { background: "var(--accent)", color: "white", border: "none" }
               : { background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
@@ -1047,7 +1047,7 @@ export default function DashClassic() {
           {/* عنوان مجموعة — يظهر فوق أول قسم في المجموعة (خارج وضع التخصيص) */}
           {!editMode && GROUP_LABEL[item.id] && (
             <div className="flex items-center gap-3 pt-2 pb-0.5">
-              <span className="text-[12px] font-bold whitespace-nowrap" style={{ color: "var(--text-muted)" }}>
+              <span className="text-[14px] font-bold whitespace-nowrap" style={{ color: "var(--text-muted)" }}>
                 {GROUP_LABEL[item.id]}
               </span>
               <span className="flex-1 h-px" style={{ background: "var(--border)" }} />
@@ -1127,16 +1127,16 @@ export default function DashClassic() {
           <section className="card" style={{ border: "1.5px dashed var(--border)", background: "var(--surface2)" }}>
             <p className="eyebrow mb-3">إضافة قسم</p>
             {hiddenItems.length === 0 ? (
-              <p className="text-[14px] font-semibold" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[16px] font-semibold" style={{ color: "var(--text-muted)" }}>
                 كل الأقسام ظاهرة — اسحب ⠿ لإعادة ترتيبها أو ✕ لإخفائها.
               </p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {hiddenItems.map((item) => (
                   <button key={item.id} onClick={() => setVisible(item.id, true)}
-                    className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-[14px] font-bold transition active:scale-95"
+                    className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-[16px] font-bold transition active:scale-95"
                     style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}>
-                    <span className="text-[18px] leading-none" style={{ color: "var(--accent-light)" }}>＋</span>
+                    <span className="text-[20px] leading-none" style={{ color: "var(--accent-light)" }}>＋</span>
                     {DASH_SECTION_META[item.id].label}
                   </button>
                 ))}

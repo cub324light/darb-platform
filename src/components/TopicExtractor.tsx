@@ -167,7 +167,7 @@ export default function TopicExtractor({
     <div className="fixed inset-0 z-[9990] flex flex-col overflow-y-auto" style={{ background: "var(--bg)" }}>
       <div className="sticky top-0 z-10 px-5 pt-safe pt-4 pb-3 flex items-center gap-3"
         style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
-        <button onClick={close} className="dome-chip text-[17px] font-bold flex-shrink-0" style={{ color: "var(--text)" }}>← رجوع</button>
+        <button onClick={close} className="dome-chip text-[19px] font-bold flex-shrink-0" style={{ color: "var(--text)" }}>← رجوع</button>
         <p className="title-lg flex-1 text-right" style={{ color: "var(--text)" }}>استخراج مواضيع {subject}</p>
       </div>
 
@@ -175,13 +175,13 @@ export default function TopicExtractor({
         {stage === "loading" && (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <div className="w-10 h-10 rounded-full border-2 border-transparent animate-spin" style={{ borderTopColor: color }} />
-            <p className="text-[15px] font-bold" style={{ color: "var(--text-muted)" }}>دويرب يقرأ المادة ويستخرج المواضيع...</p>
+            <p className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>دويرب يقرأ المادة ويستخرج المواضيع...</p>
           </div>
         )}
 
         {stage === "input" && (
           <>
-            <p className="text-[14px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[16px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
               صوّر فهرس الكتاب أو ارفع ملف PDF، ودويرب يستخرج أهم المواضيع. أو الصق نص الفهرس يدوياً.
             </p>
 
@@ -190,14 +190,14 @@ export default function TopicExtractor({
               className="hidden"
               onChange={(e) => setFiles(Array.from(e.target.files ?? []).slice(0, 4))} />
             <button onClick={() => fileRef.current?.click()}
-              className="w-full rounded-2xl py-5 font-bold text-[16px] transition active:scale-[0.98]"
+              className="w-full rounded-2xl py-5 font-bold text-[18px] transition active:scale-[0.98]"
               style={{ background: "var(--surface)", border: `2px dashed ${color}`, color }}>
               📷 اختر صورة أو ملف PDF
             </button>
             {files.length > 0 && (
               <div className="flex flex-col gap-1.5">
                 {files.map((f, i) => (
-                  <div key={i} className="flex items-center justify-between rounded-xl px-3 py-2 text-[13px]"
+                  <div key={i} className="flex items-center justify-between rounded-xl px-3 py-2 text-[15px]"
                     style={{ background: "var(--surface2)", color: "var(--text)" }}>
                     <span className="truncate">{f.name}</span>
                     <button onClick={() => setFiles((p) => p.filter((_, j) => j !== i))}
@@ -209,7 +209,7 @@ export default function TopicExtractor({
 
             <div className="flex items-center gap-3">
               <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
-              <span className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>أو</span>
+              <span className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>أو</span>
               <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
             </div>
 
@@ -222,12 +222,12 @@ export default function TopicExtractor({
 
             {err && (
               <div className="rounded-2xl px-4 py-3" style={{ background: "rgba(239,68,68,0.12)", border: "2px solid #EF4444" }}>
-                <p className="text-[14px] text-center font-bold" style={{ color: "#EF4444" }}>{err}</p>
+                <p className="text-[16px] text-center font-bold" style={{ color: "#EF4444" }}>{err}</p>
               </div>
             )}
 
             <button onClick={extract}
-              className="w-full rounded-2xl py-4 font-black text-[17px] transition active:scale-[0.98]"
+              className="w-full rounded-2xl py-4 font-black text-[19px] transition active:scale-[0.98]"
               style={{ background: color, color: "#fff" }}>
               استخرج المواضيع 🤖
             </button>
@@ -236,7 +236,7 @@ export default function TopicExtractor({
 
         {stage === "review" && (
           <>
-            <p className="text-[14px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[16px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
               راجع المواضيع، احذف الغلط وعدّل اللي تبي، ثم أضف المحدّد. ({selectedCount} مختار)
             </p>
             <div className="flex flex-col gap-2">
@@ -250,7 +250,7 @@ export default function TopicExtractor({
                   </button>
                   <input value={it.title}
                     onChange={(e) => setItems((p) => p.map((x) => x.id === it.id ? { ...x, title: e.target.value } : x))}
-                    className="flex-1 min-w-0 bg-transparent outline-none text-[15px] font-semibold"
+                    className="flex-1 min-w-0 bg-transparent outline-none text-[17px] font-semibold"
                     style={{ color: "var(--text)" }} />
                   <button onClick={() => setItems((p) => p.filter((x) => x.id !== it.id))}
                     className="text-[var(--text-muted)] text-lg px-1 flex-shrink-0" aria-label="حذف">✕</button>
@@ -260,12 +260,12 @@ export default function TopicExtractor({
 
             <div className="flex gap-2.5">
               <button onClick={() => { reset(); }}
-                className="rounded-2xl py-4 px-5 font-bold text-[15px]"
+                className="rounded-2xl py-4 px-5 font-bold text-[17px]"
                 style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
                 إعادة
               </button>
               <button onClick={confirmAdd} disabled={selectedCount === 0}
-                className="flex-1 rounded-2xl py-4 font-black text-[17px] transition active:scale-[0.98]"
+                className="flex-1 rounded-2xl py-4 font-black text-[19px] transition active:scale-[0.98]"
                 style={{ background: color, color: "#fff", opacity: selectedCount === 0 ? 0.4 : 1 }}>
                 أضف المحدّد ({selectedCount}) ←
               </button>
@@ -279,7 +279,7 @@ export default function TopicExtractor({
   return (
     <>
       <button onClick={() => setOpen(true)}
-        className="w-full rounded-2xl py-3.5 font-bold text-[15px] transition active:scale-[0.98] flex items-center justify-center gap-2"
+        className="w-full rounded-2xl py-3.5 font-bold text-[17px] transition active:scale-[0.98] flex items-center justify-center gap-2"
         style={{ background: "var(--surface)", border: `1.5px solid ${color}`, color }}>
         📷 استخرج المواضيع من صورة أو ملف 🤖
       </button>

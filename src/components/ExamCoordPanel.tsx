@@ -25,10 +25,10 @@ export default function ExamCoordPanel({ tracks }: { tracks: string[] }) {
       <div className="rounded-2xl p-4 flex flex-col gap-3"
         style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
         <div className="flex items-center gap-2">
-          <span className="text-[17px]">🔀</span>
-          <p className="font-black text-[15px]" style={{ color: "var(--text)" }}>تنسيق اختباراتك</p>
+          <span className="text-[19px]">🔀</span>
+          <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>تنسيق اختباراتك</p>
         </div>
-        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>
           عندك أكثر من اختبار ({tracks.join(" و")}). اختر كيف توزّع وقتك بينها — يأخذها دويرب بالحسبان عند بناء جدولك.
         </p>
 
@@ -41,8 +41,8 @@ export default function ExamCoordPanel({ tracks }: { tracks: string[] }) {
                 style={active
                   ? { background: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1.5px solid var(--accent)" }
                   : { background: "var(--surface2)", border: "1.5px solid var(--border)" }}>
-                <p className="font-bold text-[13px]" style={{ color: active ? "var(--accent-light)" : "var(--text)" }}>{o.label}</p>
-                <p className="text-[11px] mt-0.5 leading-snug" style={{ color: "var(--text-muted)" }}>{o.desc}</p>
+                <p className="font-bold text-[15px]" style={{ color: active ? "var(--accent-light)" : "var(--text)" }}>{o.label}</p>
+                <p className="text-[12px] mt-0.5 leading-snug" style={{ color: "var(--text-muted)" }}>{o.desc}</p>
               </button>
             );
           })}
@@ -52,7 +52,7 @@ export default function ExamCoordPanel({ tracks }: { tracks: string[] }) {
           <textarea value={coord.custom} onChange={(e) => update({ custom: e.target.value })}
             placeholder="مثال: ركّز على القدرات أسبوعين قبل اختباره، وبعد اختبار القدرات حوّل كامل الوقت للتحصيلي."
             rows={3} maxLength={400}
-            className="w-full rounded-xl px-3 py-2.5 text-[13px] text-[var(--text)] placeholder-[var(--text-muted)] outline-none resize-y"
+            className="w-full rounded-xl px-3 py-2.5 text-[15px] text-[var(--text)] placeholder-[var(--text-muted)] outline-none resize-y"
             style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
         )}
       </div>

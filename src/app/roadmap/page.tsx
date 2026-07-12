@@ -85,8 +85,8 @@ function ReviewBanner({ label, onDismiss }: { label: string; onDismiss: () => vo
   return (
     <div className="rounded-2xl p-3.5 mb-3 flex items-center gap-3"
       style={{ background: "color-mix(in srgb, var(--accent) 12%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--accent) 32%, transparent)" }}>
-      <p className="flex-1 font-bold text-[17px]" style={{ color: "var(--text)" }}>{label}</p>
-      <button onClick={onDismiss} className="px-3 py-2 rounded-xl font-bold text-[17px] min-h-[40px] flex-shrink-0"
+      <p className="flex-1 font-bold text-[19px]" style={{ color: "var(--text)" }}>{label}</p>
+      <button onClick={onDismiss} className="px-3 py-2 rounded-xl font-bold text-[19px] min-h-[40px] flex-shrink-0"
         style={{ background: "var(--accent)", color: "white", border: "none" }}>تمت ✓</button>
     </div>
   );
@@ -107,10 +107,10 @@ function PhaseSection({ title, num, pct, complete, unlocked, color, accentText, 
           <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs flex-shrink-0"
             style={{ background: "var(--surface2)", color: "var(--text-muted)", border: "1.5px solid var(--border)" }}>🔒</div>
           <div className="flex-1 min-w-0">
-            <span className="text-[11px] font-semibold" style={{ color: "var(--text-muted)" }}>المرحلة {num} من ٣</span>
-            <p className="font-black text-[15px] leading-tight" style={{ color: "var(--text-muted)" }}>{title}</p>
+            <span className="text-[12px] font-semibold" style={{ color: "var(--text-muted)" }}>المرحلة {num} من ٣</span>
+            <p className="font-black text-[17px] leading-tight" style={{ color: "var(--text-muted)" }}>{title}</p>
           </div>
-          {lockedMsg && <span className="text-[12px] font-bold text-left" style={{ color: "var(--text-muted)" }}>{lockedMsg}</span>}
+          {lockedMsg && <span className="text-[14px] font-bold text-left" style={{ color: "var(--text-muted)" }}>{lockedMsg}</span>}
         </div>
       </div>
     );
@@ -126,10 +126,10 @@ function PhaseSection({ title, num, pct, complete, unlocked, color, accentText, 
           <div className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-black flex-shrink-0"
             style={{ background: "#10B981", color: "white" }}>✓</div>
           <div className="flex-1 min-w-0 text-right">
-            <span className="text-[11px] font-semibold" style={{ color: "var(--text-muted)" }}>المرحلة {num} من ٣</span>
-            <p className="font-black text-[15px] leading-tight" style={{ color: "var(--text)" }}>{title} — مكتمل</p>
+            <span className="text-[12px] font-semibold" style={{ color: "var(--text-muted)" }}>المرحلة {num} من ٣</span>
+            <p className="font-black text-[17px] leading-tight" style={{ color: "var(--text)" }}>{title} — مكتمل</p>
           </div>
-          <span className="text-[13px] font-black flex-shrink-0" style={{ color: "#10B981" }}>عرض ▾</span>
+          <span className="text-[15px] font-black flex-shrink-0" style={{ color: "#10B981" }}>عرض ▾</span>
         </button>
       </div>
     );
@@ -145,11 +145,11 @@ function PhaseSection({ title, num, pct, complete, unlocked, color, accentText, 
           {complete ? "✓" : num}
         </div>
         <div className="flex flex-col flex-1 min-w-0">
-          <span className="text-[11px] font-semibold" style={{ color: "var(--text-muted)" }}>المرحلة {num} من ٣</span>
+          <span className="text-[12px] font-semibold" style={{ color: "var(--text-muted)" }}>المرحلة {num} من ٣</span>
           <p className="font-black text-base leading-tight" style={{ color: "var(--text)" }}>{title}</p>
         </div>
-        <span className="font-mono-nums font-black text-[17px] flex-shrink-0" style={{ color: accentText }}>{pct}%</span>
-        {complete && <span className="text-[13px] font-black flex-shrink-0" style={{ color: "#10B981" }}>▴</span>}
+        <span className="font-mono-nums font-black text-[19px] flex-shrink-0" style={{ color: accentText }}>{pct}%</span>
+        {complete && <span className="text-[15px] font-black flex-shrink-0" style={{ color: "#10B981" }}>▴</span>}
       </button>
       <div className="h-2.5 bg-[var(--border)] rounded-full overflow-hidden mb-3">
         <div className="h-full rounded-full transition-all duration-700"
@@ -197,7 +197,7 @@ function NextStepOverlay({
       <div className="sticky top-0 z-10 px-5 pt-safe pt-4 pb-3 flex items-center gap-3"
         style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
         {canDismiss && (
-          <button onClick={onClose} className="dome-chip text-[17px] font-bold flex-shrink-0" style={{ color: "var(--text)" }}>← رجوع</button>
+          <button onClick={onClose} className="dome-chip text-[19px] font-bold flex-shrink-0" style={{ color: "var(--text)" }}>← رجوع</button>
         )}
         <p className="title-lg flex-1 text-right" style={{ color: "var(--text)" }}>وش تبي تكمل؟</p>
       </div>
@@ -206,12 +206,12 @@ function NextStepOverlay({
         {/* احتفال الإكمال — وسام فضي لامع + إحصائيات الرحلة */}
         <div className="flex flex-col items-center text-center gap-4 pt-2">
           <div className="relative silver-medal w-28 h-28 rounded-full flex flex-col items-center justify-center">
-            <span className="text-[34px] leading-none">🏅</span>
-            <span className="text-[11px] font-black mt-0.5" style={{ color: "#5A6270" }}>أنجزت</span>
+            <span className="text-[38px] leading-none">🏅</span>
+            <span className="text-[12px] font-black mt-0.5" style={{ color: "#5A6270" }}>أنجزت</span>
           </div>
           <div>
             <p className="title-lg" style={{ color: "var(--text)" }}>مبروك! أكملت {examTitle}</p>
-            <p className="text-[14px] mt-1" style={{ color: "var(--text-muted)" }}>وسام الفضة من نصيبك — رحلة تستاهل الفخر</p>
+            <p className="text-[16px] mt-1" style={{ color: "var(--text-muted)" }}>وسام الفضة من نصيبك — رحلة تستاهل الفخر</p>
           </div>
           <div className="grid grid-cols-3 gap-2.5 w-full">
             {[
@@ -229,7 +229,7 @@ function NextStepOverlay({
                     ? <NumberTicker value={s.val} style={{ color: s.color }} />
                     : s.val}
                 </span>
-                <span className="text-[11px] relative z-10" style={{ color: "var(--text-muted)" }}>{s.label}</span>
+                <span className="text-[12px] relative z-10" style={{ color: "var(--text-muted)" }}>{s.label}</span>
               </div>
             ))}
           </div>
@@ -239,7 +239,7 @@ function NextStepOverlay({
         {gradeDisplay && (
           <div className="rounded-2xl px-4 py-3 flex items-center gap-2"
             style={{ background: "color-mix(in srgb, var(--gold) 12%, var(--surface))", border: "1px solid color-mix(in srgb, var(--gold) 35%, transparent)" }}>
-            <span className="font-bold text-[17px]" style={{ color: "var(--gold)" }}>{gradeDisplay}</span>
+            <span className="font-bold text-[19px]" style={{ color: "var(--gold)" }}>{gradeDisplay}</span>
           </div>
         )}
 
@@ -257,8 +257,8 @@ function NextStepOverlay({
                 }}>
 
                 <div className="flex-1 min-w-0">
-                  <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>{opt.title}</p>
-                  <p className="text-[17px] mt-0.5" style={{ color: "var(--text-muted)" }}>{opt.sub}</p>
+                  <p className="font-black text-[19px]" style={{ color: "var(--text)" }}>{opt.title}</p>
+                  <p className="text-[19px] mt-0.5" style={{ color: "var(--text-muted)" }}>{opt.sub}</p>
                 </div>
                 {currentPlan === opt.id && <span className="text-[var(--accent)] text-xl flex-shrink-0">✓</span>}
               </button>
@@ -284,8 +284,8 @@ function NextStepOverlay({
                 }}>
 
                 <div className="flex-1 min-w-0">
-                  <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>{opt.title}</p>
-                  <p className="text-[17px] mt-0.5" style={{ color: "var(--text-muted)" }}>{opt.sub}</p>
+                  <p className="font-black text-[19px]" style={{ color: "var(--text)" }}>{opt.title}</p>
+                  <p className="text-[19px] mt-0.5" style={{ color: "var(--text-muted)" }}>{opt.sub}</p>
                 </div>
                 {currentPlan === opt.id && <span className="text-[var(--danger)] text-xl flex-shrink-0">✓</span>}
               </button>
@@ -293,7 +293,7 @@ function NextStepOverlay({
           </div>
         </div>
 
-        <p className="text-[17px] text-center" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[19px] text-center" style={{ color: "var(--text-muted)" }}>
           القرار يُحفظ ويمكنك تغييره في أي وقت من مساري
         </p>
       </div>
@@ -705,9 +705,9 @@ export default function RoadmapPage() {
       <div className="min-h-dvh pb-nav relative z-[1]">
         <Dome compact>
           <div className="flex items-center justify-between">
-            <button onClick={() => setSelected(null)} className="dome-chip text-[17px] font-bold" style={{ color: "var(--text)" }}>← رجوع</button>
+            <button onClick={() => setSelected(null)} className="dome-chip text-[19px] font-bold" style={{ color: "var(--text)" }}>← رجوع</button>
             <h1 className="title-lg grad-title">{selected}</h1>
-            <span className="dome-chip num-hero text-[17px]" style={{ color: "var(--text)" }}>{detailCount()}</span>
+            <span className="dome-chip num-hero text-[19px]" style={{ color: "var(--text)" }}>{detailCount()}</span>
           </div>
         </Dome>
         <div className="h-5" />
@@ -767,8 +767,8 @@ export default function RoadmapPage() {
         <div className="flex items-center gap-3">
           <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: t.color, minHeight: "36px" }} />
           <div className="flex-1 min-w-0">
-            <p className="font-extrabold text-[16px]" style={{ color: "var(--text)" }}>{t.title}</p>
-            <p className="text-[12px] font-semibold mt-0.5" style={{ color: examColor(dl) }}>{examLabel(dl)}</p>
+            <p className="font-extrabold text-[18px]" style={{ color: "var(--text)" }}>{t.title}</p>
+            <p className="text-[14px] font-semibold mt-0.5" style={{ color: examColor(dl) }}>{examLabel(dl)}</p>
           </div>
           <ExamDateButton value={d} color={t.color} min={todayStr}
             onChange={(v) => { const updated = { ...trackExamDates, [tid]: v }; setTrackExamDates(updated); saveTrackExamDates(updated); }}
@@ -791,8 +791,8 @@ export default function RoadmapPage() {
         <div className="flex items-center gap-3 mb-3">
           <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: t.color, minHeight: "34px" }} />
           <div className="flex-1 min-w-0">
-            <p className="font-extrabold text-[16px]" style={{ color: "var(--text)" }}>{t.title}</p>
-            <p className="text-[12px] font-semibold mt-0.5" style={{ color: examColor(dl) }}>{examLabel(dl)}</p>
+            <p className="font-extrabold text-[18px]" style={{ color: "var(--text)" }}>{t.title}</p>
+            <p className="text-[14px] font-semibold mt-0.5" style={{ color: examColor(dl) }}>{examLabel(dl)}</p>
           </div>
           <ExamDateButton value={d} color={t.color} min={todayStr}
             onChange={(v) => { const updated = { ...trackExamDates, [tid]: v }; setTrackExamDates(updated); saveTrackExamDates(updated); }}
@@ -803,7 +803,7 @@ export default function RoadmapPage() {
           const activeSubjects = t.subjects.filter((s) => statsForSubject(t, s.name).total > 0);
           if (activeSubjects.length === 0) {
             return (
-              <p className="text-[12px] font-semibold text-center py-1" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[14px] font-semibold text-center py-1" style={{ color: "var(--text-muted)" }}>
                 ابدأ بإضافة دروسك من الخريطة
               </p>
             );
@@ -815,12 +815,12 @@ export default function RoadmapPage() {
                 return (
                   <div key={s.name} className="flex items-center gap-2.5">
                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
-                    <span className="text-[13px] font-bold flex-shrink-0" style={{ color: "var(--text)", minWidth: "58px" }}>{s.name}</span>
+                    <span className="text-[15px] font-bold flex-shrink-0" style={{ color: "var(--text)", minWidth: "58px" }}>{s.name}</span>
                     <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
                       <div className="h-full rounded-full" style={{ width: `${st.pct}%`, background: s.color }} />
                     </div>
-                    <span className="font-mono-nums text-[11px] font-black flex-shrink-0 text-left" style={{ color: s.color, minWidth: "32px" }}>{st.pct}%</span>
-                    <span className="font-mono-nums text-[10px] flex-shrink-0 text-left" style={{ color: "var(--text-muted)", minWidth: "34px" }}>{st.done}/{st.total}</span>
+                    <span className="font-mono-nums text-[12px] font-black flex-shrink-0 text-left" style={{ color: s.color, minWidth: "32px" }}>{st.pct}%</span>
+                    <span className="font-mono-nums text-[11px] flex-shrink-0 text-left" style={{ color: "var(--text-muted)", minWidth: "34px" }}>{st.done}/{st.total}</span>
                   </div>
                 );
               })}
@@ -846,7 +846,7 @@ export default function RoadmapPage() {
       <Dome compact>
         <div className="flex items-center justify-between">
           <h1 className="title-lg grad-title">مساري</h1>
-          <span className="dome-chip text-[17px] font-bold" style={{ color: "var(--text-dim)" }}>
+          <span className="dome-chip text-[19px] font-bold" style={{ color: "var(--text-dim)" }}>
             {testTab === "all" ? "كل الاختبارات" : `${track.icon} ${track.title}`}
           </span>
         </div>
@@ -858,12 +858,12 @@ export default function RoadmapPage() {
         <Link href="/plan"
           className="w-full rounded-2xl py-3.5 px-4 flex items-center gap-3 transition active:scale-[0.98]"
           style={{ background: "linear-gradient(135deg, var(--accent), var(--accent-hi))", color: "#fff", textDecoration: "none" }}>
-          <span className="text-[20px]">🗓️</span>
+          <span className="text-[23px]">🗓️</span>
           <span className="flex-1 text-right">
-            <span className="block text-[16px] font-black">خطتي</span>
-            <span className="block text-[12px] opacity-90">جدول اليوم والأسبوع وتخطيط دويرب</span>
+            <span className="block text-[18px] font-black">خطتي</span>
+            <span className="block text-[14px] opacity-90">جدول اليوم والأسبوع وتخطيط دويرب</span>
           </span>
-          <span className="text-[18px] font-black">←</span>
+          <span className="text-[20px] font-black">←</span>
         </Link>
       </div>
 
@@ -876,7 +876,7 @@ export default function RoadmapPage() {
       <div className="px-5 mb-4 flex flex-wrap gap-2">
         <button
           onClick={() => { setTestTab("all"); setSelected(null); }}
-          className="px-3.5 py-1.5 rounded-xl text-[13px] font-bold transition"
+          className="px-3.5 py-1.5 rounded-xl text-[15px] font-bold transition"
           style={testTab === "all"
             ? { background: "var(--accent)", color: "white", border: "1.5px solid var(--accent)" }
             : { background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}>
@@ -889,7 +889,7 @@ export default function RoadmapPage() {
           return (
             <button key={tid}
               onClick={() => { setTestTab(tid); setSelected(null); }}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[13px] font-bold transition"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[15px] font-bold transition"
               style={active
                 ? { background: t.color, color: "white", border: `1.5px solid ${t.color}` }
                 : { background: "transparent", border: `1.5px solid ${t.color}55`, color: t.color }}>
@@ -910,10 +910,10 @@ export default function RoadmapPage() {
         <Link href="/skills" className="flex items-center justify-between rounded-2xl px-4 py-3 transition active:scale-[0.98]"
           style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid var(--accent)" }}>
           <div className="flex items-center gap-2.5">
-            <span className="text-[20px]">🧠</span>
+            <span className="text-[23px]">🧠</span>
             <div>
-              <p className="text-[14px] font-black" style={{ color: "var(--accent-light)" }}>خريطة مهاراتي الشاملة</p>
-              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>قيّم مستواك في كل مهارة وتتبّع تقدمك</p>
+              <p className="text-[16px] font-black" style={{ color: "var(--accent-light)" }}>خريطة مهاراتي الشاملة</p>
+              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>قيّم مستواك في كل مهارة وتتبّع تقدمك</p>
             </div>
           </div>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 shrink-0" style={{ color: "var(--accent)" }}>
@@ -946,7 +946,7 @@ export default function RoadmapPage() {
               <>
                 <div className="flex items-center justify-between mb-2 px-1">
                   <p className="eyebrow">تقدّمك في كل المواد</p>
-                  <span className="font-mono-nums text-[13px] font-black" style={{ color: "var(--accent-light)" }}>{overall}%</span>
+                  <span className="font-mono-nums text-[15px] font-black" style={{ color: "var(--accent-light)" }}>{overall}%</span>
                 </div>
                 {/* الشريط: برواز مستقل لكل اختبار */}
                 <div className="flex mb-4" style={{ height: "18px", gap: "4px" }}>
@@ -999,7 +999,7 @@ export default function RoadmapPage() {
           <div className="rounded-2xl p-3.5 mb-3 flex items-center gap-2"
             style={{ background: "color-mix(in srgb, #10B981 10%, var(--surface))", border: "1px solid color-mix(in srgb, #10B981 30%, transparent)" }}>
             <span>✓</span>
-            <span className="font-bold text-[17px]" style={{ color: "#10B981" }}>التأسيس مكتمل — انتقلت للتدريب</span>
+            <span className="font-bold text-[19px]" style={{ color: "#10B981" }}>التأسيس مكتمل — انتقلت للتدريب</span>
           </div>
         )}
         <div className="grid grid-cols-2 desk-grid-3 gap-3">
@@ -1044,7 +1044,7 @@ export default function RoadmapPage() {
           <div className="rounded-2xl p-3.5 mb-3 flex items-center gap-2"
             style={{ background: "color-mix(in srgb, #10B981 10%, var(--surface))", border: "1px solid color-mix(in srgb, #10B981 30%, transparent)" }}>
             <span>✓</span>
-            <span className="font-bold text-[17px]" style={{ color: "#10B981" }}>التدريب مكتمل — انتقلت للتسريبات</span>
+            <span className="font-bold text-[19px]" style={{ color: "#10B981" }}>التدريب مكتمل — انتقلت للتسريبات</span>
           </div>
         )}
         <div className="grid grid-cols-2 desk-grid-3 gap-3 mb-3">
@@ -1075,7 +1075,7 @@ export default function RoadmapPage() {
         </div>
         {allTraining.length === 0 && !examFlow.skippedTadreeb && (
           <button onClick={() => updFlow({ skippedTadreeb: true })}
-            className="w-full py-3 rounded-2xl font-bold text-[17px] min-h-[44px]"
+            className="w-full py-3 rounded-2xl font-bold text-[19px] min-h-[44px]"
             style={{ background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}>
             تخطي التدريب والانتقال للتسريبات
           </button>
@@ -1097,7 +1097,7 @@ export default function RoadmapPage() {
         {/* تتبع الأوراق */}
         {!examPast && (
           <div className="mb-4">
-            <p className="text-[17px] mb-3" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[19px] mb-3" style={{ color: "var(--text-muted)" }}>
               سجّل تقدمك في حل الاختبارات السابقة (0–99%)
             </p>
             <div className="flex items-center gap-3">
@@ -1114,7 +1114,7 @@ export default function RoadmapPage() {
                 className="w-11 h-11 rounded-xl font-black text-xl flex-shrink-0 flex items-center justify-center"
                 style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}>+</button>
             </div>
-            <p className="text-[17px] text-center mt-2" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[19px] text-center mt-2" style={{ color: "var(--text-muted)" }}>
               الـ 1% الأخير يكتمل بإدخال درجتك بعد الاختبار
             </p>
           </div>
@@ -1124,11 +1124,11 @@ export default function RoadmapPage() {
         {examPast && !hasGrade && !skipped && (
           <div className="rounded-2xl p-5 mb-3"
             style={{ background: "color-mix(in srgb, var(--gold) 10%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--gold) 40%, transparent)" }}>
-            <p className="font-black text-[17px] mb-1" style={{ color: "var(--gold)" }}>يوم الاختبار وصل!</p>
-            <p className="text-[17px] mb-4" style={{ color: "var(--text-muted)" }}>أدخل درجتك لتكمل الـ 1% الأخير</p>
+            <p className="font-black text-[19px] mb-1" style={{ color: "var(--gold)" }}>يوم الاختبار وصل!</p>
+            <p className="text-[19px] mb-4" style={{ color: "var(--text-muted)" }}>أدخل درجتك لتكمل الـ 1% الأخير</p>
             <div className="flex gap-2 mb-3">
               <input type="number" value={gradeInput} onChange={(e) => setGradeInput(e.target.value)}
-                placeholder="الدرجة..." className="flex-1 rounded-xl px-4 py-3 text-[17px] font-bold outline-none min-h-[48px]"
+                placeholder="الدرجة..." className="flex-1 rounded-xl px-4 py-3 text-[19px] font-bold outline-none min-h-[48px]"
                 style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
               <button
                 onClick={() => {
@@ -1149,15 +1149,15 @@ export default function RoadmapPage() {
                   }
                 }}
                 disabled={!gradeInput.trim() || isNaN(parseFloat(gradeInput))}
-                className="px-5 rounded-xl font-black text-[17px] min-h-[48px]"
+                className="px-5 rounded-xl font-black text-[19px] min-h-[48px]"
                 style={{ background: "var(--gold)", color: "#1a1200", border: "none" }}>سجّل</button>
             </div>
             <button onClick={() => { updFlow({ skippedGrade: true }); setShowNextStep(true); }}
-              className="w-full py-2.5 rounded-xl text-[17px] font-bold"
+              className="w-full py-2.5 rounded-xl text-[19px] font-bold"
               style={{ background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}>
               ما أبي أقولها
             </button>
-            <p className="text-[17px] mt-1.5 text-center" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
+            <p className="text-[19px] mt-1.5 text-center" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
               لا يُفضَّل هذا — اكتب درجتك الحقيقية لتستفيد من التوصيات
             </p>
           </div>
@@ -1168,8 +1168,8 @@ export default function RoadmapPage() {
           <div className="rounded-2xl p-4 flex items-center gap-3"
             style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--accent) 25%, transparent)" }}>
             <div className="flex-1">
-              <p className="font-bold text-[17px]" style={{ color: "var(--text)" }}>الخطة المختارة</p>
-              <p className="text-[17px]" style={{ color: "var(--text-muted)" }}>
+              <p className="font-bold text-[19px]" style={{ color: "var(--text)" }}>الخطة المختارة</p>
+              <p className="text-[19px]" style={{ color: "var(--text-muted)" }}>
                 {examFlow.plan === "cpc"           && "مسار CPC — أرامكو"}
                 {examFlow.plan === "qudrat"         && "اختبار القدرات"}
                 {examFlow.plan === "other"          && "مادة جديدة"}
@@ -1180,7 +1180,7 @@ export default function RoadmapPage() {
               </p>
             </div>
             <button onClick={() => setShowNextStep(true)}
-              className="text-[var(--accent-light)] text-[17px] font-bold px-2 min-h-[44px]">
+              className="text-[var(--accent-light)] text-[19px] font-bold px-2 min-h-[44px]">
               تغيير
             </button>
           </div>
@@ -1230,7 +1230,7 @@ export default function RoadmapPage() {
                   return (
                     <div className="rounded-2xl px-4 py-3 mb-3 text-center"
                       style={{ background: "color-mix(in srgb, var(--success) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--success) 30%, transparent)" }}>
-                      <p className="text-[15px] font-black" style={{ color: "var(--success)" }}>خلّصت جدول اليوم 🎉</p>
+                      <p className="text-[17px] font-black" style={{ color: "var(--success)" }}>خلّصت جدول اليوم 🎉</p>
                     </div>
                   );
                 }
@@ -1247,13 +1247,13 @@ export default function RoadmapPage() {
                 return (
                   <div className="rounded-2xl px-4 py-3 mb-3 flex items-center gap-3"
                     style={{ background: `color-mix(in srgb, ${c} 12%, var(--surface2))`, border: `1px solid ${c}44` }}>
-                    <span className="text-[22px]">{current ? "▶️" : "⏭️"}</span>
+                    <span className="text-[25px]">{current ? "▶️" : "⏭️"}</span>
                     <div className="flex-1 text-right min-w-0">
-                      <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>{line1}</p>
-                      <p className="text-[16px] font-black truncate" style={{ color: c }}>{subj ?? "مذاكرة"}</p>
+                      <p className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>{line1}</p>
+                      <p className="text-[18px] font-black truncate" style={{ color: c }}>{subj ?? "مذاكرة"}</p>
                     </div>
                     <Link href={`/orbit?subject=${encodeURIComponent(subj ?? "")}`}
-                      className="text-[13px] font-black px-3 py-2 rounded-xl flex-shrink-0"
+                      className="text-[15px] font-black px-3 py-2 rounded-xl flex-shrink-0"
                       style={{ background: c, color: "#fff", textDecoration: "none" }}>
                       ابدأ أوربت ←
                     </Link>
@@ -1265,7 +1265,7 @@ export default function RoadmapPage() {
               {todayEvents.length === 0 ? (
                 <div className="flex items-center justify-center gap-2 rounded-2xl py-5"
                   style={{ background: "var(--surface2)", border: "1.5px dashed var(--border)", minHeight: "56px" }}>
-                  <span className="text-[15px] font-bold" style={{ color: "var(--text-muted)" }}>
+                  <span className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>
                     لا يوجد جدول اليوم — اضغط «مساعد دويرب» تحت
                   </span>
                 </div>
@@ -1273,20 +1273,20 @@ export default function RoadmapPage() {
                 <button onClick={() => { setSchedTab("manual"); setSchedulerDate(todayStr); }}
                   className="w-full flex items-center justify-between gap-2 rounded-2xl px-4 py-3 transition active:scale-[0.99]"
                   style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-                  <span className="text-[14px] font-bold" style={{ color: "var(--text)" }}>
+                  <span className="text-[16px] font-bold" style={{ color: "var(--text)" }}>
                     {todayEvents.filter((e) => e.type === "study").length} جلسة اليوم
                   </span>
-                  <span className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>عرض وتعديل ←</span>
+                  <span className="text-[15px] font-bold" style={{ color: "var(--accent-light)" }}>عرض وتعديل ←</span>
                 </button>
               )}
               <div className="flex gap-2 mt-3">
                 <button onClick={() => { setSchedTab("manual"); setSchedulerDate(todayStr); }}
-                  className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
+                  className="flex-1 py-3 rounded-2xl font-bold text-[19px]"
                   style={{ background: "transparent", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
                   يدوي
                 </button>
                 <button onClick={() => { setSchedTab("ai"); setSchedulerDate(todayStr); }}
-                  className="flex-1 py-3 rounded-2xl font-bold text-[17px]"
+                  className="flex-1 py-3 rounded-2xl font-bold text-[19px]"
                   style={{ background: "var(--accent)", color: "white", border: "none" }}>
                   مساعد دويرب
                 </button>
@@ -1306,17 +1306,17 @@ export default function RoadmapPage() {
           {selected && drillPhase ? (
             <>
               <div className="rm-detail-head">
-                <span className="font-black text-[15px] flex-1 min-w-0 truncate" style={{ color: "var(--text)" }}>{selected}</span>
-                <span className="num-hero text-[13px]" style={{ color: "var(--text-muted)" }}>{detailCount()}</span>
+                <span className="font-black text-[17px] flex-1 min-w-0 truncate" style={{ color: "var(--text)" }}>{selected}</span>
+                <span className="num-hero text-[15px]" style={{ color: "var(--text-muted)" }}>{detailCount()}</span>
                 <button onClick={() => setSelected(null)} className="rm-detail-close" aria-label="إغلاق التفاصيل">✕</button>
               </div>
               <div className="rm-detail-scroll">{renderDetailBody()}</div>
             </>
           ) : (
             <div className="rm-detail-empty">
-              <span className="text-[34px]">🗺️</span>
-              <p className="font-bold text-[15px] mt-3" style={{ color: "var(--text)" }}>اختر مادة لعرض دروسها</p>
-              <p className="text-[13px] mt-1 leading-relaxed" style={{ color: "var(--text-muted)" }}>
+              <span className="text-[38px]">🗺️</span>
+              <p className="font-bold text-[17px] mt-3" style={{ color: "var(--text)" }}>اختر مادة لعرض دروسها</p>
+              <p className="text-[15px] mt-1 leading-relaxed" style={{ color: "var(--text-muted)" }}>
                 اضغط أي مادة من المراحل على اليمين لتتابع دروسها وتمارينها هنا.
               </p>
             </div>

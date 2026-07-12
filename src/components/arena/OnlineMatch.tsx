@@ -264,14 +264,14 @@ export default function OnlineMatch({ track, onExit }: { track: string; onExit: 
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center gap-2">
               <RankBadge rp={myRp.newRP} size="md" showRp />
-              <span className="font-mono-nums font-black text-[15px]"
+              <span className="font-mono-nums font-black text-[17px]"
                 style={{ color: myRp.delta >= 0 ? "var(--success)" : "var(--danger)" }}>
                 {myRp.delta >= 0 ? "+" : ""}{myRp.delta} RP
               </span>
             </div>
-            {myRp.streakBonus > 0 && <p className="text-[12px]" style={{ color: "var(--gold)" }}>🔥 مكافأة سلسلة +{myRp.streakBonus}</p>}
-            {myRp.promoted && <p className="text-[13px] font-black" style={{ color: "var(--success)" }}>⬆️ ترقية رتبة!</p>}
-            {myRp.demoted && <p className="text-[13px] font-black" style={{ color: "var(--danger)" }}>⬇️ خفض رتبة</p>}
+            {myRp.streakBonus > 0 && <p className="text-[14px]" style={{ color: "var(--gold)" }}>🔥 مكافأة سلسلة +{myRp.streakBonus}</p>}
+            {myRp.promoted && <p className="text-[15px] font-black" style={{ color: "var(--success)" }}>⬆️ ترقية رتبة!</p>}
+            {myRp.demoted && <p className="text-[15px] font-black" style={{ color: "var(--danger)" }}>⬇️ خفض رتبة</p>}
           </div>
         )}
 
@@ -307,14 +307,14 @@ export default function OnlineMatch({ track, onExit }: { track: string; onExit: 
           <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0"
             style={{ background: "linear-gradient(135deg,var(--accent-2),var(--accent-light))" }}>{(me?.name ?? "؟").charAt(0)}</div>
           <div className="min-w-0">
-            <p className="text-[11px] font-bold text-[var(--text-muted)] truncate">{me?.name ?? "أنت"}</p>
+            <p className="text-[12px] font-bold text-[var(--text-muted)] truncate">{me?.name ?? "أنت"}</p>
             {me && <RankBadge rp={me.rp} size="xs" showLabel={false} showRp />}
           </div>
         </div>
         <span className="font-mono-nums font-black text-[var(--text)]">{qIndex + 1}/{qs.length}</span>
         <div className="flex items-center gap-2 min-w-0 justify-end">
           <div className="min-w-0 text-left">
-            <p className="text-[11px] font-bold text-[var(--text-muted)] truncate">{opp?.name ?? "الخصم"}{oppDone ? " ✓" : ""}</p>
+            <p className="text-[12px] font-bold text-[var(--text-muted)] truncate">{opp?.name ?? "الخصم"}{oppDone ? " ✓" : ""}</p>
             {opp && <RankBadge rp={opp.rp} size="xs" showLabel={false} showRp />}
           </div>
           <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0"
@@ -347,7 +347,7 @@ export default function OnlineMatch({ track, onExit }: { track: string; onExit: 
             );
           })}
         </div>
-        <p className="text-center text-[12px] mt-3" style={{ color: "var(--text-muted)" }}>
+        <p className="text-center text-[14px] mt-3" style={{ color: "var(--text-muted)" }}>
           تُكشف النتيجة بعد انتهاء الجولة — جاوب بسرعة ودقة.
         </p>
       </div>

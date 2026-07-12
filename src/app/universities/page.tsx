@@ -58,7 +58,7 @@ function UniCard({ u }: { u: UniversityOption }) {
     <Card href={`/universities/${u.id}`} tint={c} ariaLabel={u.name}>
       <div className="flex items-center gap-3">
         {/* الأفاتار: الحرف الأول فوق تدرّج بلون النوع (لا صور خارجية — CSP) */}
-        <span className="w-12 h-12 rounded-2xl flex items-center justify-center text-[19px] font-black flex-shrink-0"
+        <span className="w-12 h-12 rounded-2xl flex items-center justify-center text-[22px] font-black flex-shrink-0"
           style={{
             background: `color-mix(in srgb, ${c} 16%, transparent)`,
             border: `1.5px solid color-mix(in srgb, ${c} 38%, transparent)`,

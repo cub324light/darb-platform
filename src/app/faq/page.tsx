@@ -59,7 +59,7 @@ export default function FaqPage() {
       </Dome>
 
       <main className="px-5 py-6 max-w-2xl min-[1100px]:max-w-3xl mx-auto flex flex-col gap-10 pb-20">
-        <p className="text-[14.5px] leading-relaxed -mb-4" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[16px] leading-relaxed -mb-4" style={{ color: "var(--text-muted)" }}>
           سؤال لكل اختبار: وش المشكلة فيه بالضبط، وكيف يحلّها درب — من القدرات والتحصيلي إلى اختبارات اللغة والقبول.
         </p>
 

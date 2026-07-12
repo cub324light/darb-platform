@@ -72,7 +72,7 @@ export default function DashboardPage() {
               border: "1.5px solid var(--accent)",
             }}
             aria-label="افتح البروفايل">
-            <span className="w-8 h-8 rounded-xl flex items-center justify-center text-[16px] font-black text-white flex-shrink-0"
+            <span className="w-8 h-8 rounded-xl flex items-center justify-center text-[18px] font-black text-white flex-shrink-0"
               style={{ background: "linear-gradient(135deg, var(--accent-2), var(--accent-light))" }}>
               {(user?.name ?? "د").charAt(0)}
             </span>
@@ -80,7 +80,7 @@ export default function DashboardPage() {
               أهلاً، {user ? user.name : <span className="skeleton" style={{ width: "70px", height: "1em", verticalAlign: "middle" }} />}
             </span>
           </Link>
-          <p className="text-[15px] font-semibold mt-1.5" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[17px] font-semibold mt-1.5" style={{ color: "var(--text-muted)" }}>
             {greeting}
           </p>
         </div>

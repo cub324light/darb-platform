@@ -23,8 +23,8 @@ export default function PublicPageCta({ current }: { current: string }) {
             <Link key={s.href} href={s.href}
               className="grow basis-[45%] md:basis-[30%] rounded-2xl p-4 flex items-center gap-2.5 glow-card-hover"
               style={{ background: "var(--surface)", border: "1.5px solid var(--border)", textDecoration: "none" }}>
-              <span className="text-[18px]" aria-hidden="true">{s.icon}</span>
-              <span className="font-bold text-[13.5px]" style={{ color: "var(--text)" }}>{s.label}</span>
+              <span className="text-[20px]" aria-hidden="true">{s.icon}</span>
+              <span className="font-bold text-[15px]" style={{ color: "var(--text)" }}>{s.label}</span>
             </Link>
           ))}
         </div>
@@ -36,12 +36,12 @@ export default function PublicPageCta({ current }: { current: string }) {
           background: "linear-gradient(145deg, color-mix(in srgb, var(--accent) 8%, transparent), var(--surface))",
           border: "1.5px solid color-mix(in srgb, var(--accent) 22%, transparent)",
         }}>
-        <h2 className="font-black text-[20px] mb-2" style={{ color: "var(--text)" }}>جاهز تبدأ دربك؟</h2>
-        <p className="text-[14px] mb-5 leading-relaxed" style={{ color: "var(--text-dim)" }}>
+        <h2 className="font-black text-[23px] mb-2" style={{ color: "var(--text)" }}>جاهز تبدأ دربك؟</h2>
+        <p className="text-[16px] mb-5 leading-relaxed" style={{ color: "var(--text-dim)" }}>
           خريطة مذاكرة كاملة للقدرات والتحصيلي وستيب — تأسيس وتدريب ومتابعة، مجاناً.
         </p>
         <Link href="/onboarding"
-          className="btn-shimmer inline-flex items-center gap-2 px-9 py-3.5 font-black text-[16px]"
+          className="btn-shimmer inline-flex items-center gap-2 px-9 py-3.5 font-black text-[18px]"
           style={{ textDecoration: "none" }}>
           ابدأ مجاناً ←
         </Link>

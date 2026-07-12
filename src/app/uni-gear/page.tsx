@@ -41,7 +41,7 @@ export default function UniGearPage() {
       </Dome>
 
       <main className="px-5 py-6 max-w-2xl min-[1100px]:max-w-3xl mx-auto flex flex-col gap-10 pb-20">
-        <p className="text-[14.5px] leading-relaxed -mb-4" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[16px] leading-relaxed -mb-4" style={{ color: "var(--text-muted)" }}>
           أجهزة وبرامج وأدوات ذكاء اصطناعي تخدم تخصصك: حدّد تخصصك وميزانيتك وشف وش يستاهل فعلاً — فئات ومواصفات تدوم بدل موديلات وإصدارات تتقادم، توصيات محايدة بلا روابط شراء (وكثير من البرامج مجاني أو له نسخة طلابية).
         </p>
 

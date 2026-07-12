@@ -48,17 +48,17 @@ export default function LegalDoc({
               className="rounded-2xl p-5"
               style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
             >
-              <h2 className="font-bold text-[17px] text-[var(--text)] mb-2">{s.h}</h2>
+              <h2 className="font-bold text-[19px] text-[var(--text)] mb-2">{s.h}</h2>
               {s.p &&
                 (Array.isArray(s.p) ? s.p : [s.p]).map((para, i) => (
-                  <p key={i} className="text-[15px] text-[var(--text-dim)] leading-relaxed mb-2 last:mb-0">
+                  <p key={i} className="text-[17px] text-[var(--text-dim)] leading-relaxed mb-2 last:mb-0">
                     {para}
                   </p>
                 ))}
               {s.list && (
                 <ul className="mt-1 space-y-1.5">
                   {s.list.map((item, i) => (
-                    <li key={i} className="text-[15px] text-[var(--text-dim)] leading-relaxed flex gap-2">
+                    <li key={i} className="text-[17px] text-[var(--text-dim)] leading-relaxed flex gap-2">
                       <span style={{ color: "var(--accent-light)" }} className="flex-shrink-0">•</span>
                       <span>{item}</span>
                     </li>

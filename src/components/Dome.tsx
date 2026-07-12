@@ -29,7 +29,7 @@ function ClockWidget() {
 
   return (
     <button onClick={toggle}
-      className="flex items-center justify-center px-3.5 py-2 rounded-xl text-[16px] font-black tabular-nums transition active:scale-95"
+      className="flex items-center justify-center px-3.5 py-2 rounded-xl text-[18px] font-black tabular-nums transition active:scale-95"
       style={{ background: "color-mix(in srgb, var(--text-muted) 10%, transparent)", color: "var(--text)", border: "1px solid var(--border)" }}
       aria-label="الساعة — اضغط لتبديل 12/24">
       {time}

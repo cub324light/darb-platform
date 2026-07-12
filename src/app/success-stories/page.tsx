@@ -44,7 +44,7 @@ function StoryCard({ story }: { story: SuccessStoryDoc }) {
       style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
       {/* الاسم + شارة التوثيق — التسميات مجهولة فالأفاتار أيقونة ثابتة 🎓 */}
       <div className="flex items-center gap-3 mb-4">
-        <span className="w-11 h-11 rounded-2xl flex items-center justify-center text-[19px] flex-shrink-0"
+        <span className="w-11 h-11 rounded-2xl flex items-center justify-center text-[22px] flex-shrink-0"
           style={{
             background: "color-mix(in srgb, var(--gold) 14%, transparent)",
             border: "1.5px solid color-mix(in srgb, var(--gold) 35%, transparent)",
@@ -52,9 +52,9 @@ function StoryCard({ story }: { story: SuccessStoryDoc }) {
           aria-hidden="true">
           🎓
         </span>
-        <p className="font-black text-[16px] flex-1" style={{ color: "var(--text)" }}>{story.name}</p>
+        <p className="font-black text-[18px] flex-1" style={{ color: "var(--text)" }}>{story.name}</p>
         {story.verified && (
-          <span className="text-[11px] font-black px-2 py-0.5 rounded-full flex-shrink-0"
+          <span className="text-[12px] font-black px-2 py-0.5 rounded-full flex-shrink-0"
             style={{
               background: "color-mix(in srgb, var(--success) 14%, transparent)",
               color: "var(--success)",
@@ -76,8 +76,8 @@ function StoryCard({ story }: { story: SuccessStoryDoc }) {
                 background: `color-mix(in srgb, ${c} 12%, transparent)`,
                 border: `1px solid color-mix(in srgb, ${c} 30%, transparent)`,
               }}>
-              <span className="text-[11px] font-bold" style={{ color: "var(--text-dim)" }}>{key}</span>
-              <span className={numeric ? "font-black text-[16px] font-mono-nums" : "font-bold text-[12px]"}
+              <span className="text-[12px] font-bold" style={{ color: "var(--text-dim)" }}>{key}</span>
+              <span className={numeric ? "font-black text-[18px] font-mono-nums" : "font-bold text-[14px]"}
                 style={{ color: c }}>
                 {val}
               </span>
@@ -88,7 +88,7 @@ function StoryCard({ story }: { story: SuccessStoryDoc }) {
 
       {/* الملاحظة إن وُجدت */}
       {story.note.trim() !== "" && (
-        <p className="text-[13.5px] leading-relaxed mt-3 pr-3"
+        <p className="text-[15px] leading-relaxed mt-3 pr-3"
           style={{ color: "var(--text-dim)", borderInlineStart: "2.5px solid color-mix(in srgb, var(--gold) 45%, transparent)" }}>
           {story.note}
         </p>
@@ -112,7 +112,7 @@ export default async function SuccessStoriesPage() {
 
       {/* حاوية أوسع على سطح المكتب — تتيح ثلاثة أعمدة للقصص دون تضييقها */}
       <main className="px-5 py-6 max-w-2xl min-[1100px]:max-w-5xl mx-auto flex flex-col gap-10 pb-20">
-        <p className="text-[14.5px] leading-relaxed -mb-4" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[16px] leading-relaxed -mb-4" style={{ color: "var(--text-muted)" }}>
           طلاب حقيقيون وصلوا لدرجات عالية في القدرات والتحصيلي وستيب — أرقامهم وطريقتهم، عشان تعرف إن الوصول ممكن.
         </p>
 
@@ -126,7 +126,7 @@ export default async function SuccessStoriesPage() {
         {/* ═══ استراتيجيات المذاكرة — مستخلصة من تجاربهم ═══ */}
         <section>
           <p className="eyebrow mb-1" style={{ color: "var(--accent-light)" }}>كيف وصلوا؟</p>
-          <h2 className="font-black text-[19px] mb-4" style={{ color: "var(--text)" }}>استراتيجيات من تجاربهم</h2>
+          <h2 className="font-black text-[22px] mb-4" style={{ color: "var(--text)" }}>استراتيجيات من تجاربهم</h2>
           {/* عمود واحد على الجوال، ثلاثة أعمدة على سطح المكتب */}
           <div className="grid gap-3 desk-grid-3">
             {snap.studyStrategies.map((s, i) => (
@@ -136,7 +136,7 @@ export default async function SuccessStoriesPage() {
                   border: "1.5px solid color-mix(in srgb, var(--accent) 20%, var(--border))",
                 }}>
                 <div className="flex items-center gap-2.5 mb-3">
-                  <span className="w-9 h-9 rounded-xl flex items-center justify-center text-[16px] flex-shrink-0"
+                  <span className="w-9 h-9 rounded-xl flex items-center justify-center text-[18px] flex-shrink-0"
                     style={{
                       background: "color-mix(in srgb, var(--accent) 12%, transparent)",
                       border: "1px solid color-mix(in srgb, var(--accent) 28%, transparent)",
@@ -144,7 +144,7 @@ export default async function SuccessStoriesPage() {
                     aria-hidden="true">
                     {STRATEGY_ICONS[i % STRATEGY_ICONS.length]}
                   </span>
-                  <p className="font-black text-[15px]" style={{ color: "var(--text)" }}>{s.title}</p>
+                  <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>{s.title}</p>
                 </div>
                 <BulletText text={s.content} />
               </div>

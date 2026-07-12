@@ -25,7 +25,7 @@ export default function DashCards() {
       {CARDS.map((c) => (
         <Link key={c.href} href={c.href}
           className="ds-card ds-card-tight ds-card-interactive flex items-center gap-2.5 no-underline">
-          <span className="text-[20px] leading-none flex-shrink-0" aria-hidden="true">{c.icon}</span>
+          <span className="text-[23px] leading-none flex-shrink-0" aria-hidden="true">{c.icon}</span>
           <span className="flex flex-col min-w-0">
             <span className="t-body font-black leading-tight" style={{ color: "var(--text)" }}>{c.title}</span>
             <span className="t-caption truncate" style={{ color: "var(--text-muted)" }}>{c.desc}</span>

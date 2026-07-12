@@ -14,7 +14,7 @@ const REGIONS = [
 function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button onClick={onClick} aria-pressed={on}
-      className="px-3.5 py-2 rounded-full text-[13px] font-bold transition active:scale-95"
+      className="px-3.5 py-2 rounded-full text-[15px] font-bold transition active:scale-95"
       style={{
         background: on ? "var(--accent)" : "var(--surface2)",
         color: on ? "#fff" : "var(--text-muted)",
@@ -46,13 +46,13 @@ export default function CalendarSettings() {
     <div className="rounded-2xl p-5 flex flex-col gap-5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
       <div>
         <p className="label mb-1">🗓️ التقويم الدراسي</p>
-        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>
           يربط خطتك بالدراسة والإجازات والاختبارات الحقيقية. مُحدَّث لـ {CALENDAR_UPDATED_FOR}.
         </p>
       </div>
 
       <div>
-        <p className="text-[13px] font-bold mb-2" style={{ color: "var(--text)" }}>نوع الطالب</p>
+        <p className="text-[15px] font-bold mb-2" style={{ color: "var(--text)" }}>نوع الطالب</p>
         <div className="flex flex-wrap gap-2">
           {(["ثانوي", "جامعي"] as StudentType[]).map((t) => (
             <Chip key={t} on={studentType === t} onClick={() => update({ studentType: t })}>{t}</Chip>
@@ -61,7 +61,7 @@ export default function CalendarSettings() {
       </div>
 
       <div>
-        <p className="text-[13px] font-bold mb-2" style={{ color: "var(--text)" }}>المنطقة</p>
+        <p className="text-[15px] font-bold mb-2" style={{ color: "var(--text)" }}>المنطقة</p>
         <div className="flex flex-wrap gap-2">
           {REGIONS.map((r) => (
             <Chip key={r} on={region === r} onClick={() => update({ region: region === r ? undefined : r })}>{r}</Chip>
@@ -70,7 +70,7 @@ export default function CalendarSettings() {
       </div>
 
       <div>
-        <p className="text-[13px] font-bold mb-2" style={{ color: "var(--text)" }}>سنة التخرّج المتوقعة</p>
+        <p className="text-[15px] font-bold mb-2" style={{ color: "var(--text)" }}>سنة التخرّج المتوقعة</p>
         <div className="flex flex-wrap gap-2">
           {gradYears.map((y) => (
             <Chip key={y} on={gradYear === y} onClick={() => update({ graduationYear: gradYear === y ? undefined : y })}>

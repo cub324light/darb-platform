@@ -21,7 +21,7 @@ function ProfileQuickStatsBase({ data, onOpenStats }: { data: QuickStatsData; on
     <div className="rounded-2xl p-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
       <div className="flex items-center justify-between mb-3">
         <p className="label">أرقامك الآن</p>
-        <button onClick={onOpenStats} className="text-[12.5px] font-bold transition active:scale-95"
+        <button onClick={onOpenStats} className="text-[14px] font-bold transition active:scale-95"
           style={{ color: "var(--accent-light)" }}>
           كل الإحصائيات ←
         </button>
@@ -31,9 +31,9 @@ function ProfileQuickStatsBase({ data, onOpenStats }: { data: QuickStatsData; on
         {tiles.map((t) => (
           <li key={t.label} className="rounded-xl px-1.5 py-2.5 text-center min-w-0"
             style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-            <p className="text-[15px] leading-none mb-1" aria-hidden="true">{t.icon}</p>
-            <p className="font-mono-nums font-black text-[15px] leading-none" style={{ color: "var(--text)" }}>{t.val}</p>
-            <p className="text-[10.5px] font-semibold mt-1" style={{ color: "var(--text-muted)" }}>{t.label}</p>
+            <p className="text-[17px] leading-none mb-1" aria-hidden="true">{t.icon}</p>
+            <p className="font-mono-nums font-black text-[17px] leading-none" style={{ color: "var(--text)" }}>{t.val}</p>
+            <p className="text-[12px] font-semibold mt-1" style={{ color: "var(--text-muted)" }}>{t.label}</p>
           </li>
         ))}
       </ul>

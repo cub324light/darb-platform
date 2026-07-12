@@ -27,18 +27,18 @@ function AccordionItem({
         className="w-full flex items-center gap-3 px-4 py-3.5 text-right">
         <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" aria-hidden="true"
           style={{ background: accent }} />
-        <span className="flex-1 font-bold text-[14.5px] leading-relaxed"
+        <span className="flex-1 font-bold text-[16px] leading-relaxed"
           style={{ color: open ? accent : "var(--text)", transition: "color 0.25s ease" }}>
           {item.question}
         </span>
-        <span aria-hidden="true" className="flex-shrink-0 text-[13px]"
+        <span aria-hidden="true" className="flex-shrink-0 text-[15px]"
           style={{ color: "var(--text-muted)", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.25s ease" }}>
           ▼
         </span>
       </button>
       <div className="grid" style={{ gridTemplateRows: open ? "1fr" : "0fr", transition: "grid-template-rows 0.3s ease" }}>
         <div className="overflow-hidden">
-          <p className="px-4 pb-4 text-[14px] leading-relaxed" style={{ color: "var(--text-dim)" }}>
+          <p className="px-4 pb-4 text-[16px] leading-relaxed" style={{ color: "var(--text-dim)" }}>
             {item.answer}
           </p>
         </div>

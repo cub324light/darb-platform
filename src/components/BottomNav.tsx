@@ -132,13 +132,13 @@ export default function BottomNav() {
             <span className="nav-bubble relative">
               {item.icon(active)}
               {badge > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-black flex items-center justify-center"
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full text-[10px] font-black flex items-center justify-center"
                   style={{ background: "#EF4444", color: "#fff", lineHeight: 1 }}>
                   {badge > 9 ? "9+" : badge}
                 </span>
               )}
             </span>
-            <span className={`nav-label text-[11.5px] ${active ? "font-extrabold" : "font-semibold"}`}>{item.label}</span>
+            <span className={`nav-label text-[13px] ${active ? "font-extrabold" : "font-semibold"}`}>{item.label}</span>
           </Link>
         );
       })}

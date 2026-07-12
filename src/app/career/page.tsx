@@ -35,8 +35,8 @@ export default function CareerPage() {
         {/* جسر إلى أدوات الجامعة والأجهزة — ربط داخلي، لا تكرار */}
         <section className="rounded-2xl p-4 flex items-center gap-3 flex-wrap"
           style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-          <span className="text-[18px]" aria-hidden="true">🎓</span>
-          <p className="text-[13px] font-bold flex-1" style={{ color: "var(--text-muted)" }}>
+          <span className="text-[20px]" aria-hidden="true">🎓</span>
+          <p className="text-[15px] font-bold flex-1" style={{ color: "var(--text-muted)" }}>
             معدّلك وغيابك في{" "}
             <Link href="/uni-tools" className="font-black" style={{ color: "var(--accent-light)" }}>
               أدوات الجامعة ←

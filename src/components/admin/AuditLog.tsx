@@ -82,42 +82,42 @@ export default function AuditLog({ pass }: { pass: string }) {
     <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col gap-4">
       <div>
         <p className="title-md" style={{ color: "var(--text)" }}>🛡️ سجلّ التدقيق</p>
-        <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>كل عملية حسّاسة يقوم بها أي مشرف — من، ماذا، متى، ومن أين.</p>
+        <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>كل عملية حسّاسة يقوم بها أي مشرف — من، ماذا، متى، ومن أين.</p>
       </div>
 
       {/* المرشّحات */}
       <div className="flex flex-wrap gap-2">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="بحث (ملخّص/هدف/IP)…"
-          className="px-3 py-2 rounded-xl text-[13px] flex-1 min-w-[160px]" style={inp} />
+          className="px-3 py-2 rounded-xl text-[15px] flex-1 min-w-[160px]" style={inp} />
         <input value={actor} onChange={(e) => setActor(e.target.value)} placeholder="المشرف (إيميل/uid)"
-          className="px-3 py-2 rounded-xl text-[13px]" style={inp} />
-        <select value={area} onChange={(e) => setArea(e.target.value)} className="px-3 py-2 rounded-xl text-[13px]" style={inp}>
+          className="px-3 py-2 rounded-xl text-[15px]" style={inp} />
+        <select value={area} onChange={(e) => setArea(e.target.value)} className="px-3 py-2 rounded-xl text-[15px]" style={inp}>
           <option value="">كل الأقسام</option>
           {areas.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
         </select>
-        <button onClick={() => run(true)} disabled={busy} className="px-4 py-2 rounded-xl text-[13px] font-bold"
+        <button onClick={() => run(true)} disabled={busy} className="px-4 py-2 rounded-xl text-[15px] font-bold"
           style={{ background: "var(--accent)", color: "#fff" }}>{busy ? "…" : "بحث"}</button>
       </div>
 
-      {err && <p className="text-[13px]" style={{ color: "var(--danger)" }}>{err}</p>}
+      {err && <p className="text-[15px]" style={{ color: "var(--danger)" }}>{err}</p>}
 
       {/* الجدول */}
       <div className="flex flex-col gap-1.5">
         {rows.map((r) => (
-          <div key={r.id} className="rounded-xl px-3 py-2 text-[13px]" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <div key={r.id} className="rounded-xl px-3 py-2 text-[15px]" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
             <button className="w-full flex items-center gap-2 text-right" onClick={() => setExpanded(expanded === r.id ? null : r.id)}>
-              <span className="text-[11px] px-2 py-0.5 rounded-full font-bold flex-shrink-0"
+              <span className="text-[12px] px-2 py-0.5 rounded-full font-bold flex-shrink-0"
                 style={{ background: "color-mix(in srgb, var(--accent) 14%, transparent)", color: "var(--accent-light)" }}>{actionLabel(r.action)}</span>
               <div className="flex-1 min-w-0">
                 <p className="font-bold truncate" style={{ color: "var(--text)" }}>{r.summary || r.action}</p>
-                <p className="text-[11px] truncate" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[12px] truncate" style={{ color: "var(--text-muted)" }}>
                   {r.actorEmail || r.actorUid} · {r.actorRole} · {fmtTime(r.at)}{r.ip ? ` · ${r.ip}` : ""}
                 </p>
               </div>
               <span style={{ color: "var(--text-muted)" }}>{expanded === r.id ? "▲" : "▼"}</span>
             </button>
             {expanded === r.id && (
-              <div className="mt-2 pt-2 flex flex-col gap-1 text-[12px]" style={{ borderTop: "1px solid var(--border)", color: "var(--text-dim)" }}>
+              <div className="mt-2 pt-2 flex flex-col gap-1 text-[14px]" style={{ borderTop: "1px solid var(--border)", color: "var(--text-dim)" }}>
                 {r.targetId && <p>الهدف: <span style={{ color: "var(--text)" }}>{r.targetType ? `${r.targetType}/` : ""}{r.targetId}</span></p>}
                 {r.before && <p>قبل: <span style={{ color: "var(--danger)" }}>{r.before}</span></p>}
                 {r.after && <p>بعد: <span style={{ color: "var(--success)" }}>{r.after}</span></p>}
@@ -127,11 +127,11 @@ export default function AuditLog({ pass }: { pass: string }) {
             )}
           </div>
         ))}
-        {rows.length === 0 && !busy && <p className="text-center py-8 text-[13px]" style={{ color: "var(--text-muted)" }}>لا عمليات مسجّلة بعد</p>}
+        {rows.length === 0 && !busy && <p className="text-center py-8 text-[15px]" style={{ color: "var(--text-muted)" }}>لا عمليات مسجّلة بعد</p>}
       </div>
 
       {hasMore && (
-        <button onClick={() => run(false)} disabled={busy} className="self-center px-5 py-2 rounded-xl text-[13px] font-bold"
+        <button onClick={() => run(false)} disabled={busy} className="self-center px-5 py-2 rounded-xl text-[15px] font-bold"
           style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}>
           {busy ? "…" : "تحميل المزيد"}
         </button>

@@ -30,13 +30,13 @@ function ProfileTabsBase({ active, onChange, showUniversity = true }: { active: 
             <button key={t.id} id={`profile-tab-${t.id}`} role="tab" aria-selected={on}
               aria-controls={`profile-panel-${t.id}`}
               onClick={() => onChange(t.id)}
-              className="flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-bold transition active:scale-95 flex-shrink-0"
+              className="flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-[15px] font-bold transition active:scale-95 flex-shrink-0"
               style={{
                 background: on ? "var(--accent)" : "var(--surface2)",
                 color: on ? "#fff" : "var(--text-muted)",
                 border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}`,
               }}>
-              <span className="text-[13px]" aria-hidden="true">{t.icon}</span>
+              <span className="text-[15px]" aria-hidden="true">{t.icon}</span>
               {t.label}
             </button>
           );

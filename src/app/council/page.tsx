@@ -348,9 +348,9 @@ export default function CouncilPage() {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <p className="font-bold text-[15px]" style={{ color: "var(--text)" }}>{group.name}</p>
+            <p className="font-bold text-[17px]" style={{ color: "var(--text)" }}>{group.name}</p>
             {isMyTrack && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0"
+              <span className="text-[11px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0"
                 style={{
                   background: "color-mix(in srgb, var(--accent) 12%, transparent)",
                   color: "var(--accent-light)",
@@ -360,7 +360,7 @@ export default function CouncilPage() {
               </span>
             )}
           </div>
-          <p className="text-[13px] truncate mt-0.5" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[15px] truncate mt-0.5" style={{ color: "var(--text-muted)" }}>
             {last ? last.text : group.description}
           </p>
         </div>
@@ -396,8 +396,8 @@ export default function CouncilPage() {
           👥
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-[15px]" style={{ color: "var(--text)" }}>الأصدقاء</p>
-          <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>ابحث عن زملائك وأضفهم</p>
+          <p className="font-bold text-[17px]" style={{ color: "var(--text)" }}>الأصدقاء</p>
+          <p className="text-[15px] mt-0.5" style={{ color: "var(--text-muted)" }}>ابحث عن زملائك وأضفهم</p>
         </div>
         <span className="text-[var(--text-muted)] text-lg flex-shrink-0">‹</span>
       </button>
@@ -432,11 +432,11 @@ export default function CouncilPage() {
               ← رجوع
             </button>
             <span className="text-xl">{activeGroup.icon}</span>
-            <p className="font-bold flex-1 text-[16px]" style={{ color: "var(--text)" }}>
+            <p className="font-bold flex-1 text-[18px]" style={{ color: "var(--text)" }}>
               {activeGroup.name}
             </p>
             {isMyTrack && (
-              <span className="text-[11px] px-2 py-0.5 rounded-full font-bold"
+              <span className="text-[12px] px-2 py-0.5 rounded-full font-bold"
                 style={{
                   background: "color-mix(in srgb, var(--accent) 12%, transparent)",
                   color: "var(--accent-light)",
@@ -483,7 +483,7 @@ export default function CouncilPage() {
             {msgLoading && activeChannel === "general" ? (
               <div className="flex flex-col items-center justify-center flex-1 py-16 gap-2">
                 <div className="w-8 h-8 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
-                <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>جارٍ التحميل...</p>
+                <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>جارٍ التحميل...</p>
               </div>
             ) : displayedMessages.length === 0 ? (
               <div className="flex flex-col items-center justify-center flex-1 gap-2 py-16">
@@ -492,7 +492,7 @@ export default function CouncilPage() {
                   {activeChannel === "official" ? "لا توجد إعلانات رسمية بعد" : "ابدأ النقاش"}
                 </p>
                 {activeChannel === "general" && (
-                  <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>{activeGroup.description}</p>
+                  <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>{activeGroup.description}</p>
                 )}
               </div>
             ) : (
@@ -517,7 +517,7 @@ export default function CouncilPage() {
                       style={{ maxWidth: "75%", alignItems: isMine ? "flex-end" : "flex-start" }}>
                       {!isMine && (
                         <div className="flex items-center gap-1.5">
-                          <p className="text-[11px] font-bold"
+                          <p className="text-[12px] font-bold"
                             style={{ color: msg.isOfficial ? "var(--gold)" : "var(--accent-light)" }}>
                             {msg.pinned ? "📌 " : ""}{msg.isOfficial ? "درب الرسمي" : msg.name}
                           </p>
@@ -535,17 +535,17 @@ export default function CouncilPage() {
                             ? "1px solid color-mix(in srgb, var(--gold) 40%, var(--border))"
                             : "1px solid var(--border)",
                         }}>
-                        <p className="text-[14px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>
+                        <p className="text-[16px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>
                           {msg.content}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                           {timeAgo(msg.createdAt)}
                         </p>
                         {!isMine && !msg.isOfficial && authUid && (
                           <button onClick={() => openReport(msg)}
-                            className="text-[11px] transition active:opacity-60"
+                            className="text-[12px] transition active:opacity-60"
                             style={{ color: "var(--text-muted)" }}
                             aria-label="إبلاغ عن هذه الرسالة">
                             ⚐ إبلاغ
@@ -570,7 +570,7 @@ export default function CouncilPage() {
                   paddingBottom: "calc(12px + env(safe-area-inset-bottom))",
                   background: "var(--bg)",
                 }}>
-                <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>
                   سجّل دخولك للمشاركة في النقاش
                 </p>
               </div>
@@ -592,7 +592,7 @@ export default function CouncilPage() {
                   background: "var(--bg)",
                 }}>
                 {sendWarn && (
-                  <div className="rounded-xl px-3 py-2 text-[12px] font-bold text-center"
+                  <div className="rounded-xl px-3 py-2 text-[14px] font-bold text-center"
                     style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.4)", color: "#EF4444" }}>
                     {sendWarn}
                   </div>
@@ -604,7 +604,7 @@ export default function CouncilPage() {
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
                   placeholder="اكتب رسالة..."
                   maxLength={1000}
-                  className="flex-1 rounded-2xl px-4 py-3 text-[15px] outline-none"
+                  className="flex-1 rounded-2xl px-4 py-3 text-[17px] outline-none"
                   style={{
                     background: "var(--surface)",
                     border: "1.5px solid var(--border)",
@@ -629,7 +629,7 @@ export default function CouncilPage() {
                 paddingBottom: "calc(12px + env(safe-area-inset-bottom))",
                 background: "var(--bg)",
               }}>
-              <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>
                 قراءة فقط — القناة الرسمية لـ {activeGroup.name}
               </p>
             </div>
@@ -653,8 +653,8 @@ export default function CouncilPage() {
                 </p>
               ) : (
                 <>
-                  <p className="font-black text-[16px]" style={{ color: "var(--text)" }}>الإبلاغ عن رسالة</p>
-                  <div className="rounded-xl px-3 py-2 text-[13px] line-clamp-3"
+                  <p className="font-black text-[18px]" style={{ color: "var(--text)" }}>الإبلاغ عن رسالة</p>
+                  <div className="rounded-xl px-3 py-2 text-[15px] line-clamp-3"
                     style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
                     {reportTarget.content}
                   </div>
@@ -670,22 +670,22 @@ export default function CouncilPage() {
                           style={{ border: `2px solid ${reportReason === r.id ? "var(--accent)" : "var(--border)"}` }}>
                           {reportReason === r.id && <span className="w-2 h-2 rounded-full" style={{ background: "var(--accent)" }} />}
                         </span>
-                        <span className="text-[14px] font-bold" style={{ color: "var(--text)" }}>{r.label}</span>
+                        <span className="text-[16px] font-bold" style={{ color: "var(--text)" }}>{r.label}</span>
                       </button>
                     ))}
                   </div>
                   <input value={reportNote} onChange={(e) => setReportNote(e.target.value)}
                     placeholder="ملاحظة (اختياري)" maxLength={300}
-                    className="w-full rounded-xl px-3 py-2.5 text-[14px] outline-none"
+                    className="w-full rounded-xl px-3 py-2.5 text-[16px] outline-none"
                     style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
                   <div className="flex gap-2 mt-1">
                     <button onClick={() => setReportTarget(null)} disabled={reportBusy}
-                      className="px-4 py-2.5 rounded-xl text-[14px] font-bold"
+                      className="px-4 py-2.5 rounded-xl text-[16px] font-bold"
                       style={{ background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
                       إلغاء
                     </button>
                     <button onClick={submitReport} disabled={reportBusy}
-                      className="flex-1 py-2.5 rounded-xl text-[14px] font-black text-white transition active:scale-[0.98]"
+                      className="flex-1 py-2.5 rounded-xl text-[16px] font-black text-white transition active:scale-[0.98]"
                       style={{ background: "var(--danger)", opacity: reportBusy ? 0.6 : 1 }}>
                       {reportBusy ? "..." : "إرسال البلاغ"}
                     </button>
@@ -743,9 +743,9 @@ export default function CouncilPage() {
           {groupListBody}
         </aside>
         <main className="cc-main cc-empty">
-          <span className="text-[44px]">💬</span>
-          <p className="font-bold text-[17px] mt-3" style={{ color: "var(--text)" }}>اختر مجموعة لبدء النقاش</p>
-          <p className="text-[13.5px] mt-1.5 leading-relaxed" style={{ color: "var(--text-muted)" }}>
+          <span className="text-[50px]">💬</span>
+          <p className="font-bold text-[19px] mt-3" style={{ color: "var(--text)" }}>اختر مجموعة لبدء النقاش</p>
+          <p className="text-[15px] mt-1.5 leading-relaxed" style={{ color: "var(--text-muted)" }}>
             مجموعات مسارك ونقاشات الطلاب على اليمين — اضغط أي مجموعة لفتح محادثتها هنا.
           </p>
         </main>

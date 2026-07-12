@@ -82,16 +82,16 @@ export default function DuirbTour() {
         style={{ background: "var(--surface)", border: `2px solid ${current.accent}33` }}>
         {/* أيقونة ونبضة */}
         <div className="flex justify-center">
-          <span className="text-[52px] leading-none">{current.icon}</span>
+          <span className="text-[59px] leading-none">{current.icon}</span>
         </div>
 
         {/* العنوان */}
-        <h2 className="text-center text-[20px] font-black" style={{ color: "var(--text)" }}>
+        <h2 className="text-center text-[23px] font-black" style={{ color: "var(--text)" }}>
           {current.title}
         </h2>
 
         {/* الوصف */}
-        <p className="text-center text-[14px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+        <p className="text-center text-[16px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
           {current.body}
         </p>
 
@@ -110,12 +110,12 @@ export default function DuirbTour() {
         {/* أزرار */}
         <div className="flex gap-2 mt-1">
           <button onClick={finish}
-            className="flex-1 py-3 rounded-2xl text-[14px] font-bold"
+            className="flex-1 py-3 rounded-2xl text-[16px] font-bold"
             style={{ background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
             تخطّى
           </button>
           <button onClick={isLast ? finish : () => setStep((s) => s + 1)}
-            className="flex-[2] py-3 rounded-2xl text-[15px] font-black transition"
+            className="flex-[2] py-3 rounded-2xl text-[17px] font-black transition"
             style={{ background: current.accent, color: "#fff" }}>
             {isLast ? "ابدأ الآن ✓" : "التالي ←"}
           </button>

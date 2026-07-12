@@ -92,18 +92,18 @@ export default function QuizGen({ subjects }: Props) {
   return (
     <section className="card rise rise-3">
       <p className="title-md mb-1" style={{ color: "var(--text)" }}>أسئلة تدريب من دويرب</p>
-      <p className="text-[13px] mb-3" style={{ color: "var(--text-muted)" }}>
+      <p className="text-[15px] mb-3" style={{ color: "var(--text-muted)" }}>
         اختر مادة ودع دويرب يولّد لك أسئلة تدريب — للتمرين فقط، مو من بنك رسمي.
       </p>
 
       <div className="flex gap-2">
         <select value={subject} onChange={(e) => setSubject(e.target.value)}
-          className="flex-1 rounded-2xl px-4 py-3 text-[15px] outline-none min-h-[48px]"
+          className="flex-1 rounded-2xl px-4 py-3 text-[17px] outline-none min-h-[48px]"
           style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
           {subjects.map((s) => <option key={s.name}>{s.name}</option>)}
         </select>
         <button onClick={generate} disabled={loading || !subject}
-          className="rounded-2xl px-5 font-bold text-[15px] transition min-h-[48px]"
+          className="rounded-2xl px-5 font-bold text-[17px] transition min-h-[48px]"
           style={{
             background: loading || !subject ? "var(--surface2)" : "var(--accent)",
             color: loading || !subject ? "var(--text-muted)" : "white",
@@ -117,31 +117,31 @@ export default function QuizGen({ subjects }: Props) {
       </div>
 
       {err && (
-        <p className="text-[13px] text-center mt-3 font-semibold" style={{ color: "var(--danger)" }}>{err}</p>
+        <p className="text-[15px] text-center mt-3 font-semibold" style={{ color: "var(--danger)" }}>{err}</p>
       )}
 
       {questions.length > 0 && (
         <div className="mt-3 flex flex-col gap-2.5">
           {/* الخطوة التالية: احفظ ما أخطأت فيه في الخزنة */}
           <a href="/vault"
-            className="py-2.5 rounded-2xl text-[13px] font-bold transition active:scale-[0.98] flex items-center justify-center gap-1.5 no-underline"
+            className="py-2.5 rounded-2xl text-[15px] font-bold transition active:scale-[0.98] flex items-center justify-center gap-1.5 no-underline"
             style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
             🔖 أخطأت في سؤال؟ احفظه في خزنة الأخطاء
           </a>
           {questions.map((qa, i) => (
             <div key={i} className="rounded-2xl px-4 py-3.5"
               style={{ background: "var(--surface2)", border: `1px solid ${color}33` }}>
-              <p className="text-[15px] font-bold leading-relaxed" style={{ color: "var(--text)" }}>
+              <p className="text-[17px] font-bold leading-relaxed" style={{ color: "var(--text)" }}>
                 <span style={{ color }}>{i + 1}. </span>{qa.q}
               </p>
               {qa.a && (
                 revealed.has(i) ? (
-                  <p className="text-[14px] leading-relaxed mt-2 pt-2 border-t" style={{ color: "var(--text-dim)", borderColor: "var(--border)" }}>
+                  <p className="text-[16px] leading-relaxed mt-2 pt-2 border-t" style={{ color: "var(--text-dim)", borderColor: "var(--border)" }}>
                     {qa.a}
                   </p>
                 ) : (
                   <button onClick={() => toggle(i)}
-                    className="text-[13px] font-bold mt-2" style={{ color: "var(--accent-light)" }}>
+                    className="text-[15px] font-bold mt-2" style={{ color: "var(--accent-light)" }}>
                     اظهر الإجابة
                   </button>
                 )
@@ -154,7 +154,7 @@ export default function QuizGen({ subjects }: Props) {
       {raw && questions.length === 0 && (
         <div className="mt-3 rounded-2xl px-4 py-3.5"
           style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-          <p className="text-[14px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{raw}</p>
+          <p className="text-[16px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{raw}</p>
         </div>
       )}
     </section>

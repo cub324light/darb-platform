@@ -20,7 +20,7 @@ export default function ChangelogPage() {
       </Dome>
 
       <div className="px-5 py-5 max-w-lg mx-auto flex flex-col gap-5">
-        <p className="text-[14px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[16px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
           نطوّر درب باستمرار. هذي أبرز الإضافات والتحسينات والإصلاحات.
         </p>
 
@@ -28,19 +28,19 @@ export default function ChangelogPage() {
           <div key={entry.date} className="rounded-2xl p-5"
             style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
             <div className="flex items-baseline justify-between mb-3">
-              <p className="font-black text-[16px]" style={{ color: "var(--text)" }}>{entry.title ?? "تحديث"}</p>
-              <span className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>{fmtDate(entry.date)}</span>
+              <p className="font-black text-[18px]" style={{ color: "var(--text)" }}>{entry.title ?? "تحديث"}</p>
+              <span className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>{fmtDate(entry.date)}</span>
             </div>
             <div className="flex flex-col gap-2.5">
               {entry.changes.map((c, i) => {
                 const m = CHANGE_META[c.type];
                 return (
                   <div key={i} className="flex items-start gap-2.5">
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-md flex-shrink-0 mt-0.5"
+                    <span className="text-[11px] font-black px-2 py-0.5 rounded-md flex-shrink-0 mt-0.5"
                       style={{ background: `color-mix(in srgb, ${m.color} 14%, transparent)`, color: m.color, border: `1px solid ${m.color}55` }}>
                       {m.icon} {m.label}
                     </span>
-                    <span className="text-[14px] leading-relaxed" style={{ color: "var(--text)" }}>{c.text}</span>
+                    <span className="text-[16px] leading-relaxed" style={{ color: "var(--text)" }}>{c.text}</span>
                   </div>
                 );
               })}

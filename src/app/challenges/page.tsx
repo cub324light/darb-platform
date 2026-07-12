@@ -29,21 +29,21 @@ export default function ChallengesPage() {
       <div key={s.def.id} className="rounded-2xl p-4 flex flex-col gap-3"
         style={{ background: "var(--surface)", border: ready ? "1.5px solid var(--gold)" : "1px solid var(--border)", boxShadow: ready ? "0 0 18px color-mix(in srgb, var(--gold) 22%, transparent)" : "none" }}>
         <div className="flex items-center gap-3">
-          <span className="w-11 h-11 rounded-2xl flex items-center justify-center text-[22px] flex-shrink-0"
+          <span className="w-11 h-11 rounded-2xl flex items-center justify-center text-[25px] flex-shrink-0"
             style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)" }}>{s.def.icon}</span>
           <div className="flex-1 min-w-0">
-            <p className="font-black text-[15px]" style={{ color: "var(--text)" }}>{s.def.title}</p>
-            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{s.def.desc}</p>
+            <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>{s.def.title}</p>
+            <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>{s.def.desc}</p>
           </div>
-          <span className="text-[12px] font-black px-2 py-1 rounded-lg flex-shrink-0"
+          <span className="text-[14px] font-black px-2 py-1 rounded-lg flex-shrink-0"
             style={{ background: "color-mix(in srgb, var(--gold) 14%, transparent)", color: "var(--gold)" }}>
             +{s.def.reward} 🪙
           </span>
         </div>
         <div>
           <div className="flex justify-between mb-1.5">
-            <span className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>{s.current} / {s.def.goal} {s.def.unit}</span>
-            {s.claimed && <span className="text-[12px] font-bold" style={{ color: "var(--success)" }}>✓ تم الاستلام</span>}
+            <span className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>{s.current} / {s.def.goal} {s.def.unit}</span>
+            {s.claimed && <span className="text-[14px] font-bold" style={{ color: "var(--success)" }}>✓ تم الاستلام</span>}
           </div>
           <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--surface2)" }}>
             <div className="h-full rounded-full transition-all duration-700"
@@ -52,7 +52,7 @@ export default function ChallengesPage() {
         </div>
         {ready && (
           <button onClick={() => claim(s)}
-            className="w-full py-2.5 rounded-xl font-black text-[14px] transition active:scale-[0.98]"
+            className="w-full py-2.5 rounded-xl font-black text-[16px] transition active:scale-[0.98]"
             style={{ background: "var(--gold)", color: "#1a1205" }}>
             🎁 استلم {s.def.reward} فضة
           </button>
@@ -72,25 +72,25 @@ export default function ChallengesPage() {
 
       {/* حاوية أوسع على سطح المكتب — الشبكات ثلاثية عند ≥1100px */}
       <div className="px-5 py-5 max-w-lg min-[1100px]:max-w-none mx-auto flex flex-col gap-5">
-        <p className="text-[14px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[16px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
           أكمل التحديات واكسب فضة. الأسبوعية تتجدّد كل أسبوع.
         </p>
 
         {weekly.length > 0 && (
           <div>
-            <p className="text-[13px] font-black mb-3" style={{ color: "var(--accent-light)" }}>🔄 تحديات أسبوعية</p>
+            <p className="text-[15px] font-black mb-3" style={{ color: "var(--accent-light)" }}>🔄 تحديات أسبوعية</p>
             <div className="grid gap-3 desk-grid-3">{weekly.map(card)}</div>
           </div>
         )}
 
         <div>
-          <p className="text-[13px] font-black mb-3" style={{ color: "var(--gold)" }}>🏅 تحديات دائمة</p>
+          <p className="text-[15px] font-black mb-3" style={{ color: "var(--gold)" }}>🏅 تحديات دائمة</p>
           <div className="grid gap-3 desk-grid-3">{once.map(card)}</div>
         </div>
       </div>
 
       {toast && (
-        <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl shadow-xl font-black text-[15px]"
+        <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl shadow-xl font-black text-[17px]"
           style={{ background: "var(--gold)", color: "#1a1205" }}>{toast}</div>
       )}
 

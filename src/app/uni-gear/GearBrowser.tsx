@@ -19,7 +19,7 @@ import {
 function BudgetBadge({ tier }: { tier: BudgetTier }) {
   const meta = budgetMeta(tier);
   return (
-    <span className="text-[10.5px] font-black px-2 py-0.5 rounded-md flex-shrink-0"
+    <span className="text-[12px] font-black px-2 py-0.5 rounded-md flex-shrink-0"
       style={{
         background: `color-mix(in srgb, ${meta.color} 14%, transparent)`,
         color: meta.color,
@@ -49,7 +49,7 @@ function ChipRow<T extends string>({ title, value, onChange, options }: {
           const active = value === chip.id;
           return (
             <button key={chip.id} onClick={() => onChange(chip.id)} aria-pressed={active}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-black whitespace-nowrap flex-shrink-0 transition active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[14px] font-black whitespace-nowrap flex-shrink-0 transition active:scale-95"
               style={{
                 background: active ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
                 color: active ? "var(--accent-light)" : "var(--text-muted)",
@@ -79,7 +79,7 @@ function GearCard({ item }: { item: GearItem }) {
     /* بطاقة نظام موحّدة — متساوية الارتفاع داخل CardGrid (السعر يلتصق بالأسفل عبر mt-auto) */
     <article className="ds-card flex flex-col gap-3">
       <div className="flex items-start gap-2.5">
-        <span className="w-9 h-9 rounded-xl flex items-center justify-center text-[16px] flex-shrink-0"
+        <span className="w-9 h-9 rounded-xl flex items-center justify-center text-[18px] flex-shrink-0"
           style={{
             background: "color-mix(in srgb, var(--accent) 10%, transparent)",
             border: "1px solid color-mix(in srgb, var(--accent) 24%, transparent)",
@@ -111,7 +111,7 @@ function GearCard({ item }: { item: GearItem }) {
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="t-caption" style={{ color: "var(--text-muted)" }}>أمثلة:</span>
           {item.examples.map((e) => (
-            <span key={e} className="text-[11px] font-bold px-2 py-0.5 rounded-lg"
+            <span key={e} className="text-[12px] font-bold px-2 py-0.5 rounded-lg"
               style={{ background: "var(--surface2)", color: "var(--text-dim)", border: "1px solid var(--border)" }}>
               {e}
             </span>
@@ -121,13 +121,13 @@ function GearCard({ item }: { item: GearItem }) {
 
       <div className="mt-auto pt-1 flex items-baseline gap-1.5">
         {isFree ? (
-          <span className="font-black text-[14.5px]" style={{ color: "var(--success)" }}>مجاني</span>
+          <span className="font-black text-[16px]" style={{ color: "var(--success)" }}>مجاني</span>
         ) : (
           <>
-            <span className="font-mono-nums font-black text-[14.5px]" style={{ color: "var(--text)" }} dir="ltr">
+            <span className="font-mono-nums font-black text-[16px]" style={{ color: "var(--text)" }} dir="ltr">
               {formatPriceRange(item.priceRangeSAR)}
             </span>
-            <span className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>
+            <span className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>
               {isSoftware ? "ريال/شهر" : "ريال"}
             </span>
           </>
@@ -174,7 +174,7 @@ export default function GearBrowser() {
             background: "color-mix(in srgb, var(--gold) 10%, transparent)",
             borderColor: "color-mix(in srgb, var(--gold) 34%, transparent)",
           }}>
-          <span className="text-[18px] flex-shrink-0" aria-hidden="true">⚖️</span>
+          <span className="text-[20px] flex-shrink-0" aria-hidden="true">⚖️</span>
           <p className="t-body" style={{ color: "var(--text-dim)" }}>
             استخدمها للفهم والمساعدة لا للغش — النزاهة الأكاديمية مسؤوليتك.
             خلّها تشرح لك لتتعلّم، وسلّم شغلك بيدك أنت.

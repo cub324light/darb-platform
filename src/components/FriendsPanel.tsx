@@ -163,11 +163,11 @@ export default function FriendsPanel({ onClose }: { onClose: () => void }) {
         {p.name.charAt(0) || "؟"}
       </button>
       <button onClick={() => openProfile(p)} className="flex-1 min-w-0 text-right">
-        <p className="font-bold text-[15px] truncate" style={{ color: "var(--text)" }}>
+        <p className="font-bold text-[17px] truncate" style={{ color: "var(--text)" }}>
           {p.name || "طالب"}
         </p>
         {p.track && (
-          <p className="text-[12px] truncate" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[14px] truncate" style={{ color: "var(--text-muted)" }}>
             {p.track}
           </p>
         )}
@@ -224,7 +224,7 @@ export default function FriendsPanel({ onClose }: { onClose: () => void }) {
           ← رجوع
         </button>
         <span className="text-xl">👥</span>
-        <p className="font-bold flex-1 text-[16px]" style={{ color: "var(--text)" }}>
+        <p className="font-bold flex-1 text-[18px]" style={{ color: "var(--text)" }}>
           الأصدقاء
         </p>
       </div>
@@ -236,7 +236,7 @@ export default function FriendsPanel({ onClose }: { onClose: () => void }) {
           <p className="font-bold" style={{ color: "var(--text)" }}>
             سجّل دخولك لإضافة الأصدقاء
           </p>
-          <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>
             البحث عن الأصدقاء وإضافتهم متاح للحسابات المسجّلة فقط — وضع الزائر محلي.
           </p>
         </div>
@@ -252,7 +252,7 @@ export default function FriendsPanel({ onClose }: { onClose: () => void }) {
                   if (e.key === "Enter") runSearch();
                 }}
                 placeholder="ابحث باسم الطالب..."
-                className="flex-1 rounded-2xl px-4 py-3 text-[15px] outline-none"
+                className="flex-1 rounded-2xl px-4 py-3 text-[17px] outline-none"
                 style={{
                   background: "var(--surface)",
                   border: "1.5px solid var(--border)",
@@ -271,13 +271,13 @@ export default function FriendsPanel({ onClose }: { onClose: () => void }) {
 
             {/* نتائج البحث */}
             {searched && results.length === 0 && (
-              <p className="text-[13px] text-center py-2" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[15px] text-center py-2" style={{ color: "var(--text-muted)" }}>
                 ما لقينا أحد بهذا الاسم
               </p>
             )}
             {results.length > 0 && (
               <div className="flex flex-col gap-2">
-                <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>
                   نتائج البحث
                 </p>
                 {results.map((p) => personRow(p, "add"))}
@@ -287,7 +287,7 @@ export default function FriendsPanel({ onClose }: { onClose: () => void }) {
 
           {/* قائمة الأصدقاء */}
           <div className="flex flex-col gap-2">
-            <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>
               أصدقائي ({friends.length})
             </p>
             {friends.length === 0 ? (
@@ -295,7 +295,7 @@ export default function FriendsPanel({ onClose }: { onClose: () => void }) {
                 className="rounded-2xl px-4 py-6 text-center"
                 style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
               >
-                <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>
                   ما عندك أصدقاء بعد — ابحث وأضف زملاءك
                 </p>
               </div>
@@ -326,7 +326,7 @@ export default function FriendsPanel({ onClose }: { onClose: () => void }) {
                   <p className="font-black text-xl" style={{ color: "var(--text)" }}>
                     {profile.name || "طالب"}
                   </p>
-                  {profile.track && <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>{profile.track}</p>}
+                  {profile.track && <p className="text-[15px] mt-0.5" style={{ color: "var(--text-muted)" }}>{profile.track}</p>}
                 </div>
                 <div className="grid grid-cols-2 gap-3 w-full">
                   {([
@@ -337,7 +337,7 @@ export default function FriendsPanel({ onClose }: { onClose: () => void }) {
                   ]).map((s) => (
                     <div key={s.label} className="rounded-2xl px-3 py-3 text-center"
                       style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-                      <p className="text-[11px] font-bold" style={{ color: "var(--text-muted)" }}>{s.label}</p>
+                      <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>{s.label}</p>
                       <p className="font-black text-lg mt-0.5" style={{ color: "var(--accent-light)" }}>{s.value}</p>
                     </div>
                   ))}

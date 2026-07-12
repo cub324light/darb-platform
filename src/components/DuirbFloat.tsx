@@ -69,14 +69,14 @@ export default function DuirbFloat() {
       <div className="sticky top-0 z-10 px-5 pt-safe pt-4 pb-3 flex items-center gap-3"
         style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
         <button onClick={() => setOpen(false)}
-          className="dome-chip text-[17px] font-bold flex-shrink-0" style={{ color: "var(--text)" }}>
+          className="dome-chip text-[19px] font-bold flex-shrink-0" style={{ color: "var(--text)" }}>
           ← رجوع
         </button>
         <p className="title-lg flex-1 text-right" style={{ color: "var(--text)" }}>دويرب</p>
       </div>
       <div className="px-4 py-4 pb-28 max-w-lg w-full mx-auto">
         {hint && (
-          <p className="text-[12.5px] font-semibold mb-3 px-1" style={{ color: "var(--text-muted)" }}>💡 {hint}</p>
+          <p className="text-[14px] font-semibold mb-3 px-1" style={{ color: "var(--text-muted)" }}>💡 {hint}</p>
         )}
         <DuirbHub defaultView={view} />
       </div>
@@ -105,7 +105,7 @@ export default function DuirbFloat() {
           WebkitBackdropFilter: "blur(8px)",
           boxShadow: "0 4px 16px color-mix(in srgb, var(--accent) 28%, transparent)",
         }}>
-        <span className="text-[24px] relative leading-none">🤖</span>
+        <span className="text-[27px] relative leading-none">🤖</span>
       </button>
 
       {open && createPortal(modal, document.body)}

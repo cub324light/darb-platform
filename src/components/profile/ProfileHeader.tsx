@@ -63,7 +63,7 @@ function ProfileHeaderBase({ user, track, level, xp, streak, joinLabel, planId, 
       <div className="flex items-center gap-4">
         <button onClick={() => setPickAvatar((v) => !v)} className="relative transition active:scale-95" aria-label="تغيير الصورة">
           <Avatar avatar={user.avatar} photoURL={photoURL} name={user.name} />
-          <span className="absolute -bottom-1 -left-1 w-6 h-6 rounded-full flex items-center justify-center text-[11px]"
+          <span className="absolute -bottom-1 -left-1 w-6 h-6 rounded-full flex items-center justify-center text-[12px]"
             style={{ background: "var(--accent)", color: "#fff", border: "2px solid var(--surface)" }} aria-hidden>✎</span>
         </button>
 
@@ -81,11 +81,11 @@ function ProfileHeaderBase({ user, track, level, xp, streak, joinLabel, planId, 
             <div className="flex items-center gap-2">
               <p className="font-black text-xl text-[var(--text)] truncate">{user.name || "—"}</p>
               <button onClick={() => { setNameVal(user.name ?? ""); setEditingName(true); }} aria-label="تعديل الاسم"
-                className="text-[13px] text-[var(--accent-light)] font-semibold flex-shrink-0">✎</button>
+                className="text-[15px] text-[var(--accent-light)] font-semibold flex-shrink-0">✎</button>
             </div>
           )}
 
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[12px]" style={{ color: "var(--text-muted)" }}>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[14px]" style={{ color: "var(--text-muted)" }}>
             <span style={{ color: track.color }}>🎯 {track.title}</span>
             {joinLabel && <span>📅 {joinLabel}</span>}
             <span>🔥 {streak} ستريك</span>
@@ -127,22 +127,22 @@ function ProfileHeaderBase({ user, track, level, xp, streak, joinLabel, planId, 
           <div className="flex flex-col gap-2">
             <textarea value={bioVal} onChange={(e) => setBioVal(e.target.value)} maxLength={160} rows={2} autoFocus
               placeholder="عرّف بنفسك بسطر — هدفك، مادتك المفضّلة، أو شعارك."
-              className="w-full rounded-xl px-3 py-2 text-[14px] text-[var(--text)] outline-none resize-none"
+              className="w-full rounded-xl px-3 py-2 text-[16px] text-[var(--text)] outline-none resize-none"
               style={{ background: "var(--surface2)", border: "1.5px solid var(--accent)" }} />
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setEditingBio(false)} className="text-[13px] px-3 py-1.5 rounded-lg font-bold" style={{ color: "var(--text-muted)" }}>إلغاء</button>
-              <button onClick={saveBio} className="text-[13px] px-3 py-1.5 rounded-lg font-bold"
+              <button onClick={() => setEditingBio(false)} className="text-[15px] px-3 py-1.5 rounded-lg font-bold" style={{ color: "var(--text-muted)" }}>إلغاء</button>
+              <button onClick={saveBio} className="text-[15px] px-3 py-1.5 rounded-lg font-bold"
                 style={{ background: "var(--accent)", color: "#fff" }}>حفظ</button>
             </div>
           </div>
         ) : user.bio ? (
           <button onClick={() => { setBioVal(user.bio ?? ""); setEditingBio(true); }}
-            className="text-[13.5px] text-right leading-snug w-full" style={{ color: "var(--text-dim)" }}>
+            className="text-[15px] text-right leading-snug w-full" style={{ color: "var(--text-dim)" }}>
             {user.bio}
           </button>
         ) : (
           <button onClick={() => { setBioVal(""); setEditingBio(true); }}
-            className="text-[13px] font-semibold" style={{ color: "var(--accent-light)" }}>
+            className="text-[15px] font-semibold" style={{ color: "var(--accent-light)" }}>
             ＋ أضف سيرة قصيرة
           </button>
         )}
@@ -151,17 +151,17 @@ function ProfileHeaderBase({ user, track, level, xp, streak, joinLabel, planId, 
       {/* المستوى + XP */}
       <div className="mt-4">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="font-black text-[14px] flex items-center gap-1.5" style={{ color: level.color }}>
+          <span className="font-black text-[16px] flex items-center gap-1.5" style={{ color: level.color }}>
             <span className="text-lg" aria-hidden="true">{level.icon}</span> {level.name}
           </span>
-          <span className="font-mono-nums text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>{xp.toLocaleString("ar")} XP</span>
+          <span className="font-mono-nums text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>{xp.toLocaleString("ar")} XP</span>
         </div>
         <div className="w-full rounded-full h-2 overflow-hidden" style={{ background: "var(--border)" }}
           role="progressbar" aria-label="تقدّم المستوى" aria-valuenow={level.progress} aria-valuemin={0} aria-valuemax={100}>
           <div className="h-full rounded-full transition-all duration-700" style={{ width: `${level.progress}%`, background: level.color }} />
         </div>
         {level.next && (
-          <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
             {level.next.name} — يحتاج {level.next.minXp.toLocaleString("ar")} XP
           </p>
         )}
@@ -173,10 +173,10 @@ function ProfileHeaderBase({ user, track, level, xp, streak, joinLabel, planId, 
         style={{ background: `color-mix(in srgb, ${PLAN_COLORS[planId]} 10%, var(--surface2))`, border: `1.5px solid color-mix(in srgb, ${PLAN_COLORS[planId]} 45%, transparent)` }}>
         <span className="text-lg">{planId === "free" ? "○" : "✦"}</span>
         <span className="flex-1">
-          <span className="block text-[11px] font-semibold" style={{ color: "var(--text-muted)" }}>باقتك الحالية</span>
-          <span className="block font-black text-[15px]" style={{ color: PLAN_COLORS[planId] }}>{PLAN_NAMES[planId]}</span>
+          <span className="block text-[12px] font-semibold" style={{ color: "var(--text-muted)" }}>باقتك الحالية</span>
+          <span className="block font-black text-[17px]" style={{ color: PLAN_COLORS[planId] }}>{PLAN_NAMES[planId]}</span>
         </span>
-        <span className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>{planId === "free" ? "ترقية ←" : "تغيير ←"}</span>
+        <span className="text-[15px] font-bold" style={{ color: "var(--accent-light)" }}>{planId === "free" ? "ترقية ←" : "تغيير ←"}</span>
       </button>
     </div>
   );

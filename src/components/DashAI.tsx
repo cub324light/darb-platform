@@ -135,7 +135,7 @@ export default function DashAI({ subjects, onOpenScheduler }: Props) {
       <div className="grid grid-cols-2 gap-2 mb-3">
         {QUICK_PROMPTS.map((p) => (
           <button key={p.label} onClick={() => handleQuick(p)}
-            className="px-3 py-2.5 rounded-xl text-[13px] font-bold text-right transition active:scale-[0.97] leading-snug"
+            className="px-3 py-2.5 rounded-xl text-[15px] font-bold text-right transition active:scale-[0.97] leading-snug"
             style={{
               background: "color-mix(in srgb, var(--accent) 10%, transparent)",
               border: "1px solid color-mix(in srgb, var(--accent) 28%, transparent)",
@@ -150,10 +150,10 @@ export default function DashAI({ subjects, onOpenScheduler }: Props) {
         <input value={input} onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && !loading) send(input); }}
           placeholder="اوصف يومك..."
-          className="flex-1 rounded-2xl px-4 py-3 text-[15px] outline-none"
+          className="flex-1 rounded-2xl px-4 py-3 text-[17px] outline-none"
           style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
         <button onClick={() => send(input)} disabled={loading || !input.trim()}
-          className="rounded-2xl px-4 font-bold text-[17px] min-w-[48px] transition"
+          className="rounded-2xl px-4 font-bold text-[19px] min-w-[48px] transition"
           style={{
             background: loading || !input.trim() ? "var(--surface2)" : "var(--accent)",
             color: loading || !input.trim() ? "var(--text-muted)" : "white",
@@ -171,11 +171,11 @@ export default function DashAI({ subjects, onOpenScheduler }: Props) {
               background: "color-mix(in srgb, var(--accent) 6%, var(--surface2))",
               border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)",
             }}>
-            <p className="text-[13px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{response}</p>
+            <p className="text-[15px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{response}</p>
           </div>
           {parsedCount > 0 && !applied && (
             <button onClick={applySchedule}
-              className="w-full py-2.5 rounded-2xl font-bold text-[15px] transition"
+              className="w-full py-2.5 rounded-2xl font-bold text-[17px] transition"
               style={{ background: "var(--accent)", color: "white", border: "none" }}>
               أضف للجدول ← ({parsedCount} حدث)
             </button>
@@ -187,25 +187,25 @@ export default function DashAI({ subjects, onOpenScheduler }: Props) {
                   background: "color-mix(in srgb, var(--success) 8%, var(--surface2))",
                   border: "1px solid color-mix(in srgb, var(--success) 25%, transparent)",
                 }}>
-                <p className="text-center text-[14px] font-black" style={{ color: "var(--success)" }}>
+                <p className="text-center text-[16px] font-black" style={{ color: "var(--success)" }}>
                   ✅ تم إنشاء الخطة — {parsedCount} جلسة أُضيفت
                 </p>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => window.dispatchEvent(new CustomEvent("darb:openCalendar"))}
-                    className="py-2.5 rounded-2xl text-[13px] font-bold transition active:scale-[0.97] flex items-center justify-center gap-1.5"
+                    className="py-2.5 rounded-2xl text-[15px] font-bold transition active:scale-[0.97] flex items-center justify-center gap-1.5"
                     style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
                     🗓️ أضف للتقويم
                   </button>
                   <a href="/orbit"
-                    className="py-2.5 rounded-2xl text-[13px] font-bold transition active:scale-[0.97] flex items-center justify-center gap-1.5 no-underline"
+                    className="py-2.5 rounded-2xl text-[15px] font-bold transition active:scale-[0.97] flex items-center justify-center gap-1.5 no-underline"
                     style={{ background: "var(--accent)", color: "#fff" }}>
                     ⏱️ ابدأ جلسة
                   </a>
                 </div>
               </div>
             ) : (
-              <p className="text-center text-[14px] font-bold py-1.5" style={{ color: "var(--text-muted)" }}>
+              <p className="text-center text-[16px] font-bold py-1.5" style={{ color: "var(--text-muted)" }}>
                 كل الأوقات المقترحة متعارضة مع جدولك الحالي
               </p>
             )

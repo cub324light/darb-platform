@@ -55,31 +55,31 @@ export default function ProgressTool({ subjects }: Props) {
 
   return (
     <div>
-      <p className="text-[13px] mb-3" style={{ color: "var(--text-muted)" }}>
+      <p className="text-[15px] mb-3" style={{ color: "var(--text-muted)" }}>
         دويرب يقرأ جاهزيتك وأقوى/أحوج موادك، ويعطيك خطوة عملية واحدة تقرّبك من هدفك.
       </p>
 
       {/* لمحة الملف — تطمئن الطالب أن التحليل مبني على بياناته */}
       <div className="rounded-2xl px-4 py-3 mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5"
         style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-        {goalLine && <span className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>🎯 {goalLine}</span>}
+        {goalLine && <span className="text-[15px] font-bold" style={{ color: "var(--accent-light)" }}>🎯 {goalLine}</span>}
         {readiness != null && (
-          <span className="text-[13px] font-bold" style={{ color: "var(--text)" }}>
+          <span className="text-[15px] font-bold" style={{ color: "var(--text)" }}>
             🚀 جاهزيتك {readiness.toLocaleString("ar")}٪
           </span>
         )}
         {profile.weakest && (
-          <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>⚠️ ركّز على {profile.weakest}</span>
+          <span className="text-[15px]" style={{ color: "var(--text-muted)" }}>⚠️ ركّز على {profile.weakest}</span>
         )}
         {!goalLine && readiness == null && !profile.weakest && (
-          <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+          <span className="text-[15px]" style={{ color: "var(--text-muted)" }}>
             أكمل أهدافك في ملفك لتحصل على تحليل أدق.
           </span>
         )}
       </div>
 
       <button onClick={analyze} disabled={loading}
-        className="w-full rounded-2xl py-3.5 font-black text-[16px] transition active:scale-[0.98]"
+        className="w-full rounded-2xl py-3.5 font-black text-[18px] transition active:scale-[0.98]"
         style={{ background: loading ? "var(--surface2)" : "var(--accent)", color: loading ? "var(--text-muted)" : "white", border: "none" }}>
         {loading ? (
           <span className="inline-block w-4 h-4 rounded-full border-2 animate-spin align-middle"
@@ -87,13 +87,13 @@ export default function ProgressTool({ subjects }: Props) {
         ) : "دويرب: حلّل تقدّمي 🎯"}
       </button>
 
-      {err && <p className="text-[13px] text-center mt-3 font-semibold" style={{ color: "var(--danger)" }}>{err}</p>}
+      {err && <p className="text-[15px] text-center mt-3 font-semibold" style={{ color: "var(--danger)" }}>{err}</p>}
 
       {response && !loading && (
         <>
           <div className="mt-3 rounded-2xl px-4 py-3.5"
             style={{ background: "color-mix(in srgb, var(--accent) 6%, var(--surface2))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
-            <p className="text-[14px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{response}</p>
+            <p className="text-[16px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{response}</p>
           </div>
           {/* تقييم دويرب + فرص ضائعة */}
           <div className="mt-2">
@@ -102,13 +102,13 @@ export default function ProgressTool({ subjects }: Props) {
           {/* الخطوة التالية */}
           <div className="grid grid-cols-2 gap-2 mt-2">
             <a href="/orbit"
-              className="py-2.5 rounded-2xl text-[13px] font-bold transition active:scale-[0.97] flex items-center justify-center gap-1.5 no-underline"
+              className="py-2.5 rounded-2xl text-[15px] font-bold transition active:scale-[0.97] flex items-center justify-center gap-1.5 no-underline"
               style={{ background: "var(--accent)", color: "#fff" }}>
               ⏱️ ابدأ جلسة الآن
             </a>
             <button
               onClick={() => window.dispatchEvent(new CustomEvent("darb:openDuirb", { detail: { tab: "schedule" } }))}
-              className="py-2.5 rounded-2xl text-[13px] font-bold transition active:scale-[0.97] flex items-center justify-center gap-1.5"
+              className="py-2.5 rounded-2xl text-[15px] font-bold transition active:scale-[0.97] flex items-center justify-center gap-1.5"
               style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
               📅 خطّط لهذا
             </button>

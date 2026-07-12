@@ -67,9 +67,9 @@ export default function DuwairbScoreView({ expanded = false }: Props) {
         className="flex items-center gap-3 w-full text-right"
         aria-expanded={show}>
         <div className="flex-1">
-          <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>🎯 تقييم دويرب</p>
-          <p className="text-[24px] font-black" style={{ color: scoreColor }}>
-            {ar(score.total)}<span className="text-[14px] font-semibold" style={{ color: "var(--text-muted)" }}>/100</span>
+          <p className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>🎯 تقييم دويرب</p>
+          <p className="text-[27px] font-black" style={{ color: scoreColor }}>
+            {ar(score.total)}<span className="text-[16px] font-semibold" style={{ color: "var(--text-muted)" }}>/100</span>
           </p>
         </div>
         <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true">
@@ -78,7 +78,7 @@ export default function DuwairbScoreView({ expanded = false }: Props) {
             strokeDasharray={`${(score.total / 100) * 100.5} 100.5`}
             strokeLinecap="round" transform="rotate(-90 22 22)" />
         </svg>
-        <span className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>{show ? "▲" : "▼"}</span>
+        <span className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>{show ? "▲" : "▼"}</span>
       </button>
 
       {/* تفصيل عند الضغط */}
@@ -88,11 +88,11 @@ export default function DuwairbScoreView({ expanded = false }: Props) {
           <div className="flex flex-col gap-1.5">
             {Object.values(score.components).map((c) => (
               <div key={c.label} className="flex items-center gap-2">
-                <p className="text-[11px] font-bold w-20 flex-shrink-0" style={{ color: "var(--text-muted)" }}>{c.label}</p>
+                <p className="text-[12px] font-bold w-20 flex-shrink-0" style={{ color: "var(--text-muted)" }}>{c.label}</p>
                 <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--surface2)" }}>
                   <div className="h-full rounded-full" style={{ width: `${(c.score / c.max) * 100}%`, background: "var(--accent)" }} />
                 </div>
-                <p className="text-[10px] font-bold" style={{ color: "var(--text-muted)" }}>{c.score}/{c.max}</p>
+                <p className="text-[11px] font-bold" style={{ color: "var(--text-muted)" }}>{c.score}/{c.max}</p>
               </div>
             ))}
           </div>
@@ -102,7 +102,7 @@ export default function DuwairbScoreView({ expanded = false }: Props) {
             <div className="rounded-xl px-3 py-2.5 flex flex-col gap-1"
               style={{ background: "color-mix(in srgb, var(--success) 7%, transparent)" }}>
               {score.strengths.map((s) => (
-                <p key={s} className="text-[12px] font-semibold" style={{ color: "var(--success)" }}>✓ {s}</p>
+                <p key={s} className="text-[14px] font-semibold" style={{ color: "var(--success)" }}>✓ {s}</p>
               ))}
             </div>
           )}
@@ -112,7 +112,7 @@ export default function DuwairbScoreView({ expanded = false }: Props) {
             <div className="rounded-xl px-3 py-2.5 flex flex-col gap-1"
               style={{ background: "color-mix(in srgb, var(--gold) 7%, transparent)" }}>
               {score.gaps.map((g) => (
-                <p key={g} className="text-[12px] font-semibold" style={{ color: "var(--gold)" }}>⚠ {g}</p>
+                <p key={g} className="text-[14px] font-semibold" style={{ color: "var(--gold)" }}>⚠ {g}</p>
               ))}
             </div>
           )}
@@ -128,8 +128,8 @@ export default function DuwairbScoreView({ expanded = false }: Props) {
               : "color-mix(in srgb, var(--gold) 7%, transparent)",
             border: `1px solid ${o.severity === "critical" ? "color-mix(in srgb, var(--danger) 18%, transparent)" : "color-mix(in srgb, var(--gold) 18%, transparent)"}`,
           }}>
-          <p className="text-[12px] font-semibold" style={{ color: "var(--text)" }}>{o.message}</p>
-          <p className="text-[12px] font-bold" style={{ color: "var(--accent-light)" }}>← {o.solution}</p>
+          <p className="text-[14px] font-semibold" style={{ color: "var(--text)" }}>{o.message}</p>
+          <p className="text-[14px] font-bold" style={{ color: "var(--accent-light)" }}>← {o.solution}</p>
         </div>
       ))}
     </div>

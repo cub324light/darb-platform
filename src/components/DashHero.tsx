@@ -32,7 +32,7 @@ export default function DashHero() {
       {/* ماذا أفعل الآن؟ — قرار واحد (التحية أعلاه في القبة) */}
       {d.top ? (
         <div className="flex items-start gap-3">
-          <span className="text-[26px] leading-none flex-shrink-0 mt-0.5" aria-hidden="true">{d.top.icon}</span>
+          <span className="text-[29px] leading-none flex-shrink-0 mt-0.5" aria-hidden="true">{d.top.icon}</span>
           <div className="flex flex-col gap-0.5 flex-1 min-w-0">
             <span className="eyebrow" style={{ color: c }}>{d.top.urgent ? "⏳ الأهمّ الآن" : "✦ الأهمّ الآن"}</span>
             <h1 className="t-h1 leading-tight" style={{ color: "var(--text)" }}>{d.top.title}</h1>
@@ -45,12 +45,12 @@ export default function DashHero() {
       {/* أقرب اختبار + تقدّم اليوم — إشارتان موجزتان (بلا لونٍ ثالث) */}
       <div className="flex items-center gap-2 flex-wrap">
         {d.qiyas && (
-          <span className="inline-flex items-center gap-1.5 text-[12.5px] font-bold px-2.5 py-1 rounded-lg"
+          <span className="inline-flex items-center gap-1.5 text-[14px] font-bold px-2.5 py-1 rounded-lg"
             style={{ background: "var(--surface2)", color: "var(--text-dim)" }}>
             📅 {d.qiyas.label} · بعد {d.qiyas.approximate ? "~" : ""}{d.qiyas.days} يوم
           </span>
         )}
-        <span className="inline-flex items-center gap-1.5 text-[12.5px] font-bold px-2.5 py-1 rounded-lg"
+        <span className="inline-flex items-center gap-1.5 text-[14px] font-bold px-2.5 py-1 rounded-lg"
           style={{ background: "var(--surface2)", color: "var(--text-dim)" }}>
           ⏳ اليوم: {d.todayMins} دقيقة
         </span>

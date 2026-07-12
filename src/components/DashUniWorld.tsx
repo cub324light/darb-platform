@@ -36,7 +36,7 @@ function StatCard({ href, icon, label, value, sub, color }: {
     <Link href={href}
       className="ds-card ds-card-tight flex flex-col gap-1 text-right no-underline h-full transition active:scale-[0.98]">
       <div className="flex items-center gap-1.5">
-        <span className="text-[15px]" aria-hidden="true">{icon}</span>
+        <span className="text-[17px]" aria-hidden="true">{icon}</span>
         <span className="t-caption" style={{ color: "var(--text-muted)" }}>{label}</span>
       </div>
       <span className="font-mono-nums font-black" style={{ fontSize: "1.5rem", lineHeight: 1.1, color }}>{value}</span>
@@ -59,7 +59,7 @@ function JourneyRow({ step, isLast }: { step: JourneyStep; isLast: boolean }) {
     <div className="flex gap-3 items-stretch">
       {/* عمود العقدة + الخط الرأسي (يمين في RTL) */}
       <div className="flex flex-col items-center flex-shrink-0" style={{ width: 34 }}>
-        <span className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-[15px] leading-none"
+        <span className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-[17px] leading-none"
           style={{
             background: `color-mix(in srgb, ${c} ${isCurrent ? 20 : 12}%, var(--surface))`,
             border: `1.5px solid color-mix(in srgb, ${c} ${isCurrent ? 55 : 34}%, transparent)`,
@@ -84,15 +84,15 @@ function JourneyRow({ step, isLast }: { step: JourneyStep; isLast: boolean }) {
           opacity: step.state === "upcoming" ? 0.82 : 1,
         }}>
         <div className="flex items-center justify-between gap-2">
-          <span className="text-[10px] font-bold" style={{ color: "var(--text-muted)" }}>{step.year}</span>
+          <span className="text-[11px] font-bold" style={{ color: "var(--text-muted)" }}>{step.year}</span>
           {isCurrent && (
-            <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full"
+            <span className="text-[11px] font-black px-1.5 py-0.5 rounded-full"
               style={{ background: "color-mix(in srgb, var(--accent) 18%, transparent)", color: "var(--accent-light)" }}>
               أنت هنا
             </span>
           )}
         </div>
-        <p className="text-[14px] font-black leading-tight mt-0.5"
+        <p className="text-[16px] font-black leading-tight mt-0.5"
           style={{ color: isCurrent ? "var(--accent-light)" : isDone ? "var(--text-dim)" : "var(--text)" }}>
           {step.title}
         </p>
@@ -196,9 +196,9 @@ export default function DashUniWorld({ hint }: { hint: string }) {
         <CardGrid cols={2}>
           {w.week.map((it) => (
             <div key={it.task} className="ds-card ds-card-tight flex items-start gap-2 text-right">
-              <span className="text-[15px] leading-none mt-0.5" aria-hidden="true">✦</span>
+              <span className="text-[17px] leading-none mt-0.5" aria-hidden="true">✦</span>
               <div className="min-w-0">
-                <p className="text-[13px] font-black leading-tight" style={{ color: "var(--accent-light)" }}>{it.task}</p>
+                <p className="text-[15px] font-black leading-tight" style={{ color: "var(--accent-light)" }}>{it.task}</p>
                 <p className="t-caption mt-0.5" style={{ color: "var(--text-muted)" }}>{it.via}</p>
               </div>
             </div>
@@ -214,20 +214,20 @@ export default function DashUniWorld({ hint }: { hint: string }) {
           background: "color-mix(in srgb, var(--accent) 12%, transparent)",
           border: "1px solid color-mix(in srgb, var(--accent) 30%, transparent)",
         }}>
-        <span className="w-11 h-11 rounded-2xl flex items-center justify-center text-[22px] leading-none flex-shrink-0"
+        <span className="w-11 h-11 rounded-2xl flex items-center justify-center text-[25px] leading-none flex-shrink-0"
           style={{
             background: "color-mix(in srgb, var(--accent) 16%, transparent)",
             border: "1.5px solid color-mix(in srgb, var(--accent) 32%, transparent)",
           }}
           aria-hidden="true">🌍</span>
         <div className="flex-1 min-w-0">
-          <p className="text-[15px] font-black leading-tight" style={{ color: "var(--accent-light)" }}>
+          <p className="text-[17px] font-black leading-tight" style={{ color: "var(--accent-light)" }}>
             {w.majorName ? `عالم ${w.majorName}` : "عالم تخصصك"}
           </p>
           <p className="t-caption mt-0.5" style={{ color: "var(--text-muted)" }}>برامجك وشهاداتك وشركاتك ومساراتك</p>
           <p className="t-caption mt-1" style={{ color: "var(--text-dim)" }}>💼 {hint}</p>
         </div>
-        <span className="text-[18px] flex-shrink-0" style={{ color: "var(--accent-light)" }} aria-hidden="true">←</span>
+        <span className="text-[20px] flex-shrink-0" style={{ color: "var(--accent-light)" }} aria-hidden="true">←</span>
       </Link>
 
       {/* ═══ أدوات الجامعة + عُدّة تخصصك (ToolTile الموحّد) ═══ */}

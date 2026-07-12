@@ -15,7 +15,7 @@ interface Tile { icon: string; title: string; desc: string; href?: string; event
 function TileCard({ t }: { t: Tile }) {
   const inner = (
     <>
-      <span className="text-[20px] leading-none flex-shrink-0" aria-hidden="true">{t.icon}</span>
+      <span className="text-[23px] leading-none flex-shrink-0" aria-hidden="true">{t.icon}</span>
       <span className="flex flex-col min-w-0">
         <span className="t-body font-black leading-tight" style={{ color: "var(--text)" }}>{t.title}</span>
         <span className="t-caption truncate" style={{ color: "var(--text-muted)" }}>{t.desc}</span>
@@ -72,7 +72,7 @@ export default function UniBoard() {
           </div>
           {sem?.daysToFinals != null && (
             <span className="flex-shrink-0 text-right">
-              <span className="font-mono-nums font-black text-[15px]" style={{ color: finalsClose ? "var(--danger)" : "var(--accent-light)" }}>
+              <span className="font-mono-nums font-black text-[17px]" style={{ color: finalsClose ? "var(--danger)" : "var(--accent-light)" }}>
                 ⏳ {sem.daysToFinals} يوم
               </span>
               <span className="t-caption block" style={{ color: "var(--text-muted)" }}>{sem.finalsLabel ?? "للاختبارات"}</span>

@@ -140,7 +140,7 @@ export default function FileAnalyzer({
     <div className="fixed inset-0 z-[9990] flex flex-col overflow-y-auto" style={{ background: "var(--bg)" }}>
       <div className="sticky top-0 z-10 px-5 pt-safe pt-4 pb-3 flex items-center gap-3"
         style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
-        <button onClick={close} className="dome-chip text-[17px] font-bold flex-shrink-0" style={{ color: "var(--text)" }}>← رجوع</button>
+        <button onClick={close} className="dome-chip text-[19px] font-bold flex-shrink-0" style={{ color: "var(--text)" }}>← رجوع</button>
         <p className="title-lg flex-1 text-right" style={{ color: "var(--text)" }}>تحليل ملف</p>
       </div>
 
@@ -148,13 +148,13 @@ export default function FileAnalyzer({
         {stage === "loading" && (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <div className="w-10 h-10 rounded-full border-2 border-transparent animate-spin" style={{ borderTopColor: color }} />
-            <p className="text-[15px] font-bold" style={{ color: "var(--text-muted)" }}>{progress || "جارٍ المعالجة..."}</p>
+            <p className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>{progress || "جارٍ المعالجة..."}</p>
           </div>
         )}
 
         {stage === "input" && (
           <>
-            <p className="text-[14px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[16px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
               ارفع ملف PDF أو Word أو نص، ودويرب يستخرج النص ويعطيك ملخصاً والمهارات وخطة مذاكرة. الملفات الكبيرة تُقسَّم وتُحلَّل تلقائياً.
             </p>
 
@@ -162,16 +162,16 @@ export default function FileAnalyzer({
               className="hidden"
               onChange={(e) => pick(e.target.files?.[0] ?? null)} />
             <button onClick={() => fileRef.current?.click()}
-              className="w-full rounded-2xl py-5 font-bold text-[16px] transition active:scale-[0.98]"
+              className="w-full rounded-2xl py-5 font-bold text-[18px] transition active:scale-[0.98]"
               style={{ background: "var(--surface)", border: `2px dashed ${color}`, color }}>
               📄 اختر ملف PDF أو Word أو نص
             </button>
 
             {file && (
-              <div className="flex items-center justify-between rounded-xl px-3.5 py-3 text-[14px]"
+              <div className="flex items-center justify-between rounded-xl px-3.5 py-3 text-[16px]"
                 style={{ background: "var(--surface2)", color: "var(--text)" }}>
                 <span className="truncate flex-1">{file.name}</span>
-                <span className="text-[12px] font-bold px-2 py-0.5 rounded-md flex-shrink-0"
+                <span className="text-[14px] font-bold px-2 py-0.5 rounded-md flex-shrink-0"
                   style={{ background: color + "22", color }}>{kind ? KIND_LABEL[kind] : ""}</span>
                 <button onClick={() => { setFile(null); if (fileRef.current) fileRef.current.value = ""; }}
                   className="text-[var(--text-muted)] px-2 flex-shrink-0">✕</button>
@@ -180,12 +180,12 @@ export default function FileAnalyzer({
 
             {err && (
               <div className="rounded-2xl px-4 py-3" style={{ background: "rgba(239,68,68,0.12)", border: "2px solid #EF4444" }}>
-                <p className="text-[14px] text-center font-bold" style={{ color: "#EF4444" }}>{err}</p>
+                <p className="text-[16px] text-center font-bold" style={{ color: "#EF4444" }}>{err}</p>
               </div>
             )}
 
             <button onClick={analyze} disabled={!file}
-              className="w-full rounded-2xl py-4 font-black text-[17px] transition active:scale-[0.98]"
+              className="w-full rounded-2xl py-4 font-black text-[19px] transition active:scale-[0.98]"
               style={{ background: color, color: "#fff", opacity: file ? 1 : 0.4 }}>
               حلّل الملف 🤖
             </button>
@@ -202,23 +202,23 @@ export default function FileAnalyzer({
                 { n: result.chunkCount, l: "جزء حُلّل" },
               ].map((c) => (
                 <div key={c.l} className="rounded-2xl py-3.5 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-                  <p className="text-[22px] font-black" style={{ color }}>{c.n}</p>
-                  <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>{c.l}</p>
+                  <p className="text-[25px] font-black" style={{ color }}>{c.n}</p>
+                  <p className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>{c.l}</p>
                 </div>
               ))}
             </div>
 
             {result.classification && (
               <div className="rounded-2xl px-4 py-3" style={{ background: color + "12", border: `1px solid ${color}33` }}>
-                <p className="text-[12px] font-bold mb-1" style={{ color }}>التصنيف</p>
-                <p className="text-[14px] leading-relaxed" style={{ color: "var(--text)" }}>{result.classification}</p>
+                <p className="text-[14px] font-bold mb-1" style={{ color }}>التصنيف</p>
+                <p className="text-[16px] leading-relaxed" style={{ color: "var(--text)" }}>{result.classification}</p>
               </div>
             )}
 
             <div>
               <p className="title-md mb-2" style={{ color: "var(--text)" }}>الملخص</p>
               <div className="rounded-2xl px-4 py-3.5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-                <p className="text-[14px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{result.summary}</p>
+                <p className="text-[16px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{result.summary}</p>
               </div>
             </div>
 
@@ -227,7 +227,7 @@ export default function FileAnalyzer({
                 <p className="title-md mb-2" style={{ color: "var(--text)" }}>المهارات المستخرجة</p>
                 <div className="flex flex-wrap gap-2">
                   {result.skills.map((s, i) => (
-                    <span key={i} className="rounded-xl px-3 py-1.5 text-[13px] font-bold"
+                    <span key={i} className="rounded-xl px-3 py-1.5 text-[15px] font-bold"
                       style={{ background: color + "16", border: `1px solid ${color}33`, color: "var(--text)" }}>{s}</span>
                   ))}
                 </div>
@@ -238,7 +238,7 @@ export default function FileAnalyzer({
               <div>
                 <p className="title-md mb-2" style={{ color: "var(--text)" }}>الخطة المقترحة</p>
                 <div className="rounded-2xl px-4 py-3.5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-                  <p className="text-[14px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{result.plan}</p>
+                  <p className="text-[16px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{result.plan}</p>
                 </div>
               </div>
             )}
@@ -246,13 +246,13 @@ export default function FileAnalyzer({
             {/* الخطوة التالية: درّب نفسك على ما حلّلته */}
             <button
               onClick={() => { close(); window.dispatchEvent(new CustomEvent("darb:openDuirb", { detail: { tab: "quiz" } })); }}
-              className="w-full rounded-2xl py-3.5 font-black text-[15px] transition active:scale-[0.98] flex items-center justify-center gap-1.5"
+              className="w-full rounded-2xl py-3.5 font-black text-[17px] transition active:scale-[0.98] flex items-center justify-center gap-1.5"
               style={{ background: color, color: "#fff" }}>
               ❓ درّب نفسك — ولّد أسئلة على هذا
             </button>
 
             <button onClick={reset}
-              className="w-full rounded-2xl py-4 font-black text-[16px] transition active:scale-[0.98]"
+              className="w-full rounded-2xl py-4 font-black text-[18px] transition active:scale-[0.98]"
               style={{ background: "var(--surface)", border: `1.5px solid ${color}`, color }}>
               حلّل ملفاً آخر
             </button>
@@ -265,7 +265,7 @@ export default function FileAnalyzer({
   return (
     <>
       <button onClick={() => setOpen(true)}
-        className="w-full rounded-2xl py-3.5 font-bold text-[15px] transition active:scale-[0.98] flex items-center justify-center gap-2"
+        className="w-full rounded-2xl py-3.5 font-bold text-[17px] transition active:scale-[0.98] flex items-center justify-center gap-2"
         style={{ background: "var(--surface)", border: `1.5px solid ${color}`, color }}>
         📄 حلّل ملفاً مع دويرب 🤖
       </button>

@@ -24,7 +24,7 @@ export default function UniToolsPage() {
           <BackButton />
           <h1 className="title-lg grad-title">أدوات الجامعة</h1>
         </div>
-        <p className="text-[13px] mt-1" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[15px] mt-1" style={{ color: "var(--text-muted)" }}>
           المعدل والغياب والفاينل وتحويل المعدل — استرشادي، والقرار للوائح جامعتك
         </p>
       </Dome>
@@ -37,8 +37,8 @@ export default function UniToolsPage() {
         {/* جسر إلى الخطة القائمة — إعادة استخدام لا تكرار */}
         <section className="rounded-2xl p-4 flex items-center gap-3"
           style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-          <span className="text-[18px]" aria-hidden="true">📅</span>
-          <p className="text-[13px] font-bold flex-1" style={{ color: "var(--text-muted)" }}>
+          <span className="text-[20px]" aria-hidden="true">📅</span>
+          <p className="text-[15px] font-bold flex-1" style={{ color: "var(--text-muted)" }}>
             جدولك وخطتك الأسبوعية في{" "}
             <Link href="/plan" className="font-black" style={{ color: "var(--accent-light)" }}>
               خطتي ←

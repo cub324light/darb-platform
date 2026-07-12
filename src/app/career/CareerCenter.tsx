@@ -41,7 +41,7 @@ const asItems = (arr: string[]): WorldItem[] => arr.map((name) => ({ name }));
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button onClick={onClick} aria-pressed={active}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-black whitespace-nowrap flex-shrink-0 transition active:scale-95"
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[14px] font-black whitespace-nowrap flex-shrink-0 transition active:scale-95"
       style={{
         background: active ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
         color: active ? "var(--accent-light)" : "var(--text-muted)",
@@ -62,7 +62,7 @@ function Section({ id, icon, title, badge, children }: {
   return (
     <section id={id} className="ds-card ds-stack-tight" style={id ? { scrollMarginTop: 76 } : undefined}>
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-[18px]" aria-hidden="true">{icon}</span>
+        <span className="text-[20px]" aria-hidden="true">{icon}</span>
         <h2 className="t-h3 flex-1" style={{ color: "var(--text)" }}>{title}</h2>
         {badge && (
           <span className="t-caption px-2.5 py-1 rounded-full flex-shrink-0"
@@ -153,14 +153,14 @@ function FlowNodeRow({ node, last }: { node: FlowNode; last: boolean }) {
         borderInlineStartWidth: 3,
         borderInlineStartColor: `color-mix(in srgb, ${meta.color} 62%, transparent)`,
       }}>
-      <span className="text-[17px] flex-shrink-0" aria-hidden="true">{node.icon}</span>
+      <span className="text-[19px] flex-shrink-0" aria-hidden="true">{node.icon}</span>
       <div className="flex-1 min-w-0 flex flex-col">
         <span className="t-caption" style={{ color: "var(--text-muted)" }}>{node.lead}</span>
         <span className="t-body font-black leading-snug"
           style={{ color: isDest ? "var(--success)" : "var(--text)" }}>{node.label}</span>
       </div>
       {meta.anchor && (
-        <span className="text-[13px] flex-shrink-0" style={{ color: "var(--text-muted)" }} aria-hidden="true">↓</span>
+        <span className="text-[15px] flex-shrink-0" style={{ color: "var(--text-muted)" }} aria-hidden="true">↓</span>
       )}
     </div>
   );
@@ -172,7 +172,7 @@ function FlowNodeRow({ node, last }: { node: FlowNode; last: boolean }) {
       {/* واصل رأسي بين العُقد — يجسّد «كلٌّ يقود للذي بعده» */}
       {!last && (
         <div className="flex justify-center" aria-hidden="true">
-          <span className="text-[12px] leading-none py-0.5" style={{ color: "var(--accent-light)" }}>↓</span>
+          <span className="text-[14px] leading-none py-0.5" style={{ color: "var(--accent-light)" }}>↓</span>
         </div>
       )}
     </div>
@@ -195,7 +195,7 @@ function SubjectJourney({ majorId }: { majorId: string | null }) {
         borderColor: "color-mix(in srgb, var(--accent) 20%, var(--border))",
       }}>
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-[18px]" aria-hidden="true">🧭</span>
+        <span className="text-[20px]" aria-hidden="true">🧭</span>
         <div className="flex-1">
           <h2 className="t-h3" style={{ color: "var(--text)" }}>رحلتك من المادة إلى الوظيفة</h2>
           <p className="t-caption" style={{ color: "var(--text-muted)" }}>
@@ -272,12 +272,12 @@ export default function CareerCenter() {
             background: "color-mix(in srgb, var(--accent) 10%, transparent)",
             borderColor: "color-mix(in srgb, var(--accent) 30%, transparent)",
           }}>
-          <span className="text-[20px] flex-shrink-0" aria-hidden="true">🎯</span>
+          <span className="text-[23px] flex-shrink-0" aria-hidden="true">🎯</span>
           <div className="flex-1 min-w-0">
             <p className="t-body font-black" style={{ color: "var(--text)" }}>حدّد تخصصك ليصير المحتوى خاصاً بك</p>
             <p className="t-caption" style={{ color: "var(--text-muted)" }}>من ملفك — تظهر أدوات تخصصك وشهاداته وشركاته ومساراته</p>
           </div>
-          <span className="text-[18px] flex-shrink-0" style={{ color: "var(--accent-light)" }} aria-hidden="true">←</span>
+          <span className="text-[20px] flex-shrink-0" style={{ color: "var(--accent-light)" }} aria-hidden="true">←</span>
         </Link>
       )}
 
@@ -294,11 +294,11 @@ export default function CareerCenter() {
             background: "color-mix(in srgb, var(--success) 10%, transparent)",
             borderColor: "color-mix(in srgb, var(--success) 32%, transparent)",
           }}>
-          <span className="text-[22px] flex-shrink-0" aria-hidden="true">💰</span>
+          <span className="text-[25px] flex-shrink-0" aria-hidden="true">💰</span>
           <div className="flex-1 min-w-0 flex flex-col gap-0.5">
             <div className="flex items-center gap-2 flex-wrap">
               <p className="t-body font-black" style={{ color: "var(--success)" }}>الراتب الاسترشادي</p>
-              <span className="text-[10px] font-black px-2 py-0.5 rounded-full"
+              <span className="text-[11px] font-black px-2 py-0.5 rounded-full"
                 style={{ background: "color-mix(in srgb, var(--success) 16%, transparent)", color: "var(--success)" }}>
                 تقريبي
               </span>
@@ -326,7 +326,7 @@ export default function CareerCenter() {
               background: "color-mix(in srgb, var(--gold) 10%, transparent)",
               border: "1px solid color-mix(in srgb, var(--gold) 32%, transparent)",
             }}>
-            <span className="text-[16px] flex-shrink-0" aria-hidden="true">⚖️</span>
+            <span className="text-[18px] flex-shrink-0" aria-hidden="true">⚖️</span>
             <p className="t-caption" style={{ color: "var(--text-dim)" }}>
               استخدمها للفهم والمساعدة لا للغش — خلّها تشرح لك لتتعلّم، وسلّم شغلك بيدك أنت.
             </p>
@@ -360,7 +360,7 @@ export default function CareerCenter() {
       {/* ══ خطواتك المهنية — طبقة ثانوية مضغوطة (لا تنافس البطل) ══ */}
       <div className="ds-section">
         <div className="flex items-center gap-2 px-0.5">
-          <span className="text-[18px]" aria-hidden="true">🧗</span>
+          <span className="text-[20px]" aria-hidden="true">🧗</span>
           <div className="flex-1">
             <h2 className="t-h3" style={{ color: "var(--text)" }}>خطواتك المهنية</h2>
             <p className="t-caption" style={{ color: "var(--text-muted)" }}>تدريب وسيرة ولينكدإن وفرص ودراسات عليا — إرشاد عملي</p>
@@ -422,7 +422,7 @@ export default function CareerCenter() {
               <ul className="flex flex-col gap-2">
                 {LINKEDIN_CHECKLIST.map((it) => (
                   <li key={it.id} className="flex gap-2">
-                    <span className="flex-shrink-0 text-[13px]" style={{ color: "var(--success)" }} aria-hidden="true">☑</span>
+                    <span className="flex-shrink-0 text-[15px]" style={{ color: "var(--success)" }} aria-hidden="true">☑</span>
                     <div className="flex flex-col">
                       <span className="t-caption" style={{ color: "var(--text)" }}>{it.label}</span>
                       <span className="t-caption" style={{ color: "var(--text-muted)" }}>{it.hint}</span>
@@ -452,7 +452,7 @@ export default function CareerCenter() {
                   <p className="t-caption" style={{ color: "var(--text-muted)" }}>{o.what}</p>
                   <div className="flex flex-wrap gap-1.5 mt-0.5">
                     {o.tags.map((t) => (
-                      <span key={t} className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                      <span key={t} className="text-[11px] font-bold px-2 py-0.5 rounded-full"
                         style={{ background: "color-mix(in srgb, var(--accent) 9%, transparent)", color: "var(--text-muted)" }}>
                         {t}
                       </span>

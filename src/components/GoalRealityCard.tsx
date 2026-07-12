@@ -69,20 +69,20 @@ export default function GoalRealityCard() {
   return (
     <div className="rounded-2xl p-4 flex flex-col gap-3"
       style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-      <p className="text-[13px] font-black" style={{ color: "var(--text)" }}>🎯 واقعية أهدافك</p>
+      <p className="text-[15px] font-black" style={{ color: "var(--text)" }}>🎯 واقعية أهدافك</p>
 
       {entries.map(({ examName, result }) => (
         <div key={examName}
           className="rounded-xl px-3 py-2.5 flex flex-col gap-1"
           style={{ background: "var(--surface2)" }}>
           <div className="flex items-center gap-2">
-            <span className="text-[18px]">{result.icon}</span>
+            <span className="text-[20px]">{result.icon}</span>
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-black truncate" style={{ color: "var(--text)" }}>
+              <p className="text-[15px] font-black truncate" style={{ color: "var(--text)" }}>
                 {examName} — {result.verdict}
               </p>
             </div>
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+            <span className="text-[12px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
               style={{
                 background: result.icon === "🟢"
                   ? "color-mix(in srgb, var(--success) 15%, transparent)"
@@ -94,8 +94,8 @@ export default function GoalRealityCard() {
               {result.feasibilityScore}٪
             </span>
           </div>
-          <p className="text-[12px] font-semibold" style={{ color: "var(--text-muted)" }}>{result.reason}</p>
-          <p className="text-[12px] font-bold rounded-lg px-2.5 py-1.5 mt-0.5"
+          <p className="text-[14px] font-semibold" style={{ color: "var(--text-muted)" }}>{result.reason}</p>
+          <p className="text-[14px] font-bold rounded-lg px-2.5 py-1.5 mt-0.5"
             style={{
               background: result.icon === "🟢"
                 ? "color-mix(in srgb, var(--success) 8%, transparent)"

@@ -435,7 +435,7 @@ export default function LandingPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <p className="font-black text-base" style={{ color: f.color }}>{f.title}</p>
-                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                  <span className="text-[12px] font-bold px-2 py-0.5 rounded-full"
                     style={{ background: `color-mix(in srgb, ${f.color} 14%, transparent)`, color: f.color }}>
                     {f.tag}
                   </span>

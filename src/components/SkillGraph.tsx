@@ -38,7 +38,7 @@ export default function SkillGraph({ track }: { track: string | undefined | null
 
   if (skills.length === 0) {
     return (
-      <p className="text-[13px] px-1 py-2" style={{ color: "var(--text-muted)" }}>
+      <p className="text-[15px] px-1 py-2" style={{ color: "var(--text-muted)" }}>
         خريطة المهارات متاحة لمساري القدرات والتحصيلي حالياً.
       </p>
     );
@@ -82,14 +82,14 @@ export default function SkillGraph({ track }: { track: string | undefined | null
         <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
           <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: pct === 100 ? "var(--success)" : "var(--accent)" }} />
         </div>
-        <span className="text-[13px] font-bold font-mono-nums" style={{ color: "var(--text-dim)" }}>
+        <span className="text-[15px] font-bold font-mono-nums" style={{ color: "var(--text-dim)" }}>
           {masteredCount}/{skills.length}
         </span>
       </div>
 
       {sections.map(([section, list]) => (
         <div key={section} className="flex flex-col gap-2">
-          <p className="text-[13px] font-black" style={{ color: "var(--accent-light)" }}>{section}</p>
+          <p className="text-[15px] font-black" style={{ color: "var(--accent-light)" }}>{section}</p>
           <div className="flex flex-wrap gap-2">
             {list.map((s) => {
               const status = skillNodeStatus(s, mastered);
@@ -103,14 +103,14 @@ export default function SkillGraph({ track }: { track: string | undefined | null
                   onClick={() => toggle(s, status)}
                   disabled={status === "locked"}
                   title={status === "locked" && prereqNames ? `يتطلب: ${prereqNames}` : undefined}
-                  className="rounded-xl px-3 py-2 text-[13px] font-bold transition active:scale-[0.97] text-right"
+                  className="rounded-xl px-3 py-2 text-[15px] font-bold transition active:scale-[0.97] text-right"
                   style={{ ...statusStyle[status], cursor: status === "locked" ? "not-allowed" : "pointer" }}>
                   <span className="flex items-center gap-1.5">
                     <span>{status === "mastered" ? "✓" : status === "locked" ? "🔒" : "•"}</span>
                     <span>{s.name}</span>
                   </span>
                   {status === "locked" && prereqNames && (
-                    <span className="block text-[10px] font-normal mt-0.5" style={{ color: "var(--text-muted)" }}>
+                    <span className="block text-[11px] font-normal mt-0.5" style={{ color: "var(--text-muted)" }}>
                       يتطلب: {prereqNames}
                     </span>
                   )}
@@ -121,7 +121,7 @@ export default function SkillGraph({ track }: { track: string | undefined | null
         </div>
       ))}
 
-      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+      <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
         اضغط مهارة متاحة لتعليمها كمُتقنة، فتنفتح المهارات التي تعتمد عليها.
       </p>
     </div>

@@ -147,7 +147,7 @@ export default function ArenaPage() {
             </button>
             <div className="flex items-center justify-between flex-1">
               <h1 className="title-lg grad-title">مباراة 1v1</h1>
-              <span className="dome-chip text-[17px] font-bold" style={{ color: "var(--gold-light)" }}>⚔️</span>
+              <span className="dome-chip text-[19px] font-bold" style={{ color: "var(--gold-light)" }}>⚔️</span>
             </div>
           </div>
         </Dome>
@@ -168,7 +168,7 @@ export default function ArenaPage() {
             </Link>
             <div className="flex items-center justify-between flex-1">
               <h1 className="title-lg grad-title">الأرينا</h1>
-              <span className="dome-chip text-[17px] font-bold" style={{ color: "var(--gold-light)" }}>1v1</span>
+              <span className="dome-chip text-[19px] font-bold" style={{ color: "var(--gold-light)" }}>1v1</span>
             </div>
           </div>
         </Dome>
@@ -214,20 +214,20 @@ export default function ArenaPage() {
           >
             ابدأ 1v1 ⚔️
           </button>
-          <p className="text-[12px] mb-5 text-center" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[14px] mb-5 text-center" style={{ color: "var(--text-muted)" }}>
             مباراة حقيقية ضد لاعب من رتبتك — الفوز يرفع نقاطك (RP)
           </p>
 
           {/* Divider */}
           <div className="flex items-center gap-3 mb-4 w-full max-w-xs">
             <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
-            <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>أو</span>
+            <span className="text-[15px]" style={{ color: "var(--text-muted)" }}>أو</span>
             <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
           </div>
 
           {/* Play against bot (تدريب — لا يؤثر على الرتبة) */}
-          <p className="font-black text-[15px] mb-1 text-center" style={{ color: "var(--text-dim)" }}>تدرّب ضد البوت</p>
-          <p className="text-[12px] mb-3 text-center" style={{ color: "var(--text-muted)" }}>لا يؤثر على رتبتك · الفوز +{WIN_SILVER} فضة</p>
+          <p className="font-black text-[17px] mb-1 text-center" style={{ color: "var(--text-dim)" }}>تدرّب ضد البوت</p>
+          <p className="text-[14px] mb-3 text-center" style={{ color: "var(--text-muted)" }}>لا يؤثر على رتبتك · الفوز +{WIN_SILVER} فضة</p>
 
           <button
             onClick={startGame}

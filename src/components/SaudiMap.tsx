@@ -34,13 +34,13 @@ export default function SaudiMap({ regionCounts = {}, className = "" }: SaudiMap
             }}
           >
             <p
-              className="text-[12px] font-bold leading-tight"
+              className="text-[14px] font-bold leading-tight"
               style={{ color: active ? "var(--text)" : "var(--text-muted)" }}
             >
               {name}
             </p>
             <p
-              className="font-mono-nums text-[15px] font-black leading-none"
+              className="font-mono-nums text-[17px] font-black leading-none"
               style={{ color: active ? "var(--accent-light)" : "var(--text-muted)" }}
             >
               {active ? count : "—"}

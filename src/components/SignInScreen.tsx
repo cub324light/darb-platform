@@ -121,14 +121,14 @@ export default function SignInScreen({
     <div className="min-h-dvh flex flex-col items-center justify-center px-5 py-10 relative z-[1]">
       <div className="w-full max-w-sm flex flex-col items-center">
         <Logo className="font-black text-5xl mb-2" />
-        <p className="text-[15px] text-center leading-relaxed mb-8" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[17px] text-center leading-relaxed mb-8" style={{ color: "var(--text-muted)" }}>
           اختر طريقة الدخول
         </p>
 
         {/* ── رسالة الخطأ ── */}
         {err && (
           <div className="w-full rounded-2xl px-4 py-3 mb-4" style={{ background: "color-mix(in srgb, var(--danger) 12%, transparent)", border: "1.5px solid var(--danger)" }}>
-            <p className="text-[13px] text-center font-semibold" style={{ color: "var(--danger)" }}>{err}</p>
+            <p className="text-[15px] text-center font-semibold" style={{ color: "var(--danger)" }}>{err}</p>
           </div>
         )}
 
@@ -146,12 +146,12 @@ export default function SignInScreen({
               </svg>
             </div>
             <div>
-              <p className="font-black text-[15px]" style={{ color: "var(--text)" }}>Google</p>
-              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>سجّل دخولك ببضع ثوانٍ</p>
+              <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>Google</p>
+              <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>سجّل دخولك ببضع ثوانٍ</p>
             </div>
           </div>
           <button onClick={oauthGoogle} disabled={busy !== null}
-            className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl font-bold text-[15px] transition active:scale-[0.98] min-h-[52px]"
+            className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl font-bold text-[17px] transition active:scale-[0.98] min-h-[52px]"
             style={{
               background: "#FFFFFF", color: "#1F1F1F",
               border: "1.5px solid #DADCE0",
@@ -184,8 +184,8 @@ export default function SignInScreen({
               </svg>
             </div>
             <div className="flex-1 text-right">
-              <p className="font-black text-[15px]" style={{ color: "var(--text)" }}>الإيميل</p>
-              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>دخول أو حساب جديد</p>
+              <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>الإيميل</p>
+              <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>دخول أو حساب جديد</p>
             </div>
             <span className="text-[var(--text-muted)] text-lg transition-transform duration-200"
               style={{ transform: emailOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
@@ -197,10 +197,10 @@ export default function SignInScreen({
             <div className="mt-4 flex flex-col gap-3">
               {mode === "forgot" ? (
                 <>
-                  <p className="text-[13px] text-center font-semibold" style={{ color: "var(--text)" }}>إعادة تعيين كلمة المرور</p>
+                  <p className="text-[15px] text-center font-semibold" style={{ color: "var(--text)" }}>إعادة تعيين كلمة المرور</p>
                   {resetSent ? (
                     <div className="rounded-xl px-4 py-3" style={{ background: "color-mix(in srgb, #10B981 12%, transparent)", border: "1.5px solid #10B981" }}>
-                      <p className="text-[13px] text-center font-semibold" style={{ color: "#10B981" }}>تم الإرسال — تحقق من بريدك</p>
+                      <p className="text-[15px] text-center font-semibold" style={{ color: "#10B981" }}>تم الإرسال — تحقق من بريدك</p>
                     </div>
                   ) : (
                     <>
@@ -215,7 +215,7 @@ export default function SignInScreen({
                     </>
                   )}
                   <button onClick={() => { setMode("signin"); setErr(""); setResetSent(false); }}
-                    className="text-[13px] text-center py-1 font-semibold" style={{ color: "var(--text-muted)" }}>
+                    className="text-[15px] text-center py-1 font-semibold" style={{ color: "var(--text-muted)" }}>
                     ← رجوع
                   </button>
                 </>
@@ -225,7 +225,7 @@ export default function SignInScreen({
                   <div className="flex rounded-xl p-1 gap-1" style={{ background: "var(--surface2)" }}>
                     {(["signin", "signup"] as const).map((m) => (
                       <button key={m} onClick={() => { setMode(m); setErr(""); setConfirmPass(""); }}
-                        className="flex-1 py-2.5 rounded-lg text-[14px] font-bold transition"
+                        className="flex-1 py-2.5 rounded-lg text-[16px] font-bold transition"
                         style={mode === m
                           ? { background: "var(--accent)", color: "white" }
                           : { color: "var(--text-muted)" }}>
@@ -256,7 +256,7 @@ export default function SignInScreen({
 
                   {mode === "signin" && (
                     <button onClick={() => { setMode("forgot"); setErr(""); }}
-                      className="text-[13px] text-center py-1" style={{ color: "var(--text-muted)" }}>
+                      className="text-[15px] text-center py-1" style={{ color: "var(--text-muted)" }}>
                       نسيت كلمة المرور؟
                     </button>
                   )}
@@ -279,12 +279,12 @@ export default function SignInScreen({
                 </svg>
               </div>
               <div>
-                <p className="font-black text-[15px]" style={{ color: "var(--text)" }}>زائر</p>
-                <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>تجرّب بدون حساب — البيانات محلية فقط</p>
+                <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>زائر</p>
+                <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>تجرّب بدون حساب — البيانات محلية فقط</p>
               </div>
             </div>
             <button onClick={onGuest} disabled={busy !== null}
-              className="w-full py-3.5 rounded-xl font-bold text-[15px] transition active:scale-[0.98] min-h-[52px]"
+              className="w-full py-3.5 rounded-xl font-bold text-[17px] transition active:scale-[0.98] min-h-[52px]"
               style={{
                 background: "transparent",
                 border: "1.5px solid var(--border)",
@@ -296,7 +296,7 @@ export default function SignInScreen({
           </div>
         )}
 
-        <p className="text-[11px] text-center mt-6 leading-relaxed" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[12px] text-center mt-6 leading-relaxed" style={{ color: "var(--text-muted)" }}>
           بدخولك توافق على{" "}
           <a href="/privacy" className="underline" style={{ color: "var(--text-dim)" }}>سياسة الخصوصية</a>
         </p>

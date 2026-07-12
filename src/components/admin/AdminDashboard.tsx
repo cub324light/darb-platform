@@ -62,7 +62,7 @@ export default function AdminDashboard({ onGoto }: { onGoto?: (section: "content
       {/* ملخّص الجودة */}
       <button onClick={() => onGoto?.("quality")} className="ds-card ds-card-interactive flex items-center gap-3 text-right"
         style={{ borderColor: qualityCount > 0 ? "color-mix(in srgb, var(--gold) 30%, var(--border))" : "var(--border)" }}>
-        <span className="text-[22px]">🩺</span>
+        <span className="text-[25px]">🩺</span>
         <div className="flex flex-col flex-1 min-w-0">
           <span className="t-title" style={{ color: "var(--text)" }}>لوحة الجودة</span>
           <span className="t-caption" style={{ color: "var(--text-muted)" }}>{qualityCount > 0 ? `${qualityCount} عنصرٌ يحتاج معالجة` : "لا مشاكل ظاهرة"}</span>

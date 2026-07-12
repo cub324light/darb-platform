@@ -128,7 +128,7 @@ export default function PricingPage() {
               boxShadow: "0 0 30px color-mix(in srgb, var(--accent) 10%, transparent)",
             }}
           >
-            <div className="absolute top-4 left-4 bg-[var(--accent)] text-white text-[17px] font-bold px-2 py-0.5 rounded-full">
+            <div className="absolute top-4 left-4 bg-[var(--accent)] text-white text-[19px] font-bold px-2 py-0.5 rounded-full">
               الأكثر شيوعاً
             </div>
             <div className="p-5 pt-10">
@@ -177,7 +177,7 @@ export default function PricingPage() {
               boxShadow: "0 0 30px rgba(245,158,11,0.08)",
             }}
           >
-            <div className="absolute top-4 left-4 bg-[#F59E0B] text-[#0A0A0F] text-[17px] font-bold px-2 py-0.5 rounded-full">
+            <div className="absolute top-4 left-4 bg-[#F59E0B] text-[#0A0A0F] text-[19px] font-bold px-2 py-0.5 rounded-full">
               النخبة والمؤسسون
             </div>
             <div className="p-5 pt-10">
@@ -238,7 +238,7 @@ export default function PricingPage() {
               </button>
 
               {lifeTime && (
-                <p className="text-[17px] text-center text-[var(--text-muted)] mt-2">
+                <p className="text-[19px] text-center text-[var(--text-muted)] mt-2">
                   لماذا 279 تحديداً؟ لأنه رقم محسوب — يعكس قيمة حقيقية.
                 </p>
               )}
@@ -321,10 +321,10 @@ export default function PricingPage() {
               key={row.label}
               className={`grid grid-cols-4 text-center py-2.5 ${i % 2 === 0 ? "" : "bg-[var(--surface)]/30"}`}
             >
-              <p className="text-[17px] text-[var(--text-dim)] text-right pr-3">{row.label}</p>
-              <p className="text-[17px] text-[var(--text-muted)]">{row.free}</p>
-              <p className="text-[17px] text-[var(--accent-light)]">{row.shaheen}</p>
-              <p className="text-[17px] text-[var(--gold)]">{row.anqa}</p>
+              <p className="text-[19px] text-[var(--text-dim)] text-right pr-3">{row.label}</p>
+              <p className="text-[19px] text-[var(--text-muted)]">{row.free}</p>
+              <p className="text-[19px] text-[var(--accent-light)]">{row.shaheen}</p>
+              <p className="text-[19px] text-[var(--gold)]">{row.anqa}</p>
             </div>
           ))}
         </div>

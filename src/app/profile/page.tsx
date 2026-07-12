@@ -257,8 +257,8 @@ export default function ProfilePage() {
                   <div className="rounded-2xl px-4 py-3.5 flex items-center justify-between gap-3"
                     style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
                     <div className="min-w-0">
-                      <p className="font-bold text-[15px]" style={{ color: "var(--text)" }}>⚔️ رتبة الأرينا</p>
-                      <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+                      <p className="font-bold text-[17px]" style={{ color: "var(--text)" }}>⚔️ رتبة الأرينا</p>
+                      <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>
                         {arena.wins}ف · {arena.losses}خ · أعلى {arena.peakRp} RP
                       </p>
                     </div>

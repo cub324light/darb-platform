@@ -166,7 +166,7 @@ export default function SettingsButton() {
           <div className="w-10 h-1.5 rounded-full bg-[var(--border)]" />
           <button
             onClick={() => setOpen(false)}
-            className="text-[17px] font-bold px-3 py-1.5 rounded-xl"
+            className="text-[19px] font-bold px-3 py-1.5 rounded-xl"
             style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-dim)" }}
           >
             رجوع ←
@@ -180,14 +180,14 @@ export default function SettingsButton() {
         <div className="rounded-2xl px-4 py-4 mb-6 flex items-center justify-between gap-3"
           style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
           <div className="min-w-0">
-            <p className="font-bold text-[15px]" style={{ color: "var(--text)" }}>بروفايل خاص</p>
-            <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+            <p className="font-bold text-[17px]" style={{ color: "var(--text)" }}>بروفايل خاص</p>
+            <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>
               {isPrivate ? "لا يظهر للآخرين عند البحث" : "يمكن للآخرين رؤية بروفايلك"}
             </p>
           </div>
           <button
             onClick={togglePrivacy}
-            className="px-4 py-2.5 rounded-xl font-black text-[14px] flex-shrink-0 transition active:scale-95"
+            className="px-4 py-2.5 rounded-xl font-black text-[16px] flex-shrink-0 transition active:scale-95"
             style={isPrivate
               ? { background: "#EF4444", color: "#fff", border: "1.5px solid #EF4444" }
               : { background: "transparent", color: "var(--text-muted)", border: "1.5px solid var(--border)" }}>
@@ -202,14 +202,14 @@ export default function SettingsButton() {
             <div className="rounded-2xl p-4" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-base">☁️</span>
-                <p className="font-bold text-[15px] text-[var(--text)] truncate flex-1">{authUser.displayName || authUser.email}</p>
+                <p className="font-bold text-[17px] text-[var(--text)] truncate flex-1">{authUser.displayName || authUser.email}</p>
               </div>
-              <p className="text-[13px] text-[var(--text-muted)] mb-3">
+              <p className="text-[15px] text-[var(--text-muted)] mb-3">
                 {authUser.email ? `${authUser.email} · ` : ""}بياناتك محفوظة وتتزامن تلقائياً
               </p>
               {/* حالة توثيق البريد — Google موثّق تلقائياً */}
               {authUser.emailVerified ? (
-                <p className="text-[12px] font-bold mb-3" style={{ color: "var(--success)" }}>✓ بريدك موثّق</p>
+                <p className="text-[14px] font-bold mb-3" style={{ color: "var(--success)" }}>✓ بريدك موثّق</p>
               ) : (
                 <div className="mb-3">
                   <EmailVerifyNotice message="بريدك غير موثّق — وثّقه للمشاركة في المجتمع" />
@@ -225,7 +225,7 @@ export default function SettingsButton() {
                   خروج
                 </button>
               </div>
-              {syncMsg && <p className="text-[13px] mt-2 font-semibold" style={{ color: "var(--accent-light)" }}>{syncMsg}</p>}
+              {syncMsg && <p className="text-[15px] mt-2 font-semibold" style={{ color: "var(--accent-light)" }}>{syncMsg}</p>}
             </div>
           ) : authOpen ? (
             <div className="rounded-2xl p-4" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
@@ -258,7 +258,7 @@ export default function SettingsButton() {
                 className="w-full rounded-xl px-4 py-3 text-base text-[var(--text)] outline-none mb-2 text-left"
                 style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}
               />
-              {authErr && <p className="text-[13px] mb-2 font-semibold" style={{ color: "var(--danger)" }}>{authErr}</p>}
+              {authErr && <p className="text-[15px] mb-2 font-semibold" style={{ color: "var(--danger)" }}>{authErr}</p>}
               <div className="flex gap-2">
                 <button onClick={submitAuth} disabled={authBusy}
                   className="flex-1 py-3 rounded-xl font-bold text-white disabled:opacity-60"
@@ -277,8 +277,8 @@ export default function SettingsButton() {
               style={{ background: "var(--surface2)", border: "1.5px dashed var(--accent)" }}>
               <span className="text-2xl">☁️</span>
               <span className="flex-1">
-                <span className="block font-bold text-[15px] text-[var(--text)]">سجّل دخولك واحفظ بياناتك</span>
-                <span className="block text-[13px] text-[var(--text-muted)]">عشان ما تروح لو غيّرت الجهاز</span>
+                <span className="block font-bold text-[17px] text-[var(--text)]">سجّل دخولك واحفظ بياناتك</span>
+                <span className="block text-[15px] text-[var(--text-muted)]">عشان ما تروح لو غيّرت الجهاز</span>
               </span>
               <span className="text-[var(--accent-light)]">←</span>
             </button>
@@ -299,7 +299,7 @@ export default function SettingsButton() {
         <div className="flex flex-col gap-3.5 mb-6">
           {TRACK_GROUPS.map((group) => (
             <div key={group.label}>
-              <p className="text-[10px] font-black tracking-widest mb-2 px-0.5" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[11px] font-black tracking-widest mb-2 px-0.5" style={{ color: "var(--text-muted)" }}>
                 ── {group.label} ──
               </p>
               <div className="grid grid-cols-2 gap-2">
@@ -316,8 +316,8 @@ export default function SettingsButton() {
                         opacity: disabled ? 0.38 : 1,
                       }}>
                       {selected && <span className="absolute top-2 left-2.5 text-[var(--accent-light)] text-sm font-black">✓</span>}
-                      <p className="font-bold text-[14px] text-[var(--text)]">{t.title}</p>
-                      <p className="text-[10px] text-[var(--text-muted)] mt-0.5 leading-snug">{t.sub}</p>
+                      <p className="font-bold text-[16px] text-[var(--text)]">{t.title}</p>
+                      <p className="text-[11px] text-[var(--text-muted)] mt-0.5 leading-snug">{t.sub}</p>
                     </button>
                   );
                 })}
@@ -330,7 +330,7 @@ export default function SettingsButton() {
         <p className="label mb-3">تخصيص الصفحة الرئيسية</p>
         <div className="rounded-2xl px-4 py-3.5 mb-6"
           style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-          <p className="text-[14px] font-semibold leading-relaxed" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[16px] font-semibold leading-relaxed" style={{ color: "var(--text-muted)" }}>
             التخصيص من الصفحة الرئيسية مباشرة — اضغط «تخصيص»، سحب الأقسام وإعادة ترتيبها وإخفاءها.
           </p>
         </div>
@@ -362,7 +362,7 @@ export default function SettingsButton() {
           style={{ background: "#EF4444", border: "1.5px solid #EF4444", color: "#fff" }}>
           {deleting ? "جارٍ الحذف…" : "حذف الحساب نهائياً"}
         </button>
-        <p className="text-[12px] mt-2 px-1" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[14px] mt-2 px-1" style={{ color: "var(--text-muted)" }}>
           «إعادة الضبط» تمسح بيانات هذا الجهاز فقط. «حذف الحساب» يمسح حسابك السحابي وكل بياناتك نهائياً.
         </p>
       </div>

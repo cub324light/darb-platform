@@ -69,23 +69,23 @@ export default function DuirbHub({ subjects: propSubjects, defaultView = "schedu
     <section className="card">
       {/* رأس دويرب */}
       <div className="flex items-center gap-2.5 mb-1">
-        <div className="w-8 h-8 rounded-xl flex items-center justify-center text-[18px] flex-shrink-0"
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center text-[20px] flex-shrink-0"
           style={{ background: "color-mix(in srgb, var(--accent) 15%, transparent)" }}>
           🤖
         </div>
         <p className="title-md" style={{ color: "var(--text)" }}>دويرب</p>
-        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full mr-auto"
+        <span className="text-[12px] font-bold px-2 py-0.5 rounded-full mr-auto"
           style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>
           مساعدك الذكي
         </span>
       </div>
       {/* اقتراح افتتاحي سياقي حسب المرحلة — دائم الظهور (يجعل دويرب يعرف الطالب) */}
-      <p className="text-[12.5px] font-bold mr-10" style={{ color: "var(--accent-light)" }}>🧭 {phaseHint}</p>
+      <p className="text-[14px] font-bold mr-10" style={{ color: "var(--accent-light)" }}>🧭 {phaseHint}</p>
       {goalLine && (
-        <p className="text-[12px] font-bold mr-10 mt-1" style={{ color: "var(--accent-light)" }}>🎯 {goalLine} — دويرب يخصّص لك كل شيء حسب هدفك</p>
+        <p className="text-[14px] font-bold mr-10 mt-1" style={{ color: "var(--accent-light)" }}>🎯 {goalLine} — دويرب يخصّص لك كل شيء حسب هدفك</p>
       )}
       {memoryHint && (
-        <p className="text-[12px] font-semibold mr-10 mt-1" style={{ color: "var(--text-muted)" }}>💬 {memoryHint}</p>
+        <p className="text-[14px] font-semibold mr-10 mt-1" style={{ color: "var(--text-muted)" }}>💬 {memoryHint}</p>
       )}
       <div className="mb-3" />
 
@@ -97,8 +97,8 @@ export default function DuirbHub({ subjects: propSubjects, defaultView = "schedu
             style={tab === t.id
               ? { background: accent, color: "#fff", boxShadow: `0 2px 8px color-mix(in srgb, ${accent} 30%, transparent)` }
               : { background: "transparent", color: "var(--text-muted)" }}>
-            <span className="text-[18px] leading-none" aria-hidden="true">{t.icon}</span>
-            <span className="text-[11.5px] font-bold">{t.label}</span>
+            <span className="text-[20px] leading-none" aria-hidden="true">{t.icon}</span>
+            <span className="text-[13px] font-bold">{t.label}</span>
           </button>
         ))}
       </div>

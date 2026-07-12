@@ -64,13 +64,13 @@ export default function BroadcastHost() {
         return (
           <div key={b.id} className="pointer-events-auto w-full max-w-sm rounded-2xl p-3.5 flex items-start gap-3 shadow-lg fade-in"
             style={{ background: "var(--surface)", border: `1.5px solid ${accent}`, boxShadow: "0 8px 24px rgba(0,0,0,0.25)" }}>
-            <span className="text-[20px] flex-shrink-0">{ICON[b.type] ?? "🔔"}</span>
+            <span className="text-[23px] flex-shrink-0">{ICON[b.type] ?? "🔔"}</span>
             <button className="flex-1 min-w-0 text-right" onClick={() => close(b, true)}>
-              <p className="font-black text-[14px] truncate" style={{ color: "var(--text)" }}>{b.title}</p>
-              <p className="text-[12.5px] leading-relaxed line-clamp-2" style={{ color: "var(--text-dim)" }}>{b.body}</p>
+              <p className="font-black text-[16px] truncate" style={{ color: "var(--text)" }}>{b.title}</p>
+              <p className="text-[14px] leading-relaxed line-clamp-2" style={{ color: "var(--text-dim)" }}>{b.body}</p>
             </button>
             <button onClick={() => close(b, false)} aria-label="إغلاق"
-              className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[13px]"
+              className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[15px]"
               style={{ color: "var(--text-muted)", background: "var(--bg)" }}>✕</button>
           </div>
         );

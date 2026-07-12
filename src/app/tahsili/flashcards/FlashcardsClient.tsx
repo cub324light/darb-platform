@@ -24,7 +24,7 @@ function FactRow({
   const hideAnswer = testMode && answer !== "" && !revealed;
 
   return (
-    <li className="flex items-start gap-2 text-[13.5px] leading-relaxed" style={{ color: "var(--text-dim)" }}>
+    <li className="flex items-start gap-2 text-[15px] leading-relaxed" style={{ color: "var(--text-dim)" }}>
       <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-[8px]" style={{ background: color }} aria-hidden="true" />
       <span className="flex-1">
         <span className="font-bold" style={{ color: "var(--text)" }}>{concept}</span>
@@ -33,7 +33,7 @@ function FactRow({
             <span aria-hidden="true" style={{ color: "var(--text-muted)" }}> ← </span>
             {hideAnswer ? (
               <button onClick={onReveal}
-                className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-[12px] font-black align-middle transition active:scale-95"
+                className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-[14px] font-black align-middle transition active:scale-95"
                 style={{
                   background: `color-mix(in srgb, ${color} 12%, transparent)`,
                   border: `1px dashed color-mix(in srgb, ${color} 55%, transparent)`,
@@ -87,7 +87,7 @@ export default function FlashcardsClient({ cards }: { cards: TahsiliFlashcardDoc
               const active = subjectFilter === s;
               return (
                 <button key={s ?? "all"} onClick={() => setSubjectFilter(s)}
-                  className="px-3 py-1.5 rounded-full text-[12.5px] font-black transition active:scale-95"
+                  className="px-3 py-1.5 rounded-full text-[14px] font-black transition active:scale-95"
                   style={{
                     background: active
                       ? `color-mix(in srgb, ${meta?.color ?? "var(--accent)"} 14%, transparent)`
@@ -104,7 +104,7 @@ export default function FlashcardsClient({ cards }: { cards: TahsiliFlashcardDoc
           </div>
         )}
         <button onClick={toggleTestMode}
-          className="mr-auto px-4 py-1.5 rounded-full text-[12.5px] font-black transition active:scale-95"
+          className="mr-auto px-4 py-1.5 rounded-full text-[14px] font-black transition active:scale-95"
           aria-pressed={testMode}
           style={{
             background: testMode ? "color-mix(in srgb, var(--gold) 14%, transparent)" : "var(--surface)",
@@ -143,7 +143,7 @@ export default function FlashcardsClient({ cards }: { cards: TahsiliFlashcardDoc
                     pointerEvents: isFlipped ? "none" : undefined,
                   }}>
                   <div className="flex items-center gap-2.5">
-                    <span className="w-10 h-10 rounded-xl flex items-center justify-center text-[18px] flex-shrink-0"
+                    <span className="w-10 h-10 rounded-xl flex items-center justify-center text-[20px] flex-shrink-0"
                       style={{
                         background: `color-mix(in srgb, ${meta.color} 14%, transparent)`,
                         border: `1.5px solid color-mix(in srgb, ${meta.color} 28%, transparent)`,
@@ -151,19 +151,19 @@ export default function FlashcardsClient({ cards }: { cards: TahsiliFlashcardDoc
                       aria-hidden="true">
                       {meta.icon}
                     </span>
-                    <span className="text-[11px] font-black px-2 py-0.5 rounded-full"
+                    <span className="text-[12px] font-black px-2 py-0.5 rounded-full"
                       style={{ background: `color-mix(in srgb, ${meta.color} 14%, transparent)`, color: meta.color }}>
                       {meta.label}
                     </span>
-                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full font-mono-nums mr-auto"
+                    <span className="text-[12px] font-bold px-2 py-0.5 rounded-full font-mono-nums mr-auto"
                       style={{ background: "var(--surface2)", color: "var(--text-muted)" }}>
                       {card.facts.length} حقيقة
                     </span>
                   </div>
-                  <p className="font-black text-[15.5px] leading-relaxed flex-1" style={{ color: "var(--text)" }}>
+                  <p className="font-black text-[18px] leading-relaxed flex-1" style={{ color: "var(--text)" }}>
                     {card.topic}
                   </p>
-                  <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>
+                  <p className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>
                     اضغط للقلب ↺
                   </p>
                 </button>
@@ -181,9 +181,9 @@ export default function FlashcardsClient({ cards }: { cards: TahsiliFlashcardDoc
                     pointerEvents: isFlipped ? undefined : "none",
                   }}>
                   <div className="flex items-center gap-2">
-                    <p className="font-black text-[13.5px] flex-1" style={{ color: meta.color }}>{card.topic}</p>
+                    <p className="font-black text-[15px] flex-1" style={{ color: meta.color }}>{card.topic}</p>
                     <button onClick={() => toggleFlip(card.id)}
-                      className="text-[11.5px] font-black px-2.5 py-1 rounded-lg flex-shrink-0 transition active:scale-95"
+                      className="text-[13px] font-black px-2.5 py-1 rounded-lg flex-shrink-0 transition active:scale-95"
                       style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-dim)" }}>
                       اقلب ↺
                     </button>

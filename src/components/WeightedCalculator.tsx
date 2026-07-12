@@ -56,8 +56,8 @@ export default function WeightedCalculator({ universityId }: { universityId?: st
   if (!uni || uni.id === "other") {
     return (
       <div className="rounded-2xl p-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-        <p className="text-[13px] font-black mb-1" style={{ color: "var(--text)" }}>🧮 حاسبة الموزونة</p>
-        <p className="text-[12.5px] font-semibold" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[15px] font-black mb-1" style={{ color: "var(--text)" }}>🧮 حاسبة الموزونة</p>
+        <p className="text-[14px] font-semibold" style={{ color: "var(--text-muted)" }}>
           اختر جامعتك من القائمة أعلاه لأحسب نسبتك الموزونة حسب معادلتها الرسمية.
         </p>
       </div>
@@ -71,11 +71,11 @@ export default function WeightedCalculator({ universityId }: { universityId?: st
 
   const field = (label: string, value: string, set: (v: string) => void, onBlur?: () => void, dim?: boolean) => (
     <label className="flex flex-col gap-1 flex-1 min-w-[88px]">
-      <span className="text-[11.5px] font-bold" style={{ color: dim ? "var(--text-muted)" : "var(--text-muted)" }}>{label}</span>
+      <span className="text-[13px] font-bold" style={{ color: dim ? "var(--text-muted)" : "var(--text-muted)" }}>{label}</span>
       <input
         value={value} onChange={(e) => set(e.target.value)} onBlur={onBlur}
         inputMode="decimal" placeholder="—" maxLength={5}
-        className="w-full rounded-xl px-3 py-2 text-[15px] font-black text-center text-[var(--text)] outline-none"
+        className="w-full rounded-xl px-3 py-2 text-[17px] font-black text-center text-[var(--text)] outline-none"
         style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
     </label>
   );
@@ -83,13 +83,13 @@ export default function WeightedCalculator({ universityId }: { universityId?: st
   return (
     <div className="rounded-2xl p-4 flex flex-col gap-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
       <div className="flex items-center gap-2">
-        <span className="text-[18px]">🧮</span>
-        <p className="text-[13px] font-black flex-1" style={{ color: "var(--text)" }}>حاسبة الموزونة — {uni.name}</p>
+        <span className="text-[20px]">🧮</span>
+        <p className="text-[15px] font-black flex-1" style={{ color: "var(--text)" }}>حاسبة الموزونة — {uni.name}</p>
       </div>
 
       {/* أهلية بلا معادلة رسمية */}
       {formulas.length === 0 ? (
-        <div className="rounded-xl px-3 py-3 text-[12.5px] font-semibold"
+        <div className="rounded-xl px-3 py-3 text-[14px] font-semibold"
           style={{ background: "var(--surface2)", color: "var(--text-muted)" }}>
           {uni.admissionNote ?? "معايير القبول في هذه الجامعة تختلف حسب التخصص — راجع موقعها الرسمي."}
         </div>
@@ -102,7 +102,7 @@ export default function WeightedCalculator({ universityId }: { universityId?: st
                 const on = f.id === formula?.id;
                 return (
                   <button key={f.id} onClick={() => setFormulaId(f.id)} aria-pressed={on}
-                    className="px-3 py-1.5 rounded-full text-[12px] font-bold transition active:scale-95"
+                    className="px-3 py-1.5 rounded-full text-[14px] font-bold transition active:scale-95"
                     style={{
                       background: on ? "var(--accent)" : "var(--surface2)",
                       color: on ? "#fff" : "var(--text)",
@@ -123,7 +123,7 @@ export default function WeightedCalculator({ universityId }: { universityId?: st
           </div>
 
           {formula?.note && (
-            <p className="text-[11.5px] font-semibold" style={{ color: "var(--gold)" }}>⚠️ {formula.note}</p>
+            <p className="text-[13px] font-semibold" style={{ color: "var(--gold)" }}>⚠️ {formula.note}</p>
           )}
 
           {/* النتيجة */}
@@ -131,19 +131,19 @@ export default function WeightedCalculator({ universityId }: { universityId?: st
             <div className="rounded-xl p-3.5 flex flex-col gap-3"
               style={{ background: `color-mix(in srgb, ${vColor} 8%, var(--surface2))`, border: `1px solid color-mix(in srgb, ${vColor} 28%, transparent)` }}>
               <div className="flex items-center gap-3">
-                <span className="text-[24px]">{verdict?.icon}</span>
+                <span className="text-[27px]">{verdict?.icon}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11.5px] font-bold" style={{ color: "var(--text-muted)" }}>نسبتك الموزونة</p>
-                  <p className="text-[26px] font-black leading-none" style={{ color: vColor }}>{ar(result.score)}٪</p>
+                  <p className="text-[13px] font-bold" style={{ color: "var(--text-muted)" }}>نسبتك الموزونة</p>
+                  <p className="text-[29px] font-black leading-none" style={{ color: vColor }}>{ar(result.score)}٪</p>
                 </div>
               </div>
               {verdict && (
-                <p className="text-[12.5px] font-bold" style={{ color: "var(--text)" }}>{verdict.label}</p>
+                <p className="text-[14px] font-bold" style={{ color: "var(--text)" }}>{verdict.label}</p>
               )}
               {/* تفصيل المساهمة */}
               <div className="flex flex-col gap-1.5">
                 {result.parts.map((p) => (
-                  <div key={p.label} className="flex items-center justify-between text-[12px]">
+                  <div key={p.label} className="flex items-center justify-between text-[14px]">
                     <span className="font-bold" style={{ color: "var(--text-muted)" }}>
                       {p.label} ({ar(p.value)} × {ar(p.weight)}٪)
                     </span>
@@ -153,7 +153,7 @@ export default function WeightedCalculator({ universityId }: { universityId?: st
               </div>
             </div>
           ) : (
-            <p className="text-[12px] font-semibold rounded-xl px-3 py-2.5"
+            <p className="text-[14px] font-semibold rounded-xl px-3 py-2.5"
               style={{ background: "var(--surface2)", color: "var(--text-muted)" }}>
               أدخل {result?.missing.join(" و") || "درجاتك"} لحساب نسبتك الموزونة.
             </p>
@@ -164,10 +164,10 @@ export default function WeightedCalculator({ universityId }: { universityId?: st
       {/* كليات الجامعة */}
       {uni.colleges && uni.colleges.length > 0 && (
         <div className="flex flex-col gap-2">
-          <p className="text-[12px] font-black" style={{ color: "var(--text)" }}>🏛️ كليات {uni.name}</p>
+          <p className="text-[14px] font-black" style={{ color: "var(--text)" }}>🏛️ كليات {uni.name}</p>
           <div className="flex flex-wrap gap-1.5">
             {uni.colleges.map((c) => (
-              <span key={c} className="px-2.5 py-1 rounded-full text-[11px] font-semibold"
+              <span key={c} className="px-2.5 py-1 rounded-full text-[12px] font-semibold"
                 style={{ background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
                 {c}
               </span>
@@ -176,7 +176,7 @@ export default function WeightedCalculator({ universityId }: { universityId?: st
         </div>
       )}
 
-      <p className="text-[10.5px]" style={{ color: "var(--text-muted)" }}>
+      <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
         المعادلات إرشادية وتتغيّر سنوياً — اعتمد دائماً على موقع الجامعة الرسمي.
       </p>
     </div>

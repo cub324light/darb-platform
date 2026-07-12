@@ -276,11 +276,11 @@ export default function OnboardingPage() {
         {universityId ? (
           <div className="rounded-2xl px-4 py-3 flex items-center gap-2"
             style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid color-mix(in srgb, var(--accent) 28%, transparent)" }}>
-            <span className="font-bold text-[15px] flex-1" style={{ color: "var(--accent-light)" }}>
+            <span className="font-bold text-[17px] flex-1" style={{ color: "var(--accent-light)" }}>
               {universityId === "other" ? (otherUni.trim() || "أخرى") : universityName}
             </span>
             <button onClick={() => { setUniversityId(""); setUniversityName(""); }}
-              className="text-[13px] font-bold px-2" style={{ color: "var(--text-muted)" }}>تغيير ✕</button>
+              className="text-[15px] font-bold px-2" style={{ color: "var(--text-muted)" }}>تغيير ✕</button>
           </div>
         ) : (
           <>
@@ -291,13 +291,13 @@ export default function OnboardingPage() {
             <div className="flex flex-wrap gap-2 max-h-52 overflow-y-auto">
               {filteredUnis.map((u) => (
                 <button key={u.id} onClick={() => pickUni(u.id)}
-                  className="px-3 py-2 rounded-full text-[13px] font-bold transition active:scale-95"
+                  className="px-3 py-2 rounded-full text-[15px] font-bold transition active:scale-95"
                   style={{ background: "var(--surface2)", color: "var(--text)", border: "1.5px solid var(--border)" }}>
                   {u.name}
                 </button>
               ))}
               {filteredUnis.length === 0 && (
-                <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>لا نتائج — اختر «أخرى».</p>
+                <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>لا نتائج — اختر «أخرى».</p>
               )}
             </div>
           </>
@@ -317,7 +317,7 @@ export default function OnboardingPage() {
             const on = majorId === m.id;
             return (
               <button key={m.id} onClick={() => pickMajor(m.id)} aria-pressed={on}
-                className="px-3 py-2 rounded-full text-[13px] font-bold transition active:scale-95"
+                className="px-3 py-2 rounded-full text-[15px] font-bold transition active:scale-95"
                 style={{
                   background: on ? "var(--accent)" : "var(--surface2)",
                   color: on ? "#fff" : "var(--text)",
@@ -351,7 +351,7 @@ export default function OnboardingPage() {
         </div>
 
         <div>
-          <p className="label mb-3">عمرك؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+          <p className="label mb-3">عمرك؟ <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
           <input type="number" value={age} onChange={(e) => setAge(e.target.value)}
             placeholder="مثال: 18"
             className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
@@ -372,7 +372,7 @@ export default function OnboardingPage() {
                     setStatus(s.status);
                     setGrade(s.grade);
                   }}
-                  className={`rounded-2xl py-3.5 font-bold text-[15px] transition active:scale-[0.98] ${s.key === "grad" ? "col-span-2" : ""}`}
+                  className={`rounded-2xl py-3.5 font-bold text-[17px] transition active:scale-[0.98] ${s.key === "grad" ? "col-span-2" : ""}`}
                   style={chipStyle(on)}>
                   {s.label}
                 </button>
@@ -410,13 +410,13 @@ export default function OnboardingPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setPrevResults((p) => ({ ...p, [exam]: { ...p[exam], tested: !p[exam].tested } }))}
-                    className="w-6 h-6 rounded-lg flex items-center justify-center text-[13px] font-black flex-shrink-0 transition"
+                    className="w-6 h-6 rounded-lg flex items-center justify-center text-[15px] font-black flex-shrink-0 transition"
                     style={{
                       background: r.tested ? "var(--accent)" : "var(--surface2)",
                       border: `1.5px solid ${r.tested ? "var(--accent)" : "var(--border)"}`,
                       color: r.tested ? "#fff" : "transparent",
                     }}>✓</button>
-                  <span className="font-bold text-[15px] flex-1" style={{ color: "var(--text)" }}>{exam}</span>
+                  <span className="font-bold text-[17px] flex-1" style={{ color: "var(--text)" }}>{exam}</span>
                   <input value={r.score} inputMode="decimal" disabled={!r.tested}
                     onChange={(e) => { setPrevErr(""); setPrevResults((p) => ({ ...p, [exam]: { ...p[exam], score: e.target.value } })); }}
                     placeholder="الدرجة" maxLength={6}
@@ -424,13 +424,13 @@ export default function OnboardingPage() {
                     style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
                 </div>
                 {r.tested && range && (
-                  <p className="text-[11px] mt-1.5 px-1" style={{ color: "var(--text-muted)" }}>الدرجة: {range.hint}</p>
+                  <p className="text-[12px] mt-1.5 px-1" style={{ color: "var(--text-muted)" }}>الدرجة: {range.hint}</p>
                 )}
               </div>
             );
           })}
         </div>
-        {prevErr && <p className="text-[12px] mt-2 font-bold" style={{ color: "var(--danger)" }}>{prevErr}</p>}
+        {prevErr && <p className="text-[14px] mt-2 font-bold" style={{ color: "var(--danger)" }}>{prevErr}</p>}
       </>
     );
 
@@ -447,18 +447,18 @@ export default function OnboardingPage() {
               {grade === "أول ثانوي" && (
                 <div className="rounded-2xl px-4 py-3"
                   style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
-                  <p className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>
+                  <p className="text-[15px] font-bold" style={{ color: "var(--accent-light)" }}>
                     🌱 التحصيلي يبدأ من ثاني ثانوي — نفعّل لك القدرات ومواد المدرسة لتأسيس قوي.
                   </p>
                 </div>
               )}
               <div>
                 <p className="label mb-1">مسارك الدراسي؟</p>
-                <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>يساعدنا نرتّب أولوياتك تلقائياً</p>
+                <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>يساعدنا نرتّب أولوياتك تلقائياً</p>
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
                   {TRACK_TYPES.map((t) => (
                     <button key={t} onClick={() => setTrackType(trackType === t ? "" : t)}
-                      className="rounded-2xl py-3 font-bold text-[14px] transition active:scale-[0.98]"
+                      className="rounded-2xl py-3 font-bold text-[16px] transition active:scale-[0.98]"
                       style={chipStyle(trackType === t)}>
                       {t}
                     </button>
@@ -467,14 +467,14 @@ export default function OnboardingPage() {
               </div>
               <div className="rounded-2xl px-4 py-3"
                 style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
-                <p className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>
+                <p className="text-[15px] font-bold" style={{ color: "var(--accent-light)" }}>
                   🗺️ بالخطوة الجاية: لوحة اختباراتك كاملة — وش متاح لصفّك الآن، ووش مقفل ومتى يفتح وليش.
                 </p>
               </div>
               {/* نتائج سابقة للثانوي — اختيارية، لا تمنع التقدم */}
               <div>
-                <p className="label mb-1">اختبرت من قبل؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
-                <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>لو دخلت أياً منها سابقاً، أدخل درجتك — نستخدمها لتخصيص خطتك وجاهزيتك</p>
+                <p className="label mb-1">اختبرت من قبل؟ <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+                <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>لو دخلت أياً منها سابقاً، أدخل درجتك — نستخدمها لتخصيص خطتك وجاهزيتك</p>
                 {prevExamsList}
               </div>
             </>
@@ -489,7 +489,7 @@ export default function OnboardingPage() {
                 <div className="grid grid-cols-3 gap-2">
                   {UNI_YEARS.map((y) => (
                     <button key={y} onClick={() => setUniversityYear(universityYear === y ? "" : y)}
-                      className="rounded-2xl py-3 font-bold text-[14px] transition active:scale-[0.98]"
+                      className="rounded-2xl py-3 font-bold text-[16px] transition active:scale-[0.98]"
                       style={chipStyle(universityYear === y)}>
                       {y}
                     </button>
@@ -501,8 +501,8 @@ export default function OnboardingPage() {
                  لا سؤال قياس/تحصيلي/step للجامعي؛ التدريب والدراسات العليا تُضبط
                  لاحقاً من المنصة لا في التسجيل (أقل أسئلة). */}
               <div>
-                <p className="label mb-1">معدلك الجامعي الحالي؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
-                <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>من 5 — يساعدنا نخصّص توصياتك وأولوياتك</p>
+                <p className="label mb-1">معدلك الجامعي الحالي؟ <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+                <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>من 5 — يساعدنا نخصّص توصياتك وأولوياتك</p>
                 <input type="number" value={universityGpa} onChange={(e) => setUniversityGpa(e.target.value)}
                   placeholder="مثال: 3.75" min={0} max={5} step={0.01}
                   className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
@@ -521,7 +521,7 @@ export default function OnboardingPage() {
                 <div className="grid grid-cols-2 gap-2.5">
                   {GRAD_STAGES.map((g) => (
                     <button key={g} onClick={() => setGradStage(gradStage === g ? "" : g)}
-                      className="rounded-2xl py-3.5 font-bold text-[15px] transition active:scale-[0.98]"
+                      className="rounded-2xl py-3.5 font-bold text-[17px] transition active:scale-[0.98]"
                       style={chipStyle(gradStage === g)}>
                       {g}
                     </button>
@@ -530,15 +530,15 @@ export default function OnboardingPage() {
               </div>
               <div>
                 <p className="label mb-1">هل تنوي تحسين درجات القدرات أو التحصيلي؟</p>
-                <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>اختر «لا» لو خلّصت اختباراتك وتريد التركيز على القبول الجامعي فقط</p>
+                <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>اختر «لا» لو خلّصت اختباراتك وتريد التركيز على القبول الجامعي فقط</p>
                 <div className="grid grid-cols-2 gap-2.5">
                   <button onClick={() => setGapYear(gapYear === "yes" ? "" : "yes")}
-                    className="rounded-2xl py-3.5 px-3 font-bold text-[14px] transition active:scale-[0.98] text-center leading-snug"
+                    className="rounded-2xl py-3.5 px-3 font-bold text-[16px] transition active:scale-[0.98] text-center leading-snug"
                     style={chipStyle(gapYear === "yes")}>
                     نعم، أبي أحسّنها 📈
                   </button>
                   <button onClick={() => setGapYear(gapYear === "no" ? "" : "no")}
-                    className="rounded-2xl py-3.5 px-3 font-bold text-[14px] transition active:scale-[0.98] text-center leading-snug"
+                    className="rounded-2xl py-3.5 px-3 font-bold text-[16px] transition active:scale-[0.98] text-center leading-snug"
                     style={chipStyle(gapYear === "no")}>
                     لا، ركّز على القبول 🎓
                   </button>
@@ -546,7 +546,7 @@ export default function OnboardingPage() {
               </div>
               <div>
                 <p className="label mb-1">نتائجك السابقة؟</p>
-                <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>
                   {gapYear === "no"
                     ? "ندخلها لحساب نسبتك الموزونة ومقارنة الجامعات — مهمة لخطة القبول"
                     : "نستخدمها لحساب جاهزيتك وتخصيص خطتك"}
@@ -569,7 +569,7 @@ export default function OnboardingPage() {
             disabled={!canProceed} style={{ opacity: canProceed ? 1 : 0.4 }}>
             التالي ←
           </button>
-          <button onClick={() => setStep(0)} className="text-[15px] font-semibold w-full text-center py-1"
+          <button onClick={() => setStep(0)} className="text-[17px] font-semibold w-full text-center py-1"
             style={{ color: "var(--text-muted)" }}>← رجوع</button>
         </div>
       </div>
@@ -593,8 +593,8 @@ export default function OnboardingPage() {
      الاختبارات. عند اختيار «جامعة/تخصص» يظهر منتقي الوجهة أدناه (غير حاجز). */
   const goalsSection = (
     <div>
-      <p className="label mb-1">وش أهدافك؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(تقدر تختار أكثر من واحد)</span></p>
-      <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>
+      <p className="label mb-1">وش أهدافك؟ <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(تقدر تختار أكثر من واحد)</span></p>
+      <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>
         نبني خطتك وأولوياتك حولها — والأهداف نية عليا مستقلة لا تغيّر اختباراتك
       </p>
       <div className="flex flex-col gap-2.5">
@@ -605,14 +605,14 @@ export default function OnboardingPage() {
               aria-pressed={on}
               className="rounded-2xl px-4 py-3.5 flex items-center gap-3 text-right transition active:scale-[0.98]"
               style={chipStyle(on)}>
-              <span className="w-5 h-5 rounded-md flex items-center justify-center text-[12px] font-black flex-shrink-0"
+              <span className="w-5 h-5 rounded-md flex items-center justify-center text-[14px] font-black flex-shrink-0"
                 style={{
                   background: on ? "var(--accent)" : "var(--surface2)",
                   border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}`,
                   color: on ? "#fff" : "transparent",
                 }}>✓</span>
-              <span className="text-[20px]">{g.icon}</span>
-              <span className="font-bold text-[15px] flex-1">{g.label}</span>
+              <span className="text-[23px]">{g.icon}</span>
+              <span className="font-bold text-[17px] flex-1">{g.label}</span>
             </button>
           );
         })}
@@ -624,8 +624,8 @@ export default function OnboardingPage() {
      الطالب يقدّم غالباً على عدّة جهات معاً؛ الرئيسية ترتّب بطاقاته حول اختياره. */
   const targetsSection = (
     <div>
-      <p className="label mb-1">وش أهدافك بعد الثانوية؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(تقدر تختار أكثر من واحد)</span></p>
-      <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>
+      <p className="label mb-1">وش أهدافك بعد الثانوية؟ <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(تقدر تختار أكثر من واحد)</span></p>
+      <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>
         نرتّب لك صفحتك الرئيسية حول هذي الجهات — تقدر تعدّلها لاحقاً من ملفك
       </p>
       <div className="grid grid-cols-2 gap-2.5">
@@ -636,14 +636,14 @@ export default function OnboardingPage() {
               aria-pressed={on}
               className="rounded-2xl px-3.5 py-3 flex items-center gap-2 text-right transition active:scale-[0.98]"
               style={chipStyle(on)}>
-              <span className="w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-black flex-shrink-0"
+              <span className="w-5 h-5 rounded-md flex items-center justify-center text-[12px] font-black flex-shrink-0"
                 style={{
                   background: on ? "var(--accent)" : "var(--surface2)",
                   border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}`,
                   color: on ? "#fff" : "transparent",
                 }}>✓</span>
-              <span className="text-[18px]">{t.icon}</span>
-              <span className="font-bold text-[14px] flex-1 leading-tight">{t.label}</span>
+              <span className="text-[20px]">{t.icon}</span>
+              <span className="font-bold text-[16px] flex-1 leading-tight">{t.label}</span>
             </button>
           );
         })}
@@ -663,8 +663,8 @@ export default function OnboardingPage() {
   /* قسم اختبارات اللغة المشترك (الثانوي والخريج) — متعدد بلا حد، اختياري بالكامل */
   const languageSection = (
     <div>
-      <p className="label mb-1">🗣️ اختبارات اللغة <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
-      <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>
+      <p className="label mb-1">🗣️ اختبارات اللغة <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+      <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>
         تقدر تضيف أكثر من اختبار بنفس الوقت — كلها اختيارية وبلا حد
       </p>
       <div className="flex flex-col gap-2.5">
@@ -676,15 +676,15 @@ export default function OnboardingPage() {
               className="rounded-2xl px-4 py-3 text-right transition active:scale-[0.98]"
               style={chipStyle(on)}>
               <div className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-md flex items-center justify-center text-[12px] font-black flex-shrink-0"
+                <span className="w-5 h-5 rounded-md flex items-center justify-center text-[14px] font-black flex-shrink-0"
                   style={{
                     background: on ? "var(--accent)" : "var(--surface2)",
                     border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}`,
                     color: on ? "#fff" : "transparent",
                   }}>✓</span>
-                <span className="font-bold text-[15px] flex-1">{t.title}</span>
+                <span className="font-bold text-[17px] flex-1">{t.title}</span>
               </div>
-              <p className="text-[12px] mt-1 pr-7" style={{ color: on ? "var(--accent-light)" : "var(--text-muted)" }}>{t.sub}</p>
+              <p className="text-[14px] mt-1 pr-7" style={{ color: on ? "var(--accent-light)" : "var(--text-muted)" }}>{t.sub}</p>
             </button>
           );
         })}
@@ -705,7 +705,7 @@ export default function OnboardingPage() {
             {grade === "ثالث ثانوي" && targetsSection}
             <div>
               <p className="label mb-1">اختباراتك الأساسية</p>
-              <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>
                 نفعّلها لك تلقائياً حسب صفّك — القدرات والتحصيلي ودرجة المدرسة
               </p>
               <div className="flex flex-col gap-2.5">
@@ -717,32 +717,32 @@ export default function OnboardingPage() {
                     <div key={id} className="rounded-2xl px-4 py-3"
                       style={{ background: "var(--surface)", border: "2px solid var(--border)", opacity: 0.55 }}>
                       <div className="flex items-center gap-2">
-                        <span className="text-[14px] flex-shrink-0">🔒</span>
-                        <span className="font-bold text-[15px] flex-1" style={{ color: "var(--text)" }}>{t.title}</span>
+                        <span className="text-[16px] flex-shrink-0">🔒</span>
+                        <span className="font-bold text-[17px] flex-1" style={{ color: "var(--text)" }}>{t.title}</span>
                       </div>
-                      <p className="text-[12px] mt-1 pr-6" style={{ color: "var(--text-muted)" }}>{e?.reason}</p>
+                      <p className="text-[14px] mt-1 pr-6" style={{ color: "var(--text-muted)" }}>{e?.reason}</p>
                     </div>
                   );
                   /* المتاح: مفعّل تلقائياً (بطاقة تأكيدية غير قابلة للإلغاء) */
                   return (
                     <div key={id} className="rounded-2xl px-4 py-3" style={chipStyle(true)}>
                       <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-md flex items-center justify-center text-[12px] font-black flex-shrink-0"
+                        <span className="w-5 h-5 rounded-md flex items-center justify-center text-[14px] font-black flex-shrink-0"
                           style={{ background: "var(--accent)", border: "1.5px solid var(--accent)", color: "#fff" }}>✓</span>
-                        <span className="font-bold text-[15px] flex-1">{t.title}</span>
+                        <span className="font-bold text-[17px] flex-1">{t.title}</span>
                         {e.important && (
-                          <span className="text-[11px] font-black px-2 py-0.5 rounded-full flex-shrink-0"
+                          <span className="text-[12px] font-black px-2 py-0.5 rounded-full flex-shrink-0"
                             style={{ background: "color-mix(in srgb, var(--gold) 16%, transparent)", color: "var(--gold)" }}>
                             ⭐ مهم لمرحلتك
                           </span>
                         )}
                       </div>
-                      <p className="text-[12px] mt-1 pr-7" style={{ color: "var(--accent-light)" }}>{t.sub}</p>
+                      <p className="text-[14px] mt-1 pr-7" style={{ color: "var(--accent-light)" }}>{t.sub}</p>
                     </div>
                   );
                 })}
               </div>
-              <p className="text-[11.5px] mt-2" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[13px] mt-2" style={{ color: "var(--text-muted)" }}>
                 نواتك ثابتة ومفعّلة دائماً — تقدر تضيف اختبارات لغة تحت. وتعدّل كل شيء لاحقاً من ملفك.
               </p>
             </div>
@@ -752,7 +752,7 @@ export default function OnboardingPage() {
           /* ── الجامعي: بلا سؤال قياس/هدف — ملخّص تأكيدي فقط ثم ساعات المذاكرة ── */
           <div>
             <p className="label mb-1">جاهز يا طالب الجامعة 🎓</p>
-            <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>
               ركّزنا لك على عالمك الجامعي — معدلك وتدريبك ومهاراتك وسوق العمل. بلا قدرات ولا تحصيلي ولا قبول.
             </p>
             <div className="rounded-2xl px-4 py-3 flex flex-wrap gap-2"
@@ -760,7 +760,7 @@ export default function OnboardingPage() {
               {([universityName, findMajor(majorId)?.name, universityYear ? `السنة ${universityYear}` : ""]
                 .filter(Boolean) as string[])
                 .map((chip) => (
-                  <span key={chip} className="px-3 py-1.5 rounded-full text-[13px] font-bold"
+                  <span key={chip} className="px-3 py-1.5 rounded-full text-[15px] font-bold"
                     style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)", border: "1.5px solid color-mix(in srgb, var(--accent) 28%, transparent)" }}>
                     {chip}
                   </span>
@@ -778,7 +778,7 @@ export default function OnboardingPage() {
         {/* منتقي الوجهة الجامعية عند اختيار هدف الجامعة/التخصص (الثانوي والخريج) — اختياري غير حاجز */}
         {showsGoalUniPicker && (
           <div className="rounded-2xl p-4" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-            <p className="label mb-3">وجهتك الجامعية <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+            <p className="label mb-3">وجهتك الجامعية <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
             {uniMajorPicker}
           </div>
         )}
@@ -788,11 +788,11 @@ export default function OnboardingPage() {
           uniOpen ? (
             <div className="rounded-2xl p-4" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
               <div className="flex items-center gap-2 mb-3">
-                <p className="label flex-1">عندك وجهة جامعية؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
-                <button onClick={() => setUniOpen(false)} className="text-[13px] font-bold px-1" style={{ color: "var(--text-muted)" }}>إخفاء ▴</button>
+                <p className="label flex-1">عندك وجهة جامعية؟ <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+                <button onClick={() => setUniOpen(false)} className="text-[15px] font-bold px-1" style={{ color: "var(--text-muted)" }}>إخفاء ▴</button>
               </div>
               {grade === "ثالث ثانوي" && (
-                <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>
                   سنة القبول — تحديد وجهتك يخلينا نحسب موزونتك ونرسم طريقك لها
                 </p>
               )}
@@ -802,11 +802,11 @@ export default function OnboardingPage() {
             <button onClick={() => setUniOpen(true)}
               className="rounded-2xl px-4 py-3.5 w-full flex items-center gap-2 text-right transition active:scale-[0.98]"
               style={inputStyle}>
-              <span className="text-[16px]">🏛️</span>
-              <span className="font-bold text-[14px] flex-1" style={{ color: "var(--text)" }}>
-                عندك وجهة جامعية؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span>
+              <span className="text-[18px]">🏛️</span>
+              <span className="font-bold text-[16px] flex-1" style={{ color: "var(--text)" }}>
+                عندك وجهة جامعية؟ <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span>
               </span>
-              <span className="text-[13px] font-bold" style={{ color: "var(--text-muted)" }}>▾</span>
+              <span className="text-[15px] font-bold" style={{ color: "var(--text-muted)" }}>▾</span>
             </button>
           )
         )}
@@ -819,7 +819,7 @@ export default function OnboardingPage() {
               {computedTracks.map((id) => {
                 const t = TRACKS.find((tr) => tr.id === id)!;
                 return (
-                  <span key={id} className="px-3 py-2 rounded-full text-[13px] font-black flex items-center gap-1.5"
+                  <span key={id} className="px-3 py-2 rounded-full text-[15px] font-black flex items-center gap-1.5"
                     style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)", border: "1.5px solid color-mix(in srgb, var(--accent) 28%, transparent)" }}>
                     <span className="w-2 h-2 rounded-full" style={{ background: t.color }} />
                     {t.title}
@@ -833,7 +833,7 @@ export default function OnboardingPage() {
         {/* موعد الاختبار القادم (اختياري) */}
         {(isSecondary ? finalTracks.length > 0 : (goals.length > 0 && primaryTrack)) && (
           <div>
-            <p className="label mb-3">📅 موعد اختبارك القادم؟ <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+            <p className="label mb-3">📅 موعد اختبارك القادم؟ <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
             <input type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)}
               min={new Date().toISOString().slice(0, 10)}
               className="w-full rounded-2xl px-4 py-3 text-base text-[var(--text)] outline-none"
@@ -855,8 +855,8 @@ export default function OnboardingPage() {
         {/* درجة الثانوية — لطالب ثالث ثانوي أو خريج (مهمة لحساب الموزونة والقبول) */}
         {((status === "ثانوي" && grade === "ثالث ثانوي") || status === "خريج") && (
           <div>
-            <p className="label mb-1">📊 درجة الثانوية العامة (النسبة المئوية) <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
-            <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>ننصح بإدخالها — مهمة لحساب الموزونة ومقارنة فرص القبول</p>
+            <p className="label mb-1">📊 درجة الثانوية العامة (النسبة المئوية) <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+            <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>ننصح بإدخالها — مهمة لحساب الموزونة ومقارنة فرص القبول</p>
             <input type="number" value={highschoolPct} onChange={(e) => setHighschoolPct(e.target.value)}
               placeholder="مثال: 94.5" min={50} max={100} step={0.1}
               className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
@@ -871,12 +871,12 @@ export default function OnboardingPage() {
           <button onClick={() => setExtrasOpen((o) => !o)}
             className="flex items-center gap-2 w-full text-right"
             aria-expanded={extrasOpen}>
-            <span className="label flex-1">معلومات إضافية <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></span>
-            <span className="text-[13px] font-bold" style={{ color: "var(--text-muted)" }}>{extrasOpen ? "▴" : "▾"}</span>
+            <span className="label flex-1">معلومات إضافية <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></span>
+            <span className="text-[15px] font-bold" style={{ color: "var(--text-muted)" }}>{extrasOpen ? "▴" : "▾"}</span>
           </button>
           {extrasOpen && (<>
           <div>
-            <p className="text-[13px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>اسم المدرسة / الجامعة (اختياري)</p>
+            <p className="text-[15px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>اسم المدرسة / الجامعة (اختياري)</p>
             <input type="text" value={school} onChange={(e) => setSchool(e.target.value)}
               placeholder="مثال: ثانوية الملك فهد"
               className="w-full rounded-2xl px-5 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
@@ -885,7 +885,7 @@ export default function OnboardingPage() {
               onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
           </div>
           <div>
-            <p className="text-[13px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>المدينة (اختياري)</p>
+            <p className="text-[15px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>المدينة (اختياري)</p>
             <input type="text" value={city} onChange={(e) => setCity(e.target.value)}
               placeholder="مثال: الرياض، جدة..."
               className="w-full rounded-2xl px-5 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
@@ -894,7 +894,7 @@ export default function OnboardingPage() {
               onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
           </div>
           <div>
-            <p className="text-[13px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>رقم الجوال (اختياري)</p>
+            <p className="text-[15px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>رقم الجوال (اختياري)</p>
             <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
               placeholder="05xxxxxxxx"
               className="w-full rounded-2xl px-5 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
@@ -903,7 +903,7 @@ export default function OnboardingPage() {
               onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
           </div>
           <div>
-            <p className="text-[13px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>المنطقة (اختياري)</p>
+            <p className="text-[15px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>المنطقة (اختياري)</p>
             <select value={region} onChange={(e) => setRegion(e.target.value)} aria-label="المنطقة"
               className="w-full rounded-2xl px-5 py-3.5 text-base text-[var(--text)] outline-none"
               style={inputStyle}>
@@ -916,7 +916,7 @@ export default function OnboardingPage() {
 
         {/* الإلزامي فقط: الثانوي → ساعات · الجامعي → ساعات · الخريج → هدف + ساعات */}
         {!canFinish && (
-          <p className="text-[12px] text-center" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[14px] text-center" style={{ color: "var(--text-muted)" }}>
             {isSecondary ? "حدّد ساعات مذاكرتك للمتابعة"
               : isUniversity ? "حدّد ساعات مذاكرتك للمتابعة"
               : "اختر هدفاً واحداً على الأقل وحدّد ساعات مذاكرتك للمتابعة"}
@@ -924,10 +924,10 @@ export default function OnboardingPage() {
         )}
 
         {prevErr && (
-          <p className="text-[13px] text-center font-bold" style={{ color: "var(--danger)" }}>{prevErr}</p>
+          <p className="text-[15px] text-center font-bold" style={{ color: "var(--danger)" }}>{prevErr}</p>
         )}
         {submitErr && (
-          <p className="text-[13px] text-center font-bold" style={{ color: "var(--danger)" }}>{submitErr}</p>
+          <p className="text-[15px] text-center font-bold" style={{ color: "var(--danger)" }}>{submitErr}</p>
         )}
 
         <button className="btn-primary glow-blue" onClick={finish}
@@ -935,7 +935,7 @@ export default function OnboardingPage() {
           style={{ opacity: !isSubmitting && canFinish ? 1 : 0.4 }}>
           {isSubmitting ? "جارٍ الحفظ…" : "يلا نبدأ ←"}
         </button>
-        <button onClick={() => setStep(1)} className="text-[15px] font-semibold w-full text-center py-1"
+        <button onClick={() => setStep(1)} className="text-[17px] font-semibold w-full text-center py-1"
           style={{ color: "var(--text-muted)" }}>← رجوع</button>
       </div>
     </div>

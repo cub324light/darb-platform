@@ -53,15 +53,15 @@ export default function FeedbackButton({ className = "", style }: { className?: 
         onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
           <p className="title-md" style={{ color: "var(--text)" }}>شاركنا رأيك</p>
-          <button onClick={close} className="text-[15px] font-bold px-3 py-1.5 rounded-xl"
+          <button onClick={close} className="text-[17px] font-bold px-3 py-1.5 rounded-xl"
             style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-dim)" }}>إغلاق</button>
         </div>
 
         {done ? (
           <div className="flex flex-col items-center text-center gap-3 py-8">
-            <span className="text-[44px]">✅</span>
-            <p className="font-black text-[18px]" style={{ color: "var(--text)" }}>وصلتنا ملاحظتك، شكراً لك!</p>
-            <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>نقرأ كل ملاحظة ونطوّر درب على أساسها.</p>
+            <span className="text-[50px]">✅</span>
+            <p className="font-black text-[20px]" style={{ color: "var(--text)" }}>وصلتنا ملاحظتك، شكراً لك!</p>
+            <p className="text-[16px]" style={{ color: "var(--text-muted)" }}>نقرأ كل ملاحظة ونطوّر درب على أساسها.</p>
             <button onClick={close} className="btn-primary mt-2 px-8" style={{ width: "auto" }}>تمام</button>
           </div>
         ) : (
@@ -73,8 +73,8 @@ export default function FeedbackButton({ className = "", style }: { className?: 
                   style={kind === k.id
                     ? { background: "color-mix(in srgb, var(--accent) 14%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }
                     : { background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
-                  <span className="text-[20px]">{k.icon}</span>
-                  <span className="text-[12px] font-bold">{k.label}</span>
+                  <span className="text-[23px]">{k.icon}</span>
+                  <span className="text-[14px] font-bold">{k.label}</span>
                 </button>
               ))}
             </div>
@@ -84,10 +84,10 @@ export default function FeedbackButton({ className = "", style }: { className?: 
               placeholder="اكتب اقتراحك أو المشكلة أو رأيك بالتفصيل..."
               maxLength={2000}
               rows={5}
-              className="w-full rounded-2xl px-4 py-3 text-[15px] outline-none resize-none mb-3"
+              className="w-full rounded-2xl px-4 py-3 text-[17px] outline-none resize-none mb-3"
               style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}
             />
-            {err && <p className="text-[13px] mb-3 text-center font-bold" style={{ color: "#EF4444" }}>{err}</p>}
+            {err && <p className="text-[15px] mb-3 text-center font-bold" style={{ color: "#EF4444" }}>{err}</p>}
             <button onClick={submit} disabled={text.trim().length < 3 || busy}
               className="btn-primary w-full" style={{ opacity: text.trim().length < 3 || busy ? 0.5 : 1 }}>
               {busy ? "جارٍ الإرسال..." : "إرسال"}

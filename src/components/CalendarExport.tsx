@@ -92,22 +92,22 @@ export default function CalendarExport({
       <div className="sticky top-0 z-10 px-5 pt-safe pt-4 pb-3 flex items-center gap-3"
         style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
         <button onClick={() => { setOpen(false); setDone(""); }}
-          className="dome-chip text-[17px] font-bold flex-shrink-0" style={{ color: "var(--text)" }}>← رجوع</button>
+          className="dome-chip text-[19px] font-bold flex-shrink-0" style={{ color: "var(--text)" }}>← رجوع</button>
         <p className="title-lg flex-1 text-right" style={{ color: "var(--text)" }}>أضف خطتك للتقويم</p>
       </div>
 
       <div className="px-5 py-5 flex flex-col gap-5 pb-28 max-w-lg w-full mx-auto">
-        <p className="text-[14px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[16px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
           صدّر جلسات مذاكرتك إلى تقويمك المفضّل — كل جلسة تصبح حدثاً مستقلاً بتنبيه قبلها بـ١٠ دقائق.
         </p>
 
         {/* المدى الزمني */}
         <div>
-          <p className="text-[13px] font-bold mb-2" style={{ color: "var(--text)" }}>المدى</p>
+          <p className="text-[15px] font-bold mb-2" style={{ color: "var(--text)" }}>المدى</p>
           <div className="grid grid-cols-4 gap-2">
             {RANGE_OPTIONS.map((o) => (
               <button key={o.days} onClick={() => { setDays(o.days); setDone(""); }}
-                className="py-2.5 rounded-xl text-[13px] font-bold transition"
+                className="py-2.5 rounded-xl text-[15px] font-bold transition"
                 style={days === o.days
                   ? { background: color, color: "#fff" }
                   : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}>
@@ -118,19 +118,19 @@ export default function CalendarExport({
         </div>
 
         <div className="rounded-2xl px-4 py-3 text-center" style={{ background: "var(--surface2)" }}>
-          <span className="text-[22px] font-black" style={{ color }}>{calEvents.length}</span>
-          <span className="text-[14px] font-bold mr-2" style={{ color: "var(--text-muted)" }}>جلسة سيتم تصديرها</span>
+          <span className="text-[25px] font-black" style={{ color }}>{calEvents.length}</span>
+          <span className="text-[16px] font-bold mr-2" style={{ color: "var(--text-muted)" }}>جلسة سيتم تصديرها</span>
         </div>
 
         {/* المرحلة ٢: ربط Google مباشر */}
         <button onClick={syncGoogle} disabled={calEvents.length === 0 || syncing}
-          className="w-full rounded-2xl py-4 px-4 font-black text-[16px] flex items-center gap-3 transition active:scale-[0.98]"
+          className="w-full rounded-2xl py-4 px-4 font-black text-[18px] flex items-center gap-3 transition active:scale-[0.98]"
           style={{ background: color, color: "#fff", opacity: calEvents.length === 0 ? 0.4 : 1 }}>
           {syncing ? (
             <span className="inline-block w-5 h-5 rounded-full border-2 border-white/40 border-t-white animate-spin mx-auto" />
           ) : (
             <>
-              <span className="text-[20px]">🔗</span>
+              <span className="text-[23px]">🔗</span>
               <span className="flex-1 text-right">ربط Google وإضافة مباشرة</span>
               <span>←</span>
             </>
@@ -139,7 +139,7 @@ export default function CalendarExport({
         {syncMsg && (
           <div className="rounded-2xl px-4 py-3"
             style={{ background: syncMsg.ok ? color + "18" : "rgba(239,68,68,0.12)", border: `1px solid ${syncMsg.ok ? color + "44" : "#EF4444"}` }}>
-            <p className="text-[14px] text-center font-bold" style={{ color: syncMsg.ok ? "var(--text)" : "#EF4444" }}>
+            <p className="text-[16px] text-center font-bold" style={{ color: syncMsg.ok ? "var(--text)" : "#EF4444" }}>
               {syncMsg.ok ? "✓ " : ""}{syncMsg.text}
             </p>
           </div>
@@ -147,7 +147,7 @@ export default function CalendarExport({
 
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
-          <span className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>أو صدّر يدوياً</span>
+          <span className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>أو صدّر يدوياً</span>
           <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
         </div>
 
@@ -155,12 +155,12 @@ export default function CalendarExport({
         <div className="flex flex-col gap-2.5">
           {CALENDAR_PROVIDERS.map((p) => (
             <button key={p.id} onClick={() => run(p)} disabled={calEvents.length === 0}
-              className="w-full rounded-2xl py-4 px-4 font-bold text-[16px] flex items-center gap-3 transition active:scale-[0.98]"
+              className="w-full rounded-2xl py-4 px-4 font-bold text-[18px] flex items-center gap-3 transition active:scale-[0.98]"
               style={{
                 background: "var(--surface)", border: `1.5px solid ${color}55`, color: "var(--text)",
                 opacity: calEvents.length === 0 ? 0.4 : 1,
               }}>
-              <span className="text-[20px]">{p.icon}</span>
+              <span className="text-[23px]">{p.icon}</span>
               <span className="flex-1 text-right">{p.label}</span>
               <span style={{ color }}>←</span>
             </button>
@@ -169,20 +169,20 @@ export default function CalendarExport({
 
         {done && (
           <div className="rounded-2xl px-4 py-3" style={{ background: color + "18", border: `1px solid ${color}44` }}>
-            <p className="text-[14px] text-center font-bold" style={{ color: "var(--text)" }}>✓ {done}</p>
+            <p className="text-[16px] text-center font-bold" style={{ color: "var(--text)" }}>✓ {done}</p>
           </div>
         )}
 
         {/* قريباً — إثبات قابلية التوسّع للمراحل القادمة */}
         <div>
-          <p className="text-[12px] font-bold mb-2" style={{ color: "var(--text-muted)" }}>قريباً</p>
+          <p className="text-[14px] font-bold mb-2" style={{ color: "var(--text-muted)" }}>قريباً</p>
           <div className="flex flex-col gap-2">
             {UPCOMING_PROVIDERS.map((p) => (
               <div key={p.id} className="w-full rounded-2xl py-3.5 px-4 flex items-center gap-3"
                 style={{ background: "var(--surface2)", color: "var(--text-muted)", opacity: 0.7 }}>
-                <span className="text-[18px]">{p.icon}</span>
-                <span className="flex-1 text-right text-[14px] font-bold">{p.label}</span>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-md"
+                <span className="text-[20px]">{p.icon}</span>
+                <span className="flex-1 text-right text-[16px] font-bold">{p.label}</span>
+                <span className="text-[12px] font-bold px-2 py-0.5 rounded-md"
                   style={{ background: "var(--border)", color: "var(--text-muted)" }}>قريباً</span>
               </div>
             ))}
@@ -196,10 +196,10 @@ export default function CalendarExport({
     return (
       <div className="rounded-2xl p-4 flex flex-col gap-2.5"
         style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-        <p className="text-[13px] text-center" style={{ color: "var(--text-muted)" }}>لا توجد خطة حالياً</p>
+        <p className="text-[15px] text-center" style={{ color: "var(--text-muted)" }}>لا توجد خطة حالياً</p>
         <button
           onClick={() => window.dispatchEvent(new CustomEvent("darb:openDuirb", { detail: { tab: "schedule" } }))}
-          className="w-full rounded-2xl py-2.5 font-bold text-[14px] transition active:scale-[0.98] flex items-center justify-center gap-2"
+          className="w-full rounded-2xl py-2.5 font-bold text-[16px] transition active:scale-[0.98] flex items-center justify-center gap-2"
           style={{
             background: "color-mix(in srgb, var(--accent) 12%, transparent)",
             border: "1.5px solid color-mix(in srgb, var(--accent) 30%, transparent)",
@@ -215,7 +215,7 @@ export default function CalendarExport({
   return (
     <>
       <button onClick={() => setOpen(true)}
-        className="w-full rounded-2xl py-3 font-bold text-[15px] transition active:scale-[0.98] flex items-center justify-center gap-2"
+        className="w-full rounded-2xl py-3 font-bold text-[17px] transition active:scale-[0.98] flex items-center justify-center gap-2"
         style={{ background: "transparent", border: `1.5px solid ${color}`, color }}>
         🗓️ أضف للتقويم
       </button>

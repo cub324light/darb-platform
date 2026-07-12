@@ -41,8 +41,8 @@ export default function AdminShell({
       <aside className="flex-shrink-0 w-[68px] sm:w-[210px] sticky top-0 h-dvh overflow-y-auto py-4 px-2 sm:px-3 flex flex-col gap-1"
         style={{ background: "var(--surface)", borderInlineEnd: "1px solid var(--border)" }}>
         <div className="px-1 sm:px-2 mb-3">
-          <p className="font-black text-[16px] hidden sm:block" style={{ color: "var(--text)" }}>لوحة درب</p>
-          <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full inline-block mt-1"
+          <p className="font-black text-[18px] hidden sm:block" style={{ color: "var(--text)" }}>لوحة درب</p>
+          <span className="text-[11px] font-black px-1.5 py-0.5 rounded-full inline-block mt-1"
             style={{ background: `color-mix(in srgb, ${ROLE_COLOR[role]} 16%, transparent)`, color: ROLE_COLOR[role] }}>
             {ROLE_LABEL[role]}
           </span>
@@ -53,7 +53,7 @@ export default function AdminShell({
           return (
             <button key={n.id} onClick={() => n.ready && onNavigate(n.id)} disabled={!n.ready}
               title={n.label}
-              className="flex items-center gap-2.5 rounded-xl px-2 sm:px-3 py-2.5 text-[13.5px] font-bold transition text-right"
+              className="flex items-center gap-2.5 rounded-xl px-2 sm:px-3 py-2.5 text-[15px] font-bold transition text-right"
               style={{
                 background: isActive ? "color-mix(in srgb, var(--accent) 15%, transparent)" : "transparent",
                 color: isActive ? "var(--accent-light)" : n.ready ? "var(--text-dim)" : "var(--text-muted)",
@@ -61,9 +61,9 @@ export default function AdminShell({
                 opacity: n.ready ? 1 : 0.55,
                 cursor: n.ready ? "pointer" : "default",
               }}>
-              <span className="text-[17px] flex-shrink-0">{n.icon}</span>
+              <span className="text-[19px] flex-shrink-0">{n.icon}</span>
               <span className="hidden sm:inline flex-1">{n.label}</span>
-              {!n.ready && <span className="hidden sm:inline text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: "var(--bg)", color: "var(--text-muted)" }}>قريباً</span>}
+              {!n.ready && <span className="hidden sm:inline text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: "var(--bg)", color: "var(--text-muted)" }}>قريباً</span>}
             </button>
           );
         })}

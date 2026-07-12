@@ -33,7 +33,7 @@ export default function PriorityHint() {
         background: "color-mix(in srgb, var(--accent) 7%, var(--surface))",
         borderColor: "color-mix(in srgb, var(--accent) 22%, var(--border))",
       }}>
-      <span className="text-[20px] flex-shrink-0" aria-hidden="true">{top.icon}</span>
+      <span className="text-[23px] flex-shrink-0" aria-hidden="true">{top.icon}</span>
       <div className="flex-1 min-w-0">
         <p className="t-body font-black leading-snug" style={{ color: "var(--text)" }}>{top.title}</p>
         <p className="t-caption" style={{ color: "var(--text-muted)" }}>{top.why}</p>

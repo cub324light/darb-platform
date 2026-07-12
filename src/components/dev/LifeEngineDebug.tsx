@@ -223,7 +223,7 @@ export default function LifeEngineDebug() {
             <div className="flex items-center gap-2 flex-wrap">
               <span className="w-6 h-6 rounded-full flex items-center justify-center t-caption font-black font-mono-nums flex-shrink-0"
                 style={{ background: "color-mix(in srgb, var(--accent) 16%, transparent)", color: "var(--accent-light)" }}>{p.rank}</span>
-              <span className="text-[15px]" aria-hidden="true">{p.icon}</span>
+              <span className="text-[17px]" aria-hidden="true">{p.icon}</span>
               <span className="t-body font-black flex-1" style={{ color: "var(--text)" }}>{p.title}</span>
               <span className="t-caption font-black px-2 py-0.5 rounded-full"
                 style={{ background: `color-mix(in srgb, ${TIER_META[p.tier].color} 16%, transparent)`, color: TIER_META[p.tier].color }}>

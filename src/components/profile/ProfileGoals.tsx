@@ -53,15 +53,15 @@ function ProfileGoalsBase({ goals, onGoalsChange, results, onAddResult, onDelete
       {/* درجات مستهدفة */}
       <div>
         <p className="label mb-1">درجاتك المستهدفة</p>
-        <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>حدّد هدفك لكل اختبار — يذكّرك دائماً بوجهتك.</p>
+        <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>حدّد هدفك لكل اختبار — يذكّرك دائماً بوجهتك.</p>
         <div className="grid grid-cols-2 gap-2.5">
           {TARGETS.map((t) => (
             <div key={t.key} className="rounded-2xl px-3 py-2.5 flex items-center justify-between gap-2" style={innerStyle}>
-              <span className="text-[13px] font-bold" style={{ color: "var(--text)" }}>{t.label}</span>
+              <span className="text-[15px] font-bold" style={{ color: "var(--text)" }}>{t.label}</span>
               <input inputMode="decimal" defaultValue={goals[t.key] != null ? String(goals[t.key]) : ""}
                 onBlur={(e) => setTarget(t.key, e.target.value)} placeholder="—" maxLength={5}
                 aria-label={`هدف ${t.label}`}
-                className="w-14 text-center rounded-lg px-1 py-1 text-[14px] font-black font-mono-nums text-[var(--text)] outline-none"
+                className="w-14 text-center rounded-lg px-1 py-1 text-[16px] font-black font-mono-nums text-[var(--text)] outline-none"
                 style={{ background: "var(--surface)", border: "1px solid var(--border)" }} />
             </div>
           ))}
@@ -76,10 +76,10 @@ function ProfileGoalsBase({ goals, onGoalsChange, results, onAddResult, onDelete
             {results.map((r) => (
               <div key={r.id} className="rounded-2xl px-4 py-3 flex items-center gap-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-[15px] text-[var(--text)] truncate">{r.exam}</p>
-                  {r.date && <p className="text-[12px] text-[var(--text-muted)]">{r.date}</p>}
+                  <p className="font-bold text-[17px] text-[var(--text)] truncate">{r.exam}</p>
+                  {r.date && <p className="text-[14px] text-[var(--text-muted)]">{r.date}</p>}
                 </div>
-                {r.score && <span className="font-black text-[16px]" style={{ color: "var(--gold)" }}>{r.score}</span>}
+                {r.score && <span className="font-black text-[18px]" style={{ color: "var(--gold)" }}>{r.score}</span>}
                 <button onClick={() => onDeleteResult(r.id)} aria-label="حذف النتيجة" className="text-[var(--text-muted)] text-sm font-bold px-1">✕</button>
               </div>
             ))}
@@ -87,29 +87,29 @@ function ProfileGoalsBase({ goals, onGoalsChange, results, onAddResult, onDelete
         ) : (
           <div className="rounded-2xl p-5 text-center mb-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
             <div className="text-3xl mb-1.5">📊</div>
-            <p className="font-bold text-[14px] mb-1" style={{ color: "var(--text)" }}>سجّل نتائجك السابقة</p>
-            <p className="text-[12.5px]" style={{ color: "var(--text-muted)" }}>تابع تقدّمك نحو هدفك، اختباراً بعد اختبار.</p>
+            <p className="font-bold text-[16px] mb-1" style={{ color: "var(--text)" }}>سجّل نتائجك السابقة</p>
+            <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>تابع تقدّمك نحو هدفك، اختباراً بعد اختبار.</p>
           </div>
         )}
 
         <div className="flex gap-2 mb-2">
           <select value={resExam} onChange={(e) => { setResExam(e.target.value); setResScore(""); setResErr(""); }}
-            className="flex-1 min-w-0 rounded-2xl px-4 py-3 text-[15px] text-[var(--text)] outline-none" style={innerStyle}>
+            className="flex-1 min-w-0 rounded-2xl px-4 py-3 text-[17px] text-[var(--text)] outline-none" style={innerStyle}>
             <option value="">اختر الاختبار</option>
             {TRACKS.map((t) => (<option key={t.id} value={t.title}>{t.title}</option>))}
           </select>
           <input value={resScore} inputMode="decimal" onChange={(e) => { setResScore(e.target.value); setResErr(""); }}
             disabled={noScore} placeholder={noScore ? "بلا درجة" : "الدرجة"} maxLength={6}
-            className="w-24 rounded-2xl px-3 py-3 text-[15px] text-center text-[var(--text)] placeholder-[var(--text-muted)] outline-none disabled:opacity-40" style={innerStyle} />
+            className="w-24 rounded-2xl px-3 py-3 text-[17px] text-center text-[var(--text)] placeholder-[var(--text-muted)] outline-none disabled:opacity-40" style={innerStyle} />
         </div>
-        {resExam && resRange && (<p className="text-[12px] mb-2 px-1" style={{ color: "var(--text-muted)" }}>الدرجة: {resRange.hint}</p>)}
-        {noScore && (<p className="text-[12px] mb-2 px-1" style={{ color: "var(--text-muted)" }}>هذا الاختبار برنامج قبول/تدريب — ما له درجة رقمية.</p>)}
-        {resErr && (<p className="text-[12px] mb-2 px-1 font-bold" style={{ color: "var(--danger)" }}>{resErr}</p>)}
+        {resExam && resRange && (<p className="text-[14px] mb-2 px-1" style={{ color: "var(--text-muted)" }}>الدرجة: {resRange.hint}</p>)}
+        {noScore && (<p className="text-[14px] mb-2 px-1" style={{ color: "var(--text-muted)" }}>هذا الاختبار برنامج قبول/تدريب — ما له درجة رقمية.</p>)}
+        {resErr && (<p className="text-[14px] mb-2 px-1 font-bold" style={{ color: "var(--danger)" }}>{resErr}</p>)}
         <div className="flex gap-2">
           <input type="date" value={resDate} onChange={(e) => setResDate(e.target.value)}
             aria-label="تاريخ الاختبار"
-            className="flex-1 rounded-2xl px-4 py-3 text-[15px] text-[var(--text)] outline-none" style={innerStyle} />
-          <button onClick={addResult} disabled={!resExam.trim()} className="px-5 rounded-2xl font-black text-[15px]"
+            className="flex-1 rounded-2xl px-4 py-3 text-[17px] text-[var(--text)] outline-none" style={innerStyle} />
+          <button onClick={addResult} disabled={!resExam.trim()} className="px-5 rounded-2xl font-black text-[17px]"
             style={{ background: resExam.trim() ? "var(--accent)" : "var(--surface2)", color: resExam.trim() ? "white" : "var(--text-muted)" }}>أضف</button>
         </div>
       </div>

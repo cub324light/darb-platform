@@ -140,7 +140,7 @@ export default function PlanPage() {
           {nearestExam !== null && (
             <div className="dome-chip flex items-center gap-1.5">
               <span className="num-hero text-base" style={{ color: urgentColor }}>{nearestExam.days}</span>
-              <span className="text-[13px] font-semibold" style={{ color: "var(--text-dim)" }}>
+              <span className="text-[15px] font-semibold" style={{ color: "var(--text-dim)" }}>
                 يوم على {nearestExam.label}
               </span>
             </div>
@@ -162,15 +162,15 @@ export default function PlanPage() {
         <div className="grid grid-cols-3 gap-3">
           <div className="rounded-2xl p-4 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
             <p className="font-mono-nums font-black text-3xl" style={{ color: streak > 0 ? "var(--gold)" : "var(--text-muted)" }}>{streak}</p>
-            <p className="text-[12px] font-bold mt-1" style={{ color: "var(--text-muted)" }}>يوم ستريك</p>
+            <p className="text-[14px] font-bold mt-1" style={{ color: "var(--text-muted)" }}>يوم ستريك</p>
           </div>
           <div className="rounded-2xl p-4 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
             <p className="font-mono-nums font-black text-3xl" style={{ color: "var(--accent-light)" }}>{todayMins}</p>
-            <p className="text-[12px] font-bold mt-1" style={{ color: "var(--text-muted)" }}>دقيقة اليوم</p>
+            <p className="text-[14px] font-bold mt-1" style={{ color: "var(--text-muted)" }}>دقيقة اليوم</p>
           </div>
           <div className="rounded-2xl p-4 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
             <p className="font-mono-nums font-black text-3xl" style={{ color: dueCards > 0 ? "#EF4444" : "var(--success)" }}>{dueCards}</p>
-            <p className="text-[12px] font-bold mt-1" style={{ color: "var(--text-muted)" }}>بطاقة مستحقة</p>
+            <p className="text-[14px] font-bold mt-1" style={{ color: "var(--text-muted)" }}>بطاقة مستحقة</p>
           </div>
         </div>
       </div>
@@ -180,7 +180,7 @@ export default function PlanPage() {
         <div className="flex gap-2 p-1 rounded-2xl" style={{ background: "var(--surface)" }}>
           {([["day", "اليوم"], ["week", "الأسبوع"], ["month", "الشهر"]] as const).map(([v, label]) => (
             <button key={v} onClick={() => setView(v)}
-              className="flex-1 py-2.5 rounded-xl text-[14px] font-bold text-center transition"
+              className="flex-1 py-2.5 rounded-xl text-[16px] font-bold text-center transition"
               style={view === v
                 ? { background: "var(--accent)", color: "#fff" }
                 : { color: "var(--text-muted)" }}>
@@ -196,9 +196,9 @@ export default function PlanPage() {
           {todayStudy.length === 0 ? (
             <div className="rounded-2xl py-6 px-4 text-center"
               style={{ background: "var(--surface2)", border: "1.5px dashed var(--border)" }}>
-              <p className="text-[14px] font-bold mb-3" style={{ color: "var(--text-muted)" }}>لا يوجد جدول لليوم</p>
+              <p className="text-[16px] font-bold mb-3" style={{ color: "var(--text-muted)" }}>لا يوجد جدول لليوم</p>
               <button onClick={openScheduler}
-                className="w-full rounded-2xl py-3 font-bold text-[15px] transition active:scale-[0.98]"
+                className="w-full rounded-2xl py-3 font-bold text-[17px] transition active:scale-[0.98]"
                 style={{ background: "var(--accent)", color: "#fff" }}>
                 🤖 ابنِ خطة اليوم مع دويرب
               </button>
@@ -208,23 +208,23 @@ export default function PlanPage() {
               {/* شريط «أنت الآن» */}
               <div className="rounded-2xl px-4 py-3 mb-3 flex items-center gap-3"
                 style={{ background: `color-mix(in srgb, ${colorFor(currentEv?.subject ?? nextEv?.subject)} 12%, var(--surface))`, border: `1px solid ${colorFor(currentEv?.subject ?? nextEv?.subject)}44` }}>
-                <span className="text-[20px]">{currentEv ? "▶️" : nextEv ? "⏭️" : "✓"}</span>
+                <span className="text-[23px]">{currentEv ? "▶️" : nextEv ? "⏭️" : "✓"}</span>
                 <div className="flex-1 text-right">
                   {currentEv ? (
                     <>
-                      <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>الآن — حتى {fmtHour(currentEv.toHour)}</p>
-                      <p className="text-[16px] font-black" style={{ color: colorFor(currentEv.subject) }}>{currentEv.subject ?? "مذاكرة"}</p>
+                      <p className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>الآن — حتى {fmtHour(currentEv.toHour)}</p>
+                      <p className="text-[18px] font-black" style={{ color: colorFor(currentEv.subject) }}>{currentEv.subject ?? "مذاكرة"}</p>
                     </>
                   ) : nextEv ? (
                     <>
-                      <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>القادمة — {fmtHour(nextEv.fromHour)}</p>
-                      <p className="text-[16px] font-black" style={{ color: colorFor(nextEv.subject) }}>{nextEv.subject ?? "مذاكرة"}</p>
+                      <p className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>القادمة — {fmtHour(nextEv.fromHour)}</p>
+                      <p className="text-[18px] font-black" style={{ color: colorFor(nextEv.subject) }}>{nextEv.subject ?? "مذاكرة"}</p>
                     </>
                   ) : (
-                    <p className="text-[15px] font-black" style={{ color: "var(--success)" }}>خلّصت جلسات اليوم 🎉</p>
+                    <p className="text-[17px] font-black" style={{ color: "var(--success)" }}>خلّصت جلسات اليوم 🎉</p>
                   )}
                 </div>
-                <Link href="/orbit" className="text-[13px] font-black px-3 py-2 rounded-xl"
+                <Link href="/orbit" className="text-[15px] font-black px-3 py-2 rounded-xl"
                   style={{ background: "var(--accent)", color: "#fff", textDecoration: "none" }}>ابدأ ←</Link>
               </div>
 
@@ -239,15 +239,15 @@ export default function PlanPage() {
                       className={`flex items-center gap-3 px-4 py-3.5 ${i < todayStudy.length - 1 ? "border-b" : ""}`}
                       style={{ borderColor: "var(--border)", background: isNow ? `color-mix(in srgb, ${c} 10%, transparent)` : "transparent", opacity: isPast ? 0.5 : 1 }}>
                       <div className="flex flex-col items-center w-14 flex-shrink-0">
-                        <span className="text-[13px] font-black" style={{ color: isNow ? c : "var(--text)" }}>{fmtHour(ev.fromHour)}</span>
-                        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{fmtHour(ev.toHour)}</span>
+                        <span className="text-[15px] font-black" style={{ color: isNow ? c : "var(--text)" }}>{fmtHour(ev.fromHour)}</span>
+                        <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{fmtHour(ev.toHour)}</span>
                       </div>
                       <div className="w-1.5 self-stretch rounded-full flex-shrink-0" style={{ background: c }} />
-                      <span className="flex-1 text-[15px] font-bold" style={{ color: "var(--text)" }}>
+                      <span className="flex-1 text-[17px] font-bold" style={{ color: "var(--text)" }}>
                         {ev.subject ?? "مذاكرة"}
                       </span>
                       {isNow && (
-                        <span className="text-[11px] font-black px-2 py-0.5 rounded-lg" style={{ background: c, color: "#fff" }}>الآن</span>
+                        <span className="text-[12px] font-black px-2 py-0.5 rounded-lg" style={{ background: c, color: "#fff" }}>الآن</span>
                       )}
                     </div>
                   );
@@ -265,13 +265,13 @@ export default function PlanPage() {
             {weekDays.map(({ label, evs, dateStr }, i) => (
               <div key={dateStr} className="flex items-start gap-3 rounded-xl px-3 py-3"
                 style={{ background: "var(--surface)", border: `1px solid ${i === 0 ? "color-mix(in srgb, var(--accent) 40%, transparent)" : "var(--border)"}` }}>
-                <span className="text-[13px] font-black w-16 flex-shrink-0 pt-0.5" style={{ color: i === 0 ? "var(--accent-light)" : "var(--text-muted)" }}>{label}</span>
+                <span className="text-[15px] font-black w-16 flex-shrink-0 pt-0.5" style={{ color: i === 0 ? "var(--accent-light)" : "var(--text-muted)" }}>{label}</span>
                 {evs.length === 0 ? (
-                  <span className="text-[13px] pt-0.5" style={{ color: "var(--text-dim)" }}>لا جلسات</span>
+                  <span className="text-[15px] pt-0.5" style={{ color: "var(--text-dim)" }}>لا جلسات</span>
                 ) : (
                   <div className="flex flex-wrap gap-1.5">
                     {evs.map((ev) => (
-                      <span key={ev.id} className="text-[12px] font-bold px-2 py-1 rounded-lg"
+                      <span key={ev.id} className="text-[14px] font-bold px-2 py-1 rounded-lg"
                         style={{ background: `color-mix(in srgb, ${colorFor(ev.subject)} 16%, transparent)`, color: colorFor(ev.subject), border: `1px solid ${colorFor(ev.subject)}44` }}>
                         {ev.subject ?? "مذاكرة"} · {fmtHour(ev.fromHour)}
                       </span>
@@ -306,23 +306,23 @@ export default function PlanPage() {
       {/* ── دويرب للتخطيط ── */}
       <div className="px-5 mb-5 rise rise-4">
         <button onClick={openScheduler}
-          className="w-full rounded-2xl py-4 px-4 font-black text-[16px] flex items-center gap-3 transition active:scale-[0.98]"
+          className="w-full rounded-2xl py-4 px-4 font-black text-[18px] flex items-center gap-3 transition active:scale-[0.98]"
           style={{ background: "linear-gradient(135deg, var(--accent), var(--accent-hi))", color: "#fff" }}>
-          <span className="text-[20px]">🤖</span>
+          <span className="text-[23px]">🤖</span>
           <span className="flex-1 text-right">خطّط مع دويرب</span>
           <span>←</span>
         </button>
-        <p className="text-[12px] text-center mt-2" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[14px] text-center mt-2" style={{ color: "var(--text-muted)" }}>
           أخبره بوقتك ومواعيدك — يبني لك جدول ذكي في ثوانٍ
         </p>
       </div>
 
       {/* ── تصدير التقويم ── */}
       <div className="px-5 mb-5 rise rise-5">
-        <p className="text-[15px] font-black mb-3" style={{ color: "var(--text)" }}>تصدير للتقويم</p>
+        <p className="text-[17px] font-black mb-3" style={{ color: "var(--text)" }}>تصدير للتقويم</p>
         <CalendarExport events={allEvents} />
         {!hasSchedule && (
-          <p className="text-[12px] text-center mt-2" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[14px] text-center mt-2" style={{ color: "var(--text-muted)" }}>
             ابنِ خطة أولاً ثم صدّرها لتقويمك المفضّل
           </p>
         )}
@@ -339,9 +339,9 @@ export default function PlanPage() {
             <Link key={item.href} href={item.href}
               className="rounded-2xl p-4 flex flex-col gap-1.5 transition active:scale-[0.97]"
               style={{ background: "var(--surface)", border: "1px solid var(--border)", textDecoration: "none" }}>
-              <span className="text-[22px]">{item.icon}</span>
-              <span className="text-[15px] font-black" style={{ color: "var(--text)" }}>{item.label}</span>
-              <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{item.desc}</span>
+              <span className="text-[25px]">{item.icon}</span>
+              <span className="text-[17px] font-black" style={{ color: "var(--text)" }}>{item.label}</span>
+              <span className="text-[14px]" style={{ color: "var(--text-muted)" }}>{item.desc}</span>
             </Link>
           ))}
         </div>

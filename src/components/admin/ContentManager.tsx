@@ -174,7 +174,7 @@ export default function ContentManager() {
             return (
               <div key={r.entity.id} className="ds-card ds-card-tight flex items-center gap-2.5">
                 <input type="checkbox" checked={selected.has(r.entity.id)} onChange={() => toggleSel(r.entity.id)} className="flex-shrink-0 w-4 h-4" aria-label="تحديد" />
-                <span className="text-[18px] flex-shrink-0">{KIND_META[r.entity.kind].icon}</span>
+                <span className="text-[20px] flex-shrink-0">{KIND_META[r.entity.kind].icon}</span>
                 <div className="flex flex-col min-w-0 flex-1">
                   <span className="t-title" style={{ color: "var(--text)" }}>{r.entity.name}</span>
                   <span className="t-caption truncate" style={{ color: "var(--text-muted)" }}>{r.entity.summary}</span>

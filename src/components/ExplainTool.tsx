@@ -48,13 +48,13 @@ export default function ExplainTool({ subjects }: Props) {
 
   return (
     <div>
-      <p className="text-[13px] mb-3" style={{ color: "var(--text-muted)" }}>
+      <p className="text-[15px] mb-3" style={{ color: "var(--text-muted)" }}>
         الصق سؤالاً غلطته أو مفهوماً يحيّرك، ودويرب يشرح لك المفهوم الصحيح وأين يقع الخطأ.
       </p>
 
       {subjects.length > 0 && (
         <select value={subject} onChange={(e) => setSubject(e.target.value)}
-          className="w-full rounded-2xl px-4 py-3 text-[15px] outline-none min-h-[48px] mb-2"
+          className="w-full rounded-2xl px-4 py-3 text-[17px] outline-none min-h-[48px] mb-2"
           style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
           {subjects.map((s) => <option key={s}>{s}</option>)}
         </select>
@@ -67,7 +67,7 @@ export default function ExplainTool({ subjects }: Props) {
         style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
 
       <button onClick={send} disabled={loading || !input.trim()}
-        className="w-full mt-2 rounded-2xl py-3.5 font-black text-[16px] transition active:scale-[0.98]"
+        className="w-full mt-2 rounded-2xl py-3.5 font-black text-[18px] transition active:scale-[0.98]"
         style={{
           background: loading || !input.trim() ? "var(--surface2)" : "var(--accent)",
           color: loading || !input.trim() ? "var(--text-muted)" : "white",
@@ -80,19 +80,19 @@ export default function ExplainTool({ subjects }: Props) {
       </button>
 
       {err && (
-        <p className="text-[13px] text-center mt-3 font-semibold" style={{ color: "var(--danger)" }}>{err}</p>
+        <p className="text-[15px] text-center mt-3 font-semibold" style={{ color: "var(--danger)" }}>{err}</p>
       )}
 
       {response && !loading && (
         <>
           <div className="mt-3 rounded-2xl px-4 py-3.5"
             style={{ background: "color-mix(in srgb, var(--accent) 6%, var(--surface2))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
-            <p className="text-[14px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{response}</p>
+            <p className="text-[16px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{response}</p>
           </div>
           {/* الخطوة التالية: ثبّت الفهم بأسئلة على نفس المادة */}
           <button
             onClick={() => window.dispatchEvent(new CustomEvent("darb:openDuirb", { detail: { tab: "quiz" } }))}
-            className="w-full mt-2 py-2.5 rounded-2xl text-[13px] font-bold transition active:scale-[0.98] flex items-center justify-center gap-1.5"
+            className="w-full mt-2 py-2.5 rounded-2xl text-[15px] font-bold transition active:scale-[0.98] flex items-center justify-center gap-1.5"
             style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
             ❓ ثبّت فهمك — ولّد أسئلة على {subject || "هذه المادة"}
           </button>

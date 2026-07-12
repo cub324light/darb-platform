@@ -30,12 +30,12 @@ function AlertCard({ alert, onDismiss }: { alert: ExamAlert; onDismiss: () => vo
   return (
     <div className="rounded-2xl px-4 py-3 flex items-start gap-3"
       style={{ background: bg, border: `1px solid ${border}` }}>
-      <span className="text-[18px] flex-shrink-0 mt-0.5">{isOpen ? "🟢" : "🔔"}</span>
+      <span className="text-[20px] flex-shrink-0 mt-0.5">{isOpen ? "🟢" : "🔔"}</span>
       <div className="flex-1 min-w-0">
-        <p className="text-[13px] font-black" style={{ color: accent }}>
+        <p className="text-[15px] font-black" style={{ color: accent }}>
           {isOpen ? `التسجيل مفتوح الآن — ${alert.trackTitle}` : `التسجيل يفتح خلال ${ar(alert.daysUntilOpen ?? 0)} يوم — ${alert.trackTitle}`}
         </p>
-        <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[14px] mt-0.5" style={{ color: "var(--text-muted)" }}>
           {alert.windowLabel}
           {isOpen && alert.registrationEnd ? ` · ينتهي التسجيل ${alert.registrationEnd}` : ""}
         </p>
@@ -92,7 +92,7 @@ export function ExamWindowInfo({ trackId }: { trackId: TrackId }) {
 
   if (!info) {
     return (
-      <p className="text-[12px] px-1" style={{ color: "var(--text-muted)" }}>
+      <p className="text-[14px] px-1" style={{ color: "var(--text-muted)" }}>
         بانتظار الإعلان الرسمي عن مواعيد {String(trackId)}
       </p>
     );
@@ -101,7 +101,7 @@ export function ExamWindowInfo({ trackId }: { trackId: TrackId }) {
   const { window: w, status } = info;
   if (status === "pending") {
     return (
-      <p className="text-[12px] px-1" style={{ color: "var(--text-muted)" }}>
+      <p className="text-[14px] px-1" style={{ color: "var(--text-muted)" }}>
         ⏳ بانتظار الإعلان الرسمي — {w.yearLabel}
       </p>
     );
@@ -110,7 +110,7 @@ export function ExamWindowInfo({ trackId }: { trackId: TrackId }) {
   const isOpen = status === "open";
   const color = isOpen ? "var(--success)" : "var(--gold)";
   return (
-    <div className="rounded-xl px-3 py-2 text-[12px]"
+    <div className="rounded-xl px-3 py-2 text-[14px]"
       style={{ background: `color-mix(in srgb, ${color} 8%, var(--surface2))`, border: `1px solid color-mix(in srgb, ${color} 20%, transparent)` }}>
       <span className="font-black" style={{ color }}>{isOpen ? "🟢 التسجيل مفتوح" : "🔔 التسجيل قادم"}</span>
       <span className="mr-2" style={{ color: "var(--text-muted)" }}>{w.yearLabel}</span>

@@ -97,7 +97,7 @@ export default function SchoolPage() {
 
         {/* الجدول الدراسي — يربط الواجبات باليوم */}
         <Link href="/plan" className="ds-card ds-card-interactive flex items-center gap-3 no-underline">
-          <span className="text-[22px]">📅</span>
+          <span className="text-[25px]">📅</span>
           <span className="flex flex-col flex-1 min-w-0">
             <span className="t-body font-black" style={{ color: "var(--text)" }}>الجدول الدراسي</span>
             <span className="t-caption" style={{ color: "var(--text-muted)" }}>نظّم مواعيد يومك واربط واجباتك بالأيام</span>

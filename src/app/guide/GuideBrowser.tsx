@@ -12,7 +12,7 @@ import BulletText from "@/components/content/BulletText";
 /* شارة «تتغير سنوياً» للقوائم الموسومة بالمراجعة السنوية */
 function AnnualBadge() {
   return (
-    <span className="text-[10.5px] font-black px-2 py-0.5 rounded-md flex-shrink-0"
+    <span className="text-[12px] font-black px-2 py-0.5 rounded-md flex-shrink-0"
       style={{
         background: "color-mix(in srgb, var(--gold) 14%, transparent)",
         color: "var(--gold)",
@@ -27,7 +27,7 @@ function AnnualBadge() {
 function CategoryBadge({ category }: { category: string }) {
   const meta = faqCategoryMeta(category);
   return (
-    <span className="text-[10.5px] font-black px-2 py-0.5 rounded-md flex-shrink-0"
+    <span className="text-[12px] font-black px-2 py-0.5 rounded-md flex-shrink-0"
       style={{
         background: "color-mix(in srgb, var(--accent) 12%, transparent)",
         color: "var(--accent-light)",
@@ -59,12 +59,12 @@ function AccordionItem({
       }}>
       <button onClick={onToggle} aria-expanded={open}
         className="w-full flex items-center gap-3 px-4 py-3.5 text-right">
-        <span className="flex-1 font-bold text-[14.5px] leading-relaxed"
+        <span className="flex-1 font-bold text-[16px] leading-relaxed"
           style={{ color: open ? "var(--accent-light)" : "var(--text)", transition: "color 0.25s ease" }}>
           {title}
         </span>
         {badge}
-        <span aria-hidden="true" className="flex-shrink-0 text-[13px]"
+        <span aria-hidden="true" className="flex-shrink-0 text-[15px]"
           style={{ color: "var(--text-muted)", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.25s ease" }}>
           ▼
         </span>
@@ -119,7 +119,7 @@ export default function GuideBrowser({
             onChange={(e) => setQuery(e.target.value)}
             placeholder="ابحث في كل الأسئلة..."
             aria-label="ابحث في الأسئلة الشائعة"
-            className="w-full rounded-2xl px-5 py-3.5 text-[14.5px] outline-none pr-11"
+            className="w-full rounded-2xl px-5 py-3.5 text-[16px] outline-none pr-11"
             style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)" }}
           />
           <span className="absolute right-4 top-1/2 -translate-y-1/2" style={{ color: "var(--text-muted)" }} aria-hidden="true">
@@ -134,14 +134,14 @@ export default function GuideBrowser({
           results.length === 0 ? (
             <div className="rounded-2xl p-8 text-center"
               style={{ background: "var(--surface)", border: "1.5px dashed var(--border)" }}>
-              <p className="text-[15px] font-black mb-1" style={{ color: "var(--text)" }}>ما لقينا سؤالاً يطابق بحثك</p>
-              <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[17px] font-black mb-1" style={{ color: "var(--text)" }}>ما لقينا سؤالاً يطابق بحثك</p>
+              <p className="text-[15px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
                 جرّب كلمة أقصر، أو امسح البحث وتصفح التصنيفات.
               </p>
             </div>
           ) : (
             <>
-              <p className="text-[12.5px] font-bold mb-3 font-mono-nums" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[14px] font-bold mb-3 font-mono-nums" style={{ color: "var(--text-muted)" }}>
                 {results.length} نتيجة
               </p>
               <div className="flex flex-col gap-2.5">
@@ -168,7 +168,7 @@ export default function GuideBrowser({
                 const active = cat === chip.id;
                 return (
                   <button key={chip.id} onClick={() => { setCat(chip.id); setOpenId(null); }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-black whitespace-nowrap flex-shrink-0 transition active:scale-95"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[14px] font-black whitespace-nowrap flex-shrink-0 transition active:scale-95"
                     style={{
                       background: active ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
                       color: active ? "var(--accent-light)" : "var(--text-muted)",
@@ -178,7 +178,7 @@ export default function GuideBrowser({
                     }}>
                     <span aria-hidden="true">{chip.icon}</span>
                     {chip.label}
-                    <span className="text-[10.5px] font-bold px-1.5 py-0.5 rounded-full font-mono-nums"
+                    <span className="text-[12px] font-bold px-1.5 py-0.5 rounded-full font-mono-nums"
                       style={{
                         background: active ? "color-mix(in srgb, var(--accent) 16%, transparent)" : "var(--surface2)",
                         color: active ? "var(--accent-light)" : "var(--text-muted)",
@@ -206,8 +206,8 @@ export default function GuideBrowser({
       {/* ═══ القوائم المرجعية ═══ */}
       <section>
         <p className="eyebrow mb-1" style={{ color: "var(--accent-light)" }}>مرجع سريع</p>
-        <h2 className="font-black text-[19px] mb-1" style={{ color: "var(--text)" }}>قوائم مرجعية</h2>
-        <p className="text-[13px] leading-relaxed mb-4" style={{ color: "var(--text-muted)" }}>
+        <h2 className="font-black text-[22px] mb-1" style={{ color: "var(--text)" }}>قوائم مرجعية</h2>
+        <p className="text-[15px] leading-relaxed mb-4" style={{ color: "var(--text-muted)" }}>
           القوائم الموسومة بـ ⚠️ تتغير كل موسم قبول — تأكد دائماً من موقع الجامعة الرسمي قبل الاعتماد عليها.
         </p>
         <div className="flex flex-col gap-2.5">
@@ -225,7 +225,7 @@ export default function GuideBrowser({
       {/* ═══ النصائح ═══ */}
       <section>
         <p className="eyebrow mb-1" style={{ color: "var(--accent-light)" }}>من تجارب الطلاب</p>
-        <h2 className="font-black text-[19px] mb-4" style={{ color: "var(--text)" }}>نصائح تفيدك</h2>
+        <h2 className="font-black text-[22px] mb-4" style={{ color: "var(--text)" }}>نصائح تفيدك</h2>
         <div className="flex flex-col gap-3">
           {tips.map((t) => (
             <div key={t.id} className="rounded-2xl p-5 glow-card-hover"
@@ -234,7 +234,7 @@ export default function GuideBrowser({
                 border: "1.5px solid color-mix(in srgb, var(--success) 22%, var(--border))",
               }}>
               <div className="flex items-center gap-2.5 mb-3">
-                <span className="w-9 h-9 rounded-xl flex items-center justify-center text-[16px] flex-shrink-0"
+                <span className="w-9 h-9 rounded-xl flex items-center justify-center text-[18px] flex-shrink-0"
                   style={{
                     background: "color-mix(in srgb, var(--success) 12%, transparent)",
                     border: "1px solid color-mix(in srgb, var(--success) 28%, transparent)",
@@ -242,7 +242,7 @@ export default function GuideBrowser({
                   aria-hidden="true">
                   💡
                 </span>
-                <p className="font-black text-[15px]" style={{ color: "var(--text)" }}>{t.title}</p>
+                <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>{t.title}</p>
               </div>
               <BulletText text={t.content} dotColor="var(--success)" />
             </div>

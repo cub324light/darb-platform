@@ -64,7 +64,7 @@ export default function ContentDashboard() {
                 <span className="t-caption font-mono-nums" style={{ color: "var(--text-muted)" }}>{d.actual}/{d.target} · {d.pct}%</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-mono-nums text-[13px] tracking-tighter" style={{ color: d.pct >= 60 ? "var(--success)" : d.pct >= 25 ? "var(--gold)" : "var(--text-muted)" }}>{bar(d.pct)}</span>
+                <span className="font-mono-nums text-[15px] tracking-tighter" style={{ color: d.pct >= 60 ? "var(--success)" : d.pct >= 25 ? "var(--gold)" : "var(--text-muted)" }}>{bar(d.pct)}</span>
                 <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "var(--surface2)" }}>
                   <div className="h-full rounded-full" style={{ width: `${d.pct}%`, background: "var(--accent)" }} />
                 </div>

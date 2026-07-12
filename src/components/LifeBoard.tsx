@@ -22,7 +22,7 @@ const AREA_COLOR: Record<PriorityArea, string> = {
 function DecisionField({ icon, label, value }: { icon: string; label: string; value: string }) {
   return (
     <div className="flex items-start gap-2">
-      <span className="text-[13px] flex-shrink-0 mt-0.5" aria-hidden="true">{icon}</span>
+      <span className="text-[15px] flex-shrink-0 mt-0.5" aria-hidden="true">{icon}</span>
       <p className="t-caption leading-snug" style={{ color: "var(--text-dim)" }}>
         <span className="font-black" style={{ color: "var(--text-muted)" }}>{label}: </span>
         {value}
@@ -38,7 +38,7 @@ function PriorityRow({ p }: { p: Priority }) {
     <Link href={p.href}
       className="ds-card ds-card-tight flex items-center gap-3 text-right no-underline transition active:scale-[0.98]"
       style={{ borderInlineStartWidth: 3, borderInlineStartColor: `color-mix(in srgb, ${c} 55%, transparent)` }}>
-      <span className="w-7 h-7 rounded-full flex items-center justify-center text-[13px] font-black flex-shrink-0 font-mono-nums"
+      <span className="w-7 h-7 rounded-full flex items-center justify-center text-[15px] font-black flex-shrink-0 font-mono-nums"
         style={{ background: `color-mix(in srgb, ${c} 15%, transparent)`, color: c }}>
         {p.rank}
       </span>
@@ -78,7 +78,7 @@ export default function LifeBoard() {
         </div>
 
         <div className="flex items-start gap-3">
-          <span className="text-[26px] leading-none flex-shrink-0 mt-0.5" aria-hidden="true">{top.icon}</span>
+          <span className="text-[29px] leading-none flex-shrink-0 mt-0.5" aria-hidden="true">{top.icon}</span>
           <h2 className="t-h2 leading-tight flex-1" style={{ color: "var(--text)" }}>{top.title}</h2>
         </div>
 

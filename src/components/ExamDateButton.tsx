@@ -37,7 +37,7 @@ export default function ExamDateButton({
       <button
         type="button"
         onClick={open}
-        className="px-3 py-2 rounded-xl text-[12.5px] font-bold min-h-[40px] transition active:scale-95 whitespace-nowrap"
+        className="px-3 py-2 rounded-xl text-[14px] font-bold min-h-[40px] transition active:scale-95 whitespace-nowrap"
         style={{
           background: value ? `color-mix(in srgb, ${color} 16%, transparent)` : "var(--surface2)",
           color: value ? color : "var(--text-muted)",

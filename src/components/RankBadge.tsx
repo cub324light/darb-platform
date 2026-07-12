@@ -12,10 +12,10 @@ interface Props {
 }
 
 const SIZES = {
-  xs: { pad: "px-1.5 py-0.5", text: "text-[10px]", emoji: "text-[11px]" },
-  sm: { pad: "px-2 py-0.5",   text: "text-[12px]", emoji: "text-[13px]" },
-  md: { pad: "px-2.5 py-1",   text: "text-[13px]", emoji: "text-[15px]" },
-  lg: { pad: "px-3 py-1.5",   text: "text-[15px]", emoji: "text-[18px]" },
+  xs: { pad: "px-1.5 py-0.5", text: "text-[11px]", emoji: "text-[12px]" },
+  sm: { pad: "px-2 py-0.5",   text: "text-[14px]", emoji: "text-[15px]" },
+  md: { pad: "px-2.5 py-1",   text: "text-[15px]", emoji: "text-[17px]" },
+  lg: { pad: "px-3 py-1.5",   text: "text-[17px]", emoji: "text-[20px]" },
 };
 
 export default function RankBadge({ rp, size = "sm", showRp = false, showLabel = true }: Props) {

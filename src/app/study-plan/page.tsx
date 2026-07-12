@@ -177,13 +177,13 @@ export default function StudyPlanPage() {
         <div className="flex items-center justify-between">
           <h1 className="title-lg grad-title">مخطط الدراسة</h1>
           {saved && (
-            <span className="text-[12px] font-bold px-2 py-1 rounded-full"
+            <span className="text-[14px] font-bold px-2 py-1 rounded-full"
               style={{ background: "color-mix(in srgb, var(--success) 14%, var(--surface))", color: "var(--success)" }}>
               ✓ حُفظ
             </span>
           )}
         </div>
-        <p className="text-[13px] mt-1" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[15px] mt-1" style={{ color: "var(--text-muted)" }}>
           وزّع ساعاتك الأسبوعية — التعديلات تنعكس على دويرب وتقرير المدرّب
         </p>
       </Dome>
@@ -198,22 +198,22 @@ export default function StudyPlanPage() {
         <div className="rounded-2xl px-4 py-3 flex items-center justify-between gap-3"
           style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 20%, transparent)" }}>
           <div>
-            <p className="text-[22px] font-black font-mono-nums" style={{ color: "var(--accent-light)" }}>{ar(totalHours)}</p>
-            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>ساعة أسبوعياً</p>
+            <p className="text-[25px] font-black font-mono-nums" style={{ color: "var(--accent-light)" }}>{ar(totalHours)}</p>
+            <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>ساعة أسبوعياً</p>
           </div>
           <div className="text-center">
-            <p className="text-[16px] font-black" style={{ color: "var(--text)" }}>{ar(strategy.studyDaysPerWeek)} أيام</p>
-            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>مذاكرة أسبوعياً</p>
+            <p className="text-[18px] font-black" style={{ color: "var(--text)" }}>{ar(strategy.studyDaysPerWeek)} أيام</p>
+            <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>مذاكرة أسبوعياً</p>
           </div>
           <div className="text-left">
-            <p className="text-[16px] font-black" style={{ color: strategy.labels.intensity === "مكثّفة" ? "var(--danger)" : strategy.labels.intensity === "متوازنة" ? "var(--gold)" : "var(--success)" }}>
+            <p className="text-[18px] font-black" style={{ color: strategy.labels.intensity === "مكثّفة" ? "var(--danger)" : strategy.labels.intensity === "متوازنة" ? "var(--gold)" : "var(--success)" }}>
               {strategy.labels.intensity}
             </p>
-            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>كثافة الدراسة</p>
+            <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>كثافة الدراسة</p>
           </div>
         </div>
         {major && (
-          <div className="mt-2 rounded-xl px-3 py-2 text-[12px]"
+          <div className="mt-2 rounded-xl px-3 py-2 text-[14px]"
             style={{ background: "color-mix(in srgb, var(--accent) 6%, var(--surface2))", border: "1px solid color-mix(in srgb, var(--accent) 12%, transparent)" }}>
             <span style={{ color: "var(--accent-light)" }}>🎓 تخصص {major.name}</span>
             <span className="mr-2" style={{ color: "var(--text-muted)" }}>يُعزّز مواد ذات الصلة تلقائياً</span>
@@ -247,31 +247,31 @@ export default function StudyPlanPage() {
                   {/* أزرار إعادة الترتيب */}
                   <div className="flex flex-col gap-0.5">
                     <button onClick={() => moveUp(idx)} disabled={idx === 0}
-                      className="w-6 h-5 flex items-center justify-center rounded text-[10px] transition disabled:opacity-30"
+                      className="w-6 h-5 flex items-center justify-center rounded text-[11px] transition disabled:opacity-30"
                       style={{ background: "var(--surface2)", color: "var(--text-muted)" }}>▲</button>
                     <button onClick={() => moveDown(idx)} disabled={idx === subjects.length - 1}
-                      className="w-6 h-5 flex items-center justify-center rounded text-[10px] transition disabled:opacity-30"
+                      className="w-6 h-5 flex items-center justify-center rounded text-[11px] transition disabled:opacity-30"
                       style={{ background: "var(--surface2)", color: "var(--text-muted)" }}>▼</button>
                   </div>
 
                   {/* اسم المادة */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[15px] font-black" style={{ color: "var(--text)" }}>{subj.name}</span>
+                      <span className="text-[17px] font-black" style={{ color: "var(--text)" }}>{subj.name}</span>
                       {hasPriorityBoost && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                        <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full"
                           style={{ background: `color-mix(in srgb, ${color} 15%, transparent)`, color }}>
                           🎓 معزَّز
                         </span>
                       )}
                       {strategy.weakest === subj.name && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                        <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full"
                           style={{ background: "color-mix(in srgb, var(--danger) 15%, transparent)", color: "var(--danger)" }}>
                           الأحوج
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                    <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>
                       {ar(pct)}٪ من الوقت الأسبوعي
                     </p>
                   </div>
@@ -279,16 +279,16 @@ export default function StudyPlanPage() {
                   {/* ضبط الساعات */}
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <button onClick={() => adjustHours(subj.name, -STEP)}
-                      className="w-8 h-8 rounded-lg text-[16px] font-black flex items-center justify-center transition active:scale-95"
+                      className="w-8 h-8 rounded-lg text-[18px] font-black flex items-center justify-center transition active:scale-95"
                       style={{ background: "var(--surface2)", color: "var(--text)" }}>−</button>
                     <div className="text-center w-14">
-                      <p className="text-[18px] font-black font-mono-nums" style={{ color }}>
+                      <p className="text-[20px] font-black font-mono-nums" style={{ color }}>
                         {ar(subj.hoursPerWeek)}
                       </p>
-                      <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>ساعة/أسبوع</p>
+                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>ساعة/أسبوع</p>
                     </div>
                     <button onClick={() => adjustHours(subj.name, STEP)}
-                      className="w-8 h-8 rounded-lg text-[16px] font-black flex items-center justify-center transition active:scale-95"
+                      className="w-8 h-8 rounded-lg text-[18px] font-black flex items-center justify-center transition active:scale-95"
                       style={{ background: "var(--accent)", color: "#fff" }}>+</button>
                   </div>
                 </div>
@@ -296,12 +296,12 @@ export default function StudyPlanPage() {
                 {/* زر «لماذا هذه المادة؟» */}
                 <div className="mt-2">
                   <button onClick={() => setWhyOpen(whyOpen === subj.name ? null : subj.name)}
-                    className="text-[12px] font-bold px-2.5 py-1 rounded-lg transition"
+                    className="text-[14px] font-bold px-2.5 py-1 rounded-lg transition"
                     style={{ background: "var(--surface2)", color: "var(--text-muted)" }}>
                     {whyOpen === subj.name ? "إخفاء ▲" : "لماذا هذه المادة؟ ▼"}
                   </button>
                   {whyOpen === subj.name && (
-                    <p className="mt-2 text-[12.5px] leading-relaxed px-1" style={{ color: "var(--text)" }}>
+                    <p className="mt-2 text-[14px] leading-relaxed px-1" style={{ color: "var(--text)" }}>
                       {whyReason(subj.name)}
                     </p>
                   )}
@@ -315,12 +315,12 @@ export default function StudyPlanPage() {
       {/* ── زر إعادة البناء ── */}
       <div className="px-5 mb-5">
         <button onClick={rebuild}
-          className="w-full rounded-2xl py-3.5 font-black text-[15px] flex items-center justify-center gap-2 transition active:scale-[0.98]"
+          className="w-full rounded-2xl py-3.5 font-black text-[17px] flex items-center justify-center gap-2 transition active:scale-[0.98]"
           style={{ background: "var(--surface2)", color: "var(--text-muted)", border: "1.5px dashed var(--border)" }}>
           <span>🔄</span>
           <span>إعادة بناء الجدول من الاستراتيجية</span>
         </button>
-        <p className="text-[12px] text-center mt-1.5" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[14px] text-center mt-1.5" style={{ color: "var(--text-muted)" }}>
           يُعيد الحساب التلقائي بناءً على موعدك وهدفك وجاهزيتك وتخصصك
         </p>
       </div>
@@ -340,12 +340,12 @@ export default function StudyPlanPage() {
       <div className="px-5 mb-5 rise rise-3">
         <div className="rounded-2xl px-4 py-3.5"
           style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-          <p className="text-[13px] font-black mb-1.5" style={{ color: "var(--text)" }}>مبرّر الاستراتيجية</p>
-          <p className="text-[12.5px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[15px] font-black mb-1.5" style={{ color: "var(--text)" }}>مبرّر الاستراتيجية</p>
+          <p className="text-[14px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
             {strategy.rationale}
           </p>
           {strategy.schoolFinalsNote && (
-            <p className="text-[12px] mt-2 font-bold" style={{ color: "var(--gold)" }}>
+            <p className="text-[14px] mt-2 font-bold" style={{ color: "var(--gold)" }}>
               ⚠️ {strategy.schoolFinalsNote}
             </p>
           )}
@@ -362,9 +362,9 @@ export default function StudyPlanPage() {
             <Link key={item.href} href={item.href}
               className="rounded-2xl p-4 flex flex-col gap-1.5 transition active:scale-[0.97]"
               style={{ background: "var(--surface)", border: "1px solid var(--border)", textDecoration: "none" }}>
-              <span className="text-[22px]">{item.icon}</span>
-              <span className="text-[15px] font-black" style={{ color: "var(--text)" }}>{item.label}</span>
-              <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{item.desc}</span>
+              <span className="text-[25px]">{item.icon}</span>
+              <span className="text-[17px] font-black" style={{ color: "var(--text)" }}>{item.label}</span>
+              <span className="text-[14px]" style={{ color: "var(--text-muted)" }}>{item.desc}</span>
             </Link>
           ))}
         </div>

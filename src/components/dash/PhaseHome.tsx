@@ -21,7 +21,7 @@ interface Tile { icon: string; title: string; desc: string; href?: string; event
 function TileCard({ t }: { t: Tile }) {
   const inner = (
     <>
-      <span className="text-[20px] leading-none flex-shrink-0" aria-hidden="true">{t.icon}</span>
+      <span className="text-[23px] leading-none flex-shrink-0" aria-hidden="true">{t.icon}</span>
       <span className="flex flex-col min-w-0">
         <span className="t-body font-black leading-tight" style={{ color: "var(--text)" }}>{t.title}</span>
         <span className="t-caption truncate" style={{ color: "var(--text-muted)" }}>{t.desc}</span>
@@ -54,13 +54,13 @@ function WideAction({ href, icon, title, desc, tone = "gold" }: {
     <Link href={href}
       className="rounded-2xl px-4 py-3 flex items-center gap-3 text-right no-underline transition active:scale-[0.98]"
       style={{ background: `color-mix(in srgb, ${base} 10%, var(--surface))`, border: `1px solid color-mix(in srgb, ${base} 28%, transparent)` }}>
-      <span className="w-11 h-11 rounded-2xl flex items-center justify-center text-[22px] leading-none flex-shrink-0"
+      <span className="w-11 h-11 rounded-2xl flex items-center justify-center text-[25px] leading-none flex-shrink-0"
         style={{ background: `color-mix(in srgb, ${base} 16%, transparent)` }} aria-hidden="true">{icon}</span>
       <div className="flex-1 min-w-0">
         <p className="t-body font-black leading-tight" style={{ color: "var(--text)" }}>{title}</p>
         <p className="t-caption mt-0.5" style={{ color: "var(--text-muted)" }}>{desc}</p>
       </div>
-      <span className="text-[18px] flex-shrink-0" style={{ color: base }} aria-hidden="true">←</span>
+      <span className="text-[20px] flex-shrink-0" style={{ color: base }} aria-hidden="true">←</span>
     </Link>
   );
 }

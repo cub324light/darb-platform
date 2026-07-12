@@ -31,8 +31,8 @@ function RecCard({ r, onDismiss, onAct, onAccept }: {
   const inner = (
     <div className="flex items-center justify-between gap-3">
       <div className="min-w-0">
-        <p className="text-[15px] font-black" style={{ color: c }}>{r.title}</p>
-        <p className="text-[13px] mt-0.5 leading-relaxed" style={{ color: "var(--text-muted)" }}>{r.reason}</p>
+        <p className="text-[17px] font-black" style={{ color: c }}>{r.title}</p>
+        <p className="text-[15px] mt-0.5 leading-relaxed" style={{ color: "var(--text-muted)" }}>{r.reason}</p>
       </div>
       <span className="text-lg font-black flex-shrink-0" style={{ color: c }}>←</span>
     </div>
@@ -58,7 +58,7 @@ function RecCard({ r, onDismiss, onAct, onAccept }: {
       <button
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDismiss(r); }}
         aria-label="تجاهل"
-        className="absolute top-1.5 left-1.5 w-6 h-6 rounded-full flex items-center justify-center text-[12px] font-bold"
+        className="absolute top-1.5 left-1.5 w-6 h-6 rounded-full flex items-center justify-center text-[14px] font-bold"
         style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
         ✕
       </button>
@@ -78,11 +78,11 @@ function PromoCard({ r, onAccept }: { r: Recommendation; onAccept: (r: Recommend
       }}>
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-[15px] font-black" style={{ color: "var(--text)" }}>{r.title}</p>
-          {r.subtitle && <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>{r.subtitle}</p>}
-          <p className="text-[12.5px] mt-1 leading-relaxed" style={{ color: "var(--text-muted)" }}>{r.reason}</p>
+          <p className="text-[17px] font-black" style={{ color: "var(--text)" }}>{r.title}</p>
+          {r.subtitle && <p className="text-[15px] mt-0.5" style={{ color: "var(--text-muted)" }}>{r.subtitle}</p>}
+          <p className="text-[14px] mt-1 leading-relaxed" style={{ color: "var(--text-muted)" }}>{r.reason}</p>
         </div>
-        <span className="text-[22px] flex-shrink-0">🏛️</span>
+        <span className="text-[25px] flex-shrink-0">🏛️</span>
       </div>
     </Link>
   );

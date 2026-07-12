@@ -113,19 +113,19 @@ export default function RetentionHost() {
   return (
     <div className="mb-3 flex items-center gap-3 rounded-2xl px-4 py-3"
       style={{ background: `color-mix(in srgb, ${tint} 9%, var(--surface))`, border: `1px solid color-mix(in srgb, ${tint} 30%, var(--border))` }}>
-      <span className="text-[22px] leading-none flex-shrink-0" aria-hidden="true">{emoji}</span>
+      <span className="text-[25px] leading-none flex-shrink-0" aria-hidden="true">{emoji}</span>
       <div className="flex-1 min-w-0">
-        <p className="text-[14px] font-black" style={{ color: "var(--text)" }}>{title}</p>
-        <p className="text-[12.5px] leading-snug" style={{ color: "var(--text-dim)" }}>{text}</p>
+        <p className="text-[16px] font-black" style={{ color: "var(--text)" }}>{title}</p>
+        <p className="text-[14px] leading-snug" style={{ color: "var(--text-dim)" }}>{text}</p>
       </div>
       {action && (action.href
-        ? <a href={action.href} className="text-[12.5px] font-black px-3 py-1.5 rounded-lg no-underline flex-shrink-0 whitespace-nowrap"
+        ? <a href={action.href} className="text-[14px] font-black px-3 py-1.5 rounded-lg no-underline flex-shrink-0 whitespace-nowrap"
             style={{ background: `color-mix(in srgb, ${tint} 16%, transparent)`, color: tint }}>{action.label}</a>
-        : <button onClick={action.onClick} className="text-[12.5px] font-black px-3 py-1.5 rounded-lg flex-shrink-0 whitespace-nowrap"
+        : <button onClick={action.onClick} className="text-[14px] font-black px-3 py-1.5 rounded-lg flex-shrink-0 whitespace-nowrap"
             style={{ background: `color-mix(in srgb, ${tint} 16%, transparent)`, color: tint }}>{action.label}</button>
       )}
       <button onClick={() => setDismissed(true)} aria-label="إغلاق"
-        className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[13px] transition active:scale-90"
+        className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[15px] transition active:scale-90"
         style={{ color: "var(--text-muted)", background: "var(--surface2)" }}>✕</button>
     </div>
   );

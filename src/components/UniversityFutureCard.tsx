@@ -65,10 +65,10 @@ export default function UniversityFutureCard({ onOpenTab }: { onOpenTab?: () => 
     <div className="rounded-3xl p-4 flex flex-col gap-3"
       style={{ background: "color-mix(in srgb, var(--accent) 6%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 16%, transparent)" }}>
       <div className="flex items-center gap-2">
-        <span className="text-[18px]">🎓</span>
-        <p className="text-[14px] font-black flex-1" style={{ color: "var(--text)" }}>مستقبلي الجامعي</p>
+        <span className="text-[20px]">🎓</span>
+        <p className="text-[16px] font-black flex-1" style={{ color: "var(--text)" }}>مستقبلي الجامعي</p>
         {onOpenTab && (
-          <button onClick={onOpenTab} className="text-[12px] font-bold px-2" style={{ color: "var(--accent-light)" }}>
+          <button onClick={onOpenTab} className="text-[14px] font-bold px-2" style={{ color: "var(--accent-light)" }}>
             عرض الكل ←
           </button>
         )}
@@ -76,27 +76,27 @@ export default function UniversityFutureCard({ onOpenTab }: { onOpenTab?: () => 
 
       <div className="flex flex-col gap-1">
         {majorName && (
-          <p className="text-[15px] font-black" style={{ color: "var(--text)" }}>{majorName}</p>
+          <p className="text-[17px] font-black" style={{ color: "var(--text)" }}>{majorName}</p>
         )}
         {uniName && (
-          <p className="text-[12.5px] font-semibold" style={{ color: "var(--text-muted)" }}>🏛️ {uniName}</p>
+          <p className="text-[14px] font-semibold" style={{ color: "var(--text-muted)" }}>🏛️ {uniName}</p>
         )}
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
         {readiness.hasData ? (
-          <span className="text-[12px] font-black px-2.5 py-1 rounded-full"
+          <span className="text-[14px] font-black px-2.5 py-1 rounded-full"
             style={{ background: `color-mix(in srgb, ${levelColor} 14%, transparent)`, color: levelColor }}>
             {readiness.icon} الوصول: {readiness.level} ({ar(readiness.score)}٪)
           </span>
         ) : (
-          <span className="text-[12px] font-bold px-2.5 py-1 rounded-full"
+          <span className="text-[14px] font-bold px-2.5 py-1 rounded-full"
             style={{ background: "var(--surface2)", color: "var(--text-muted)" }}>
             أضف نتائجك لحساب مؤشر الوصول
           </span>
         )}
         {exam && (
-          <span className="text-[12px] font-bold px-2.5 py-1 rounded-full"
+          <span className="text-[14px] font-bold px-2.5 py-1 rounded-full"
             style={{ background: "var(--surface2)", color: "var(--accent-light)" }}>
             ⏳ {ar(exam.days)} يوم لـ{exam.label}
           </span>
@@ -104,7 +104,7 @@ export default function UniversityFutureCard({ onOpenTab }: { onOpenTab?: () => 
       </div>
 
       <button onClick={askDuwairb}
-        className="rounded-2xl py-2.5 text-[13px] font-black transition active:scale-[0.97]"
+        className="rounded-2xl py-2.5 text-[15px] font-black transition active:scale-[0.97]"
         style={{ background: "var(--accent)", color: "#fff" }}>
         🤖 كيف أصل لهذا التخصص؟
       </button>

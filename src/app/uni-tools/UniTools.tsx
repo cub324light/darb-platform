@@ -55,10 +55,10 @@ function Field({ label, value, onChange, placeholder }: {
 }) {
   return (
     <label className="flex flex-col gap-1 flex-1 min-w-[120px]">
-      <span className="text-[11px] font-black" style={{ color: "var(--text-muted)" }}>{label}</span>
+      <span className="text-[12px] font-black" style={{ color: "var(--text-muted)" }}>{label}</span>
       <input type="number" inputMode="decimal" value={value} placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-xl px-3 py-2.5 text-[14px] font-bold font-mono-nums outline-none"
+        className="w-full rounded-xl px-3 py-2.5 text-[16px] font-bold font-mono-nums outline-none"
         style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}
         onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
         onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
@@ -70,8 +70,8 @@ function Field({ label, value, onChange, placeholder }: {
 function ResultRow({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-[12.5px] font-bold" style={{ color: "var(--text-muted)" }}>{label}</span>
-      <span className="text-[14px] font-black font-mono-nums" style={{ color: color ?? "var(--text)" }}>{value}</span>
+      <span className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>{label}</span>
+      <span className="text-[16px] font-black font-mono-nums" style={{ color: color ?? "var(--text)" }}>{value}</span>
     </div>
   );
 }
@@ -89,7 +89,7 @@ function ResultCard({ children }: { children: React.ReactNode }) {
 /* تنويه استرشادي موحّد */
 function Disclaimer({ extra }: { extra?: string }) {
   return (
-    <p className="text-[10.5px] font-bold leading-relaxed" style={{ color: "var(--text-muted)" }}>
+    <p className="text-[12px] font-bold leading-relaxed" style={{ color: "var(--text-muted)" }}>
       ⚖️ {UNI_TOOLS_DISCLAIMER}{extra ? ` — ${extra}` : ""}
     </p>
   );
@@ -99,7 +99,7 @@ function Disclaimer({ extra }: { extra?: string }) {
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button onClick={onClick} aria-pressed={active}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-black whitespace-nowrap flex-shrink-0 transition active:scale-95"
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[14px] font-black whitespace-nowrap flex-shrink-0 transition active:scale-95"
       style={{
         background: active ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
         color: active ? "var(--accent-light)" : "var(--text-muted)",
@@ -214,7 +214,7 @@ export default function UniTools() {
       {/* ── زر الرجوع للوحة البطاقات عند فتح أداة ── */}
       {tab !== null && (
         <button onClick={() => setTab(null)}
-          className="flex items-center gap-2 self-start px-3.5 py-2 rounded-xl text-[13px] font-black transition active:scale-95"
+          className="flex items-center gap-2 self-start px-3.5 py-2 rounded-xl text-[15px] font-black transition active:scale-95"
           style={{ background: "var(--surface)", color: "var(--accent-light)", border: "1px solid var(--border)" }}>
           <span aria-hidden="true">←</span> رجوع للأدوات
         </button>
@@ -224,7 +224,7 @@ export default function UniTools() {
       {tab === "gpa" && (
         <section className="ds-card ds-stack-tight">
           <div className="flex items-center gap-2">
-            <span className="text-[18px]" aria-hidden="true">🧮</span>
+            <span className="text-[20px]" aria-hidden="true">🧮</span>
             <p className="t-body font-black flex-1" style={{ color: "var(--text)" }}>حاسبة المعدل</p>
             <div className="flex gap-1.5">
               {([5, 4] as const).map((sys) => (
@@ -241,32 +241,32 @@ export default function UniTools() {
               <div key={i} className="flex items-center gap-2">
                 <input value={c.name} placeholder={`مادة ${ar(i + 1, 0)} (اختياري)`}
                   onChange={(e) => setCourse(i, { name: e.target.value })}
-                  className="flex-1 min-w-0 rounded-xl px-3 py-2.5 text-[13px] font-bold outline-none"
+                  className="flex-1 min-w-0 rounded-xl px-3 py-2.5 text-[15px] font-bold outline-none"
                   style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}
                   onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
                   onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
                 <input type="number" inputMode="numeric" value={c.hours} placeholder="ساعات"
                   aria-label={`ساعات مادة ${ar(i + 1, 0)}`}
                   onChange={(e) => setCourse(i, { hours: e.target.value })}
-                  className="w-[64px] rounded-xl px-2 py-2.5 text-[13px] font-bold font-mono-nums text-center outline-none flex-shrink-0"
+                  className="w-[64px] rounded-xl px-2 py-2.5 text-[15px] font-bold font-mono-nums text-center outline-none flex-shrink-0"
                   style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }} />
                 <select value={c.letter} aria-label={`تقدير مادة ${ar(i + 1, 0)}`}
                   onChange={(e) => setCourse(i, { letter: e.target.value })}
-                  className="w-[72px] rounded-xl px-2 py-2.5 text-[13px] font-black outline-none flex-shrink-0"
+                  className="w-[72px] rounded-xl px-2 py-2.5 text-[15px] font-black outline-none flex-shrink-0"
                   style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>
                   {GRADE_SCALE.map((g) => (
                     <option key={g.letter} value={g.letter}>{g.letter}</option>
                   ))}
                 </select>
                 <button onClick={() => removeCourse(i)} aria-label={`حذف مادة ${ar(i + 1, 0)}`}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[13px] font-black flex-shrink-0 transition active:scale-95"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[15px] font-black flex-shrink-0 transition active:scale-95"
                   style={{ background: "color-mix(in srgb, var(--danger) 10%, transparent)", color: "var(--danger)" }}>
                   ✕
                 </button>
               </div>
             ))}
             <button onClick={addCourse}
-              className="rounded-xl px-3 py-2.5 text-[13px] font-black transition active:scale-95"
+              className="rounded-xl px-3 py-2.5 text-[15px] font-black transition active:scale-95"
               style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", color: "var(--accent-light)", border: "1px dashed color-mix(in srgb, var(--accent) 45%, transparent)" }}>
               + أضف مادة
             </button>
@@ -277,7 +277,7 @@ export default function UniTools() {
             {sem != null ? (
               <ResultRow label={`المعدل الفصلي (${ar(semHours, 1)} ساعة)`} value={`${ar(sem)} من ${ar(GPA_MAX[system], 0)}`} color="var(--accent-light)" />
             ) : (
-              <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>
                 أدخل ساعات موادك وتقديراتها ليظهر معدلك الفصلي.
               </p>
             )}
@@ -285,7 +285,7 @@ export default function UniTools() {
 
           {/* التراكمي الجديد */}
           <div className="flex flex-col gap-2">
-            <p className="text-[12.5px] font-black" style={{ color: "var(--text)" }}>تراكمي</p>
+            <p className="text-[14px] font-black" style={{ color: "var(--text)" }}>تراكمي</p>
             <div className="flex flex-wrap gap-2">
               <Field label={`معدلك الحالي (من ${ar(GPA_MAX[system], 0)})`} value={state.prevGpa ?? ""}
                 onChange={(v) => update({ prevGpa: v })} placeholder="مثال: 4.2" />
@@ -302,16 +302,16 @@ export default function UniTools() {
 
           {/* وش أحتاج؟ */}
           <div className="flex flex-col gap-2">
-            <p className="text-[12.5px] font-black" style={{ color: "var(--text)" }}>وش أحتاج؟</p>
+            <p className="text-[14px] font-black" style={{ color: "var(--text)" }}>وش أحتاج؟</p>
             <Field label={`هدفك التراكمي (من ${ar(GPA_MAX[system], 0)})`} value={state.targetGpa ?? ""}
               onChange={(v) => update({ targetGpa: v })} placeholder="مثال: 4.5" />
             {target != null && !prevValid && (
-              <p className="text-[11.5px] font-bold" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[13px] font-bold" style={{ color: "var(--text-muted)" }}>
                 أدخل معدلك الحالي وساعاتك المنجزة فوق أولاً.
               </p>
             )}
             {target != null && prevValid && semHours <= 0 && (
-              <p className="text-[11.5px] font-bold" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[13px] font-bold" style={{ color: "var(--text-muted)" }}>
                 أضف مواد هذا الفصل بساعاتها فوق ليُحسب المطلوب.
               </p>
             )}
@@ -340,7 +340,7 @@ export default function UniTools() {
       {tab === "absence" && (
         <section className="ds-card ds-stack-tight">
           <div className="flex items-center gap-2">
-            <span className="text-[18px]" aria-hidden="true">📅</span>
+            <span className="text-[20px]" aria-hidden="true">📅</span>
             <p className="t-body font-black flex-1" style={{ color: "var(--text)" }}>حاسبة الغياب</p>
           </div>
 
@@ -371,13 +371,13 @@ export default function UniTools() {
                   style={{ width: `${Math.min(1, abRes.usedOfLimit) * 100}%`, background: abBarColor }} />
               </div>
               {abRes.exceeded && (
-                <p className="text-[12px] font-black" style={{ color: "var(--danger)" }}>
+                <p className="text-[14px] font-black" style={{ color: "var(--danger)" }}>
                   ⛔ تجاوزت حد الحرمان — راجع أستاذ المادة وعمادة كليتك فوراً.
                 </p>
               )}
             </ResultCard>
           ) : (
-            <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>
               أدخل ساعات المادة الأسبوعية ليظهر سقفك.
             </p>
           )}
@@ -390,7 +390,7 @@ export default function UniTools() {
       {tab === "final" && (
         <section className="ds-card ds-stack-tight">
           <div className="flex items-center gap-2">
-            <span className="text-[18px]" aria-hidden="true">📝</span>
+            <span className="text-[20px]" aria-hidden="true">📝</span>
             <p className="t-body font-black flex-1" style={{ color: "var(--text)" }}>حاسبة الفاينل</p>
           </div>
 
@@ -421,7 +421,7 @@ export default function UniTools() {
               )}
             </ResultCard>
           ) : (
-            <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>
               عبّئ الحقول الأربعة ليظهر المطلوب في الفاينل.
             </p>
           )}
@@ -434,20 +434,20 @@ export default function UniTools() {
       {tab === "convert" && (
         <section className="ds-card ds-stack-tight">
           <div className="flex items-center gap-2">
-            <span className="text-[18px]" aria-hidden="true">🔄</span>
+            <span className="text-[20px]" aria-hidden="true">🔄</span>
             <p className="t-body font-black flex-1" style={{ color: "var(--text)" }}>تحويل المعدل</p>
           </div>
 
           <Field label="معدلك" value={cvIn.value ?? ""} onChange={(v) => setCv({ value: v })} placeholder="مثال: 4.3" />
 
           <div className="flex flex-col gap-2">
-            <p className="text-[11px] font-black" style={{ color: "var(--text-muted)" }}>من سلم</p>
+            <p className="text-[12px] font-black" style={{ color: "var(--text-muted)" }}>من سلم</p>
             <div className="flex gap-1.5 flex-wrap">
               {SCALES.map((s) => (
                 <Chip key={s.id} active={cvFrom === s.id} onClick={() => setCv({ from: s.id })}>{s.label}</Chip>
               ))}
             </div>
-            <p className="text-[11px] font-black" style={{ color: "var(--text-muted)" }}>إلى سلم</p>
+            <p className="text-[12px] font-black" style={{ color: "var(--text-muted)" }}>إلى سلم</p>
             <div className="flex gap-1.5 flex-wrap">
               {SCALES.map((s) => (
                 <Chip key={s.id} active={cvTo === s.id} onClick={() => setCv({ to: s.id })}>{s.label}</Chip>
@@ -460,7 +460,7 @@ export default function UniTools() {
               <ResultRow label={`${ar(Math.min(Math.max(cvVal ?? 0, 0), cvFrom))} من ${ar(cvFrom, 0)} تعادل تقريباً`}
                 value={`${ar(cvOut)} من ${ar(cvTo, 0)}`} color="var(--accent-light)" />
               {cvVal != null && (cvVal > cvFrom || cvVal < 0) && (
-                <p className="text-[11.5px] font-bold" style={{ color: "var(--gold)" }}>
+                <p className="text-[13px] font-bold" style={{ color: "var(--gold)" }}>
                   قيمتك خارج حدود السلم المصدر — قُصّت إلى حده.
                 </p>
               )}

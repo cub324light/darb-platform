@@ -96,16 +96,16 @@ export default function CoachReportView() {
       {/* رأس التقرير */}
       <div className="rounded-3xl p-5"
         style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
-        <p className="text-[13px] font-bold mb-1" style={{ color: "var(--text-muted)" }}>📊 تقريرك الأسبوعي</p>
-        <p className="text-[22px] font-black mb-0.5" style={{ color: "var(--text)" }}>
+        <p className="text-[15px] font-bold mb-1" style={{ color: "var(--text-muted)" }}>📊 تقريرك الأسبوعي</p>
+        <p className="text-[25px] font-black mb-0.5" style={{ color: "var(--text)" }}>
           {fmtMins(weekly.mins)}
           {weekly.deltaPct != null && (
-            <span className="text-[14px] font-bold mr-2" style={{ color: (weekly.deltaPct ?? 0) >= 0 ? "var(--success)" : "var(--danger)" }}>
+            <span className="text-[16px] font-bold mr-2" style={{ color: (weekly.deltaPct ?? 0) >= 0 ? "var(--success)" : "var(--danger)" }}>
               {deltaSign} {deltaAbs}٪
             </span>
           )}
         </p>
-        {goalLine && <p className="text-[13px] font-semibold" style={{ color: "var(--accent-light)" }}>🎯 {goalLine}</p>}
+        {goalLine && <p className="text-[15px] font-semibold" style={{ color: "var(--accent-light)" }}>🎯 {goalLine}</p>}
       </div>
 
       {/* الاستراتيجية الموحّدة — نفس قرار الخطة والخريطة ودويرب */}
@@ -115,10 +115,10 @@ export default function CoachReportView() {
       {uniReadiness && uniReadiness.hasData && (
         <div className="rounded-3xl p-4 flex items-center gap-3"
           style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-          <span className="text-[24px]">{uniReadiness.icon}</span>
+          <span className="text-[27px]">{uniReadiness.icon}</span>
           <div className="flex-1 min-w-0">
-            <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>🎓 مؤشر الوصول الجامعي{uniLabel ? ` — ${uniLabel}` : ""}</p>
-            <p className="text-[15px] font-black"
+            <p className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>🎓 مؤشر الوصول الجامعي{uniLabel ? ` — ${uniLabel}` : ""}</p>
+            <p className="text-[17px] font-black"
               style={{ color: uniReadiness.icon === "🟢" ? "var(--success)" : uniReadiness.icon === "🟡" ? "var(--gold)" : "var(--danger)" }}>
               {uniReadiness.level} ({ar(uniReadiness.score)}٪)
             </p>
@@ -138,10 +138,10 @@ export default function CoachReportView() {
         ].map((tile) => (
           <div key={tile.label} className="rounded-2xl px-4 py-3.5 flex flex-col gap-1"
             style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-            <p className="text-[11px] font-bold" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>
               <span aria-hidden="true">{tile.icon}</span> {tile.label}
             </p>
-            <p className="text-[18px] font-black" style={{ color: "var(--text)" }}>{tile.value}</p>
+            <p className="text-[20px] font-black" style={{ color: "var(--text)" }}>{tile.value}</p>
           </div>
         ))}
       </div>
@@ -151,9 +151,9 @@ export default function CoachReportView() {
         style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
         <div className="flex items-center gap-3">
           <div className="flex-1">
-            <p className="text-[13px] font-bold" style={{ color: "var(--text-muted)" }}>🎯 تقييم دويرب</p>
-            <p className="text-[28px] font-black leading-tight" style={{ color: scoreColor }}>
-              {ar(score.total)}<span className="text-[16px] font-bold" style={{ color: "var(--text-muted)" }}>/100</span>
+            <p className="text-[15px] font-bold" style={{ color: "var(--text-muted)" }}>🎯 تقييم دويرب</p>
+            <p className="text-[32px] font-black leading-tight" style={{ color: scoreColor }}>
+              {ar(score.total)}<span className="text-[18px] font-bold" style={{ color: "var(--text-muted)" }}>/100</span>
             </p>
           </div>
           {/* شريط دائري بسيط */}
@@ -169,12 +169,12 @@ export default function CoachReportView() {
         <div className="flex flex-col gap-1.5">
           {Object.values(score.components).map((c) => (
             <div key={c.label} className="flex items-center gap-2">
-              <p className="text-[12px] font-bold w-24 flex-shrink-0" style={{ color: "var(--text-muted)" }}>{c.label}</p>
+              <p className="text-[14px] font-bold w-24 flex-shrink-0" style={{ color: "var(--text-muted)" }}>{c.label}</p>
               <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--surface2)" }}>
                 <div className="h-full rounded-full transition-all"
                   style={{ width: `${(c.score / c.max) * 100}%`, background: "var(--accent)" }} />
               </div>
-              <p className="text-[11px] font-bold w-8 text-left" style={{ color: "var(--text-muted)" }}>{c.score}/{c.max}</p>
+              <p className="text-[12px] font-bold w-8 text-left" style={{ color: "var(--text-muted)" }}>{c.score}/{c.max}</p>
             </div>
           ))}
         </div>
@@ -184,10 +184,10 @@ export default function CoachReportView() {
       {score.strengths.length > 0 && (
         <div className="rounded-3xl p-4"
           style={{ background: "color-mix(in srgb, var(--success) 7%, var(--surface))", border: "1px solid color-mix(in srgb, var(--success) 20%, transparent)" }}>
-          <p className="text-[13px] font-black mb-2.5" style={{ color: "var(--success)" }}>✅ إنجازاتك</p>
+          <p className="text-[15px] font-black mb-2.5" style={{ color: "var(--success)" }}>✅ إنجازاتك</p>
           <ul className="flex flex-col gap-1.5">
             {score.strengths.map((s) => (
-              <li key={s} className="text-[13px] font-semibold flex items-start gap-1.5" style={{ color: "var(--text)" }}>
+              <li key={s} className="text-[15px] font-semibold flex items-start gap-1.5" style={{ color: "var(--text)" }}>
                 <span aria-hidden="true">•</span>{s}
               </li>
             ))}
@@ -199,10 +199,10 @@ export default function CoachReportView() {
       {score.gaps.length > 0 && (
         <div className="rounded-3xl p-4"
           style={{ background: "color-mix(in srgb, var(--gold) 6%, var(--surface))", border: "1px solid color-mix(in srgb, var(--gold) 20%, transparent)" }}>
-          <p className="text-[13px] font-black mb-2.5" style={{ color: "var(--gold)" }}>⚠️ ما يحتاج تحسين</p>
+          <p className="text-[15px] font-black mb-2.5" style={{ color: "var(--gold)" }}>⚠️ ما يحتاج تحسين</p>
           <ul className="flex flex-col gap-1.5">
             {score.gaps.map((g) => (
-              <li key={g} className="text-[13px] font-semibold flex items-start gap-1.5" style={{ color: "var(--text)" }}>
+              <li key={g} className="text-[15px] font-semibold flex items-start gap-1.5" style={{ color: "var(--text)" }}>
                 <span aria-hidden="true">•</span>{g}
               </li>
             ))}
@@ -214,11 +214,11 @@ export default function CoachReportView() {
       {opps.length > 0 && (
         <div className="rounded-3xl p-4 flex flex-col gap-3"
           style={{ background: "color-mix(in srgb, var(--danger) 5%, var(--surface))", border: "1px solid color-mix(in srgb, var(--danger) 18%, transparent)" }}>
-          <p className="text-[13px] font-black" style={{ color: "var(--danger)" }}>🎯 توصية دويرب للأسبوع القادم</p>
+          <p className="text-[15px] font-black" style={{ color: "var(--danger)" }}>🎯 توصية دويرب للأسبوع القادم</p>
           {opps.map((o, i) => (
             <div key={i} className="flex flex-col gap-1">
-              <p className="text-[13px] font-semibold" style={{ color: "var(--text)" }}>{o.message}</p>
-              <p className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>← {o.solution}</p>
+              <p className="text-[15px] font-semibold" style={{ color: "var(--text)" }}>{o.message}</p>
+              <p className="text-[15px] font-bold" style={{ color: "var(--accent-light)" }}>← {o.solution}</p>
             </div>
           ))}
         </div>
@@ -228,8 +228,8 @@ export default function CoachReportView() {
       {opps.length === 0 && score.total >= 50 && (
         <div className="rounded-3xl p-4"
           style={{ background: "color-mix(in srgb, var(--accent) 6%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
-          <p className="text-[13px] font-black mb-1" style={{ color: "var(--accent-light)" }}>🎯 توصية دويرب للأسبوع القادم</p>
-          <p className="text-[13px] font-semibold" style={{ color: "var(--text)" }}>
+          <p className="text-[15px] font-black mb-1" style={{ color: "var(--accent-light)" }}>🎯 توصية دويرب للأسبوع القادم</p>
+          <p className="text-[15px] font-semibold" style={{ color: "var(--text)" }}>
             {score.total >= 75
               ? "أنت على المسار الصحيح — حافظ على هذا الإيقاع وركّز على التدريب بأسئلة مشابهة للاختبار الحقيقي."
               : "استمر في بناء عادة المذاكرة اليومية — الاتساق هو أقوى سلاح لتحسين تقييمك."}
@@ -240,12 +240,12 @@ export default function CoachReportView() {
       {/* CTAs */}
       <div className="grid grid-cols-2 gap-2">
         <a href="/orbit"
-          className="py-3 rounded-2xl text-[13px] font-black transition active:scale-[0.97] flex items-center justify-center gap-1.5 no-underline"
+          className="py-3 rounded-2xl text-[15px] font-black transition active:scale-[0.97] flex items-center justify-center gap-1.5 no-underline"
           style={{ background: "var(--accent)", color: "#fff" }}>
           ⏱️ ابدأ جلسة الآن
         </a>
         <a href="/roadmap"
-          className="py-3 rounded-2xl text-[13px] font-bold transition active:scale-[0.97] flex items-center justify-center gap-1.5 no-underline"
+          className="py-3 rounded-2xl text-[15px] font-bold transition active:scale-[0.97] flex items-center justify-center gap-1.5 no-underline"
           style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
           🗺️ افتح الخريطة
         </a>

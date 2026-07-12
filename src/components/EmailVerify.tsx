@@ -56,20 +56,20 @@ export function EmailVerifyNotice({ message }: { message?: string }) {
   return (
     <div className="rounded-xl px-4 py-3 flex flex-col gap-2"
       style={{ background: "color-mix(in srgb, var(--gold) 12%, transparent)", border: "1.5px solid color-mix(in srgb, var(--gold) 45%, var(--border))" }}>
-      <p className="text-[13px] font-bold text-center" style={{ color: "var(--gold)" }}>
+      <p className="text-[15px] font-bold text-center" style={{ color: "var(--gold)" }}>
         ✉️ {message ?? "وثّق بريدك للمشاركة في المجتمع"}
       </p>
       {note && (
-        <p className="text-[12px] text-center" style={{ color: "var(--text-muted)" }}>{note}</p>
+        <p className="text-[14px] text-center" style={{ color: "var(--text-muted)" }}>{note}</p>
       )}
       <div className="flex gap-2">
         <button onClick={resend} disabled={busy !== null}
-          className="flex-1 rounded-lg py-2 text-[13px] font-bold transition active:scale-[0.98]"
+          className="flex-1 rounded-lg py-2 text-[15px] font-bold transition active:scale-[0.98]"
           style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)", opacity: busy ? 0.6 : 1 }}>
           {busy === "resend" ? "..." : "أعد الإرسال"}
         </button>
         <button onClick={refresh} disabled={busy !== null}
-          className="flex-1 rounded-lg py-2 text-[13px] font-bold text-white transition active:scale-[0.98]"
+          className="flex-1 rounded-lg py-2 text-[15px] font-bold text-white transition active:scale-[0.98]"
           style={{ background: "var(--gold)", opacity: busy ? 0.6 : 1 }}>
           {busy === "refresh" ? "..." : "وثّقت، حدّث"}
         </button>

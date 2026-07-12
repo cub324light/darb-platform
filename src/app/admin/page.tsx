@@ -160,7 +160,7 @@ function ProgressCell({ pct }: { pct: number }) {
       <div className="w-14 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
         <div className="h-full rounded-full" style={{ width: `${pct}%`, background: pct === 100 ? "#10B981" : "var(--accent)" }} />
       </div>
-      <span className="text-[11px] font-mono-nums" style={{ color: pct > 0 ? "var(--text-dim)" : "var(--text-muted)" }}>{pct}%</span>
+      <span className="text-[12px] font-mono-nums" style={{ color: pct > 0 ? "var(--text-dim)" : "var(--text-muted)" }}>{pct}%</span>
     </div>
   );
 }
@@ -656,7 +656,7 @@ export default function AdminPage() {
             درب
           </p>
           <p className="title-md text-center relative z-10" style={{ color: "var(--text)" }}>لوحة الإدارة</p>
-          <p className="text-[12px] text-center relative z-10" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[14px] text-center relative z-10" style={{ color: "var(--text-muted)" }}>
             {checkingRole ? "جارٍ التحقق من صلاحياتك..." : "الطاقم يدخل تلقائياً بحسابه · أو كلمة سر المالك"}
           </p>
           <div className="relative w-full z-10">
@@ -692,13 +692,13 @@ export default function AdminPage() {
           </div>
           {error && (
             <div className="rounded-xl px-4 py-3" style={{ background: "color-mix(in srgb, var(--danger) 12%, transparent)", border: "1.5px solid var(--danger)" }}>
-              <p className="text-center text-[14px] font-semibold" style={{ color: "var(--danger)", whiteSpace: "pre-line", wordBreak: "break-word" }}>{error}</p>
+              <p className="text-center text-[16px] font-semibold" style={{ color: "var(--danger)", whiteSpace: "pre-line", wordBreak: "break-word" }}>{error}</p>
             </div>
           )}
           {pingMsg && (
             <div className="rounded-xl px-4 py-3 text-right" dir="rtl"
               style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-              <p className="text-[12.5px] font-semibold leading-relaxed"
+              <p className="text-[14px] font-semibold leading-relaxed"
                 style={{ color: pingMsg.startsWith("✅") ? "#10B981" : "var(--danger)", whiteSpace: "pre-line", wordBreak: "break-word" }}>
                 {pingMsg}
               </p>
@@ -708,7 +708,7 @@ export default function AdminPage() {
             {loading ? "جاري التحقق..." : "دخول"}
           </button>
           <button onClick={ping} disabled={pinging || !pass.trim()}
-            className="text-[14px] text-center py-2 font-semibold relative z-10"
+            className="text-[16px] text-center py-2 font-semibold relative z-10"
             style={{ color: "var(--text-muted)", opacity: pass.trim() ? 1 : 0.5 }}>
             {pinging ? "يتحقق..." : "تشخيص اتصال Firebase"}
           </button>
@@ -733,27 +733,27 @@ export default function AdminPage() {
         <div>
           <div className="flex items-center gap-2">
             <p className="title-md" style={{ color: "var(--text)" }}>لوحة الإدارة</p>
-            <span className="text-[11px] font-black px-2 py-0.5 rounded-full"
+            <span className="text-[12px] font-black px-2 py-0.5 rounded-full"
               style={{ background: `color-mix(in srgb, ${ROLE_COLOR[myRole]} 16%, transparent)`, color: ROLE_COLOR[myRole] }}>
               {ROLE_LABEL[myRole]}
             </span>
           </div>
-          <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>{users.length} مستخدم مسجّل</p>
+          <p className="text-[17px]" style={{ color: "var(--text-muted)" }}>{users.length} مستخدم مسجّل</p>
         </div>
         <div className="flex items-center gap-2.5 flex-wrap">
           <input
             value={search} onChange={(e) => setSearch(e.target.value)}
             placeholder="ابحث باسم، إيميل، مسار، منطقة..."
-            className="rounded-2xl px-4 py-3 text-[15px] outline-none"
+            className="rounded-2xl px-4 py-3 text-[17px] outline-none"
             style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)", width: "240px" }}
           />
           <button onClick={refresh} disabled={refreshing}
-            className="rounded-2xl px-4 py-3 text-[14px] font-bold transition active:scale-[0.97]"
+            className="rounded-2xl px-4 py-3 text-[16px] font-bold transition active:scale-[0.97]"
             style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text-dim)", opacity: refreshing ? 0.5 : 1 }}>
             {refreshing ? "..." : "↻ تحديث"}
           </button>
           <button onClick={exportCsv} disabled={!users.length}
-            className="rounded-2xl px-4 py-3 text-[14px] font-bold transition active:scale-[0.97] text-white"
+            className="rounded-2xl px-4 py-3 text-[16px] font-bold transition active:scale-[0.97] text-white"
             style={{ background: "var(--accent)", opacity: users.length ? 1 : 0.5 }}>
             ⬇ تصدير CSV
           </button>
@@ -774,7 +774,7 @@ export default function AdminPage() {
           <div key={s.label} className="rounded-2xl p-4 flex flex-col gap-1"
             style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
             <p className="font-black text-2xl" style={{ color: "var(--accent-light)" }}>{s.val}</p>
-            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{s.label}</p>
+            <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>{s.label}</p>
           </div>
         ))}
       </div>
@@ -787,18 +787,18 @@ export default function AdminPage() {
             border: "1.5px solid color-mix(in srgb, var(--gold) 35%, var(--border))",
           }}>
           <div className="flex items-center gap-2 mb-1.5">
-            <p className="font-black text-[15px]" style={{ color: "var(--text)" }}>⚠️ مراجعة سنوية — القوائم المرجعية</p>
-            <span className="text-[11px] font-black px-2 py-0.5 rounded-full font-mono-nums"
+            <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>⚠️ مراجعة سنوية — القوائم المرجعية</p>
+            <span className="text-[12px] font-black px-2 py-0.5 rounded-full font-mono-nums"
               style={{ background: "color-mix(in srgb, var(--gold) 16%, transparent)", color: "var(--gold)" }}>
               {ANNUAL_REVIEW.length}
             </span>
           </div>
-          <p className="text-[12.5px] leading-relaxed mb-2.5" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[14px] leading-relaxed mb-2.5" style={{ color: "var(--text-muted)" }}>
             هذه القوائم في دليل القبول تتغير كل موسم قبول — حدّث بياناتها قبل فتح التقديم ثم ارفعها بـ npm run seed:content.
           </p>
           <div className="flex flex-wrap gap-1.5">
             {ANNUAL_REVIEW.map((r) => (
-              <span key={r.id} className="text-[12px] font-bold px-2.5 py-1 rounded-lg"
+              <span key={r.id} className="text-[14px] font-bold px-2.5 py-1 rounded-lg"
                 style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-dim)" }}>
                 {r.title}
               </span>
@@ -810,7 +810,7 @@ export default function AdminPage() {
       {/* قسم إدارة المصادر (قاعدة المعرفة) */}
       <div className="max-w-7xl mx-auto mb-6">
         <button onClick={() => setShowSources((v) => !v)}
-          className="flex items-center gap-2 mb-3 font-black text-[15px]"
+          className="flex items-center gap-2 mb-3 font-black text-[17px]"
           style={{ color: "var(--text)" }}>
           📚 إدارة المصادر (قاعدة المعرفة)
           <span style={{ color: "var(--text-muted)" }}>{showSources ? "▲" : "▼"}</span>
@@ -821,11 +821,11 @@ export default function AdminPage() {
       {/* قسم بلاغات المجلس */}
       <div className="max-w-7xl mx-auto mb-6">
         <button onClick={() => { const n = !showReports; setShowReports(n); if (n && reportsList.length === 0) loadReports(); }}
-          className="flex items-center gap-2 mb-3 font-black text-[15px]"
+          className="flex items-center gap-2 mb-3 font-black text-[17px]"
           style={{ color: "var(--text)" }}>
           ⚐ بلاغات المجلس
           {reportsList.length > 0 && (
-            <span className="text-[11px] font-black px-2 py-0.5 rounded-full"
+            <span className="text-[12px] font-black px-2 py-0.5 rounded-full"
               style={{ background: "color-mix(in srgb, var(--danger) 16%, transparent)", color: "var(--danger)", border: "1px solid var(--danger)" }}>
               {reportsList.length}
             </span>
@@ -835,43 +835,43 @@ export default function AdminPage() {
         {showReports && (
           <div className="flex flex-col gap-3">
             <button onClick={loadReports} disabled={reportsBusy}
-              className="self-start px-4 py-2 rounded-xl text-[13px] font-bold"
+              className="self-start px-4 py-2 rounded-xl text-[15px] font-bold"
               style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
               {reportsBusy ? "جارٍ التحديث..." : "🔄 تحديث"}
             </button>
             {reportsList.length === 0 ? (
-              <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>{reportsBusy ? "جارٍ التحميل..." : "ما فيه بلاغات معلّقة 🎉"}</p>
+              <p className="text-[16px]" style={{ color: "var(--text-muted)" }}>{reportsBusy ? "جارٍ التحميل..." : "ما فيه بلاغات معلّقة 🎉"}</p>
             ) : reportsList.map((r) => (
               <div key={r.id} className="rounded-2xl p-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
-                  <span className="text-[11px] font-black px-2 py-0.5 rounded-md"
+                  <span className="text-[12px] font-black px-2 py-0.5 rounded-md"
                     style={{ background: "color-mix(in srgb, var(--danger) 14%, transparent)", color: "var(--danger)", border: "1px solid color-mix(in srgb, var(--danger) 40%, transparent)" }}>
                     {REASON_AR[r.reason] ?? r.reason}
                   </span>
-                  <span className="font-bold text-[13px]" style={{ color: "var(--text)" }}>{r.reportedName || "طالب"}</span>
-                  <span className="text-[11px] mr-auto" style={{ color: "var(--text-muted)" }}>
+                  <span className="font-bold text-[15px]" style={{ color: "var(--text)" }}>{r.reportedName || "طالب"}</span>
+                  <span className="text-[12px] mr-auto" style={{ color: "var(--text-muted)" }}>
                     {r.createdAt ? new Date(r.createdAt).toLocaleString("ar-SA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
                   </span>
                 </div>
-                <p className="text-[14px] leading-relaxed whitespace-pre-wrap rounded-xl px-3 py-2 mb-2"
+                <p className="text-[16px] leading-relaxed whitespace-pre-wrap rounded-xl px-3 py-2 mb-2"
                   style={{ color: "var(--text)", background: "var(--surface2)", border: "1px solid var(--border)" }}>
                   {r.content || "—"}
                 </p>
-                {r.note && <p className="text-[12px] mb-2" style={{ color: "var(--text-muted)" }}>ملاحظة المبلّغ: {r.note}</p>}
-                <p className="text-[10px] mb-3" style={{ color: "var(--text-muted)" }}>uid: {r.reportedUid}</p>
+                {r.note && <p className="text-[14px] mb-2" style={{ color: "var(--text-muted)" }}>ملاحظة المبلّغ: {r.note}</p>}
+                <p className="text-[11px] mb-3" style={{ color: "var(--text-muted)" }}>uid: {r.reportedUid}</p>
                 <div className="flex gap-2 flex-wrap">
                   <button onClick={() => resolveReport(r.id, "delete")} disabled={reportsBusy}
-                    className="px-3 py-2 rounded-xl text-[13px] font-bold"
+                    className="px-3 py-2 rounded-xl text-[15px] font-bold"
                     style={{ background: "color-mix(in srgb, var(--danger) 12%, transparent)", border: "1.5px solid var(--danger)", color: "var(--danger)" }}>
                     🗑 احذف الرسالة
                   </button>
                   <button onClick={() => resolveReport(r.id, "block")} disabled={reportsBusy}
-                    className="px-3 py-2 rounded-xl text-[13px] font-bold"
+                    className="px-3 py-2 rounded-xl text-[15px] font-bold"
                     style={{ background: "color-mix(in srgb, #B45309 12%, transparent)", border: "1.5px solid #B45309", color: "#B45309" }}>
                     🚫 احظر المستخدم
                   </button>
                   <button onClick={() => resolveReport(r.id, "dismiss")} disabled={reportsBusy}
-                    className="px-3 py-2 rounded-xl text-[13px] font-bold"
+                    className="px-3 py-2 rounded-xl text-[15px] font-bold"
                     style={{ background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
                     تجاهل
                   </button>
@@ -885,7 +885,7 @@ export default function AdminPage() {
       {/* قسم ملاحظات المستخدمين */}
       <div className="max-w-7xl mx-auto mb-6">
         <button onClick={() => { const n = !showFeedback; setShowFeedback(n); if (n && fbList.length === 0) loadFeedback(); }}
-          className="flex items-center gap-2 mb-3 font-black text-[15px]"
+          className="flex items-center gap-2 mb-3 font-black text-[17px]"
           style={{ color: "var(--text)" }}>
           💬 ملاحظات المستخدمين
           <span style={{ color: "var(--text-muted)" }}>{showFeedback ? "▲" : "▼"}</span>
@@ -893,12 +893,12 @@ export default function AdminPage() {
         {showFeedback && (
           <div className="flex flex-col gap-3">
             <button onClick={loadFeedback} disabled={fbBusy}
-              className="self-start px-4 py-2 rounded-xl text-[13px] font-bold"
+              className="self-start px-4 py-2 rounded-xl text-[15px] font-bold"
               style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
               {fbBusy ? "جارٍ التحديث..." : "🔄 تحديث"}
             </button>
             {fbList.length === 0 ? (
-              <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>{fbBusy ? "جارٍ التحميل..." : "ما فيه ملاحظات بعد."}</p>
+              <p className="text-[16px]" style={{ color: "var(--text-muted)" }}>{fbBusy ? "جارٍ التحميل..." : "ما فيه ملاحظات بعد."}</p>
             ) : fbList.map((f) => {
               const k = f.kind === "feature" ? { icon: "💡", label: "اقتراح", color: "#10B981" }
                 : f.kind === "bug" ? { icon: "🐞", label: "مشكلة", color: "#EF4444" }
@@ -906,18 +906,18 @@ export default function AdminPage() {
               return (
                 <div key={f.id} className="rounded-2xl p-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <span className="text-[11px] font-black px-2 py-0.5 rounded-md"
+                    <span className="text-[12px] font-black px-2 py-0.5 rounded-md"
                       style={{ background: `color-mix(in srgb, ${k.color} 14%, transparent)`, color: k.color, border: `1px solid ${k.color}55` }}>
                       {k.icon} {k.label}
                     </span>
-                    <span className="font-bold text-[13px]" style={{ color: "var(--text)" }}>{f.name || "طالب"}</span>
-                    {f.page && <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{f.page}</span>}
-                    <span className="text-[11px] mr-auto" style={{ color: "var(--text-muted)" }}>
+                    <span className="font-bold text-[15px]" style={{ color: "var(--text)" }}>{f.name || "طالب"}</span>
+                    {f.page && <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{f.page}</span>}
+                    <span className="text-[12px] mr-auto" style={{ color: "var(--text-muted)" }}>
                       {f.createdAt ? new Date(f.createdAt).toLocaleString("ar-SA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
                     </span>
                   </div>
-                  <p className="text-[14px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{f.text}</p>
-                  <p className="text-[10px] mt-2" style={{ color: "var(--text-muted)" }}>uid: {f.uid}</p>
+                  <p className="text-[16px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{f.text}</p>
+                  <p className="text-[11px] mt-2" style={{ color: "var(--text-muted)" }}>uid: {f.uid}</p>
                 </div>
               );
             })}
@@ -928,7 +928,7 @@ export default function AdminPage() {
       {/* قسم الإعلانات الرسمية */}
       <div className="max-w-7xl mx-auto mb-6">
         <button onClick={() => setShowAnnounce(v => !v)}
-          className="flex items-center gap-2 mb-3 font-black text-[15px]"
+          className="flex items-center gap-2 mb-3 font-black text-[17px]"
           style={{ color: "var(--text)" }}>
           📢 الإعلانات الرسمية
           <span style={{ color: "var(--text-muted)" }}>{showAnnounce ? "▲" : "▼"}</span>
@@ -940,24 +940,24 @@ export default function AdminPage() {
             <div className="rounded-2xl p-5 flex flex-col gap-3"
               style={{ background: "var(--surface)", border: editingId ? "1.5px solid var(--accent)" : "1.5px solid var(--border)" }}>
               {editingId && (
-                <p className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>✏️ تعديل إعلان</p>
+                <p className="text-[15px] font-bold" style={{ color: "var(--accent-light)" }}>✏️ تعديل إعلان</p>
               )}
               <input value={announceTitle} onChange={e => setAnnounceTitle(e.target.value)}
                 placeholder="عنوان الإعلان..."
-                className="w-full rounded-xl px-4 py-3 text-[15px] outline-none"
+                className="w-full rounded-xl px-4 py-3 text-[17px] outline-none"
                 style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
               <textarea value={announceContent} onChange={e => setAnnounceContent(e.target.value)}
                 placeholder="محتوى الإعلان..."
                 rows={3}
-                className="w-full rounded-xl px-4 py-3 text-[15px] outline-none resize-none"
+                className="w-full rounded-xl px-4 py-3 text-[17px] outline-none resize-none"
                 style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
 
               {/* اختيار القروب + التثبيت */}
               <div className="flex items-center gap-3 flex-wrap">
-                <label className="flex items-center gap-2 text-[13px]" style={{ color: "var(--text-dim)" }}>
+                <label className="flex items-center gap-2 text-[15px]" style={{ color: "var(--text-dim)" }}>
                   القروب:
                   <select value={announceGroup} onChange={e => setAnnounceGroup(e.target.value)}
-                    className="rounded-xl px-3 py-2 text-[14px] outline-none"
+                    className="rounded-xl px-3 py-2 text-[16px] outline-none"
                     style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
                     <option value="all">📣 الكل (يظهر بكل القروبات)</option>
                     {CHAT_GROUPS.map(g => (
@@ -965,7 +965,7 @@ export default function AdminPage() {
                     ))}
                   </select>
                 </label>
-                <label className="flex items-center gap-2 text-[14px] font-semibold cursor-pointer" style={{ color: "var(--text-dim)" }}>
+                <label className="flex items-center gap-2 text-[16px] font-semibold cursor-pointer" style={{ color: "var(--text-dim)" }}>
                   <input type="checkbox" checked={announcePinned} onChange={e => setAnnouncePinned(e.target.checked)}
                     style={{ width: 18, height: 18, accentColor: "var(--gold)" }} />
                   📌 تثبيت
@@ -987,7 +987,7 @@ export default function AdminPage() {
                 )}
               </div>
               {announceMsg && (
-                <p className="text-[13px] font-semibold" style={{ color: announceMsg.startsWith("✅") ? "var(--success)" : "var(--danger)" }}>
+                <p className="text-[15px] font-semibold" style={{ color: announceMsg.startsWith("✅") ? "var(--success)" : "var(--danger)" }}>
                   {announceMsg}
                 </p>
               )}
@@ -995,40 +995,40 @@ export default function AdminPage() {
 
             {/* قائمة الإعلانات السابقة */}
             <div className="flex flex-col gap-2">
-              <p className="text-[13px] font-bold" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[15px] font-bold" style={{ color: "var(--text-muted)" }}>
                 الإعلانات المنشورة ({annList.length})
               </p>
               {annList.length === 0 ? (
-                <p className="text-[13px] py-4 text-center" style={{ color: "var(--text-muted)" }}>لا توجد إعلانات بعد</p>
+                <p className="text-[15px] py-4 text-center" style={{ color: "var(--text-muted)" }}>لا توجد إعلانات بعد</p>
               ) : annList.map(a => (
                 <div key={a.id} className="rounded-2xl p-4 flex flex-col gap-2"
                   style={{ background: "var(--surface)", border: a.pinned ? "1.5px solid var(--gold)" : "1px solid var(--border)" }}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <p className="font-bold text-[15px] flex items-center gap-1.5" style={{ color: "var(--text)" }}>
+                      <p className="font-bold text-[17px] flex items-center gap-1.5" style={{ color: "var(--text)" }}>
                         {a.pinned && <span title="مثبّت">📌</span>}
                         <span className="truncate">{a.title}</span>
                       </p>
-                      <p className="text-[13px] mt-1 whitespace-pre-wrap" style={{ color: "var(--text-dim)" }}>{a.content}</p>
+                      <p className="text-[15px] mt-1 whitespace-pre-wrap" style={{ color: "var(--text-dim)" }}>{a.content}</p>
                     </div>
-                    <span className="text-[11px] px-2 py-0.5 rounded-full font-bold flex-shrink-0"
+                    <span className="text-[12px] px-2 py-0.5 rounded-full font-bold flex-shrink-0"
                       style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>
                       {groupName(a.groupId)}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <button onClick={() => togglePin(a)}
-                      className="text-[12px] font-bold px-3 py-1.5 rounded-lg transition"
+                      className="text-[14px] font-bold px-3 py-1.5 rounded-lg transition"
                       style={{ background: "color-mix(in srgb, var(--gold) 12%, transparent)", border: "1px solid color-mix(in srgb, var(--gold) 40%, var(--border))", color: "var(--gold)" }}>
                       {a.pinned ? "إلغاء التثبيت" : "📌 تثبيت"}
                     </button>
                     <button onClick={() => startEdit(a)}
-                      className="text-[12px] font-bold px-3 py-1.5 rounded-lg transition"
+                      className="text-[14px] font-bold px-3 py-1.5 rounded-lg transition"
                       style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--accent) 35%, var(--border))", color: "var(--accent-light)" }}>
                       ✏️ تعديل
                     </button>
                     <button onClick={() => deleteAnnouncement(a)}
-                      className="text-[12px] font-bold px-3 py-1.5 rounded-lg transition"
+                      className="text-[14px] font-bold px-3 py-1.5 rounded-lg transition"
                       style={{ background: "color-mix(in srgb, var(--danger) 10%, transparent)", border: "1px solid var(--danger)", color: "var(--danger)" }}>
                       🗑 حذف
                     </button>
@@ -1043,15 +1043,15 @@ export default function AdminPage() {
       {/* نظرة عامة — تحليلات اليوم */}
       <div className="max-w-7xl mx-auto mb-6">
         <div className="flex items-center gap-3 mb-3">
-          <p className="font-black text-[15px]" style={{ color: "var(--text)" }}>📊 نظرة عامة — اليوم</p>
+          <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>📊 نظرة عامة — اليوم</p>
           <button onClick={loadAnalytics} disabled={statsLoading}
-            className="rounded-lg px-2.5 py-1 text-[12px] font-bold"
+            className="rounded-lg px-2.5 py-1 text-[14px] font-bold"
             style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-dim)", opacity: statsLoading ? 0.5 : 1 }}>
             {statsLoading ? "..." : "↻ تحديث"}
           </button>
         </div>
 
-        {statsErr && <p className="text-[13px] font-semibold mb-3" style={{ color: "var(--danger)" }}>❌ {statsErr}</p>}
+        {statsErr && <p className="text-[15px] font-semibold mb-3" style={{ color: "var(--danger)" }}>❌ {statsErr}</p>}
 
         {stats && (
           <div className="flex flex-col gap-3">
@@ -1068,7 +1068,7 @@ export default function AdminPage() {
                 <div key={s.label} className="rounded-2xl p-4 flex flex-col gap-1"
                   style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
                   <p className="font-black text-2xl font-mono-nums" style={{ color: s.color }}>{s.val}</p>
-                  <p className="text-[12px] leading-tight" style={{ color: "var(--text-muted)" }}>{s.label}</p>
+                  <p className="text-[14px] leading-tight" style={{ color: "var(--text-muted)" }}>{s.label}</p>
                 </div>
               ))}
             </div>
@@ -1077,11 +1077,11 @@ export default function AdminPage() {
             <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
               <div className="px-4 py-2.5 flex items-center justify-between"
                 style={{ background: "var(--surface2)" }}>
-                <span className="text-[13px] font-bold" style={{ color: "var(--text)" }}>أكثر الصفحات زيارة اليوم</span>
-                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{stats.totalUsers} مستخدم إجمالاً</span>
+                <span className="text-[15px] font-bold" style={{ color: "var(--text)" }}>أكثر الصفحات زيارة اليوم</span>
+                <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{stats.totalUsers} مستخدم إجمالاً</span>
               </div>
               {stats.topPages.length === 0 ? (
-                <p className="text-[13px] px-4 py-4 text-center" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[15px] px-4 py-4 text-center" style={{ color: "var(--text-muted)" }}>
                   لا توجد زيارات مسجّلة اليوم بعد — يبدأ العدّ مع زيارات الصفحات.
                 </p>
               ) : (() => {
@@ -1089,24 +1089,24 @@ export default function AdminPage() {
                 return stats.topPages.map((p, i) => (
                   <div key={p.path} className="flex items-center gap-3 px-4 py-2.5"
                     style={{ borderTop: i > 0 ? "1px solid var(--border)" : "none", background: i % 2 === 0 ? "var(--surface)" : "var(--bg)" }}>
-                    <span className="font-mono-nums text-[13px] flex-1 truncate" style={{ color: "var(--text-dim)" }} dir="ltr">{p.path}</span>
+                    <span className="font-mono-nums text-[15px] flex-1 truncate" style={{ color: "var(--text-dim)" }} dir="ltr">{p.path}</span>
                     <div className="w-28 h-1.5 rounded-full overflow-hidden flex-shrink-0" style={{ background: "var(--border)" }}>
                       <div className="h-full rounded-full" style={{ width: `${Math.round((p.count / maxCount) * 100)}%`, background: "var(--accent)" }} />
                     </div>
-                    <span className="font-mono-nums text-[13px] font-bold w-10 text-left flex-shrink-0" style={{ color: "var(--accent-light)" }}>{p.count}</span>
+                    <span className="font-mono-nums text-[15px] font-bold w-10 text-left flex-shrink-0" style={{ color: "var(--accent-light)" }}>{p.count}</span>
                   </div>
                 ));
               })()}
             </div>
-            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
               زوار اليوم = أجهزة فريدة سجّلت زيارة · نسبة التحويل = المسجّلون ÷ الزوار · متوسط المدة من جلسات أوربت المكتملة · بتوقيت UTC.
             </p>
 
             {/* ── التعلّم: الدروس والاختبارات والقمع (من أحداث اليوم) ── */}
             {stats.eventsScanned === 0 ? (
               <div className="rounded-2xl px-4 py-6 text-center" style={{ background: "var(--surface)", border: "1px dashed var(--border)" }}>
-                <p className="font-black text-[14px]" style={{ color: "var(--text-dim)" }}>لا توجد بيانات أحداث كافية بعد</p>
-                <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>يبدأ قياس الدروس والاختبارات والقمع مع أول استخدامٍ حقيقي.</p>
+                <p className="font-black text-[16px]" style={{ color: "var(--text-dim)" }}>لا توجد بيانات أحداث كافية بعد</p>
+                <p className="text-[14px] mt-1" style={{ color: "var(--text-muted)" }}>يبدأ قياس الدروس والاختبارات والقمع مع أول استخدامٍ حقيقي.</p>
               </div>
             ) : (
               <div className="flex flex-col gap-3">
@@ -1120,12 +1120,12 @@ export default function AdminPage() {
                   ].map((c) => (
                     <div key={c.label} className="rounded-2xl p-4 flex flex-col gap-1" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
                       {c.empty ? (
-                        <p className="font-black text-[13px] leading-tight" style={{ color: "var(--text-dim)" }}>لا توجد بيانات كافية بعد</p>
+                        <p className="font-black text-[15px] leading-tight" style={{ color: "var(--text-dim)" }}>لا توجد بيانات كافية بعد</p>
                       ) : (
                         <p className="font-black text-2xl font-mono-nums" style={{ color: c.color }}>{c.val}</p>
                       )}
-                      <p className="text-[12px] leading-tight" style={{ color: "var(--text-muted)" }}>{c.label}</p>
-                      <p className="text-[10px] leading-tight" style={{ color: "var(--text-muted)" }}>{c.sub}</p>
+                      <p className="text-[14px] leading-tight" style={{ color: "var(--text-muted)" }}>{c.label}</p>
+                      <p className="text-[11px] leading-tight" style={{ color: "var(--text-muted)" }}>{c.sub}</p>
                     </div>
                   ))}
                 </div>
@@ -1133,20 +1133,20 @@ export default function AdminPage() {
                 {/* القمع — رحلة الطالب اليوم (مستخدمون فريدون لكل خطوة) */}
                 <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
                   <div className="px-4 py-2.5" style={{ background: "var(--surface2)" }}>
-                    <span className="text-[13px] font-bold" style={{ color: "var(--text)" }}>قمع الرحلة اليوم</span>
-                    <span className="text-[11px] mr-2" style={{ color: "var(--text-muted)" }}>مستخدمون فريدون لكل خطوة</span>
+                    <span className="text-[15px] font-bold" style={{ color: "var(--text)" }}>قمع الرحلة اليوم</span>
+                    <span className="text-[12px] mr-2" style={{ color: "var(--text-muted)" }}>مستخدمون فريدون لكل خطوة</span>
                   </div>
                   {stats.funnel.every((s) => s.count === 0) ? (
-                    <p className="text-[13px] px-4 py-4 text-center" style={{ color: "var(--text-muted)" }}>لا توجد بيانات كافية بعد</p>
+                    <p className="text-[15px] px-4 py-4 text-center" style={{ color: "var(--text-muted)" }}>لا توجد بيانات كافية بعد</p>
                   ) : (() => {
                     const maxF = Math.max(...stats.funnel.map((s) => s.count), 1);
                     return stats.funnel.map((s, i) => (
                       <div key={s.key} className="flex items-center gap-3 px-4 py-2" style={{ borderTop: i > 0 ? "1px solid var(--border)" : "none", background: i % 2 === 0 ? "var(--surface)" : "var(--bg)" }}>
-                        <span className="text-[13px] flex-shrink-0 w-20" style={{ color: "var(--text-dim)" }}>{s.label}</span>
+                        <span className="text-[15px] flex-shrink-0 w-20" style={{ color: "var(--text-dim)" }}>{s.label}</span>
                         <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
                           <div className="h-full rounded-full" style={{ width: `${Math.round((s.count / maxF) * 100)}%`, background: "var(--accent)" }} />
                         </div>
-                        <span className="font-mono-nums text-[13px] font-bold w-10 text-left flex-shrink-0" style={{ color: "var(--accent-light)" }}>{s.count}</span>
+                        <span className="font-mono-nums text-[15px] font-bold w-10 text-left flex-shrink-0" style={{ color: "var(--accent-light)" }}>{s.count}</span>
                       </div>
                     ));
                   })()}
@@ -1156,27 +1156,27 @@ export default function AdminPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
                     <div className="px-4 py-2.5" style={{ background: "var(--surface2)" }}>
-                      <span className="text-[13px] font-bold" style={{ color: "var(--text)" }}>أكثر الدروس إكمالاً</span>
+                      <span className="text-[15px] font-bold" style={{ color: "var(--text)" }}>أكثر الدروس إكمالاً</span>
                     </div>
                     {stats.topLessons.length === 0 ? (
-                      <p className="text-[13px] px-4 py-4 text-center" style={{ color: "var(--text-muted)" }}>لا توجد بيانات كافية بعد</p>
+                      <p className="text-[15px] px-4 py-4 text-center" style={{ color: "var(--text-muted)" }}>لا توجد بيانات كافية بعد</p>
                     ) : stats.topLessons.map((l, i) => (
                       <div key={l.key} className="flex items-center gap-3 px-4 py-2.5" style={{ borderTop: i > 0 ? "1px solid var(--border)" : "none" }}>
-                        <span className="text-[13px] flex-1 truncate" style={{ color: "var(--text-dim)" }}>{l.name}</span>
-                        <span className="font-mono-nums text-[13px] font-bold" style={{ color: "#5fd08a" }}>{l.count}</span>
+                        <span className="text-[15px] flex-1 truncate" style={{ color: "var(--text-dim)" }}>{l.name}</span>
+                        <span className="font-mono-nums text-[15px] font-bold" style={{ color: "#5fd08a" }}>{l.count}</span>
                       </div>
                     ))}
                   </div>
                   <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
                     <div className="px-4 py-2.5" style={{ background: "var(--surface2)" }}>
-                      <span className="text-[13px] font-bold" style={{ color: "var(--text)" }}>أكثر الاختبارات تسجيلاً</span>
+                      <span className="text-[15px] font-bold" style={{ color: "var(--text)" }}>أكثر الاختبارات تسجيلاً</span>
                     </div>
                     {stats.topExams.length === 0 ? (
-                      <p className="text-[13px] px-4 py-4 text-center" style={{ color: "var(--text-muted)" }}>لا توجد بيانات كافية بعد</p>
+                      <p className="text-[15px] px-4 py-4 text-center" style={{ color: "var(--text-muted)" }}>لا توجد بيانات كافية بعد</p>
                     ) : stats.topExams.map((x, i) => (
                       <div key={x.exam} className="flex items-center gap-3 px-4 py-2.5" style={{ borderTop: i > 0 ? "1px solid var(--border)" : "none" }}>
-                        <span className="text-[13px] flex-1 truncate" style={{ color: "var(--text-dim)" }}>{x.exam}</span>
-                        <span className="font-mono-nums text-[13px] font-bold" style={{ color: "#7c9cff" }}>{x.count}</span>
+                        <span className="text-[15px] flex-1 truncate" style={{ color: "var(--text-dim)" }}>{x.exam}</span>
+                        <span className="font-mono-nums text-[15px] font-bold" style={{ color: "#7c9cff" }}>{x.count}</span>
                       </div>
                     ))}
                   </div>
@@ -1190,7 +1190,7 @@ export default function AdminPage() {
       {/* تكلفة الذكاء الاصطناعي */}
       <div className="max-w-7xl mx-auto mb-6">
         <button onClick={toggleAi}
-          className="flex items-center gap-2 mb-3 font-black text-[15px]"
+          className="flex items-center gap-2 mb-3 font-black text-[17px]"
           style={{ color: "var(--text)" }}>
           🤖 تكلفة الذكاء الاصطناعي
           <span style={{ color: "var(--text-muted)" }}>{showAi ? "▲" : "▼"}</span>
@@ -1198,8 +1198,8 @@ export default function AdminPage() {
 
         {showAi && (
           <div className="flex flex-col gap-4">
-            {aiLoading && <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>جارٍ الجلب...</p>}
-            {aiErr && <p className="text-[13px] font-semibold" style={{ color: "var(--danger)" }}>❌ {aiErr}</p>}
+            {aiLoading && <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>جارٍ الجلب...</p>}
+            {aiErr && <p className="text-[15px] font-semibold" style={{ color: "var(--danger)" }}>❌ {aiErr}</p>}
 
             {aiLoaded && !aiErr && (() => {
               const t = aiDays.reduce(
@@ -1212,7 +1212,7 @@ export default function AdminPage() {
                 { requests: 0, prompt: 0, completion: 0, usd: 0 },
               );
               if (aiDays.length === 0) {
-                return <p className="text-[13px] py-4 text-center" style={{ color: "var(--text-muted)" }}>لا يوجد استهلاك مسجّل بعد — استخدم دويرب ثم حدّث.</p>;
+                return <p className="text-[15px] py-4 text-center" style={{ color: "var(--text-muted)" }}>لا يوجد استهلاك مسجّل بعد — استخدم دويرب ثم حدّث.</p>;
               }
               return (
                 <>
@@ -1227,14 +1227,14 @@ export default function AdminPage() {
                       <div key={s.label} className="rounded-2xl p-4 flex flex-col gap-1"
                         style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
                         <p className="font-black text-2xl" style={{ color: s.gold ? "var(--gold)" : "var(--accent-light)" }}>{s.val}</p>
-                        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{s.label}</p>
+                        <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>{s.label}</p>
                       </div>
                     ))}
                   </div>
 
                   {/* تفصيل يومي */}
                   <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-                    <div className="grid text-[12px] font-bold px-4 py-2.5"
+                    <div className="grid text-[14px] font-bold px-4 py-2.5"
                       style={{ gridTemplateColumns: "100px 80px 90px 90px 90px", background: "var(--surface2)", color: "var(--text-muted)" }}>
                       <span>اليوم</span>
                       <span className="text-center">طلبات</span>
@@ -1243,7 +1243,7 @@ export default function AdminPage() {
                       <span className="text-center">تكلفة</span>
                     </div>
                     {aiDays.map((d, i) => (
-                      <div key={d.date} className="grid items-center px-4 py-2.5 text-[12px]"
+                      <div key={d.date} className="grid items-center px-4 py-2.5 text-[14px]"
                         style={{ gridTemplateColumns: "100px 80px 90px 90px 90px", borderTop: i > 0 ? "1px solid var(--border)" : "none", background: i % 2 === 0 ? "var(--surface)" : "var(--bg)" }}>
                         <span className="font-mono-nums" style={{ color: "var(--text-dim)" }}>{d.date}</span>
                         <span className="text-center" style={{ color: "var(--text-dim)" }}>{d.requests}</span>
@@ -1253,11 +1253,11 @@ export default function AdminPage() {
                       </div>
                     ))}
                   </div>
-                  <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                  <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                     التكلفة تقديرية حسب تسعير Groq المعلن (قد يتغيّر). يشمل دويرب: الجداول، الشرح، الأسئلة، استخراج المواضيع.
                   </p>
                   <button onClick={loadAiUsage} disabled={aiLoading}
-                    className="self-start rounded-xl px-4 py-2 text-[13px] font-bold"
+                    className="self-start rounded-xl px-4 py-2 text-[15px] font-bold"
                     style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text-dim)", opacity: aiLoading ? 0.5 : 1 }}>
                     ↻ تحديث
                   </button>
@@ -1272,7 +1272,7 @@ export default function AdminPage() {
       <div className="max-w-7xl mx-auto rounded-2xl overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
         <div style={{ minWidth: "1300px" }}>
           {/* رأس الجدول */}
-          <div className="grid text-[12px] font-bold px-4 py-3"
+          <div className="grid text-[14px] font-bold px-4 py-3"
             style={{
               gridTemplateColumns: "160px 180px 80px 70px 60px 70px 70px 70px 70px 80px 100px 100px",
               background: "var(--surface2)", color: "var(--text-muted)",
@@ -1293,11 +1293,11 @@ export default function AdminPage() {
 
           {/* الصفوف */}
           {filtered.length === 0 ? (
-            <div className="py-12 text-center text-[15px]" style={{ color: "var(--text-muted)" }}>لا يوجد مستخدمون</div>
+            <div className="py-12 text-center text-[17px]" style={{ color: "var(--text-muted)" }}>لا يوجد مستخدمون</div>
           ) : filtered.map((u, i) => (
             <div key={u.id}
               onClick={() => { setDetail(u); setActionMsg(""); }}
-              className="grid items-center px-4 py-3 text-[12px] cursor-pointer transition hover:brightness-110"
+              className="grid items-center px-4 py-3 text-[14px] cursor-pointer transition hover:brightness-110"
               style={{
                 gridTemplateColumns: "160px 180px 80px 70px 60px 70px 70px 70px 70px 80px 100px 100px",
                 borderTop: i > 0 ? "1px solid var(--border)" : "none",
@@ -1315,28 +1315,28 @@ export default function AdminPage() {
                   <span className="font-bold truncate" style={{ color: "var(--text)" }}>{u.name || "—"}</span>
                 </span>
                 {(u.school || u.city || u.phone) && (
-                  <span className="text-[10px] truncate" style={{ color: "var(--text-muted)" }}>
+                  <span className="text-[11px] truncate" style={{ color: "var(--text-muted)" }}>
                     {[u.school, u.city, u.phone].filter(Boolean).join(" · ")}
                   </span>
                 )}
               </div>
 
               {/* الإيميل */}
-              <span className="truncate text-[11px]" style={{ color: u.email ? "var(--text-dim)" : "var(--text-muted)" }}
+              <span className="truncate text-[12px]" style={{ color: u.email ? "var(--text-dim)" : "var(--text-muted)" }}
                 title={u.email || ""}>
                 {u.email || "—"}
               </span>
 
               {/* المسار */}
               <span className="text-center">
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold"
+                <span className="px-2 py-0.5 rounded-full text-[12px] font-bold"
                   style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>
                   {u.track || "—"}
                 </span>
               </span>
 
               {/* المنطقة */}
-              <span className="text-center text-[11px]" style={{ color: "var(--text-muted)" }}>{u.region || u.city || "—"}</span>
+              <span className="text-center text-[12px]" style={{ color: "var(--text-muted)" }}>{u.region || u.city || "—"}</span>
 
               {/* ستريك */}
               <span className="text-center font-bold" style={{ color: u.streak > 0 ? "var(--gold)" : "var(--text-muted)" }}>
@@ -1362,16 +1362,16 @@ export default function AdminPage() {
               </span>
 
               {/* تاريخ الدخول */}
-              <span className="text-center text-[11px]" style={{ color: "var(--text-muted)" }}>{fmt(u.joinedAt)}</span>
+              <span className="text-center text-[12px]" style={{ color: "var(--text-muted)" }}>{fmt(u.joinedAt)}</span>
 
               {/* آخر نشاط */}
-              <span className="text-center text-[11px]" style={{ color: "var(--text-muted)" }}>{fmt(u.lastSeen)}</span>
+              <span className="text-center text-[12px]" style={{ color: "var(--text-muted)" }}>{fmt(u.lastSeen)}</span>
             </div>
           ))}
         </div>
       </div>
 
-      <p className="text-center text-[13px] mt-6" style={{ color: "var(--text-muted)" }}>
+      <p className="text-center text-[15px] mt-6" style={{ color: "var(--text-muted)" }}>
         /admin — للإدارة فقط
       </p>
 
@@ -1386,7 +1386,7 @@ export default function AdminPage() {
               <div className="flex items-center gap-2 min-w-0">
                 <p className="font-black text-xl truncate" style={{ color: "var(--text)" }}>{detail.name || "بدون اسم"}</p>
                 {detail.blocked && (
-                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full flex-shrink-0"
+                  <span className="text-[11px] font-black px-2 py-0.5 rounded-full flex-shrink-0"
                     style={{ background: "color-mix(in srgb, var(--danger) 16%, transparent)", color: "var(--danger)" }}>موقوف</span>
                 )}
               </div>
@@ -1395,7 +1395,7 @@ export default function AdminPage() {
 
             {/* انتحال العرض — قراءة فقط */}
             <button onClick={() => openImpersonate(detail)} disabled={impLoading}
-              className="rounded-xl px-4 py-2.5 text-[13px] font-bold transition active:scale-[0.98]"
+              className="rounded-xl px-4 py-2.5 text-[15px] font-bold transition active:scale-[0.98]"
               style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1.5px solid color-mix(in srgb, var(--accent) 40%, var(--border))", color: "var(--accent-light)", opacity: impLoading ? 0.5 : 1 }}>
               {impLoading ? "جارٍ الفتح..." : "👁 عرض كالطالب (قراءة فقط)"}
             </button>
@@ -1404,15 +1404,15 @@ export default function AdminPage() {
             <div className="rounded-2xl p-4 flex flex-col gap-3"
               style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
               <div className="flex items-center justify-between">
-                <p className="text-[12px] font-black" style={{ color: "var(--text-muted)" }}>الدور</p>
-                <span className="text-[11px] font-black px-2 py-0.5 rounded-full"
+                <p className="text-[14px] font-black" style={{ color: "var(--text-muted)" }}>الدور</p>
+                <span className="text-[12px] font-black px-2 py-0.5 rounded-full"
                   style={{ background: `color-mix(in srgb, ${ROLE_COLOR[detail.role]} 16%, transparent)`, color: ROLE_COLOR[detail.role] }}>
                   {ROLE_LABEL[detail.role]}
                 </span>
               </div>
               {canDo(myRole, "manageRoles") ? (
                 detail.role === "owner" ? (
-                  <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>حساب المالك — لا يُغيَّر دوره.</p>
+                  <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>حساب المالك — لا يُغيَّر دوره.</p>
                 ) : (
                   <div className="grid grid-cols-3 gap-2">
                     {ASSIGNABLE_ROLES.map((r) => {
@@ -1420,7 +1420,7 @@ export default function AdminPage() {
                       return (
                         <button key={r} onClick={() => !active && !actionBusy && setUserRole(detail.id, r)}
                           disabled={actionBusy}
-                          className="py-2.5 rounded-xl text-[13px] font-bold transition disabled:opacity-60"
+                          className="py-2.5 rounded-xl text-[15px] font-bold transition disabled:opacity-60"
                           style={active
                             ? { background: ROLE_COLOR[r], color: "white", border: `1.5px solid ${ROLE_COLOR[r]}` }
                             : { background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-dim)" }}>
@@ -1431,7 +1431,7 @@ export default function AdminPage() {
                   </div>
                 )
               ) : (
-                <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>إدارة الأدوار للمالك فقط.</p>
+                <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>إدارة الأدوار للمالك فقط.</p>
               )}
             </div>
 
@@ -1439,14 +1439,14 @@ export default function AdminPage() {
             {canDo(myRole, "manageUser") && (
             <div className="rounded-2xl p-4 flex flex-col gap-3"
               style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-              <p className="text-[12px] font-black" style={{ color: "var(--text-muted)" }}>الباقة</p>
+              <p className="text-[14px] font-black" style={{ color: "var(--text-muted)" }}>الباقة</p>
               <div className="grid grid-cols-3 gap-2">
                 {(["free", "shaheen", "anqa"] as PlanId[]).map((p) => {
                   const active = detail.plan === p;
                   return (
                     <button key={p} onClick={() => !active && !actionBusy && setUserPlan(detail.id, p)}
                       disabled={actionBusy}
-                      className="py-2.5 rounded-xl text-[13px] font-bold transition disabled:opacity-60"
+                      className="py-2.5 rounded-xl text-[15px] font-bold transition disabled:opacity-60"
                       style={active
                         ? { background: PLAN_CLR[p], color: p === "anqa" ? "#1A1205" : "white", border: `1.5px solid ${PLAN_CLR[p]}` }
                         : { background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-dim)" }}>
@@ -1456,9 +1456,9 @@ export default function AdminPage() {
                 })}
               </div>
 
-              <p className="text-[12px] font-black mt-1" style={{ color: "var(--text-muted)" }}>الإيقاف</p>
+              <p className="text-[14px] font-black mt-1" style={{ color: "var(--text-muted)" }}>الإيقاف</p>
               {detail.blocked && (
-                <div className="rounded-xl px-3 py-2 text-[13px] font-bold" style={{ background: "color-mix(in srgb, var(--danger) 10%, transparent)", border: "1px solid var(--danger)", color: "var(--danger)" }}>
+                <div className="rounded-xl px-3 py-2 text-[15px] font-bold" style={{ background: "color-mix(in srgb, var(--danger) 10%, transparent)", border: "1px solid var(--danger)", color: "var(--danger)" }}>
                   {detail.blockUntil ? `موقوف حتى ${new Date(detail.blockUntil).toLocaleDateString("ar-SA")}` : "موقوف بشكل دائم"}
                 </div>
               )}
@@ -1472,20 +1472,20 @@ export default function AdminPage() {
                 ] as { label: string; hours: number }[]).map(({ label, hours }) => (
                   <button key={label} onClick={() => !actionBusy && timedBlock(detail.id, hours)}
                     disabled={actionBusy}
-                    className="py-2 rounded-xl text-[12px] font-bold transition disabled:opacity-50"
+                    className="py-2 rounded-xl text-[14px] font-bold transition disabled:opacity-50"
                     style={{ background: "color-mix(in srgb, var(--danger) 10%, transparent)", border: "1.5px solid var(--danger)", color: "var(--danger)" }}>
                     {label}
                   </button>
                 ))}
                 <button onClick={() => !actionBusy && toggleBlock(detail.id, false)}
                   disabled={actionBusy || !detail.blocked}
-                  className="py-2 rounded-xl text-[12px] font-bold transition disabled:opacity-40"
+                  className="py-2 rounded-xl text-[14px] font-bold transition disabled:opacity-40"
                   style={{ background: "color-mix(in srgb, var(--success) 10%, transparent)", border: "1.5px solid var(--success)", color: "var(--success)" }}>
                   رفع الإيقاف
                 </button>
               </div>
 
-              <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
                 التغييرات تُطبَّق على جهاز المستخدم عند فتحه التطبيق في المرة القادمة.
               </p>
             </div>
@@ -1495,7 +1495,7 @@ export default function AdminPage() {
             {canDo(myRole, "manageUser") && (
             <div className="rounded-2xl p-4 flex flex-col gap-3 mt-2"
               style={{ background: "color-mix(in srgb, var(--danger) 6%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--danger) 30%, var(--border))" }}>
-              <p className="text-[12px] font-black" style={{ color: "var(--danger)" }}>⚠️ منطقة خطر</p>
+              <p className="text-[14px] font-black" style={{ color: "var(--danger)" }}>⚠️ منطقة خطر</p>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => {
@@ -1503,7 +1503,7 @@ export default function AdminPage() {
                     void resetUserData(detail.id);
                   }}
                   disabled={actionBusy}
-                  className="py-2.5 rounded-xl text-[13px] font-bold transition disabled:opacity-50"
+                  className="py-2.5 rounded-xl text-[15px] font-bold transition disabled:opacity-50"
                   style={{ background: "color-mix(in srgb, #F59E0B 12%, transparent)", border: "1.5px solid #F59E0B", color: "#F59E0B" }}>
                   🔄 إعادة تعيين
                 </button>
@@ -1514,14 +1514,14 @@ export default function AdminPage() {
                     void deleteUserAccount(detail.id);
                   }}
                   disabled={actionBusy}
-                  className="py-2.5 rounded-xl text-[13px] font-bold transition disabled:opacity-50"
+                  className="py-2.5 rounded-xl text-[15px] font-bold transition disabled:opacity-50"
                   style={{ background: "color-mix(in srgb, var(--danger) 12%, transparent)", border: "1.5px solid var(--danger)", color: "var(--danger)" }}>
                   🗑 حذف نهائي
                 </button>
                 )}
               </div>
               {actionMsg && (
-                <p className="text-[13px] font-bold text-center" style={{ color: "var(--text-dim)" }}>{actionMsg}</p>
+                <p className="text-[15px] font-bold text-center" style={{ color: "var(--text-dim)" }}>{actionMsg}</p>
               )}
             </div>
             )}
@@ -1551,11 +1551,11 @@ export default function AdminPage() {
               ] as [string, string][]).map(([label, val]) => (
                 <div key={label} className="flex items-center justify-between gap-3 py-2"
                   style={{ borderBottom: "1px solid var(--border)" }}>
-                  <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>{label}</span>
-                  <span className="text-[14px] font-semibold text-left" style={{ color: "var(--text)" }} dir="auto">{val}</span>
+                  <span className="text-[15px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                  <span className="text-[16px] font-semibold text-left" style={{ color: "var(--text)" }} dir="auto">{val}</span>
                 </div>
               ))}
-              <p className="text-[10px] mt-1 font-mono-nums" style={{ color: "var(--text-muted)" }}>ID: {detail.id}</p>
+              <p className="text-[11px] mt-1 font-mono-nums" style={{ color: "var(--text-muted)" }}>ID: {detail.id}</p>
             </div>
           </div>
         </div>
@@ -1570,7 +1570,7 @@ export default function AdminPage() {
             style={{ background: "var(--bg)", border: "1.5px solid var(--accent)" }}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 min-w-0">
-                <span className="text-[11px] font-black px-2 py-0.5 rounded-full flex-shrink-0"
+                <span className="text-[12px] font-black px-2 py-0.5 rounded-full flex-shrink-0"
                   style={{ background: "color-mix(in srgb, var(--accent) 16%, transparent)", color: "var(--accent-light)" }}>👁 عرض كالطالب</span>
                 <p className="font-black text-lg truncate" style={{ color: "var(--text)" }}>{impData.name || "بدون اسم"}</p>
               </div>
@@ -1592,14 +1592,14 @@ export default function AdminPage() {
                 <div key={s.label} className="rounded-xl p-3 flex flex-col gap-0.5"
                   style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
                   <p className="font-black text-xl" style={{ color: "var(--accent-light)" }}>{s.val}</p>
-                  <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{s.label}</p>
+                  <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{s.label}</p>
                 </div>
               ))}
             </div>
 
             {/* الملف الشخصي */}
             <div className="rounded-2xl p-4 flex flex-col gap-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-              <p className="text-[12px] font-black" style={{ color: "var(--text-muted)" }}>الملف</p>
+              <p className="text-[14px] font-black" style={{ color: "var(--text-muted)" }}>الملف</p>
               {([
                 ["الإيميل", impData.email || "—"],
                 ["المسار", String(impData.user.track ?? "—")],
@@ -1608,7 +1608,7 @@ export default function AdminPage() {
                 ["المرحلة", String(impData.user.studyLevel ?? "—")],
                 ["الصف", String(impData.user.grade ?? "—")],
               ] as [string, string][]).map(([k, v]) => (
-                <div key={k} className="flex items-center justify-between gap-3 text-[13px]">
+                <div key={k} className="flex items-center justify-between gap-3 text-[15px]">
                   <span style={{ color: "var(--text-muted)" }}>{k}</span>
                   <span className="font-semibold text-left" style={{ color: "var(--text)" }} dir="auto">{v}</span>
                 </div>
@@ -1618,9 +1618,9 @@ export default function AdminPage() {
             {/* آخر النتائج */}
             {impData.results.length > 0 && (
               <div className="rounded-2xl p-4 flex flex-col gap-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-                <p className="text-[12px] font-black" style={{ color: "var(--text-muted)" }}>النتائج المسجّلة</p>
+                <p className="text-[14px] font-black" style={{ color: "var(--text-muted)" }}>النتائج المسجّلة</p>
                 {impData.results.slice(0, 8).map((r, i) => (
-                  <div key={i} className="flex items-center justify-between gap-3 text-[13px]">
+                  <div key={i} className="flex items-center justify-between gap-3 text-[15px]">
                     <span style={{ color: "var(--text-dim)" }}>{r.exam || "—"}{r.date ? ` · ${r.date}` : ""}</span>
                     <span className="font-bold" style={{ color: "var(--gold)" }}>{r.score ?? "—"}</span>
                   </div>
@@ -1631,18 +1631,18 @@ export default function AdminPage() {
             {/* آخر أخطاء الخزنة */}
             {impData.vault.length > 0 && (
               <div className="rounded-2xl p-4 flex flex-col gap-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-                <p className="text-[12px] font-black" style={{ color: "var(--text-muted)" }}>آخر أخطاء الخزنة</p>
+                <p className="text-[14px] font-black" style={{ color: "var(--text-muted)" }}>آخر أخطاء الخزنة</p>
                 {impData.vault.slice(0, 8).map((v, i) => (
-                  <div key={i} className="flex items-start justify-between gap-3 text-[13px]">
+                  <div key={i} className="flex items-start justify-between gap-3 text-[15px]">
                     <span className="min-w-0 truncate" style={{ color: "var(--text-dim)" }}>{v.question || "—"}</span>
-                    <span className="flex-shrink-0 text-[11px] px-2 py-0.5 rounded-full font-bold"
+                    <span className="flex-shrink-0 text-[12px] px-2 py-0.5 rounded-full font-bold"
                       style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>{v.subject || "—"}</span>
                   </div>
                 ))}
               </div>
             )}
 
-            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
               عرض للقراءة فقط من نسخة الطالب السحابية — لا يعدّل أي بيانات.
             </p>
           </div>

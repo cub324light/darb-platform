@@ -42,14 +42,14 @@ function SkillCard({
     <div className="rounded-2xl p-3 flex flex-col gap-2" style={{ background: bg, border: `1.5px solid ${hasData ? color : "var(--border)"}` }}>
       <div className="flex items-center justify-between gap-2">
         <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-          <span className="text-[13px] font-bold truncate" style={{ color: "var(--text)" }}>{skill.name}</span>
-          <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{skill.domain}</span>
+          <span className="text-[15px] font-bold truncate" style={{ color: "var(--text)" }}>{skill.name}</span>
+          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{skill.domain}</span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-[11px] font-bold" style={{ color }}>{hasData ? `${score}%` : label}</span>
+          <span className="text-[12px] font-bold" style={{ color }}>{hasData ? `${score}%` : label}</span>
           <button
             onClick={() => setOpen((p) => !p)}
-            className="rounded-xl px-2 py-1 text-[11px] font-bold transition active:scale-95"
+            className="rounded-xl px-2 py-1 text-[12px] font-bold transition active:scale-95"
             style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-dim)" }}>
             {open ? "إغلاق" : "قيّم"}
           </button>
@@ -71,7 +71,7 @@ function SkillCard({
             <button
               key={lvl}
               onClick={() => { onRate(skill.id, lvl); setOpen(false); }}
-              className="flex-1 rounded-xl py-1.5 text-[11px] font-bold transition active:scale-95 text-center"
+              className="flex-1 rounded-xl py-1.5 text-[12px] font-bold transition active:scale-95 text-center"
               style={{
                 background: progress?.masteryScore === LEVEL_SCORES[lvl] ? color : "var(--surface)",
                 border: `1px solid ${color}`,
@@ -123,8 +123,8 @@ export default function SkillsPage() {
             </svg>
           </Link>
           <div>
-            <h1 className="text-[20px] font-black text-white">خريطة المهارات</h1>
-            <p className="text-[12px] text-white/70">{activeIds.join(" · ")}</p>
+            <h1 className="text-[23px] font-black text-white">خريطة المهارات</h1>
+            <p className="text-[14px] text-white/70">{activeIds.join(" · ")}</p>
           </div>
         </div>
       </Dome>
@@ -139,8 +139,8 @@ export default function SkillsPage() {
             { label: "جديد",  value: stats.newSkills, color: "var(--text-muted)" },
           ].map(({ label, value, color }) => (
             <div key={label} className="rounded-2xl p-3 text-center flex flex-col gap-0.5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-              <span className="text-[22px] font-black font-mono-nums" style={{ color }}>{value}</span>
-              <span className="text-[11px] font-bold" style={{ color: "var(--text-muted)" }}>{label}</span>
+              <span className="text-[25px] font-black font-mono-nums" style={{ color }}>{value}</span>
+              <span className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>{label}</span>
             </div>
           ))}
         </div>
@@ -149,8 +149,8 @@ export default function SkillsPage() {
         {stats.avgScore > 0 && (
           <div className="rounded-2xl p-4 flex flex-col gap-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
             <div className="flex justify-between items-center">
-              <span className="text-[13px] font-bold" style={{ color: "var(--text)" }}>متوسط الإتقان</span>
-              <span className="text-[18px] font-black font-mono-nums" style={{ color: stats.avgScore >= 70 ? "#10B981" : stats.avgScore >= 40 ? "#F59E0B" : "#EF4444" }}>
+              <span className="text-[15px] font-bold" style={{ color: "var(--text)" }}>متوسط الإتقان</span>
+              <span className="text-[20px] font-black font-mono-nums" style={{ color: stats.avgScore >= 70 ? "#10B981" : stats.avgScore >= 40 ? "#F59E0B" : "#EF4444" }}>
                 {stats.avgScore}%
               </span>
             </div>
@@ -168,8 +168,8 @@ export default function SkillsPage() {
         {weakSkills.length > 0 && (
           <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ background: "color-mix(in srgb, var(--accent) 8%, transparent)", border: "1.5px solid var(--accent)" }}>
             <div className="flex items-center gap-2">
-              <span className="text-[16px]">🎯</span>
-              <span className="text-[14px] font-black" style={{ color: "var(--accent-light)" }}>ركّز عليها اليوم</span>
+              <span className="text-[18px]">🎯</span>
+              <span className="text-[16px] font-black" style={{ color: "var(--accent-light)" }}>ركّز عليها اليوم</span>
             </div>
             <div className="flex flex-col gap-1.5">
               {weakSkills.map((s) => {
@@ -179,10 +179,10 @@ export default function SkillsPage() {
                 return (
                   <div key={s.id} className="flex items-center justify-between gap-2 rounded-xl px-3 py-2" style={{ background: "var(--surface)" }}>
                     <div>
-                      <span className="text-[13px] font-bold" style={{ color: "var(--text)" }}>{s.name}</span>
-                      <span className="text-[11px] mr-2" style={{ color: "var(--text-muted)" }}>{s.category}</span>
+                      <span className="text-[15px] font-bold" style={{ color: "var(--text)" }}>{s.name}</span>
+                      <span className="text-[12px] mr-2" style={{ color: "var(--text-muted)" }}>{s.category}</span>
                     </div>
-                    <span className="text-[12px] font-bold" style={{ color }}>
+                    <span className="text-[14px] font-bold" style={{ color }}>
                       {p ? `${p.masteryScore}%` : "جديدة"}
                     </span>
                   </div>
@@ -194,8 +194,8 @@ export default function SkillsPage() {
 
         {/* تعليمات التقييم */}
         <div className="rounded-2xl p-3 flex items-start gap-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-          <span className="text-[15px] mt-0.5">💡</span>
-          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+          <span className="text-[17px] mt-0.5">💡</span>
+          <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>
             اضغط «قيّم» على أي مهارة لتحديد مستواك فيها. تُحفَظ التقييمات وتتزامن سحابياً ليراها دويرب ويخصّص توصياتك.
           </p>
         </div>
@@ -203,10 +203,10 @@ export default function SkillsPage() {
         {/* المهارات مجمّعة حسب الفئة */}
         {grouped.map(({ category, domains }) => (
           <div key={category} className="flex flex-col gap-3">
-            <h2 className="text-[15px] font-black" style={{ color: "var(--text)" }}>{category}</h2>
+            <h2 className="text-[17px] font-black" style={{ color: "var(--text)" }}>{category}</h2>
             {domains.map(({ domain, skills: ds }) => (
               <div key={domain} className="flex flex-col gap-2">
-                <p className="text-[12px] font-bold px-1" style={{ color: "var(--accent-light)" }}>{domain}</p>
+                <p className="text-[14px] font-bold px-1" style={{ color: "var(--accent-light)" }}>{domain}</p>
                 {/* عمود واحد على الجوال، عمودان على سطح المكتب — items-start حتى لا
                     يتمدد الجار عند فتح أزرار التقييم في بطاقة */}
                 <div className="grid gap-2 desk-grid-2 items-start">
@@ -226,8 +226,8 @@ export default function SkillsPage() {
 
         {skills.length === 0 && (
           <div className="rounded-2xl p-6 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-            <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>لا توجد مهارات لمساراتك الحالية</p>
-            <Link href="/roadmap" className="mt-3 inline-block text-[13px] font-bold" style={{ color: "var(--accent)" }}>
+            <p className="text-[16px]" style={{ color: "var(--text-muted)" }}>لا توجد مهارات لمساراتك الحالية</p>
+            <Link href="/roadmap" className="mt-3 inline-block text-[15px] font-bold" style={{ color: "var(--accent)" }}>
               اختر مساراً أولاً
             </Link>
           </div>

@@ -179,13 +179,13 @@ export default function VaultPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSortBy((s) => s === "recent" ? "priority" : "recent")}
-              className="dome-chip text-[15px] font-bold transition"
+              className="dome-chip text-[17px] font-bold transition"
               style={{ color: sortBy === "priority" ? "var(--gold)" : "var(--text-dim)" }}>
               {sortBy === "priority" ? "أولوية" : "أحدث"}
             </button>
             <div className="dome-chip">
               <span className="num-hero text-base" style={{ color: "var(--gold-light)" }}>{errors.length}</span>
-              <span className="text-[15px] font-semibold" style={{ color: "var(--text-dim)" }}>خطأ</span>
+              <span className="text-[17px] font-semibold" style={{ color: "var(--text-dim)" }}>خطأ</span>
             </div>
           </div>
         </div>
@@ -332,7 +332,7 @@ export default function VaultPage() {
                     const clr = d === "سهل" ? "#10B981" : d === "متوسط" ? "#F59E0B" : "#EF4444";
                     return (
                       <button key={d} onClick={() => setNewDiff(d)} type="button"
-                        className="py-2.5 rounded-xl font-bold text-[14px] transition active:scale-95"
+                        className="py-2.5 rounded-xl font-bold text-[16px] transition active:scale-95"
                         style={active
                           ? { background: `color-mix(in srgb, ${clr} 16%, transparent)`, border: `1.5px solid ${clr}`, color: clr }
                           : { background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
@@ -386,7 +386,7 @@ export default function VaultPage() {
             <p className="title-md text-[var(--text)] mb-2">ما في أخطاء بعد</p>
             <p className="body-sm mb-1">هنا تحفظ أي سؤال تغلط فيه — مع سبب الغلط.</p>
             <p className="body-sm mb-4">دويرب يقدر يشرح لك كل خطأ بالضبط فين غلطت.</p>
-            <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>
               أو راجع{" "}
               <a href="/review" className="font-bold underline" style={{ color: "var(--accent-light)" }}>بطاقاتي</a>
               {" "}إذا تبي تمرن على المعلومات
@@ -439,7 +439,7 @@ export default function VaultPage() {
                       <button
                         onClick={(e) => { e.stopPropagation(); setExpandedId(error.id); explainError(error); }}
                         disabled={explainLoadingId === error.id}
-                        className="mt-3 w-full py-2 rounded-xl text-[12px] font-bold transition flex items-center justify-center gap-1.5"
+                        className="mt-3 w-full py-2 rounded-xl text-[14px] font-bold transition flex items-center justify-center gap-1.5"
                         style={{
                           background: "color-mix(in srgb, var(--accent) 8%, transparent)",
                           border: "1px solid color-mix(in srgb, var(--accent) 20%, transparent)",
@@ -496,7 +496,7 @@ export default function VaultPage() {
 
                     {/* تحويل لبطاقة مراجعة — يمنع التكرار إذا كانت موجودة */}
                     {cardQuestions.has(error.question.trim()) ? (
-                      <div className="w-full py-3 rounded-2xl text-[14px] font-bold text-center flex items-center justify-center gap-2"
+                      <div className="w-full py-3 rounded-2xl text-[16px] font-bold text-center flex items-center justify-center gap-2"
                         style={{ background: "color-mix(in srgb, var(--success) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--success) 30%, transparent)", color: "var(--success)" }}>
                         ✓ موجودة في بطاقاتي — راجِعها هناك
                       </div>

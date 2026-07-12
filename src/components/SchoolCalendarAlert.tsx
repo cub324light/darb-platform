@@ -81,8 +81,8 @@ export default function SchoolCalendarAlert() {
             border: `1px solid color-mix(in srgb, ${a.color} 22%, transparent)`,
           }}>
           <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-black" style={{ color: a.color }}>{a.text}</p>
-            <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>{a.sub}</p>
+            <p className="text-[15px] font-black" style={{ color: a.color }}>{a.text}</p>
+            <p className="text-[14px] mt-0.5" style={{ color: "var(--text-muted)" }}>{a.sub}</p>
           </div>
           <button onClick={() => dismiss(a.id)} aria-label="إغلاق"
             className="text-[var(--text-muted)] text-sm font-bold px-1 flex-shrink-0">✕</button>

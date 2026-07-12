@@ -489,7 +489,7 @@ export default function OrbitPage() {
                     return (
                       <button key={t.id}
                         onClick={() => { setSelTrackId(t.id); setSubject(t.subjects[0]?.name ?? ""); }}
-                        className="px-4 py-2.5 rounded-xl text-[14px] font-bold transition flex items-center gap-2 min-h-[44px]"
+                        className="px-4 py-2.5 rounded-xl text-[16px] font-bold transition flex items-center gap-2 min-h-[44px]"
                         style={active
                           ? { background: t.color, color: "#fff", border: `1.5px solid ${t.color}` }
                           : { background: "var(--surface)", border: `1.5px solid ${t.color}55`, color: t.color }}>
@@ -630,7 +630,7 @@ export default function OrbitPage() {
                 {/* تراجع */}
                 <button
                   onClick={() => { setDurMode(prevDur.mode); setCustomMins(prevDur.custom); setCustomInput(String(prevDur.custom)); }}
-                  className="text-[17px] font-semibold text-center w-full"
+                  className="text-[19px] font-semibold text-center w-full"
                   style={{ color: "var(--text-muted)" }}>
                   ↩ تراجع
                 </button>
@@ -675,7 +675,7 @@ export default function OrbitPage() {
               {!hideTip && (
                 <div className="relative mb-2">
                   <button onClick={dismissTip} aria-label="حذف النصيحة"
-                    className="absolute top-0 left-0 w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold"
+                    className="absolute top-0 left-0 w-5 h-5 rounded-full flex items-center justify-center text-[12px] font-bold"
                     style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
                     ✕
                   </button>
@@ -733,14 +733,14 @@ export default function OrbitPage() {
       <div className="px-5 pb-4">
         <div className="flex gap-2">
           <button onClick={() => { setShowLog((v) => !v); setShowSettings(false); }}
-            className="flex-1 py-3 rounded-2xl font-bold text-[15px] flex items-center justify-center gap-2 transition active:scale-[0.98]"
+            className="flex-1 py-3 rounded-2xl font-bold text-[17px] flex items-center justify-center gap-2 transition active:scale-[0.98]"
             style={showLog
               ? { background: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }
               : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}>
             📋 سجل الجلسات
           </button>
           <button onClick={() => { setShowSettings((v) => !v); setShowLog(false); }}
-            className="flex-1 py-3 rounded-2xl font-bold text-[15px] flex items-center justify-center gap-2 transition active:scale-[0.98]"
+            className="flex-1 py-3 rounded-2xl font-bold text-[17px] flex items-center justify-center gap-2 transition active:scale-[0.98]"
             style={showSettings
               ? { background: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }
               : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}>
@@ -755,8 +755,8 @@ export default function OrbitPage() {
               className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-right transition active:scale-[0.99]"
               style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-[14px] text-[var(--text)]">إبقاء الجلسة شغّالة عند الخروج</p>
-                <p className="text-[12px] text-[var(--text-muted)] mt-0.5">لو طلعت للخريطة أو صفحة ثانية تكمل الجلسة من حيث وقفت</p>
+                <p className="font-bold text-[16px] text-[var(--text)]">إبقاء الجلسة شغّالة عند الخروج</p>
+                <p className="text-[14px] text-[var(--text-muted)] mt-0.5">لو طلعت للخريطة أو صفحة ثانية تكمل الجلسة من حيث وقفت</p>
               </div>
               <span className="w-12 h-7 rounded-full flex items-center transition flex-shrink-0 px-0.5"
                 style={{ background: keepRunning ? "var(--accent)" : "var(--border)", justifyContent: keepRunning ? "flex-start" : "flex-end" }}>
@@ -771,7 +771,7 @@ export default function OrbitPage() {
           <div className="mt-3 rounded-2xl p-4 flex flex-col gap-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
             <p className="font-black text-base text-[var(--text)] mb-1">سجل الجلسات ({sessionLog.length})</p>
             {sessionLog.length === 0 ? (
-              <p className="text-[13px] text-[var(--text-muted)] py-4 text-center">ما فيه جلسات بعد — أنجز جلستك الأولى</p>
+              <p className="text-[15px] text-[var(--text-muted)] py-4 text-center">ما فيه جلسات بعد — أنجز جلستك الأولى</p>
             ) : (
               <div className="flex flex-col gap-1.5 max-h-[320px] overflow-y-auto">
                 {sessionLog.map((e) => {
@@ -780,9 +780,9 @@ export default function OrbitPage() {
                   return (
                     <div key={e.id} className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5"
                       style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-                      <span className="font-bold text-[13px] text-[var(--text)] truncate">{e.subject}</span>
-                      <span className="text-[12px] text-[var(--text-muted)] flex-shrink-0">{when}</span>
-                      <span className="font-mono-nums font-bold text-[13px] flex-shrink-0" style={{ color: "var(--accent-light)" }}>{e.focusMins}د</span>
+                      <span className="font-bold text-[15px] text-[var(--text)] truncate">{e.subject}</span>
+                      <span className="text-[14px] text-[var(--text-muted)] flex-shrink-0">{when}</span>
+                      <span className="font-mono-nums font-bold text-[15px] flex-shrink-0" style={{ color: "var(--accent-light)" }}>{e.focusMins}د</span>
                     </div>
                   );
                 })}
