@@ -708,7 +708,8 @@ export default function OrbitPage() {
         </div>
       </div>
 
-      {/* شريط الإحصاءات */}
+      {/* شريط الإحصاءات — بعد الجلسة فقط (لحظة المكافأة والتأمّل)؛ لا يزاحم قرار البدء ولا التركيز */}
+      {phase === "done" && (
       <div className="px-5 pb-4 rise rise-4">
         <div className="rounded-2xl p-5 grid grid-cols-3 text-center gap-3"
           style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
@@ -725,8 +726,10 @@ export default function OrbitPage() {
           ))}
         </div>
       </div>
+      )}
 
-      {/* السجل والإعدادات — أسفل الصفحة بعيداً عن إعدادات التطبيق فوق */}
+      {/* السجل والإعدادات — قبل الجلسة فقط (إعدادٌ وسجلّ)؛ لا يزاحم التركيز أثناء الجلسة */}
+      {phase === "idle" && (
       <div className="px-5 pb-4">
         <div className="flex gap-2">
           <button onClick={() => { setShowLog((v) => !v); setShowSettings(false); }}
@@ -788,6 +791,7 @@ export default function OrbitPage() {
           </div>
         )}
       </div>
+      )}
 
       <PageFooter />
     </div>
