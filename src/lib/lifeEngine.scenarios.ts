@@ -9,14 +9,14 @@ const uni = (o: Partial<LifeContext>): LifeContext => ({
   majorId: "ee", majorName: "هندسة كهربائية", coopDone: false, gradInterest: false,
   highschoolPct: null, inSchoolFinals: false, daysToSchoolFinals: null, qiyas: null,
   uniFinalsInDays: null, termLabel: "الفصل الثاني", inStudyTerm: true,
-  hwOverdue: 0, hwDueToday: 0, hwPending: 0, ...o,
+  hwOverdue: 0, hwDueToday: 0, hwPending: 0, retakeExams: [], ...o,
 });
 const sec = (o: Partial<LifeContext>): LifeContext => ({
   stage: "first", uniStage: null, gpa: null, hours: null, year: null,
   majorId: null, majorName: null, coopDone: false, gradInterest: false,
   highschoolPct: null, inSchoolFinals: false, daysToSchoolFinals: null, qiyas: null,
   uniFinalsInDays: null, termLabel: null, inStudyTerm: true,
-  hwOverdue: 0, hwDueToday: 0, hwPending: 0, ...o,
+  hwOverdue: 0, hwDueToday: 0, hwPending: 0, retakeExams: [], ...o,
 });
 const q = (days: number, kind: "qudurat" | "tahsili" | "step" = "qudurat", label = "القدرات العامة") =>
   ({ kind, label, days, weeks: Math.ceil(days / 7), approximate: true });
@@ -41,6 +41,7 @@ export const SCENARIOS: Scenario[] = [
   { id: "s09", name: "ثالث ثانوي — قدرات بعد أسبوعين (عاجل)", ctx: sec({ stage: "third", qiyas: q(14) }), expectTop: "qiyas-soon" },
   { id: "s10", name: "خريج ثانوي — ينتظر القبول", ctx: sec({ stage: "graduate" }), expectTop: "admission" },
   { id: "s11", name: "خريج — سنة استدراك + قدرات قريبة", ctx: sec({ stage: "graduate", qiyas: q(30) }) },
+  { id: "s12", name: "ثالث ثانوي — اختار إعادة القدرات", ctx: sec({ stage: "third", retakeExams: ["القدرات"] }), expectTop: "retake" },
 
   /* ═════ جامعي — بداية ═════ */
   { id: "u01", name: "سنة أولى — معدّل ٣٫٢", ctx: uni({ uniStage: "start", year: "الأولى", hours: 18, gpa: 3.2 }), expectTop: "foundation" },

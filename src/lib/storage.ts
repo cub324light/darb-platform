@@ -15,6 +15,7 @@ export interface DarbUser {
   goal?: StudyGoalType;     // الهدف الأساسي (goals[0]) — يقود تفعيل المسارات والأولويات (SSoT لكل المستهلكين القائمين)
   goals?: StudyGoalType[];  // كل الأهداف المختارة (متعدد بلا حد) — الأساسي منها = goals[0]
   targets?: string[];       // أهداف ما بعد الثانوية (متعدّد): جامعة/أرامكو/سابك/عسكري/ITC/تدريب — معرّفات من lib/targets
+  retakeExams?: string[];   // اختبارات اختار الطالب إعادتها (قدرات/تحصيلي/…) — يقرؤها Life Engine لرفع أولوية الاستعداد
   gapYear?: boolean;        // خريج ينوي إعادة القدرات/التحصيلي (سنة استدراك)
   studyHours?: number;
   subjects?: string[];

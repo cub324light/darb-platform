@@ -112,7 +112,7 @@ const baseCtx: LifeContext = {
   majorId: null, majorName: null, coopDone: false, gradInterest: false,
   highschoolPct: null, inSchoolFinals: false, daysToSchoolFinals: null,
   qiyas: null, uniFinalsInDays: null, termLabel: null, inStudyTerm: false,
-  hwOverdue: 0, hwDueToday: 0, hwPending: 0,
+  hwOverdue: 0, hwDueToday: 0, hwPending: 0, retakeExams: [],
 };
 
 test("Life Engine: واجبٌ متأخّر يُظهر أولوية «الواجبات» بسببها الحقيقي", () => {

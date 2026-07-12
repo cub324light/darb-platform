@@ -2,8 +2,12 @@
 /* ─── الأهداف الأكاديمية — درجات مستهدفة + الجامعة/التخصص + نتائجي ─── */
 import { memo, useState } from "react";
 import type { DarbGoals, ExamResult } from "@/lib/storage";
+import { loadUser, saveUser } from "@/lib/storage";
 import { TRACKS, scoreRangeForTitle, validateScore } from "@/lib/tracks";
 import { trackEvent } from "@/lib/analytics";
+import { satisfactionForResult, type Satisfaction, type SatBand } from "@/lib/satisfaction";
+
+const BAND_COLOR: Record<SatBand, string> = { green: "var(--success)", yellow: "var(--gold)", red: "var(--danger)" };
 
 interface Props {
   goals: DarbGoals;
@@ -31,6 +35,30 @@ function ProfileGoalsBase({ goals, onGoalsChange, results, onAddResult, onDelete
   const [resErr, setResErr] = useState("");
   const resRange = resExam ? scoreRangeForTitle(resExam) : undefined;
   const noScore = resRange === null;
+
+  /* قرار إعادة الاختبار — يقرؤه Life Engine ويغيّر أولويات الطالب وتوصياته.
+     يُحفظ في المستخدم، وقابل للتغيير في أي وقت من هنا (الإعدادات). */
+  const [retakes, setRetakes] = useState<string[]>(() =>
+    typeof window !== "undefined" ? loadUser()?.retakeExams ?? [] : []);
+  const setRetake = (exam: string, on: boolean) => {
+    const next = on ? [...new Set([...retakes, exam])] : retakes.filter((x) => x !== exam);
+    setRetakes(next);
+    const u = loadUser();
+    if (u) saveUser({ ...u, retakeExams: next.length ? next : undefined });
+  };
+
+  /* مؤشّر الرضا لكل اختبارٍ له نتيجة (أحدث نتيجة لكل اختبار، إن كان له حكم) */
+  const satCards: { exam: string; sat: Satisfaction }[] = (() => {
+    const seen = new Set<string>();
+    const out: { exam: string; sat: Satisfaction }[] = [];
+    for (const r of results) {
+      const ex = r.exam.trim();
+      if (seen.has(ex)) continue;
+      const sat = satisfactionForResult(ex, r.score, goals);
+      if (sat) { seen.add(ex); out.push({ exam: ex, sat }); }
+    }
+    return out;
+  })();
 
   const setTarget = (key: keyof DarbGoals, raw: string) => {
     const n = raw.trim() === "" ? undefined : Math.max(0, Math.min(100, parseFloat(raw)));
@@ -67,6 +95,47 @@ function ProfileGoalsBase({ goals, onGoalsChange, results, onAddResult, onDelete
           ))}
         </div>
       </div>
+
+      {/* مؤشّر الرضا عن الدرجة + قرار الإعادة (يدخل Life Engine ويغيّر تجربتك) */}
+      {satCards.length > 0 && (
+        <div className="flex flex-col gap-2.5">
+          {satCards.map(({ exam, sat }) => {
+            const c = BAND_COLOR[sat.band];
+            const retaking = retakes.includes(exam);
+            return (
+              <div key={exam} className="rounded-2xl p-4 flex flex-col gap-2.5"
+                style={{ background: `color-mix(in srgb, ${c} 8%, var(--surface))`, border: `1.5px solid color-mix(in srgb, ${c} 34%, var(--border))` }}>
+                <div>
+                  <p className="font-black text-[16px] leading-tight" style={{ color: "var(--text)" }}>{sat.title}</p>
+                  <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>{exam} · {sat.note}</p>
+                </div>
+                <p className="text-[14px] font-bold" style={{ color: "var(--text-dim)" }}>هل أنت راضٍ عن درجتك؟</p>
+                <div className="flex gap-2">
+                  <button onClick={() => setRetake(exam, false)}
+                    className="flex-1 py-2.5 rounded-xl font-bold text-[14px] transition active:scale-[0.98]"
+                    style={!retaking
+                      ? { background: "var(--success)", color: "#04240f", border: "none" }
+                      : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                    نعم، سأعتمدها
+                  </button>
+                  <button onClick={() => setRetake(exam, true)}
+                    className="flex-1 py-2.5 rounded-xl font-bold text-[14px] transition active:scale-[0.98]"
+                    style={retaking
+                      ? { background: "var(--accent)", color: "#fff", border: "none" }
+                      : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                    لا، سأعيد الاختبار
+                  </button>
+                </div>
+                {retaking && (
+                  <p className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>
+                    🔁 فعّلنا خطة إعادة {exam} — ستراها أولويةً في صفحتك الرئيسية.
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* نتائجي */}
       <div>

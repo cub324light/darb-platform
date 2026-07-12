@@ -44,12 +44,14 @@ export interface LifeContext {
   hwOverdue: number;
   hwDueToday: number;
   hwPending: number;
+  /* اختبارات اختار الطالب إعادتها — قرارٌ صريح يرفع أولوية الاستعداد ويغيّر التوصيات */
+  retakeExams: string[];
 }
 
 export type PriorityKey =
   | "uni-finals" | "gpa" | "research" | "cv" | "coop" | "cert" | "foundation" | "study-routine"
   | "school-finals-now" | "school-finals-soon" | "qiyas-soon" | "qiyas" | "school-grades" | "admission" | "early"
-  | "homework";
+  | "homework" | "retake";
 
 export type PriorityArea = "urgent" | "gpa" | "career" | "admission" | "study" | "growth";
 
@@ -103,6 +105,16 @@ interface PDef {
 const major = (c: LifeContext) => (c.majorName ? ` — ${c.majorName}` : "");
 
 const PRIORITY_DEFS: Record<PriorityKey, PDef> = {
+  retake: {
+    area: "study", icon: "🔁", urgent: false,
+    title: (c) => `الاستعداد لإعادة ${c.retakeExams[0] ?? "اختبارك"}`,
+    why: (c) => c.retakeExams.length > 1
+      ? `اخترت إعادة ${c.retakeExams.length} اختبارات لرفع فرصك.`
+      : `اخترت إعادة ${c.retakeExams[0] ?? "الاختبار"} لرفع درجتك.`,
+    benefit: "درجةٌ أعلى تفتح لك تخصصاتٍ وجامعاتٍ أكثر.",
+    time: () => "خطة إعادة",
+    next: "ابدأ خطة الإعادة وركّز على نقاط ضعفك.", cta: "ابدأ خطة الإعادة", href: "/roadmap",
+  },
   homework: {
     area: "study", icon: "📝", urgent: false,
     title: () => "إنجاز واجباتك المدرسية",
@@ -239,7 +251,7 @@ const PRIORITY_DEFS: Record<PriorityKey, PDef> = {
 const TIER: Record<PriorityKey, Tier> = {
   "uni-finals": "urgent", "school-finals-now": "urgent", "school-finals-soon": "urgent", "qiyas-soon": "urgent",
   gpa: "important", cv: "important", coop: "important", admission: "important",
-  qiyas: "important", "study-routine": "important", "school-grades": "important", homework: "important",
+  qiyas: "important", "study-routine": "important", "school-grades": "important", homework: "important", retake: "important",
   research: "strategic", cert: "strategic", foundation: "strategic", early: "strategic",
 };
 
@@ -261,6 +273,7 @@ const COST: Record<PriorityKey, { hours: number; payoff: string }> = {
   admission: { hours: 6, payoff: "تعرف أين تُقبل وتقدّم بثقة" },
   early: { hours: 0, payoff: "تسبق دفعتك وتدخل القبول متقدّماً" },
   homework: { hours: 0, payoff: "درجات الواجبات محفوظة ولا تتراكم عليك" },
+  retake: { hours: 6, payoff: "درجة أعلى تفتح تخصصاتٍ وجامعاتٍ أكثر" },
 };
 
 /* ── القواعد: صريحة، كلٌّ بمعرّف وسبب ووزن وشرط ── */
@@ -298,6 +311,9 @@ export const RULES: Rule[] = [
   { id: 40, label: "واجبات متأخّرة", priority: "homework", weight: 68, when: (c) => c.hwOverdue > 0 },
   { id: 41, label: "واجبات مستحقة اليوم", priority: "homework", weight: 52, when: (c) => c.hwDueToday > 0 },
   { id: 42, label: "واجبات قادمة بلا إنجاز", priority: "homework", weight: 26, when: (c) => c.hwPending > 0 },
+
+  /* اختار الطالب إعادة اختبار — قرارٌ صريح يرفع أولوية الاستعداد (لا يظهر للجامعي) */
+  { id: 45, label: "اختار إعادة اختبار", priority: "retake", weight: 85, when: (c) => c.stage !== "university" && c.retakeExams.length > 0 },
 ];
 
 /* ════════ العقل: أولويات الطالب مرتّبة ومُفسَّرة ════════ */
@@ -447,6 +463,7 @@ export function readLifeContext(now: Date = new Date()): LifeContext {
     uniFinalsInDays: sem?.daysToFinals ?? null,
     termLabel: sem?.termLabel ?? null,
     inStudyTerm: cal.inStudyTerm,
+    retakeExams: user?.retakeExams ?? [],
     hwOverdue: hw.overdue,
     hwDueToday: hw.dueToday,
     hwPending: hw.pending,
