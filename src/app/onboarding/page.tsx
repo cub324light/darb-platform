@@ -2,15 +2,15 @@
 import { useState, useEffect } from "react";
 import {
   TRACKS, basicTracksFor, STUDY_GOALS, goalLabelFor, scoreRangeForTitle, validateScore,
-  trackEligibilityFor,
-  secondaryCoreTracks, secondaryActiveTracks, LANGUAGE_TESTS, primaryGoal,
+  trackEligibilityFor, LANGUAGE_TESTS, primaryGoal,
   type StudyGoalType, type TrackId,
 } from "@/lib/tracks";
 import { UNIVERSITIES, MAJORS, findUniversity, findMajor } from "@/lib/university";
 import { saveUser, saveExamDate, saveResults, saveTrackExamDates, loadGoals, saveGoals } from "@/lib/storage";
 import { ADMISSION_TARGETS } from "@/lib/targets";
-import { currentAcademicYearId } from "@/lib/academicCalendar";
-import { currentRegistrationStatus, type RegistrationStatus } from "@/lib/examProvider";
+import { currentAcademicYearId, isAfterFirstTerm } from "@/lib/academicCalendar";
+import { currentRegistrationStatus } from "@/lib/examProvider";
+import { examBoard, type BoardStage, type ExamBoardId, type ExamMode } from "@/lib/examEligibility";
 /* registerUser, pushBackup, currentUser مُستورَدة ديناميكياً أسفل */
 import { trackEvent } from "@/lib/analytics";
 import { redeemPendingRef } from "@/lib/referral";
@@ -43,14 +43,17 @@ function visiblePrevExamsFor(status: string, grade: string): string[] {
   return PREV_EXAMS; // ثالث ثانوي
 }
 
-/* شارة حالة التسجيل الرسمية لاختبار قياس — بلا تاريخ مُخمَّن (المصدر examProvider). */
-const WIN_BADGE: Record<RegistrationStatus, { text: string; color: string }> = {
-  open:     { text: "🟢 التسجيل مفتوح الآن",       color: "var(--success)" },
-  upcoming: { text: "🔔 التسجيل قادم قريباً",       color: "var(--gold)" },
-  pending:  { text: "⏳ بانتظار فتح التسجيل",        color: "var(--text-muted)" },
-  passed:   { text: "استعد له — النافذة القادمة",  color: "var(--text-muted)" },
+/* بطاقة اختبار القياس تُقرأ من مصدر الحقيقة examEligibility: الاسم (مبكر/عادي) وحالته
+   والظهور — لا اسم ثابت في الواجهة. المخفي لا يظهر أصلاً. */
+const EXAM_TRACK: Record<ExamBoardId, TrackId> = {
+  qudurat: "قدرات", tahsiliEarly: "تحصيلي مبكر", tahsiliRegular: "تحصيلي",
 };
-const QIYAS_TRACKS: TrackId[] = ["قدرات", "تحصيلي", "تحصيلي مبكر", "ستيب"];
+const MODE_COLOR: Record<ExamMode, string> = {
+  "register-open": "var(--success)",
+  "register-upcoming": "var(--gold)",
+  "prepare": "var(--text-muted)",
+  "pending": "var(--text-muted)",
+};
 /* هدف الاختبار → عنوان نتيجته السابقة (لصياغة «تحسين» بدل «الاستعداد» إن كان له درجة) */
 const GOAL_PREV_EXAM: Partial<Record<StudyGoalType, string>> = {
   qudurat: "القدرات", tahsili: "التحصيلي", step: "ستيب STEP",
@@ -121,17 +124,36 @@ export default function OnboardingPage() {
     status: status || undefined, grade, goal: primaryGoal(goals), gapYear: gapYear === "yes",
   });
 
-  /* لوحة أهلية الاختبارات للثانوي — وش متاح ووش مقفل وليش (نقية ورخيصة) */
+  /* لوحة أهلية الاختبارات للثانوي — النجمة «مهم لمرحلتك» فقط (الظهور من examBoard) */
   const eligibility = status === "ثانوي" ? trackEligibilityFor({ status, grade }) : [];
-  /* حالة تسجيل كل اختبار قياس من المصدر الرسمي (examProvider) — لا نعرض المغلق كمتاح */
   const today = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; })();
-  const winBadgeFor = (id: TrackId) => (QIYAS_TRACKS.includes(id) ? WIN_BADGE[currentRegistrationStatus(id, today)] : null);
-  /* المسارات النهائية (الأهداف نية عليا مستقلة — لا تغيّر الاختبارات):
-     - الثانوي: النواة المتاحة + اختبارات اللغة المختارة (بلا حد)
-     - الخريج: الحزمة التلقائية + اختبارات اللغة المختارة (بلا حد)
-     - الجامعي: الحزمة التلقائية فقط (بلا لغات) */
+
+  /* ── جدول اختبارات القياس من مصدر الحقيقة examEligibility (المرحلة+الفصل+النافذة+الاستهداف) ──
+     اللوحة والمسارات المفعّلة تقرآن منه معاً، فلا تناقض بين المعروض والمُفعَّل. */
+  const boardStage: BoardStage | null =
+    status === "ثانوي" ? (grade === "أول ثانوي" ? "first" : grade === "ثاني ثانوي" ? "second" : grade === "ثالث ثانوي" ? "third" : null)
+    : status === "خريج" ? "graduate"
+    : status === "جامعي" ? "university" : null;
+  /* مُستهدَف للتحصيلي المبكر: له وجهة قبول أو اختار التحصيلي/الجامعة/التخصص هدفاً */
+  const isTargeted = targets.length > 0 || goals.includes("tahsili") || goals.includes("university") || goals.includes("major");
+  const examB = boardStage ? examBoard({
+    stage: boardStage,
+    isUniGrad: gradStage === "خريج جامعة",
+    afterFirstTerm: isAfterFirstTerm(),
+    isTargeted,
+    windows: {
+      qudurat: currentRegistrationStatus("قدرات", today),
+      tahsiliEarly: currentRegistrationStatus("تحصيلي مبكر", today),
+      tahsiliRegular: currentRegistrationStatus("تحصيلي", today),
+    },
+  }) : [];
+  const qiyasTracks = examB.map((e) => EXAM_TRACK[e.id]);
+
+  /* المسارات النهائية:
+     - الثانوي: اختبارات القياس من examBoard + اللغات المختارة + المدرسة (المصدر نفسه المعروض)
+     - الخريج: الحزمة التلقائية + اختبارات اللغة · الجامعي: الحزمة التلقائية فقط */
   const finalTracks =
-    status === "ثانوي" ? secondaryActiveTracks(grade, eligibility, selectedLanguages) :
+    status === "ثانوي" ? [...new Set<TrackId>([...qiyasTracks, ...LANGUAGE_TESTS.filter((id) => selectedLanguages.includes(id)), "مدرسه"])] :
     status === "خريج"  ? [...new Set([...computedTracks, ...selectedLanguages])] :
     computedTracks;
 
@@ -740,31 +762,23 @@ export default function OnboardingPage() {
             <div>
               <p className="label mb-1">اختباراتك الأساسية</p>
               <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>
-                نفعّلها لك تلقائياً حسب صفّك — القدرات والتحصيلي ودرجة المدرسة
+                {examB.length
+                  ? "نفعّلها لك تلقائياً حسب صفّك وحالة التسجيل الرسمية — ودرجة المدرسة"
+                  : "في صفّك الآن نركّز على مواد المدرسة — القدرات والتحصيلي يبدآن من ثاني ثانوي"}
               </p>
               <div className="flex flex-col gap-2.5">
-                {secondaryCoreTracks(grade).map((id) => {
-                  const e = eligibility.find((x) => x.id === id);
+                {/* اختبارات القياس من مصدر الحقيقة examBoard: الاسم والحالة والظهور منه (لا نص ثابت) */}
+                {examB.map((be) => {
+                  const id = EXAM_TRACK[be.id];
                   const t = TRACKS.find((tr) => tr.id === id)!;
-                  /* المقفل (تحصيلي أول ثانوي): يبقى ظاهراً مع سبب الفتح بدل إخفائه */
-                  if (!e || e.status === "locked") return (
-                    <div key={id} className="rounded-2xl px-4 py-3"
-                      style={{ background: "var(--surface)", border: "2px solid var(--border)", opacity: 0.55 }}>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[16px] flex-shrink-0">🔒</span>
-                        <span className="font-bold text-[17px] flex-1" style={{ color: "var(--text)" }}>{t.title}</span>
-                      </div>
-                      <p className="text-[14px] mt-1 pr-6" style={{ color: "var(--text-muted)" }}>{e?.reason}</p>
-                    </div>
-                  );
-                  /* المتاح: مفعّل تلقائياً (بطاقة تأكيدية غير قابلة للإلغاء) */
+                  const important = eligibility.find((x) => x.id === id)?.important;
                   return (
-                    <div key={id} className="rounded-2xl px-4 py-3" style={chipStyle(true)}>
+                    <div key={be.id} className="rounded-2xl px-4 py-3" style={chipStyle(true)}>
                       <div className="flex items-center gap-2">
                         <span className="w-5 h-5 rounded-md flex items-center justify-center text-[14px] font-black flex-shrink-0"
                           style={{ background: "var(--accent)", border: "1.5px solid var(--accent)", color: "#fff" }}>✓</span>
-                        <span className="font-bold text-[17px] flex-1">{t.title}</span>
-                        {e.important && (
+                        <span className="font-bold text-[17px] flex-1">{be.label}</span>
+                        {important && (
                           <span className="text-[12px] font-black px-2 py-0.5 rounded-full flex-shrink-0"
                             style={{ background: "color-mix(in srgb, var(--gold) 16%, transparent)", color: "var(--gold)" }}>
                             ⭐ مهم لمرحلتك
@@ -772,15 +786,22 @@ export default function OnboardingPage() {
                         )}
                       </div>
                       <p className="text-[14px] mt-1 pr-7" style={{ color: "var(--accent-light)" }}>{t.sub}</p>
-                      {(() => { const w = winBadgeFor(id); return w ? (
-                        <p className="text-[13px] font-bold mt-1 pr-7" style={{ color: w.color }}>{w.text}</p>
-                      ) : null; })()}
+                      <p className="text-[13px] font-bold mt-1 pr-7" style={{ color: MODE_COLOR[be.mode] }}>{be.hint}</p>
                     </div>
                   );
                 })}
+                {/* درجة المدرسة — دائماً (النواة اليومية) */}
+                <div className="rounded-2xl px-4 py-3" style={chipStyle(true)}>
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-md flex items-center justify-center text-[14px] font-black flex-shrink-0"
+                      style={{ background: "var(--accent)", border: "1.5px solid var(--accent)", color: "#fff" }}>✓</span>
+                    <span className="font-bold text-[17px] flex-1">{TRACKS.find((tr) => tr.id === "مدرسه")!.title}</span>
+                  </div>
+                  <p className="text-[14px] mt-1 pr-7" style={{ color: "var(--accent-light)" }}>{TRACKS.find((tr) => tr.id === "مدرسه")!.sub}</p>
+                </div>
               </div>
               <p className="text-[13px] mt-2" style={{ color: "var(--text-muted)" }}>
-                نواتك ثابتة ومفعّلة دائماً — تقدر تضيف اختبارات لغة تحت. وتعدّل كل شيء لاحقاً من ملفك.
+                نواتك مفعّلة تلقائياً حسب مرحلتك وموعدها الرسمي — تقدر تضيف اختبارات لغة تحت، وتعدّل كل شيء لاحقاً من ملفك.
               </p>
             </div>
             {languageSection}
