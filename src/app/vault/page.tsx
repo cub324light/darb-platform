@@ -218,34 +218,7 @@ export default function VaultPage() {
         </div>
       </div>
 
-      {/* ── شريط الحد — لكل مادة ٢٥ خطأً مستقلة ── */}
-      {isPlanFree && (() => {
-        const isAll = filterSubject === "الكل";
-        const cap = isAll ? subjects.length * PER_SUBJECT_LIMIT : PER_SUBJECT_LIMIT;
-        const used = isAll ? errors.length : countForSubject(filterSubject);
-        const full = cap > 0 && used >= cap;
-        return (
-          <div className="px-5 mb-7 rise rise-1">
-            <div className="flex justify-between mb-2">
-              <span className="body-sm">{isAll ? "إجمالي الأخطاء" : `أخطاء ${filterSubject}`}</span>
-              <span className="body-sm">{used} / {cap}</span>
-            </div>
-            <div className="h-2 bg-[var(--border)] rounded-full overflow-hidden">
-              <div className="h-full rounded-full transition-all duration-500"
-                style={{
-                  width: (cap === 0 ? 0 : Math.min(100, (used / cap) * 100)) + "%",
-                  background: full ? "#EF4444" : "#F59E0B",
-                }} />
-            </div>
-            {!isAll && full && (
-              <p className="text-sm text-[var(--danger)] mt-2 text-center">
-                وصلت ٢٥ خطأ في {filterSubject}.{" "}
-                <Link href="/pricing" className="text-[var(--accent-light)] underline font-semibold">رقّي لشاهين</Link>
-              </p>
-            )}
-          </div>
-        );
-      })()}
+      {/* شريط الحد نُقل إلى نموذج الإضافة (بيته الصحيح) — لا يزاحم مراجعة الأخطاء */}
 
       {/* ── تصنيفات الخطأ ── */}
       <div className="px-5 mb-7 rise rise-2">
