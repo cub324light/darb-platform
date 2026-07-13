@@ -127,10 +127,11 @@ export const TRACKS: Track[] = [
 ];
 
 /* ── تجميع المسارات حسب المرحلة ── */
+/* أقسام اختيار الاختبارات — المدرسة ليست منها (قسم مستقل، ليست اختباراً). */
 export const TRACK_GROUPS: { label: string; ids: TrackId[] }[] = [
-  { label: "الثانوية",      ids: ["تحصيلي", "تحصيلي مبكر", "قدرات", "مدرسه"] },
-  { label: "الإنجليزي",    ids: ["ايلتس", "ستيب", "توفل", "دوليقو"] },
-  { label: "اختبارات القبول", ids: ["CPC", "ITC"] },
+  { label: "اختبارات القبول السعودية", ids: ["قدرات", "تحصيلي", "تحصيلي مبكر"] },
+  { label: "اختبارات اللغة الإنجليزية", ids: ["ستيب", "ايلتس", "توفل", "دوليقو"] },
+  { label: "برامج القبول",              ids: ["CPC", "ITC"] },
 ];
 
 /* ── المواد الكاملة مع التجميع والمختبِر ── */
@@ -328,18 +329,21 @@ export function basicTracksFor(opts: { status?: string; grade?: string; goal?: S
 
   const dedupe = (arr: TrackId[]) => [...new Set(arr)];
 
-  /* الجامعي: خرج من عالم القياس/القبول — لا نفعّل له قدرات/تحصيلي/ستيب إطلاقاً.
-     مساره محايد (مواد دراسية عامة) يخدم لوحته دون توجيهه لاختبارات لا تخصّ مرحلته. */
+  /* المدرسة ليست اختباراً — لا تدخل قائمة الاختبارات (activeTracks) ولا عدّادها.
+     من لا اختبار قياس له (جامعي · أول ثانوي · خريج مركّز على القبول) → قائمة فارغة،
+     والمدرسة قسمٌ مستقل دائم. */
+
+  /* الجامعي: خرج من عالم القياس/القبول — لا اختبارات قياس إطلاقاً. */
   if (opts.status === "جامعي") {
-    return ["مدرسه"];
+    return [];
   }
 
   /* لما يختار جامعة أو تخصص: التركيز على القبول لا إعادة الاختبارات */
   const isUniGoal = opts.goal === "university" || opts.goal === "major";
 
-  /* الخريج: أنهى القدرات/التحصيلي — لا نعيد تفعيل حزمة التحضير إلا إذا اختار
-     سنة استدراك (gapYear) لإعادة الاختبار. بدون استدراك: نفعّل فقط المسار
-     الذي يخدم هدفه (إن كان رفع درجة)، وإلا اختبار أساسي واحد ليعمل التطبيق. */
+  /* الخريج: أنهى القدرات/التحصيلي — لا نعيد تفعيل التحضير إلا باختيار سنة استدراك
+     (gapYear). بدون استدراك: فقط المسار الذي يخدم هدفه إن كان رفع درجة، وإلا لا شيء
+     (اختار «ركّز على القبول» فلا نفرض عليه قدرات). */
   if (opts.status === "خريج") {
     if (opts.gapYear) {
       const core: TrackId[] = ["قدرات", "تحصيلي"];
@@ -347,27 +351,23 @@ export function basicTracksFor(opts: { status?: string; grade?: string; goal?: S
       const ordered = primary ? [primary, ...core] : core;
       return dedupe(ordered).slice(0, MAX_BASIC_TRACKS);
     }
-    // هدف القبول: لا نضيف قدرات أو تحصيلي
-    if (isUniGoal) return ["مدرسه"];
-    return primary ? [primary] : ["قدرات"];
+    if (isUniGoal) return [];
+    return primary ? [primary] : []; // «لا، ركّز على القبول» → لا اختبار مفروض
   }
 
-  /* ثانوي + هدف القبول: مسار المدرسة فقط (بدون قدرات أو تحصيلي) */
+  /* ثانوي + هدف القبول: لا اختبار قياس مفروض (المدرسة قسم مستقل) */
   if (isUniGoal) {
-    return ["مدرسه"];
+    return [];
   }
   /* أول ثانوي: لا قدرات ولا تحصيلي (يبني أساسه المدرسي أولاً — القدرات من ثاني ثانوي).
-     الحزمة الأساسية مواد المدرسة، وستيب اختياري إن كان هدفه لغوياً. */
+     لا اختبار قياس؛ ستيب اختياري إن كان هدفه لغوياً. */
   if (opts.grade === "أول ثانوي") {
-    return opts.goal === "step" ? ["ستيب", "مدرسه"] : ["مدرسه"];
+    return opts.goal === "step" ? ["ستيب"] : [];
   }
   const core: TrackId[] = ["قدرات", tahsiliTrack];
   if (opts.goal === "step") core.unshift("ستيب");
   const ordered = primary ? [primary, ...core] : core;
-  const examTracks = dedupe(ordered).slice(0, MAX_BASIC_TRACKS);
-  // ثالث ثانوي: مسار المدرسة دائماً بجانب اختبارات قياس
-  if (opts.grade === "ثالث ثانوي") return dedupe([...examTracks, "مدرسه"]);
-  return examTracks;
+  return dedupe(ordered).slice(0, MAX_BASIC_TRACKS);
 }
 
 
@@ -459,16 +459,14 @@ export function deriveGoalFromTracks(selected: TrackId[], eligibility: TrackElig
   return undefined;
 }
 
-/* المبدئيات المنطقية للوحة الاختبارات: نجوم المرحلة + القدرات + المدرسة (dedupe).
-   أول: قدرات+مدرسة · ثاني: مبكر+قدرات+مدرسة · ثالث: قدرات+تحصيلي+مدرسة.
-   حدّ الاختبارات MAX_BASIC_TRACKS — والمدرسة لا تُحسب منه (نفس سلوك basicTracksFor). */
+/* المبدئيات المنطقية لاختبارات القبول: نجوم المرحلة + القدرات المتاحة (dedupe).
+   المدرسة ليست اختباراً فلا تدخل هنا. حدّ الاختبارات MAX_BASIC_TRACKS. */
 export function defaultTracksFromEligibility(eligibility: TrackEligibility[]): TrackId[] {
   const avail = (id: TrackId) => eligibility.some((e) => e.id === id && e.status === "available");
   const starred = eligibility.filter((e) => e.status === "available" && e.important).map((e) => e.id);
   const base = [...starred];
   if (avail("قدرات")) base.push("قدرات");
-  const exams = [...new Set(base)].filter((id) => id !== "مدرسه").slice(0, MAX_BASIC_TRACKS);
-  return avail("مدرسه") ? [...exams, "مدرسه"] : exams;
+  return [...new Set(base)].filter((id) => id !== "مدرسه").slice(0, MAX_BASIC_TRACKS);
 }
 
 /* نطاق درجة اختبار من عنوانه — undefined لو غير معروف، null لو بلا درجة */

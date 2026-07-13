@@ -149,11 +149,11 @@ export default function OnboardingPage() {
   }) : [];
   const qiyasTracks = examB.map((e) => EXAM_TRACK[e.id]);
 
-  /* المسارات النهائية:
-     - الثانوي: اختبارات القياس من examBoard + اللغات المختارة + المدرسة (المصدر نفسه المعروض)
+  /* المسارات النهائية — اختبارات فقط (المدرسة قسمٌ مستقل، ليست اختباراً ولا تُحسب):
+     - الثانوي: اختبارات القياس من examBoard + اللغات المختارة
      - الخريج: الحزمة التلقائية + اختبارات اللغة · الجامعي: الحزمة التلقائية فقط */
   const finalTracks =
-    status === "ثانوي" ? [...new Set<TrackId>([...qiyasTracks, ...LANGUAGE_TESTS.filter((id) => selectedLanguages.includes(id)), "مدرسه"])] :
+    status === "ثانوي" ? [...new Set<TrackId>([...qiyasTracks, ...LANGUAGE_TESTS.filter((id) => selectedLanguages.includes(id))])] :
     status === "خريج"  ? [...new Set([...computedTracks, ...selectedLanguages])] :
     computedTracks;
 
@@ -192,8 +192,9 @@ export default function OnboardingPage() {
     /* الأهداف غير حاجزة للثانوي (نواته تكفي)؛ الخريج يلزمه هدف واحد على الأقل */
     if (!isSecondary && !isUniversity && !goals.length) return;
     const tracks = finalTracks;
-    if (!tracks.length) return;
-    const primaryTrack = tracks[0];
+    /* قد لا يكون للطالب أي اختبار (أول ثانوي · خريج ركّز على القبول) — والمدرسة
+       قسمٌ مستقل. المسار الأساسي (حقل إلزامي) يبقى «مدرسه» كأساسٍ يومي غير محسوب. */
+    const primaryTrack: TrackId = tracks[0] ?? "مدرسه";
 
     /* تحقّق درجات الخريج السابقة */
     for (const exam of PREV_EXAMS) {
@@ -234,7 +235,7 @@ export default function OnboardingPage() {
     saveUser({
       name: trimmedName,
       track: primaryTrack,
-      activeTracks: tracks,
+      activeTracks: tracks.length ? tracks : undefined,
       onboarded: true,
       age: age ? parseInt(age) : undefined, // اختياري — بلا حد أدنى أو أعلى
       studyLevel: status || undefined,
@@ -769,50 +770,53 @@ export default function OnboardingPage() {
           <>
             {goalsSection}
             {grade === "ثالث ثانوي" && targetsSection}
+            {/* ── اختبارات القبول (قياس) — من examBoard فقط. المدرسة ليست هنا. ── */}
             <div>
-              <p className="label mb-1">اختباراتك الأساسية</p>
+              <p className="label mb-1">اختبارات القبول</p>
               <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>
                 {examB.length
-                  ? "نفعّلها لك تلقائياً حسب صفّك وحالة التسجيل الرسمية — ودرجة المدرسة"
-                  : "في صفّك الآن نركّز على مواد المدرسة — القدرات والتحصيلي يبدآن من ثاني ثانوي"}
+                  ? "نفعّلها لك تلقائياً حسب صفّك وحالة التسجيل الرسمية"
+                  : "لا اختبارات قبول في مرحلتك الآن — القدرات والتحصيلي يبدآن من ثاني ثانوي"}
               </p>
-              <div className="flex flex-col gap-2.5">
-                {/* اختبارات القياس من مصدر الحقيقة examBoard: الاسم والحالة والظهور منه (لا نص ثابت) */}
-                {examB.map((be) => {
-                  const id = EXAM_TRACK[be.id];
-                  const t = TRACKS.find((tr) => tr.id === id)!;
-                  const important = eligibility.find((x) => x.id === id)?.important;
-                  return (
-                    <div key={be.id} className="rounded-2xl px-4 py-3" style={chipStyle(true)}>
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-md flex items-center justify-center text-[14px] font-black flex-shrink-0"
-                          style={{ background: "var(--accent)", border: "1.5px solid var(--accent)", color: "#fff" }}>✓</span>
-                        <span className="font-bold text-[17px] flex-1">{be.label}</span>
-                        {important && (
-                          <span className="text-[12px] font-black px-2 py-0.5 rounded-full flex-shrink-0"
-                            style={{ background: "color-mix(in srgb, var(--gold) 16%, transparent)", color: "var(--gold)" }}>
-                            ⭐ مهم لمرحلتك
-                          </span>
-                        )}
+              {examB.length > 0 && (
+                <div className="flex flex-col gap-2.5">
+                  {/* اسم الاختبار وحالته وظهوره من مصدر الحقيقة examBoard (لا نص ثابت) */}
+                  {examB.map((be) => {
+                    const id = EXAM_TRACK[be.id];
+                    const t = TRACKS.find((tr) => tr.id === id)!;
+                    const important = eligibility.find((x) => x.id === id)?.important;
+                    return (
+                      <div key={be.id} className="rounded-2xl px-4 py-3" style={chipStyle(true)}>
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-md flex items-center justify-center text-[14px] font-black flex-shrink-0"
+                            style={{ background: "var(--accent)", border: "1.5px solid var(--accent)", color: "#fff" }}>✓</span>
+                          <span className="font-bold text-[17px] flex-1">{be.label}</span>
+                          {important && (
+                            <span className="text-[12px] font-black px-2 py-0.5 rounded-full flex-shrink-0"
+                              style={{ background: "color-mix(in srgb, var(--gold) 16%, transparent)", color: "var(--gold)" }}>
+                              ⭐ مهم لمرحلتك
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[14px] mt-1 pr-7" style={{ color: "var(--accent-light)" }}>{t.sub}</p>
+                        <p className="text-[13px] font-bold mt-1 pr-7" style={{ color: MODE_COLOR[be.mode] }}>{be.hint}</p>
                       </div>
-                      <p className="text-[14px] mt-1 pr-7" style={{ color: "var(--accent-light)" }}>{t.sub}</p>
-                      <p className="text-[13px] font-bold mt-1 pr-7" style={{ color: MODE_COLOR[be.mode] }}>{be.hint}</p>
-                    </div>
-                  );
-                })}
-                {/* درجة المدرسة — دائماً (النواة اليومية) */}
-                <div className="rounded-2xl px-4 py-3" style={chipStyle(true)}>
-                  <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-md flex items-center justify-center text-[14px] font-black flex-shrink-0"
-                      style={{ background: "var(--accent)", border: "1.5px solid var(--accent)", color: "#fff" }}>✓</span>
-                    <span className="font-bold text-[17px] flex-1">{TRACKS.find((tr) => tr.id === "مدرسه")!.title}</span>
-                  </div>
-                  <p className="text-[14px] mt-1 pr-7" style={{ color: "var(--accent-light)" }}>{TRACKS.find((tr) => tr.id === "مدرسه")!.sub}</p>
+                    );
+                  })}
                 </div>
+              )}
+            </div>
+
+            {/* ── المدرسة: قسم مستقل، ليست اختباراً ── */}
+            <div className="rounded-2xl px-4 py-3.5 flex items-start gap-3"
+              style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
+              <span className="text-[22px] flex-shrink-0">🏫</span>
+              <div>
+                <p className="font-bold text-[16px]" style={{ color: "var(--text)" }}>المدرسة — قسمك اليومي المستقل</p>
+                <p className="text-[14px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                  موادك وواجباتك وجدولك وتقويم الوزارة في «المدرسة» — دائمة معك، وليست اختباراً.
+                </p>
               </div>
-              <p className="text-[13px] mt-2" style={{ color: "var(--text-muted)" }}>
-                نواتك مفعّلة تلقائياً حسب مرحلتك وموعدها الرسمي — تقدر تضيف اختبارات لغة تحت، وتعدّل كل شيء لاحقاً من ملفك.
-              </p>
             </div>
             {languageSection}
           </>

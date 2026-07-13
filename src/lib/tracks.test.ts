@@ -131,19 +131,18 @@ test("كل مسار مقفل في كل الحالات يحمل سبباً غير
 });
 
 /* ════════ المبدئيات المنطقية ════════ */
-test("المبدئيات: أول → مدرسة فقط · ثاني → مبكر+قدرات+مدرسة · ثالث → قدرات+تحصيلي+مدرسة", () => {
+test("المبدئيات (اختبارات فقط، بلا مدرسة): أول → لا شيء · ثاني → مبكر+قدرات · ثالث → قدرات+تحصيلي", () => {
   const d1 = defaultTracksFromEligibility(trackEligibilityFor({ status: "ثانوي", grade: "أول ثانوي" }));
-  assert.deepEqual(d1, ["مدرسه"]);
+  assert.deepEqual(d1, []);
 
   const d2 = defaultTracksFromEligibility(trackEligibilityFor({ status: "ثانوي", grade: "ثاني ثانوي" }));
-  assert.deepEqual(d2, ["تحصيلي مبكر", "قدرات", "مدرسه"]);
+  assert.deepEqual(d2, ["تحصيلي مبكر", "قدرات"]);
 
   const d3 = defaultTracksFromEligibility(trackEligibilityFor({ status: "ثانوي", grade: "ثالث ثانوي" }));
-  assert.deepEqual(d3, ["قدرات", "تحصيلي", "مدرسه"]);
+  assert.deepEqual(d3, ["قدرات", "تحصيلي"]);
 
-  /* حد الاختبارات محفوظ — المدرسة لا تُحسب منه (نفس سلوك basicTracksFor) */
   for (const d of [d1, d2, d3]) {
-    assert.ok(d.filter((t) => t !== "مدرسه").length <= MAX_BASIC_TRACKS);
+    assert.ok(d.length <= MAX_BASIC_TRACKS);
   }
 });
 
@@ -159,9 +158,9 @@ test("المبدئيات متّسقة مع basicTracksFor حيث تتطابق ا
 });
 
 /* ════════ الجامعي: مسار محايد لا قياس ════════ */
-test("basicTracksFor الجامعي: مسار محايد واحد بلا قدرات/تحصيلي/ستيب مهما كان الهدف", () => {
+test("basicTracksFor الجامعي: لا اختبار قياس إطلاقاً (المدرسة قسم مستقل، ليست هنا)", () => {
   const neutral = basicTracksFor({ status: "جامعي" });
-  assert.deepEqual(neutral, ["مدرسه"]);
+  assert.deepEqual(neutral, []);
   /* حتى لو مُرِّر هدف قياس (لن يحدث في التسجيل الجديد) لا نفعّل اختبار قياس للجامعي */
   for (const goal of ["qudurat", "tahsili", "step", "university", "major"] as const) {
     const t = basicTracksFor({ status: "جامعي", goal });
