@@ -8,12 +8,11 @@ import PageGuide from "@/components/PageGuide";
 import DefCard from "@/components/DefCard";
 import { RAKAN_SCHEDULE } from "@/lib/constants";
 import { getTrack, subjectColor, TRACKS, type Track, type TrackId } from "@/lib/tracks";
-import { fmtHour } from "@/lib/utils";
 import { NumberTicker } from "@/components/ui/number-ticker";
 import Confetti from "@/components/Confetti";
 import {
-  loadUser, saveUser, loadList, saveList, loadExamDate, saveExamDate, loadStats,
-  loadEvents, saveEvents, loadExamFlow, saveExamFlow,
+  loadUser, saveUser, loadList, saveList, loadExamDate, loadStats,
+  loadEvents, loadExamFlow, saveExamFlow,
   loadStageReviews, saveStageReviews,
   loadTadreebItems, saveTadreebItems, loadTadreebDone, saveTadreebDone,
   loadTasreebatPct, saveTasreebatPct,
@@ -24,11 +23,10 @@ import {
 import { trackEvent } from "@/lib/analytics";
 /* syncUser مُستورَد ديناميكياً أسفل — يُبعد Firebase عن حزمة الخريطة المبدئية */
 import dynamic from "next/dynamic";
-const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
 const TopicExtractor = dynamic(() => import("@/components/TopicExtractor"), { ssr: false });
 const LeaksPlanner = dynamic(() => import("@/components/LeaksPlanner"), { ssr: false });
 const ExamCoordPanel = dynamic(() => import("@/components/ExamCoordPanel"), { ssr: false });
-import DayScheduler, { getEventsForDate } from "@/components/DayScheduler";
+import { getEventsForDate } from "@/components/DayScheduler";
 import ExamDateButton from "@/components/ExamDateButton";
 
 interface CustomLesson { id: string; subject: string; title: string; }
@@ -320,14 +318,13 @@ export default function RoadmapPage() {
   const [newLesson, setNewLesson]     = useState("");
   const [newTraining, setNewTraining] = useState("");
 
-  const [examDate, setExamDate] = useState<string | null>(() =>
+  /* موعد الاختبار والجدول للقراءة فقط هنا — التحرير في «خطتي» (محرّر واحد للمنصّة) */
+  const [examDate] = useState<string | null>(() =>
     typeof window !== "undefined" ? loadExamDate() : null
   );
-  const [events, setEvents] = useState<ScheduleEvent[]>(() =>
+  const [events] = useState<ScheduleEvent[]>(() =>
     typeof window !== "undefined" ? loadEvents() : []
   );
-  const [schedulerDate, setSchedulerDate]   = useState<string | null>(null);
-  const [schedTab, setSchedTab]             = useState<"manual" | "ai">("manual");
 
   const [examFlow, setExamFlow] = useState<ExamFlow>(() =>
     typeof window !== "undefined" ? loadExamFlow() : {}
@@ -1190,109 +1187,36 @@ export default function RoadmapPage() {
       </PhaseSection>
       </>)}
 
-      {/* تقويم الشهر + جدول اليوم — ملاصقان بدون فاصل */}
+      {/* خطتك الحالية — ملخّص للقراءة فقط. محرّر الجدول الوحيد في «خطتي» (بيت واحد) */}
       <div className="px-5 mt-2 rise rise-4">
-        <p className="eyebrow mb-3 px-1">تقويم الشهر</p>
-        <Calendar
-          flushBottom
-          examDate={examDate}
-          onExamDateChange={(d) => { setExamDate(d); saveExamDate(d); }}
-          onDayClick={(date) => { setSchedTab("manual"); setSchedulerDate(date); }}
-          getDayInfo={(date) =>
-            getEventsForDate(date, events).map((ev) => ({
-              id: ev.id,
-              label: ev.type === "study" ? (ev.subject ?? "مذاكرة") : (ev.label ?? "مشغول"),
-              color: ev.type === "study"
-                ? (ev.subject ? subjectColor(track, ev.subject) : "var(--accent-light)")
-                : "var(--danger)",
-              from: ev.fromHour,
-              to: ev.toHour,
-            }))
-          }
-        />
-
-        {/* جدول اليوم — ملاصق للتقويم بدون فاصل */}
         {(() => {
-          const todayEvents = getEventsForDate(todayStr, events);
+          let week = 0;
+          for (let i = 0; i < 7; i++) {
+            const d = new Date(); d.setDate(d.getDate() + i);
+            week += getEventsForDate(d.toISOString().slice(0, 10), events).filter((e) => e.type === "study").length;
+          }
+          const total = events.filter((e) => e.type === "study").length;
           return (
-            <section className="card" style={{ borderTopLeftRadius: 0, borderTopRightRadius: 0, borderTop: "none" }}>
-              <div className="flex items-center justify-between mb-3">
-                <p className="title-md" style={{ color: "var(--text)" }}>جدول اليوم</p>
+            <section className="rounded-2xl p-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+              <div className="flex items-center gap-2 mb-3">
+                <span aria-hidden="true">📅</span>
+                <p className="t-title flex-1" style={{ color: "var(--text)" }}>خطتك الحالية</p>
               </div>
-
-              {/* بانر «الآن/القادمة» — يبيّن وقتك الحالي وكم باقٍ ويبدأ أوربت بالمادة تلقائياً */}
-              {(() => {
-                const study = todayEvents.filter((e) => e.type === "study").sort((a, b) => a.fromHour - b.fromHour);
-                if (study.length === 0) return null;
-                const now = new Date();
-                const nowH = now.getHours() + now.getMinutes() / 60;
-                const current = study.find((e) => nowH >= e.fromHour && nowH < e.toHour);
-                const next = study.find((e) => e.fromHour > nowH);
-                if (!current && !next) {
-                  return (
-                    <div className="rounded-2xl px-4 py-3 mb-3 text-center"
-                      style={{ background: "color-mix(in srgb, var(--success) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--success) 30%, transparent)" }}>
-                      <p className="text-[17px] font-black" style={{ color: "var(--success)" }}>خلّصت جدول اليوم 🎉</p>
-                    </div>
-                  );
-                }
-                const subj = current?.subject ?? next?.subject;
-                const c = subj ? subjectColor(track, subj) : "var(--accent-light)";
-                let line1 = "";
-                if (current) {
-                  line1 = `الآن — حتى ${fmtHour(current.toHour)}`;
-                } else if (next) {
-                  const m = Math.max(1, Math.round((next.fromHour - nowH) * 60));
-                  const when = m >= 60 ? `بعد ${Math.floor(m / 60)} ساعة${m % 60 ? ` و${m % 60} د` : ""}` : `بعد ${m} دقيقة`;
-                  line1 = `القادمة ${when} — ${fmtHour(next.fromHour)}`;
-                }
-                return (
-                  <div className="rounded-2xl px-4 py-3 mb-3 flex items-center gap-3"
-                    style={{ background: `color-mix(in srgb, ${c} 12%, var(--surface2))`, border: `1px solid ${c}44` }}>
-                    <span className="text-[25px]">{current ? "▶️" : "⏭️"}</span>
-                    <div className="flex-1 text-right min-w-0">
-                      <p className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>{line1}</p>
-                      <p className="text-[18px] font-black truncate" style={{ color: c }}>{subj ?? "مذاكرة"}</p>
-                    </div>
-                    <Link href={`/orbit?subject=${encodeURIComponent(subj ?? "")}`}
-                      className="text-[15px] font-black px-3 py-2 rounded-xl flex-shrink-0"
-                      style={{ background: c, color: "#fff", textDecoration: "none" }}>
-                      ابدأ أوربت ←
-                    </Link>
-                  </div>
-                );
-              })()}
-
-              {/* التفاصيل تظهر بالتعديل فقط — هنا ملخّص بسيط لا يزحم الطالب */}
-              {todayEvents.length === 0 ? (
-                <div className="flex items-center justify-center gap-2 rounded-2xl py-5"
-                  style={{ background: "var(--surface2)", border: "1.5px dashed var(--border)", minHeight: "56px" }}>
-                  <span className="text-[17px] font-bold" style={{ color: "var(--text-muted)" }}>
-                    لا يوجد جدول اليوم — اضغط «مساعد دويرب» تحت
-                  </span>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div className="rounded-xl p-3 text-center" style={{ background: "var(--surface2)" }}>
+                  <p className="t-h2 font-mono-nums" style={{ color: "var(--accent-light)" }}>{week}</p>
+                  <p className="t-caption mt-0.5" style={{ color: "var(--text-muted)" }}>جلسة هذا الأسبوع</p>
                 </div>
-              ) : (
-                <button onClick={() => { setSchedTab("manual"); setSchedulerDate(todayStr); }}
-                  className="w-full flex items-center justify-between gap-2 rounded-2xl px-4 py-3 transition active:scale-[0.99]"
-                  style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-                  <span className="text-[16px] font-bold" style={{ color: "var(--text)" }}>
-                    {todayEvents.filter((e) => e.type === "study").length} جلسة اليوم
-                  </span>
-                  <span className="text-[15px] font-bold" style={{ color: "var(--accent-light)" }}>عرض وتعديل ←</span>
-                </button>
-              )}
-              <div className="flex gap-2 mt-3">
-                <button onClick={() => { setSchedTab("manual"); setSchedulerDate(todayStr); }}
-                  className="flex-1 py-3 rounded-2xl font-bold text-[19px]"
-                  style={{ background: "transparent", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
-                  يدوي
-                </button>
-                <button onClick={() => { setSchedTab("ai"); setSchedulerDate(todayStr); }}
-                  className="flex-1 py-3 rounded-2xl font-bold text-[19px]"
-                  style={{ background: "var(--accent)", color: "white", border: "none" }}>
-                  مساعد دويرب
-                </button>
+                <div className="rounded-xl p-3 text-center" style={{ background: "var(--surface2)" }}>
+                  <p className="t-h2 font-mono-nums" style={{ color: "var(--text)" }}>{total}</p>
+                  <p className="t-caption mt-0.5" style={{ color: "var(--text-muted)" }}>جلسة مجدولة</p>
+                </div>
               </div>
+              <Link href="/plan"
+                className="w-full flex items-center justify-center gap-2 rounded-2xl py-3 t-body font-black transition active:scale-[0.98] no-underline"
+                style={{ background: "var(--accent)", color: "#fff" }}>
+                فتح خطتي ←
+              </Link>
             </section>
           );
         })()}
@@ -1326,20 +1250,6 @@ export default function RoadmapPage() {
         </aside>
       )}
       </div>
-
-      {/* DayScheduler */}
-      {schedulerDate && (
-        <DayScheduler
-          date={schedulerDate}
-          events={events}
-          subjects={track.subjects}
-          examDate={examDate}
-          onExamDateChange={(d) => { setExamDate(d); saveExamDate(d); }}
-          onEventsChange={(updated) => { setEvents(updated); saveEvents(updated); }}
-          onClose={() => setSchedulerDate(null)}
-          initialTab={schedTab}
-        />
-      )}
 
       {/* NextStep Overlay */}
       {(showNextStep || shouldAutoOpenNextStep) && (
