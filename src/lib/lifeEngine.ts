@@ -20,6 +20,7 @@ import { findMajor } from "./university";
 import { hasMajorWorld } from "./majors";
 import { loadUser, loadGoals, loadTrackExamDates, loadCalendarConfig, localDayKey } from "./storage";
 import { loadHomework, homeworkPressure } from "./homework";
+import { achievableRetakes } from "./retake";
 
 /* ── سياق الطالب الكامل — يُجمَّع مرّة من كل الأنظمة القائمة ── */
 export interface LifeContext {
@@ -451,6 +452,11 @@ export function readLifeContext(now: Date = new Date()): LifeContext {
   const m = findMajor(goals.majorId ?? undefined);
   const hw = homeworkPressure(loadHomework(), localDayKey(now));
 
+  /* نوايا الإعادة المُحقَّقة فقط: المرحلة تسمح + باب التسجيل غير منتهٍ.
+     فلا يقترح العقل إعادةً مستحيلة، ويظهر تلقائياً أفضل خطوةٍ تالية (الأولوية التي تليها). */
+  const admissionOpen = exp.admission !== "hidden";
+  const retakeExams = achievableRetakes(user?.retakeExams ?? [], exp.stage, localDayKey(now), { admissionOpen });
+
   return {
     stage: exp.stage,
     uniStage: isUni ? uniStage(user?.universityYear, user?.creditHoursCompleted) : null,
@@ -468,8 +474,8 @@ export function readLifeContext(now: Date = new Date()): LifeContext {
     uniFinalsInDays: sem?.daysToFinals ?? null,
     termLabel: sem?.termLabel ?? null,
     inStudyTerm: cal.inStudyTerm,
-    retakeExams: user?.retakeExams ?? [],
-    admissionOpen: exp.admission !== "hidden",
+    retakeExams,
+    admissionOpen,
     hwOverdue: hw.overdue,
     hwDueToday: hw.dueToday,
     hwPending: hw.pending,

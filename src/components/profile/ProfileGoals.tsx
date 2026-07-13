@@ -1,13 +1,30 @@
 "use client";
 /* ─── الأهداف الأكاديمية — درجات مستهدفة + الجامعة/التخصص + نتائجي ─── */
-import { memo, useState } from "react";
+import { memo, useState, type CSSProperties } from "react";
 import type { DarbGoals, ExamResult } from "@/lib/storage";
 import { loadUser, saveUser } from "@/lib/storage";
 import { TRACKS, scoreRangeForTitle, validateScore } from "@/lib/tracks";
 import { trackEvent } from "@/lib/analytics";
-import { satisfactionForResult, type Satisfaction, type SatBand } from "@/lib/satisfaction";
+import { satisfactionForResult, examKeyOf, type Satisfaction, type SatBand } from "@/lib/satisfaction";
+import { phaseExperience, type Stage } from "@/lib/experience";
+import { retakeAvailability, bestNextStep, type FinalityState, type RetakeAvailability } from "@/lib/retake";
 
 const BAND_COLOR: Record<SatBand, string> = { green: "var(--success)", yellow: "var(--gold)", red: "var(--danger)" };
+
+function todayStr(): string {
+  const d = new Date();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+/* عبارة حالة نافذة الإعادة — بلا تاريخ مُخمَّن (المصدر examProvider) */
+function windowHint(a: RetakeAvailability): string {
+  if (a.reason === "pending") return "⏳ بانتظار إعلان الموعد الرسمي";
+  if (a.windowStatus === "open") return "🟢 التسجيل مفتوح الآن";
+  if (a.windowStatus === "upcoming") return "🔔 التسجيل قادم";
+  return "";
+}
 
 interface Props {
   goals: DarbGoals;
@@ -36,15 +53,27 @@ function ProfileGoalsBase({ goals, onGoalsChange, results, onAddResult, onDelete
   const resRange = resExam ? scoreRangeForTitle(resExam) : undefined;
   const noScore = resRange === null;
 
-  /* قرار إعادة الاختبار — يقرؤه Life Engine ويغيّر أولويات الطالب وتوصياته.
-     يُحفظ في المستخدم، وقابل للتغيير في أي وقت من هنا (الإعدادات). */
+  /* مرحلة الطالب ووضع القبول — يحكمان أيّ إعادةٍ ممكنة فعلاً (لا نعرض المستحيل) */
+  const [stage] = useState<Stage>(() =>
+    typeof window !== "undefined" ? phaseExperience(loadUser()).stage : "first");
+  const [admissionOpen] = useState(() =>
+    typeof window !== "undefined" ? phaseExperience(loadUser()).admission !== "hidden" : true);
+  const today = todayStr();
+
+  /* قرار «هل الدرجة نهائية؟» — ثلاث حالات صريحة (نهائية · لم أقرّر · سأعيد).
+     الإعادة تُخزَّن في retakeExams (يقرؤها Life Engine)، والاعتماد في finalizedExams.
+     يُحفظان في المستخدم، وقابلان للتغيير في أي وقت من هنا. */
   const [retakes, setRetakes] = useState<string[]>(() =>
     typeof window !== "undefined" ? loadUser()?.retakeExams ?? [] : []);
-  const setRetake = (exam: string, on: boolean) => {
-    const next = on ? [...new Set([...retakes, exam])] : retakes.filter((x) => x !== exam);
-    setRetakes(next);
+  const [finals, setFinals] = useState<string[]>(() =>
+    typeof window !== "undefined" ? loadUser()?.finalizedExams ?? [] : []);
+  const setFinality = (exam: string, state: FinalityState) => {
+    const nextRetakes = state === "retake" ? [...new Set([...retakes, exam])] : retakes.filter((x) => x !== exam);
+    const nextFinals = state === "final" ? [...new Set([...finals, exam])] : finals.filter((x) => x !== exam);
+    setRetakes(nextRetakes);
+    setFinals(nextFinals);
     const u = loadUser();
-    if (u) saveUser({ ...u, retakeExams: next.length ? next : undefined });
+    if (u) saveUser({ ...u, retakeExams: nextRetakes.length ? nextRetakes : undefined, finalizedExams: nextFinals.length ? nextFinals : undefined });
   };
 
   /* مؤشّر الرضا لكل اختبارٍ له نتيجة (أحدث نتيجة لكل اختبار، إن كان له حكم) */
@@ -96,12 +125,28 @@ function ProfileGoalsBase({ goals, onGoalsChange, results, onAddResult, onDelete
         </div>
       </div>
 
-      {/* مؤشّر الرضا عن الدرجة + قرار الإعادة (يدخل Life Engine ويغيّر تجربتك) */}
+      {/* «هل تعتبر هذه الدرجة نهائية؟» — ثلاث حالات، والإعادة تُعرَض فقط إن كانت
+          ممكنة فعلاً (المرحلة + نافذة التسجيل). وإلا: أفضل خطوة تالية بدل المستحيل. */}
       {satCards.length > 0 && (
         <div className="flex flex-col gap-2.5">
           {satCards.map(({ exam, sat }) => {
             const c = BAND_COLOR[sat.band];
-            const retaking = retakes.includes(exam);
+            const key = examKeyOf(exam);
+            const avail = key ? retakeAvailability(key, stage, today, { admissionOpen })
+              : { possible: false, reason: "stage", windowStatus: null, windowLabel: null } as RetakeAvailability;
+            /* الإعادة تُحتسب حالةً فعّالة فقط إن كانت ممكنة؛ وإلا تُعامَل كـ«لم أقرّر» */
+            const state: FinalityState =
+              retakes.includes(exam) && avail.possible ? "retake"
+              : finals.includes(exam) ? "final" : "undecided";
+            const pill = (label: string, active: boolean, activeStyle: CSSProperties, onClick: () => void) => (
+              <button onClick={onClick}
+                className="flex-1 py-2.5 rounded-xl font-bold text-[13px] transition active:scale-[0.98]"
+                style={active ? activeStyle : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                {label}
+              </button>
+            );
+            const step = key ? bestNextStep(stage, key) : null;
+            const hint = windowHint(avail);
             return (
               <div key={exam} className="rounded-2xl p-4 flex flex-col gap-2.5"
                 style={{ background: `color-mix(in srgb, ${c} 8%, var(--surface))`, border: `1.5px solid color-mix(in srgb, ${c} 34%, var(--border))` }}>
@@ -109,27 +154,29 @@ function ProfileGoalsBase({ goals, onGoalsChange, results, onAddResult, onDelete
                   <p className="font-black text-[16px] leading-tight" style={{ color: "var(--text)" }}>{sat.title}</p>
                   <p className="text-[13px] mt-0.5" style={{ color: "var(--text-muted)" }}>{exam} · {sat.note}</p>
                 </div>
-                <p className="text-[14px] font-bold" style={{ color: "var(--text-dim)" }}>هل أنت راضٍ عن درجتك؟</p>
+                <p className="text-[14px] font-bold" style={{ color: "var(--text-dim)" }}>هل تعتبر هذه الدرجة نهائية؟</p>
                 <div className="flex gap-2">
-                  <button onClick={() => setRetake(exam, false)}
-                    className="flex-1 py-2.5 rounded-xl font-bold text-[14px] transition active:scale-[0.98]"
-                    style={!retaking
-                      ? { background: "var(--success)", color: "#04240f", border: "none" }
-                      : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
-                    نعم، سأعتمدها
-                  </button>
-                  <button onClick={() => setRetake(exam, true)}
-                    className="flex-1 py-2.5 rounded-xl font-bold text-[14px] transition active:scale-[0.98]"
-                    style={retaking
-                      ? { background: "var(--accent)", color: "#fff", border: "none" }
-                      : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
-                    لا، سأعيد الاختبار
-                  </button>
+                  {pill("نعم، نهائية", state === "final",
+                    { background: "var(--success)", color: "#04240f", border: "none" },
+                    () => setFinality(exam, "final"))}
+                  {pill("لم أقرّر بعد", state === "undecided",
+                    { background: "var(--text-dim)", color: "var(--surface)", border: "none" },
+                    () => setFinality(exam, "undecided"))}
+                  {avail.possible && pill("لا، سأعيدها", state === "retake",
+                    { background: "var(--accent)", color: "#fff", border: "none" },
+                    () => setFinality(exam, "retake"))}
                 </div>
-                {retaking && (
+                {state === "retake" && (
                   <p className="text-[13px] font-bold" style={{ color: "var(--accent-light)" }}>
-                    🔁 فعّلنا خطة إعادة {exam} — ستراها أولويةً في صفحتك الرئيسية.
+                    🔁 فعّلنا خطة إعادة {exam}{hint ? ` — ${hint}` : ""}. ستراها أولويةً في صفحتك الرئيسية.
                   </p>
+                )}
+                {!avail.possible && step && (
+                  <a href={step.href}
+                    className="text-[13px] font-bold rounded-xl px-3 py-2 transition active:scale-[0.98]"
+                    style={{ background: "var(--surface2)", color: "var(--text-dim)", border: "1px solid var(--border)" }}>
+                    ⤷ {step.label}
+                  </a>
                 )}
               </div>
             );

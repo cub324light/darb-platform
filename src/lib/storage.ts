@@ -16,6 +16,7 @@ export interface DarbUser {
   goals?: StudyGoalType[];  // كل الأهداف المختارة (متعدد بلا حد) — الأساسي منها = goals[0]
   targets?: string[];       // أهداف ما بعد الثانوية (متعدّد): جامعة/أرامكو/سابك/عسكري/ITC/تدريب — معرّفات من lib/targets
   retakeExams?: string[];   // اختبارات اختار الطالب إعادتها (قدرات/تحصيلي/…) — يقرؤها Life Engine لرفع أولوية الاستعداد
+  finalizedExams?: string[]; // اختبارات اعتمد الطالب درجتها نهائيةً صراحةً (الحالة الثالثة مقابل «لم أقرّر»)
   gapYear?: boolean;        // خريج ينوي إعادة القدرات/التحصيلي (سنة استدراك)
   studyHours?: number;
   subjects?: string[];

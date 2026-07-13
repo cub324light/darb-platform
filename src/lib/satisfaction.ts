@@ -54,7 +54,7 @@ export function evaluateSatisfaction(score: number, threshold: number | null, fr
   const title =
     band === "green" ? "🟢 ممتاز — درجتك مناسبة لهدفك"
     : band === "yellow" ? "🟡 جيدة — رفعها بضع درجات يفتح لك خياراتٍ أكثر"
-    : "🔴 تحتاج رفعاً — أعِد الاختبار إن كان هدفك هذا التخصص";
+    : "🔴 أقل من هدفك — كل درجة تفتح خياراتٍ أكثر";
   const note =
     threshold == null ? "حكمٌ عام — حدّد تخصصك المستهدف لقياسٍ أدقّ."
     : fromMajor ? `متطلّب تخصصك ≈ ${threshold}.`
