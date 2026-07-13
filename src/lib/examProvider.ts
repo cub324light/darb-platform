@@ -256,6 +256,13 @@ export function nearestActiveWindow(
   return null;
 }
 
+/* الحالة التسجيلية الحاليّة لمسارٍ واحد — لجدول الأهلية (open/upcoming/pending أو
+   passed إن لم تبقَ نافذةٌ مفتوحة/قادمة/معلّقة). بلا تخمين: كلها من النوافذ الرسمية. */
+export function currentRegistrationStatus(trackId: TrackId, todayStr: string): RegistrationStatus {
+  const near = nearestActiveWindow(trackId, todayStr);
+  return near ? near.status : "passed";
+}
+
 /* يبني قائمة تنبيهات للمسارات النشطة (للداشبورد وصفحة الخطة) */
 export function buildExamAlerts(
   activeTrackIds: TrackId[],

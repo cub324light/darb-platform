@@ -189,12 +189,12 @@ export interface ExamRule {
   bands: readonly ScoreBand[];
 }
 
-/** قدرات (GAT) — لفظي وكمي. مفتوح لكل صفوف الثانوي والخريجين، يُفضّل بدؤه في ثاني ثانوي. */
+/** قدرات (GAT) — لفظي وكمي. من ثاني ثانوي فصاعداً + الخريجون (أول ثانوي يبني أساسه المدرسي أولاً). */
 export const QUDURAT_RULES: ExamRule = {
   id: "قدرات",
   nameEn: "GAT",
   scale: 100,
-  eligibleStages: SCHOOL_STAGES,
+  eligibleStages: ["ثاني ثانوي", "ثالث ثانوي"],
   graduatesEligible: true,
   recommendedStart: "ثاني ثانوي",
   validityYears: 5,
@@ -254,11 +254,16 @@ export const EXAM_RULES: Record<string, ExamRule> = {
    القاعدة الجوهرية: الطالب الجامعي خرج من عالم القياس/القبول كلياً.
    ════════════════════════════════════════════════════════════ */
 
-/** هل يحقّ للطالب دخول القدرات؟ (كل الثانوي + خريج الثانوية · ليس الجامعي/خريج الجامعة) */
+/** هل يحقّ للطالب دخول القدرات؟ (ثاني/ثالث ثانوي + خريج الثانوية · لا أول ثانوي
+    ولا الجامعي/خريج الجامعة). أول ثانوي يبني أساسه المدرسي أولاً — القدرات تبدأ من
+    ثاني ثانوي. الثانوي بلا صفٍّ محدّد يُعامَل كأول ثانوي (الأكثر تحفّظاً). */
 export function canTakeQudurat(u?: DarbUser | null): boolean {
   if (isUniversityGraduate(u)) return false; // خرج من عالم القياس نهائياً
   const phase = getStudentPhase(u);
-  return phase === "secondary" || phase === "graduate";
+  if (phase === "graduate") return true;
+  if (phase !== "secondary") return false;
+  const stage = stageOf(u);
+  return stage === "ثاني ثانوي" || stage === "ثالث ثانوي";
 }
 
 /** هل يحقّ له دخول التحصيلي؟ (ثالث ثانوي + خريج الثانوية · ليس الجامعي/خريج الجامعة/الصفوف الأدنى) */

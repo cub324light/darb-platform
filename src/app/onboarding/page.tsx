@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import {
-  TRACKS, basicTracksFor, STUDY_GOALS, scoreRangeForTitle, validateScore,
+  TRACKS, basicTracksFor, STUDY_GOALS, goalLabelFor, scoreRangeForTitle, validateScore,
   trackEligibilityFor,
   secondaryCoreTracks, secondaryActiveTracks, LANGUAGE_TESTS, primaryGoal,
   type StudyGoalType, type TrackId,
@@ -9,6 +9,8 @@ import {
 import { UNIVERSITIES, MAJORS, findUniversity, findMajor } from "@/lib/university";
 import { saveUser, saveExamDate, saveResults, saveTrackExamDates, loadGoals, saveGoals } from "@/lib/storage";
 import { ADMISSION_TARGETS } from "@/lib/targets";
+import { currentAcademicYearId } from "@/lib/academicCalendar";
+import { currentRegistrationStatus, type RegistrationStatus } from "@/lib/examProvider";
 /* registerUser, pushBackup, currentUser مُستورَدة ديناميكياً أسفل */
 import { trackEvent } from "@/lib/analytics";
 import { redeemPendingRef } from "@/lib/referral";
@@ -28,8 +30,31 @@ const STAGES: { key: string; label: string; status: Status; grade: string }[] = 
 const TRACK_TYPES = ["عام", "صحي", "هندسي", "حاسب", "إداري"] as const;
 const GRAD_STAGES = ["خريج ثانوي", "خريج جامعة"];
 const UNI_YEARS = ["الأولى", "الثانية", "الثالثة", "الرابعة", "الخامسة+"];
-/* اختبارات النتائج السابقة للخريج — العناوين تطابق سُلّم الدرجات في tracks.ts */
+/* اختبارات النتائج السابقة — العناوين تطابق سُلّم الدرجات في tracks.ts */
 const PREV_EXAMS = ["القدرات", "التحصيلي", "ستيب STEP"];
+
+/* «اختبرت من قبل؟» حسب المرحلة — لا نسأل أول ثانوي عن القدرات/التحصيلي (ليست له)،
+   ولا ثاني ثانوي عن التحصيلي. الخريج وثالث ثانوي: الكل. */
+function visiblePrevExamsFor(status: string, grade: string): string[] {
+  if (status === "خريج") return PREV_EXAMS;
+  if (status !== "ثانوي") return [];
+  if (grade === "أول ثانوي") return ["ستيب STEP"];
+  if (grade === "ثاني ثانوي") return ["القدرات", "ستيب STEP"];
+  return PREV_EXAMS; // ثالث ثانوي
+}
+
+/* شارة حالة التسجيل الرسمية لاختبار قياس — بلا تاريخ مُخمَّن (المصدر examProvider). */
+const WIN_BADGE: Record<RegistrationStatus, { text: string; color: string }> = {
+  open:     { text: "🟢 التسجيل مفتوح الآن",       color: "var(--success)" },
+  upcoming: { text: "🔔 التسجيل قادم قريباً",       color: "var(--gold)" },
+  pending:  { text: "⏳ بانتظار فتح التسجيل",        color: "var(--text-muted)" },
+  passed:   { text: "استعد له — النافذة القادمة",  color: "var(--text-muted)" },
+};
+const QIYAS_TRACKS: TrackId[] = ["قدرات", "تحصيلي", "تحصيلي مبكر", "ستيب"];
+/* هدف الاختبار → عنوان نتيجته السابقة (لصياغة «تحسين» بدل «الاستعداد» إن كان له درجة) */
+const GOAL_PREV_EXAM: Partial<Record<StudyGoalType, string>> = {
+  qudurat: "القدرات", tahsili: "التحصيلي", step: "ستيب STEP",
+};
 const SAUDI_REGIONS = [
   "الرياض", "مكة المكرمة", "المدينة المنورة", "القصيم", "المنطقة الشرقية",
   "عسير", "تبوك", "حائل", "الحدود الشمالية", "جازان", "نجران", "الباحة", "الجوف",
@@ -98,6 +123,9 @@ export default function OnboardingPage() {
 
   /* لوحة أهلية الاختبارات للثانوي — وش متاح ووش مقفل وليش (نقية ورخيصة) */
   const eligibility = status === "ثانوي" ? trackEligibilityFor({ status, grade }) : [];
+  /* حالة تسجيل كل اختبار قياس من المصدر الرسمي (examProvider) — لا نعرض المغلق كمتاح */
+  const today = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; })();
+  const winBadgeFor = (id: TrackId) => (QIYAS_TRACKS.includes(id) ? WIN_BADGE[currentRegistrationStatus(id, today)] : null);
   /* المسارات النهائية (الأهداف نية عليا مستقلة — لا تغيّر الاختبارات):
      - الثانوي: النواة المتاحة + اختبارات اللغة المختارة (بلا حد)
      - الخريج: الحزمة التلقائية + اختبارات اللغة المختارة (بلا حد)
@@ -189,6 +217,8 @@ export default function OnboardingPage() {
       age: age ? parseInt(age) : undefined, // اختياري — بلا حد أدنى أو أعلى
       studyLevel: status || undefined,
       grade: status === "ثانوي" && grade ? grade : undefined,
+      /* مرساة الترقية التلقائية: العام الدراسي الحالي وقت ضبط الصف (للثانوي فقط) */
+      gradeYearId: status === "ثانوي" && grade ? (currentAcademicYearId() ?? undefined) : undefined,
       gradStage: status === "خريج" && gradStage ? gradStage : undefined,
       universityYear: status === "جامعي" && universityYear ? universityYear : undefined,
       goal: effectiveGoal || undefined,
@@ -401,7 +431,7 @@ export default function OnboardingPage() {
     const prevExamsList = (
       <>
         <div className="flex flex-col gap-2.5">
-          {PREV_EXAMS.map((exam) => {
+          {visiblePrevExamsFor(status, grade).map((exam) => {
             const r = prevResults[exam];
             const range = scoreRangeForTitle(exam);
             return (
@@ -448,7 +478,7 @@ export default function OnboardingPage() {
                 <div className="rounded-2xl px-4 py-3"
                   style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
                   <p className="text-[15px] font-bold" style={{ color: "var(--accent-light)" }}>
-                    🌱 التحصيلي يبدأ من ثاني ثانوي — نفعّل لك القدرات ومواد المدرسة لتأسيس قوي.
+                    🌱 القدرات والتحصيلي يبدآن من ثاني ثانوي — الآن نفعّل لك مواد المدرسة لتأسيسٍ قويّ، ونجهّزك للقدرات في وقتها.
                   </p>
                 </div>
               )}
@@ -600,6 +630,10 @@ export default function OnboardingPage() {
       <div className="flex flex-col gap-2.5">
         {STUDY_GOALS.map((g) => {
           const on = goals.includes(g.id);
+          /* «تحسين درجة X» إذا أدخل درجةً سابقة لهذا الاختبار، وإلا «الاستعداد» */
+          const prevTitle = GOAL_PREV_EXAM[g.id];
+          const hasScore = !!(prevTitle && prevResults[prevTitle]?.tested && prevResults[prevTitle].score.trim());
+          const label = goalLabelFor(g.id, hasScore) ?? g.label;
           return (
             <button key={g.id} onClick={() => setGoals((prev) => prev.includes(g.id) ? prev.filter((x) => x !== g.id) : [...prev, g.id])}
               aria-pressed={on}
@@ -612,7 +646,7 @@ export default function OnboardingPage() {
                   color: on ? "#fff" : "transparent",
                 }}>✓</span>
               <span className="text-[23px]">{g.icon}</span>
-              <span className="font-bold text-[17px] flex-1">{g.label}</span>
+              <span className="font-bold text-[17px] flex-1">{label}</span>
             </button>
           );
         })}
@@ -738,6 +772,9 @@ export default function OnboardingPage() {
                         )}
                       </div>
                       <p className="text-[14px] mt-1 pr-7" style={{ color: "var(--accent-light)" }}>{t.sub}</p>
+                      {(() => { const w = winBadgeFor(id); return w ? (
+                        <p className="text-[13px] font-bold mt-1 pr-7" style={{ color: w.color }}>{w.text}</p>
+                      ) : null; })()}
                     </div>
                   );
                 })}

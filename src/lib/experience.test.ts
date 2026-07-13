@@ -9,19 +9,19 @@ const mk = (o: Partial<DarbUser>): DarbUser =>
   ({ name: "ط", track: "قدرات", onboarded: true, ...o });
 
 /* ════════ أول ثانوي ════════ */
-test("أول ثانوي: قدرات فقط، لا تحصيلي ولا مبكر، القبول استكشافي، التنقل مساري", () => {
+test("أول ثانوي: المدرسة فقط، لا قدرات ولا تحصيلي ولا مبكر، القبول استكشافي، التنقل مساري", () => {
   const e = phaseExperience(mk({ studyLevel: "ثانوي", grade: "أول ثانوي" }));
   assert.equal(e.stage, "first");
   assert.equal(e.stageLabel, "أول ثانوي");
   assert.equal(e.phase, "secondary");
-  assert.equal(e.showsQudurat, true);
+  assert.equal(e.showsQudurat, false); // القدرات تبدأ من ثاني ثانوي
   assert.equal(e.showsTahsili, false);
   assert.equal(e.showsEarlyTahsili, false);
   assert.equal(e.showsStep, true);
   assert.equal(e.admission, "explore");
   assert.equal(e.showsUniLife, false);
   assert.equal(e.navMid, "roadmap");
-  assert.ok(e.duwairbHint.includes("القدرات") || e.duwairbHint.includes("عادات"));
+  assert.ok(e.duwairbHint.includes("أساس") || e.duwairbHint.includes("عادات"));
 });
 
 /* ════════ ثاني ثانوي ════════ */

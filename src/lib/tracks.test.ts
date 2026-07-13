@@ -15,7 +15,7 @@ const byId = (list: TrackEligibility[], id: TrackId) => {
 };
 
 /* ════════ أول ثانوي ════════ */
-test("أول ثانوي: التحصيلي والمبكر مقفلان بسبب واضح، القدرات متاحة بلا نجمة", () => {
+test("أول ثانوي: القدرات والتحصيلي والمبكر مقفلة بسبب واضح، المدرسة فقط متاحة", () => {
   const list = trackEligibilityFor({ status: "ثانوي", grade: "أول ثانوي" });
 
   const tahsili = byId(list, "تحصيلي");
@@ -26,9 +26,10 @@ test("أول ثانوي: التحصيلي والمبكر مقفلان بسبب �
   assert.equal(early.status, "locked");
   assert.match(early.reason!, /ثاني ثانوي/);
 
+  /* القدرات تبدأ من ثاني ثانوي — أول ثانوي يبني أساسه المدرسي أولاً */
   const qudurat = byId(list, "قدرات");
-  assert.equal(qudurat.status, "available");
-  assert.equal(qudurat.important, false);
+  assert.equal(qudurat.status, "locked");
+  assert.match(qudurat.reason!, /ثاني ثانوي/);
 
   assert.equal(byId(list, "مدرسه").status, "available");
   assert.equal(byId(list, "ستيب").status, "available");
@@ -130,9 +131,9 @@ test("كل مسار مقفل في كل الحالات يحمل سبباً غير
 });
 
 /* ════════ المبدئيات المنطقية ════════ */
-test("المبدئيات: أول → قدرات+مدرسة · ثاني → مبكر+قدرات+مدرسة · ثالث → قدرات+تحصيلي+مدرسة", () => {
+test("المبدئيات: أول → مدرسة فقط · ثاني → مبكر+قدرات+مدرسة · ثالث → قدرات+تحصيلي+مدرسة", () => {
   const d1 = defaultTracksFromEligibility(trackEligibilityFor({ status: "ثانوي", grade: "أول ثانوي" }));
-  assert.deepEqual(d1, ["قدرات", "مدرسه"]);
+  assert.deepEqual(d1, ["مدرسه"]);
 
   const d2 = defaultTracksFromEligibility(trackEligibilityFor({ status: "ثانوي", grade: "ثاني ثانوي" }));
   assert.deepEqual(d2, ["تحصيلي مبكر", "قدرات", "مدرسه"]);
@@ -223,8 +224,8 @@ test("secondaryCoreTracks: القدرات والمدرسة ثابتتان، وش
 /* ════════ المسارات النهائية للثانوي: نواة متاحة + لغات بلا حد ════════ */
 test("secondaryActiveTracks: النواة المتاحة فقط بلا لغات، والقدرات دائماً أولاً والمدرسة أخيراً", () => {
   const e1 = trackEligibilityFor({ status: "ثانوي", grade: "أول ثانوي" });
-  /* أول ثانوي: التحصيلي مقفل → يُستبعَد من النواة المتاحة */
-  assert.deepEqual(secondaryActiveTracks("أول ثانوي", e1, []), ["قدرات", "مدرسه"]);
+  /* أول ثانوي: القدرات والتحصيلي مقفلان → المدرسة فقط في النواة المتاحة */
+  assert.deepEqual(secondaryActiveTracks("أول ثانوي", e1, []), ["مدرسه"]);
 
   const e2 = trackEligibilityFor({ status: "ثانوي", grade: "ثاني ثانوي" });
   assert.deepEqual(secondaryActiveTracks("ثاني ثانوي", e2, []), ["قدرات", "تحصيلي مبكر", "مدرسه"]);

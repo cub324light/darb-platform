@@ -59,7 +59,7 @@ function stageKey(u: DarbUser | null | undefined, phase: StudentPhase): Stage {
 /* اقتراح دويرب الافتتاحي لكل مرحلة (أمثلة المالك الحرفية) — الخريج حسب استدراكه */
 function hintFor(stage: Stage, u?: DarbUser | null): string {
   switch (stage) {
-    case "first":  return "ابدأ بالقدرات وبناء عاداتك الدراسية من الآن.";
+    case "first":  return "ابنِ أساسك المدرسي وعاداتك الدراسية من الآن — القدرات تبدأ من ثاني ثانوي.";
     case "second": return "القدرات والتحصيلي المبكر يخلّونك تسبق دفعتك.";
     case "third":  return "نحسب نسبتك الموزونة ونرتّب رغباتك للقبول.";
     case "university": return "جهّز سيرتك الذاتية وقدّم على التدريب الصيفي.";

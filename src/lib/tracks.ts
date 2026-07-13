@@ -252,16 +252,30 @@ export const MAX_BASIC_TRACKS = 3;
 
 export type StudyGoalType = "qudurat" | "tahsili" | "step" | "university" | "major";
 
+/* الصياغة الافتراضية «الاستعداد» — لأن اختيار الهدف يسبق معرفة إن اختبر الطالب.
+   إذا كان له درجةٌ مسجّلة تتحوّل عبر goalLabelFor إلى «تحسين درجة X». */
 export const STUDY_GOALS: { id: StudyGoalType; label: string; icon: string }[] = [
-  { id: "qudurat",    label: "رفع درجة القدرات",     icon: "📈" },
-  { id: "tahsili",    label: "رفع درجة التحصيلي",    icon: "📊" },
-  { id: "step",       label: "رفع درجة STEP",        icon: "🔤" },
-  { id: "university", label: "دخول جامعة محددة",      icon: "🏛️" },
-  { id: "major",      label: "الوصول إلى تخصص معيّن", icon: "🎯" },
+  { id: "qudurat",    label: "الاستعداد لاختبار القدرات",  icon: "📈" },
+  { id: "tahsili",    label: "الاستعداد لاختبار التحصيلي", icon: "📊" },
+  { id: "step",       label: "الاستعداد لاختبار STEP",     icon: "🔤" },
+  { id: "university", label: "دخول جامعة محددة",           icon: "🏛️" },
+  { id: "major",      label: "الوصول إلى تخصص معيّن",       icon: "🎯" },
 ];
 
 export const goalLabel = (id?: StudyGoalType): string | undefined =>
   id ? STUDY_GOALS.find((g) => g.id === id)?.label : undefined;
+
+/* صياغة هدف الاختبار حسب حالة الطالب: بلا درجة → «الاستعداد» (الافتراضي)،
+   وبدرجةٍ مسجّلة → «تحسين درجة X». لا نقول «تحسين» قبل أن نعرف أن له درجة. */
+const IMPROVE_LABEL: Partial<Record<StudyGoalType, string>> = {
+  qudurat: "تحسين درجة القدرات",
+  tahsili: "تحسين درجة التحصيلي",
+  step: "تحسين درجة STEP",
+};
+export function goalLabelFor(id?: StudyGoalType, hasScore = false): string | undefined {
+  if (!id) return undefined;
+  return hasScore ? (IMPROVE_LABEL[id] ?? goalLabel(id)) : goalLabel(id);
+}
 
 /* الهدف الأساسي من قائمة أهداف متعددة — أول عنصر (SSoT للتوافق مع كل المستهلكين
    القائمين الذين يقرؤون goal مفرداً: goldenPath/duwairb/goalReality). */
@@ -342,10 +356,10 @@ export function basicTracksFor(opts: { status?: string; grade?: string; goal?: S
   if (isUniGoal) {
     return ["مدرسه"];
   }
-  /* أول ثانوي: لا تحصيلي إطلاقاً (المدارس لا تبدأه قبل ثاني ثانوي) —
-     الحزمة الأساسية قدرات + مدرسة، وهدف tahsili يُعامل كهدف عام */
+  /* أول ثانوي: لا قدرات ولا تحصيلي (يبني أساسه المدرسي أولاً — القدرات من ثاني ثانوي).
+     الحزمة الأساسية مواد المدرسة، وستيب اختياري إن كان هدفه لغوياً. */
   if (opts.grade === "أول ثانوي") {
-    return opts.goal === "step" ? ["ستيب", "قدرات", "مدرسه"] : ["قدرات", "مدرسه"];
+    return opts.goal === "step" ? ["ستيب", "مدرسه"] : ["مدرسه"];
   }
   const core: TrackId[] = ["قدرات", tahsiliTrack];
   if (opts.goal === "step") core.unshift("ستيب");
@@ -390,9 +404,12 @@ export function trackEligibilityFor(opts: {
 
   return TRACKS.map((t): TrackEligibility => {
     switch (t.id) {
-      /* القدرات: كل صفوف الثانوي + الخريج — نجمة لثالث ثانوي (سنة الاختبارات) وسنة الاستدراك */
+      /* القدرات: ثاني/ثالث ثانوي + الخريج (لا أول ثانوي — يبني أساسه المدرسي أولاً).
+         نجمة لثالث ثانوي (سنة الاختبارات) وسنة الاستدراك. */
       case "قدرات":
-        return { id: t.id, ...(sec || grad ? available(g3 || gap) : locked("لطلاب الثانوي والخريجين")) };
+        if (g2 || g3 || grad) return { id: t.id, ...available(g3 || gap) };
+        if (g1) return { id: t.id, ...locked("تبدأ من ثاني ثانوي — ركّز على أساسك المدرسي الآن") };
+        return { id: t.id, ...locked("لطلاب الثانوي والخريجين") };
       /* التحصيلي العادي: ثالث ثانوي + الخريج فقط */
       case "تحصيلي":
         if (g3 || grad) return { id: t.id, ...available(g3 || gap) };

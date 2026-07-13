@@ -254,6 +254,25 @@ export function resolveCalendar(
   };
 }
 
+/* ════════ مرجع زمني للترقية التلقائية وأهلية الاختبارات ════════
+   العام الدراسي الحالي (id هجري) + هل تجاوزنا الفصل الأول؟ — كلاهما من التقويم
+   الرسمي فقط (لا تخمين). يستهلكهما: الترقية التلقائية للصفوف + جدول أهلية القياس. */
+
+/** معرّف العام الدراسي (الهجري) الذي يغطّي «الآن» — أو الأحدث كمرجع. null إن لا بيانات. */
+export function currentAcademicYearId(now: Date = new Date()): string | null {
+  return pickYear(ymd(now))?.id ?? null;
+}
+
+/** هل تجاوز «اليوم» نهايةَ الفصل الدراسي الأول؟ (فصل ثانٍ/ثالث/صيف → true).
+    يخدم قاعدة «ثاني ثانوي: لا تحصيلي في الفصل الأول، ويظهر بعده». */
+export function isAfterFirstTerm(now: Date = new Date()): boolean {
+  const today = ymd(now);
+  const year = pickYear(today);
+  if (!year) return false;
+  const firstTerm = year.periods.find((p) => p.kind === "term" && p.label.includes("الأول"));
+  return firstTerm ? today > firstTerm.end : false;
+}
+
 /* ── إشارات مختصرة تُمرَّر لمحرّك الاستراتيجية (عميل ⇄ خادم) ── */
 export interface CalendarSignals {
   onVacation?: boolean;

@@ -94,10 +94,11 @@ test("ثاني ثانوي: «القبول قدامك» مع ما يتاح فعل
   assert.match(unis.note ?? "", /التحصيلي المبكر/);
 });
 
-test("أول ثانوي: القدرات تُذكر ولا يُذكر التحصيلي المبكر (قاعدة المبكر: ثاني/ثالث فقط)", () => {
+test("أول ثانوي: المدرسة فقط متاحة، لا قدرات ولا تحصيلي مبكر (القدرات تبدأ من ثاني ثانوي)", () => {
   const unis = buildOpportunities({ studyLevel: "ثانوي", grade: "أول ثانوي" })[0];
   assert.match(unis.note ?? "", /القبول قدامك/);
-  assert.match(unis.note ?? "", /القدرات/);
+  assert.match(unis.note ?? "", /مواد المدرسة/);
+  assert.ok(!(unis.note ?? "").includes("القدرات"));
   assert.ok(!(unis.note ?? "").includes("التحصيلي المبكر"));
 });
 

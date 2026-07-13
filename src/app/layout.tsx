@@ -3,6 +3,7 @@ import { IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import AnalyticsGate from "@/components/AnalyticsGate";
 import CloudSync from "@/components/CloudSync";
+import GradeSync from "@/components/GradeSync";
 import AuthGate from "@/components/AuthGate";
 import Telemetry from "@/components/Telemetry";
 import PageViewTracker from "@/components/PageViewTracker";
@@ -85,6 +86,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AuthGate>{children}</AuthGate>
         </div>
         <CloudSync />
+        <GradeSync />
         <Telemetry />
         <PageViewTracker />
         <DuirbFloat />
