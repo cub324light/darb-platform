@@ -12,7 +12,7 @@ function ctx(o: Partial<LifeContext> = {}): LifeContext {
     majorId: "ee", majorName: "هندسة كهربائية", coopDone: false, gradInterest: false,
     highschoolPct: null, inSchoolFinals: false, daysToSchoolFinals: null, qiyas: null,
     uniFinalsInDays: null, termLabel: null, inStudyTerm: false,
-    hwOverdue: 0, hwDueToday: 0, hwPending: 0, retakeExams: [], ...o,
+    hwOverdue: 0, hwDueToday: 0, hwPending: 0, retakeExams: [], admissionOpen: true, ...o,
   };
 }
 
@@ -33,6 +33,17 @@ function assertRanked(ps: Priority[]) {
   for (let i = 1; i < ps.length; i++) assert.ok(ps[i - 1].score >= ps[i].score, "غير مرتّبة بالوزن");
   ps.forEach(assertComplete);
 }
+
+/* ════════ خريج الجامعة خارج عالم القبول/القياس (#51) ════════ */
+test("خريج الجامعة (admissionOpen=false) لا يرى «القبول» ولا «إعادة اختبار»", () => {
+  const ps = lifeEngine(ctx({ stage: "graduate", admissionOpen: false, retakeExams: ["القدرات"] }));
+  assert.ok(!ps.some((p) => p.key === "admission"), "خريج الجامعة يجب ألا يرى أولوية القبول");
+  assert.ok(!ps.some((p) => p.key === "retake"), "خريج الجامعة يجب ألا يرى إعادة اختبار");
+});
+test("خريج الثانوية (admissionOpen=true) يرى «القبول»", () => {
+  const ps = lifeEngine(ctx({ stage: "graduate", admissionOpen: true }));
+  assert.ok(ps.some((p) => p.key === "admission"), "خريج الثانوية يجب أن يرى القبول");
+});
 
 /* ════════ الأولوية تتحوّل بالحال ════════ */
 test("متعثّر (٢٫٣) → الأولوية الأولى رفع المعدّل، وقواعدها تشمل «المعدّل أقل من ٢٫٧٥»", () => {

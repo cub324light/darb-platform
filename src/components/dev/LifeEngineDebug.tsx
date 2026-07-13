@@ -23,7 +23,7 @@ const BASE: LifeContext = {
   majorId: "ee", majorName: "هندسة كهربائية", coopDone: false, gradInterest: false,
   highschoolPct: null, inSchoolFinals: false, daysToSchoolFinals: null, qiyas: null,
   uniFinalsInDays: null, termLabel: "الفصل الثالث", inStudyTerm: true,
-  hwOverdue: 0, hwDueToday: 0, hwPending: 0, retakeExams: [],
+  hwOverdue: 0, hwDueToday: 0, hwPending: 0, retakeExams: [], admissionOpen: false,
 };
 const PRESETS: { label: string; patch: Partial<LifeContext> }[] = [
   { label: "جامعي متعثّر", patch: { stage: "university", uniStage: "senior", gpa: 2.31 } },

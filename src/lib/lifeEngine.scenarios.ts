@@ -9,14 +9,14 @@ const uni = (o: Partial<LifeContext>): LifeContext => ({
   majorId: "ee", majorName: "هندسة كهربائية", coopDone: false, gradInterest: false,
   highschoolPct: null, inSchoolFinals: false, daysToSchoolFinals: null, qiyas: null,
   uniFinalsInDays: null, termLabel: "الفصل الثاني", inStudyTerm: true,
-  hwOverdue: 0, hwDueToday: 0, hwPending: 0, retakeExams: [], ...o,
+  hwOverdue: 0, hwDueToday: 0, hwPending: 0, retakeExams: [], admissionOpen: false, ...o,
 });
 const sec = (o: Partial<LifeContext>): LifeContext => ({
   stage: "first", uniStage: null, gpa: null, hours: null, year: null,
   majorId: null, majorName: null, coopDone: false, gradInterest: false,
   highschoolPct: null, inSchoolFinals: false, daysToSchoolFinals: null, qiyas: null,
   uniFinalsInDays: null, termLabel: null, inStudyTerm: true,
-  hwOverdue: 0, hwDueToday: 0, hwPending: 0, retakeExams: [], ...o,
+  hwOverdue: 0, hwDueToday: 0, hwPending: 0, retakeExams: [], admissionOpen: true, ...o,
 });
 const q = (days: number, kind: "qudurat" | "tahsili" | "step" = "qudurat", label = "القدرات العامة") =>
   ({ kind, label, days, weeks: Math.ceil(days / 7), approximate: true });

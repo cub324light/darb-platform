@@ -102,7 +102,8 @@ export function activateTrack(id: TrackId): DarbUser | null {
    (التحق فعلاً). نقي وحتمي — مصدر واحد لكل المستهلكين. */
 export function showsUniversityUI(u?: DarbUser | null): boolean {
   if (!u) return false;
-  if (u.studyLevel === "خريج") return true;
+  /* خريج الجامعة خرج من عالم القبول نهائياً — لا موزونة/مقارنة/قبول */
+  if (u.studyLevel === "خريج") return u.gradStage !== "خريج جامعة";
   if (u.studyLevel === "ثانوي" && u.grade === "ثالث ثانوي") return true;
   return false;
 }

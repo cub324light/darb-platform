@@ -16,6 +16,7 @@ const CalendarStatusCard = dynamic(() => import("@/components/CalendarStatusCard
 const GoalRealityCard = dynamic(() => import("@/components/GoalRealityCard"), { ssr: false });
 import { getEventsForDate } from "@/components/DayScheduler";
 import { loadUser, loadEvents, loadExamDate, saveExamDate, loadTrackExamDates, showsUniversityUI, type ScheduleEvent } from "@/lib/storage";
+import { isUniversityGraduate } from "@/lib/phase";
 import { getTrack, colorForSubject, type TrackId } from "@/lib/tracks";
 import { fmtHour } from "@/lib/utils";
 
@@ -55,6 +56,10 @@ export default function PlanPage() {
   /* هل الطالب على أعتاب القبول (ثالث ثانوي/خريج)؟ — يقرّر ظهور «هدفي الجامعي» */
   const [showUni] = useState(() =>
     typeof window !== "undefined" ? showsUniversityUI(loadUser()) : false
+  );
+  /* خريج الجامعة: لا أهداف/درجات اختبارات — «خطتي» له تخطيطٌ شخصي فقط */
+  const [gradUni] = useState(() =>
+    typeof window !== "undefined" ? isUniversityGraduate(loadUser()) : false
   );
 
   /* أقرب اختبار من المسارات النشطة */
@@ -141,20 +146,25 @@ export default function PlanPage() {
       </Dome>
       <div className="h-5" />
 
-      {/* ── التقويم الدراسي + استراتيجية المذاكرة الموحّدة ── */}
-      <div className="px-5 mb-5 rise rise-1 flex flex-col gap-4">
-        <ExamRegistrationAlert />
-        <CalendarStatusCard />
-        <GoalRealityCard />
-        <StrategyBanner defaultExpanded />
-      </div>
+      {/* ── التقويم الدراسي + استراتيجية المذاكرة (اختبارات/مذاكرة — لا تخصّ خريج الجامعة) ── */}
+      {!gradUni && (
+        <div className="px-5 mb-5 rise rise-1 flex flex-col gap-4">
+          <ExamRegistrationAlert />
+          <CalendarStatusCard />
+          <GoalRealityCard />
+          <StrategyBanner defaultExpanded />
+        </div>
+      )}
 
-      {/* ── قرار الطالب: أهدافي/نتائجي/الرضا ثم هدفي الجامعي (وين رايح؟) ── */}
-      <div className="px-5 mb-5 rise rise-1 flex flex-col gap-4">
-        <GoalsPanel />
-        {/* هدفي الجامعي — يظهر فقط لمن هم على أعتاب القبول (ثالث ثانوي/خريج) */}
-        {showUni && <UniversityFuture />}
-      </div>
+      {/* ── قرار الطالب: أهدافي/نتائجي/الرضا ثم هدفي الجامعي (وين رايح؟) ──
+          خريج الجامعة خارج عالم الاختبارات، فلا تظهر له أهداف/درجات/قبول */}
+      {!gradUni && (
+        <div className="px-5 mb-5 rise rise-1 flex flex-col gap-4">
+          <GoalsPanel />
+          {/* هدفي الجامعي — يظهر فقط لمن هم على أعتاب القبول (ثالث ثانوي/خريج ثانوي) */}
+          {showUni && <UniversityFuture />}
+        </div>
+      )}
 
       {/* ── مبدّل العرض: يوم / أسبوع / شهر ── */}
       <div className="px-5 mb-4 rise rise-2">

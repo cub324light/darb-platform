@@ -7,7 +7,7 @@
    (canTakeQudurat/…/canTakeStep/canApplyUniversity/stageOf) ومرحلة phase.ts
    (computeStudentPhase/isUniversityPhase). أي تغيير في القواعد يبقى في مصدره. */
 import type { DarbUser } from "./storage";
-import { computeStudentPhase, isUniversityPhase, type StudentPhase } from "./phase";
+import { computeStudentPhase, isUniversityPhase, isUniversityGraduate, type StudentPhase } from "./phase";
 import {
   canTakeQudurat,
   canTakeTahsili,
@@ -75,10 +75,10 @@ export function phaseExperience(u?: DarbUser | null): PhaseExperience {
   const phase = computeStudentPhase(u);
   const stage = stageKey(u, phase);
 
-  /* القبول: الجامعي خرج منه · ثالث/خريج مفاضلة كاملة · أول/ثاني استكشاف تعريفي.
-     canApplyUniversity يطابق منطق showsUniversityUI (ثالث ثانوي أو خريج). */
+  /* القبول: الجامعي وخريج الجامعة خرجا منه · ثالث/خريج ثانوي مفاضلة كاملة ·
+     أول/ثاني استكشاف تعريفي. canApplyUniversity يطابق منطق showsUniversityUI. */
   const admission: PhaseExperience["admission"] =
-    phase === "university" ? "hidden"
+    phase === "university" || isUniversityGraduate(u) ? "hidden"
     : canApplyUniversity(u) ? "full"
     : "explore";
 

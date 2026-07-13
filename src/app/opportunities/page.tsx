@@ -9,6 +9,7 @@ import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import PageFooter from "@/components/PageFooter";
 import { loadUser, loadGoals, currentScoreMap } from "@/lib/storage";
+import { isUniversityGraduate } from "@/lib/phase";
 import {
   buildOpportunities, OPPORTUNITIES_DISCLAIMER,
   type OpportunityItem, type OpportunityStatus,
@@ -44,6 +45,31 @@ export default function OpportunitiesPage() {
   const [user] = useState(() => loadUser());
   const [goals] = useState(() => loadGoals());
   const [scoreMap] = useState(() => currentScoreMap());
+
+  /* خريج الجامعة خارج عالم القبول — فرص القبول/الابتعاث ليست له */
+  if (isUniversityGraduate(user)) {
+    return (
+      <div className="page desk-wide">
+        <Dome compact>
+          <div className="flex items-center gap-3"><BackButton /><h1 className="title-lg grad-title">الفرص</h1></div>
+        </Dome>
+        <div className="px-5 mt-8">
+          <div className="rounded-3xl p-6 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+            <p className="text-[45px] mb-2">🎓</p>
+            <p className="t-h3 mb-2" style={{ color: "var(--text)" }}>هذا القسم لمن هم على أعتاب القبول</p>
+            <p className="t-body" style={{ color: "var(--text-muted)" }}>
+              فرص القبول والابتعاث للمتّجهين للجامعة. فرصك المهنية (وظائف/تدريب/شهادات) في «المستقبل».
+            </p>
+            <Link href="/future" className="inline-block mt-4 px-5 py-2.5 rounded-2xl font-bold text-[16px] no-underline"
+              style={{ background: "var(--accent)", color: "#fff" }}>
+              ← المستقبل
+            </Link>
+          </div>
+        </div>
+        <PageFooter />
+      </div>
+    );
+  }
 
   const qudurat = scoreFrom(scoreMap, "قدرات");
   const tahsili = scoreFrom(scoreMap, "تحصيلي");

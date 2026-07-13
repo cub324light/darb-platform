@@ -18,6 +18,7 @@
 import type { DarbUser } from "./storage";
 import {
   computeStudentPhase,
+  isUniversityGraduate,
   phaseLabel,
   type StudentPhase,
 } from "./phase";
@@ -34,6 +35,7 @@ export {
   isSecondaryPhase,
   isUniversityPhase,
   isGraduatePhase,
+  isUniversityGraduate,
   phaseLabel,
   UNIVERSITY_HIDDEN_CONCEPTS,
   SECONDARY_HIDDEN_CONCEPTS,
@@ -252,14 +254,16 @@ export const EXAM_RULES: Record<string, ExamRule> = {
    القاعدة الجوهرية: الطالب الجامعي خرج من عالم القياس/القبول كلياً.
    ════════════════════════════════════════════════════════════ */
 
-/** هل يحقّ للطالب دخول القدرات؟ (كل الثانوي + الخريج · ليس الجامعي) */
+/** هل يحقّ للطالب دخول القدرات؟ (كل الثانوي + خريج الثانوية · ليس الجامعي/خريج الجامعة) */
 export function canTakeQudurat(u?: DarbUser | null): boolean {
+  if (isUniversityGraduate(u)) return false; // خرج من عالم القياس نهائياً
   const phase = getStudentPhase(u);
   return phase === "secondary" || phase === "graduate";
 }
 
-/** هل يحقّ له دخول التحصيلي؟ (ثالث ثانوي + الخريج · ليس الجامعي/الصفوف الأدنى) */
+/** هل يحقّ له دخول التحصيلي؟ (ثالث ثانوي + خريج الثانوية · ليس الجامعي/خريج الجامعة/الصفوف الأدنى) */
 export function canTakeTahsili(u?: DarbUser | null): boolean {
+  if (isUniversityGraduate(u)) return false;
   const phase = getStudentPhase(u);
   if (phase === "graduate") return true;
   if (phase !== "secondary") return false;
@@ -276,6 +280,7 @@ export function canTakeEarlyTahsili(u?: DarbUser | null): boolean {
 /** هل يحقّ له دخول STEP؟ (كل الثانوي + الخريج · ليس الجامعي) — نفس نطاق قياس
     (STEP_RULES: كل الصفوف الثانوية + الخريجون مؤهَّلون، والجامعي خرج من عالم القياس). */
 export function canTakeStep(u?: DarbUser | null): boolean {
+  if (isUniversityGraduate(u)) return false;
   const phase = getStudentPhase(u);
   return phase === "secondary" || phase === "graduate";
 }
@@ -306,6 +311,7 @@ export function shouldRecommendSTEP(
 /** هل الطالب على أعتاب القبول الجامعي؟ (ثالث ثانوي أو خريج · ليس الجامعي/الصفوف الأدنى)
     يطابق منطق showsUniversityUI في storage — مصدر واحد للمستهلكين. */
 export function canApplyUniversity(u?: DarbUser | null): boolean {
+  if (isUniversityGraduate(u)) return false; // التحق وتخرّج — لا قبول جديد
   const phase = getStudentPhase(u);
   if (phase === "graduate") return true;
   if (phase !== "secondary") return false;

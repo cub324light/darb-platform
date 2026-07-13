@@ -46,6 +46,8 @@ export interface LifeContext {
   hwPending: number;
   /* اختبارات اختار الطالب إعادتها — قرارٌ صريح يرفع أولوية الاستعداد ويغيّر التوصيات */
   retakeExams: string[];
+  /* هل عالم القبول/القياس مفتوح لهذا الطالب؟ (false: جامعي/خريج جامعة → لا قبول) */
+  admissionOpen: boolean;
 }
 
 export type PriorityKey =
@@ -304,7 +306,7 @@ export const RULES: Rule[] = [
   { id: 31, label: "اختبارات مدرسية خلال ٢١ يوماً", priority: "school-finals-soon", weight: 90, when: (c) => c.stage !== "university" && !c.inSchoolFinals && inRange(c.daysToSchoolFinals, 0, 21) },
   { id: 32, label: "قياس قادم يراه الطالب خلال ٤٥ يوماً", priority: "qiyas", weight: 40, when: (c) => c.stage !== "university" && c.qiyas != null && c.qiyas.days > 21 && c.qiyas.days <= 45 },
   { id: 35, label: "قياس عاجل يراه الطالب خلال ٢١ يوماً", priority: "qiyas-soon", weight: 88, when: (c) => c.stage !== "university" && c.qiyas != null && inRange(c.qiyas.days, 0, 21) },
-  { id: 33, label: "سنة القبول (ثالث ثانوي/خريج)", priority: "admission", weight: 45, when: (c) => c.stage === "third" || c.stage === "graduate" },
+  { id: 33, label: "سنة القبول (ثالث ثانوي/خريج ثانوي)", priority: "admission", weight: 45, when: (c) => c.admissionOpen && (c.stage === "third" || c.stage === "graduate") },
   { id: 36, label: "ثالث ثانوي بدرجات منخفضة (تحت ٨٥٪)", priority: "school-grades", weight: 50, when: (c) => c.stage === "third" && c.highschoolPct != null && c.highschoolPct < 85 },
   { id: 34, label: "مرحلة مبكّرة (أول/ثاني ثانوي)", priority: "early", weight: 30, when: (c) => c.stage === "first" || c.stage === "second" },
   /* ── الواجبات المدرسية (الضغط الحقيقي، لكل المراحل) ── */
@@ -313,7 +315,7 @@ export const RULES: Rule[] = [
   { id: 42, label: "واجبات قادمة بلا إنجاز", priority: "homework", weight: 26, when: (c) => c.hwPending > 0 },
 
   /* اختار الطالب إعادة اختبار — قرارٌ صريح يرفع أولوية الاستعداد (لا يظهر للجامعي) */
-  { id: 45, label: "اختار إعادة اختبار", priority: "retake", weight: 85, when: (c) => c.stage !== "university" && c.retakeExams.length > 0 },
+  { id: 45, label: "اختار إعادة اختبار", priority: "retake", weight: 85, when: (c) => c.stage !== "university" && c.admissionOpen && c.retakeExams.length > 0 },
 ];
 
 /* ════════ العقل: أولويات الطالب مرتّبة ومُفسَّرة ════════ */
@@ -464,6 +466,7 @@ export function readLifeContext(now: Date = new Date()): LifeContext {
     termLabel: sem?.termLabel ?? null,
     inStudyTerm: cal.inStudyTerm,
     retakeExams: user?.retakeExams ?? [],
+    admissionOpen: exp.admission !== "hidden",
     hwOverdue: hw.overdue,
     hwDueToday: hw.dueToday,
     hwPending: hw.pending,

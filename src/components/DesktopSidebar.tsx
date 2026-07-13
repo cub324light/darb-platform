@@ -12,7 +12,7 @@ import Logo from "./Logo";
 import { ThemeToggle } from "./Profile";
 import SettingsButton from "./SettingsPanel";
 import { loadUser, showsUniversityUI, type DarbUser } from "@/lib/storage";
-import { isUniversityPhase, isGraduatePhase } from "@/lib/phase";
+import { isUniversityPhase, isGraduatePhase, isUniversityGraduate } from "@/lib/phase";
 
 /* عدّاد البطاقات المستحقّة — نفس منطق BottomNav */
 function calcDue(): number {
@@ -105,6 +105,11 @@ const I = {
       <circle cx="12" cy="10.5" r="2" />
     </svg>
   ),
+  skills: (a: boolean) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.3 : 1.8} className="w-5 h-5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 21.6 7.1 18l.9-5.5-4-3.9L9.5 8 12 3z" />
+    </svg>
+  ),
   robot: () => <span className="text-[20px] leading-none">🤖</span>,
 };
 
@@ -150,12 +155,15 @@ export default function DesktopSidebar() {
       ? { href: "/future", label: "المستقبل", icon: I.future }
       : { href: "/school", label: "المدرسة", icon: I.school },
     { href: "/orbit", label: "أوربت", icon: I.orbit },
-    /* العنصر الأوسط حسب المرحلة: جامعي → أدوات الجامعة، ثالث ثانوي/خريج → القبول، وإلا مساري */
+    /* العنصر الأوسط حسب المرحلة: جامعي → أدوات · خريج جامعة → مهاراتي (مهني) ·
+       ثالث ثانوي/خريج ثانوي → القبول · وإلا مساري */
     isUniversityPhase(user)
       ? { href: "/uni-tools", label: "أدوات الجامعة", icon: I.uniTools }
-      : uniMode
-        ? { href: "/university", label: "القبول الجامعي", icon: I.university }
-        : { href: "/roadmap", label: "مساري", icon: I.roadmap },
+      : isUniversityGraduate(user)
+        ? { href: "/skills", label: "مهاراتي", icon: I.skills }
+        : uniMode
+          ? { href: "/university", label: "القبول الجامعي", icon: I.university }
+          : { href: "/roadmap", label: "مساري", icon: I.roadmap },
     { href: "/plan", label: "خطتي", icon: I.plan },
     { href: "/study-plan", label: "مخطط الدراسة", icon: I.study },
     { href: "/review", label: "بطاقاتي", icon: I.cards, badge: true },

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { loadUser, showsUniversityUI } from "@/lib/storage";
-import { isUniversityPhase, isGraduatePhase } from "@/lib/phase";
+import { isUniversityPhase, isGraduatePhase, isUniversityGraduate } from "@/lib/phase";
 
 function calcDue(): number {
   if (typeof window === "undefined") return 0;
@@ -65,6 +65,17 @@ const SCHOOL_ITEM: NavItem = {
   icon: (a: boolean) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.5 3.5 4v13.5L12 20m0-13.5L20.5 4v13.5L12 20m0-13.5V20" />
+    </svg>
+  ),
+};
+
+/* المهارات — العنصر الأوسط لخريج الجامعة (تطوير مهني، لا قبول/قياس/جامعات) */
+const SKILLS_ITEM: NavItem = {
+  href: "/skills",
+  label: "مهاراتي",
+  icon: (a: boolean) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 21.6 7.1 18l.9-5.5-4-3.9L9.5 8 12 3z" />
     </svg>
   ),
 };
@@ -131,7 +142,11 @@ export default function BottomNav() {
   const [{ midItem, schoolItem }] = useState<{ midItem: NavItem; schoolItem: NavItem }>(() => {
     if (typeof window === "undefined") return { midItem: ROADMAP_ITEM, schoolItem: SCHOOL_ITEM };
     const u = loadUser();
-    const mid = isUniversityPhase(u) ? UNI_TOOLS_ITEM : showsUniversityUI(u) ? ADMISSION_ITEM : ROADMAP_ITEM;
+    /* خريج الجامعة: مهني بحت — لا قبول (admission) ولا مساري (قدرات/تحصيلي) */
+    const mid = isUniversityPhase(u) ? UNI_TOOLS_ITEM
+      : isUniversityGraduate(u) ? SKILLS_ITEM
+      : showsUniversityUI(u) ? ADMISSION_ITEM
+      : ROADMAP_ITEM;
     /* الجامعي والخريج لا يرون «المدرسة» — تُستبدل بـ«المستقبل» */
     const school = isUniversityPhase(u) || isGraduatePhase(u) ? FUTURE_ITEM : SCHOOL_ITEM;
     return { midItem: mid, schoolItem: school };

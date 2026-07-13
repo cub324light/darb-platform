@@ -27,6 +27,12 @@ export const isSecondaryPhase  = (u?: DarbUser | null) => computeStudentPhase(u)
 export const isUniversityPhase = (u?: DarbUser | null) => computeStudentPhase(u) === "university";
 export const isGraduatePhase   = (u?: DarbUser | null) => computeStudentPhase(u) === "graduate";
 
+/* خريج الجامعة — مرحلة ما بعد الجامعة (مهنية بحتة). يُميَّز بـ gradStage عن خريج
+   الثانوية. عالمه: وظائف/تدريب/شهادات/مهارات — لا قبول/قياس/موزونة/جامعات إطلاقاً.
+   كل بوابات القبول والقياس تستثنيه عبر هذا المُميِّز (مصدر واحد). */
+export const isUniversityGraduate = (u?: DarbUser | null) =>
+  computeStudentPhase(u) === "graduate" && u?.gradStage === "خريج جامعة";
+
 /* ════════ SSoT: ما يُحظر على كل مرحلة ════════ */
 export const UNIVERSITY_HIDDEN_CONCEPTS = [
   "قدرات", "تحصيلي", "موزونة", "قبول جامعي", "قياس", "معدل الثانوية",
