@@ -288,6 +288,8 @@ export interface Rule {
 }
 
 const inRange = (n: number | null, lo: number, hi: number) => n != null && n >= lo && n <= hi;
+/* مرحلة مدرسية (ثانوي) — «المدرسة»/الواجبات عالمُها، لا الجامعي/الخريج */
+const isSchoolStage = (s: Stage) => s === "first" || s === "second" || s === "third";
 
 export const RULES: Rule[] = [
   /* ── الجامعي ── */
@@ -302,17 +304,18 @@ export const RULES: Rule[] = [
   { id: 18, label: "بداية المشوار الجامعي", priority: "foundation", weight: 30, when: (c) => c.uniStage === "start" },
   { id: 19, label: "داخل الفصل الدراسي (بلا اختبارات قريبة)", priority: "study-routine", weight: 15, when: (c) => c.stage === "university" && c.inStudyTerm && !inRange(c.uniFinalsInDays, 0, 21) },
   /* ── الثانوي/الخريج ── */
-  { id: 30, label: "اختبارات مدرسية جارية الآن", priority: "school-finals-now", weight: 100, when: (c) => c.stage !== "university" && c.inSchoolFinals },
-  { id: 31, label: "اختبارات مدرسية خلال ٢١ يوماً", priority: "school-finals-soon", weight: 90, when: (c) => c.stage !== "university" && !c.inSchoolFinals && inRange(c.daysToSchoolFinals, 0, 21) },
+  /* اختبارات المدرسة النهائية للثانوي فقط — الخريج (ثانوي أو جامعة) لم يعُد في مدرسة */
+  { id: 30, label: "اختبارات مدرسية جارية الآن", priority: "school-finals-now", weight: 100, when: (c) => isSchoolStage(c.stage) && c.inSchoolFinals },
+  { id: 31, label: "اختبارات مدرسية خلال ٢١ يوماً", priority: "school-finals-soon", weight: 90, when: (c) => isSchoolStage(c.stage) && !c.inSchoolFinals && inRange(c.daysToSchoolFinals, 0, 21) },
   { id: 32, label: "قياس قادم يراه الطالب خلال ٤٥ يوماً", priority: "qiyas", weight: 40, when: (c) => c.stage !== "university" && c.qiyas != null && c.qiyas.days > 21 && c.qiyas.days <= 45 },
   { id: 35, label: "قياس عاجل يراه الطالب خلال ٢١ يوماً", priority: "qiyas-soon", weight: 88, when: (c) => c.stage !== "university" && c.qiyas != null && inRange(c.qiyas.days, 0, 21) },
   { id: 33, label: "سنة القبول (ثالث ثانوي/خريج ثانوي)", priority: "admission", weight: 45, when: (c) => c.admissionOpen && (c.stage === "third" || c.stage === "graduate") },
   { id: 36, label: "ثالث ثانوي بدرجات منخفضة (تحت ٨٥٪)", priority: "school-grades", weight: 50, when: (c) => c.stage === "third" && c.highschoolPct != null && c.highschoolPct < 85 },
   { id: 34, label: "مرحلة مبكّرة (أول/ثاني ثانوي)", priority: "early", weight: 30, when: (c) => c.stage === "first" || c.stage === "second" },
-  /* ── الواجبات المدرسية (الضغط الحقيقي، لكل المراحل) ── */
-  { id: 40, label: "واجبات متأخّرة", priority: "homework", weight: 68, when: (c) => c.hwOverdue > 0 },
-  { id: 41, label: "واجبات مستحقة اليوم", priority: "homework", weight: 52, when: (c) => c.hwDueToday > 0 },
-  { id: 42, label: "واجبات قادمة بلا إنجاز", priority: "homework", weight: 26, when: (c) => c.hwPending > 0 },
+  /* ── الواجبات المدرسية (للثانوي فقط — «المدرسة» عالمُ الثانوي، لا الجامعي/الخريج) ── */
+  { id: 40, label: "واجبات متأخّرة", priority: "homework", weight: 68, when: (c) => isSchoolStage(c.stage) && c.hwOverdue > 0 },
+  { id: 41, label: "واجبات مستحقة اليوم", priority: "homework", weight: 52, when: (c) => isSchoolStage(c.stage) && c.hwDueToday > 0 },
+  { id: 42, label: "واجبات قادمة بلا إنجاز", priority: "homework", weight: 26, when: (c) => isSchoolStage(c.stage) && c.hwPending > 0 },
 
   /* اختار الطالب إعادة اختبار — قرارٌ صريح يرفع أولوية الاستعداد (لا يظهر للجامعي) */
   { id: 45, label: "اختار إعادة اختبار", priority: "retake", weight: 85, when: (c) => c.stage !== "university" && c.admissionOpen && c.retakeExams.length > 0 },
