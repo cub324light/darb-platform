@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   trackEligibilityFor, orderSelectedTracks, deriveGoalFromTracks,
-  defaultTracksFromEligibility, basicTracksFor, MAX_BASIC_TRACKS,
+  defaultTracksFromEligibility, basicTracksFor,
   secondaryCoreTracks, secondaryActiveTracks, LANGUAGE_TESTS, primaryGoal,
   type TrackEligibility, type TrackId,
 } from "./tracks";
@@ -140,10 +140,6 @@ test("المبدئيات (اختبارات فقط، بلا مدرسة): أول �
 
   const d3 = defaultTracksFromEligibility(trackEligibilityFor({ status: "ثانوي", grade: "ثالث ثانوي" }));
   assert.deepEqual(d3, ["قدرات", "تحصيلي"]);
-
-  for (const d of [d1, d2, d3]) {
-    assert.ok(d.length <= MAX_BASIC_TRACKS);
-  }
 });
 
 test("المبدئيات متّسقة مع basicTracksFor حيث تتطابق الحزم (أول وثالث ثانوي)", () => {
@@ -233,13 +229,13 @@ test("secondaryActiveTracks: النواة المتاحة فقط بلا لغات�
   assert.deepEqual(secondaryActiveTracks("ثالث ثانوي", e3, []), ["قدرات", "تحصيلي", "مدرسه"]);
 });
 
-test("secondaryActiveTracks: اختبارات اللغة متعددة بلا حد — تتجاوز MAX_BASIC_TRACKS", () => {
+test("secondaryActiveTracks: اختبارات اللغة متعددة بلا أي حدّ عددي", () => {
   const e3 = trackEligibilityFor({ status: "ثانوي", grade: "ثالث ثانوي" });
 
-  /* اختباران لغة → 5 مسارات (يتجاوز الحد ٣) والقدرات أولاً والمدرسة أخيراً */
+  /* اختباران لغة → ٥ مسارات، والقدرات أولاً والمدرسة أخيراً — بلا سقف */
   const two = secondaryActiveTracks("ثالث ثانوي", e3, ["ايلتس", "توفل"]);
   assert.deepEqual(two, ["قدرات", "تحصيلي", "ايلتس", "توفل", "مدرسه"]);
-  assert.ok(two.filter((t) => t !== "مدرسه").length > MAX_BASIC_TRACKS, "لا يُطبَّق أي حد على اختبارات اللغة");
+  assert.ok(two.filter((t) => t !== "مدرسه").length > 3, "لا يُطبَّق أي حد على اختبارات اللغة");
 
   /* كل اختبارات اللغة الأربعة معاً — بترتيب LANGUAGE_TESTS بغضّ النظر عن ترتيب الاختيار */
   const all = secondaryActiveTracks("ثالث ثانوي", e3, ["دوليقو", "توفل", "ايلتس", "ستيب"]);

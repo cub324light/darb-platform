@@ -246,10 +246,9 @@ export function trackByTitle(title: string): Track | undefined {
   return TRACKS.find((tr) => tr.title === t || tr.id === t);
 }
 
-/* ─── الهدف الحالي + تفعيل الاختبارات الأساسية تلقائياً ───
-   التسجيل الأساسي يقتصر على اختبارات قياس الأساسية (قدرات/تحصيلي/تحصيلي مبكر/STEP).
-   CPC/ITC والاختبارات الإنجليزية المهنية تُضاف لاحقاً من الملف الشخصي عند الحاجة. */
-export const MAX_BASIC_TRACKS = 3;
+/* ─── الهدف الحالي + تفعيل الاختبارات تلقائياً ───
+   لا حدّ عددي مصطنع على الاختبارات: البوّابة الوحيدة هي الأهلية (examEligibility).
+   إذا سمحت المرحلة/النافذة/الهدف بالاختبار فلا رقمٌ ثابت يمنعه، واللغات بلا حدّ إطلاقاً. */
 
 export type StudyGoalType = "qudurat" | "tahsili" | "step" | "university" | "major";
 
@@ -285,8 +284,8 @@ export function primaryGoal(goals?: StudyGoalType[]): StudyGoalType | undefined 
 }
 
 /* ─── اختبارات اللغة: قسم إضافي اختياري متعدد بلا حد في تسجيل الثانوي/الخريج ───
-   كلها بلا تقييد صفّي (available في trackEligibilityFor) ولا تُحسب بأي حد
-   (MAX_BASIC_TRACKS لا يُطبَّق عليها) — للطالب أن يضيف أكثر من واحد بنفس الوقت. */
+   كلها بلا تقييد صفّي (available في trackEligibilityFor) وبلا أي حدّ عددي —
+   للطالب أن يضيف أكثر من واحد بنفس الوقت. */
 export const LANGUAGE_TESTS: TrackId[] = ["ستيب", "ايلتس", "توفل", "دوليقو"];
 
 /* النواة الثابتة لطلاب الثانوي — تظهر دائماً بترتيب [القدرات · التحصيلي · المدرسة].
@@ -349,7 +348,7 @@ export function basicTracksFor(opts: { status?: string; grade?: string; goal?: S
       const core: TrackId[] = ["قدرات", "تحصيلي"];
       if (opts.goal === "step") core.unshift("ستيب");
       const ordered = primary ? [primary, ...core] : core;
-      return dedupe(ordered).slice(0, MAX_BASIC_TRACKS);
+      return dedupe(ordered);
     }
     if (isUniGoal) return [];
     return primary ? [primary] : []; // «لا، ركّز على القبول» → لا اختبار مفروض
@@ -367,7 +366,7 @@ export function basicTracksFor(opts: { status?: string; grade?: string; goal?: S
   const core: TrackId[] = ["قدرات", tahsiliTrack];
   if (opts.goal === "step") core.unshift("ستيب");
   const ordered = primary ? [primary, ...core] : core;
-  return dedupe(ordered).slice(0, MAX_BASIC_TRACKS);
+  return dedupe(ordered);
 }
 
 
@@ -460,13 +459,13 @@ export function deriveGoalFromTracks(selected: TrackId[], eligibility: TrackElig
 }
 
 /* المبدئيات المنطقية لاختبارات القبول: نجوم المرحلة + القدرات المتاحة (dedupe).
-   المدرسة ليست اختباراً فلا تدخل هنا. حدّ الاختبارات MAX_BASIC_TRACKS. */
+   المدرسة ليست اختباراً فلا تدخل هنا. لا حدّ عددي — الأهلية وحدها تحكم. */
 export function defaultTracksFromEligibility(eligibility: TrackEligibility[]): TrackId[] {
   const avail = (id: TrackId) => eligibility.some((e) => e.id === id && e.status === "available");
   const starred = eligibility.filter((e) => e.status === "available" && e.important).map((e) => e.id);
   const base = [...starred];
   if (avail("قدرات")) base.push("قدرات");
-  return [...new Set(base)].filter((id) => id !== "مدرسه").slice(0, MAX_BASIC_TRACKS);
+  return [...new Set(base)].filter((id) => id !== "مدرسه");
 }
 
 /* نطاق درجة اختبار من عنوانه — undefined لو غير معروف، null لو بلا درجة */
