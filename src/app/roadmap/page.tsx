@@ -10,7 +10,6 @@ import { RAKAN_SCHEDULE } from "@/lib/constants";
 import { getTrack, subjectColor, TRACKS, type Track, type TrackId } from "@/lib/tracks";
 import { fmtHour } from "@/lib/utils";
 import { NumberTicker } from "@/components/ui/number-ticker";
-import { BorderBeam } from "@/components/ui/border-beam";
 import Confetti from "@/components/Confetti";
 import {
   loadUser, saveUser, loadList, saveList, loadExamDate, saveExamDate, loadStats,
@@ -29,7 +28,6 @@ const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
 const TopicExtractor = dynamic(() => import("@/components/TopicExtractor"), { ssr: false });
 const LeaksPlanner = dynamic(() => import("@/components/LeaksPlanner"), { ssr: false });
 const ExamCoordPanel = dynamic(() => import("@/components/ExamCoordPanel"), { ssr: false });
-const StrategyBanner = dynamic(() => import("@/components/StrategyBanner"), { ssr: false });
 import DayScheduler, { getEventsForDate } from "@/components/DayScheduler";
 import ExamDateButton from "@/components/ExamDateButton";
 
@@ -874,11 +872,6 @@ export default function RoadmapPage() {
           </span>
           <span className="text-[20px] font-black">←</span>
         </Link>
-      </div>
-
-      {/* استراتيجية المذاكرة الموحّدة — نفس قرار الخطة والمدرّب */}
-      <div className="px-5 mb-4">
-        <StrategyBanner />
       </div>
 
       {/* فلتر الاختبارات — [الكل] + كل اختبار */}
