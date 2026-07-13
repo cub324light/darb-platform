@@ -9,7 +9,8 @@ import { LocalStore } from "./store";
 
 let _engine: MemoryEngine | null = null;
 
-/** المثيل الافتراضي — مخزن محلي مع مزامنة سحابية (darb_memory_v1 في BACKUP_KEYS). */
+/** المثيل الافتراضي — مخزن محلي (darb_memory_v1) يُزامَن سحابياً عبر engineSync
+    إلى users/{uid}/engine/memory بمعاملة دمج (مسارٌ مستقلّ عن BACKUP_KEYS/cloud.ts). */
 export function memory(): MemoryEngine {
   if (!_engine) _engine = new MemoryEngine(new LocalStore());
   return _engine;
