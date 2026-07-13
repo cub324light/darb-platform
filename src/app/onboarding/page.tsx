@@ -641,6 +641,16 @@ export default function OnboardingPage() {
     setSelectedLanguages((prev) => prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]);
   };
 
+  /* هدف اختبار لا يُعرَض إلا إذا كان اختباره من مرحلة الطالب (examBoard = مصدر الحقيقة).
+     أول ثانوي لا يرى «الاستعداد للقدرات/التحصيلي/STEP» — ليست مرحلته. الجامعة/التخصص
+     نيّة عليا تُعرَض دائماً. */
+  const examGoalOk = (id: StudyGoalType): boolean => {
+    if (id === "qudurat") return examB.some((e) => e.id === "qudurat");
+    if (id === "tahsili") return examB.some((e) => e.id === "tahsiliEarly" || e.id === "tahsiliRegular");
+    if (id === "step") return boardStage !== null && boardStage !== "first" && boardStage !== "university";
+    return true; // university / major
+  };
+
   /* قسم الأهداف المتعدد المشترك (الثانوي والخريج) — نية عليا صريحة بلا حد، لا تغيّر
      الاختبارات. عند اختيار «جامعة/تخصص» يظهر منتقي الوجهة أدناه (غير حاجز). */
   const goalsSection = (
@@ -650,7 +660,7 @@ export default function OnboardingPage() {
         نبني خطتك وأولوياتك حولها — والأهداف نية عليا مستقلة لا تغيّر اختباراتك
       </p>
       <div className="flex flex-col gap-2.5">
-        {STUDY_GOALS.map((g) => {
+        {STUDY_GOALS.filter((g) => examGoalOk(g.id)).map((g) => {
           const on = goals.includes(g.id);
           /* «تحسين درجة X» إذا أدخل درجةً سابقة لهذا الاختبار، وإلا «الاستعداد» */
           const prevTitle = GOAL_PREV_EXAM[g.id];
