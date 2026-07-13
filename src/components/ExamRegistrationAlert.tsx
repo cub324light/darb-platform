@@ -3,7 +3,7 @@
    يظهر في: الداشبورد + صفحة الخطة + ملف الطالب (قسم الأهداف).
    يُخفى تلقائياً إذا لا يوجد تنبيه نشط. */
 import { useMemo, useState } from "react";
-import { loadUser, loadTrackExamDates } from "@/lib/storage";
+import { loadUser } from "@/lib/storage";
 import { buildExamAlerts, nearestActiveWindow, type ExamAlert } from "@/lib/examProvider";
 import type { TrackId } from "@/lib/tracks";
 
@@ -93,7 +93,7 @@ export function ExamWindowInfo({ trackId }: { trackId: TrackId }) {
   if (!info) {
     return (
       <p className="text-[14px] px-1" style={{ color: "var(--text-muted)" }}>
-        بانتظار الإعلان الرسمي عن مواعيد {String(trackId)}
+        ⏳ بانتظار إعلان هيئة تقويم التعليم والتدريب عن مواعيد {String(trackId)}.
       </p>
     );
   }
@@ -102,7 +102,7 @@ export function ExamWindowInfo({ trackId }: { trackId: TrackId }) {
   if (status === "pending") {
     return (
       <p className="text-[14px] px-1" style={{ color: "var(--text-muted)" }}>
-        ⏳ بانتظار الإعلان الرسمي — {w.yearLabel}
+        ⏳ بانتظار إعلان هيئة تقويم التعليم والتدريب — {w.yearLabel}.
       </p>
     );
   }
