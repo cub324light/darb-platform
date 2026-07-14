@@ -536,6 +536,21 @@ export default function OnboardingPage() {
                   ))}
                 </div>
               </div>
+              {/* المنطقة والمدرسة — من هوية الطالب (بداية التسجيل) */}
+              <div>
+                <p className="label mb-1">منطقتك ومدرستك <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+                <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>تساعدنا نربط تقويمك ومدرستك لاحقاً</p>
+                <div className="flex flex-col gap-2.5">
+                  <select value={region} onChange={(e) => setRegion(e.target.value)} aria-label="المنطقة"
+                    className="w-full rounded-2xl px-4 py-3.5 text-base text-[var(--text)] outline-none" style={inputStyle}>
+                    <option value="">اختر منطقتك</option>
+                    {SAUDI_REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                  <input type="text" value={school} onChange={(e) => setSchool(e.target.value)}
+                    placeholder="اسم مدرستك (مثال: ثانوية الملك فهد)"
+                    className="w-full rounded-2xl px-4 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none" style={inputStyle} />
+                </div>
+              </div>
               <div className="rounded-2xl px-4 py-3"
                 style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
                 <p className="text-[15px] font-bold" style={{ color: "var(--accent-light)" }}>
@@ -1005,15 +1020,6 @@ export default function OnboardingPage() {
           </button>
           {extrasOpen && (<>
           <div>
-            <p className="text-[15px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>اسم المدرسة / الجامعة (اختياري)</p>
-            <input type="text" value={school} onChange={(e) => setSchool(e.target.value)}
-              placeholder="مثال: ثانوية الملك فهد"
-              className="w-full rounded-2xl px-5 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
-              style={inputStyle}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
-          </div>
-          <div>
             <p className="text-[15px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>المدينة (اختياري)</p>
             <input type="text" value={city} onChange={(e) => setCity(e.target.value)}
               placeholder="مثال: الرياض، جدة..."
@@ -1030,15 +1036,6 @@ export default function OnboardingPage() {
               style={inputStyle}
               onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
               onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
-          </div>
-          <div>
-            <p className="text-[15px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>المنطقة (اختياري)</p>
-            <select value={region} onChange={(e) => setRegion(e.target.value)} aria-label="المنطقة"
-              className="w-full rounded-2xl px-5 py-3.5 text-base text-[var(--text)] outline-none"
-              style={inputStyle}>
-              <option value="">اختر منطقتك</option>
-              {SAUDI_REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-            </select>
           </div>
           </>)}
         </div>
