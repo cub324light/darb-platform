@@ -273,6 +273,16 @@ export function isAfterFirstTerm(now: Date = new Date()): boolean {
   return firstTerm ? today > firstTerm.end : false;
 }
 
+/** الفصل الحالي المُقترَح من التقويم — قيمة افتراضية لسؤال التسجيل (يؤكّده الطالب). */
+export type TermGuess = "first" | "second" | "summer";
+export function currentTermGuess(now: Date = new Date()): TermGuess {
+  const today = ymd(now);
+  const year = pickYear(today);
+  if (!year) return "first";
+  if (year.periods.some((p) => p.kind === "summer" && within(today, p))) return "summer";
+  return isAfterFirstTerm(now) ? "second" : "first";
+}
+
 /* ── إشارات مختصرة تُمرَّر لمحرّك الاستراتيجية (عميل ⇄ خادم) ── */
 export interface CalendarSignals {
   onVacation?: boolean;

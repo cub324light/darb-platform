@@ -8,7 +8,7 @@ import {
 import { UNIVERSITIES, MAJORS, findUniversity, findMajor } from "@/lib/university";
 import { saveUser, saveExamDate, saveResults, saveTrackExamDates, loadGoals, saveGoals } from "@/lib/storage";
 import { ADMISSION_TARGETS } from "@/lib/targets";
-import { currentAcademicYearId, isAfterFirstTerm } from "@/lib/academicCalendar";
+import { currentAcademicYearId, currentTermGuess, type TermGuess } from "@/lib/academicCalendar";
 import { currentRegistrationStatus } from "@/lib/examProvider";
 import { examBoard, type BoardStage, type ExamBoardId, type ExamMode } from "@/lib/examEligibility";
 /* registerUser, pushBackup, currentUser مُستورَدة ديناميكياً أسفل */
@@ -27,7 +27,14 @@ const STAGES: { key: string; label: string; status: Status; grade: string }[] = 
   { key: "uni",  label: "طالب جامعي",  status: "جامعي", grade: "" },
   { key: "grad", label: "خريج",        status: "خريج",  grade: "" },
 ];
-const TRACK_TYPES = ["عام", "صحي", "هندسي", "حاسب", "إداري"] as const;
+/* المسار = ميول تحدّد المواد والاهتمامات (المعرّف يبقى فئة منطقية؛ العرض أوضح).
+   الهندسة والحاسب مدموجان في خيارٍ واحد (المعرّف «هندسي»، ويُنقّحه التخصص لاحقاً). */
+const TRACK_TYPES: { id: string; label: string }[] = [
+  { id: "عام",   label: "المسار العام" },
+  { id: "صحي",   label: "مسار الصحة والحياة" },
+  { id: "هندسي", label: "مسار الهندسة والحاسب" },
+  { id: "إداري", label: "مسار إدارة الأعمال" },
+];
 const GRAD_STAGES = ["خريج ثانوي", "خريج جامعة"];
 const UNI_YEARS = ["الأولى", "الثانية", "الثالثة", "الرابعة", "الخامسة+"];
 /* اختبارات النتائج السابقة — العناوين تطابق سُلّم الدرجات في tracks.ts */
@@ -74,12 +81,13 @@ export default function OnboardingPage() {
       if (dn) setName((prev) => prev || dn.split(" ")[0]);
     });
   }, []);
-  const [age, setAge] = useState("");
   const [status, setStatus] = useState<Status | "">("");
 
   /* ── تفاصيل المرحلة ── */
   const [grade, setGrade] = useState("");                 // ثانوي (مشتق من خيار المرحلة)
   const [trackType, setTrackType] = useState("");         // ثانوي: المسار
+  /* الفصل الدراسي الحالي — يحكم إتاحة التحصيلي المبكر. افتراضٌ من التقويم يؤكّده الطالب. */
+  const [term, setTerm] = useState<TermGuess>(() => (typeof window !== "undefined" ? currentTermGuess() : "first"));
   const [gradStage, setGradStage] = useState("");         // خريج
   const [universityYear, setUniversityYear] = useState(""); // جامعي
   /* الجامعة/التخصص (جامعي + هدف الجامعة/التخصص) */
@@ -111,7 +119,7 @@ export default function OnboardingPage() {
   const [seedGrade, setSeedGrade] = useState("");   // آخر صف ضُبط له فتح «الوجهة الجامعية» — لا نعيد ضبطه عند الرجوع بلا تغيير
   const [uniOpen, setUniOpen] = useState(false);    // «عندك وجهة جامعية؟» — بارز لثالث، مطوي لغيره
   const [extrasOpen, setExtrasOpen] = useState(false); // «معلومات إضافية» مطوية افتراضياً
-  const [studyHours, setStudyHours] = useState("");
+  const [studyHours, setStudyHours] = useState("3"); // قيمة افتراضية — يعدّلها لاحقاً، لا تحجب الإكمال
   const [examDate, setExamDate] = useState("");
   const [school, setSchool] = useState("");
   const [region, setRegion] = useState("");
@@ -139,7 +147,7 @@ export default function OnboardingPage() {
   const examB = boardStage ? examBoard({
     stage: boardStage,
     isUniGrad: gradStage === "خريج جامعة",
-    afterFirstTerm: isAfterFirstTerm(),
+    afterFirstTerm: term !== "first",
     isTargeted,
     windows: {
       qudurat: currentRegistrationStatus("قدرات", today),
@@ -207,7 +215,6 @@ export default function OnboardingPage() {
 
     /* H3: تحقّق برمجي من الحقول الرقمية (لا نعتمد على min/max المتصفح) */
     const numErr = (() => {
-      if (age) { const a = Number(age); if (!Number.isInteger(a) || a <= 0) return "العمر يجب أن يكون رقماً صحيحاً موجباً"; }
       if (studyHours) { const h = parseInt(studyHours); if (!Number.isFinite(h) || h < 1 || h > 16) return "ساعات المذاكرة بين ١ و١٦"; }
       if (status === "جامعي" && universityGpa) { const g = parseFloat(universityGpa); if (!Number.isFinite(g) || g < 0 || g > 5) return "المعدل الجامعي بين ٠ و٥"; }
       const showsHs = (status === "ثانوي" && grade === "ثالث ثانوي") || status === "خريج";
@@ -237,11 +244,11 @@ export default function OnboardingPage() {
       track: primaryTrack,
       activeTracks: tracks.length ? tracks : undefined,
       onboarded: true,
-      age: age ? parseInt(age) : undefined, // اختياري — بلا حد أدنى أو أعلى
       studyLevel: status || undefined,
       grade: status === "ثانوي" && grade ? grade : undefined,
       /* مرساة الترقية التلقائية: العام الدراسي الحالي وقت ضبط الصف (للثانوي فقط) */
       gradeYearId: status === "ثانوي" && grade ? (currentAcademicYearId() ?? undefined) : undefined,
+      academicTerm: status === "ثانوي" ? term : undefined,
       gradStage: status === "خريج" && gradStage ? gradStage : undefined,
       universityYear: status === "جامعي" && universityYear ? universityYear : undefined,
       goal: effectiveGoal || undefined,
@@ -404,16 +411,6 @@ export default function OnboardingPage() {
         </div>
 
         <div>
-          <p className="label mb-3">عمرك؟ <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
-          <input type="number" value={age} onChange={(e) => setAge(e.target.value)}
-            placeholder="مثال: 18"
-            className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
-            style={inputStyle}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
-        </div>
-
-        <div>
           <p className="label mb-3">وش مرحلتك؟</p>
           <div className="grid grid-cols-2 gap-2.5">
             {STAGES.map((s) => {
@@ -508,12 +505,26 @@ export default function OnboardingPage() {
               <div>
                 <p className="label mb-1">مسارك الدراسي؟</p>
                 <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>يساعدنا نرتّب أولوياتك تلقائياً</p>
-                <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                <div className="grid grid-cols-2 gap-2">
                   {TRACK_TYPES.map((t) => (
-                    <button key={t} onClick={() => setTrackType(trackType === t ? "" : t)}
-                      className="rounded-2xl py-3 font-bold text-[16px] transition active:scale-[0.98]"
-                      style={chipStyle(trackType === t)}>
-                      {t}
+                    <button key={t.id} onClick={() => setTrackType(trackType === t.id ? "" : t.id)}
+                      className="rounded-2xl py-3 px-2 font-bold text-[15px] leading-snug transition active:scale-[0.98]"
+                      style={chipStyle(trackType === t.id)}>
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* الفصل الدراسي الحالي — يحكم إتاحة التحصيلي المبكر وتنبيهات دويرب (افتراضٌ من التقويم) */}
+              <div>
+                <p className="label mb-1">أنت الآن في أي فصل؟</p>
+                <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>يحدّد ما يناسبك من الاختبارات ومواعيدها</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {([["first", "الفصل الأول"], ["second", "الفصل الثاني"], ["summer", "الإجازة الصيفية"]] as [TermGuess, string][]).map(([v, label]) => (
+                    <button key={v} onClick={() => setTerm(v)}
+                      className="rounded-2xl py-3 px-2 font-bold text-[14px] leading-snug transition active:scale-[0.98]"
+                      style={chipStyle(term === v)}>
+                      {label}
                     </button>
                   ))}
                 </div>
@@ -521,7 +532,7 @@ export default function OnboardingPage() {
               <div className="rounded-2xl px-4 py-3"
                 style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
                 <p className="text-[15px] font-bold" style={{ color: "var(--accent-light)" }}>
-                  🗺️ بالخطوة الجاية: لوحة اختباراتك كاملة — وش متاح لصفّك الآن، ووش مقفل ومتى يفتح وليش.
+                  🗺️ بالخطوة الجاية: نقترح لك اختباراتك المناسبة — تقبل أو تحذف، بلا فرض.
                 </p>
               </div>
               {/* نتائج سابقة للثانوي — اختيارية، لا تمنع التقدم */}
@@ -718,14 +729,9 @@ export default function OnboardingPage() {
     </div>
   );
 
-  /* شروط الإكمال: الثانوي → ساعات فقط (النواة ثابتة ومفعّلة تلقائياً، واللغات اختيارية) ·
-     الجامعي → ساعات فقط (الجامعة/التخصص/السنة تحقّقت في الخطوة 1) ·
-     الخريج → هدف واحد على الأقل + ساعات (منتقي الجامعة غير حاجز) */
-  const canFinish = isSecondary
-    ? !!studyHours
-    : isUniversity
-      ? !!studyHours
-      : goals.length > 0 && !!studyHours;
+  /* شروط الإكمال: ساعات المذاكرة افتراضية (٣) غير حاجزة. الثانوي/الجامعي بلا حاجز
+     إضافي (تحقّق الخطوة ١ يكفي)؛ الخريج يلزمه وجهةٌ واحدة على الأقل. */
+  const canFinish = isSecondary || isUniversity ? true : goals.length > 0;
 
   /* قسم اختبارات اللغة المشترك (الثانوي والخريج) — متعدد بلا حد، اختياري بالكامل */
   const languageSection = (
