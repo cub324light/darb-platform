@@ -125,7 +125,6 @@ export default function OnboardingPage() {
   const [selectedLanguages, setSelectedLanguages] = useState<TrackId[]>([]);
   const [seedGrade, setSeedGrade] = useState("");   // آخر صف ضُبط له فتح «الوجهة الجامعية» — لا نعيد ضبطه عند الرجوع بلا تغيير
   const [uniOpen, setUniOpen] = useState(false);    // «عندك وجهة جامعية؟» — بارز لثالث، مطوي لغيره
-  const [extrasOpen, setExtrasOpen] = useState(false); // «معلومات إضافية» مطوية افتراضياً
   const [studyHours, setStudyHours] = useState("3"); // قيمة افتراضية — يعدّلها لاحقاً، لا تحجب الإكمال
   const [examDate, setExamDate] = useState("");
   const [school, setSchool] = useState("");
@@ -1010,15 +1009,10 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* معلومات إضافية — كلها اختيارية، مطوية افتراضياً لتقليل الزحام */}
+        {/* معلومات إضافية — اختيارية، ظاهرة مباشرة في آخر التسجيل (بلا طيّ) */}
         <div className="flex flex-col gap-4">
-          <button onClick={() => setExtrasOpen((o) => !o)}
-            className="flex items-center gap-2 w-full text-right"
-            aria-expanded={extrasOpen}>
-            <span className="label flex-1">معلومات إضافية <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></span>
-            <span className="text-[15px] font-bold" style={{ color: "var(--text-muted)" }}>{extrasOpen ? "▴" : "▾"}</span>
-          </button>
-          {extrasOpen && (<>
+          <p className="label">معلومات إضافية <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+          {(<>
           <div>
             <p className="text-[15px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>المدينة (اختياري)</p>
             <input type="text" value={city} onChange={(e) => setCity(e.target.value)}
