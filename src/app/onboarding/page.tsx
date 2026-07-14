@@ -6,7 +6,7 @@ import {
   type StudyGoalType, type TrackId,
 } from "@/lib/tracks";
 import { UNIVERSITIES, MAJORS, findUniversity, findMajor } from "@/lib/university";
-import { saveUser, saveExamDate, saveResults, saveTrackExamDates, loadGoals, saveGoals } from "@/lib/storage";
+import { saveUser, saveExamDate, saveResults, saveTrackExamDates, loadGoals, saveGoals, ensureWorkspace, type DarbUser } from "@/lib/storage";
 import { ADMISSION_TARGETS } from "@/lib/targets";
 import { currentAcademicYearId, currentTermGuess, type TermGuess } from "@/lib/academicCalendar";
 import { currentRegistrationStatus } from "@/lib/examProvider";
@@ -245,7 +245,10 @@ export default function OnboardingPage() {
       city:   city.trim()   || undefined,
       phone:  phone.trim()  || undefined,
     };
-    saveUser({
+    /* التسجيل يبني «ملف الطالب»؛ ومساري (Workspace) يُبنى منه: وحدات Core بالمرحلة
+       (المدرسة للثانوي) + الاختبارات التي اختار الطالب البدء بها صراحةً (opt-in).
+       ensureWorkspace يشتق اللوحة من المرحلة + tracks المختارة (مصدر واحد، لا تكرار). */
+    const userData: DarbUser = {
       name: trimmedName,
       track: primaryTrack,
       activeTracks: tracks.length ? tracks : undefined,
@@ -266,7 +269,8 @@ export default function OnboardingPage() {
       /* حقول الجامعي — المعدل فقط (التدريب/الدراسات العليا تُضاف لاحقاً من المنصة) */
       universityGpa: status === "جامعي" && universityGpa ? parseFloat(universityGpa) : undefined,
       ...extras,
-    });
+    };
+    saveUser(ensureWorkspace(userData));
 
     /* حفظ الأهداف: الوجهة الجامعية + درجة الثانوية (كتابة واحدة) */
     const showsHighschool = (status === "ثانوي" && grade === "ثالث ثانوي") || status === "خريج";
