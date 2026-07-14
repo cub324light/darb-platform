@@ -11,10 +11,10 @@ test("أول ثانوي: لا إعادة (مبكّر) — السبب stage", () 
   assert.equal(r.reason, "stage");
 });
 
-test("ثاني ثانوي: القدرات فقط قابلة للإعادة (بانتظار الإعلان)", () => {
+test("ثاني ثانوي: القدرات فقط قابلة للإعادة (المحوسب مفتوح طوال السنة)", () => {
   const q = retakeAvailability("qudurat", "second", TODAY);
   assert.equal(q.possible, true);
-  assert.equal(q.reason, "pending");
+  assert.equal(q.reason, "ok"); // القدرات المحوسب مفتوح دائماً — لا «بانتظار»
   const t = retakeAvailability("tahsili", "second", TODAY);
   assert.equal(t.possible, false);
   assert.equal(t.reason, "stage");
@@ -44,8 +44,8 @@ test("الجامعي: لا إعادة قياس", () => {
   assert.equal(r.reason, "stage");
 });
 
-test("النافذة المعلّقة تحمل تسمية السنة بلا تاريخ مُخمَّن", () => {
-  const r = retakeAvailability("qudurat", "third", TODAY);
+test("النافذة المعلّقة تحمل تسمية السنة بلا تاريخ مُخمَّن (التحصيلي موسمي)", () => {
+  const r = retakeAvailability("tahsili", "third", TODAY);
   assert.equal(r.windowStatus, "pending");
   assert.match(r.windowLabel ?? "", /1448/);
 });

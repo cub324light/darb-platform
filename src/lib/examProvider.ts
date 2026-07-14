@@ -29,6 +29,9 @@ export interface ExamWindow {
 export interface ExamProviderEntry {
   trackId: TrackId;
   hasOfficialDates: boolean;   // false → CPC/ITC (تقريبي، بدون تواريخ ثابتة)
+  /* مفتوح طوال السنة (المحوسب): لا موسم تسجيل — التسجيل متاح دائماً. الورقي فقط موسمي.
+     القدرات المحوسب من هذا النوع، فلا يُعرَض «مغلق» ولا «بانتظار فتح التسجيل» أبداً. */
+  alwaysOpen?: boolean;
   windows: ExamWindow[];
   /* CPC/ITC فقط: خيارات ربع السنة للاختيار اليدوي */
   quarterOptions?: string[];
@@ -77,6 +80,7 @@ export const EXAM_PROVIDER: ExamProviderEntry[] = [
   {
     trackId: "قدرات",
     hasOfficialDates: true,
+    alwaysOpen: true, // القدرات المحوسب متاح طوال السنة (الورقي فقط موسمي) — لا يُعرَض «مغلق»
     windows: [
       {
         id: "gat-1447-1",
@@ -246,6 +250,10 @@ export function nearestActiveWindow(
 ): { window: ExamWindow; status: RegistrationStatus } | null {
   const entry = getProviderEntry(trackId);
   if (!entry || !entry.hasOfficialDates) return null;
+  /* المحوسب مفتوح دائماً — نافذة اصطناعية «مفتوحة» بلا موسم */
+  if (entry.alwaysOpen) {
+    return { window: { id: `${trackId}-computerized`, yearLabel: "المحوسب — متاح طوال السنة" }, status: "open" };
+  }
   for (const w of entry.windows) {
     const s = windowStatus(w, todayStr);
     if (s === "open" || s === "upcoming") return { window: w, status: s };
@@ -259,6 +267,7 @@ export function nearestActiveWindow(
 /* الحالة التسجيلية الحاليّة لمسارٍ واحد — لجدول الأهلية (open/upcoming/pending أو
    passed إن لم تبقَ نافذةٌ مفتوحة/قادمة/معلّقة). بلا تخمين: كلها من النوافذ الرسمية. */
 export function currentRegistrationStatus(trackId: TrackId, todayStr: string): RegistrationStatus {
+  if (getProviderEntry(trackId)?.alwaysOpen) return "open"; // محوسب: مفتوح دائماً
   const near = nearestActiveWindow(trackId, todayStr);
   return near ? near.status : "passed";
 }
