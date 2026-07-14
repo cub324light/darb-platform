@@ -65,6 +65,10 @@ const MODE_COLOR: Record<ExamMode, string> = {
 const GOAL_PREV_EXAM: Partial<Record<StudyGoalType, string>> = {
   qudurat: "القدرات", tahsili: "التحصيلي", step: "ستيب STEP",
 };
+/* اختبار القياس المقترَح → عنوان نتيجته السابقة (لإدخال الدرجة داخل بطاقة الاقتراح) */
+const EXAM_PREV_KEY: Record<ExamBoardId, string> = {
+  qudurat: "القدرات", tahsiliEarly: "التحصيلي", tahsiliRegular: "التحصيلي",
+};
 const SAUDI_REGIONS = [
   "الرياض", "مكة المكرمة", "المدينة المنورة", "القصيم", "المنطقة الشرقية",
   "عسير", "تبوك", "حائل", "الحدود الشمالية", "جازان", "نجران", "الباحة", "الجوف",
@@ -101,6 +105,9 @@ export default function OnboardingPage() {
     Object.fromEntries(PREV_EXAMS.map((e) => [e, { tested: false, score: "" }]))
   );
   const [prevErr, setPrevErr] = useState("");
+  /* قرار الطالب لكل اختبار قياس مقترَح: «ابدأ الآن» (start) أو «ليس الآن» (skip).
+     لا يُحفظ في activeTracks إلا ما اختار له «ابدأ الآن» — الاقتراح ليس تفعيلاً. */
+  const [examChoice, setExamChoice] = useState<Record<string, "start" | "skip">>({});
   /* H1: قفل ضغط مزدوج + رسالة فشل واضحة على آخر خطوة */
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitErr, setSubmitErr] = useState("");
@@ -161,7 +168,7 @@ export default function OnboardingPage() {
      - الثانوي: اختبارات القياس من examBoard + اللغات المختارة
      - الخريج: الحزمة التلقائية + اختبارات اللغة · الجامعي: الحزمة التلقائية فقط */
   const finalTracks =
-    status === "ثانوي" ? [...new Set<TrackId>([...qiyasTracks, ...LANGUAGE_TESTS.filter((id) => selectedLanguages.includes(id))])] :
+    status === "ثانوي" ? [...new Set<TrackId>([...qiyasTracks.filter((id) => examChoice[id] === "start"), ...LANGUAGE_TESTS.filter((id) => selectedLanguages.includes(id))])] :
     status === "خريج"  ? [...new Set([...computedTracks, ...selectedLanguages])] :
     computedTracks;
 
@@ -532,14 +539,8 @@ export default function OnboardingPage() {
               <div className="rounded-2xl px-4 py-3"
                 style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
                 <p className="text-[15px] font-bold" style={{ color: "var(--accent-light)" }}>
-                  🗺️ بالخطوة الجاية: نقترح لك اختباراتك المناسبة — تقبل أو تحذف، بلا فرض.
+                  🗺️ بالخطوة الجاية: نقترح لك اختباراتك المناسبة — تبدأ ما تريد، وتُدخل درجتك إن اختبرته. بلا فرض.
                 </p>
-              </div>
-              {/* نتائج سابقة للثانوي — اختيارية، لا تمنع التقدم */}
-              <div>
-                <p className="label mb-1">اختبرت من قبل؟ <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
-                <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>لو دخلت أياً منها سابقاً، أدخل درجتك — نستخدمها لتخصيص خطتك وجاهزيتك</p>
-                {prevExamsList}
               </div>
             </>
           )}
@@ -776,36 +777,86 @@ export default function OnboardingPage() {
           <>
             {goalsSection}
             {grade === "ثالث ثانوي" && targetsSection}
-            {/* ── اختبارات القبول (قياس) — من examBoard فقط. المدرسة ليست هنا. ── */}
+            {/* ── نقترح عليك البدء بـ… — اقتراحات لا تُفعَّل غصباً. لا يُحفظ اختبار في
+                activeTracks إلا بعد «ابدأ الآن» (الاقتراح ليس تفعيلاً). ── */}
             <div>
-              <p className="label mb-1">اختبارات القبول</p>
+              <p className="label mb-1">نقترح عليك البدء بـ…</p>
               <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>
                 {examB.length
-                  ? "نفعّلها لك تلقائياً حسب صفّك وحالة التسجيل الرسمية"
-                  : "لا اختبارات قبول في مرحلتك الآن — القدرات والتحصيلي يبدآن من ثاني ثانوي"}
+                  ? "حسب مرحلتك وفصلك — أنت من يقرّر ما يبدأ (لا شيء يُضاف تلقائياً)"
+                  : "لا اختبارات قبول في مرحلتك الآن — ركّز على أساسك المدرسي"}
               </p>
               {examB.length > 0 && (
                 <div className="flex flex-col gap-2.5">
-                  {/* اسم الاختبار وحالته وظهوره من مصدر الحقيقة examBoard (لا نص ثابت) */}
                   {examB.map((be) => {
                     const id = EXAM_TRACK[be.id];
                     const t = TRACKS.find((tr) => tr.id === id)!;
-                    const important = eligibility.find((x) => x.id === id)?.important;
-                    return (
-                      <div key={be.id} className="rounded-2xl px-4 py-3" style={chipStyle(true)}>
+                    const choice = examChoice[id];
+                    if (choice === "skip") return null;
+                    const prevKey = EXAM_PREV_KEY[be.id];
+                    const r = prevResults[prevKey] ?? { tested: false, score: "" };
+                    const range = scoreRangeForTitle(prevKey);
+                    const c = "var(--accent)";
+
+                    /* بطاقة مُضافة (اختار «ابدأ الآن») — تتحوّل لسؤال الدرجة */
+                    if (choice === "start") return (
+                      <div key={be.id} className="rounded-2xl px-4 py-3 flex flex-col gap-2.5"
+                        style={{ background: `color-mix(in srgb, ${c} 8%, var(--surface))`, border: `1.5px solid color-mix(in srgb, ${c} 34%, var(--border))` }}>
                         <div className="flex items-center gap-2">
                           <span className="w-5 h-5 rounded-md flex items-center justify-center text-[14px] font-black flex-shrink-0"
-                            style={{ background: "var(--accent)", border: "1.5px solid var(--accent)", color: "#fff" }}>✓</span>
+                            style={{ background: c, border: `1.5px solid ${c}`, color: "#fff" }}>✓</span>
                           <span className="font-bold text-[17px] flex-1">{be.label}</span>
-                          {important && (
+                          <button onClick={() => setExamChoice((m) => { const n = { ...m }; delete n[id]; return n; })}
+                            className="text-[13px] font-bold px-1" style={{ color: "var(--text-muted)" }}>إزالة ✕</button>
+                        </div>
+                        <p className="text-[14px] font-bold" style={{ color: "var(--text-dim)" }}>هل سبق أن اختبرته؟</p>
+                        <div className="flex gap-2">
+                          <button onClick={() => setPrevResults((p) => ({ ...p, [prevKey]: { ...(p[prevKey] ?? { score: "" }), tested: true } }))}
+                            className="flex-1 py-2 rounded-xl font-bold text-[14px]"
+                            style={r.tested ? { background: c, color: "#fff", border: "none" } : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                            نعم، أدخل درجتي
+                          </button>
+                          <button onClick={() => { setPrevErr(""); setPrevResults((p) => ({ ...p, [prevKey]: { tested: false, score: "" } })); }}
+                            className="flex-1 py-2 rounded-xl font-bold text-[14px]"
+                            style={!r.tested ? { background: "var(--success)", color: "#04240f", border: "none" } : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                            لا، أضفه لخطتي
+                          </button>
+                        </div>
+                        {r.tested && (
+                          <div>
+                            <input value={r.score} inputMode="decimal"
+                              onChange={(e) => { setPrevErr(""); setPrevResults((p) => ({ ...p, [prevKey]: { ...(p[prevKey] ?? { tested: true }), score: e.target.value } })); }}
+                              placeholder="درجتك" maxLength={6}
+                              className="w-full rounded-xl px-3 py-2.5 text-[16px] text-center text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+                              style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
+                            {range && <p className="text-[12px] mt-1 px-1" style={{ color: "var(--text-muted)" }}>الدرجة: {range.hint}</p>}
+                          </div>
+                        )}
+                      </div>
+                    );
+
+                    /* بطاقة اقتراح (مبدئية) — ابدأ الآن / ليس الآن */
+                    return (
+                      <div key={be.id} className="rounded-2xl px-4 py-3 flex flex-col gap-2.5"
+                        style={{ background: "var(--surface)", border: "1.5px dashed color-mix(in srgb, var(--accent) 34%, var(--border))" }}>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-[17px] flex-1" style={{ color: "var(--text)" }}>{be.label}</span>
+                          {eligibility.find((x) => x.id === id)?.important && (
                             <span className="text-[12px] font-black px-2 py-0.5 rounded-full flex-shrink-0"
-                              style={{ background: "color-mix(in srgb, var(--gold) 16%, transparent)", color: "var(--gold)" }}>
-                              ⭐ مهم لمرحلتك
-                            </span>
+                              style={{ background: "color-mix(in srgb, var(--gold) 16%, transparent)", color: "var(--gold)" }}>⭐ مهم لمرحلتك</span>
                           )}
                         </div>
-                        <p className="text-[14px] mt-1 pr-7" style={{ color: "var(--accent-light)" }}>{t.sub}</p>
-                        <p className="text-[13px] font-bold mt-1 pr-7" style={{ color: MODE_COLOR[be.mode] }}>{be.hint}</p>
+                        <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>{t.sub} · <span style={{ color: MODE_COLOR[be.mode] }}>{be.hint}</span></p>
+                        <div className="flex gap-2">
+                          <button onClick={() => setExamChoice((m) => ({ ...m, [id]: "start" }))}
+                            className="flex-1 py-2.5 rounded-xl font-bold text-[14px]" style={{ background: "var(--accent)", color: "#fff", border: "none" }}>
+                            ابدأ الآن
+                          </button>
+                          <button onClick={() => setExamChoice((m) => ({ ...m, [id]: "skip" }))}
+                            className="flex-1 py-2.5 rounded-xl font-bold text-[14px]" style={{ background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                            ليس الآن
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
