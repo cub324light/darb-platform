@@ -2,8 +2,8 @@
 import type { TrackId, StudyGoalType } from "./tracks";
 import type { PlanId } from "./types";
 import type { Workspace } from "./modules/workspace";
-import { buildInitialWorkspace, addModule } from "./modules/workspace";
-import type { ModuleId } from "./modules/types";
+import { buildInitialWorkspace, addModule, addMember } from "./modules/workspace";
+import type { ModuleId, ExamMemberId } from "./modules/types";
 import { toBoardStage } from "./examEligibility";
 
 export interface DarbUser {
@@ -105,22 +105,24 @@ export function activateTrack(id: TrackId): DarbUser | null {
 }
 
 /* ── مساري (Workspace) — التخزين + ترحيل النظام القديم ──
-   خريطة activeTracks القديمة → معرّفات الوحدات الجديدة (المدرسة Core فتُستثنى). */
+   خريطة activeTracks القديمة: القياس → وحدات عليا مفردة؛ اللغة/البرامج → أعضاءٌ
+   داخل وحدتيهما المجموعتين. «مدرسه» Core تُبنى تلقائياً فتُستثنى. */
 const LEGACY_TRACK_TO_MODULE: Partial<Record<TrackId, ModuleId>> = {
   "قدرات": "qudurat",
   "تحصيلي": "tahsili",
   "تحصيلي مبكر": "tahsili",
-  "CPC": "aramco",
-  "ITC": "itc",
-  "ايلتس": "ielts",
+};
+const LEGACY_TRACK_TO_MEMBER: Partial<Record<TrackId, ExamMemberId>> = {
   "ستيب": "step",
+  "ايلتس": "ielts",
   "توفل": "toefl",
   "دوليقو": "duolingo",
-  // "مدرسه" وحدة Core تُبنى تلقائياً بالمرحلة — لا تُرحَّل كاختيارية
+  "CPC": "aramco",
+  "ITC": "itc",
 };
 
 /* يضمن وجود Workspace للطالب: يبنيه من المرحلة (Core فقط) ويرحّل activeTracks القديمة
-   إلى وحداتٍ اختيارية (مرة واحدة). لا يمسّ شيئاً إن كان workspace موجوداً بالفعل. نقيّ. */
+   إلى وحدات/أعضاء (مرة واحدة). لا يمسّ شيئاً إن كان workspace موجوداً بالفعل. نقيّ. */
 export function ensureWorkspace(u: DarbUser): DarbUser {
   if (u.workspace) return u;
   const stage = toBoardStage({ studyLevel: u.studyLevel, grade: u.grade });
@@ -128,7 +130,9 @@ export function ensureWorkspace(u: DarbUser): DarbUser {
   const legacy = u.activeTracks?.length ? u.activeTracks : (u.track ? [u.track] : []);
   for (const t of legacy) {
     const mid = LEGACY_TRACK_TO_MODULE[t];
-    if (mid) ws = addModule(ws, mid);
+    if (mid) { ws = addModule(ws, mid); continue; }
+    const mem = LEGACY_TRACK_TO_MEMBER[t];
+    if (mem) ws = addMember(ws, mem);
   }
   return { ...u, workspace: ws };
 }
