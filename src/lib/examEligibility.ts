@@ -105,3 +105,18 @@ export function examBoard(input: ExamBoardInput): ExamBoardEntry[] {
 
   return out;
 }
+
+/* ── تحويل حقول الملف (الحالة/الصف) إلى BoardStage — SSoT واحد ──
+   كان مكرَّراً يدوياً في التسجيل وSettingsPanel والوحدات؛ عُرِّف هنا (بيت BoardStage)
+   ليستهلكه الجميع بلا تناقض. يعيد null إذا لم تُعرف المرحلة بعد. */
+export function toBoardStage(input: { studyLevel?: string; grade?: string }): BoardStage | null {
+  const { studyLevel, grade } = input;
+  if (studyLevel === "ثانوي") {
+    return grade === "أول ثانوي" ? "first"
+      : grade === "ثاني ثانوي" ? "second"
+      : grade === "ثالث ثانوي" ? "third" : null;
+  }
+  if (studyLevel === "خريج") return "graduate";
+  if (studyLevel === "جامعي") return "university";
+  return null;
+}
