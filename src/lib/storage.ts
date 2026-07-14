@@ -1,6 +1,10 @@
 /* ─── تخزين حقيقي في localStorage — صفر بيانات وهمية ─── */
 import type { TrackId, StudyGoalType } from "./tracks";
 import type { PlanId } from "./types";
+import type { Workspace } from "./modules/workspace";
+import { buildInitialWorkspace, addModule } from "./modules/workspace";
+import type { ModuleId } from "./modules/types";
+import { toBoardStage } from "./examEligibility";
 
 export interface DarbUser {
   name: string;
@@ -20,7 +24,8 @@ export interface DarbUser {
   gapYear?: boolean;        // خريج ينوي إعادة القدرات/التحصيلي (سنة استدراك)
   studyHours?: number;
   subjects?: string[];
-  activeTracks?: TrackId[];
+  activeTracks?: TrackId[]; // (نظام Track القديم — يُرحَّل إلى workspace ثم يُزال في المرحلة الأخيرة)
+  workspace?: Workspace;    // مساري: لوحة عمل الطالب من وحداتٍ مستقلة (النظام الجديد)
   plan?: PlanId;
   school?: string;
   region?: string;
@@ -95,6 +100,44 @@ export function activateTrack(id: TrackId): DarbUser | null {
   const current = u.activeTracks?.length ? u.activeTracks : (u.track ? [u.track] : []);
   if (current.includes(id)) return u;
   const next: DarbUser = { ...u, activeTracks: [...current, id] };
+  saveUser(next);
+  return next;
+}
+
+/* ── مساري (Workspace) — التخزين + ترحيل النظام القديم ──
+   خريطة activeTracks القديمة → معرّفات الوحدات الجديدة (المدرسة Core فتُستثنى). */
+const LEGACY_TRACK_TO_MODULE: Partial<Record<TrackId, ModuleId>> = {
+  "قدرات": "qudurat",
+  "تحصيلي": "tahsili",
+  "تحصيلي مبكر": "tahsili",
+  "CPC": "aramco",
+  "ITC": "itc",
+  "ايلتس": "ielts",
+  "ستيب": "step",
+  "توفل": "toefl",
+  "دوليقو": "duolingo",
+  // "مدرسه" وحدة Core تُبنى تلقائياً بالمرحلة — لا تُرحَّل كاختيارية
+};
+
+/* يضمن وجود Workspace للطالب: يبنيه من المرحلة (Core فقط) ويرحّل activeTracks القديمة
+   إلى وحداتٍ اختيارية (مرة واحدة). لا يمسّ شيئاً إن كان workspace موجوداً بالفعل. نقيّ. */
+export function ensureWorkspace(u: DarbUser): DarbUser {
+  if (u.workspace) return u;
+  const stage = toBoardStage({ studyLevel: u.studyLevel, grade: u.grade });
+  let ws: Workspace = stage ? buildInitialWorkspace(stage) : { modules: [], updatedAt: Date.now() };
+  const legacy = u.activeTracks?.length ? u.activeTracks : (u.track ? [u.track] : []);
+  for (const t of legacy) {
+    const mid = LEGACY_TRACK_TO_MODULE[t];
+    if (mid) ws = addModule(ws, mid);
+  }
+  return { ...u, workspace: ws };
+}
+
+/* يحفظ Workspace داخل المستخدم — المزامنة السحابية تركبه مع بقية بيانات المستخدم. */
+export function saveWorkspace(ws: Workspace): DarbUser | null {
+  const u = loadUser();
+  if (!u) return null;
+  const next: DarbUser = { ...u, workspace: ws };
   saveUser(next);
   return next;
 }
