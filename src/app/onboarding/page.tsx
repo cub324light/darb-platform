@@ -102,6 +102,11 @@ export default function OnboardingPage() {
   /* قرار الطالب لكل اختبار قياس مقترَح: «ابدأ الآن» (start) أو «ليس الآن» (skip).
      لا يُحفظ في activeTracks إلا ما اختار له «ابدأ الآن» — الاقتراح ليس تفعيلاً. */
   const [examChoice, setExamChoice] = useState<Record<string, "start" | "skip">>({});
+  /* نيّة الإعادة (ADR-0001 §2.6): بعد إدخال الدرجة، «راضٍ؟» — «لا» ⇒ true (لا Goal).
+     المفتاح = عنوان نتيجة الاختبار (القدرات/التحصيلي/…) لمطابقة retakeExams. */
+  const [retakeIntent, setRetakeIntent] = useState<Record<string, boolean>>({});
+  /* التركيز الأول (ADR-0001 §2.6): يبني الخطة الأولى فقط، لا يغيّر الوجهة. */
+  const [focus, setFocus] = useState("");
   /* H1: قفل ضغط مزدوج + رسالة فشل واضحة على آخر خطوة */
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitErr, setSubmitErr] = useState("");
@@ -235,6 +240,9 @@ export default function OnboardingPage() {
       gradStage: status === "خريج" && gradStage ? gradStage : undefined,
       universityYear: status === "جامعي" && universityYear ? universityYear : undefined,
       targets: targets.length ? targets : undefined,
+      /* التركيز + نيّة الإعادة (ADR-0001 §2.6) — يبنيان الخطة الأولى، لا يغيّران الوجهة */
+      focus: focus || undefined,
+      retakeExams: (() => { const r = Object.keys(retakeIntent).filter((k) => retakeIntent[k]); return r.length ? r : undefined; })(),
       gapYear: status === "خريج" ? gapYear === "yes" : undefined,
       studyHours: studyHours ? parseInt(studyHours) : undefined,
       trackType: resolvedTrackType,
@@ -769,6 +777,24 @@ export default function OnboardingPage() {
                       className="w-full rounded-xl px-3 py-2.5 text-[16px] text-center text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
                       style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
                     {range && <p className="text-[12px] mt-1 px-1" style={{ color: "var(--text-muted)" }}>الدرجة: {range.hint}</p>}
+                    {/* سؤال الرضا بعد الدرجة (ADR-0001 §2.6) — «لا» ⇒ نيّة إعادة (لا Goal) */}
+                    {r.score.trim() && (
+                      <div className="mt-2.5">
+                        <p className="text-[13px] font-bold mb-1.5" style={{ color: "var(--text-dim)" }}>راضٍ عن درجتك؟</p>
+                        <div className="flex gap-2">
+                          <button onClick={() => setRetakeIntent((mm) => ({ ...mm, [prevKey]: false }))}
+                            className="flex-1 py-2 rounded-xl font-bold text-[13px]"
+                            style={retakeIntent[prevKey] === false ? { background: "var(--success)", color: "#04240f", border: "none" } : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                            نعم، مناسبة لي
+                          </button>
+                          <button onClick={() => setRetakeIntent((mm) => ({ ...mm, [prevKey]: true }))}
+                            className="flex-1 py-2 rounded-xl font-bold text-[13px]"
+                            style={retakeIntent[prevKey] === true ? { background: "var(--accent)", color: "#fff", border: "none" } : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                            لا، سأعيد الاختبار 📈
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -814,6 +840,36 @@ export default function OnboardingPage() {
     </div>
   );
 
+  /* ── سؤال التركيز (ADR-0001 §2.6) — يبني الخطة الأولى فقط، لا يغيّر الوجهة ──
+     خياراته حسب ما يخصّ الطالب (من recommendedExams + الوجهة). */
+  const focusOptions = [
+    { id: "qudurat",    label: "تحسين القدرات",    show: recQiyas.some((e) => e.kind === "qudurat") },
+    { id: "tahsili",    label: "تحسين التحصيلي",   show: recQiyas.some((e) => e.kind === "tahsili") },
+    { id: "english",    label: "اللغة الإنجليزية", show: true },
+    { id: "university", label: "القبول الجامعي",   show: targets.includes("university") },
+    { id: "programs",   label: "البرامج",          show: recExams.some((e) => e.kind === "aramco" || e.kind === "itc" || e.kind === "niti") },
+  ].filter((o) => o.show);
+  const focusSection = focusOptions.length > 0 ? (
+    <div>
+      <p className="label mb-1">🎯 وش تركيزك الأول؟ <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(نبني عليه خطتك الأولى)</span></p>
+      <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>يرتّب خطتك الأولى فقط — لا يغيّر وجهتك، وتقدر تعدّله لاحقاً</p>
+      <div className="flex flex-col gap-2.5">
+        {focusOptions.map((o) => {
+          const on = focus === o.id;
+          return (
+            <button key={o.id} onClick={() => setFocus(on ? "" : o.id)} aria-pressed={on}
+              className="rounded-2xl px-4 py-3 flex items-center gap-3 text-right transition active:scale-[0.98]"
+              style={chipStyle(on)}>
+              <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px] font-black flex-shrink-0"
+                style={{ background: on ? "var(--accent)" : "var(--surface2)", border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}`, color: on ? "#fff" : "transparent" }}>●</span>
+              <span className="font-bold text-[16px] flex-1">{o.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  ) : null;
+
   return (
     <div className="min-h-dvh flex flex-col app-col">
       {header}
@@ -825,6 +881,7 @@ export default function OnboardingPage() {
           <>
             {targetsSection}
             {examSuggestionSection}
+            {focusSection}
             {schoolNoteSection}
             {languageSection}
           </>
@@ -853,6 +910,7 @@ export default function OnboardingPage() {
               <>
                 {targetsSection}
                 {examSuggestionSection}
+                {focusSection}
               </>
             )}
             {languageSection}

@@ -18,8 +18,9 @@ export interface DarbUser {
   universityYear?: string;  // السنة الدراسية (للجامعي): الأولى ... الخامسة+
   goal?: StudyGoalType;     // الهدف الأساسي (goals[0]) — يقود تفعيل المسارات والأولويات (SSoT لكل المستهلكين القائمين)
   goals?: StudyGoalType[];  // كل الأهداف المختارة (متعدد بلا حد) — الأساسي منها = goals[0]
-  targets?: string[];       // أهداف ما بعد الثانوية (متعدّد): جامعة/أرامكو/سابك/عسكري/ITC/تدريب — معرّفات من lib/targets
-  retakeExams?: string[];   // اختبارات اختار الطالب إعادتها (قدرات/تحصيلي/…) — يقرؤها Life Engine لرفع أولوية الاستعداد
+  targets?: string[];       // الوجهات النهائية (متعدّد): معرّفات ثابتة من lib/targets — الوجهة تقود recommendedExams (ADR-0001)
+  focus?: string;           // التركيز الأول (ADR-0001 §2.6): يبني الخطة الأولى فقط، لا يغيّر الوجهة — qudurat/tahsili/english/university/programs
+  retakeExams?: string[];   // نيّة الإعادة (retakeIntent): اختبارات غير راضٍ عنها من سؤال الرضا — يقرؤها Life Engine/الخطة (لا Goal)
   finalizedExams?: string[]; // اختبارات اعتمد الطالب درجتها نهائيةً صراحةً (الحالة الثالثة مقابل «لم أقرّر»)
   gapYear?: boolean;        // خريج ينوي إعادة القدرات/التحصيلي (سنة استدراك)
   studyHours?: number;
