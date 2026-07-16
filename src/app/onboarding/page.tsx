@@ -4,7 +4,7 @@ import {
   TRACKS, scoreRangeForTitle, validateScore, LANGUAGE_TESTS, type TrackId,
 } from "@/lib/tracks";
 import { UNIVERSITIES, MAJORS, findUniversity, findMajor } from "@/lib/university";
-import { saveUser, saveExamDate, saveResults, saveTrackExamDates, loadGoals, saveGoals, ensureWorkspace, type DarbUser } from "@/lib/storage";
+import { saveUser, saveResults, loadGoals, saveGoals, ensureWorkspace, type DarbUser } from "@/lib/storage";
 import { ADMISSION_TARGETS } from "@/lib/targets";
 import { currentAcademicYearId, currentTermGuess, type TermGuess } from "@/lib/academicCalendar";
 import { toBoardStage, type ExamBoardId, type ExamMode } from "@/lib/examEligibility";
@@ -38,16 +38,6 @@ const UNI_YEARS = ["الأولى", "الثانية", "الثالثة", "الرا
 /* اختبارات النتائج السابقة — العناوين تطابق سُلّم الدرجات في tracks.ts */
 const PREV_EXAMS = ["القدرات", "التحصيلي", "ستيب STEP"];
 
-/* «اختبرت من قبل؟» حسب المرحلة — لا نسأل أول ثانوي عن القدرات/التحصيلي (ليست له)،
-   ولا ثاني ثانوي عن التحصيلي. الخريج وثالث ثانوي: الكل. */
-function visiblePrevExamsFor(status: string, grade: string): string[] {
-  if (status === "خريج") return PREV_EXAMS;
-  if (status !== "ثانوي") return [];
-  if (grade === "أول ثانوي") return ["ستيب STEP"];
-  if (grade === "ثاني ثانوي") return ["القدرات", "ستيب STEP"];
-  return PREV_EXAMS; // ثالث ثانوي
-}
-
 /* بطاقة اختبار القياس تُقرأ من مصدر الحقيقة examEligibility: الاسم (مبكر/عادي) وحالته
    والظهور — لا اسم ثابت في الواجهة. المخفي لا يظهر أصلاً. */
 const EXAM_TRACK: Record<ExamBoardId, TrackId> = {
@@ -63,11 +53,6 @@ const MODE_COLOR: Record<ExamMode, string> = {
 const EXAM_PREV_KEY: Record<ExamBoardId, string> = {
   qudurat: "القدرات", tahsiliEarly: "التحصيلي", tahsiliRegular: "التحصيلي",
 };
-const SAUDI_REGIONS = [
-  "الرياض", "مكة المكرمة", "المدينة المنورة", "القصيم", "المنطقة الشرقية",
-  "عسير", "تبوك", "حائل", "الحدود الشمالية", "جازان", "نجران", "الباحة", "الجوف",
-];
-
 export default function OnboardingPage() {
   const [step, setStep] = useState<0 | 1 | 2>(0);
 
@@ -123,12 +108,6 @@ export default function OnboardingPage() {
   const [seedGrade, setSeedGrade] = useState("");   // آخر صف ضُبط له فتح «الوجهة الجامعية» — لا نعيد ضبطه عند الرجوع بلا تغيير
   const [uniOpen, setUniOpen] = useState(false);    // «عندك وجهة جامعية؟» — بارز لثالث، مطوي لغيره
   const [studyHours, setStudyHours] = useState("3"); // قيمة افتراضية — يعدّلها لاحقاً، لا تحجب الإكمال
-  const [examDate, setExamDate] = useState("");
-  const [school, setSchool] = useState("");
-  const [region, setRegion] = useState("");
-  const [city, setCity] = useState("");
-  const [phone, setPhone] = useState("");
-  const [highschoolPct, setHighschoolPct] = useState("");
 
   const today = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; })();
 
@@ -201,8 +180,6 @@ export default function OnboardingPage() {
     const numErr = (() => {
       if (studyHours) { const h = parseInt(studyHours); if (!Number.isFinite(h) || h < 1 || h > 16) return "ساعات المذاكرة بين ١ و١٦"; }
       if (status === "جامعي" && universityGpa) { const g = parseFloat(universityGpa); if (!Number.isFinite(g) || g < 0 || g > 5) return "المعدل الجامعي بين ٠ و٥"; }
-      const showsHs = (status === "ثانوي" && grade === "ثالث ثانوي") || status === "خريج";
-      if (showsHs && highschoolPct) { const p = parseFloat(highschoolPct); if (!Number.isFinite(p) || p < 0 || p > 100) return "نسبة الثانوية بين ٠ و١٠٠"; }
       return "";
     })();
     if (numErr) { setSubmitErr(numErr); return; }
@@ -217,12 +194,6 @@ export default function OnboardingPage() {
       status === "جامعي" && majorId ? findMajor(majorId)?.category :
       (trackType || undefined);
 
-    const extras = {
-      school: school.trim() || undefined,
-      region: region        || undefined,
-      city:   city.trim()   || undefined,
-      phone:  phone.trim()  || undefined,
-    };
     /* ADR-0001: التسجيل يبني «ملف الطالب» فقط — الوجهة (targets) + النتائج + البيانات
        الشخصية. لا goal اختبار. track/activeTracks هنا منظورٌ مُشتقّ من recommendedExams
        (توافق انتقالي مع مساري الحالي فقط، لا مصدر مستقل — يُزالان في مرحلة حذف Track).
@@ -248,13 +219,11 @@ export default function OnboardingPage() {
       trackType: resolvedTrackType,
       /* حقول الجامعي — المعدل فقط (التدريب/الدراسات العليا تُضاف لاحقاً من المنصة) */
       universityGpa: status === "جامعي" && universityGpa ? parseFloat(universityGpa) : undefined,
-      ...extras,
     };
     saveUser(ensureWorkspace(userData));
 
-    /* حفظ الأهداف: الوجهة الجامعية + درجة الثانوية (كتابة واحدة) */
-    const showsHighschool = (status === "ثانوي" && grade === "ثالث ثانوي") || status === "خريج";
-    if (universityId || majorId || (showsHighschool && highschoolPct)) {
+    /* الوجهة الجامعية/التخصص فقط (درجة الثانوية والموعد تُطلبان لاحقاً داخل المنصة) */
+    if (universityId || majorId) {
       const g = loadGoals();
       const next = { ...g };
       if (universityId) {
@@ -262,17 +231,10 @@ export default function OnboardingPage() {
         next.university = universityId === "other" ? (otherUni.trim() || "أخرى") : (universityName || findUniversity(universityId)?.name);
       }
       if (majorId) { next.majorId = majorId; next.major = findMajor(majorId)?.name; }
-      if (showsHighschool && highschoolPct) next.highschoolPct = parseFloat(highschoolPct);
       saveGoals(next);
     }
 
-    /* موعد الاختبار القادم للمسار الأساسي */
-    if (examDate) {
-      saveExamDate(examDate);
-      saveTrackExamDates({ [primaryTrack]: examDate });
-    }
-
-    /* نتائج الخريج السابقة → «نتائجي» */
+    /* نتائج الاختبارات المُدخَلة (بطاقات الخطوة ٢) → «نتائجي» */
     const validPrev = PREV_EXAMS.filter((e) => prevResults[e]?.tested && prevResults[e].score.trim());
     if (validPrev.length) {
       saveResults(validPrev.map((exam, i) => ({
@@ -282,7 +244,7 @@ export default function OnboardingPage() {
       })));
     }
 
-    import("@/lib/firestore").then(({ registerUser }) => { registerUser(trimmedName, primaryTrack, extras); });
+    import("@/lib/firestore").then(({ registerUser }) => { registerUser(trimmedName, primaryTrack, {}); });
     trackEvent("onboarding_completed", { track: primaryTrack, tracks: tracks.length, targets: targets.length, status });
     import("@/lib/cloud").then(({ pushBackup }) => { pushBackup().catch(() => {}); });
     await redeemPendingRef().catch(() => 0);
@@ -437,43 +399,6 @@ export default function OnboardingPage() {
       status === "جامعي" ? (!!universityId && !!majorId && !!universityYear) :
       false;
 
-    /* قائمة «اختبرت من قبل؟» — مشتركة بين الثانوي والخريج (تُحفَظ عبر saveResults في finish) */
-    const prevExamsList = (
-      <>
-        <div className="flex flex-col gap-2.5">
-          {visiblePrevExamsFor(status, grade).map((exam) => {
-            const r = prevResults[exam];
-            const range = scoreRangeForTitle(exam);
-            return (
-              <div key={exam} className="rounded-2xl px-4 py-3"
-                style={{ background: "var(--surface)", border: "2px solid var(--border)" }}>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setPrevResults((p) => ({ ...p, [exam]: { ...p[exam], tested: !p[exam].tested } }))}
-                    className="w-6 h-6 rounded-lg flex items-center justify-center text-[15px] font-black flex-shrink-0 transition"
-                    style={{
-                      background: r.tested ? "var(--accent)" : "var(--surface2)",
-                      border: `1.5px solid ${r.tested ? "var(--accent)" : "var(--border)"}`,
-                      color: r.tested ? "#fff" : "transparent",
-                    }}>✓</button>
-                  <span className="font-bold text-[17px] flex-1" style={{ color: "var(--text)" }}>{exam}</span>
-                  <input value={r.score} inputMode="decimal" disabled={!r.tested}
-                    onChange={(e) => { setPrevErr(""); setPrevResults((p) => ({ ...p, [exam]: { ...p[exam], score: e.target.value } })); }}
-                    placeholder="الدرجة" maxLength={6}
-                    className="w-20 rounded-xl px-3 py-2 text-base text-center text-[var(--text)] placeholder-[var(--text-muted)] outline-none disabled:opacity-30"
-                    style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
-                </div>
-                {r.tested && range && (
-                  <p className="text-[12px] mt-1.5 px-1" style={{ color: "var(--text-muted)" }}>الدرجة: {range.hint}</p>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        {prevErr && <p className="text-[14px] mt-2 font-bold" style={{ color: "var(--danger)" }}>{prevErr}</p>}
-      </>
-    );
-
     return (
       <div className="min-h-dvh flex flex-col app-col">
         {header}
@@ -519,21 +444,7 @@ export default function OnboardingPage() {
                   ))}
                 </div>
               </div>
-              {/* المنطقة والمدرسة — من هوية الطالب (بداية التسجيل) */}
-              <div>
-                <p className="label mb-1">منطقتك ومدرستك <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
-                <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>تساعدنا نربط تقويمك ومدرستك لاحقاً</p>
-                <div className="flex flex-col gap-2.5">
-                  <select value={region} onChange={(e) => setRegion(e.target.value)} aria-label="المنطقة"
-                    className="w-full rounded-2xl px-4 py-3.5 text-base text-[var(--text)] outline-none" style={inputStyle}>
-                    <option value="">اختر منطقتك</option>
-                    {SAUDI_REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-                  </select>
-                  <input type="text" value={school} onChange={(e) => setSchool(e.target.value)}
-                    placeholder="اسم مدرستك (مثال: ثانوية الملك فهد)"
-                    className="w-full rounded-2xl px-4 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none" style={inputStyle} />
-                </div>
-              </div>
+              {/* المنطقة/المدرسة أُخرجت من التسجيل — تُطلب لاحقاً في «المدرسة»/الملف (ADR-0001 قاعدة ٣) */}
               <div className="rounded-2xl px-4 py-3"
                 style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
                 <p className="text-[15px] font-bold" style={{ color: "var(--accent-light)" }}>
@@ -607,15 +518,7 @@ export default function OnboardingPage() {
                   </button>
                 </div>
               </div>
-              <div>
-                <p className="label mb-1">نتائجك السابقة؟</p>
-                <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>
-                  {gapYear === "no"
-                    ? "ندخلها لحساب نسبتك الموزونة ومقارنة الجامعات — مهمة لخطة القبول"
-                    : "نستخدمها لحساب جاهزيتك وتخصيص خطتك"}
-                </p>
-                {prevExamsList}
-              </div>
+              {/* درجات الخريج مصدرها الوحيد بطاقات «ابدأ الآن» في الخطوة ٢ (لا ازدواج إدخال) */}
             </>
           )}
 
@@ -953,17 +856,6 @@ export default function OnboardingPage() {
           )
         )}
 
-        {/* موعد الاختبار القادم (اختياري) */}
-        {finalTracks.length > 0 && (
-          <div>
-            <p className="label mb-3">📅 موعد اختبارك القادم؟ <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
-            <input type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)}
-              min={new Date().toISOString().slice(0, 10)}
-              className="w-full rounded-2xl px-4 py-3 text-base text-[var(--text)] outline-none"
-              style={{ background: "var(--surface)", border: "2px solid var(--border)", colorScheme: "dark" }} />
-          </div>
-        )}
-
         {/* ساعات المذاكرة (إلزامي — يقود حساب الخطة والجدول) */}
         <div>
           <p className="label mb-3">كم ساعة تقدر تذاكر باليوم؟</p>
@@ -975,44 +867,8 @@ export default function OnboardingPage() {
             onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
         </div>
 
-        {/* درجة الثانوية — لطالب ثالث ثانوي أو خريج (مهمة لحساب الموزونة والقبول) */}
-        {((status === "ثانوي" && grade === "ثالث ثانوي") || status === "خريج") && (
-          <div>
-            <p className="label mb-1">📊 درجة الثانوية العامة (النسبة المئوية) <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
-            <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>ننصح بإدخالها — مهمة لحساب الموزونة ومقارنة فرص القبول</p>
-            <input type="number" value={highschoolPct} onChange={(e) => setHighschoolPct(e.target.value)}
-              placeholder="مثال: 94.5" min={50} max={100} step={0.1}
-              className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
-              style={inputStyle}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
-          </div>
-        )}
-
-        {/* معلومات إضافية — اختيارية، ظاهرة مباشرة في آخر التسجيل (بلا طيّ) */}
-        <div className="flex flex-col gap-4">
-          <p className="label">معلومات إضافية <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
-          {(<>
-          <div>
-            <p className="text-[15px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>المدينة (اختياري)</p>
-            <input type="text" value={city} onChange={(e) => setCity(e.target.value)}
-              placeholder="مثال: الرياض، جدة..."
-              className="w-full rounded-2xl px-5 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
-              style={inputStyle}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
-          </div>
-          <div>
-            <p className="text-[15px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>رقم الجوال (اختياري)</p>
-            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
-              placeholder="05xxxxxxxx"
-              className="w-full rounded-2xl px-5 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
-              style={inputStyle}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
-          </div>
-          </>)}
-        </div>
+        {/* درجة الثانوية · المدينة · الجوال · المنطقة/المدرسة · موعد الاختبار:
+           أُخرجت من التسجيل (ADR-0001 قاعدة ٣ — تُطلب لاحقاً داخل المنصة). */}
 
         {/* الإلزامي فقط: الثانوي → ساعات · الجامعي → ساعات · الخريج → هدف + ساعات */}
         {!canFinish && (
