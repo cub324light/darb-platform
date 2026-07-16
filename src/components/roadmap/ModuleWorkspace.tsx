@@ -1,0 +1,191 @@
+"use client";
+/* ─── قالب فضاء الوحدة الواحد (Module Workspace Template) ───
+   قالبٌ واحد يعرض أي وحدة/عضو من واصفها (لا صفحة لكل وحدة). أقسامٌ ثابتة:
+   الرأس · ماذا أفعل الآن (من Life Engine) · الخطة (موعد + جدول) · نتائجي ·
+   الفضاء (study: مواد الواصف عبر StudyBody · hub: روابط العالم القائم) · الإحصائيات.
+   يقرأ من: الواصف + Life Engine + نتائج الطالب. لا Track/goal. */
+import { useState } from "react";
+import Link from "next/link";
+import { readLifeContext, lifeEngine } from "@/lib/lifeEngine";
+import { loadTrackExamDates, saveTrackExamDates, loadResults, saveResults, currentScoreMap } from "@/lib/storage";
+import { trackEvent } from "@/lib/analytics";
+import { MODULE_STATE_LABEL, type ModuleState } from "@/lib/modules";
+import type { ModuleContent } from "@/lib/modules";
+import ExamDateButton from "@/components/ExamDateButton";
+import dynamic from "next/dynamic";
+const LeaksPlanner = dynamic(() => import("@/components/LeaksPlanner"), { ssr: false });
+const StudyBody = dynamic(() => import("./StudyBody"), { ssr: false });
+
+export interface WorkspaceView {
+  label: string;
+  icon?: string;          // الوحدة العليا فقط؛ العضو بلا أيقونة (fallback في الرأس)
+  color: string;
+  content: ModuleContent;
+}
+
+const todayStr = () => new Date().toISOString().slice(0, 10);
+const daysLeft = (d: string) =>
+  Math.round((new Date(d + "T00:00:00").getTime() - new Date(todayStr() + "T00:00:00").getTime()) / 86400000);
+
+const STATE_COLOR: Record<ModuleState, string> = {
+  "not-added": "var(--text-muted)", added: "var(--text-muted)", active: "var(--accent-light)",
+  paused: "#F59E0B", completed: "#10B981", "needs-retake": "#EF4444",
+};
+
+export default function ModuleWorkspace({
+  view, state, onBack, onRecordScore, onToggleRetake,
+}: {
+  view: WorkspaceView;
+  state: ModuleState;
+  onBack: () => void;
+  onRecordScore: (score: string) => void;
+  onToggleRetake: () => void;
+}) {
+  const { label, icon, color, content } = view;
+  const examKey = content.examKey;
+
+  const [dates, setDates] = useState<Record<string, string>>(() => (typeof window !== "undefined" ? loadTrackExamDates() : {}));
+  const [scoreInput, setScoreInput] = useState("");
+  const [scores, setScores] = useState<Record<string, { score: number; attempts: number }>>(() =>
+    typeof window !== "undefined" ? currentScoreMap() : {});
+
+  const d = examKey ? (dates[examKey] ?? "") : "";
+  const dl = d ? daysLeft(d) : null;
+  const myScore = scores[label]?.score;
+
+  const setExamDate = (v: string) => {
+    if (!examKey) return;
+    const up = { ...dates, [examKey]: v }; setDates(up); saveTrackExamDates(up);
+  };
+  const clearExamDate = () => {
+    if (!examKey) return;
+    const up = { ...dates }; delete up[examKey]; setDates(up); saveTrackExamDates(up);
+  };
+
+  const recordScore = () => {
+    const g = parseFloat(scoreInput);
+    if (isNaN(g)) return;
+    const prev = loadResults();
+    saveResults([{ id: `${Date.now()}`, exam: label, score: String(g), date: d || todayStr() }, ...prev]);
+    trackEvent("exam_completed", { exam: label, attemptNumber: prev.filter((r) => r.exam.trim() === label).length + 1 });
+    setScores(currentScoreMap());
+    setScoreInput("");
+    onRecordScore(String(g));
+  };
+
+  return (
+    <div className="flex flex-col gap-5 pb-8">
+      {/* ── ١) الرأس ── */}
+      <div className="rounded-2xl p-4" style={{ background: `color-mix(in srgb, ${color} 8%, var(--surface))`, border: `1.5px solid ${color}40` }}>
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} className="dome-chip t-body font-bold flex-shrink-0" style={{ color: "var(--text)" }}>← مساري</button>
+          <span className="text-[26px] flex-shrink-0" aria-hidden="true">{icon ?? "📄"}</span>
+          <div className="flex-1 min-w-0">
+            <h2 className="t-h3 font-black leading-tight" style={{ color: "var(--text)" }}>{label}</h2>
+          </div>
+          <span className="t-caption font-black px-3 py-1 rounded-full flex-shrink-0" style={{ background: `color-mix(in srgb, ${STATE_COLOR[state]} 16%, transparent)`, color: STATE_COLOR[state] }}>
+            {MODULE_STATE_LABEL[state]}
+          </span>
+        </div>
+        <p className="t-caption mt-2.5 leading-relaxed" style={{ color: "var(--text-muted)" }}>{content.intro}</p>
+      </div>
+
+      {/* ── ٢) ماذا أفعل الآن (من Life Engine) ── */}
+      <NowFromLifeEngine />
+
+      {content.kind === "study" ? (
+        <>
+          {/* ── ٣) الخطة: موعد الاختبار + جدولي ── */}
+          <section className="flex flex-col gap-3">
+            <p className="eyebrow px-1">الخطة</p>
+            {examKey && (
+              <div className="rounded-2xl px-4 py-3 flex items-center gap-3" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold t-body" style={{ color: "var(--text)" }}>موعد الاختبار</p>
+                  <p className="t-caption mt-0.5" style={{ color: dl == null ? "var(--text-muted)" : dl < 0 ? "var(--text-muted)" : dl <= 3 ? "#EF4444" : dl <= 14 ? "#F97316" : "#10B981" }}>
+                    {dl == null ? "غير محدّد" : dl < 0 ? "انتهى" : dl === 0 ? "اليوم — بالتوفيق" : `${dl} يوم على الموعد`}
+                  </p>
+                </div>
+                <ExamDateButton value={d} color={color} min={todayStr()} onChange={setExamDate} onClear={clearExamDate} />
+              </div>
+            )}
+            <Link href="/plan" className="rounded-2xl py-3 px-4 flex items-center gap-3 no-underline transition active:scale-[0.98]"
+              style={{ background: "linear-gradient(135deg, var(--accent), var(--accent-hi))", color: "#fff" }}>
+              <span className="text-[20px]">🗓️</span>
+              <span className="flex-1 text-right font-black t-body">خطتي — جدول اليوم والأسبوع</span>
+              <span className="text-[18px] font-black">←</span>
+            </Link>
+          </section>
+
+          {/* ── ٤) نتائجي: الدرجة + الرضا/الإعادة ── */}
+          <section className="flex flex-col gap-3">
+            <p className="eyebrow px-1">نتائجي</p>
+            <div className="rounded-2xl p-4" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+              {myScore != null ? (
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="font-mono-nums font-black t-h2" style={{ color }}>{myScore}</span>
+                  <span className="t-caption" style={{ color: "var(--text-muted)" }}>آخر درجة مسجّلة{scores[label]?.attempts ? ` · ${scores[label].attempts} محاولة` : ""}</span>
+                  <button onClick={onToggleRetake}
+                    className="ms-auto t-caption font-bold px-3 py-1.5 rounded-lg"
+                    style={{ background: state === "needs-retake" ? "#EF4444" : "transparent", border: "1.5px solid #EF4444", color: state === "needs-retake" ? "#fff" : "#EF4444" }}>
+                    {state === "needs-retake" ? "أنوي الإعادة ✓" : "أنوي الإعادة"}
+                  </button>
+                </div>
+              ) : (
+                <p className="t-caption mb-3" style={{ color: "var(--text-muted)" }}>سجّل درجتك بعد الاختبار لتتابع تقدّمك وتقرّر الإعادة.</p>
+              )}
+              <div className="flex gap-2">
+                <input type="number" value={scoreInput} onChange={(e) => setScoreInput(e.target.value)}
+                  placeholder="أدخل درجتك..." className="flex-1 min-w-0 rounded-xl px-4 py-3 t-body font-bold outline-none min-h-[48px]"
+                  style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
+                <button onClick={recordScore} disabled={!scoreInput.trim() || isNaN(parseFloat(scoreInput))}
+                  className="px-5 rounded-xl font-black t-body min-h-[48px]" style={{ background: color, color: "#fff", border: "none" }}>سجّل</button>
+              </div>
+            </div>
+          </section>
+
+          {/* ── ٥) الفضاء: مواد الواصف (تأسيس/تدريب) + مخطّط التسريبات ── */}
+          <section className="flex flex-col gap-3">
+            <p className="eyebrow px-1">المذاكرة</p>
+            {content.subjects && <StudyBody subjects={content.subjects} />}
+            <LeaksPlanner color="var(--gold)" daysLeft={d ? daysLeft(d) : null} />
+          </section>
+        </>
+      ) : (
+        /* ── hub: روابط العالم القائم (المدرسة/الجامعة) ── */
+        <section className="flex flex-col gap-3">
+          <p className="eyebrow px-1">الروابط</p>
+          {(content.hub ?? []).map((l) => (
+            <Link key={l.href + l.label} href={l.href} className="rounded-2xl p-4 flex items-center gap-3 no-underline transition active:scale-[0.98]"
+              style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+              <span className="text-[23px] flex-shrink-0">{l.icon}</span>
+              <div className="flex-1 min-w-0">
+                <p className="font-black t-body" style={{ color: "var(--text)" }}>{l.label}</p>
+                {l.desc && <p className="t-caption mt-0.5" style={{ color: "var(--text-muted)" }}>{l.desc}</p>}
+              </div>
+              <span className="text-[18px] font-black" style={{ color: "var(--text-muted)" }}>←</span>
+            </Link>
+          ))}
+        </section>
+      )}
+    </div>
+  );
+}
+
+/* «ماذا أفعل الآن» — أعلى أولوية من العقل المركزي (يقرأ Life Engine مباشرةً). */
+function NowFromLifeEngine() {
+  const [top] = useState(() => (typeof window === "undefined" ? null : lifeEngine(readLifeContext())[0] ?? null));
+  if (!top) return null;
+  return (
+    <Link href={top.href} className="rounded-2xl p-3.5 flex items-center gap-3 no-underline transition active:scale-[0.99]"
+      style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--accent) 22%, var(--border))" }}>
+      <span className="text-[22px] flex-shrink-0" aria-hidden="true">{top.icon}</span>
+      <div className="flex-1 min-w-0">
+        <p className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>ماذا أفعل الآن</p>
+        <p className="t-body font-black leading-snug" style={{ color: "var(--text)" }}>{top.title}</p>
+      </div>
+      <span className="t-caption font-black px-3 rounded-lg flex-shrink-0 flex items-center whitespace-nowrap"
+        style={{ height: "var(--btn-h-sm)", background: "var(--accent)", color: "#fff" }}>{top.cta} ←</span>
+    </Link>
+  );
+}
