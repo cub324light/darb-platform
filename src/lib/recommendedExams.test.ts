@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { recommendedExams, requirementsOf } from "./recommendedExams";
+import { recommendedExams, requirementsOf, recommendedExamsForUser } from "./recommendedExams";
 
 /* اليوم المرجعي يطابق examProvider: القدرات محوسبة مفتوحة، التحصيلي موسمي. */
 const today = "2026-07-13";
@@ -64,4 +64,34 @@ test("القياس يحمل حالة النافذة واسمها (المبكر/�
   assert.ok(q && q.label === "القدرات" && q.boardId === "qudurat");
   const t = rec.find((e) => e.kind === "tahsili");
   assert.ok(t && (t.boardId === "tahsiliEarly" || t.boardId === "tahsiliRegular"));
+});
+
+test("Domain: كل اختبار يحمل سبباً وحالةً وأولوية، ومرتّبٌ بالأولوية", () => {
+  const rec = recommendedExams({ destinations: ["scholarship"], stage: "third", today });
+  for (const e of rec) {
+    assert.ok(e.reason.length > 0, `${e.kind} بلا سبب`);
+    assert.ok(["open", "upcoming", "pending", "prepare", "available"].includes(e.state));
+    assert.equal(typeof e.priority, "number");
+  }
+  // مرتّب تصاعدياً بالأولوية (قدرات أولاً، ثم تحصيلي، ثم لغة)
+  const prios = rec.map((e) => e.priority);
+  assert.deepEqual(prios, [...prios].sort((a, b) => a - b));
+  assert.equal(rec[0].kind, "qudurat");
+  assert.equal(rec.find((e) => e.kind === "qudurat")!.state, "open"); // محوسب مفتوح
+});
+
+test("recommendedExamsForUser: يشتقّ من الملف (الوجهة+المرحلة+الفصل)", () => {
+  const rec = recommendedExamsForUser(
+    { studyLevel: "ثانوي", grade: "ثالث ثانوي", academicTerm: "second", targets: ["university"] }, today);
+  const kinds = new Set(rec.map((e) => e.kind));
+  assert.ok(kinds.has("qudurat") && kinds.has("tahsili"));
+
+  // أول ثانوي: لا قياس مهما الوجهة
+  const first = recommendedExamsForUser(
+    { studyLevel: "ثانوي", grade: "أول ثانوي", targets: ["university", "aramco"] }, today);
+  assert.ok(!first.some((e) => e.kind === "qudurat" || e.kind === "tahsili"));
+
+  // ملف فارغ/بلا مرحلة → []
+  assert.deepEqual(recommendedExamsForUser(null, today), []);
+  assert.deepEqual(recommendedExamsForUser({ targets: ["university"] }, today), []);
 });
