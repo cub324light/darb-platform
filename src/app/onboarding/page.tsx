@@ -1,16 +1,14 @@
 "use client";
 import { useState, useEffect } from "react";
 import {
-  TRACKS, basicTracksFor, STUDY_GOALS, goalLabelFor, scoreRangeForTitle, validateScore,
-  trackEligibilityFor, LANGUAGE_TESTS, primaryGoal,
-  type StudyGoalType, type TrackId,
+  TRACKS, scoreRangeForTitle, validateScore, LANGUAGE_TESTS, type TrackId,
 } from "@/lib/tracks";
 import { UNIVERSITIES, MAJORS, findUniversity, findMajor } from "@/lib/university";
 import { saveUser, saveExamDate, saveResults, saveTrackExamDates, loadGoals, saveGoals, ensureWorkspace, type DarbUser } from "@/lib/storage";
 import { ADMISSION_TARGETS } from "@/lib/targets";
 import { currentAcademicYearId, currentTermGuess, type TermGuess } from "@/lib/academicCalendar";
-import { currentRegistrationStatus } from "@/lib/examProvider";
-import { examBoard, type BoardStage, type ExamBoardId, type ExamMode } from "@/lib/examEligibility";
+import { toBoardStage, type ExamBoardId, type ExamMode } from "@/lib/examEligibility";
+import { recommendedExams } from "@/lib/recommendedExams";
 /* registerUser, pushBackup, currentUser مُستورَدة ديناميكياً أسفل */
 import { trackEvent } from "@/lib/analytics";
 import { redeemPendingRef } from "@/lib/referral";
@@ -60,10 +58,6 @@ const MODE_COLOR: Record<ExamMode, string> = {
   "register-upcoming": "var(--gold)",
   "prepare": "var(--text-muted)",
   "pending": "var(--text-muted)",
-};
-/* هدف الاختبار → عنوان نتيجته السابقة (لصياغة «تحسين» بدل «الاستعداد» إن كان له درجة) */
-const GOAL_PREV_EXAM: Partial<Record<StudyGoalType, string>> = {
-  qudurat: "القدرات", tahsili: "التحصيلي", step: "ستيب STEP",
 };
 /* اختبار القياس المقترَح → عنوان نتيجته السابقة (لإدخال الدرجة داخل بطاقة الاقتراح) */
 const EXAM_PREV_KEY: Record<ExamBoardId, string> = {
@@ -117,9 +111,7 @@ export default function OnboardingPage() {
      تُضبط لاحقاً من المنصة لا هنا (أقل أسئلة، لا سؤال قياس للجامعي إطلاقاً) ── */
   const [universityGpa, setUniversityGpa] = useState("");
 
-  /* ── الأهداف (متعدد بلا حد) — للخريج (الجامعي بلا أهداف قياس؛ الثانوي مشتقّ من نواته) ── */
-  const [goals, setGoals] = useState<StudyGoalType[]>([]);
-  /* أهداف ما بعد الثانوية (متعدّد) — لثالث ثانوي وخريج الثانوي؛ الرئيسية ترتّب بطاقاتها حولها */
+  /* الوجهات (متعدّد بلا حد) — الأهداف = وجهات فقط (ADR-0001)؛ منها تُشتق الاختبارات */
   const [targets, setTargets] = useState<string[]>([]);
   /* ── اختبارات اللغة الإضافية (متعدد بلا حد) — للثانوي والخريج ── */
   const [selectedLanguages, setSelectedLanguages] = useState<TrackId[]>([]);
@@ -133,43 +125,28 @@ export default function OnboardingPage() {
   const [phone, setPhone] = useState("");
   const [highschoolPct, setHighschoolPct] = useState("");
 
-  /* المسارات المُفعّلة تلقائياً (الجامعي/الخريج) من الحالة + الهدف الأساسي + سنة الاستدراك */
-  const computedTracks = basicTracksFor({
-    status: status || undefined, grade, goal: primaryGoal(goals), gapYear: gapYear === "yes",
-  });
-
-  /* لوحة أهلية الاختبارات للثانوي — النجمة «مهم لمرحلتك» فقط (الظهور من examBoard) */
-  const eligibility = status === "ثانوي" ? trackEligibilityFor({ status, grade }) : [];
   const today = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; })();
 
-  /* ── جدول اختبارات القياس من مصدر الحقيقة examEligibility (المرحلة+الفصل+النافذة+الاستهداف) ──
-     اللوحة والمسارات المفعّلة تقرآن منه معاً، فلا تناقض بين المعروض والمُفعَّل. */
-  const boardStage: BoardStage | null =
-    status === "ثانوي" ? (grade === "أول ثانوي" ? "first" : grade === "ثاني ثانوي" ? "second" : grade === "ثالث ثانوي" ? "third" : null)
-    : status === "خريج" ? "graduate"
-    : status === "جامعي" ? "university" : null;
-  /* مُستهدَف للتحصيلي المبكر: له وجهة قبول أو اختار التحصيلي/الجامعة/التخصص هدفاً */
-  const isTargeted = targets.length > 0 || goals.includes("tahsili") || goals.includes("university") || goals.includes("major");
-  const examB = boardStage ? examBoard({
+  /* ── المصدر الوحيد لاختبارات الطالب — ADR-0001 ──
+     الوجهة (targets) → recommendedExams. لا goal اختبار، ولا examBoard/if يدوي في الواجهة.
+     أول ثانوي: لا قياس مهما كانت الوجهة (المحرّك يصفّي بالمرحلة/الفصل/النافذة). */
+  const boardStage = toBoardStage({ studyLevel: status || undefined, grade });
+  const recExams = boardStage ? recommendedExams({
+    destinations: targets,
     stage: boardStage,
     isUniGrad: gradStage === "خريج جامعة",
     afterFirstTerm: term !== "first",
-    isTargeted,
-    windows: {
-      qudurat: currentRegistrationStatus("قدرات", today),
-      tahsiliEarly: currentRegistrationStatus("تحصيلي مبكر", today),
-      tahsiliRegular: currentRegistrationStatus("تحصيلي", today),
-    },
+    today,
   }) : [];
-  const qiyasTracks = examB.map((e) => EXAM_TRACK[e.id]);
+  /* اختبارات القياس المقترحة (قدرات/تحصيلي) — تُعرَض بطاقاتها في الخطوة ٢ */
+  const recQiyas = recExams.filter((e) => e.kind === "qudurat" || e.kind === "tahsili");
 
-  /* المسارات النهائية — اختبارات فقط (المدرسة قسمٌ مستقل، ليست اختباراً ولا تُحسب):
-     - الثانوي: اختبارات القياس من examBoard + اللغات المختارة
-     - الخريج: الحزمة التلقائية + اختبارات اللغة · الجامعي: الحزمة التلقائية فقط */
-  const finalTracks =
-    status === "ثانوي" ? [...new Set<TrackId>([...qiyasTracks.filter((id) => examChoice[id] === "start"), ...LANGUAGE_TESTS.filter((id) => selectedLanguages.includes(id))])] :
-    status === "خريج"  ? [...new Set([...computedTracks, ...selectedLanguages])] :
-    computedTracks;
+  /* منظورٌ مُشتقّ من recommendedExams للمقبول (اختار «ابدأ الآن») كـ TrackId — للتوافق
+     الانتقالي مع مساري الحالي فقط (المصدر recommendedExams، لا أهداف). يُزال مع Track. */
+  const finalTracks: TrackId[] = [...new Set<TrackId>([
+    ...recQiyas.filter((e) => e.boardId && examChoice[e.boardId] === "start").map((e) => EXAM_TRACK[e.boardId!]),
+    ...LANGUAGE_TESTS.filter((id) => selectedLanguages.includes(id)),
+  ])];
 
   const pickUni = (id: string) => {
     const u = findUniversity(id);
@@ -199,12 +176,8 @@ export default function OnboardingPage() {
        الخريج: هدف واحد على الأقل إلزامي (قائمة الأهداف المتعددة). */
     const isSecondary = status === "ثانوي";
     const isUniversity = status === "جامعي";
-    /* الأهداف المحفوظة: الثانوي والخريج قائمتهما المتعددة الصريحة كما اختاراها،
-       الجامعي بلا أهداف قياس. الأساسي (goal) دائماً = goals[0]. */
-    const goalsToSave: StudyGoalType[] = isUniversity ? [] : goals;
-    const effectiveGoal: StudyGoalType | "" = goalsToSave[0] ?? "";
-    /* الأهداف غير حاجزة للثانوي (نواته تكفي)؛ الخريج يلزمه هدف واحد على الأقل */
-    if (!isSecondary && !isUniversity && !goals.length) return;
+    /* الوجهة تقود المنطق (ADR-0001): الخريج يلزمه وجهةٌ واحدة على الأقل. */
+    if (!isSecondary && !isUniversity && !targets.length) return;
     const tracks = finalTracks;
     /* قد لا يكون للطالب أي اختبار (أول ثانوي · خريج ركّز على القبول) — والمدرسة
        قسمٌ مستقل. المسار الأساسي (حقل إلزامي) يبقى «مدرسه» كأساسٍ يومي غير محسوب. */
@@ -245,9 +218,10 @@ export default function OnboardingPage() {
       city:   city.trim()   || undefined,
       phone:  phone.trim()  || undefined,
     };
-    /* التسجيل يبني «ملف الطالب»؛ ومساري (Workspace) يُبنى منه: وحدات Core بالمرحلة
-       (المدرسة للثانوي) + الاختبارات التي اختار الطالب البدء بها صراحةً (opt-in).
-       ensureWorkspace يشتق اللوحة من المرحلة + tracks المختارة (مصدر واحد، لا تكرار). */
+    /* ADR-0001: التسجيل يبني «ملف الطالب» فقط — الوجهة (targets) + النتائج + البيانات
+       الشخصية. لا goal اختبار. track/activeTracks هنا منظورٌ مُشتقّ من recommendedExams
+       (توافق انتقالي مع مساري الحالي فقط، لا مصدر مستقل — يُزالان في مرحلة حذف Track).
+       ensureWorkspace يشتق مساري من المرحلة + المقبول (مصدر واحد). */
     const userData: DarbUser = {
       name: trimmedName,
       track: primaryTrack,
@@ -260,8 +234,6 @@ export default function OnboardingPage() {
       academicTerm: status === "ثانوي" ? term : undefined,
       gradStage: status === "خريج" && gradStage ? gradStage : undefined,
       universityYear: status === "جامعي" && universityYear ? universityYear : undefined,
-      goal: effectiveGoal || undefined,
-      goals: goalsToSave.length ? goalsToSave : undefined,
       targets: targets.length ? targets : undefined,
       gapYear: status === "خريج" ? gapYear === "yes" : undefined,
       studyHours: studyHours ? parseInt(studyHours) : undefined,
@@ -303,7 +275,7 @@ export default function OnboardingPage() {
     }
 
     import("@/lib/firestore").then(({ registerUser }) => { registerUser(trimmedName, primaryTrack, extras); });
-    trackEvent("onboarding_completed", { track: primaryTrack, tracks: tracks.length, goal: effectiveGoal || null, goals: goalsToSave.length, status });
+    trackEvent("onboarding_completed", { track: primaryTrack, tracks: tracks.length, targets: targets.length, status });
     import("@/lib/cloud").then(({ pushBackup }) => { pushBackup().catch(() => {}); });
     await redeemPendingRef().catch(() => 0);
     window.location.assign("/dashboard");
@@ -662,68 +634,24 @@ export default function OnboardingPage() {
   /* ════════ الخطوة 2 — لوحة اختبارات الثانوي / ملخّص الجامعي / هدف الخريج ════════ */
   const isSecondary = status === "ثانوي";
   const isUniversity = status === "جامعي";
-  /* هدف الجامعة/التخصص مختار (ثانوي أو خريج) → نُظهر منتقي الوجهة الجامعية (غير حاجز — اختياري) */
-  const goalsIncludeUni = goals.includes("university") || goals.includes("major");
-  const showsGoalUniPicker = !isUniversity && goalsIncludeUni;
-  const primaryTrack = finalTracks[0];
+  /* اختار وجهة الجامعة → نُظهر منتقي الجامعة/التخصص (اختياري غير حاجز) */
+  const wantsUniDestination = targets.includes("university");
+  const showsGoalUniPicker = !isUniversity && wantsUniDestination;
 
   /* اختبارات اللغة: إضافة/إزالة متعددة بلا أي حد */
   const toggleLanguage = (id: TrackId) => {
     setSelectedLanguages((prev) => prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]);
   };
-
-  /* هدف اختبار لا يُعرَض إلا إذا كان اختباره من مرحلة الطالب (examBoard = مصدر الحقيقة).
-     أول ثانوي لا يرى «الاستعداد للقدرات/التحصيلي/STEP» — ليست مرحلته. الجامعة/التخصص
-     نيّة عليا تُعرَض دائماً. */
-  const examGoalOk = (id: StudyGoalType): boolean => {
-    if (id === "qudurat") return examB.some((e) => e.id === "qudurat");
-    if (id === "tahsili") return examB.some((e) => e.id === "tahsiliEarly" || e.id === "tahsiliRegular");
-    if (id === "step") return boardStage !== null && boardStage !== "first" && boardStage !== "university";
-    return true; // university / major
-  };
-
-  /* قسم الأهداف المتعدد المشترك (الثانوي والخريج) — نية عليا صريحة بلا حد، لا تغيّر
-     الاختبارات. عند اختيار «جامعة/تخصص» يظهر منتقي الوجهة أدناه (غير حاجز). */
-  const goalsSection = (
-    <div>
-      <p className="label mb-1">وش أهدافك؟ <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(تقدر تختار أكثر من واحد)</span></p>
-      <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>
-        نبني خطتك وأولوياتك حولها — والأهداف نية عليا مستقلة لا تغيّر اختباراتك
-      </p>
-      <div className="flex flex-col gap-2.5">
-        {STUDY_GOALS.filter((g) => examGoalOk(g.id)).map((g) => {
-          const on = goals.includes(g.id);
-          /* «تحسين درجة X» إذا أدخل درجةً سابقة لهذا الاختبار، وإلا «الاستعداد» */
-          const prevTitle = GOAL_PREV_EXAM[g.id];
-          const hasScore = !!(prevTitle && prevResults[prevTitle]?.tested && prevResults[prevTitle].score.trim());
-          const label = goalLabelFor(g.id, hasScore) ?? g.label;
-          return (
-            <button key={g.id} onClick={() => setGoals((prev) => prev.includes(g.id) ? prev.filter((x) => x !== g.id) : [...prev, g.id])}
-              aria-pressed={on}
-              className="rounded-2xl px-4 py-3.5 flex items-center gap-3 text-right transition active:scale-[0.98]"
-              style={chipStyle(on)}>
-              <span className="w-5 h-5 rounded-md flex items-center justify-center text-[14px] font-black flex-shrink-0"
-                style={{
-                  background: on ? "var(--accent)" : "var(--surface2)",
-                  border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}`,
-                  color: on ? "#fff" : "transparent",
-                }}>✓</span>
-              <span className="text-[23px]">{g.icon}</span>
-              <span className="font-bold text-[17px] flex-1">{label}</span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
+  /* ملاحظة (ADR-0001): لا «أهداف اختبارات» في التسجيل. الأهداف = وجهات فقط
+     (targetsSection أدناه)، والاختبارات تُشتق منها عبر recommendedExams — لا goal. */
 
   /* أهداف ما بعد الثانوية (متعدّد، غير حاجز) — ثالث ثانوي وخريج الثانوي فقط.
      الطالب يقدّم غالباً على عدّة جهات معاً؛ الرئيسية ترتّب بطاقاته حول اختياره. */
   const targetsSection = (
     <div>
-      <p className="label mb-1">وش أهدافك بعد الثانوية؟ <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(تقدر تختار أكثر من واحد)</span></p>
+      <p className="label mb-1">🎯 وش وجهتك بعد الثانوية؟ <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(تقدر تختار أكثر من واحدة)</span></p>
       <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>
-        نرتّب لك صفحتك الرئيسية حول هذي الجهات — تقدر تعدّلها لاحقاً من ملفك
+        منها نشتقّ اختباراتك المطلوبة ونرتّب خطتك — تقدر تعدّلها لاحقاً من ملفك
       </p>
       <div className="grid grid-cols-2 gap-2.5">
         {ADMISSION_TARGETS.map((t) => {
@@ -750,7 +678,7 @@ export default function OnboardingPage() {
 
   /* شروط الإكمال: ساعات المذاكرة افتراضية (٣) غير حاجزة. الثانوي/الجامعي بلا حاجز
      إضافي (تحقّق الخطوة ١ يكفي)؛ الخريج يلزمه وجهةٌ واحدة على الأقل. */
-  const canFinish = isSecondary || isUniversity ? true : goals.length > 0;
+  const canFinish = isSecondary || isUniversity ? true : targets.length > 0;
 
   /* قسم اختبارات اللغة المشترك (الثانوي والخريج) — متعدد بلا حد، اختياري بالكامل */
   const languageSection = (
@@ -784,6 +712,108 @@ export default function OnboardingPage() {
     </div>
   );
 
+  /* ── نقترح عليك البدء بـ… — من recommendedExams (المصدر الوحيد، ADR-0001).
+     لا شيء يُضاف تلقائياً؛ «ابدأ الآن» فقط يُسجّل القبول. لا if يدوي يقرّر الظهور. ── */
+  const examSuggestionSection = (
+    <div>
+      <p className="label mb-1">نقترح عليك البدء بـ…</p>
+      <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>
+        {recQiyas.length
+          ? "مشتقّةٌ من وجهتك ومرحلتك — أنت من يقرّر ما يبدأ (لا شيء يُضاف تلقائياً)"
+          : targets.length
+            ? "لا اختبارات قبول في مرحلتك الآن — ركّز على أساسك المدرسي"
+            : "اختر وجهتك فوق لنقترح لك اختباراتك المطلوبة"}
+      </p>
+      {recQiyas.length > 0 && (
+        <div className="flex flex-col gap-2.5">
+          {recQiyas.map((e) => {
+            const bid = e.boardId!;
+            const id = EXAM_TRACK[bid];
+            const t = TRACKS.find((tr) => tr.id === id)!;
+            const choice = examChoice[bid];
+            if (choice === "skip") return null;
+            const prevKey = EXAM_PREV_KEY[bid];
+            const r = prevResults[prevKey] ?? { tested: false, score: "" };
+            const range = scoreRangeForTitle(prevKey);
+            const c = "var(--accent)";
+
+            /* بطاقة مُضافة (اختار «ابدأ الآن») — تتحوّل لسؤال الدرجة */
+            if (choice === "start") return (
+              <div key={bid} className="rounded-2xl px-4 py-3 flex flex-col gap-2.5"
+                style={{ background: `color-mix(in srgb, ${c} 8%, var(--surface))`, border: `1.5px solid color-mix(in srgb, ${c} 34%, var(--border))` }}>
+                <div className="flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-md flex items-center justify-center text-[14px] font-black flex-shrink-0"
+                    style={{ background: c, border: `1.5px solid ${c}`, color: "#fff" }}>✓</span>
+                  <span className="font-bold text-[17px] flex-1">{e.label}</span>
+                  <button onClick={() => setExamChoice((m) => { const n = { ...m }; delete n[bid]; return n; })}
+                    className="text-[13px] font-bold px-1" style={{ color: "var(--text-muted)" }}>إزالة ✕</button>
+                </div>
+                <p className="text-[14px] font-bold" style={{ color: "var(--text-dim)" }}>هل سبق أن اختبرته؟</p>
+                <div className="flex gap-2">
+                  <button onClick={() => setPrevResults((p) => ({ ...p, [prevKey]: { ...(p[prevKey] ?? { score: "" }), tested: true } }))}
+                    className="flex-1 py-2 rounded-xl font-bold text-[14px]"
+                    style={r.tested ? { background: c, color: "#fff", border: "none" } : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                    نعم، أدخل درجتي
+                  </button>
+                  <button onClick={() => { setPrevErr(""); setPrevResults((p) => ({ ...p, [prevKey]: { tested: false, score: "" } })); }}
+                    className="flex-1 py-2 rounded-xl font-bold text-[14px]"
+                    style={!r.tested ? { background: "var(--success)", color: "#04240f", border: "none" } : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                    لا، أضفه لخطتي
+                  </button>
+                </div>
+                {r.tested && (
+                  <div>
+                    <input value={r.score} inputMode="decimal"
+                      onChange={(ev) => { setPrevErr(""); setPrevResults((p) => ({ ...p, [prevKey]: { ...(p[prevKey] ?? { tested: true }), score: ev.target.value } })); }}
+                      placeholder="درجتك" maxLength={6}
+                      className="w-full rounded-xl px-3 py-2.5 text-[16px] text-center text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+                      style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
+                    {range && <p className="text-[12px] mt-1 px-1" style={{ color: "var(--text-muted)" }}>الدرجة: {range.hint}</p>}
+                  </div>
+                )}
+              </div>
+            );
+
+            /* بطاقة اقتراح (مبدئية) — ابدأ الآن / ليس الآن */
+            return (
+              <div key={bid} className="rounded-2xl px-4 py-3 flex flex-col gap-2.5"
+                style={{ background: "var(--surface)", border: "1.5px dashed color-mix(in srgb, var(--accent) 34%, var(--border))" }}>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-[17px] flex-1" style={{ color: "var(--text)" }}>{e.label}</span>
+                </div>
+                <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>{t.sub} · <span style={{ color: e.mode ? MODE_COLOR[e.mode] : "var(--text-muted)" }}>{e.hint}</span></p>
+                <div className="flex gap-2">
+                  <button onClick={() => setExamChoice((m) => ({ ...m, [bid]: "start" }))}
+                    className="flex-1 py-2.5 rounded-xl font-bold text-[14px]" style={{ background: "var(--accent)", color: "#fff", border: "none" }}>
+                    ابدأ الآن
+                  </button>
+                  <button onClick={() => setExamChoice((m) => ({ ...m, [bid]: "skip" }))}
+                    className="flex-1 py-2.5 rounded-xl font-bold text-[14px]" style={{ background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                    ليس الآن
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
+  /* المدرسة: قسم مستقل، ليست اختباراً (Core بالمرحلة) */
+  const schoolNoteSection = (
+    <div className="rounded-2xl px-4 py-3.5 flex items-start gap-3"
+      style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
+      <span className="text-[22px] flex-shrink-0">🏫</span>
+      <div>
+        <p className="font-bold text-[16px]" style={{ color: "var(--text)" }}>المدرسة — قسمك اليومي المستقل</p>
+        <p className="text-[14px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+          موادك وواجباتك وجدولك وتقويم الوزارة في «المدرسة» — دائمة معك، وليست اختباراً.
+        </p>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-dvh flex flex-col app-col">
       {header}
@@ -793,106 +823,9 @@ export default function OnboardingPage() {
         {/* ── الثانوي: أهداف صريحة متعددة + نواة ثابتة (مفعّلة تلقائياً) + قسم لغة اختياري ── */}
         {isSecondary ? (
           <>
-            {goalsSection}
-            {grade === "ثالث ثانوي" && targetsSection}
-            {/* ── نقترح عليك البدء بـ… — اقتراحات لا تُفعَّل غصباً. لا يُحفظ اختبار في
-                activeTracks إلا بعد «ابدأ الآن» (الاقتراح ليس تفعيلاً). ── */}
-            <div>
-              <p className="label mb-1">نقترح عليك البدء بـ…</p>
-              <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>
-                {examB.length
-                  ? "حسب مرحلتك وفصلك — أنت من يقرّر ما يبدأ (لا شيء يُضاف تلقائياً)"
-                  : "لا اختبارات قبول في مرحلتك الآن — ركّز على أساسك المدرسي"}
-              </p>
-              {examB.length > 0 && (
-                <div className="flex flex-col gap-2.5">
-                  {examB.map((be) => {
-                    const id = EXAM_TRACK[be.id];
-                    const t = TRACKS.find((tr) => tr.id === id)!;
-                    const choice = examChoice[id];
-                    if (choice === "skip") return null;
-                    const prevKey = EXAM_PREV_KEY[be.id];
-                    const r = prevResults[prevKey] ?? { tested: false, score: "" };
-                    const range = scoreRangeForTitle(prevKey);
-                    const c = "var(--accent)";
-
-                    /* بطاقة مُضافة (اختار «ابدأ الآن») — تتحوّل لسؤال الدرجة */
-                    if (choice === "start") return (
-                      <div key={be.id} className="rounded-2xl px-4 py-3 flex flex-col gap-2.5"
-                        style={{ background: `color-mix(in srgb, ${c} 8%, var(--surface))`, border: `1.5px solid color-mix(in srgb, ${c} 34%, var(--border))` }}>
-                        <div className="flex items-center gap-2">
-                          <span className="w-5 h-5 rounded-md flex items-center justify-center text-[14px] font-black flex-shrink-0"
-                            style={{ background: c, border: `1.5px solid ${c}`, color: "#fff" }}>✓</span>
-                          <span className="font-bold text-[17px] flex-1">{be.label}</span>
-                          <button onClick={() => setExamChoice((m) => { const n = { ...m }; delete n[id]; return n; })}
-                            className="text-[13px] font-bold px-1" style={{ color: "var(--text-muted)" }}>إزالة ✕</button>
-                        </div>
-                        <p className="text-[14px] font-bold" style={{ color: "var(--text-dim)" }}>هل سبق أن اختبرته؟</p>
-                        <div className="flex gap-2">
-                          <button onClick={() => setPrevResults((p) => ({ ...p, [prevKey]: { ...(p[prevKey] ?? { score: "" }), tested: true } }))}
-                            className="flex-1 py-2 rounded-xl font-bold text-[14px]"
-                            style={r.tested ? { background: c, color: "#fff", border: "none" } : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
-                            نعم، أدخل درجتي
-                          </button>
-                          <button onClick={() => { setPrevErr(""); setPrevResults((p) => ({ ...p, [prevKey]: { tested: false, score: "" } })); }}
-                            className="flex-1 py-2 rounded-xl font-bold text-[14px]"
-                            style={!r.tested ? { background: "var(--success)", color: "#04240f", border: "none" } : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
-                            لا، أضفه لخطتي
-                          </button>
-                        </div>
-                        {r.tested && (
-                          <div>
-                            <input value={r.score} inputMode="decimal"
-                              onChange={(e) => { setPrevErr(""); setPrevResults((p) => ({ ...p, [prevKey]: { ...(p[prevKey] ?? { tested: true }), score: e.target.value } })); }}
-                              placeholder="درجتك" maxLength={6}
-                              className="w-full rounded-xl px-3 py-2.5 text-[16px] text-center text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
-                              style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
-                            {range && <p className="text-[12px] mt-1 px-1" style={{ color: "var(--text-muted)" }}>الدرجة: {range.hint}</p>}
-                          </div>
-                        )}
-                      </div>
-                    );
-
-                    /* بطاقة اقتراح (مبدئية) — ابدأ الآن / ليس الآن */
-                    return (
-                      <div key={be.id} className="rounded-2xl px-4 py-3 flex flex-col gap-2.5"
-                        style={{ background: "var(--surface)", border: "1.5px dashed color-mix(in srgb, var(--accent) 34%, var(--border))" }}>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-[17px] flex-1" style={{ color: "var(--text)" }}>{be.label}</span>
-                          {eligibility.find((x) => x.id === id)?.important && (
-                            <span className="text-[12px] font-black px-2 py-0.5 rounded-full flex-shrink-0"
-                              style={{ background: "color-mix(in srgb, var(--gold) 16%, transparent)", color: "var(--gold)" }}>⭐ مهم لمرحلتك</span>
-                          )}
-                        </div>
-                        <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>{t.sub} · <span style={{ color: MODE_COLOR[be.mode] }}>{be.hint}</span></p>
-                        <div className="flex gap-2">
-                          <button onClick={() => setExamChoice((m) => ({ ...m, [id]: "start" }))}
-                            className="flex-1 py-2.5 rounded-xl font-bold text-[14px]" style={{ background: "var(--accent)", color: "#fff", border: "none" }}>
-                            ابدأ الآن
-                          </button>
-                          <button onClick={() => setExamChoice((m) => ({ ...m, [id]: "skip" }))}
-                            className="flex-1 py-2.5 rounded-xl font-bold text-[14px]" style={{ background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
-                            ليس الآن
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* ── المدرسة: قسم مستقل، ليست اختباراً ── */}
-            <div className="rounded-2xl px-4 py-3.5 flex items-start gap-3"
-              style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
-              <span className="text-[22px] flex-shrink-0">🏫</span>
-              <div>
-                <p className="font-bold text-[16px]" style={{ color: "var(--text)" }}>المدرسة — قسمك اليومي المستقل</p>
-                <p className="text-[14px] mt-0.5" style={{ color: "var(--text-muted)" }}>
-                  موادك وواجباتك وجدولك وتقويم الوزارة في «المدرسة» — دائمة معك، وليست اختباراً.
-                </p>
-              </div>
-            </div>
+            {targetsSection}
+            {examSuggestionSection}
+            {schoolNoteSection}
             {languageSection}
           </>
         ) : isUniversity ? (
@@ -916,8 +849,12 @@ export default function OnboardingPage() {
           </div>
         ) : (
           <>
-            {goalsSection}
-            {gradStage === "خريج ثانوي" && targetsSection}
+            {gradStage === "خريج ثانوي" && (
+              <>
+                {targetsSection}
+                {examSuggestionSection}
+              </>
+            )}
             {languageSection}
           </>
         )}
@@ -930,8 +867,8 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* الثانوي بلا هدف جامعة/تخصص: وجهة جامعية اختيارية مطوية — لا تُكرَّر مع منتقي الهدف أعلاه */}
-        {isSecondary && !goalsIncludeUni && (
+        {/* الثانوي بلا وجهة جامعة: وجهة جامعية اختيارية مطوية — لا تُكرَّر مع منتقي الوجهة أعلاه */}
+        {isSecondary && !wantsUniDestination && (
           uniOpen ? (
             <div className="rounded-2xl p-4" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
               <div className="flex items-center gap-2 mb-3">
@@ -958,27 +895,8 @@ export default function OnboardingPage() {
           )
         )}
 
-        {/* الاختبارات المُفعّلة تلقائياً — شفافية (الخريج) */}
-        {!isSecondary && !isUniversity && goals.length > 0 && computedTracks.length > 0 && (
-          <div>
-            <p className="label mb-2.5">فعّلنا لك هذه الاختبارات</p>
-            <div className="flex flex-wrap gap-2">
-              {computedTracks.map((id) => {
-                const t = TRACKS.find((tr) => tr.id === id)!;
-                return (
-                  <span key={id} className="px-3 py-2 rounded-full text-[15px] font-black flex items-center gap-1.5"
-                    style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)", border: "1.5px solid color-mix(in srgb, var(--accent) 28%, transparent)" }}>
-                    <span className="w-2 h-2 rounded-full" style={{ background: t.color }} />
-                    {t.title}
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         {/* موعد الاختبار القادم (اختياري) */}
-        {(isSecondary ? finalTracks.length > 0 : (goals.length > 0 && primaryTrack)) && (
+        {finalTracks.length > 0 && (
           <div>
             <p className="label mb-3">📅 موعد اختبارك القادم؟ <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
             <input type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)}
