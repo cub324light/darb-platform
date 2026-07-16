@@ -5,3 +5,4 @@ export * from "./types";
 export * from "./registry";
 export * from "./workspace";
 export * from "./eligibility";
+export * from "./descriptor";
