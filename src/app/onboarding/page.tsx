@@ -105,8 +105,6 @@ export default function OnboardingPage() {
   const [targets, setTargets] = useState<string[]>([]);
   /* ── اختبارات اللغة الإضافية (متعدد بلا حد) — للثانوي والخريج ── */
   const [selectedLanguages, setSelectedLanguages] = useState<TrackId[]>([]);
-  const [seedGrade, setSeedGrade] = useState("");   // آخر صف ضُبط له فتح «الوجهة الجامعية» — لا نعيد ضبطه عند الرجوع بلا تغيير
-  const [uniOpen, setUniOpen] = useState(false);    // «عندك وجهة جامعية؟» — بارز لثالث، مطوي لغيره
   const [studyHours, setStudyHours] = useState("3"); // قيمة افتراضية — يعدّلها لاحقاً، لا تحجب الإكمال
 
   const today = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; })();
@@ -522,16 +520,7 @@ export default function OnboardingPage() {
             </>
           )}
 
-          <button className="btn-primary glow-blue" onClick={() => {
-            if (!canProceed) return;
-            /* الثانوي: افتح «الوجهة الجامعية» تلقائياً لثالث ثانوي مرة لكل صف — لا نعيد ضبطه عند الرجوع بلا تغيير.
-               النواة ثابتة ومفعّلة تلقائياً فلا حاجة لبذر اختيارات (فقط اختبارات اللغة اختيارية). */
-            if (status === "ثانوي" && grade !== seedGrade) {
-              setUniOpen(grade === "ثالث ثانوي");
-              setSeedGrade(grade);
-            }
-            setStep(2);
-          }}
+          <button className="btn-primary glow-blue" onClick={() => { if (canProceed) setStep(2); }}
             disabled={!canProceed} style={{ opacity: canProceed ? 1 : 0.4 }}>
             التالي ←
           </button>
@@ -545,10 +534,6 @@ export default function OnboardingPage() {
   /* ════════ الخطوة 2 — لوحة اختبارات الثانوي / ملخّص الجامعي / هدف الخريج ════════ */
   const isSecondary = status === "ثانوي";
   const isUniversity = status === "جامعي";
-  /* اختار وجهة الجامعة → نُظهر منتقي الجامعة/التخصص (اختياري غير حاجز) */
-  const wantsUniDestination = targets.includes("university");
-  const showsGoalUniPicker = !isUniversity && wantsUniDestination;
-
   /* اختبارات اللغة: إضافة/إزالة متعددة بلا أي حد */
   const toggleLanguage = (id: TrackId) => {
     setSelectedLanguages((prev) => prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]);
@@ -820,41 +805,8 @@ export default function OnboardingPage() {
           </>
         )}
 
-        {/* منتقي الوجهة الجامعية عند اختيار هدف الجامعة/التخصص (الثانوي والخريج) — اختياري غير حاجز */}
-        {showsGoalUniPicker && (
-          <div className="rounded-2xl p-4" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-            <p className="label mb-3">وجهتك الجامعية <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
-            {uniMajorPicker}
-          </div>
-        )}
-
-        {/* الثانوي بلا وجهة جامعة: وجهة جامعية اختيارية مطوية — لا تُكرَّر مع منتقي الوجهة أعلاه */}
-        {isSecondary && !wantsUniDestination && (
-          uniOpen ? (
-            <div className="rounded-2xl p-4" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-              <div className="flex items-center gap-2 mb-3">
-                <p className="label flex-1">عندك وجهة جامعية؟ <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
-                <button onClick={() => setUniOpen(false)} className="text-[15px] font-bold px-1" style={{ color: "var(--text-muted)" }}>إخفاء ▴</button>
-              </div>
-              {grade === "ثالث ثانوي" && (
-                <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>
-                  سنة القبول — تحديد وجهتك يخلينا نحسب موزونتك ونرسم طريقك لها
-                </p>
-              )}
-              {uniMajorPicker}
-            </div>
-          ) : (
-            <button onClick={() => setUniOpen(true)}
-              className="rounded-2xl px-4 py-3.5 w-full flex items-center gap-2 text-right transition active:scale-[0.98]"
-              style={inputStyle}>
-              <span className="text-[18px]">🏛️</span>
-              <span className="font-bold text-[16px] flex-1" style={{ color: "var(--text)" }}>
-                عندك وجهة جامعية؟ <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span>
-              </span>
-              <span className="text-[15px] font-bold" style={{ color: "var(--text-muted)" }}>▾</span>
-            </button>
-          )
-        )}
+        {/* منتقي الجامعة/التخصص المستهدف أُخرج من التسجيل (ADR-0001 §3): الوجهة العامة تكفي،
+           والتفصيل (أي جامعة/تخصص/ترتيب الرغبات) ينتقل إلى «خطتي» عند تخطيط القبول. */}
 
         {/* ساعات المذاكرة (إلزامي — يقود حساب الخطة والجدول) */}
         <div>
