@@ -4,7 +4,7 @@
    قابل للتفسير: قواعد مُطلَقة بأوزان + ثقة + أسباب. لا قرار بلا تفسير. */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { lifeEngine, lifeScore, projectTimeline, RULES, type LifeContext, type Priority } from "./lifeEngine";
+import { lifeEngine, lifeScore, projectTimeline, RULES, duwairbState, type LifeContext, type Priority } from "./lifeEngine";
 
 function ctx(o: Partial<LifeContext> = {}): LifeContext {
   return {
@@ -185,4 +185,13 @@ test("كل الحالات تُنتج أولويات مرتّبة كاملة ال
   ]) {
     assertRanked(lifeEngine(c));
   }
+});
+
+test("duwairbState: عقدٌ مقطّرٌ جاهز للذكاء (Profile→recommendedExams→Life Engine→Duwairb)", () => {
+  const s = duwairbState();
+  assert.equal(typeof s.stage, "string");
+  assert.ok(Array.isArray(s.recommendedExams), "recommendedExams قائمة");
+  assert.ok(Array.isArray(s.retakeIntent), "retakeIntent قائمة");
+  assert.ok(s.currentPriority === null || typeof s.currentPriority.title === "string");
+  assert.ok(s.focus === null || typeof s.focus === "string");
 });

@@ -491,3 +491,26 @@ export function readLifeContext(now: Date = new Date()): LifeContext {
     hwPending: hw.pending,
   };
 }
+
+/* ─── حالة دويرب المقطّرة (ADR-0001 §6) — العقل يسلّم القرار جاهزاً للذكاء ───
+   الترتيب الملزِم: Profile → recommendedExams → Life Engine → Duwairb. الذكاء
+   يستقبل هذه الحالة فقط ولا يفسّر الملف: لا «هل ثالث؟ هل وجهته جامعة؟» — بل يشرح
+   قرار Life Engine. تستهلكها buildDuwairbProfile (وأي مستهلكٍ للحالة الجاهزة). */
+export interface DuwairbState {
+  stage: Stage;
+  currentPriority: { key: PriorityKey; area: PriorityArea; title: string; why: string } | null;
+  recommendedExams: RecommendedExam[];
+  focus: string | null;
+  retakeIntent: string[];
+}
+export function duwairbState(now: Date = new Date()): DuwairbState {
+  const ctx = readLifeContext(now);
+  const top = lifeEngine(ctx)[0] ?? null;
+  return {
+    stage: ctx.stage,
+    currentPriority: top ? { key: top.key, area: top.area, title: top.title, why: top.why } : null,
+    recommendedExams: ctx.recommendedExams,
+    focus: ctx.focus,
+    retakeIntent: ctx.retakeExams,
+  };
+}
