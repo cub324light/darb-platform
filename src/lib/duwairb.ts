@@ -12,8 +12,9 @@ import {
 import { loadSkillProgress, overallStats } from "./skillProgress";
 import { skillsForTracks, SKILL_BY_ID } from "./globalSkills";
 import { estimateReadiness, daysUntil } from "./insights";
-import { getTrack, goalLabel, type TrackId, type StudyGoalType } from "./tracks";
+import { getTrack, type TrackId, type StudyGoalType } from "./tracks";
 import { findMajor, requirementsText } from "./university";
+import { duwairbState } from "./lifeEngine";
 
 /* ── القدرات الخمس الأساسية + المواضيع ── */
 export type DuwairbTab = "schedule" | "progress" | "quiz" | "explain" | "file" | "topics";
@@ -40,11 +41,17 @@ export interface DuwairbProfile {
   attemptCount?: number;                  // مجموع المحاولات السابقة (خبرة)
   trackType?: string;                     // نوع المسار الجامعي: صحي/هندسي/حاسب/إداري/عام
   majorRequirements?: string;             // متطلبات التخصص المستهدف الإرشادية (نص)
-  goal?: string;                          // الهدف الحالي المختار في التسجيل (نص الهدف)
-  goalType?: StudyGoalType;               // معرّف الهدف (qudurat/tahsili/university/major…) — للمسار الذهبي
+  /* ── الحالة الجاهزة المقطّرة من Life Engine (ADR-0001 §6) —
+     الترتيب الملزِم: Profile → recommendedExams → Life Engine → Duwairb.
+     الذكاء يشرح هذا القرار ولا يعيد اشتقاق مرحلة الطالب أو وجهته. ── */
+  currentPriority?: { title: string; why: string }; // أولوية Life Engine الحالية (القرار المعتمد)
+  focus?: string;                         // تركيز الطالب الأول (تسمية عربية) — ADR §2.6
+  retakeIntent?: string[];                // اختبارات اختار إعادتها (من Life Engine، لا من u.gapYear)
+  stage?: string;                         // المرحلة الجاهزة (first/second/third/university/graduate)
+  goalType?: StudyGoalType;               // توافق مؤقّت: يقرأه «المسار الذهبي» فقط (يُزال معه)
   eduStatus?: string;                     // الحالة التعليمية: ثانوي/جامعي/خريج
   universityYear?: string;                // السنة الدراسية (للجامعي)
-  gapYear?: boolean;                      // خريج بسنة استدراك (لإعادة قياس) — للمسار الذهبي
+  gapYear?: boolean;                      // توافق مؤقّت: يقرأه «المسار الذهبي» فقط (يُزال معه)
   highschoolPct?: number;                 // نسبة الثانوية العامة — لمتطلبات القبول
   /* ── حقول الجامعي (Phase Engine) — لا تُرسَل للثانوي ── */
   universityGpa?: number;                 // المعدل الجامعي من 5
@@ -75,6 +82,12 @@ function targetForTrack(id: TrackId, goals: DarbGoals): number | undefined {
   }
 }
 
+/* تسمية التركيز الأول (ADR §2.6) — تطابق خيارات التسجيل حرفياً */
+const FOCUS_LABEL: Record<string, string> = {
+  qudurat: "تحسين القدرات", tahsili: "تحسين التحصيلي", english: "اللغة الإنجليزية",
+  university: "القبول الجامعي", programs: "البرامج",
+};
+
 /* رقم عربي للعرض في الواجهة */
 const ar = (n: number) => n.toLocaleString("ar");
 
@@ -86,6 +99,11 @@ export function buildDuwairbProfile(): { profile: DuwairbProfile; goalLine: stri
   const stats = loadStats();
   const prefs = loadPrefs();
   const goals = loadGoals();
+  /* الحالة الجاهزة المقطّرة من العقل — Profile → recommendedExams → Life Engine → Duwairb.
+     دويرب لا يفسّر مرحلة الطالب/وجهته؛ يستقبلها مقرّرةً ويشرحها فقط. */
+  const state = duwairbState();
+  /* توافق مؤقّت: قائمة الاختبارات (اسم/هدف/أيام) ما زالت تُبنى من activeTracks —
+     وهي View مادّي مشتقّ من recommendedExams عند التسجيل. تُصنَّف دَيناً تقنياً في التقرير. */
   const ids = (u.activeTracks?.length ? u.activeTracks : (u.track ? [u.track] : [])) as TrackId[];
   const trackDates = loadTrackExamDates();
 
@@ -140,8 +158,14 @@ export function buildDuwairbProfile(): { profile: DuwairbProfile; goalLine: stri
     attemptCount,
     trackType: u.trackType || undefined,
     majorRequirements,
-    goal: goalLabel(u.goal) || undefined,
-    goalType: u.goal || undefined,
+    /* الحالة الجاهزة من Life Engine (يشرحها الذكاء، لا يعيد قرارها) */
+    currentPriority: state.currentPriority
+      ? { title: state.currentPriority.title, why: state.currentPriority.why }
+      : undefined,
+    focus: state.focus ? (FOCUS_LABEL[state.focus] ?? state.focus) : undefined,
+    retakeIntent: state.retakeIntent.length ? state.retakeIntent : undefined,
+    stage: state.stage,
+    goalType: u.goal || undefined, // توافق مؤقّت: يقرأه «المسار الذهبي» فقط
     eduStatus: u.studyLevel || undefined,
     universityYear: u.universityYear || undefined,
     gapYear: u.gapYear || undefined,
@@ -161,7 +185,7 @@ export function buildDuwairbProfile(): { profile: DuwairbProfile; goalLine: stri
     profile.university || profile.major || profile.studyHours ||
     profile.preferredTime || profile.learningStyles || profile.strongest ||
     profile.trackType || profile.currentScores || profile.majorRequirements ||
-    profile.goal || profile.eduStatus,
+    profile.currentPriority || profile.focus || profile.eduStatus,
   );
 
   return { profile, goalLine, personalized };
@@ -191,6 +215,11 @@ export function formatProfileBlock(p: DuwairbProfile): string {
 
   if (p.name) lines.push(`- الاسم: ${p.name}`);
   if (p.eduStatus) lines.push(`- الحالة التعليمية: ${p.eduStatus}${p.universityYear ? ` (السنة ${p.universityYear})` : ""}`);
+
+  /* أولوية Life Engine — القرار المعتمد الذي يشرحه الذكاء (لا يعيد اشتقاقه). مشتركة للمرحلتين. */
+  if (p.currentPriority) {
+    lines.push(`- أولوية الطالب الآن (قرار Life Engine المعتمد — اشرحها وابنِ عليها، لا تُعِد تحليل مرحلته من الصفر): ${p.currentPriority.title}${p.currentPriority.why ? ` — ${p.currentPriority.why}` : ""}`);
+  }
 
   if (isUni) {
     /* ── الجامعي: عالم المعدل / التدريب / المشاريع / سوق العمل ── */
@@ -223,7 +252,8 @@ ${lines.join("\n")}
   }
 
   /* ── الثانوي والخريج: عالم القياس والمدرسة والقبول ── */
-  if (p.goal) lines.push(`- هدفه الحالي: ${p.goal} (وجّه كل توصياتك لخدمة هذا الهدف مباشرةً)`);
+  if (p.focus) lines.push(`- تركيزه الأول المختار: ${p.focus} (رتّب توصيتك حوله دون تغيير وجهته)`);
+  if (p.retakeIntent?.length) lines.push(`- اختار إعادة: ${p.retakeIntent.join("، ")} — ارفع أولوية الاستعداد لها`);
 
   if (p.exams?.length) {
     const exStr = p.exams.map((e) => {
@@ -261,10 +291,10 @@ ${lines.join("\n")}
   }
 
   if (!lines.length) return "";
-  return `معلومات الطالب (استخدمها لتخصيص ردّك ضمنياً؛ واربط اقتراحك بهدفه عند المناسبة، مثل «بما أن هدفك ... فإن ...»):
+  return `معلومات الطالب (استخدمها لتخصيص ردّك ضمنياً؛ اربط اقتراحك بأولويته الحالية أعلاه، مثل «بما أن أولويتك الآن ... فإن ...»):
 ${lines.join("\n")}
 
-مهم: لا تعرض هذه المعلومات كقائمة للطالب ولا تكررها حرفياً؛ وظّفها داخل صياغة ردّك فقط ليبدو مفصّلاً له شخصياً.`;
+مهم: أولوية Life Engine أعلاه هي القرار المعتمد — اشرحها وابنِ عليها ولا تُعِد استنتاج مرحلته أو وجهته. لا تعرض هذه المعلومات كقائمة للطالب ولا تكررها حرفياً؛ وظّفها داخل صياغة ردّك فقط.`;
 }
 
 /* ── التبويب المقترح حسب الصفحة (وعي بالسياق) ── */

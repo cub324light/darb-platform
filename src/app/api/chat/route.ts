@@ -243,6 +243,15 @@ function sanitizeProfile(raw: unknown): DuwairbProfile | null {
     if (Object.keys(cs).length) currentScores = cs;
   }
 
+  /* الحالة الجاهزة المقطّرة من Life Engine (ADR-0001 §6) — allow-list صارم */
+  const cpRaw = r.currentPriority && typeof r.currentPriority === "object" && !Array.isArray(r.currentPriority)
+    ? (r.currentPriority as Record<string, unknown>) : null;
+  const cpTitle = cpRaw ? cleanStr(cpRaw.title, 80) : undefined;
+  const currentPriority = cpTitle ? { title: cpTitle, why: cleanStr(cpRaw!.why, 160) ?? "" } : undefined;
+  const retakeIntent = Array.isArray(r.retakeIntent)
+    ? (r.retakeIntent as unknown[]).map((s) => cleanStr(s, 24)).filter((s): s is string => !!s).slice(0, 5)
+    : undefined;
+
   const p: DuwairbProfile = {
     name: cleanStr(r.name, 24),
     exams: exams.length ? exams : undefined,
@@ -262,7 +271,10 @@ function sanitizeProfile(raw: unknown): DuwairbProfile | null {
     attemptCount: cleanNum(r.attemptCount, 0, 50),
     trackType: cleanStr(r.trackType, 20),
     majorRequirements: cleanStr(r.majorRequirements, 120),
-    goal: cleanStr(r.goal, 40),
+    currentPriority,
+    focus: cleanStr(r.focus, 24),
+    retakeIntent: retakeIntent?.length ? retakeIntent : undefined,
+    stage: cleanStr(r.stage, 16),
     goalType: GOAL_TYPES.has(r.goalType as string) ? (r.goalType as StudyGoalType) : undefined,
     eduStatus: cleanStr(r.eduStatus, 12),
     universityYear: cleanStr(r.universityYear, 12),
