@@ -24,6 +24,7 @@ const BASE: LifeContext = {
   highschoolPct: null, inSchoolFinals: false, daysToSchoolFinals: null, qiyas: null,
   uniFinalsInDays: null, termLabel: "الفصل الثالث", inStudyTerm: true,
   hwOverdue: 0, hwDueToday: 0, hwPending: 0, retakeExams: [], admissionOpen: false,
+  recommendedExams: [], focus: null,
 };
 const PRESETS: { label: string; patch: Partial<LifeContext> }[] = [
   { label: "جامعي متعثّر", patch: { stage: "university", uniStage: "senior", gpa: 2.31 } },

@@ -8,14 +8,7 @@
    (computeStudentPhase/isUniversityPhase). أي تغيير في القواعد يبقى في مصدره. */
 import type { DarbUser } from "./storage";
 import { computeStudentPhase, isUniversityPhase, isUniversityGraduate, type StudentPhase } from "./phase";
-import {
-  canTakeQudurat,
-  canTakeTahsili,
-  canTakeEarlyTahsili,
-  canTakeStep,
-  canApplyUniversity,
-  stageOf,
-} from "./darbKnowledge";
+import { canApplyUniversity, stageOf } from "./darbKnowledge";
 
 /* مرحلة الطالب الدقيقة: صفوف الثانوي الثلاثة + جامعي + خريج */
 export type Stage = "first" | "second" | "third" | "university" | "graduate";
@@ -24,11 +17,6 @@ export interface PhaseExperience {
   stage: Stage;
   stageLabel: string;                 // التسمية العربية للمرحلة (من الصف + المرحلة)
   phase: StudentPhase;                 // secondary | university | graduate (من phase.ts)
-  /* ما تراه هذه المرحلة من عالم القياس — مشتقّة من أهلية darbKnowledge */
-  showsQudurat: boolean;
-  showsTahsili: boolean;
-  showsEarlyTahsili: boolean;
-  showsStep: boolean;
   /* القبول: أول/ثاني ثانوي → استكشاف تعريفي · ثالث/خريج → مفاضلة وتقديم · جامعي → مخفي */
   admission: "hidden" | "explore" | "full";
   showsUniLife: boolean;              // الجامعي فقط: جدول/معدل/مواد/مهنة
@@ -93,10 +81,6 @@ export function phaseExperience(u?: DarbUser | null): PhaseExperience {
     stage,
     stageLabel: STAGE_LABEL[stage],
     phase,
-    showsQudurat: canTakeQudurat(u),
-    showsTahsili: canTakeTahsili(u),
-    showsEarlyTahsili: canTakeEarlyTahsili(u),
-    showsStep: canTakeStep(u),
     admission,
     showsUniLife: phase === "university",
     navMid,

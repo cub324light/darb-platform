@@ -21,6 +21,7 @@ import { hasMajorWorld } from "./majors";
 import { loadUser, loadGoals, loadTrackExamDates, loadCalendarConfig, localDayKey } from "./storage";
 import { loadHomework, homeworkPressure } from "./homework";
 import { achievableRetakes } from "./retake";
+import { recommendedExamsForUser, type RecommendedExam } from "./recommendedExams";
 
 /* ── سياق الطالب الكامل — يُجمَّع مرّة من كل الأنظمة القائمة ── */
 export interface LifeContext {
@@ -49,6 +50,11 @@ export interface LifeContext {
   retakeExams: string[];
   /* هل عالم القبول/القياس مفتوح لهذا الطالب؟ (false: جامعي/خريج جامعة → لا قبول) */
   admissionOpen: boolean;
+  /* الطبقة الأولى (Domain, ADR-0001): الاختبارات المطلوبة المشتقّة من الوجهة —
+     المصدر الوحيد؛ لا تشتقّ أي شاشة/قاعدة اختباراتها بنفسها. */
+  recommendedExams: RecommendedExam[];
+  /* التركيز الأول (ADR-0001 §2.6) — يبني الخطة الأولى، لا يغيّر الوجهة. */
+  focus: string | null;
 }
 
 export type PriorityKey =
@@ -440,8 +446,10 @@ export function readLifeContext(now: Date = new Date()): LifeContext {
     config: loadCalendarConfig<CalendarConfig>(),
   });
 
+  /* الطبقة الأولى (Domain) — المصدر الوحيد لِما يخصّ الطالب من اختبارات (من الوجهة). */
+  const recExams = recommendedExamsForUser(user, localDayKey(now));
   const seesExam = (k: NextExamInfo["kind"]) =>
-    k === "qudurat" ? exp.showsQudurat : k === "tahsili" ? exp.showsTahsili : k === "step" ? exp.showsStep : false;
+    k === "step" ? recExams.some((r) => r.kind === "language") : recExams.some((r) => r.kind === k);
   const e = cal.nextExam;
   const qiyas = e && e.daysUntil >= 0 && seesExam(e.kind)
     ? { kind: e.kind as "qudurat" | "tahsili" | "step", label: e.label, days: e.daysUntil, weeks: e.weeksUntil, approximate: e.approximate }
@@ -476,6 +484,8 @@ export function readLifeContext(now: Date = new Date()): LifeContext {
     inStudyTerm: cal.inStudyTerm,
     retakeExams,
     admissionOpen,
+    recommendedExams: recExams,
+    focus: user?.focus ?? null,
     hwOverdue: hw.overdue,
     hwDueToday: hw.dueToday,
     hwPending: hw.pending,

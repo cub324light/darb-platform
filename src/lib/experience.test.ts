@@ -14,10 +14,6 @@ test("أول ثانوي: المدرسة فقط، لا قدرات ولا تحصي
   assert.equal(e.stage, "first");
   assert.equal(e.stageLabel, "أول ثانوي");
   assert.equal(e.phase, "secondary");
-  assert.equal(e.showsQudurat, false); // القدرات تبدأ من ثاني ثانوي
-  assert.equal(e.showsTahsili, false);
-  assert.equal(e.showsEarlyTahsili, false);
-  assert.equal(e.showsStep, true);
   assert.equal(e.admission, "explore");
   assert.equal(e.showsUniLife, false);
   assert.equal(e.navMid, "roadmap");
@@ -28,9 +24,6 @@ test("أول ثانوي: المدرسة فقط، لا قدرات ولا تحصي
 test("ثاني ثانوي: المبكر يظهر، التحصيلي العادي لا، القبول استكشافي", () => {
   const e = phaseExperience(mk({ studyLevel: "ثانوي", grade: "ثاني ثانوي" }));
   assert.equal(e.stage, "second");
-  assert.equal(e.showsQudurat, true);
-  assert.equal(e.showsEarlyTahsili, true);
-  assert.equal(e.showsTahsili, false);
   assert.equal(e.admission, "explore");
   assert.equal(e.navMid, "roadmap");
   assert.equal(e.showsUniLife, false);
@@ -40,8 +33,6 @@ test("ثاني ثانوي: المبكر يظهر، التحصيلي العادي
 test("ثالث ثانوي: التحصيلي يظهر، القبول كامل، التنقل قبول", () => {
   const e = phaseExperience(mk({ studyLevel: "ثانوي", grade: "ثالث ثانوي" }));
   assert.equal(e.stage, "third");
-  assert.equal(e.showsQudurat, true);
-  assert.equal(e.showsTahsili, true);
   assert.equal(e.admission, "full");
   assert.equal(e.navMid, "admission");
   assert.equal(e.showsUniLife, false);
@@ -53,10 +44,6 @@ test("جامعي: لا قدرات ولا تحصيلي ولا STEP، القبول
   assert.equal(e.stage, "university");
   assert.equal(e.stageLabel, "طالب جامعي");
   assert.equal(e.phase, "university");
-  assert.equal(e.showsQudurat, false);
-  assert.equal(e.showsTahsili, false);
-  assert.equal(e.showsEarlyTahsili, false);
-  assert.equal(e.showsStep, false);
   assert.equal(e.admission, "hidden");
   assert.equal(e.showsUniLife, true);
   assert.equal(e.navMid, "uni-tools");
@@ -69,10 +56,6 @@ test("خريج مع استدراك: القياس يظهر، القبول كام�
   const e = phaseExperience(mk({ studyLevel: "خريج", gapYear: true }));
   assert.equal(e.stage, "graduate");
   assert.equal(e.phase, "graduate");
-  assert.equal(e.showsQudurat, true);
-  assert.equal(e.showsTahsili, true);
-  assert.equal(e.showsEarlyTahsili, false);
-  assert.equal(e.showsStep, true);
   assert.equal(e.admission, "full");
   assert.equal(e.navMid, "admission");
   assert.equal(e.showsUniLife, false);
@@ -92,7 +75,6 @@ test("مستخدم فارغ/بلا صف: يُعامَل كأول ثانوي (ا�
   assert.equal(empty.stage, "first");
   assert.equal(empty.phase, "secondary");
   assert.equal(empty.admission, "explore");
-  assert.equal(empty.showsTahsili, false);
 
   const noGrade = phaseExperience(mk({ studyLevel: "ثانوي" }));
   assert.equal(noGrade.stage, "first");
