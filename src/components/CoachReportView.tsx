@@ -25,7 +25,6 @@ export default function CoachReportView() {
     const score = computeDuwairbScore(stats, readinessPct);
 
     /* أسبوع سابق للمقارنة */
-    const prevStreak = 0; // لا نخزّن التاريخي — نعرض الحالي فقط
 
     /* ساعات هذا الأسبوع */
     const weekHours = Math.round((weekly.mins / 60) * 10) / 10;

@@ -17,7 +17,6 @@ export const runtime = "nodejs";
 /* ثوابت توقيت المباراة (تطابق العميل) */
 const PER_QUESTION_MS = 18_000;          // 15s إجابة + هامش
 const PLAY_BUFFER_MS = 10_000;           // مهلة سماح بعد آخر سؤال
-const MATCH_TTL_MS = 10 * 60_000;        // مباراة أقدم من هذا تُهمَل
 
 const KNOWN_TRACKS = new Set<string>([
   "قدرات", "تحصيلي", "تحصيلي مبكر", "CPC", "ITC", "ايلتس", "ستيب", "توفل", "دوليقو", "مدرسه",

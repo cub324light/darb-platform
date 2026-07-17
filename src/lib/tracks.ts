@@ -277,12 +277,6 @@ export function goalLabelFor(id?: StudyGoalType, hasScore = false): string | und
   return hasScore ? (IMPROVE_LABEL[id] ?? goalLabel(id)) : goalLabel(id);
 }
 
-/* الهدف الأساسي من قائمة أهداف متعددة — أول عنصر (SSoT للتوافق مع كل المستهلكين
-   القائمين الذين يقرؤون goal مفرداً: goldenPath/duwairb/goalReality). */
-export function primaryGoal(goals?: StudyGoalType[]): StudyGoalType | undefined {
-  return goals && goals.length ? goals[0] : undefined;
-}
-
 /* ─── اختبارات اللغة: قسم إضافي اختياري متعدد بلا حد في تسجيل الثانوي/الخريج ───
    كلها بلا تقييد صفّي (available في trackEligibilityFor) وبلا أي حدّ عددي —
    للطالب أن يضيف أكثر من واحد بنفس الوقت. */
@@ -313,62 +307,6 @@ export function secondaryActiveTracks(
   const school: TrackId[] = core.includes("مدرسه") ? ["مدرسه"] : [];
   return [...new Set([...head, ...langs, ...school])];
 }
-
-/* يحدّد المسارات النشطة تلقائياً من الحالة التعليمية + الصف + الهدف.
-   نقيّة وحتمية — تُستعمل في التسجيل وعند تغيير الهدف لاحقاً. */
-export function basicTracksFor(opts: { status?: string; grade?: string; goal?: StudyGoalType; gapYear?: boolean }): TrackId[] {
-  /* التحصيلي المبكر لثاني ثانوي فقط — ثالث ثانوي على التحصيلي العادي، وأول ثانوي بلا تحصيلي إطلاقاً */
-  const early = opts.grade === "ثاني ثانوي";
-  const tahsiliTrack: TrackId = early ? "تحصيلي مبكر" : "تحصيلي";
-
-  const primary: TrackId | null =
-    opts.goal === "qudurat" ? "قدرات" :
-    opts.goal === "tahsili" ? tahsiliTrack :
-    opts.goal === "step"    ? "ستيب" : null;
-
-  const dedupe = (arr: TrackId[]) => [...new Set(arr)];
-
-  /* المدرسة ليست اختباراً — لا تدخل قائمة الاختبارات (activeTracks) ولا عدّادها.
-     من لا اختبار قياس له (جامعي · أول ثانوي · خريج مركّز على القبول) → قائمة فارغة،
-     والمدرسة قسمٌ مستقل دائم. */
-
-  /* الجامعي: خرج من عالم القياس/القبول — لا اختبارات قياس إطلاقاً. */
-  if (opts.status === "جامعي") {
-    return [];
-  }
-
-  /* لما يختار جامعة أو تخصص: التركيز على القبول لا إعادة الاختبارات */
-  const isUniGoal = opts.goal === "university" || opts.goal === "major";
-
-  /* الخريج: أنهى القدرات/التحصيلي — لا نعيد تفعيل التحضير إلا باختيار سنة استدراك
-     (gapYear). بدون استدراك: فقط المسار الذي يخدم هدفه إن كان رفع درجة، وإلا لا شيء
-     (اختار «ركّز على القبول» فلا نفرض عليه قدرات). */
-  if (opts.status === "خريج") {
-    if (opts.gapYear) {
-      const core: TrackId[] = ["قدرات", "تحصيلي"];
-      if (opts.goal === "step") core.unshift("ستيب");
-      const ordered = primary ? [primary, ...core] : core;
-      return dedupe(ordered);
-    }
-    if (isUniGoal) return [];
-    return primary ? [primary] : []; // «لا، ركّز على القبول» → لا اختبار مفروض
-  }
-
-  /* ثانوي + هدف القبول: لا اختبار قياس مفروض (المدرسة قسم مستقل) */
-  if (isUniGoal) {
-    return [];
-  }
-  /* أول ثانوي: لا قدرات ولا تحصيلي (يبني أساسه المدرسي أولاً — القدرات من ثاني ثانوي).
-     لا اختبار قياس؛ ستيب اختياري إن كان هدفه لغوياً. */
-  if (opts.grade === "أول ثانوي") {
-    return opts.goal === "step" ? ["ستيب"] : [];
-  }
-  const core: TrackId[] = ["قدرات", tahsiliTrack];
-  if (opts.goal === "step") core.unshift("ستيب");
-  const ordered = primary ? [primary, ...core] : core;
-  return dedupe(ordered);
-}
-
 
 /* ─── محرّك أهلية المسارات — لوحة «وش متاح ووش مقفل وليش» ───
    يعيد حالة كل مسار للطالب: متاح/مقفل + سبب القفل + نجمة «مهم لمرحلتك» السياقية.

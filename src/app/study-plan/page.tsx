@@ -142,7 +142,6 @@ export default function StudyPlanPage() {
   };
 
   const totalHours = round1(subjects.reduce((s, x) => s + x.hoursPerWeek, 0));
-  const stratTotal = strategy?.weeklyHoursTotal ?? totalHours;
   const priorityOrder = strategy ? subjectPriorityOrder(strategy) : [];
 
   /* سبب الأولوية لكل مادة */

@@ -3,8 +3,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   trackEligibilityFor, orderSelectedTracks, deriveGoalFromTracks,
-  defaultTracksFromEligibility, basicTracksFor,
-  secondaryCoreTracks, secondaryActiveTracks, LANGUAGE_TESTS, primaryGoal,
+  defaultTracksFromEligibility,
+  secondaryCoreTracks, secondaryActiveTracks, LANGUAGE_TESTS,
   type TrackEligibility, type TrackId,
 } from "./tracks";
 
@@ -142,28 +142,6 @@ test("المبدئيات (اختبارات فقط، بلا مدرسة): أول �
   assert.deepEqual(d3, ["قدرات", "تحصيلي"]);
 });
 
-test("المبدئيات متّسقة مع basicTracksFor حيث تتطابق الحزم (أول وثالث ثانوي)", () => {
-  assert.deepEqual(
-    defaultTracksFromEligibility(trackEligibilityFor({ status: "ثانوي", grade: "أول ثانوي" })),
-    basicTracksFor({ status: "ثانوي", grade: "أول ثانوي" }),
-  );
-  assert.deepEqual(
-    defaultTracksFromEligibility(trackEligibilityFor({ status: "ثانوي", grade: "ثالث ثانوي" })),
-    basicTracksFor({ status: "ثانوي", grade: "ثالث ثانوي" }),
-  );
-});
-
-/* ════════ الجامعي: مسار محايد لا قياس ════════ */
-test("basicTracksFor الجامعي: لا اختبار قياس إطلاقاً (المدرسة قسم مستقل، ليست هنا)", () => {
-  const neutral = basicTracksFor({ status: "جامعي" });
-  assert.deepEqual(neutral, []);
-  /* حتى لو مُرِّر هدف قياس (لن يحدث في التسجيل الجديد) لا نفعّل اختبار قياس للجامعي */
-  for (const goal of ["qudurat", "tahsili", "step", "university", "major"] as const) {
-    const t = basicTracksFor({ status: "جامعي", goal });
-    assert.ok(!t.includes("قدرات") && !t.includes("تحصيلي") && !t.includes("تحصيلي مبكر") && !t.includes("ستيب"),
-      `الجامعي لا يُفعّل اختبار قياس مع الهدف ${goal}`);
-  }
-});
 
 /* ════════ الترتيب القانوني واشتقاق الهدف ════════ */
 test("orderSelectedTracks: نجمة المرحلة أولاً والمدرسة أخيراً", () => {
@@ -197,13 +175,6 @@ test("deriveGoalFromTracks: أبرز مسار مختار يحدّد الهدف �
   assert.equal(deriveGoalFromTracks([], elig1), undefined);
 });
 
-/* ════════ الأهداف المتعددة: الهدف الأساسي ════════ */
-test("primaryGoal: أول عنصر هو الأساسي، والفارغ/غير المعرّف undefined", () => {
-  assert.equal(primaryGoal(["qudurat", "step", "university"]), "qudurat");
-  assert.equal(primaryGoal(["university"]), "university");
-  assert.equal(primaryGoal([]), undefined);
-  assert.equal(primaryGoal(undefined), undefined);
-});
 
 /* ════════ النواة الثابتة لطلاب الثانوي ════════ */
 test("secondaryCoreTracks: القدرات والمدرسة ثابتتان، وشقّ التحصيلي يتبدّل مع الصف", () => {

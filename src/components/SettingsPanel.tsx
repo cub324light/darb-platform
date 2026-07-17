@@ -61,7 +61,7 @@ export default function SettingsButton() {
     }
     setAuthBusy(true);
     try {
-      const { signIn, signUp, pushBackup, pullBackup, authErrorMsg } = await import("@/lib/cloud");
+      const { signIn, signUp, pushBackup, pullBackup } = await import("@/lib/cloud");
       if (authMode === "signup") {
         await signUp(authEmail, authPass);
         await pushBackup();

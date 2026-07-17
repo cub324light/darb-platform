@@ -282,13 +282,6 @@ export function canTakeEarlyTahsili(u?: DarbUser | null): boolean {
   return stage === "ثاني ثانوي" || stage === "ثالث ثانوي";
 }
 
-/** هل يحقّ له دخول STEP؟ (كل الثانوي + الخريج · ليس الجامعي) — نفس نطاق قياس
-    (STEP_RULES: كل الصفوف الثانوية + الخريجون مؤهَّلون، والجامعي خرج من عالم القياس). */
-export function canTakeStep(u?: DarbUser | null): boolean {
-  if (isUniversityGraduate(u)) return false;
-  const phase = getStudentPhase(u);
-  return phase === "secondary" || phase === "graduate";
-}
 
 /* أنماط الوجهات التي تتطلب إثبات لغة إنجليزية (SSoT — يستهلكها المسار الذهبي وغيره) */
 const ENGLISH_REQUIRED_UNIVERSITY = /بترول|فهد للبترول|kfupm|عفت|effat|الفيصل|alfaisal/i;
