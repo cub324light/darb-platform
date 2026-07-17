@@ -9,7 +9,7 @@ import QuizGen from "@/components/QuizGen";
 import ExplainTool from "@/components/ExplainTool";
 import ProgressTool from "@/components/ProgressTool";
 import TopicsTool from "@/components/TopicsTool";
-import { loadUser } from "@/lib/storage";
+import { loadUser, activeTrackIds } from "@/lib/storage";
 import { subjectsForTracks, type TrackId } from "@/lib/tracks";
 import { phaseExperience } from "@/lib/experience";
 import { buildDuwairbProfile } from "@/lib/duwairb";
@@ -42,9 +42,7 @@ export default function DuirbHub({ subjects: propSubjects, defaultView = "schedu
 
   const subjects = useMemo(() => {
     if (propSubjects) return propSubjects;
-    const u = loadUser();
-    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
-    return subjectsForTracks(ids.length ? ids : (["تحصيلي"] as TrackId[]));
+    return subjectsForTracks(activeTrackIds() as TrackId[]);
   }, [propSubjects]);
 
   const subjectNames = subjects.map((s) => s.name);

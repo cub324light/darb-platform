@@ -4,7 +4,7 @@
    تستهلك نفس محرّك universityReadiness — لا منطق مكرّر. */
 import { useMemo } from "react";
 import { findMajor, findUniversity, universityReadiness } from "@/lib/university";
-import { loadGoals, currentScoreMap, loadUser, loadTrackExamDates } from "@/lib/storage";
+import { loadGoals, currentScoreMap, activeExamTrackIds, loadTrackExamDates } from "@/lib/storage";
 import { getStrategy } from "@/lib/strategy";
 import { daysUntil } from "@/lib/insights";
 import { getTrack, type TrackId } from "@/lib/tracks";
@@ -33,13 +33,12 @@ export default function UniversityFutureCard({ onOpenTab }: { onOpenTab?: () => 
       weeklyHours: strategy.weeklyHoursTotal,
     });
 
-    /* أقرب اختبار */
-    const u = loadUser();
+    /* أقرب اختبار — المصدر الواحد: اختبارات الطالب من Workspace (لا activeTracks) */
     const dates = loadTrackExamDates();
-    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+    const ids = activeExamTrackIds() as TrackId[];
     let exam: { days: number; label: string } | null = null;
     for (const id of ids) {
-      const d = dates[id] ?? (id === u?.track ? u?.examDate : undefined);
+      const d = dates[id];
       if (!d) continue;
       const days = daysUntil(d);
       if (days != null && days >= 0 && (!exam || days < exam.days)) exam = { days, label: getTrack(id)?.title ?? id };

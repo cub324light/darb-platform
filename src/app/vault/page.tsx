@@ -6,7 +6,7 @@ import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import { ERROR_CATEGORIES } from "@/lib/constants";
 import { subjectsForTracks, colorForSubject, type TrackId } from "@/lib/tracks";
-import { loadUser, loadList, saveList } from "@/lib/storage";
+import { activeTrackIds, loadList, saveList } from "@/lib/storage";
 import { buildDuwairbProfile } from "@/lib/duwairb";
 import { askDuwairb } from "@/lib/orchestrator";
 import { trackEvent } from "@/lib/analytics";
@@ -17,19 +17,9 @@ const PER_SUBJECT_LIMIT = VAULT_FREE_LIMIT;
 const VAULT_KEY = "darb_vault";
 
 export default function VaultPage() {
-  const [activeIds] = useState<TrackId[]>(() => {
-    if (typeof window === "undefined") return ["تحصيلي"] as TrackId[];
-    const u = loadUser();
-    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
-    return ids.length ? ids : (["تحصيلي"] as TrackId[]);
-  });
-  const [subjectList] = useState<{ name: string; color: string }[]>(() => {
-    if (typeof window === "undefined") return [];
-    const u = loadUser();
-    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
-    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
-    return subjectsForTracks(finalIds);
-  });
+  /* المصدر الواحد: معرّفات الكتالوج مشتقّة من Workspace (لا activeTracks) */
+  const [activeIds] = useState<TrackId[]>(() => activeTrackIds() as TrackId[]);
+  const [subjectList] = useState<{ name: string; color: string }[]>(() => subjectsForTracks(activeTrackIds() as TrackId[]));
   const [errors, setErrors] = useState<VaultError[]>(() =>
     typeof window !== "undefined" ? loadList<VaultError>(VAULT_KEY) : []
   );
@@ -42,13 +32,7 @@ export default function VaultPage() {
   const [undoItem, setUndoItem] = useState<VaultError | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [newQ, setNewQ] = useState("");
-  const [newSubject, setNewSubject] = useState(() => {
-    if (typeof window === "undefined") return "";
-    const u = loadUser();
-    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
-    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
-    return subjectsForTracks(finalIds)[0]?.name ?? "";
-  });
+  const [newSubject, setNewSubject] = useState(() => subjectsForTracks(activeTrackIds() as TrackId[])[0]?.name ?? "");
   const [newCat, setNewCat] = useState<string>(ERROR_CATEGORIES[0]);
   const [newDiff, setNewDiff] = useState<VaultDifficulty>("متوسط");
   const [newNote, setNewNote] = useState("");

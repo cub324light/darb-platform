@@ -4,7 +4,7 @@
    مصدر القرار: evaluateGoal() في goalReality.ts — لا منطق مكرّر هنا. */
 import { useMemo } from "react";
 import { evaluateGoal, type GoalRealityResult } from "@/lib/goalReality";
-import { loadGoals, loadUser, currentScoreMap } from "@/lib/storage";
+import { loadGoals, loadUser, currentScoreMap, activeExamTrackIds } from "@/lib/storage";
 import { getStrategy } from "@/lib/strategy";
 import { daysUntil } from "@/lib/insights";
 import { loadTrackExamDates } from "@/lib/storage";
@@ -32,7 +32,8 @@ export default function GoalRealityCard() {
     const goals = loadGoals();
     const scoreMap = currentScoreMap();
     const trackDates = loadTrackExamDates();
-    const ids = (u.activeTracks?.length ? u.activeTracks : (u.track ? [u.track] : [])) as TrackId[];
+    /* المصدر الواحد: اختبارات الطالب من Workspace (لا activeTracks) */
+    const ids = activeExamTrackIds() as TrackId[];
     if (!ids.length) return [];
 
     const strategy = getStrategy();

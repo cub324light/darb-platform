@@ -9,7 +9,7 @@ import { BorderBeam } from "@/components/ui/border-beam";
 import { useFlag } from "@/lib/flags";
 import { sm2, nextReviewText } from "@/lib/sm2";
 import { subjectsForTracks, colorForSubject, type TrackId } from "@/lib/tracks";
-import { loadUser, loadList, saveList } from "@/lib/storage";
+import { activeTrackIds, loadList, saveList } from "@/lib/storage";
 import type { ReviewCard, SM2Grade } from "@/lib/types";
 
 const CARDS_KEY = "darb_cards";
@@ -21,19 +21,9 @@ const GRADE_LABELS = ["ما أعرف", "غلط", "صعب", "متوسط", "سهل
 type Mode = "list" | "session";
 
 export default function ReviewPage() {
-  const [activeIds] = useState<TrackId[]>(() => {
-    if (typeof window === "undefined") return ["تحصيلي"] as TrackId[];
-    const u = loadUser();
-    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
-    return ids.length ? ids : (["تحصيلي"] as TrackId[]);
-  });
-  const [subjectList] = useState<{ name: string; color: string }[]>(() => {
-    if (typeof window === "undefined") return [];
-    const u = loadUser();
-    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
-    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
-    return subjectsForTracks(finalIds);
-  });
+  /* المصدر الواحد: معرّفات الكتالوج/المواد مشتقّة من Workspace (لا activeTracks) */
+  const [activeIds] = useState<TrackId[]>(() => activeTrackIds() as TrackId[]);
+  const [subjectList] = useState<{ name: string; color: string }[]>(() => subjectsForTracks(activeTrackIds() as TrackId[]));
   const [cards, setCards] = useState<ReviewCard[]>(() =>
     typeof window !== "undefined" ? loadList<ReviewCard>(CARDS_KEY) : []
   );
@@ -50,13 +40,7 @@ export default function ReviewPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [newQ, setNewQ] = useState("");
   const [newA, setNewA] = useState("");
-  const [newSubject, setNewSubject] = useState(() => {
-    if (typeof window === "undefined") return "";
-    const u = loadUser();
-    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
-    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
-    return subjectsForTracks(finalIds)[0]?.name ?? "";
-  });
+  const [newSubject, setNewSubject] = useState(() => subjectsForTracks(activeTrackIds() as TrackId[])[0]?.name ?? "");
 
   useEffect(() => { saveList(CARDS_KEY, cards); }, [cards]);
 

@@ -8,7 +8,7 @@ import {
   loadSkillProgress, setSkillSelfAssessment, skillTier, weakestSkillIds,
   overallStats, type SkillProgress, type SkillTier,
 } from "@/lib/skillProgress";
-import { loadUser, type DarbUser } from "@/lib/storage";
+import { activeTrackIds } from "@/lib/storage";
 import { trackEvent } from "@/lib/analytics";
 import type { TrackId } from "@/lib/tracks";
 
@@ -87,18 +87,12 @@ function SkillCard({
 }
 
 export default function SkillsPage() {
-  const [user] = useState<DarbUser | null>(() =>
-    typeof window !== "undefined" ? loadUser() : null
-  );
   const [progress, setProgress] = useState<Record<string, SkillProgress>>(() =>
     typeof window !== "undefined" ? loadSkillProgress() : {}
   );
 
-  const activeIds = useMemo<TrackId[]>(() => {
-    if (!user) return ["تحصيلي"] as TrackId[];
-    const ids = (user.activeTracks?.length ? user.activeTracks : user.track ? [user.track] : []) as TrackId[];
-    return ids.length ? ids : (["تحصيلي"] as TrackId[]);
-  }, [user]);
+  /* المصدر الواحد: المهارات مشتقّة من Workspace (لا activeTracks) */
+  const activeIds = useMemo<TrackId[]>(() => activeTrackIds() as TrackId[], []);
 
   const skills = useMemo(() => skillsForTracks(activeIds), [activeIds]);
   const grouped = useMemo(() => groupedSkills(skills), [skills]);

@@ -3,6 +3,7 @@ import type { TrackId, StudyGoalType } from "./tracks";
 import type { PlanId } from "./types";
 import type { Workspace } from "./modules/workspace";
 import { buildInitialWorkspace, addModule, addMember } from "./modules/workspace";
+import { workspaceTrackIds } from "./modules/consume";
 import type { ModuleId, ExamMemberId } from "./modules/types";
 import { toBoardStage } from "./examEligibility";
 
@@ -144,6 +145,20 @@ export function activeWorkspace(): Workspace {
   const u = loadUser();
   if (!u) return { modules: [], updatedAt: Date.now() };
   return ensureWorkspace(u).workspace ?? { modules: [], updatedAt: Date.now() };
+}
+
+/* معرّفات الكتالوج (globalSkills/TRACKS) المشتقّة من Workspace — نقطة القراءة الموحّدة
+   للمستهلكين (المواد/المهارات/الألوان). تحلّ محلّ قراءة activeTracks المباشرة. الفولباك
+   «تحصيلي» يطابق السلوك القديم عند غياب أي وحدةٍ دراسية بعد. */
+export function activeTrackIds(): string[] {
+  const t = workspaceTrackIds(activeWorkspace());
+  return t.length ? t : ["تحصيلي"];
+}
+
+/* نسخة خام بلا فولباك — لمستهلكي قوائم الاختبارات (تنبيهات التسجيل/الفجوة):
+   فراغٌ = لا اختبارات (فلا نلفّق «تحصيلي»). مشتقّة من Workspace وحده. */
+export function activeExamTrackIds(): string[] {
+  return workspaceTrackIds(activeWorkspace());
 }
 
 /* يحفظ Workspace داخل المستخدم — المزامنة السحابية تركبه مع بقية بيانات المستخدم. */

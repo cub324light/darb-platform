@@ -3,7 +3,7 @@
    يظهر في: الداشبورد + صفحة الخطة + ملف الطالب (قسم الأهداف).
    يُخفى تلقائياً إذا لا يوجد تنبيه نشط. */
 import { useMemo, useState } from "react";
-import { loadUser } from "@/lib/storage";
+import { activeExamTrackIds } from "@/lib/storage";
 import { buildExamAlerts, nearestActiveWindow, type ExamAlert } from "@/lib/examProvider";
 import type { TrackId } from "@/lib/tracks";
 
@@ -51,8 +51,8 @@ export default function ExamRegistrationAlert() {
 
   const alerts = useMemo((): ExamAlert[] => {
     if (typeof window === "undefined") return [];
-    const u = loadUser();
-    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+    /* المصدر الواحد: اختبارات الطالب من Workspace (فراغ = لا تنبيهات) */
+    const ids = activeExamTrackIds() as TrackId[];
     if (!ids.length) return [];
     return buildExamAlerts(ids, today);
   }, [today]);

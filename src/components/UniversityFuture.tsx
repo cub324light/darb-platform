@@ -8,7 +8,7 @@ import { useMemo, useState } from "react";
 import {
   UNIVERSITIES, MAJORS, findUniversity, findMajor, universityReadiness, gapAnalysis,
 } from "@/lib/university";
-import { loadGoals, saveGoals, currentScoreMap, loadUser, loadTrackExamDates, type DarbGoals } from "@/lib/storage";
+import { loadGoals, saveGoals, currentScoreMap, activeExamTrackIds, loadTrackExamDates, type DarbGoals } from "@/lib/storage";
 import { getStrategy } from "@/lib/strategy";
 import { daysUntil } from "@/lib/insights";
 import { getTrack, type TrackId } from "@/lib/tracks";
@@ -24,13 +24,12 @@ function scoreOf(map: Record<string, { score: number }>, ...keys: string[]): num
 
 /* أقرب اختبار من المسارات النشطة */
 function nearestExamDays(): { days: number; label: string } | null {
-  const u = loadUser();
-  if (!u) return null;
   const dates = loadTrackExamDates();
-  const ids = (u.activeTracks?.length ? u.activeTracks : (u.track ? [u.track] : [])) as TrackId[];
+  /* المصدر الواحد: اختبارات الطالب من Workspace (لا activeTracks) */
+  const ids = activeExamTrackIds() as TrackId[];
   let best: { days: number; label: string } | null = null;
   for (const id of ids) {
-    const d = dates[id] ?? (id === u.track ? u.examDate : undefined);
+    const d = dates[id];
     if (!d) continue;
     const days = daysUntil(d);
     if (days != null && days >= 0 && (!best || days < best.days)) {

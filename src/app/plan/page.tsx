@@ -15,7 +15,7 @@ const StrategyBanner = dynamic(() => import("@/components/StrategyBanner"), { ss
 const CalendarStatusCard = dynamic(() => import("@/components/CalendarStatusCard"), { ssr: false });
 const GoalRealityCard = dynamic(() => import("@/components/GoalRealityCard"), { ssr: false });
 import { getEventsForDate } from "@/components/DayScheduler";
-import { loadUser, loadEvents, loadExamDate, saveExamDate, loadTrackExamDates, showsUniversityUI, type ScheduleEvent } from "@/lib/storage";
+import { loadUser, activeTrackIds, loadEvents, loadExamDate, saveExamDate, loadTrackExamDates, showsUniversityUI, type ScheduleEvent } from "@/lib/storage";
 import { isUniversityGraduate } from "@/lib/phase";
 import { getTrack, colorForSubject, type TrackId } from "@/lib/tracks";
 import { fmtHour } from "@/lib/utils";
@@ -33,12 +33,8 @@ export default function PlanPage() {
   const [allEvents] = useState<ScheduleEvent[]>(() =>
     typeof window !== "undefined" ? loadEvents() : []
   );
-  const [activeIds] = useState<TrackId[]>(() => {
-    if (typeof window === "undefined") return ["تحصيلي"] as TrackId[];
-    const u = loadUser();
-    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
-    return ids.length ? ids : (["تحصيلي"] as TrackId[]);
-  });
+  /* المصدر الواحد: الاختبارات مشتقّة من Workspace (لا activeTracks) */
+  const [activeIds] = useState<TrackId[]>(() => activeTrackIds() as TrackId[]);
 
   const [view, setView] = useState<PlanView>("day");
   const [examDate, setExamDate] = useState<string | null>(() =>
@@ -65,10 +61,9 @@ export default function PlanPage() {
   /* أقرب اختبار من المسارات النشطة */
   const nearestExam = (() => {
     if (typeof window === "undefined") return null;
-    const u = loadUser();
     const trackDates = loadTrackExamDates();
     const ed = loadExamDate();
-    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
+    const ids = activeTrackIds() as TrackId[];
     const candidates: { days: number; label: string; color: string }[] = [];
     for (const id of ids) {
       const d = trackDates[id];

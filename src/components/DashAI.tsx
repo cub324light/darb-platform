@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { loadEvents, saveEvents, loadUser, loadExamCoord, examCoordPrompt, recordPlanCreated, recordAIChat, type ScheduleEvent } from "@/lib/storage";
+import { loadEvents, saveEvents, activeExamTrackIds, loadExamCoord, examCoordPrompt, recordPlanCreated, recordAIChat, type ScheduleEvent } from "@/lib/storage";
 import { getEventsForDate } from "@/components/DayScheduler";
 import { normalizeDigits, fmtHour } from "@/lib/utils";
 import { buildDuwairbProfile } from "@/lib/duwairb";
@@ -81,10 +81,8 @@ export default function DashAI({ subjects, onOpenScheduler }: Props) {
       const busyNote = busy.length > 0
         ? ` الأوقات المحجوزة اليوم (تجنّبها تماماً ولا تضع فيها شيئاً): ${busy.map((e) => `${fmtHour(e.fromHour)}–${fmtHour(e.toHour)}`).join("، ")}.`
         : "";
-      /* تنسيق الاختبارات المتعددة (قدرات + تحصيلي ...) */
-      const u = loadUser();
-      const activeTracks = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as string[];
-      const coordNote = examCoordPrompt(loadExamCoord(), activeTracks);
+      /* تنسيق الاختبارات المتعددة — المصدر الواحد: Workspace (لا activeTracks) */
+      const coordNote = examCoordPrompt(loadExamCoord(), activeExamTrackIds());
       const { profile, personalized } = buildDuwairbProfile();
       /* عبر طبقة التنسيق — يستشير المحرّكات، يبني السياق الموحّد، ويُطلق الأحداث */
       const { text } = await askDuwairb({ prompt: p + busyNote + coordNote, subjects, mode: "schedule", topic: "جدول مذاكرة", profile, planning: loadPlanningPrefs(), calendar: currentCalendarSignals() });

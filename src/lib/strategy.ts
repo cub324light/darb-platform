@@ -10,7 +10,7 @@
    يعيد استخدام buildDuwairbProfile (الجاهزية/الهدف/الأقوى/الأحوج) + التفضيلات. */
 import { loadPrefs, loadCalendarConfig, loadTrackExamDates, loadGoals, type DarbPrefs } from "./storage";
 import { buildDuwairbProfile, sessionIntervalRule, type DuwairbProfile } from "./duwairb";
-import { loadUser } from "./storage";
+import { loadUser, activeTrackIds } from "./storage";
 import { subjectsForTracks, type TrackId } from "./tracks";
 import { resolveCalendar, calendarSignals, type CalendarSignals, type CalendarConfig } from "./academicCalendar";
 import { findMajor, type MajorCategory } from "./university";
@@ -297,8 +297,9 @@ export function getStrategy(): StudyStrategy {
   const { profile } = buildDuwairbProfile();
   const prefs: DarbPrefs = loadPrefs();
   const u = loadUser();
-  const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
-  const subjects = subjectsForTracks(ids.length ? ids : (["تحصيلي"] as TrackId[])).map((s) => s.name);
+  /* المصدر الواحد: مواد الخطة مشتقّة من Workspace (لا activeTracks) */
+  const ids = activeTrackIds() as TrackId[];
+  const subjects = subjectsForTracks(ids).map((s) => s.name);
   /* التخصص يُضخّ تلقائياً من الأهداف، وإلا من نوع المسار المختار في التسجيل */
   const goals = loadGoals();
   const majorCategory = findMajor(goals.majorId)?.category ?? (u?.trackType as MajorCategory | undefined);

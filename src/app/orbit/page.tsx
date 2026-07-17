@@ -6,7 +6,7 @@ import PageGuide from "@/components/PageGuide";
 import Confetti from "@/components/Confetti";
 import { subjectsForTracks, getTrack } from "@/lib/tracks";
 import type { TrackId, Track } from "@/lib/tracks";
-import { loadUser, loadStats, recordSession, loadSessionLog, type SessionLogEntry } from "@/lib/storage";
+import { activeTrackIds, loadStats, recordSession, loadSessionLog, type SessionLogEntry } from "@/lib/storage";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { trackEvent } from "@/lib/analytics";
 
@@ -197,34 +197,12 @@ export default function OrbitPage() {
     const s = typeof window !== "undefined" ? loadStats() : null;
     return s?.todayFocusMins ?? 0;
   });
-  const [subjects] = useState<{ name: string; color: string }[]>(() => {
-    if (typeof window === "undefined") return [];
-    const u = loadUser();
-    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
-    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
-    return subjectsForTracks(finalIds);
-  });
-  const [subject, setSubject] = useState<string>(() => {
-    if (typeof window === "undefined") return "";
-    const u = loadUser();
-    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
-    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
-    return subjectsForTracks(finalIds)[0]?.name ?? "";
-  });
+  /* المصدر الواحد: الاختبارات/المواد مشتقّة من Workspace (لا activeTracks) */
+  const [subjects] = useState<{ name: string; color: string }[]>(() => subjectsForTracks(activeTrackIds() as TrackId[]));
+  const [subject, setSubject] = useState<string>(() => subjectsForTracks(activeTrackIds() as TrackId[])[0]?.name ?? "");
   /* اختيار المادة بخطوتين: الاختبار (المسار) أولاً ثم المادة منه */
-  const [activeTracks] = useState<Track[]>(() => {
-    if (typeof window === "undefined") return [];
-    const u = loadUser();
-    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
-    const finalIds = ids.length ? ids : (["تحصيلي"] as TrackId[]);
-    return finalIds.map((id) => getTrack(id));
-  });
-  const [selTrackId, setSelTrackId] = useState<TrackId>(() => {
-    if (typeof window === "undefined") return "تحصيلي" as TrackId;
-    const u = loadUser();
-    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
-    return (ids[0] ?? "تحصيلي") as TrackId;
-  });
+  const [activeTracks] = useState<Track[]>(() => (activeTrackIds() as TrackId[]).map((id) => getTrack(id)));
+  const [selTrackId, setSelTrackId] = useState<TrackId>(() => (activeTrackIds()[0] ?? "تحصيلي") as TrackId);
   /* مادة محدّدة مسبقاً عبر ?subject= (من بانر «جدول اليوم» في الخريطة) */
   useEffect(() => {
     if (typeof window === "undefined") return;

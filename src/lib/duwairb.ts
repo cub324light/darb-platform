@@ -6,7 +6,7 @@
      • formatProfileBlock — نص يُحقن في برومبت النظام (يعمل على الخادم).
    كما يوفّر التبويب المقترح حسب الصفحة، وأسماء أحداث التحليلات. */
 import {
-  loadUser, loadStats, loadPrefs, loadGoals, loadTrackExamDates, currentScoreMap,
+  loadUser, loadStats, loadPrefs, loadGoals, loadTrackExamDates, currentScoreMap, activeExamTrackIds,
   type DarbGoals,
 } from "./storage";
 import { loadSkillProgress, overallStats } from "./skillProgress";
@@ -102,9 +102,8 @@ export function buildDuwairbProfile(): { profile: DuwairbProfile; goalLine: stri
   /* الحالة الجاهزة المقطّرة من العقل — Profile → recommendedExams → Life Engine → Duwairb.
      دويرب لا يفسّر مرحلة الطالب/وجهته؛ يستقبلها مقرّرةً ويشرحها فقط. */
   const state = duwairbState();
-  /* توافق مؤقّت: قائمة الاختبارات (اسم/هدف/أيام) ما زالت تُبنى من activeTracks —
-     وهي View مادّي مشتقّ من recommendedExams عند التسجيل. تُصنَّف دَيناً تقنياً في التقرير. */
-  const ids = (u.activeTracks?.length ? u.activeTracks : (u.track ? [u.track] : [])) as TrackId[];
+  /* المصدر الواحد: اختبارات الطالب (اسم/هدف/أيام) مشتقّة من Workspace (لا activeTracks) */
+  const ids = activeExamTrackIds() as TrackId[];
   const trackDates = loadTrackExamDates();
 
   /* الاختبارات النشطة مع الهدف والأيام المتبقية */

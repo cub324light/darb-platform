@@ -14,8 +14,6 @@ import DefCard from "@/components/DefCard";
 import { loadUser, loadStats, computeStreak, type DarbUser } from "@/lib/storage";
 import dynamic from "next/dynamic";
 const RetentionHost = dynamic(() => import("@/components/retention/RetentionHost"), { ssr: false });
-/* محفوظ للتراجع الكامل — لا يُركَّب (خلف علمٍ ثابت) فلا تعمل آثاره الجانبية */
-const DashClassic = dynamic(() => import("@/components/dash/DashClassic"), { ssr: false });
 
 function computeGreeting(h: number): string {
   if (h < 5) return "وقت الذئاب";
@@ -99,9 +97,6 @@ export default function DashboardPage() {
       </div>
 
       <PageFooter />
-
-      {/* محفوظ للتراجع الكامل — لا يُركَّب (العلم false دائماً). لا تُحذف. */}
-      {false && <DashClassic />}
     </div>
   );
 }

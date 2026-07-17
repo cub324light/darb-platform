@@ -8,7 +8,7 @@ import Dome from "@/components/Dome";
 import ExamRegistrationAlert from "@/components/ExamRegistrationAlert";
 import Link from "next/link";
 import { getStrategy, majorSubjectBoost, subjectPriorityOrder } from "@/lib/strategy";
-import { loadStudyPlan, saveStudyPlan, clearStudyPlan, loadGoals, loadUser } from "@/lib/storage";
+import { loadStudyPlan, saveStudyPlan, clearStudyPlan, loadGoals, activeTrackIds } from "@/lib/storage";
 import { findMajor } from "@/lib/university";
 import { colorForSubject, type TrackId } from "@/lib/tracks";
 import type { StudyPlanSubject } from "@/lib/storage";
@@ -42,12 +42,8 @@ function mergedSubjects(
 }
 
 export default function StudyPlanPage() {
-  const [activeIds] = useState<TrackId[]>(() => {
-    if (typeof window === "undefined") return ["تحصيلي"] as TrackId[];
-    const u = loadUser();
-    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
-    return ids.length ? ids : (["تحصيلي"] as TrackId[]);
-  });
+  /* المصدر الواحد: الاختبارات مشتقّة من Workspace (لا activeTracks) */
+  const [activeIds] = useState<TrackId[]>(() => activeTrackIds() as TrackId[]);
 
   const [strategy] = useState(() => typeof window !== "undefined" ? getStrategy() : null);
   const [goals] = useState(() => typeof window !== "undefined" ? loadGoals() : null);

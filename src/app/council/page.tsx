@@ -10,8 +10,7 @@ import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import FriendsPanel from "@/components/FriendsPanel";
-import { loadUser } from "@/lib/storage";
-import type { TrackId } from "@/lib/tracks";
+import { loadUser, activeTrackIds } from "@/lib/storage";
 import { CHAT_GROUPS, type ChatGroup } from "@/lib/groups";
 import { detectContact } from "@/lib/contactFilter";
 import { postSocial } from "@/lib/authFetch";
@@ -74,12 +73,8 @@ export default function CouncilPage() {
     if (typeof window === "undefined") return "طالب";
     return loadUser()?.name ?? "طالب";
   });
-  const [userTrackIds] = useState<string[]>(() => {
-    if (typeof window === "undefined") return [];
-    const u = loadUser();
-    const ids = (u?.activeTracks?.length ? u.activeTracks : (u?.track ? [u.track] : [])) as TrackId[];
-    return ids as string[];
-  });
+  /* المصدر الواحد: معرّفات الاختبارات مشتقّة من Workspace (لا activeTracks) */
+  const [userTrackIds] = useState<string[]>(() => activeTrackIds());
 
   useEffect(() => {
     let unsub: (() => void) | undefined;
