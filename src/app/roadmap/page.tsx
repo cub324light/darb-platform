@@ -59,7 +59,6 @@ function recTarget(r: RecommendedExam): AddTarget | null {
     case "tahsili": return { kind: "module", id: "tahsili" };
     case "aramco": return { kind: "member", id: "aramco" };
     case "itc": return { kind: "member", id: "itc" };
-    case "niti": return { kind: "member", id: "niti" };
     default: return null; // language: عبر زر الإضافة (مجموعة)
   }
 }
@@ -150,7 +149,7 @@ export default function RoadmapPage() {
     const recHint = rec.find((r) =>
       (r.kind === "qudurat" && m.id === "qudurat") || (r.kind === "tahsili" && m.id === "tahsili") ||
       (r.kind === "language" && m.id === "english") ||
-      (["aramco", "itc", "niti"].includes(r.kind) && m.id === "programs"));
+      (["aramco", "itc"].includes(r.kind) && m.id === "programs"));
 
     return (
       <div key={m.id} className="rounded-2xl overflow-hidden" style={{ background: "var(--surface)", border: `1.5px solid ${v.color}33` }}>

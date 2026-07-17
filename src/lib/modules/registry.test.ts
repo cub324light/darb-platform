@@ -29,7 +29,7 @@ test("الأعضاء ينتمون لوحداتهم: اللغة→english، ال�
   assert.equal(parentModuleOf("step"), "english");
   assert.equal(parentModuleOf("ielts"), "english");
   assert.equal(parentModuleOf("aramco"), "programs");
-  assert.equal(parentModuleOf("niti"), "programs");
+  assert.equal(parentModuleOf("itc"), "programs");
   assert.equal(memberDef("step").category, "language");
   assert.equal(memberDef("aramco").category, "program");
 });
@@ -41,7 +41,7 @@ test("التحصيلي يجسر نافذتَي القياس (مبكر+عادي)"
 
 test("english/programs تحملان كتالوج أعضائهما", () => {
   assert.deepEqual(moduleDef("english").memberIds, ["step", "ielts", "toefl", "duolingo"]);
-  assert.deepEqual(moduleDef("programs").memberIds, ["aramco", "itc", "niti"]);
+  assert.deepEqual(moduleDef("programs").memberIds, ["aramco", "itc"]);
 });
 
 test("لا تكرار في معرّفات الوحدات ولا الأعضاء", () => {

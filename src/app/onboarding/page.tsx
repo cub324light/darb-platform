@@ -735,7 +735,7 @@ export default function OnboardingPage() {
     { id: "tahsili",    label: "تحسين التحصيلي",   show: recQiyas.some((e) => e.kind === "tahsili") },
     { id: "english",    label: "اللغة الإنجليزية", show: true },
     { id: "university", label: "القبول الجامعي",   show: targets.includes("university") },
-    { id: "programs",   label: "البرامج",          show: recExams.some((e) => e.kind === "aramco" || e.kind === "itc" || e.kind === "niti") },
+    { id: "programs",   label: "البرامج",          show: recExams.some((e) => e.kind === "aramco" || e.kind === "itc") },
   ].filter((o) => o.show);
   const focusSection = focusOptions.length > 0 ? (
     <div>

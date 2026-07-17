@@ -38,7 +38,7 @@ export const MODULE_DEFS: ModuleDef[] = [
 
   /* Optional مجموعة — بطاقة واحدة تحوي أعضاءً (فلا تكبر الصفحة) */
   { id: "english",  kind: "optional", shape: "group", category: "language", label: "اللغة الإنجليزية", icon: "🇬🇧", color: "#10B981", memberIds: ["step", "ielts", "toefl", "duolingo"] },
-  { id: "programs", kind: "optional", shape: "group", category: "program",  label: "برامج القبول",     icon: "🏢", color: "#F97316", memberIds: ["aramco", "itc", "niti"] },
+  { id: "programs", kind: "optional", shape: "group", category: "program",  label: "برامج القبول",     icon: "🏢", color: "#F97316", memberIds: ["aramco", "itc"] },
 ];
 
 /* أعضاء الوحدات المجموعة. */
@@ -49,7 +49,6 @@ export const MEMBER_DEFS: MemberDef[] = [
   { id: "duolingo", parent: "english", category: "language", label: "Duolingo", color: "#EC4899" },
   { id: "aramco",   parent: "programs", category: "program", label: "أرامكو",   color: "#06B6D4" },
   { id: "itc",      parent: "programs", category: "program", label: "ITC",      color: "#F97316" },
-  { id: "niti",     parent: "programs", category: "program", label: "NITI",     color: "#14B8A6" },
 ];
 
 const MODULE_BY_ID = new Map(MODULE_DEFS.map((d) => [d.id, d]));

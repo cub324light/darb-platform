@@ -14,7 +14,7 @@ export type ModuleId =
 /* أعضاء الوحدات المجموعة — اختباراتٌ داخل بطاقةٍ واحدة، لكلٍّ تقدّمه. */
 export type ExamMemberId =
   | "step" | "ielts" | "toefl" | "duolingo" // أعضاء اللغة الإنجليزية
-  | "aramco" | "itc" | "niti";              // أعضاء برامج القبول
+  | "aramco" | "itc";                       // أعضاء برامج القبول
 
 export type ModuleKind = "core" | "optional";
 

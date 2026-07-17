@@ -49,7 +49,7 @@ export function studentPersona(user?: DarbUser | null, goals?: DarbGoals | null)
 
   const companyFocus =
     g.cpcTarget != null || g.itcTarget != null ||
-    targets.includes("aramco") || targets.includes("itc") || targets.includes("niti");
+    targets.includes("aramco") || targets.includes("itc");
   const uniFocus =
     !!(g.university || g.major || g.majorId || g.universityId) ||
     targets.includes("university") || targets.includes("major");

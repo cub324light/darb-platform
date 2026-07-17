@@ -25,7 +25,7 @@ test("أعضاء اللغة بلا قيد؛ أعضاء البرامج لمرحل
   assert.equal(canAddMember("aramco", { stage: "second", today }).allowed, false);
   assert.equal(canAddMember("aramco", { stage: "third", today }).allowed, true);
   assert.equal(canAddMember("itc", { stage: "graduate", today }).allowed, true);
-  assert.equal(canAddMember("niti", { stage: "graduate", isUniGrad: true, today }).allowed, false);
+  assert.equal(canAddMember("itc", { stage: "graduate", isUniGrad: true, today }).allowed, false);
 });
 
 test("buildAddMenu لطالب ثالث ثانوي: فئات + إتاحة + alreadyAdded", () => {

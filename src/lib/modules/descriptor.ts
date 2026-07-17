@@ -83,7 +83,7 @@ const MODULE_CONTENT: Record<ModuleId, ModuleContent> = {
   },
   programs: {
     kind: "hub",
-    intro: "برامج القبول — أضِف البرنامج (أرامكو/ITC/NITI) وتابع متطلباته.",
+    intro: "برامج القبول — أضِف البرنامج (أرامكو/ITC) وتابع متطلباته.",
   },
 };
 
@@ -118,7 +118,6 @@ const MEMBER_CONTENT: Record<ExamMemberId, ModuleContent> = {
   duolingo: { kind: "study", intro: "اختبار Duolingo — إثبات إنجليزي سريع.", subjects: LANG_DUO, examKey: "دوليقو" },
   aramco:   { kind: "study", intro: "برنامج أرامكو (CPC) — تحضير الإنجليزي والرياضيات.", subjects: PROG_CPC, examKey: "CPC" },
   itc:      { kind: "study", intro: "مسار ITC — الإنجليزي والرياضيات والمنطق.", subjects: PROG_ITC, examKey: "ITC" },
-  niti:     { kind: "study", intro: "مسار NITI — تحضير الإنجليزي والرياضيات.", subjects: PROG_CPC },
 };
 
 /* واصف الوحدة العليا — يرمي إن كانت مجموعةً (المجموعة تُعرض بأعضائها، لا بفضاءٍ مباشر). */

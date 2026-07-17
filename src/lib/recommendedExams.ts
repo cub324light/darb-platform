@@ -9,7 +9,7 @@ import { examBoard, toBoardStage, type BoardStage, type ExamBoardId, type ExamMo
 import { currentRegistrationStatus } from "./examProvider";
 
 /* أنواع الاختبارات التي قد تتطلّبها وجهة (وسائل الوصول). */
-export type ExamKind = "qudurat" | "tahsili" | "aramco" | "itc" | "niti" | "language";
+export type ExamKind = "qudurat" | "tahsili" | "aramco" | "itc" | "language";
 
 /* ما تتطلّبه كل وجهة (requirementsOf). المفاتيح = معرّفات وجهات التسجيل.
    يشمل الكتالوج القديم (sabic/military/training) للتوافق حتى تُوحَّد الوجهات (خطوة ١). */
@@ -18,7 +18,6 @@ export const DESTINATION_REQUIREMENTS: Record<string, ExamKind[]> = {
   major:       ["qudurat", "tahsili"],
   aramco:      ["qudurat", "tahsili", "aramco"],
   itc:         ["qudurat", "itc"],
-  niti:        ["qudurat", "niti"],
   scholarship: ["qudurat", "tahsili", "language"], // ابتعاث
   job:         ["language"],                        // وظيفة
   english:     ["language"],                        // تطوير الإنجليزية
@@ -28,8 +27,8 @@ export const DESTINATION_REQUIREMENTS: Record<string, ExamKind[]> = {
   training:    ["language"],
 };
 
-const PROGRAM_LABEL: Record<"aramco" | "itc" | "niti", string> = {
-  aramco: "أرامكو", itc: "ITC", niti: "NITI",
+const PROGRAM_LABEL: Record<"aramco" | "itc", string> = {
+  aramco: "أرامكو", itc: "ITC",
 };
 
 /* ── مخرجات الطبقة الأولى (Domain) لكل نوع: سبب الترشيح + الأولوية ──
@@ -39,11 +38,10 @@ const KIND_REASON: Record<ExamKind, string> = {
   tahsili: "مطلوب للتخصصات العلمية والصحية",
   aramco: "اختبار برنامج أرامكو",
   itc: "اختبار مسار ITC",
-  niti: "اختبار مسار NITI",
   language: "لوجهات الابتعاث/الوظيفة/تطوير الإنجليزية",
 };
 const KIND_PRIORITY: Record<ExamKind, number> = {
-  qudurat: 1, tahsili: 2, aramco: 3, itc: 3, niti: 3, language: 4,
+  qudurat: 1, tahsili: 2, aramco: 3, itc: 3, language: 4,
 };
 
 /* حالة الاختبار (Domain) — من نافذة التسجيل؛ ما لا نافذة له (لغة/برامج) = متاح. */
@@ -110,9 +108,9 @@ export function recommendedExams(input: RecommendInput): RecommendedExam[] {
     }
   }
 
-  /* ② البرامج (أرامكو/ITC/NITI) — لمرحلة القبول (ثالث ثانوي أو خريج ثانوي) فقط. */
+  /* ② البرامج (أرامكو/ITC) — لمرحلة القبول (ثالث ثانوي أو خريج ثانوي) فقط. */
   const admissionStage = (input.stage === "third" || input.stage === "graduate") && !input.isUniGrad;
-  for (const k of ["aramco", "itc", "niti"] as const) {
+  for (const k of ["aramco", "itc"] as const) {
     if (kinds.has(k) && admissionStage) out.push({ kind: k, label: PROGRAM_LABEL[k], reason: KIND_REASON[k], state: "available", priority: KIND_PRIORITY[k] });
   }
 
