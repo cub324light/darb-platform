@@ -138,6 +138,14 @@ export function ensureWorkspace(u: DarbUser): DarbUser {
   return { ...u, workspace: ws };
 }
 
+/* Workspace الطالب الحالي — نقطة القراءة الموحّدة للمستهلكين (المواد/المهارات).
+   يمرّ عبر ensureWorkspace (طبقة الترحيل الوحيدة التي تقرأ activeTracks القديمة). */
+export function activeWorkspace(): Workspace {
+  const u = loadUser();
+  if (!u) return { modules: [], updatedAt: Date.now() };
+  return ensureWorkspace(u).workspace ?? { modules: [], updatedAt: Date.now() };
+}
+
 /* يحفظ Workspace داخل المستخدم — المزامنة السحابية تركبه مع بقية بيانات المستخدم. */
 export function saveWorkspace(ws: Workspace): DarbUser | null {
   const u = loadUser();
