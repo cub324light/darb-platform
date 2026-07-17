@@ -6,7 +6,10 @@
 
 import type { ModuleId, ExamMemberId } from "./types";
 import { moduleDef, memberDef, isGroup } from "./registry";
-import { QUDURAT_GUIDE, type GuideSection } from "./guides";
+import {
+  QUDURAT_GUIDE, TAHSILI_GUIDE, STEP_GUIDE, IELTS_GUIDE, TOEFL_GUIDE,
+  DUOLINGO_GUIDE, CPC_GUIDE, ITC_GUIDE, type GuideSection,
+} from "./guides";
 
 export interface SubjectDef { name: string; color: string; }
 
@@ -76,6 +79,7 @@ const MODULE_CONTENT: Record<ModuleId, ModuleContent> = {
     intro: "التحصيلي — يقيس فهمك لمواد الثانوي العلمية، مطلوبٌ للتخصصات العلمية والصحية.",
     subjects: TAHSILI_SUBJECTS,
     examKey: "تحصيلي",
+    guide: TAHSILI_GUIDE, // «ابدأ من هنا» — يشمل قسم التحصيلي المبكر
   },
   english: {
     kind: "hub",
@@ -112,12 +116,12 @@ const PROG_ITC: SubjectDef[] = [
 ];
 
 const MEMBER_CONTENT: Record<ExamMemberId, ModuleContent> = {
-  step:     { kind: "study", intro: "اختبار STEP — إثبات إنجليزي معياري.", subjects: LANG_STEP, examKey: "ستيب" },
-  ielts:    { kind: "study", intro: "اختبار IELTS — إثبات إنجليزي دولي.", subjects: LANG_IELTS, examKey: "ايلتس" },
-  toefl:    { kind: "study", intro: "اختبار TOEFL — إثبات إنجليزي دولي.", subjects: LANG_TOEFL, examKey: "توفل" },
-  duolingo: { kind: "study", intro: "اختبار Duolingo — إثبات إنجليزي سريع.", subjects: LANG_DUO, examKey: "دوليقو" },
-  aramco:   { kind: "study", intro: "برنامج أرامكو (CPC) — تحضير الإنجليزي والرياضيات.", subjects: PROG_CPC, examKey: "CPC" },
-  itc:      { kind: "study", intro: "مسار ITC — الإنجليزي والرياضيات والمنطق.", subjects: PROG_ITC, examKey: "ITC" },
+  step:     { kind: "study", intro: "اختبار STEP — إثبات إنجليزي معياري.", subjects: LANG_STEP, examKey: "ستيب", guide: STEP_GUIDE },
+  ielts:    { kind: "study", intro: "اختبار IELTS — إثبات إنجليزي دولي.", subjects: LANG_IELTS, examKey: "ايلتس", guide: IELTS_GUIDE },
+  toefl:    { kind: "study", intro: "اختبار TOEFL — إثبات إنجليزي دولي.", subjects: LANG_TOEFL, examKey: "توفل", guide: TOEFL_GUIDE },
+  duolingo: { kind: "study", intro: "اختبار Duolingo — إثبات إنجليزي سريع.", subjects: LANG_DUO, examKey: "دوليقو", guide: DUOLINGO_GUIDE },
+  aramco:   { kind: "study", intro: "برنامج أرامكو (CPC) — تحضير الإنجليزي والرياضيات.", subjects: PROG_CPC, examKey: "CPC", guide: CPC_GUIDE },
+  itc:      { kind: "study", intro: "مسار ITC — الإنجليزي والرياضيات والمنطق.", subjects: PROG_ITC, examKey: "ITC", guide: ITC_GUIDE },
 };
 
 /* واصف الوحدة العليا — يرمي إن كانت مجموعةً (المجموعة تُعرض بأعضائها، لا بفضاءٍ مباشر). */

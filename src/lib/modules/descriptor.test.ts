@@ -35,7 +35,7 @@ test("استمرارية البيانات: مواد القياس تطابق ال
   assert.deepEqual(moduleContent("tahsili").subjects?.map((s) => s.name), ["أحياء", "فيزياء", "رياضيات", "كيمياء"]);
 });
 
-test("«ابدأ من هنا»: للقدرات دليلٌ بأقسامٍ صالحة، ولا دليل للتحصيلي (خاصٌّ بالوحدة)", () => {
+test("«ابدأ من هنا»: أدلّةٌ صالحة لوحدات القياس وأعضائها، ولا دليل لعوالم الروابط (hub)", () => {
   const g = moduleContent("qudurat").guide;
   assert.ok(g && g.length >= 10, "دليل القدرات ناقص");
   for (const s of g) {
@@ -43,7 +43,27 @@ test("«ابدأ من هنا»: للقدرات دليلٌ بأقسامٍ صال�
     assert.ok(Array.isArray(s.blocks) && s.blocks.length > 0, `قسم «${s.title}» بلا محتوى`);
   }
   assert.ok(g.some((s) => s.title.includes("ما هو")), "قسم التعريف غائب");
-  assert.equal(moduleContent("tahsili").guide, undefined, "التحصيلي لا يملك دليلاً بعد");
+
+  /* التحصيلي صار له دليلٌ يشمل قسم «التحصيلي المبكر» بالنصّ الرسمي المحدَّد. */
+  const t = moduleContent("tahsili").guide;
+  assert.ok(t && t.length > 0, "دليل التحصيلي غائب");
+  const early = t.find((s) => s.title.includes("التحصيلي المبكر"));
+  assert.ok(early, "قسم التحصيلي المبكر غائب");
+  assert.ok(
+    early!.blocks.some((b) => b.text?.includes("نفس اختبار التحصيلي العادي تماماً")),
+    "نصّ التحصيلي المبكر الرسمي غير مطابق",
+  );
+
+  /* كل عضوٍ (لغة/برنامج) له دليلٌ ينتهي بقسم «كيف يساعدك درب؟» الثابت. */
+  for (const m of MEMBER_DEFS) {
+    const mg = memberContent(m.id).guide;
+    assert.ok(mg && mg.length > 0, `دليل العضو غائب: ${m.id}`);
+    assert.equal(mg[mg.length - 1].title, "كيف يساعدك درب؟", `ذيل «كيف يساعدك درب؟» غائب: ${m.id}`);
+  }
+
+  /* عوالم الروابط (المدرسة/الجامعة/مجموعات) بلا دليلٍ تعريفي. */
+  assert.equal(moduleContent("school").guide, undefined, "hub لا يحمل دليلاً");
+  assert.equal(moduleContent("university").guide, undefined, "hub لا يحمل دليلاً");
 });
 
 test("المجموعات تُعرض بأعضائها لا بفضاءٍ مباشر", () => {
