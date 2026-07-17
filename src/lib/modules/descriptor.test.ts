@@ -35,6 +35,17 @@ test("استمرارية البيانات: مواد القياس تطابق ال
   assert.deepEqual(moduleContent("tahsili").subjects?.map((s) => s.name), ["أحياء", "فيزياء", "رياضيات", "كيمياء"]);
 });
 
+test("«ابدأ من هنا»: للقدرات دليلٌ بأقسامٍ صالحة، ولا دليل للتحصيلي (خاصٌّ بالوحدة)", () => {
+  const g = moduleContent("qudurat").guide;
+  assert.ok(g && g.length >= 10, "دليل القدرات ناقص");
+  for (const s of g) {
+    assert.ok(s.title.trim() !== "", "قسم دليل بلا عنوان");
+    assert.ok(Array.isArray(s.blocks) && s.blocks.length > 0, `قسم «${s.title}» بلا محتوى`);
+  }
+  assert.ok(g.some((s) => s.title.includes("ما هو")), "قسم التعريف غائب");
+  assert.equal(moduleContent("tahsili").guide, undefined, "التحصيلي لا يملك دليلاً بعد");
+});
+
 test("المجموعات تُعرض بأعضائها لا بفضاءٍ مباشر", () => {
   assert.equal(opensDirectSpace("english"), false);
   assert.equal(opensDirectSpace("programs"), false);

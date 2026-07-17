@@ -6,6 +6,7 @@
 
 import type { ModuleId, ExamMemberId } from "./types";
 import { moduleDef, memberDef, isGroup } from "./registry";
+import { QUDURAT_GUIDE, type GuideSection } from "./guides";
 
 export interface SubjectDef { name: string; color: string; }
 
@@ -22,6 +23,7 @@ export interface ModuleContent {
   subjects?: SubjectDef[];      // study: المواد — أسماؤها تطابق التخزين لاستمرارية البيانات
   examKey?: string;             // study: مفتاح موعد الاختبار في trackExamDates (توافق مؤقّت مُصنَّف)
   hub?: HubLink[];              // hub: روابط العالم القائم
+  guide?: GuideSection[];       // «ابدأ من هنا»: دليلٌ تعريفيٌّ يُعرَض أول تبويب في الوحدة
 }
 
 /* ── ألوان المواد (مطابقة لنظام المواد القائم — استمرارية بصرية وبيانات) ── */
@@ -67,6 +69,7 @@ const MODULE_CONTENT: Record<ModuleId, ModuleContent> = {
     intro: "القدرات العامة — قِس مهارات التفكير الكمي واللفظي، أساس القبول الجامعي.",
     subjects: QUDURAT_SUBJECTS,
     examKey: "قدرات",
+    guide: QUDURAT_GUIDE, // «ابدأ من هنا» — الدليل الكامل للقدرات
   },
   tahsili: {
     kind: "study",

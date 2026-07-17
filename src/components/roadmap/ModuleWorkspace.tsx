@@ -10,7 +10,7 @@ import { readLifeContext, lifeEngine } from "@/lib/lifeEngine";
 import { loadTrackExamDates, saveTrackExamDates, loadResults, saveResults, currentScoreMap } from "@/lib/storage";
 import { trackEvent } from "@/lib/analytics";
 import { MODULE_STATE_LABEL, type ModuleState } from "@/lib/modules";
-import type { ModuleContent } from "@/lib/modules";
+import type { ModuleContent, GuideSection } from "@/lib/modules";
 import ExamDateButton from "@/components/ExamDateButton";
 import dynamic from "next/dynamic";
 const LeaksPlanner = dynamic(() => import("@/components/LeaksPlanner"), { ssr: false });
@@ -90,34 +90,27 @@ export default function ModuleWorkspace({
         <p className="t-caption mt-2.5 leading-relaxed" style={{ color: "var(--text-muted)" }}>{content.intro}</p>
       </div>
 
-      {/* ── ٢) ماذا أفعل الآن (من Life Engine) ── */}
-      <NowFromLifeEngine />
-
       {content.kind === "study" ? (
         <>
-          {/* ── ٣) الخطة: موعد الاختبار + جدولي ── */}
+          {/* ── ابدأ من هنا: الدليل الكامل (أول تبويب، دائمٌ في الوحدة) ── */}
+          {content.guide && <StartHereGuide sections={content.guide} color={color} />}
+
+          {/* ── ماذا أفعل الآن (من Life Engine) ── */}
+          <NowFromLifeEngine />
+
+          {/* ── التأسيس + التدريب ── */}
           <section className="flex flex-col gap-3">
-            <p className="eyebrow px-1">الخطة</p>
-            {examKey && (
-              <div className="rounded-2xl px-4 py-3 flex items-center gap-3" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold t-body" style={{ color: "var(--text)" }}>موعد الاختبار</p>
-                  <p className="t-caption mt-0.5" style={{ color: dl == null ? "var(--text-muted)" : dl < 0 ? "var(--text-muted)" : dl <= 3 ? "#EF4444" : dl <= 14 ? "#F97316" : "#10B981" }}>
-                    {dl == null ? "غير محدّد" : dl < 0 ? "انتهى" : dl === 0 ? "اليوم — بالتوفيق" : `${dl} يوم على الموعد`}
-                  </p>
-                </div>
-                <ExamDateButton value={d} color={color} min={todayStr()} onChange={setExamDate} onClear={clearExamDate} />
-              </div>
-            )}
-            <Link href="/plan" className="rounded-2xl py-3 px-4 flex items-center gap-3 no-underline transition active:scale-[0.98]"
-              style={{ background: "linear-gradient(135deg, var(--accent), var(--accent-hi))", color: "#fff" }}>
-              <span className="text-[20px]">🗓️</span>
-              <span className="flex-1 text-right font-black t-body">خطتي — جدول اليوم والأسبوع</span>
-              <span className="text-[18px] font-black">←</span>
-            </Link>
+            <p className="eyebrow px-1">المذاكرة</p>
+            {content.subjects && <StudyBody subjects={content.subjects} />}
           </section>
 
-          {/* ── ٤) نتائجي: الدرجة + الرضا/الإعادة ── */}
+          {/* ── التجميعات ── */}
+          <section className="flex flex-col gap-3">
+            <p className="eyebrow px-1">التجميعات</p>
+            <LeaksPlanner color="var(--gold)" daysLeft={d ? daysLeft(d) : null} />
+          </section>
+
+          {/* ── نتائجي: الدرجة + الرضا/الإعادة ── */}
           <section className="flex flex-col gap-3">
             <p className="eyebrow px-1">نتائجي</p>
             <div className="rounded-2xl p-4" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
@@ -144,29 +137,47 @@ export default function ModuleWorkspace({
             </div>
           </section>
 
-          {/* ── ٥) الفضاء: مواد الواصف (تأسيس/تدريب) + مخطّط التسريبات ── */}
+          {/* ── خطتي: موعد الاختبار + جدولي ── */}
           <section className="flex flex-col gap-3">
-            <p className="eyebrow px-1">المذاكرة</p>
-            {content.subjects && <StudyBody subjects={content.subjects} />}
-            <LeaksPlanner color="var(--gold)" daysLeft={d ? daysLeft(d) : null} />
+            <p className="eyebrow px-1">خطتي</p>
+            {examKey && (
+              <div className="rounded-2xl px-4 py-3 flex items-center gap-3" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold t-body" style={{ color: "var(--text)" }}>موعد الاختبار</p>
+                  <p className="t-caption mt-0.5" style={{ color: dl == null ? "var(--text-muted)" : dl < 0 ? "var(--text-muted)" : dl <= 3 ? "#EF4444" : dl <= 14 ? "#F97316" : "#10B981" }}>
+                    {dl == null ? "غير محدّد" : dl < 0 ? "انتهى" : dl === 0 ? "اليوم — بالتوفيق" : `${dl} يوم على الموعد`}
+                  </p>
+                </div>
+                <ExamDateButton value={d} color={color} min={todayStr()} onChange={setExamDate} onClear={clearExamDate} />
+              </div>
+            )}
+            <Link href="/plan" className="rounded-2xl py-3 px-4 flex items-center gap-3 no-underline transition active:scale-[0.98]"
+              style={{ background: "linear-gradient(135deg, var(--accent), var(--accent-hi))", color: "#fff" }}>
+              <span className="text-[20px]">🗓️</span>
+              <span className="flex-1 text-right font-black t-body">خطتي — جدول اليوم والأسبوع</span>
+              <span className="text-[18px] font-black">←</span>
+            </Link>
           </section>
         </>
       ) : (
         /* ── hub: روابط العالم القائم (المدرسة/الجامعة) ── */
-        <section className="flex flex-col gap-3">
-          <p className="eyebrow px-1">الروابط</p>
-          {(content.hub ?? []).map((l) => (
-            <Link key={l.href + l.label} href={l.href} className="rounded-2xl p-4 flex items-center gap-3 no-underline transition active:scale-[0.98]"
-              style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-              <span className="text-[23px] flex-shrink-0">{l.icon}</span>
-              <div className="flex-1 min-w-0">
-                <p className="font-black t-body" style={{ color: "var(--text)" }}>{l.label}</p>
-                {l.desc && <p className="t-caption mt-0.5" style={{ color: "var(--text-muted)" }}>{l.desc}</p>}
-              </div>
-              <span className="text-[18px] font-black" style={{ color: "var(--text-muted)" }}>←</span>
-            </Link>
-          ))}
-        </section>
+        <>
+          <NowFromLifeEngine />
+          <section className="flex flex-col gap-3">
+            <p className="eyebrow px-1">الروابط</p>
+            {(content.hub ?? []).map((l) => (
+              <Link key={l.href + l.label} href={l.href} className="rounded-2xl p-4 flex items-center gap-3 no-underline transition active:scale-[0.98]"
+                style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+                <span className="text-[23px] flex-shrink-0">{l.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-black t-body" style={{ color: "var(--text)" }}>{l.label}</p>
+                  {l.desc && <p className="t-caption mt-0.5" style={{ color: "var(--text-muted)" }}>{l.desc}</p>}
+                </div>
+                <span className="text-[18px] font-black" style={{ color: "var(--text-muted)" }}>←</span>
+              </Link>
+            ))}
+          </section>
+        </>
       )}
     </div>
   );
@@ -187,5 +198,61 @@ function NowFromLifeEngine() {
       <span className="t-caption font-black px-3 rounded-lg flex-shrink-0 flex items-center whitespace-nowrap"
         style={{ height: "var(--btn-h-sm)", background: "var(--accent)", color: "#fff" }}>{top.cta} ←</span>
     </Link>
+  );
+}
+
+/* «ابدأ من هنا» — الدليل الكامل للوحدة، أول تبويبٍ قابلٍ للطيّ (دائمٌ ومتاحٌ في أي وقت). */
+function StartHereGuide({ sections, color }: { sections: GuideSection[]; color: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <section className="rounded-2xl overflow-hidden" style={{ border: `1.5px solid ${color}55`, background: `color-mix(in srgb, ${color} 6%, var(--surface))` }}>
+      <button onClick={() => setOpen((o) => !o)} aria-expanded={open}
+        className="w-full p-4 flex items-center gap-3 text-right transition active:scale-[0.99]">
+        <span className="text-[24px] flex-shrink-0" aria-hidden="true">📖</span>
+        <div className="flex-1 min-w-0">
+          <p className="t-title font-black" style={{ color: "var(--text)" }}>ابدأ من هنا</p>
+          <p className="t-caption mt-0.5 leading-relaxed" style={{ color: "var(--text-muted)" }}>
+            الدليل الكامل — ما هو الاختبار؟ الفرص، المحوسب والورقي، الرسوم، التسجيل، متى تبدأ، أفضل المصادر، والأسئلة الشائعة.
+          </p>
+        </div>
+        <span className="t-body font-black flex-shrink-0" style={{ color }}>{open ? "▲" : "▼"}</span>
+      </button>
+
+      {open && (
+        <div className="px-4 pb-5 flex flex-col gap-5">
+          {sections.map((sec, i) => (
+            <div key={sec.title} className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                {sec.icon && <span className="text-[18px]" aria-hidden="true">{sec.icon}</span>}
+                <h3 className="t-title font-black" style={{ color }}>{sec.title}</h3>
+              </div>
+              {sec.blocks.map((b, j) => (
+                <div key={j} className="flex flex-col gap-1.5">
+                  {b.sub && <p className="t-body font-black" style={{ color: "var(--text)" }}>{b.sub}</p>}
+                  {b.text && <p className="t-body leading-relaxed" style={{ color: "var(--text-muted)" }}>{b.text}</p>}
+                  {b.bullets && (
+                    <ul className="flex flex-col gap-1.5">
+                      {b.bullets.map((x, k) => (
+                        <li key={k} className="t-body flex items-start gap-2.5" style={{ color: "var(--text-muted)" }}>
+                          <span className="flex-shrink-0 mt-2 w-1.5 h-1.5 rounded-full" style={{ background: color }} />
+                          <span className="leading-relaxed">{x}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {b.note && (
+                    <p className="t-body leading-relaxed rounded-xl p-3"
+                      style={{ background: "color-mix(in srgb, var(--gold) 12%, var(--surface))", border: "1px solid color-mix(in srgb, var(--gold) 30%, transparent)", color: "var(--text)" }}>
+                      {b.note}
+                    </p>
+                  )}
+                </div>
+              ))}
+              {i < sections.length - 1 && <div className="h-px mt-2" style={{ background: "var(--border)" }} />}
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

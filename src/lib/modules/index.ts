@@ -7,3 +7,4 @@ export * from "./workspace";
 export * from "./eligibility";
 export * from "./descriptor";
 export * from "./consume";
+export * from "./guides";
