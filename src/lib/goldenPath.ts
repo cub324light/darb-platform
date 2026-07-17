@@ -7,7 +7,7 @@
    التصميم: دالة نقيّة واحدة computeGoldenPath(input) → GoldenPathState.
    بانيان يفوّضان لها: loadGoldenPath() (عميل، من localStorage)
    و goldenPathFromProfile(profile) (خادم، من DuwairbProfile المُنظَّف). */
-import { subjectsForTracks, type TrackId, type StudyGoalType } from "./tracks";
+import { subjectsForTracks, type TrackId } from "./tracks";
 import type { DuwairbProfile } from "./duwairb";
 import { loadUser, loadGoals, currentScoreMap } from "./storage";
 import { buildDuwairbProfile } from "./duwairb";
@@ -43,7 +43,7 @@ export interface GoldenPathInput {
   eduStatus?: string;            // ثانوي/جامعي/خريج
   grade?: string;               // أول/ثاني/ثالث ثانوي
   gapYear?: boolean;            // خريج بسنة استدراك
-  goal?: StudyGoalType;
+  uniDest?: boolean;            // الوجهة جامعية (مشتقّة من targets/الوجهة — لا goal)
   semester: SemesterPhase;
   onVacation: boolean;
   scores: { qudurat?: number; tahsili?: number; step?: number; highschool?: number };
@@ -87,7 +87,7 @@ function detectNeedsEnglish(university?: string, stepTarget?: number): boolean {
 /* ════════ المحرّك النقي ════════ */
 export function computeGoldenPath(inp: GoldenPathInput): GoldenPathState {
   const { scores, targets } = inp;
-  const isUniGoal = inp.goal === "university" || inp.goal === "major";
+  const isUniGoal = !!inp.uniDest;
 
   const milestone = (label: string): GoldenMilestone | undefined =>
     inp.daysToNearestExam != null && inp.nearestExamLabel
@@ -374,7 +374,7 @@ export function loadGoldenPath(now: Date = new Date()): GoldenPathState {
     eduStatus: u?.studyLevel,
     grade: u?.grade,
     gapYear: u?.gapYear,
-    goal: u?.goal,
+    uniDest: (u?.targets ?? []).some((t) => t === "university" || t === "major"),
     semester: currentSemester(now),
     onVacation: false,
     scores: { qudurat: qScore, tahsili: tScore, step: sScore, highschool: goals.highschoolPct },
@@ -401,7 +401,7 @@ export function goldenPathFromProfile(profile: DuwairbProfile, now: Date = new D
     eduStatus: profile.eduStatus,
     grade: profile.grade,
     gapYear: profile.gapYear,
-    goal: profile.goalType,
+    uniDest: !!(profile.university || profile.major),
     semester: currentSemester(now),
     onVacation: false,
     scores: {

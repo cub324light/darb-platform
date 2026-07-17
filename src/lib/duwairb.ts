@@ -12,7 +12,7 @@ import {
 import { loadSkillProgress, overallStats } from "./skillProgress";
 import { skillsForTracks, SKILL_BY_ID } from "./globalSkills";
 import { estimateReadiness, daysUntil } from "./insights";
-import { getTrack, type TrackId, type StudyGoalType } from "./tracks";
+import { getTrack, type TrackId } from "./tracks";
 import { findMajor, requirementsText } from "./university";
 import { duwairbState } from "./lifeEngine";
 
@@ -48,7 +48,6 @@ export interface DuwairbProfile {
   focus?: string;                         // تركيز الطالب الأول (تسمية عربية) — ADR §2.6
   retakeIntent?: string[];                // اختبارات اختار إعادتها (من Life Engine، لا من u.gapYear)
   stage?: string;                         // المرحلة الجاهزة (first/second/third/university/graduate)
-  goalType?: StudyGoalType;               // توافق مؤقّت: يقرأه «المسار الذهبي» فقط (يُزال معه)
   eduStatus?: string;                     // الحالة التعليمية: ثانوي/جامعي/خريج
   universityYear?: string;                // السنة الدراسية (للجامعي)
   gapYear?: boolean;                      // توافق مؤقّت: يقرأه «المسار الذهبي» فقط (يُزال معه)
@@ -164,7 +163,6 @@ export function buildDuwairbProfile(): { profile: DuwairbProfile; goalLine: stri
     focus: state.focus ? (FOCUS_LABEL[state.focus] ?? state.focus) : undefined,
     retakeIntent: state.retakeIntent.length ? state.retakeIntent : undefined,
     stage: state.stage,
-    goalType: u.goal || undefined, // توافق مؤقّت: يقرأه «المسار الذهبي» فقط
     eduStatus: u.studyLevel || undefined,
     universityYear: u.universityYear || undefined,
     gapYear: u.gapYear || undefined,

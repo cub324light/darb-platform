@@ -12,7 +12,6 @@ import type { DarbUser, DarbGoals } from "./storage";
 import { computeStudentPhase, type StudentPhase } from "./phase";
 import { stageOf } from "./darbKnowledge";
 import { uniStage } from "./uniJourney";
-import type { TrackId } from "./tracks";
 
 export type PersonaKey =
   | "hs-first" | "hs-second" | "hs-third"
@@ -45,15 +44,15 @@ const LABEL: Record<PersonaKey, string> = {
 export function studentPersona(user?: DarbUser | null, goals?: DarbGoals | null): StudentPersona {
   const phase = computeStudentPhase(user);
   const g = goals ?? {};
-  const tracks: TrackId[] = user?.activeTracks?.length ? user.activeTracks : (user?.track ? [user.track] : []);
-  const studyGoals = user?.goals ?? [];
+  /* المصدر الواحد: التوجّه من الوجهات (targets) لا activeTracks/goals */
+  const targets = user?.targets ?? [];
 
   const companyFocus =
     g.cpcTarget != null || g.itcTarget != null ||
-    tracks.includes("CPC") || tracks.includes("ITC");
+    targets.includes("aramco") || targets.includes("itc") || targets.includes("niti");
   const uniFocus =
     !!(g.university || g.major || g.majorId || g.universityId) ||
-    studyGoals.includes("university") || studyGoals.includes("major");
+    targets.includes("university") || targets.includes("major");
   const examFocus =
     g.quduratTarget != null || g.tahsiliTarget != null || g.stepTarget != null;
 

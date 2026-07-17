@@ -46,7 +46,7 @@ test("التوجّه: جامعة من goals، شركة من cpc/itc (tilt لا �
   assert.equal(both.companyFocus, true);
 });
 
-test("companyFocus يُشتق أيضاً من مسارات CPC/ITC النشطة", () => {
-  const p = studentPersona(u({ studyLevel: "ثانوي", grade: "ثالث ثانوي", activeTracks: ["قدرات", "CPC"] }));
+test("companyFocus يُشتق من وجهات البرامج (أرامكو/ITC/NITI)", () => {
+  const p = studentPersona(u({ studyLevel: "ثانوي", grade: "ثالث ثانوي", targets: ["aramco"] }));
   assert.equal(p.companyFocus, true);
 });

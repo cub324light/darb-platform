@@ -13,7 +13,8 @@ import { buildDuwairbProfile } from "./duwairb";
 import { computeDuwairbScore } from "./coachScore";
 import { longestStreak, activeDaysWithin } from "./insights";
 import { phaseExperience } from "./experience";
-import { goalLabel, primaryGoal, getTrack, type TrackId } from "./tracks";
+import { getTrack, type TrackId } from "./tracks";
+import { targetsFor } from "./targets";
 
 /* ── مدخلات الملخّص — كلّها من إشاراتٍ قائمة ── */
 export interface ParentDigestInput {
@@ -193,13 +194,14 @@ export function readParentDigest(): ParentDigest | null {
 
   const doneLessons = (() => { try { return loadList<string>("darb_done_lessons").length; } catch { return 0; } })();
   const goals = loadGoals();
-  const goalId = primaryGoal(user?.goals) ?? user?.goal;
+  /* المصدر الواحد: عنوان الوجهة من targets (لا goal) */
+  const destLabel = targetsFor(user?.targets)[0]?.label ?? null;
   const primaryExam = profile.exams?.[0];
 
   const input: ParentDigestInput = {
     name: profile.name ?? user?.name ?? null,
     stageLabel: phaseExperience(user).stageLabel ?? null,
-    goalLabel: goalLabel(goalId) ?? (goals.major ? `تخصص ${goals.major}` : null),
+    goalLabel: destLabel ?? (goals.major ? `تخصص ${goals.major}` : null),
     hoursThisWeek, hoursLastWeek, sessionsThisWeek, sessionsLastWeek,
     commitmentPct: score.total,
     daysSinceLastSession,

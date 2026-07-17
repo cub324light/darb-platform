@@ -8,7 +8,6 @@ import { formatProfileBlock, sessionIntervalRule, type DuwairbProfile, type Duwa
 import { strategyFromProfile, formatStrategyBlock, type PlanningPrefs, type AllocationPref } from "@/lib/strategy";
 import { goldenPathFromProfile, formatGoldenPathBlock, priorityFocusSubjects } from "@/lib/goldenPath";
 import { kbGroundingFor } from "@/lib/kb/server";
-import type { StudyGoalType } from "@/lib/tracks";
 import type { CalendarSignals } from "@/lib/academicCalendar";
 
 /* firebase-admin (المصادقة + تسجيل الاستهلاك) يحتاج Node APIs */
@@ -213,7 +212,6 @@ function cleanNum(v: unknown, min: number, max: number): number | undefined {
   if (typeof v !== "number" || !Number.isFinite(v)) return undefined;
   return Math.max(min, Math.min(max, Math.round(v)));
 }
-const GOAL_TYPES = new Set<string>(["qudurat", "tahsili", "step", "university", "major"]);
 function sanitizeProfile(raw: unknown): DuwairbProfile | null {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
@@ -275,7 +273,6 @@ function sanitizeProfile(raw: unknown): DuwairbProfile | null {
     focus: cleanStr(r.focus, 24),
     retakeIntent: retakeIntent?.length ? retakeIntent : undefined,
     stage: cleanStr(r.stage, 16),
-    goalType: GOAL_TYPES.has(r.goalType as string) ? (r.goalType as StudyGoalType) : undefined,
     eduStatus: cleanStr(r.eduStatus, 12),
     universityYear: cleanStr(r.universityYear, 12),
     gapYear: typeof r.gapYear === "boolean" ? r.gapYear : undefined,
