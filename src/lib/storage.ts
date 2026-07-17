@@ -99,9 +99,15 @@ export function saveUser(user: DarbUser) {
 export function activateTrack(id: TrackId): DarbUser | null {
   const u = loadUser();
   if (!u) return null;
-  const current = u.activeTracks?.length ? u.activeTracks : (u.track ? [u.track] : []);
-  if (current.includes(id)) return u;
-  const next: DarbUser = { ...u, activeTracks: [...current, id] };
+  /* المصدر الواحد: «التفعيل» يضيف وحدةً/عضواً إلى الـWorkspace (لا activeTracks) */
+  const withWs = ensureWorkspace(u);
+  let ws = withWs.workspace ?? { modules: [], updatedAt: Date.now() };
+  const mid = LEGACY_TRACK_TO_MODULE[id];
+  const mem = LEGACY_TRACK_TO_MEMBER[id];
+  if (mid) ws = addModule(ws, mid);
+  else if (mem) ws = addMember(ws, mem);
+  else return withWs; // مدرسه/غير معروف — لا اختبار يُضاف
+  const next: DarbUser = { ...withWs, workspace: ws };
   saveUser(next);
   return next;
 }

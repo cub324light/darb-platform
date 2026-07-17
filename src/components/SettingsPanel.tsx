@@ -1,17 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { TRACKS, TRACK_GROUPS, LANGUAGE_TESTS, trackEligibilityFor, type TrackId } from "@/lib/tracks";
-import { examBoard, type BoardStage, type ExamBoardId } from "@/lib/examEligibility";
-import { currentRegistrationStatus } from "@/lib/examProvider";
-import { isAfterFirstTerm } from "@/lib/academicCalendar";
 import { loadUser, saveUser, resetAll } from "@/lib/storage";
-
-/* بطاقة اختبار القياس (قدرات/تحصيلي/مبكر) ↔ معرّف examBoard */
-const QIYAS_EXAM_TRACK: Record<ExamBoardId, TrackId> = {
-  qudurat: "قدرات", tahsiliEarly: "تحصيلي مبكر", tahsiliRegular: "تحصيلي",
-};
-const QIYAS_IDS: TrackId[] = ["قدرات", "تحصيلي", "تحصيلي مبكر"];
 import { exportData } from "@/lib/dataExport";
 import { EmailVerifyNotice } from "@/components/EmailVerify";
 import type { User } from "firebase/auth";
@@ -23,7 +13,6 @@ import type { FirebaseError } from "firebase/app";
 export default function SettingsButton() {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState(typeof window !== "undefined" ? loadUser() : null);
-  const [activeTracksState, setActiveTracksState] = useState<TrackId[]>([]);
   const [isPrivate, setIsPrivate] = useState(false);
 
   // Cloud auth state
@@ -50,27 +39,10 @@ export default function SettingsButton() {
     const id = setTimeout(() => {
       const u = loadUser();
       setUser(u);
-      setActiveTracksState(u?.activeTracks ?? (u?.track ? [u.track] : []));
       setIsPrivate((u as (typeof u & { isPrivate?: boolean }))?.isPrivate ?? false);
     }, 0);
     return () => clearTimeout(id);
   }, [open]);
-
-  const toggleActiveTrack = (id: TrackId) => {
-    if (!user) return;
-    const prev = activeTracksState;
-    /* لا حدّ عددي — الأهلية (examEligibility) هي البوّابة الوحيدة للإضافة */
-    const next = prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id];
-    if (next === prev) return;
-    const primaryTrack = next[0] ?? user.track;
-    if (primaryTrack !== user.track &&
-        !confirm("تغيير مسارك الأساسي يبدّل خريطتك وأولوياتك. متأكد؟")) return;
-    const updated = { ...user, track: primaryTrack, activeTracks: next };
-    saveUser(updated);
-    setUser(updated);
-    setActiveTracksState(next);
-    import("@/lib/firestore").then(({ syncUser }) => { syncUser({ track: primaryTrack }); });
-  };
 
   const togglePrivacy = () => {
     if (!user) return;
@@ -293,69 +265,17 @@ export default function SettingsButton() {
           )}
         </div>
 
-        {/* الاختبارات — البوّابة الوحيدة examEligibility، بلا حدّ عددي.
-            قياس: يظهر ما تسمح به المرحلة/النافذة/الهدف · اللغات: دائماً بلا حدّ ·
-            برامج القبول: حسب أهلية القبول · المدرسة قسم مستقل (ليست هنا). */}
+        {/* الاختبارات تُدار في «مساري» — المصدر الواحد. لا محرّر مسارات هنا (لا نظامين). */}
         <p className="label mb-3">اختباراتك</p>
-        <div className="flex flex-col gap-3.5 mb-6">
-          {(() => {
-            const g = user?.grade;
-            const stage: BoardStage | null =
-              user?.studyLevel === "جامعي" ? "university"
-              : user?.studyLevel === "خريج" ? "graduate"
-              : g === "أول ثانوي" ? "first" : g === "ثاني ثانوي" ? "second" : g === "ثالث ثانوي" ? "third" : null;
-            const d = new Date();
-            const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-            const isTargeted = !!(user?.targets?.length || user?.goals?.some((x) => x === "tahsili" || x === "university" || x === "major"));
-            const board = stage ? examBoard({
-              stage, isUniGrad: user?.gradStage === "خريج جامعة",
-              afterFirstTerm: isAfterFirstTerm(), isTargeted,
-              windows: {
-                qudurat: currentRegistrationStatus("قدرات", today),
-                tahsiliEarly: currentRegistrationStatus("تحصيلي مبكر", today),
-                tahsiliRegular: currentRegistrationStatus("تحصيلي", today),
-              },
-            }) : [];
-            const qiyasHint = new Map(board.map((e) => [QIYAS_EXAM_TRACK[e.id], e.hint] as const));
-            const elig = stage ? trackEligibilityFor({ status: user?.studyLevel, grade: user?.grade, gradStage: user?.gradStage }) : [];
-            const showTrack = (id: TrackId): boolean =>
-              QIYAS_IDS.includes(id) ? qiyasHint.has(id)
-              : LANGUAGE_TESTS.includes(id) ? true
-              : elig.some((e) => e.id === id && e.status === "available");
-
-            const groups = TRACK_GROUPS.map((grp) => ({ label: grp.label, ids: grp.ids.filter(showTrack) })).filter((grp) => grp.ids.length);
-            if (!groups.length) return (
-              <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>لا اختبارات في مرحلتك الآن — ركّز على المدرسة وأساسك.</p>
-            );
-
-            return groups.map((grp) => (
-              <div key={grp.label}>
-                <p className="text-[11px] font-black tracking-widest mb-2 px-0.5" style={{ color: "var(--text-muted)" }}>
-                  ── {grp.label} ──
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {grp.ids.map((id) => {
-                    const t = TRACKS.find((tr) => tr.id === id)!;
-                    const selected = activeTracksState.includes(id);
-                    const hint = qiyasHint.get(id);
-                    return (
-                      <button key={t.id} onClick={() => toggleActiveTrack(t.id)}
-                        className="rounded-xl p-3 text-right transition active:scale-[0.98] relative"
-                        style={{
-                          background: selected ? "color-mix(in srgb, var(--accent) 12%, transparent)" : "var(--surface2)",
-                          border: `2px solid ${selected ? "var(--accent)" : "var(--border)"}`,
-                        }}>
-                        {selected && <span className="absolute top-2 left-2.5 text-[var(--accent-light)] text-sm font-black">✓</span>}
-                        <p className="font-bold text-[16px] text-[var(--text)]">{t.title}</p>
-                        <p className="text-[11px] text-[var(--text-muted)] mt-0.5 leading-snug">{hint ?? t.sub}</p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ));
-          })()}
-        </div>
+        <a href="/roadmap" className="rounded-2xl px-4 py-3.5 mb-6 flex items-center gap-3 no-underline"
+          style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+          <span className="text-[22px]" aria-hidden="true">🗺️</span>
+          <span className="flex-1 text-right">
+            <span className="block font-bold text-[16px] text-[var(--text)]">أدِر اختباراتك من «مساري»</span>
+            <span className="block text-[14px] text-[var(--text-muted)]">أضِف اختباراتك واحذفها وتابع تقدّمها هناك</span>
+          </span>
+          <span className="text-[var(--accent-light)]">←</span>
+        </a>
 
         {/* تخصيص الصفحة الرئيسية */}
         <p className="label mb-3">تخصيص الصفحة الرئيسية</p>

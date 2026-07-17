@@ -8,7 +8,7 @@ import {
   type RecContext,
   type Recommendation,
 } from "./recommendation";
-import { loadUser, loadStats, computeStreak } from "./storage";
+import { loadUser, loadStats, computeStreak, activeExamTrackIds } from "./storage";
 import { computeStudentPhase } from "./phase";
 import { canApplyUniversity } from "./darbKnowledge";
 import { loadGoldenPath } from "./goldenPath";
@@ -49,9 +49,8 @@ export function gatherRecommendationContext(now: number = Date.now()): RecContex
   const phase = computeStudentPhase(user);
   const d = new Date(now);
 
-  const ids = (user?.activeTracks?.length
-    ? user.activeTracks
-    : user?.track ? [user.track] : []) as TrackId[];
+  /* المصدر الواحد: اختبارات الطالب من Workspace (لا activeTracks) */
+  const ids = activeExamTrackIds() as TrackId[];
 
   return {
     now,
