@@ -1,101 +1,54 @@
-/* ─── «يفتح لك» — فرص القبول الاسترشادية لكل هدف من درجات الطالب ───
-   لخطوة الدرجات في التسجيل والتقرير الشخصي. لا يخترع أرقاماً: يشتقّ الحكم من بنوك
-   الدرجات القائمة (darbKnowledge) — أدنى طبقةٍ بين الاختبارات الحاكمة للهدف — ثم يطبّق
-   «صرامة» الهدف (CPC/طب/ابتعاث أصعب من الجامعة العامة/ITC). كل النتائج إرشادية تعليمية.
-   نقيّ وحتمي — لا واجهة، لا IO. */
+/* ─── «يفتح لك» — فرص القبول من شروط كل فرصة (لا من التقدير العام) ───
+   محوّلٌ رفيع: يحوّل وجهات الطالب + ميل تخصصه إلى فرصٍ، ويقيّم كلاً منها على درجاته عبر
+   المصدر الوحيد للشروط (admissionRequirements). لا أرقام هنا — كلها في ذلك الملف. */
 
 import {
-  getQuduratBand, getTahsiliBand, getStepBand, type BandTier,
-} from "../darbKnowledge";
+  evaluate, requirementById, ADMISSION_REQUIREMENTS_DISCLAIMER, type Scores, type OppIcon,
+} from "../admissionRequirements";
 
-export const OUTLOOK_DISCLAIMER =
-  "فرصٌ إرشادية تقريبية — القبول الفعلي بيد الجهات الرسمية وحدوده تُعلن سنوياً.";
+export const OUTLOOK_DISCLAIMER = ADMISSION_REQUIREMENTS_DISCLAIMER;
 
-export type OutlookIcon = "🟢" | "🟡" | "🔴" | "⚪";
-
-export interface OutlookItem {
-  id: string;
-  label: string;
-  icon: OutlookIcon;        // ⚪ = تحتاج درجةً لتقييمه
-  note: string;
-  needs?: string[];         // أسماء الاختبارات الناقصة لحساب الفرصة (إن ⚪)
-}
+export type OutlookIcon = OppIcon;
+export interface OutlookItem { id: string; label: string; icon: OutlookIcon; note: string; }
 
 export interface OutlookInput {
   targets: string[];              // من resolveGoals (university/aramco/itc/military/scholarship)
   trackType?: string;             // ميل التخصص (صحي/هندسي/حاسب/إداري/عام)
   qudurat?: number | null;
   tahsili?: number | null;
-  step?: number | null;           // درجة اللغة (STEP) — وكيل شرط اللغة للابتعاث
+  step?: number | null;
 }
 
-/* رتبة الطبقة (الأعلى أقوى) — لأخذ الأدنى بين اختبارات الهدف. */
-const TIER_RANK: Record<BandTier, number> = { excellent: 4, high: 3, good: 2, fair: 1, low: 0 };
-
-type Exam = "qudurat" | "tahsili" | "step";
-type Strictness = "lenient" | "normal" | "strict";
-
-/* عتبات الأيقونة حسب صرامة الهدف: أدنى رتبةٍ لكل لون. */
-const THRESHOLD: Record<Strictness, { green: number; yellow: number }> = {
-  lenient: { green: TIER_RANK.good, yellow: TIER_RANK.fair }, // جيد+→🟢، مقبول→🟡
-  normal:  { green: TIER_RANK.high, yellow: TIER_RANK.good }, // مرتفع+→🟢، جيد→🟡
-  strict:  { green: TIER_RANK.excellent, yellow: TIER_RANK.high }, // ممتاز→🟢، مرتفع→🟡
+/* ميل التخصص (trackType) → فرصة التخصص في ملف الشروط. «عام» بلا فرصةٍ محدّدة. */
+const TRACK_MAJOR: Record<string, string> = {
+  "صحي": "major-health", "هندسي": "major-eng", "حاسب": "major-cs", "إداري": "major-business",
 };
 
-const EXAM_LABEL: Record<Exam, string> = { qudurat: "القدرات", tahsili: "التحصيلي", step: "اللغة (STEP)" };
-
-function tierOf(exam: Exam, inp: OutlookInput): BandTier | null {
-  const band =
-    exam === "qudurat" ? getQuduratBand(inp.qudurat) :
-    exam === "tahsili" ? getTahsiliBand(inp.tahsili) :
-    getStepBand(inp.step);
-  return band?.tier ?? null;
-}
-
-/* هدفٌ استرشادي: اسمه، اختباراته الحاكمة، وصرامته. */
-interface OutlookTarget { id: string; label: string; exams: Exam[]; strictness: Strictness; }
-
-const LEAN_TARGET: Record<string, OutlookTarget> = {
-  "صحي":  { id: "major-health", label: "التخصصات الصحية", exams: ["tahsili", "qudurat"], strictness: "strict" },
-  "هندسي": { id: "major-eng", label: "الهندسة", exams: ["qudurat", "tahsili"], strictness: "normal" },
-  "حاسب": { id: "major-cs", label: "الحاسب", exams: ["qudurat", "tahsili"], strictness: "normal" },
-  "إداري": { id: "major-business", label: "إدارة الأعمال", exams: ["qudurat"], strictness: "lenient" },
-  "عام":  { id: "major-arts", label: "التخصصات الأدبية", exams: ["qudurat"], strictness: "lenient" },
-};
-
-/* يبني قائمة الأهداف الاسترشادية من الوجهات + ميل التخصص. */
-function targetsToOutlook(inp: OutlookInput): OutlookTarget[] {
-  const out: OutlookTarget[] = [];
+/* الوجهات + ميل التخصص → معرّفات الفرص المعروضة (بالترتيب). */
+function outlookReqIds(inp: OutlookInput): string[] {
+  const ids: string[] = [];
   const t = new Set(inp.targets);
   if (t.has("university")) {
-    out.push({ id: "university", label: "الجامعات", exams: ["qudurat"], strictness: "normal" });
-    const lean = inp.trackType ? LEAN_TARGET[inp.trackType] : undefined;
-    if (lean) out.push(lean);
+    ids.push("university");
+    const m = inp.trackType ? TRACK_MAJOR[inp.trackType] : undefined;
+    if (m) ids.push(m);
   }
-  if (t.has("aramco")) out.push({ id: "aramco-cpc", label: "أرامكو (CPC)", exams: ["qudurat"], strictness: "strict" });
-  if (t.has("itc")) out.push({ id: "aramco-itc", label: "مسار ITC", exams: ["qudurat"], strictness: "lenient" });
-  if (t.has("military")) out.push({ id: "military", label: "الكليات العسكرية", exams: ["qudurat"], strictness: "normal" });
-  if (t.has("scholarship")) out.push({ id: "scholarship", label: "الابتعاث", exams: ["tahsili", "step"], strictness: "strict" });
-  return out;
+  if (t.has("aramco")) ids.push("cpc");
+  if (t.has("itc")) ids.push("itc");
+  if (t.has("military")) ids.push("military");
+  if (t.has("scholarship")) ids.push("scholarship");
+  return ids;
 }
 
-/** فرص القبول الاسترشادية لكل هدف من درجات الطالب. */
+/** فرص القبول لكل هدفٍ من درجات الطالب — الحكم من شرط كل فرصة (admissionRequirements). */
 export function admissionOutlook(inp: OutlookInput): OutlookItem[] {
-  return targetsToOutlook(inp).map((tg) => {
-    /* أدنى طبقةٍ بين اختبارات الهدف الحاكمة؛ أي اختبارٍ بلا درجة = ناقص. */
-    const missing: string[] = [];
-    let minRank = Infinity;
-    for (const ex of tg.exams) {
-      const tier = tierOf(ex, inp);
-      if (tier == null) { missing.push(EXAM_LABEL[ex]); continue; }
-      minRank = Math.min(minRank, TIER_RANK[tier]);
-    }
-    if (missing.length) {
-      return { id: tg.id, label: tg.label, icon: "⚪", note: `أدخل درجة ${missing.join(" و")} لتقييم فرصتك.`, needs: missing };
-    }
-    const th = THRESHOLD[tg.strictness];
-    const icon: OutlookIcon = minRank >= th.green ? "🟢" : minRank >= th.yellow ? "🟡" : "🔴";
-    const note = icon === "🟢" ? "فرصتك قوية" : icon === "🟡" ? "فرصتك متوسطة — رفع درجتك يقرّبك" : "تحتاج رفع درجتك لهذا الهدف";
-    return { id: tg.id, label: tg.label, icon, note };
-  });
+  const scores: Scores = { qudurat: inp.qudurat ?? null, tahsili: inp.tahsili ?? null, step: inp.step ?? null };
+  const out: OutlookItem[] = [];
+  for (const id of outlookReqIds(inp)) {
+    const req = requirementById(id);
+    if (!req) continue;
+    const o = evaluate(req, scores);
+    out.push({ id, label: req.label, icon: o.icon, note: o.reason });
+  }
+  return out;
 }
