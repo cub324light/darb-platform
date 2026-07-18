@@ -15,6 +15,7 @@ import { toBoardStage } from "@/lib/examEligibility";
 import { recommendedExams, type RecommendedExam } from "@/lib/recommendedExams";
 import { resolveGoals, type PrimaryGoal, type AramcoSub, type MajorLean } from "@/lib/onboarding/goals";
 import { admissionOutlook, OUTLOOK_DISCLAIMER } from "@/lib/onboarding/outlook";
+import { recExamRank, UNDECIDED_EXAM_CARDS } from "@/lib/onboarding/examCatalog";
 import { getQuduratBand, getTahsiliBand } from "@/lib/darbKnowledge";
 import { SA_REGIONS, nearestUniversity } from "@/lib/saRegions";
 import { n } from "@/lib/format";
@@ -38,8 +39,16 @@ const UNI_YEARS = ["الأولى", "الثانية", "الثالثة", "الرا
 type StepKey =
   | "welcome" | "stage" | "region" | "goal" | "exams" | "scores"
   | "dates" | "style" | "time" | "summary" | "uni";
-const SECONDARY_STEPS: StepKey[] = ["welcome", "stage", "region", "goal", "exams", "scores", "dates", "style", "time", "summary"];
+const SECONDARY_STEPS: StepKey[] = ["welcome", "stage", "region", "goal", "exams", "scores", "style", "time", "summary"];
 const UNI_STEPS: StepKey[] = ["welcome", "stage", "uni", "style", "time", "summary"];
+/* «ما أدري»: نعرض له أوسع فرصٍ ممكنة بدل إخفاء الاختبارات. */
+const ALL_TARGETS = ["university", "aramco", "itc", "military", "scholarship"];
+/* اختبارات القياس/اللغة العامّة — للطالب غير المحدّد هدفه (يُدخل درجاته ويرى مستواه). */
+const UNIVERSAL_SCORABLE: RecommendedExam[] = [
+  { kind: "qudurat", boardId: "qudurat", label: "القدرات", reason: "أساس القبول الجامعي والبرامج", state: "available", priority: 1 },
+  { kind: "tahsili", boardId: "tahsiliRegular", label: "التحصيلي", reason: "مطلوب للتخصصات العلمية والصحية", state: "available", priority: 2 },
+  { kind: "language", label: "STEP", reason: "لوجهات الابتعاث/الوظيفة/تطوير الإنجليزية", state: "available", priority: 3 },
+];
 
 /* ── الهدف الهرمي ── */
 const GOAL_OPTIONS: { id: PrimaryGoal; icon: string; label: string }[] = [
@@ -153,11 +162,20 @@ export default function OnboardingPage() {
     afterFirstTerm: status === "ثانوي" ? term !== "first" : false,
     today,
   }) : [];
-  const scorableExams = recExams.filter((e) => scoreKeyOf(e) !== null);
+  /* الترتيب الرسمي للعرض (قرار المالك) — لا فرز عشوائي. */
+  const orderedRec = [...recExams].sort((a, b) => recExamRank(a) - recExamRank(b));
+  const displayExams = orderedRec; // كل الاختبارات المطلوبة (تشمل CPC/ITC) مرتّبة
+  /* «ما أدري» → اختبارات عامّة لإدخال الدرجة؛ وإلا القابلة للتقييم من المُوصى بها. */
+  const scorableExams = (goal.undecided ? UNIVERSAL_SCORABLE : orderedRec.filter((e) => scoreKeyOf(e) !== null))
+    .sort((a, b) => recExamRank(a) - recExamRank(b));
+  /* أول خطوة موصى بها: أول اختبارٍ مطلوب، وإلا القدرات (للطالب غير المحدّد هدفه). */
+  const firstExamLabel = displayExams[0]?.label ?? scorableExams[0]?.label;
 
   const num = (v: string) => { const x = parseFloat(v); return Number.isFinite(x) ? x : null; };
+  /* «ما أدري» → أوسع فرصٍ ممكنة (كل الوجهات) حتى لا يفوّت الطالب فرصة. */
+  const outlookTargets = goal.undecided ? ALL_TARGETS : goal.targets;
   const outlookItems = admissionOutlook({
-    targets: goal.targets, trackType: goal.trackType,
+    targets: outlookTargets, trackType: goal.trackType,
     qudurat: scores.qudurat.state === "scored" ? num(scores.qudurat.value) : null,
     tahsili: scores.tahsili.state === "scored" ? num(scores.tahsili.value) : null,
     step: scores.step.state === "scored" ? num(scores.step.value) : null,
@@ -207,7 +225,7 @@ export default function OnboardingPage() {
       if (err) { setScoreErr(`${SCORE_META[k].resultTitle}: ${err}`); setCurrent("scores"); return; }
     }
     setScoreErr("");
-    if (studyHours < 0.5 || studyHours > 16) { setSubmitErr("ساعات المذاكرة بين نصف ساعة و١٦"); return; }
+    if (studyHours < 1 || studyHours > 16) { setSubmitErr("ساعات المذاكرة بين ١ و١٦"); return; }
     if (status === "جامعي" && universityGpa) { const g = parseFloat(universityGpa); if (!Number.isFinite(g) || g < 0 || g > 5) { setSubmitErr("المعدل الجامعي بين ٠ و٥"); return; } }
     setSubmitErr("");
     setIsSubmitting(true);
@@ -300,7 +318,7 @@ export default function OnboardingPage() {
 
   /* شاشة التقرير الشخصي (٥ ثوانٍ) */
   if (showReport) return <ReportScreen name={name.trim()} scores={scores} outlook={outlookItems}
-    firstStep={recExams[0]?.label} region={region} />;
+    firstStep={firstExamLabel} region={region} />;
 
   /* ════════ الخطوات ════════ */
   const stepBody = (() => {
@@ -464,17 +482,34 @@ export default function OnboardingPage() {
         );
       }
 
-      /* ── الاختبارات المطلوبة (مشتقّة) ── */
-      case "exams": return (
+      /* ── الاختبارات المطلوبة (مشتقّة) / كل الفرص («ما أدري») ── */
+      case "exams": return goal.undecided ? (
+        <div>
+          <p className="label mb-1">كل الاختبارات وفُرصها</p>
+          <p className="t-body mb-4 leading-relaxed" style={{ color: "var(--text-muted)" }}>بما أنك لم تحدّد هدفك بعد، هذه جميع الاختبارات التي قد تفتح لك فرصاً مستقبلية.</p>
+          <div className="flex flex-col gap-2.5">
+            {UNDECIDED_EXAM_CARDS.map((c) => (
+              <div key={c.id} className="rounded-2xl px-4 py-3.5" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+                <p className="font-black t-title" style={{ color: "var(--text)" }}>{c.label}</p>
+                <p className="t-caption font-bold mt-1.5 mb-1" style={{ color: "var(--accent-light)" }}>يفتح لك:</p>
+                <ul className="flex flex-col gap-1">
+                  {c.opens.map((o) => (
+                    <li key={o} className="t-body flex items-start gap-2" style={{ color: "var(--text-muted)" }}>
+                      <span className="flex-shrink-0 mt-2 w-1.5 h-1.5 rounded-full" style={{ background: "var(--accent)" }} />
+                      <span className="leading-relaxed">{o}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <p className="t-body font-bold text-center mt-4" style={{ color: "var(--text)" }}>لا تقلق، يمكنك تغيير هدفك لاحقاً في أي وقت.</p>
+        </div>
+      ) : (
         <div>
           <p className="label mb-1">اختباراتك المطلوبة</p>
           <p className="t-caption mb-4" style={{ color: "var(--text-muted)" }}>مشتقّة تلقائياً من هدفك ومرحلتك</p>
-          {goal.undecided ? (
-            <div className="rounded-2xl px-4 py-4 flex items-start gap-3" style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
-              <span className="text-[22px]">⭐</span>
-              <p className="t-body" style={{ color: "var(--text)" }}>لا بأس — درب سيحدّد اختباراتك المطلوبة بعد أن يعرف درجاتك واهتماماتك. نبدأ ببناء أساسك أولاً.</p>
-            </div>
-          ) : recExams.length === 0 ? (
+          {displayExams.length === 0 ? (
             <div className="rounded-2xl px-4 py-4 flex items-start gap-3" style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
               <span className="text-[22px]">🌱</span>
               <p className="t-body" style={{ color: "var(--text)" }}>لا اختبارات قبولٍ في مرحلتك الآن — ركّز على أساسك المدرسي، ودرب يجهّزك للاختبارات في وقتها.</p>
@@ -483,7 +518,7 @@ export default function OnboardingPage() {
             <>
               <p className="t-body font-bold mb-2.5" style={{ color: "var(--text)" }}>ستحتاج إلى:</p>
               <div className="flex flex-col gap-2.5">
-                {recExams.map((e) => (
+                {displayExams.map((e) => (
                   <div key={e.boardId ?? e.kind} className="rounded-2xl px-4 py-3 flex items-center gap-3" style={{ background: "var(--surface)", border: "1.5px solid color-mix(in srgb, var(--accent) 25%, var(--border))" }}>
                     <span className="text-[18px]">🟢</span>
                     <div className="flex-1 min-w-0">
@@ -539,6 +574,15 @@ export default function OnboardingPage() {
                             <button onClick={() => setRetakeIntent((m) => ({ ...m, [SCORE_META[k].resultTitle]: true }))} className="flex-1 py-2 rounded-xl font-bold t-caption" style={retakeIntent[SCORE_META[k].resultTitle] === true ? { background: "var(--accent)", color: "#fff", border: "none" } : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>لا، سأعيد 📈</button>
                           </div>
                         </div>
+                        {/* موعد الاختبار — يظهر فقط عند نيّة الإعادة (لا نسأل الراضي) */}
+                        {retakeIntent[SCORE_META[k].resultTitle] === true && (
+                          <div className="mt-2.5">
+                            <p className="t-caption font-bold mb-1.5" style={{ color: "var(--text-dim)" }}>متى موعد اختبارك القادم؟ <span className="font-normal" style={{ color: "var(--text-muted)" }}>(لنبني خطتك)</span></p>
+                            <input type="date" value={examDates[SCORE_META[k].rangeTitle] ?? ""} min={today}
+                              onChange={(ev) => setExamDate(SCORE_META[k].rangeTitle, ev.target.value)}
+                              className="w-full rounded-xl px-3 py-2.5 t-body outline-none" style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
@@ -566,40 +610,6 @@ export default function OnboardingPage() {
         </div>
       );
 
-      /* ── المواعيد ── */
-      case "dates": return (
-        <div className="flex flex-col gap-4">
-          <div>
-            <p className="label mb-1">مواعيد اختباراتك</p>
-            <p className="t-caption" style={{ color: "var(--text-muted)" }}>لو حجزت موعداً، حدّده لنعدّ معك الأيام — وإلا تخطّها.</p>
-          </div>
-          {scorableExams.length === 0 ? (
-            <p className="t-body" style={{ color: "var(--text-muted)" }}>لا مواعيد الآن — تقدر تحدّدها لاحقاً من مساري.</p>
-          ) : scorableExams.map((e) => {
-            const key = SCORE_META[scoreKeyOf(e)!].rangeTitle;
-            const booked = !!examDates[key];
-            return (
-              <div key={key} className="rounded-2xl px-4 py-3.5" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-                <p className="font-bold t-body mb-2" style={{ color: "var(--text)" }}>{e.label}</p>
-                <p className="t-caption mb-2" style={{ color: "var(--text-muted)" }}>هل حجزت موعده؟</p>
-                {booked ? (
-                  <div className="flex items-center gap-2">
-                    <input type="date" value={examDates[key]} min={today} onChange={(ev) => setExamDate(key, ev.target.value)}
-                      className="flex-1 rounded-xl px-3 py-2 t-body outline-none" style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
-                    <button onClick={() => setExamDate(key, "")} className="t-caption font-bold px-2" style={{ color: "var(--text-muted)" }}>مسح ✕</button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <button onClick={() => setExamDate(key, today)} className="flex-1 py-2 rounded-xl font-bold t-caption" style={{ background: "var(--accent)", color: "#fff", border: "none" }}>نعم، أحدّد التاريخ</button>
-                    <button onClick={() => setExamDate(key, "")} className="flex-1 py-2 rounded-xl font-bold t-caption" style={{ background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>لا، ليس بعد</button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      );
-
       /* ── أسلوب المذاكرة ── */
       case "style": return (
         <div>
@@ -613,15 +623,22 @@ export default function OnboardingPage() {
         </div>
       );
 
-      /* ── الوقت اليومي ── */
+      /* ── الوقت اليومي (شريط ١–١٦) ── */
       case "time": return (
         <div>
-          <p className="label mb-1">كم ساعة تقدر تذاكر باليوم؟</p>
-          <p className="t-caption mb-4" style={{ color: "var(--text-muted)" }}>نبني خطتك على وقتك الحقيقي — تقدر تعدّلها لاحقاً</p>
-          <div className="grid grid-cols-2 gap-2.5">
-            {([[0.5, "نصف ساعة"], [1, "ساعة"], [2, "ساعتان"], [3, "٣ ساعات فأكثر"]] as [number, string][]).map(([v, label]) => (
-              <button key={v} onClick={() => setStudyHours(v)} className="rounded-2xl py-4 font-bold t-body transition active:scale-[0.98]" style={chipStyle(studyHours === v)}>{label}</button>
-            ))}
+          <p className="label mb-1">كم ساعة تستطيع المذاكرة يومياً؟</p>
+          <p className="t-caption mb-6" style={{ color: "var(--text-muted)" }}>نبني خطتك على وقتك الحقيقي — تقدر تعدّلها لاحقاً</p>
+          <div className="text-center mb-5">
+            <span className="t-display font-black font-mono-nums" style={{ color: "var(--accent-light)" }}>{n(studyHours)}</span>
+            <span className="t-body font-bold mr-2" style={{ color: "var(--text-muted)" }}>ساعة يومياً</span>
+          </div>
+          <input type="range" min={1} max={16} step={1} value={studyHours}
+            onChange={(e) => setStudyHours(parseInt(e.target.value))}
+            aria-label="ساعات المذاكرة اليومية"
+            className="w-full h-2 rounded-full appearance-none cursor-pointer" style={{ accentColor: "var(--accent)", background: "var(--surface2)" }} />
+          <div className="flex justify-between mt-2">
+            <span className="t-caption font-mono-nums" style={{ color: "var(--text-muted)" }}>{n(1)} ساعة</span>
+            <span className="t-caption font-mono-nums" style={{ color: "var(--text-muted)" }}>{n(16)} ساعة</span>
           </div>
         </div>
       );
@@ -668,7 +685,7 @@ export default function OnboardingPage() {
       );
 
       /* ── الملخّص ── */
-      case "summary": return <SummaryStep name={name.trim()} status={status} goal={goal} recExams={recExams}
+      case "summary": return <SummaryStep name={name.trim()} status={status} goal={goal} recExams={displayExams} firstStep={firstExamLabel}
         scores={scores} region={region} uni={{ name: universityName || (universityId === "other" ? otherUni.trim() : ""), major: findMajor(majorId)?.name, year: universityYear }} />;
 
       default: return null;
@@ -699,8 +716,8 @@ export default function OnboardingPage() {
 }
 
 /* ════════ الملخّص ════════ */
-function SummaryStep({ name, status, goal, recExams, scores, region, uni }: {
-  name: string; status: Status | ""; goal: ReturnType<typeof resolveGoals>; recExams: RecommendedExam[];
+function SummaryStep({ name, status, goal, recExams, firstStep, scores, region, uni }: {
+  name: string; status: Status | ""; goal: ReturnType<typeof resolveGoals>; recExams: RecommendedExam[]; firstStep?: string;
   scores: Record<ScoreKey, { state: "none" | "waiting" | "scored"; value: string }>;
   region: string; uni: { name?: string; major?: string; year?: string };
 }) {
@@ -732,7 +749,7 @@ function SummaryStep({ name, status, goal, recExams, scores, region, uni }: {
           )}
           {near && <SummaryRow icon="🏛️" title="أقرب جامعة">{near.name}</SummaryRow>}
           <SummaryRow icon="🗺️" title="خطة درب">
-            {recExams[0] ? `ابدأ بـ${recExams[0].label}` : "ابدأ ببناء أساسك المدرسي"}
+            {firstStep ? `ابدأ بـ${firstStep}` : "ابدأ ببناء أساسك المدرسي"}
           </SummaryRow>
         </>
       )}
