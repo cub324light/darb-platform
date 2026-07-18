@@ -9,7 +9,8 @@ import { useState, useEffect, type ReactNode } from "react";
 import { validateScore, scoreRangeForTitle, type TrackId } from "@/lib/tracks";
 import { MAJORS, findUniversity, findMajor, UNIVERSITIES } from "@/lib/university";
 import { saveUser, saveResults, loadGoals, saveGoals, ensureWorkspace,
-  loadTrackExamDates, saveTrackExamDates, currentScoreMap, type DarbUser } from "@/lib/storage";
+  loadTrackExamDates, saveTrackExamDates, currentScoreMap, savePendingResults,
+  type DarbUser, type PendingResultRecord } from "@/lib/storage";
 import { currentAcademicYearId, currentTermGuess, type TermGuess } from "@/lib/academicCalendar";
 import { requirementsOf } from "@/lib/recommendedExams";
 import { resolveGoals, type PrimaryGoal, type AramcoSub, type MajorLean } from "@/lib/onboarding/goals";
@@ -18,6 +19,7 @@ import { EXAM_ORDER } from "@/lib/onboarding/examCatalog";
 import { stageExams, examLabelOf, EXAM_TO_TRACK, EXAM_SCORE_KEY, MAX_EXAMS, STAGE_LOCK_REASON, type OnbStage } from "@/lib/onboarding/stageExams";
 import { ACADEMIC_TRACKS, type AcademicTrack } from "@/lib/curriculum";
 import { evalBand, percentileText, evalBarPct, scoreOutOf } from "@/lib/scoreEvaluation";
+import { estimateResult, type ExamMode } from "@/lib/onboarding/examResultStatus";
 import { SA_REGIONS, nearestUniversity } from "@/lib/saRegions";
 import { n } from "@/lib/format";
 import { trackEvent } from "@/lib/analytics";
@@ -70,12 +72,15 @@ const SUB_STAGE_PROMPT: Record<string, string> = {
 
 /* ── نموذج الخطوات (يُبنى حسب المرحلة) ── */
 type StepKey =
-  | "welcome" | "stage" | "track" | "region" | "goal" | "exams" | "scores"
+  | "welcome" | "stage" | "track" | "gpa" | "region" | "goal" | "exams" | "scores"
   | "style" | "time" | "summary" | "uni";
 const UNI_STEPS: StepKey[] = ["welcome", "stage", "uni", "style", "time", "summary"];
-/* المسار الدراسي يظهر لثاني/ثالث ثانوي فقط (أول ثانوي لم يختر مساره بعد). */
-const secondarySteps = (needsTrack: boolean): StepKey[] =>
-  ["welcome", "stage", ...(needsTrack ? ["track" as const] : []), "region", "goal", "exams", "scores", "style", "time", "summary"];
+/* متكيّف بالمرحلة بعد «stage»: المسار الدراسي لثاني/ثالث ثانوي · حاسبة المعدل للخريج. */
+const secondarySteps = (needsTrack: boolean, isGrad: boolean): StepKey[] =>
+  ["welcome", "stage",
+    ...(needsTrack ? ["track" as const] : []),
+    ...(isGrad ? ["gpa" as const] : []),
+    "region", "goal", "exams", "scores", "style", "time", "summary"];
 /* «ما أدري»: نعرض له أوسع فرصٍ ممكنة بدل إخفاء الاختبارات. */
 const ALL_TARGETS = ["university", "aramco", "itc", "military", "scholarship"];
 
@@ -113,6 +118,16 @@ const SCORE_META: Record<ScoreKey, { rangeTitle: string; resultTitle: string }> 
 const bandColor = (icon: string): string =>
   icon === "🟢" ? "var(--success)" : icon === "🟡" ? "var(--gold)" : "var(--danger)";
 
+/* حالة نتيجة كل اختبار — «انتظار النتيجة» حالةٌ مستقلّة لا «لم أختبر». */
+type ResultStatus = "not_taken" | "taken" | "waiting_result";
+interface ScoreCell { status: ResultStatus; value: string; mode: ExamMode | ""; testDate: string; }
+const EMPTY_CELL: ScoreCell = { status: "not_taken", value: "", mode: "", testDate: "" };
+
+/* تسمية نسبة الثانوية (٠–١٠٠) — سلّم وزارة التعليم المعتاد. */
+const gpaLabel = (p: number): string =>
+  p >= 90 ? "ممتاز" : p >= 80 ? "جيد جداً" : p >= 70 ? "جيد" : p >= 60 ? "مقبول" : "دون المقبول";
+const gpaColor = (p: number): string => (p >= 80 ? "var(--success)" : p >= 60 ? "var(--gold)" : "var(--danger)");
+
 export default function OnboardingPage() {
   const [current, setCurrent] = useState<StepKey>("welcome");
   const [showReport, setShowReport] = useState(false);
@@ -133,6 +148,10 @@ export default function OnboardingPage() {
   const [gradStage, setGradStage] = useState("");
   const [gradRecency, setGradRecency] = useState<"this-year" | "earlier" | "">("");
   const [academicTrack, setAcademicTrack] = useState<AcademicTrack | "">("");
+  /* ── الخريج: حاسبة المعدل (اختيارية) ── */
+  const [wantGpa, setWantGpa] = useState<boolean | null>(null);
+  const [gpaRows, setGpaRows] = useState<{ subject: string; grade: string }[]>(
+    () => Array.from({ length: 5 }, () => ({ subject: "", grade: "" })));
 
   /* ── اختيار الاختبارات (منتقٍ حسب المرحلة، حدّ ٣) ── */
   const [selectedExams, setSelectedExams] = useState<string[]>([]);
@@ -153,8 +172,8 @@ export default function OnboardingPage() {
   const [majorLean, setMajorLean] = useState<MajorLean | "">("");
 
   /* ── الدرجات + الرضا ── */
-  const [scores, setScores] = useState<Record<ScoreKey, { state: "none" | "waiting" | "scored"; value: string }>>({
-    qudurat: { state: "none", value: "" }, tahsili: { state: "none", value: "" }, step: { state: "none", value: "" },
+  const [scores, setScores] = useState<Record<ScoreKey, ScoreCell>>({
+    qudurat: { ...EMPTY_CELL }, tahsili: { ...EMPTY_CELL }, step: { ...EMPTY_CELL },
   });
   const [scoreErr, setScoreErr] = useState("");
   const [retakeIntent, setRetakeIntent] = useState<Record<string, boolean>>({});
@@ -218,7 +237,7 @@ export default function OnboardingPage() {
   const firstExamLabel = orderedSelected[0] ? examLabelOf(orderedSelected[0]) : undefined;
 
   const num = (v: string) => { const x = parseFloat(v); return Number.isFinite(x) ? x : null; };
-  const scoreOf = (k: ScoreKey) => (scores[k].state === "scored" ? num(scores[k].value) : null);
+  const scoreOf = (k: ScoreKey) => (scores[k].status === "taken" ? num(scores[k].value) : null);
   /* «درب يحدد لي» → أوسع فرصٍ ممكنة (كل الوجهات) حتى لا يفوّت الطالب فرصة. */
   const outlookTargets = goal.undecided ? ALL_TARGETS : goal.targets;
   const outlookInput = {
@@ -248,7 +267,10 @@ export default function OnboardingPage() {
 
   /* ── قائمة الخطوات (متكيّفة) — المسار الدراسي لثاني/ثالث ثانوي فقط ── */
   const needsTrack = status === "ثانوي" && (grade === "ثاني ثانوي" || grade === "ثالث ثانوي");
-  const steps = status === "جامعي" ? UNI_STEPS : secondarySteps(needsTrack);
+  const steps = status === "جامعي" ? UNI_STEPS : secondarySteps(needsTrack, status === "خريج");
+  /* نسبة الثانوية للخريج: متوسط الدرجات المُدخَلة (٠–١٠٠). */
+  const gpaValues = gpaRows.map((r) => parseFloat(r.grade)).filter((v) => Number.isFinite(v) && v >= 0 && v <= 100);
+  const gpaPercent = gpaValues.length ? Math.round((gpaValues.reduce((a, b) => a + b, 0) / gpaValues.length) * 10) / 10 : null;
   const idx = Math.max(0, steps.indexOf(current));
   const total = steps.length - 1; // الترحيب = ٠
 
@@ -261,6 +283,7 @@ export default function OnboardingPage() {
       case "welcome": return name.trim().length > 0;
       case "stage":   return !!primaryStage && !!subStage;
       case "track":   return !!academicTrack;
+      case "gpa":     return wantGpa !== null; // نعم/لا إلزامي؛ إدخال الدرجات نفسه اختياري
       case "region":  return !!region && willingToRelocate !== null; // المدينة/الحي اختياريان فقط
       case "goal":    return primaryGoals.length > 0 && (!primaryGoals.includes("university") || !!majorLean);
       case "style":   return !!studyStyle;
@@ -273,7 +296,7 @@ export default function OnboardingPage() {
   const goBack = () => { const pv = steps[idx - 1]; if (pv) setCurrent(pv); };
 
   /* ── حفظ الدرجة داخل خطوة الدرجات ── */
-  const setScore = (k: ScoreKey, patch: Partial<{ state: "none" | "waiting" | "scored"; value: string }>) =>
+  const setScore = (k: ScoreKey, patch: Partial<ScoreCell>) =>
     setScores((s) => ({ ...s, [k]: { ...s[k], ...patch } }));
 
   /* ── تحديث موعد اختبار (حيّ) ── */
@@ -288,7 +311,7 @@ export default function OnboardingPage() {
     /* تحقّق الدرجات المُدخَلة */
     for (const k of ["qudurat", "tahsili", "step"] as ScoreKey[]) {
       const s = scores[k];
-      if (s.state !== "scored" || !s.value.trim()) continue;
+      if (s.status !== "taken" || !s.value.trim()) continue;
       const err = validateScore(SCORE_META[k].rangeTitle, s.value.trim());
       if (err) { setScoreErr(`${SCORE_META[k].resultTitle}: ${err}`); setCurrent("scores"); return; }
     }
@@ -329,6 +352,7 @@ export default function OnboardingPage() {
         willingToRelocate: willingToRelocate ?? undefined,
         regionsInterested: regionsInterested.length ? regionsInterested : undefined,
         universityGpa: status === "جامعي" && universityGpa ? parseFloat(universityGpa) : undefined,
+        secondaryGpa: status === "خريج" && wantGpa && gpaPercent != null ? gpaPercent : undefined,
       };
       saveUser(ensureWorkspace(userData));
 
@@ -340,10 +364,15 @@ export default function OnboardingPage() {
       }
 
       /* الدرجات المُدخَلة → نتائجي */
-      const entered = (["qudurat", "tahsili", "step"] as ScoreKey[]).filter((k) => scores[k].state === "scored" && scores[k].value.trim());
+      const entered = (["qudurat", "tahsili", "step"] as ScoreKey[]).filter((k) => scores[k].status === "taken" && scores[k].value.trim());
       if (entered.length) {
         saveResults(entered.map((k, i) => ({ id: `${Date.now()}-${i}`, exam: SCORE_META[k].resultTitle, score: scores[k].value.trim() })));
       }
+      /* انتظار النتيجة → حالةٌ مستقلّة محفوظة (لبطاقة العدّ التنازلي لاحقاً) */
+      const pending: PendingResultRecord[] = (["qudurat", "tahsili", "step"] as ScoreKey[])
+        .filter((k) => scores[k].status === "waiting_result")
+        .map((k) => ({ exam: k, mode: (scores[k].mode || "paper") as "computer" | "paper", testDate: scores[k].testDate || "", savedAt: today }));
+      savePendingResults(pending);
 
       import("@/lib/firestore").then(({ registerUser }) => { registerUser(trimmedName, primaryTrack, {}); });
       trackEvent("onboarding_completed", { track: primaryTrack, tracks: tracks.length, targets: goal.targets.length, status });
@@ -484,6 +513,54 @@ export default function OnboardingPage() {
               );
             })}
           </div>
+        </div>
+      );
+
+      /* ── الخريج: حاسبة المعدل (اختيارية) ── */
+      case "gpa": return (
+        <div className="flex flex-col gap-5">
+          <div>
+            <p className="label mb-1">حاسبة المعدل</p>
+            <p className="t-caption" style={{ color: "var(--text-muted)" }}>تحب نحسب لك نسبتك من درجات موادك؟</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            <button onClick={() => setWantGpa(true)} className="rounded-2xl py-3 font-bold t-body transition active:scale-[0.98]" style={chipStyle(wantGpa === true)}>نعم، احسبها</button>
+            <button onClick={() => setWantGpa(false)} className="rounded-2xl py-3 font-bold t-body transition active:scale-[0.98]" style={chipStyle(wantGpa === false)}>لا، أكمل التسجيل</button>
+          </div>
+          {wantGpa === false && (
+            <p className="t-caption rise" style={{ color: "var(--text-muted)" }}>تمام 👍 — نكمّل تسجيلك، وتقدر تحسب معدلك لاحقاً.</p>
+          )}
+          {wantGpa === true && (
+            <div className="rise flex flex-col gap-3">
+              <div className="flex flex-col gap-2">
+                {gpaRows.map((row, i) => (
+                  <div key={i} className="flex gap-2">
+                    <input value={row.subject} onChange={(e) => setGpaRows((rs) => rs.map((r, j) => (j === i ? { ...r, subject: e.target.value } : r)))}
+                      placeholder={`المادة ${n(i + 1)}`} maxLength={30}
+                      className="flex-1 min-w-0 rounded-xl px-3 py-2.5 t-body text-[var(--text)] placeholder-[var(--text-muted)] outline-none" style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
+                    <input value={row.grade} inputMode="decimal" onChange={(e) => setGpaRows((rs) => rs.map((r, j) => (j === i ? { ...r, grade: e.target.value } : r)))}
+                      placeholder="الدرجة" maxLength={5}
+                      className="w-24 rounded-xl px-3 py-2.5 t-body text-center text-[var(--text)] placeholder-[var(--text-muted)] outline-none" style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => setGpaRows((rs) => [...rs, { subject: "", grade: "" }])}
+                className="self-start t-caption font-bold px-3 py-1.5 rounded-full transition active:scale-95" style={{ background: "var(--surface2)", color: "var(--accent-light)", border: "1px solid var(--border)" }}>＋ إضافة مادة</button>
+              {gpaPercent != null && (
+                <div className="rounded-2xl px-4 py-4 rise" style={{ background: `color-mix(in srgb, ${gpaColor(gpaPercent)} 10%, var(--surface))`, border: `1.5px solid color-mix(in srgb, ${gpaColor(gpaPercent)} 40%, var(--border))` }}>
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>نسبتك التقديرية</span>
+                    <span className="t-h2 font-black font-mono-nums" style={{ color: gpaColor(gpaPercent) }}>{n(gpaPercent)}٪</span>
+                  </div>
+                  <div className="mt-2 h-2.5 rounded-full overflow-hidden" style={{ background: "color-mix(in srgb, var(--text-muted) 22%, transparent)" }}>
+                    <div className="h-full rounded-full eval-bar-fill" style={{ width: `${Math.min(100, gpaPercent)}%`, background: gpaColor(gpaPercent) }} />
+                  </div>
+                  <p className="t-caption font-bold mt-2" style={{ color: "var(--text)" }}>{gpaLabel(gpaPercent)} · من {n(gpaValues.length)} مواد</p>
+                </div>
+              )}
+              <p className="t-caption" style={{ color: "var(--text-muted)" }}>النسبة تقديرية من متوسط الدرجات المُدخَلة — قد تختلف عن نسبتك الرسمية.</p>
+            </div>
+          )}
         </div>
       );
 
@@ -643,23 +720,42 @@ export default function OnboardingPage() {
             const k = e.key;
             const s = scores[k];
             const range = scoreRangeForTitle(SCORE_META[k].rangeTitle);
-            const scoreVal = s.state === "scored" ? num(s.value) : null;
+            const scoreVal = s.status === "taken" ? num(s.value) : null;
             const band = evalBand(k, scoreVal);
             const pctText = percentileText(band);
             const prior = priorScores[SCORE_META[k].resultTitle];
             const delta = band && scoreVal != null && prior != null ? Math.round((scoreVal - prior) * 10) / 10 : null;
             const whatIf = band && scoreVal != null ? whatIfRaise(outlookInput, k) : null;
+            /* خيارات الحالة: القدرات (محوسب/ورقي) · غيرها (اختبرت) — كلها + لم أختبر + انتظار النتيجة */
+            const statusOpts: { key: string; label: string; patch: Partial<ScoreCell>; on: boolean }[] =
+              k === "qudurat"
+                ? [
+                    { key: "cpu",  label: "💻 محوسب", patch: { status: "taken", mode: "computer" }, on: s.status === "taken" && s.mode === "computer" },
+                    { key: "ppr",  label: "📝 ورقي",  patch: { status: "taken", mode: "paper" },    on: s.status === "taken" && s.mode === "paper" },
+                    { key: "no",   label: "لم أختبر", patch: { status: "not_taken", value: "", mode: "", testDate: "" }, on: s.status === "not_taken" },
+                    { key: "wait", label: "⏳ انتظار النتيجة", patch: { status: "waiting_result", value: "" }, on: s.status === "waiting_result" },
+                  ]
+                : [
+                    { key: "yes",  label: "اختبرت",   patch: { status: "taken", mode: "paper" }, on: s.status === "taken" },
+                    { key: "no",   label: "لم أختبر", patch: { status: "not_taken", value: "", mode: "", testDate: "" }, on: s.status === "not_taken" },
+                    { key: "wait", label: "⏳ انتظار النتيجة", patch: { status: "waiting_result", value: "" }, on: s.status === "waiting_result" },
+                  ];
+            /* تقدير موعد ظهور النتيجة (للقدرات/التحصيلي — STEP بلا تقدير محدّد) */
+            const estimable = k !== "step";
+            const estimate = s.status === "waiting_result" && estimable && s.testDate && (k === "tahsili" || !!s.mode)
+              ? estimateResult(k as "qudurat" | "tahsili", (s.mode || "paper") as ExamMode, s.testDate)
+              : null;
             return (
               <div key={k} className="rounded-2xl px-4 py-3.5 flex flex-col gap-2.5" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
                 <p className="font-bold t-body" style={{ color: "var(--text)" }}>{SCORE_META[k].resultTitle}</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {([["none", "لم أختبر"], ["waiting", "بانتظار النتيجة"], ["scored", "أدخل درجتي"]] as const).map(([st, label]) => (
-                    <button key={st} onClick={() => { setScoreErr(""); setScore(k, { state: st, ...(st !== "scored" ? { value: "" } : {}) }); }}
-                      className="rounded-xl py-2 px-1 font-bold t-caption leading-snug text-center transition"
-                      style={s.state === st ? { background: "var(--accent)", color: "#fff", border: "none" } : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>{label}</button>
+                <div className={`grid ${k === "qudurat" ? "grid-cols-2" : "grid-cols-3"} gap-2`}>
+                  {statusOpts.map((o) => (
+                    <button key={o.key} onClick={() => { setScoreErr(""); setScore(k, o.patch); }}
+                      className="rounded-xl py-2 px-1 font-bold t-caption leading-snug text-center transition active:scale-[0.98]"
+                      style={o.on ? { background: "var(--accent)", color: "#fff", border: "none" } : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>{o.label}</button>
                   ))}
                 </div>
-                {s.state === "scored" && (
+                {s.status === "taken" && (
                   <div>
                     <input value={s.value} inputMode="decimal" onChange={(ev) => { setScoreErr(""); setScore(k, { value: ev.target.value }); }}
                       placeholder="درجتك" maxLength={6}
@@ -720,6 +816,41 @@ export default function OnboardingPage() {
                           </div>
                         )}
                       </>
+                    )}
+                  </div>
+                )}
+                {/* انتظار النتيجة — حالةٌ مستقلّة: نمط + تاريخ + تقدير موعد الظهور */}
+                {s.status === "waiting_result" && (
+                  <div className="rise flex flex-col gap-2.5">
+                    {k === "qudurat" && (
+                      <div>
+                        <p className="t-caption font-bold mb-1.5" style={{ color: "var(--text-dim)" }}>هل كان اختبارك محوسباً أم ورقياً؟</p>
+                        <div className="flex gap-2">
+                          {([["computer", "💻 محوسب"], ["paper", "📝 ورقي"]] as const).map(([md, label]) => (
+                            <button key={md} onClick={() => setScore(k, { mode: md })} className="flex-1 py-2 rounded-xl font-bold t-caption" style={s.mode === md ? { background: "var(--accent)", color: "#fff", border: "none" } : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>{label}</button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {estimable && (
+                      <div>
+                        <p className="t-caption font-bold mb-1.5" style={{ color: "var(--text-dim)" }}>{k === "qudurat" ? "متى اختبرت؟" : "متى كانت آخر محاولة؟"}</p>
+                        <input type="date" value={s.testDate} max={today}
+                          onChange={(ev) => setScore(k, { testDate: ev.target.value })}
+                          className="w-full rounded-xl px-3 py-2.5 t-body outline-none" style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
+                      </div>
+                    )}
+                    {estimate && (
+                      <div className="rounded-xl px-3.5 py-2.5 flex items-start gap-2" style={{ background: "color-mix(in srgb, var(--gold) 12%, var(--surface2))", border: "1px solid color-mix(in srgb, var(--gold) 32%, transparent)" }}>
+                        <span className="text-[15px]">⏳</span>
+                        <span className="t-caption font-bold leading-relaxed" style={{ color: "var(--text)" }}>{estimate.text}</span>
+                      </div>
+                    )}
+                    {k === "step" && (
+                      <div className="rounded-xl px-3.5 py-2.5 flex items-start gap-2" style={{ background: "color-mix(in srgb, var(--gold) 12%, var(--surface2))", border: "1px solid color-mix(in srgb, var(--gold) 32%, transparent)" }}>
+                        <span className="text-[15px]">⏳</span>
+                        <span className="t-caption font-bold leading-relaxed" style={{ color: "var(--text)" }}>سجّلنا حالتك — سننبّهك عند اقتراب موعد نتيجتك.</span>
+                      </div>
                     )}
                   </div>
                 )}
@@ -818,7 +949,7 @@ export default function OnboardingPage() {
       case "summary": return <SummaryStep name={name.trim()} status={status} goal={goal} firstStep={firstExamLabel}
         examRows={orderedSelected.map((id) => {
           const key = EXAM_SCORE_KEY[id];
-          const mark = key ? (scores[key].state === "scored" ? "✅" : scores[key].state === "waiting" ? "⏳" : "❌") : "•";
+          const mark = key ? (scores[key].status === "taken" ? "✅" : scores[key].status === "waiting_result" ? "⏳" : "❌") : "•";
           return { label: examLabelOf(id), mark };
         })}
         region={region} uni={{ name: universityName || (universityId === "other" ? otherUni.trim() : ""), major: findMajor(majorId)?.name, year: universityYear }} />;
@@ -901,10 +1032,10 @@ function SummaryRow({ icon, title, children }: { icon: string; title: string; ch
 /* ════════ التقرير الشخصي (٥ ثوانٍ) ════════ */
 function ReportScreen({ name, scores, outlook, undecided, firstStep, region }: {
   name: string;
-  scores: Record<ScoreKey, { state: "none" | "waiting" | "scored"; value: string }>;
+  scores: Record<ScoreKey, ScoreCell>;
   outlook: ReturnType<typeof admissionOutlook>; undecided?: boolean; firstStep?: string; region: string;
 }) {
-  const val = (k: ScoreKey) => (scores[k].state === "scored" ? parseFloat(scores[k].value) : null);
+  const val = (k: ScoreKey) => (scores[k].status === "taken" ? parseFloat(scores[k].value) : null);
   const level = evalBand("qudurat", val("qudurat")) ?? evalBand("tahsili", val("tahsili"));
   const levelPct = percentileText(level);
   const ready = readiness(outlook, undecided);

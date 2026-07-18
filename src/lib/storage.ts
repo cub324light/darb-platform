@@ -46,6 +46,7 @@ export interface DarbUser {
   academicTerm?: string;   // الفصل الحالي (أول/ثاني/صيف) — يؤكّده الطالب بالتسجيل، يحكم إتاحة المبكر
   trackType?: string;  // نوع المسار الجامعي: صحي/هندسي/حاسب/إداري/عام (اختياري)
   academicTrack?: import("./curriculum").AcademicTrack; // المسار الدراسي الثانوي (يقود المنهج) — لثاني/ثالث ثانوي
+  secondaryGpa?: number; // نسبة الثانوية العامة (٠–١٠٠) — للخريج عند اختيار حساب معدله
   /* ── حقول الجامعي (Phase Engine) — لا تظهر للثانوي أبداً ── */
   universityGpa?: number;        // المعدل الجامعي من 5
   creditHoursCompleted?: number; // الساعات المعتمدة المنجزة
@@ -500,6 +501,20 @@ export interface ExamResult {
 const RESULTS_KEY = "darb_results";
 export function loadResults(): ExamResult[] { return loadList<ExamResult>(RESULTS_KEY); }
 export function saveResults(list: ExamResult[]) { saveList(RESULTS_KEY, list); }
+
+/* ── انتظار النتيجة: حالةٌ مستقلّة (لا تُعامَل كأنه لم يختبر) ──
+   نخزّن مدخلات الاختبار الخام (النوع + النمط + تاريخ الاختبار) ليحسب النظام لاحقاً موعد
+   الظهور والمتبقّي تلقائياً (بطاقة العدّ التنازلي خارج التسجيل — examResultStatus.ts). */
+export type PendingExam = "qudurat" | "tahsili" | "step";
+export interface PendingResultRecord {
+  exam: PendingExam;
+  mode: "computer" | "paper"; // التحصيلي ورقيٌّ دائماً
+  testDate: string;           // متى اختبر / آخر محاولة — YYYY-MM-DD (قد يكون فارغاً لـ STEP)
+  savedAt: string;            // تاريخ حفظ الحالة — YYYY-MM-DD
+}
+const PENDING_RESULTS_KEY = "darb_pending_results";
+export function loadPendingResults(): PendingResultRecord[] { return loadList<PendingResultRecord>(PENDING_RESULTS_KEY); }
+export function savePendingResults(list: PendingResultRecord[]) { saveList(PENDING_RESULTS_KEY, list); }
 
 /* ── نتائج القبول الجامعي: تتبّع التقديمات وحالتها (رحلة الطالب الكاملة) ── */
 export type AdmissionStatus = "applied" | "accepted" | "rejected" | "waiting";
