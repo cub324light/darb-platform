@@ -61,8 +61,7 @@ test("«ابدأ من هنا»: أدلّةٌ صالحة لوحدات القيا�
     assert.equal(mg[mg.length - 1].title, "كيف يساعدك درب؟", `ذيل «كيف يساعدك درب؟» غائب: ${m.id}`);
   }
 
-  /* عوالم الروابط (المدرسة/الجامعة/مجموعات) بلا دليلٍ تعريفي. */
-  assert.equal(moduleContent("school").guide, undefined, "hub لا يحمل دليلاً");
+  /* عوالم الروابط (الجامعة/مجموعات) بلا دليلٍ تعريفي. */
   assert.equal(moduleContent("university").guide, undefined, "hub لا يحمل دليلاً");
 });
 
@@ -70,7 +69,7 @@ test("المجموعات تُعرض بأعضائها لا بفضاءٍ مباش�
   assert.equal(opensDirectSpace("english"), false);
   assert.equal(opensDirectSpace("programs"), false);
   assert.equal(opensDirectSpace("qudurat"), true);
-  assert.equal(opensDirectSpace("school"), true);
+  assert.equal(opensDirectSpace("university"), true);
 });
 
 test("moduleView/memberView يجمعان العرض (من registry) مع المحتوى", () => {

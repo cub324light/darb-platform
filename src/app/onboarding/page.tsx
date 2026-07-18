@@ -16,6 +16,7 @@ import { resolveGoals, type PrimaryGoal, type AramcoSub, type MajorLean } from "
 import { admissionOutlook, OUTLOOK_DISCLAIMER } from "@/lib/onboarding/outlook";
 import { EXAM_ORDER } from "@/lib/onboarding/examCatalog";
 import { stageExams, examLabelOf, EXAM_TO_TRACK, EXAM_SCORE_KEY, MAX_EXAMS, STAGE_LOCK_REASON, type OnbStage } from "@/lib/onboarding/stageExams";
+import { ACADEMIC_TRACKS, type AcademicTrack } from "@/lib/curriculum";
 import { getQuduratBand, getTahsiliBand } from "@/lib/darbKnowledge";
 import { SA_REGIONS, nearestUniversity } from "@/lib/saRegions";
 import { n } from "@/lib/format";
@@ -69,10 +70,12 @@ const SUB_STAGE_PROMPT: Record<string, string> = {
 
 /* ── نموذج الخطوات (يُبنى حسب المرحلة) ── */
 type StepKey =
-  | "welcome" | "stage" | "region" | "goal" | "exams" | "scores"
-  | "dates" | "style" | "time" | "summary" | "uni";
-const SECONDARY_STEPS: StepKey[] = ["welcome", "stage", "region", "goal", "exams", "scores", "style", "time", "summary"];
+  | "welcome" | "stage" | "track" | "region" | "goal" | "exams" | "scores"
+  | "style" | "time" | "summary" | "uni";
 const UNI_STEPS: StepKey[] = ["welcome", "stage", "uni", "style", "time", "summary"];
+/* المسار الدراسي يظهر لثاني/ثالث ثانوي فقط (أول ثانوي لم يختر مساره بعد). */
+const secondarySteps = (needsTrack: boolean): StepKey[] =>
+  ["welcome", "stage", ...(needsTrack ? ["track" as const] : []), "region", "goal", "exams", "scores", "style", "time", "summary"];
 /* «ما أدري»: نعرض له أوسع فرصٍ ممكنة بدل إخفاء الاختبارات. */
 const ALL_TARGETS = ["university", "aramco", "itc", "military", "scholarship"];
 
@@ -125,6 +128,7 @@ export default function OnboardingPage() {
   const [term, setTerm] = useState<TermGuess>(() => (typeof window !== "undefined" ? currentTermGuess() : "first"));
   const [gradStage, setGradStage] = useState("");
   const [gradRecency, setGradRecency] = useState<"this-year" | "earlier" | "">("");
+  const [academicTrack, setAcademicTrack] = useState<AcademicTrack | "">("");
 
   /* ── اختيار الاختبارات (منتقٍ حسب المرحلة، حدّ ٣) ── */
   const [selectedExams, setSelectedExams] = useState<string[]>([]);
@@ -231,8 +235,9 @@ export default function OnboardingPage() {
     });
   };
 
-  /* ── قائمة الخطوات (متكيّفة) ── */
-  const steps = status === "جامعي" ? UNI_STEPS : SECONDARY_STEPS;
+  /* ── قائمة الخطوات (متكيّفة) — المسار الدراسي لثاني/ثالث ثانوي فقط ── */
+  const needsTrack = status === "ثانوي" && (grade === "ثاني ثانوي" || grade === "ثالث ثانوي");
+  const steps = status === "جامعي" ? UNI_STEPS : secondarySteps(needsTrack);
   const idx = Math.max(0, steps.indexOf(current));
   const total = steps.length - 1; // الترحيب = ٠
 
@@ -244,6 +249,7 @@ export default function OnboardingPage() {
     switch (current) {
       case "welcome": return name.trim().length > 0;
       case "stage":   return !!primaryStage && !!subStage;
+      case "track":   return !!academicTrack;
       case "region":  return !!region && willingToRelocate !== null; // المدينة/الحي اختياريان فقط
       case "goal":    return primaryGoals.length > 0 && (!primaryGoals.includes("university") || !!majorLean);
       case "style":   return !!studyStyle;
@@ -305,6 +311,7 @@ export default function OnboardingPage() {
         studyHours,
         studyStyle: studyStyle || undefined,
         trackType: resolvedTrackType,
+        academicTrack: needsTrack && academicTrack ? academicTrack : undefined,
         region: region || undefined,
         city: city.trim() || undefined,
         district: district.trim() || undefined,
@@ -407,7 +414,7 @@ export default function OnboardingPage() {
                   onClick={() => {
                     if (on) { setPrimaryStage(""); setSubStage(""); setStatus(""); setGrade(""); return; }
                     setPrimaryStage(p.key); setSubStage(""); setStatus(p.status); setGrade(p.grade);
-                    setGradStage(""); setGradRecency(""); setUniversityYear("");
+                    setGradStage(""); setGradRecency(""); setUniversityYear(""); setAcademicTrack("");
                   }}
                   className={`rounded-2xl py-3.5 px-3 font-bold t-body transition active:scale-[0.98] ${p.key === "uni" ? "col-span-2" : ""}`}
                   style={chipStyle(on)}>{p.label}</button>
@@ -433,6 +440,39 @@ export default function OnboardingPage() {
               </div>
             </div>
           )}
+        </div>
+      );
+
+      /* ── المسار الدراسي (ثاني/ثالث ثانوي) ── */
+      case "track": return (
+        <div>
+          <p className="label mb-1">ما هو مسارك الدراسي؟</p>
+          <p className="t-caption mb-4" style={{ color: "var(--text-muted)" }}>نجلب مواد فصلك تلقائياً، ويركّز دويرب على ما يناسب مسارك</p>
+          <div className="flex flex-col gap-3">
+            {ACADEMIC_TRACKS.map((t) => {
+              const on = academicTrack === t.id;
+              return (
+                <button key={t.id} onClick={() => setAcademicTrack(on ? "" : t.id)} aria-pressed={on}
+                  className="rounded-2xl px-4 py-4 flex items-center gap-4 text-right transition active:scale-[0.97]"
+                  style={{
+                    background: on ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
+                    border: `2px solid ${on ? "var(--accent)" : "var(--border)"}`,
+                    boxShadow: on ? "0 6px 22px color-mix(in srgb, var(--accent) 22%, transparent)" : "none",
+                  }}>
+                  <span className="text-[30px] flex-shrink-0" aria-hidden="true">{t.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-black t-title" style={{ color: on ? "var(--accent-light)" : "var(--text)" }}>{t.label}</p>
+                      {t.recommended && <span className="t-caption font-bold px-2 py-0.5 rounded-full" style={{ background: "color-mix(in srgb, var(--accent) 16%, transparent)", color: "var(--accent-light)" }}>موصى به</span>}
+                    </div>
+                    <p className="t-caption mt-1 leading-relaxed" style={{ color: "var(--text-muted)" }}>{t.desc}</p>
+                  </div>
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center t-caption font-black flex-shrink-0"
+                    style={{ background: on ? "var(--accent)" : "var(--surface2)", border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}`, color: on ? "#fff" : "transparent" }}>✓</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       );
 

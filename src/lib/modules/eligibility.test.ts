@@ -7,7 +7,7 @@ import { buildInitialWorkspace, addMember } from "./workspace";
 const today = "2026-07-13";
 
 test("Core والمجموعات لا تُضاف مباشرةً؛ القياس المفرد محكومٌ بالجدول", () => {
-  assert.equal(canAddModule("school", { stage: "first", today }).allowed, false);
+  assert.equal(canAddModule("university", { stage: "university", today }).allowed, false); // Core لا يُضاف يدوياً
   assert.equal(canAddModule("english", { stage: "third", today }).allowed, false); // عبر عضو
 
   assert.equal(canAddModule("qudurat", { stage: "first", today }).allowed, false);

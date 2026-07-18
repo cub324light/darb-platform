@@ -45,6 +45,7 @@ export interface DarbUser {
   gradeYearId?: string;    // العام الدراسي (الهجري) الذي ضُبط فيه الصف — مرساة الترقية التلقائية
   academicTerm?: string;   // الفصل الحالي (أول/ثاني/صيف) — يؤكّده الطالب بالتسجيل، يحكم إتاحة المبكر
   trackType?: string;  // نوع المسار الجامعي: صحي/هندسي/حاسب/إداري/عام (اختياري)
+  academicTrack?: import("./curriculum").AcademicTrack; // المسار الدراسي الثانوي (يقود المنهج) — لثاني/ثالث ثانوي
   /* ── حقول الجامعي (Phase Engine) — لا تظهر للثانوي أبداً ── */
   universityGpa?: number;        // المعدل الجامعي من 5
   creditHoursCompleted?: number; // الساعات المعتمدة المنجزة

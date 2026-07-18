@@ -9,15 +9,16 @@ import {
 
 const NOW = 1_700_000_000_000;
 
-test("مساري الابتدائي: Core المرحلة فقط، لا شيء اختياري", () => {
-  assert.deepEqual(buildInitialWorkspace("first", NOW).modules.map((m) => m.id), ["school"]);
+test("مساري الابتدائي: الجامعة Core للجامعي فقط، والثانوي/الخريج فارغ (لا مدرسة)", () => {
+  assert.deepEqual(buildInitialWorkspace("first", NOW).modules, []);
+  assert.deepEqual(buildInitialWorkspace("third", NOW).modules, []);
   assert.deepEqual(buildInitialWorkspace("university", NOW).modules.map((m) => m.id), ["university"]);
   assert.deepEqual(buildInitialWorkspace("graduate", NOW).modules, []);
 });
 
 test("addModule: للمفردة فقط — يرفض Core والمجموعة والتكرار", () => {
   let ws = buildInitialWorkspace("third", NOW);
-  ws = addModule(ws, "school", NOW);   // Core → مرفوض
+  ws = addModule(ws, "university", NOW); // Core → مرفوض
   ws = addModule(ws, "english", NOW);  // مجموعة → مرفوضة (تُضاف بعضو)
   assert.equal(optionalInstances(ws).length, 0);
   ws = addModule(ws, "qudurat", NOW);
@@ -55,11 +56,11 @@ test("removeMember: يفرّغ المجموعة فتُحذف؛ removeModule يح
 });
 
 test("Core محميّة — لا تُحذف ولا تُخفى", () => {
-  let ws = buildInitialWorkspace("first", NOW);
-  ws = removeModule(ws, "school", NOW);
-  assert.ok(hasModule(ws, "school"));
-  ws = hideModule(ws, "school", true, NOW);
-  assert.equal(getInstance(ws, "school")!.hidden, false);
+  let ws = buildInitialWorkspace("university", NOW);
+  ws = removeModule(ws, "university", NOW);
+  assert.ok(hasModule(ws, "university"));
+  ws = hideModule(ws, "university", true, NOW);
+  assert.equal(getInstance(ws, "university")!.hidden, false);
 });
 
 test("تقدّم المجموعة مشتقٌّ من أعضائها", () => {
@@ -88,20 +89,20 @@ test("تقدّم المفردة يقود حالتها، والحالة اليد�
 test("الأولوية والترتيب والإخفاء", () => {
   let ws = addModule(buildInitialWorkspace("third", NOW), "qudurat", NOW);
   ws = addModule(ws, "tahsili", NOW);
-  assert.deepEqual(orderedModules(ws).map((m) => m.id), ["school", "qudurat", "tahsili"]);
+  assert.deepEqual(orderedModules(ws).map((m) => m.id), ["qudurat", "tahsili"]);
   ws = setPriority(ws, "tahsili", true, NOW);
   assert.equal(orderedModules(ws)[0].id, "tahsili");
   ws = setPriority(ws, "tahsili", false, NOW);
-  ws = reorderModules(ws, ["tahsili", "qudurat", "school"], NOW);
-  assert.deepEqual(orderedModules(ws).map((m) => m.id), ["tahsili", "qudurat", "school"]);
+  ws = reorderModules(ws, ["tahsili", "qudurat"], NOW);
+  assert.deepEqual(orderedModules(ws).map((m) => m.id), ["tahsili", "qudurat"]);
   ws = hideModule(ws, "qudurat", true, NOW);
   assert.ok(!visibleModules(ws).some((m) => m.id === "qudurat"));
 });
 
-test("syncCoreModules: ثانوي→جامعي يحذف المدرسة ويضيف الجامعة ويُبقي الاختيارية", () => {
+test("syncCoreModules: ثانوي→جامعي يضيف الجامعة Core ويُبقي الاختيارية", () => {
   let ws = addMember(addModule(buildInitialWorkspace("third", NOW), "qudurat", NOW), "step", NOW);
+  assert.ok(!hasModule(ws, "university"), "لا Core للثانوي");
   ws = syncCoreModules(ws, "university", NOW);
-  assert.ok(!hasModule(ws, "school"));
   assert.ok(hasModule(ws, "university"));
   assert.ok(hasModule(ws, "qudurat") && hasModule(ws, "english"));
 });

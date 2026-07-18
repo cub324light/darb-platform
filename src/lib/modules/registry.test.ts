@@ -5,20 +5,20 @@ import {
   coreModulesForStage, OPTIONAL_MODULES, MODULE_DEFS, MEMBER_DEFS,
 } from "./registry";
 
-test("Core لكل مرحلة: المدرسة للثانوي، الجامعة للجامعي، لا شيء للخريج", () => {
-  assert.deepEqual(coreModulesForStage("first"), ["school"]);
-  assert.deepEqual(coreModulesForStage("third"), ["school"]);
+test("Core لكل مرحلة: الجامعة للجامعي فقط، لا Core للثانوي (المدرسة أُخرجت من مساري)", () => {
+  assert.deepEqual(coreModulesForStage("first"), []);
+  assert.deepEqual(coreModulesForStage("third"), []);
   assert.deepEqual(coreModulesForStage("university"), ["university"]);
   assert.deepEqual(coreModulesForStage("graduate"), []);
 });
 
-test("isCore / isGroup: المدرسة Core مفردة، اللغة/البرامج مجموعات", () => {
-  assert.equal(isCore("school"), true);
+test("isCore / isGroup: الجامعة Core مفردة، اللغة/البرامج مجموعات", () => {
+  assert.equal(isCore("university"), true);
   assert.equal(isCore("qudurat"), false);
   assert.equal(isGroup("english"), true);
   assert.equal(isGroup("programs"), true);
   assert.equal(isGroup("qudurat"), false);
-  assert.equal(isGroup("school"), false);
+  assert.equal(isGroup("university"), false);
 });
 
 test("الوحدات العليا الاختيارية أربع فقط (لا تكبر الصفحة)", () => {

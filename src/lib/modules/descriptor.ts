@@ -51,14 +51,6 @@ const TAHSILI_SUBJECTS: SubjectDef[] = [
 /* ── محتوى الوحدات العليا المفردة والمجموعات ──
    المجموعات (english/programs) حاويةٌ لأعضائها — القالب يعرض أعضاءها، لا فضاءً مباشراً. */
 const MODULE_CONTENT: Record<ModuleId, ModuleContent> = {
-  school: {
-    kind: "hub",
-    intro: "عالمك المدرسي — موادك وواجباتك وتقويم الوزارة. دائمٌ معك، وليس اختباراً.",
-    hub: [
-      { label: "مذكرة الواجبات", href: "/school", icon: "📝", desc: "نظّم واجباتك ومواعيد تسليمها" },
-      { label: "خطتي", href: "/plan", icon: "🗓️", desc: "جدول اليوم والأسبوع" },
-    ],
-  },
   university: {
     kind: "hub",
     intro: "عالمك الجامعي — معدّلك وتدريبك ومسارك المهني. مرحلة القياس والقبول انتهت.",

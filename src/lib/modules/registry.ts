@@ -28,8 +28,8 @@ export interface MemberDef {
 
 /* الوحدات العليا (بطاقات الصفحة الرئيسية). */
 export const MODULE_DEFS: ModuleDef[] = [
-  /* Core — تلقائية بالمرحلة، لا تُحذف ولا تظهر في «+ إضافة» */
-  { id: "school",     kind: "core", shape: "single", category: "school",     label: "المدرسة", icon: "🏫", color: "#0EA5E9", coreForStages: ["first", "second", "third"] },
+  /* Core — تلقائية بالمرحلة، لا تُحذف ولا تظهر في «+ إضافة». (المدرسة أُخرجت من مساري
+     نهائياً — قسمها الخاص /school، والمواد تُجلب من نظام المنهج.) */
   { id: "university", kind: "core", shape: "single", category: "university", label: "الجامعة", icon: "🎓", color: "#2563EB", coreForStages: ["university"] },
 
   /* Optional مفردة — قياس القبول (أهليتها من examEligibility) */

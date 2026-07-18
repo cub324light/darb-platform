@@ -15,6 +15,7 @@ import { estimateReadiness, daysUntil } from "./insights";
 import { getTrack, type TrackId } from "./tracks";
 import { findMajor, requirementsText } from "./university";
 import { duwairbState } from "./lifeEngine";
+import { trackLabel, trackSubjectEmphasis, subjectsFor } from "./curriculum";
 
 /* ── القدرات الخمس الأساسية + المواضيع ── */
 export type DuwairbTab = "schedule" | "progress" | "quiz" | "explain" | "file" | "topics";
@@ -41,6 +42,9 @@ export interface DuwairbProfile {
   attemptCount?: number;                  // مجموع المحاولات السابقة (خبرة)
   trackType?: string;                     // نوع المسار الجامعي: صحي/هندسي/حاسب/إداري/عام
   majorRequirements?: string;             // متطلبات التخصص المستهدف الإرشادية (نص)
+  academicTrack?: string;                 // المسار الدراسي الثانوي (اسمٌ عربي) — يقود المنهج
+  trackFocus?: string[];                  // مواد تركيز المسار (يوليها الذكاء عنايةً أكبر)
+  currentSubjects?: string[];             // مواد الفصل الحالي (من نظام المنهج)
   /* ── الحالة الجاهزة المقطّرة من Life Engine (ADR-0001 §6) —
      الترتيب الملزِم: Profile → recommendedExams → Life Engine → Duwairb.
      الذكاء يشرح هذا القرار ولا يعيد اشتقاق مرحلة الطالب أو وجهته. ── */
@@ -156,6 +160,9 @@ export function buildDuwairbProfile(): { profile: DuwairbProfile; goalLine: stri
     attemptCount,
     trackType: u.trackType || undefined,
     majorRequirements,
+    academicTrack: u.academicTrack ? trackLabel(u.academicTrack) : undefined,
+    trackFocus: u.academicTrack && trackSubjectEmphasis(u.academicTrack).length ? trackSubjectEmphasis(u.academicTrack) : undefined,
+    currentSubjects: (() => { const s = subjectsFor(u.academicTrack, u.grade, u.academicTerm); return s.length ? s : undefined; })(),
     /* الحالة الجاهزة من Life Engine (يشرحها الذكاء، لا يعيد قرارها) */
     currentPriority: state.currentPriority
       ? { title: state.currentPriority.title, why: state.currentPriority.why }
@@ -281,6 +288,8 @@ ${lines.join("\n")}
   }
   if (p.readinessPct != null) lines.push(`- الجاهزية المقدّرة: ${p.readinessPct}٪${p.readinessLabel ? ` (${p.readinessLabel})` : ""}`);
   if (p.trackType) lines.push(`- التخصص المستهدف: ${p.trackType}`);
+  if (p.academicTrack) lines.push(`- مسارك الدراسي: ${p.academicTrack}${p.trackFocus?.length ? ` — ركّز أكثر على: ${p.trackFocus.join("، ")}` : ""}`);
+  if (p.currentSubjects?.length) lines.push(`- موادك هذا الفصل: ${p.currentSubjects.join("، ")}`);
   if (p.attemptCount) lines.push(`- محاولات اختبارات سابقة: ${p.attemptCount}`);
   if (p.currentScores && Object.keys(p.currentScores).length) {
     const scStr = Object.entries(p.currentScores).map(([k, v]) => `${k} ${v}`).join("، ");

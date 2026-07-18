@@ -11,7 +11,7 @@ test("ensureWorkspace: يبني Core المرحلة ويرحّل activeTracks ا
     activeTracks: ["قدرات", "تحصيلي", "ايلتس", "CPC"],
   };
   const ws = ensureWorkspace(u).workspace!;
-  assert.ok(hasModule(ws, "school"), "المدرسة Core الثانوي تُبنى تلقائياً");
+  assert.ok(!hasModule(ws, "university"), "لا Core للثانوي (المدرسة أُخرجت من مساري)");
   assert.ok(hasModule(ws, "qudurat"));
   assert.ok(hasModule(ws, "tahsili"));
   assert.ok(hasModule(ws, "english"), "اللغة بطاقة مجموعة واحدة");
@@ -25,13 +25,13 @@ test("ensureWorkspace: لا يمسّ workspace موجوداً", () => {
   assert.equal(ensureWorkspace(u).workspace, existing);
 });
 
-test("ensureWorkspace: «مدرسه» القديمة لا تُرحَّل كاختيارية (Core فقط)", () => {
+test("ensureWorkspace: «مدرسه» القديمة لا تُرحَّل كوحدة (لا مدرسة في مساري)", () => {
   const u: DarbUser = {
     name: "x", track: "مدرسه", onboarded: true,
     studyLevel: "ثانوي", grade: "أول ثانوي", activeTracks: ["مدرسه"],
   };
   const ws = ensureWorkspace(u).workspace!;
-  assert.ok(hasModule(ws, "school"));
+  assert.equal(ws.modules.length, 0, "لا وحدات (لا مدرسة ولا اختياري)");
   assert.equal(optionalInstances(ws).length, 0);
 });
 
@@ -39,5 +39,4 @@ test("ensureWorkspace: الجامعي يحصل على Core الجامعة بلا
   const u: DarbUser = { name: "x", track: "قدرات", onboarded: true, studyLevel: "جامعي" };
   const ws = ensureWorkspace(u).workspace!;
   assert.ok(hasModule(ws, "university"));
-  assert.ok(!hasModule(ws, "school"));
 });

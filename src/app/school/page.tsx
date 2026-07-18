@@ -16,6 +16,7 @@ import { loadTrackExamDates, localDayKey, loadUser } from "@/lib/storage";
 import { isUniversityPhase, isGraduatePhase } from "@/lib/phase";
 import { getTrack, type TrackId } from "@/lib/tracks";
 import { daysUntil } from "@/lib/insights";
+import { subjectsFor, trackLabel } from "@/lib/curriculum";
 
 const noop = () => () => {};
 const useMounted = () => useSyncExternalStore(noop, () => true, () => false);
@@ -72,6 +73,31 @@ function UpcomingExams() {
   );
 }
 
+/* المواد الدراسية — تُجلب تلقائياً من نظام المنهج حسب المسار+الصف+الفصل.
+   تظهر لثاني/ثالث ثانوي فقط (أول ثانوي بلا مسارٍ بعد → لا مواد). */
+function CurriculumSubjects() {
+  const mounted = useMounted();
+  const u = mounted ? loadUser() : null;
+  const subjects = mounted ? subjectsFor(u?.academicTrack, u?.grade, u?.academicTerm) : [];
+  if (!mounted || subjects.length === 0) return null;
+  const trackLbl = u?.academicTrack ? trackLabel(u.academicTrack) : "";
+  const termLbl = u?.academicTerm === "second" ? "الفصل الثاني" : u?.academicTerm === "summer" ? "الفصل الثالث" : "الفصل الأول";
+  return (
+    <section className="ds-card ds-stack-tight">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <h2 className="t-h3" style={{ color: "var(--text)" }}>📚 المواد الدراسية</h2>
+        <span className="t-caption font-bold px-3 py-1 rounded-full" style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>{trackLbl} · {termLbl}</span>
+      </div>
+      <p className="t-caption" style={{ color: "var(--text-muted)" }}>موادك هذا الفصل حسب مسارك — يستخدمها دويرب لتركيز خطتك.</p>
+      <div className="flex flex-wrap gap-2">
+        {subjects.map((s) => (
+          <span key={s} className="t-caption font-bold px-3 py-1.5 rounded-full" style={{ background: "var(--surface2)", color: "var(--text-dim)", border: "1px solid var(--border)" }}>{s}</span>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function SchoolPage() {
   /* حارس الأهلية — «المدرسة» للثانوي فقط، لا تظهر للجامعي/الخريج إطلاقاً
      (الشريط السفلي يخفيها، وهذا يمنع الوصول المباشر بالرابط أيضاً) */
@@ -114,6 +140,9 @@ export default function SchoolPage() {
           <h1 className="t-h1" style={{ color: "var(--text)" }}>يومك الدراسي</h1>
           <p className="t-body" style={{ color: "var(--text-dim)" }}>واجباتك ودروسك واختباراتك ومتطلباتك في مكانٍ واحد — تُنظّم ضغطك الحقيقي، لا الاختبارات وحدها.</p>
         </header>
+
+        {/* المواد الدراسية — من نظام المنهج (المسار+الصف+الفصل) */}
+        <CurriculumSubjects />
 
         {/* الأهم: مذكرة الواجبات */}
         <HomeworkPlanner />

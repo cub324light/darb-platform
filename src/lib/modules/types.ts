@@ -6,7 +6,7 @@
 
 /* الوحدات العليا (بطاقات الصفحة الرئيسية). لا تكبر: اللغة والبرامج مجموعتان. */
 export type ModuleId =
-  | "school" | "university"  // Core — تلقائية بالمرحلة
+  | "university"             // Core — الجامعة (لمرحلة الجامعي). المدرسة أُخرجت من مساري.
   | "qudurat" | "tahsili"    // Optional مفردة — قياس القبول
   | "english"                // Optional مجموعة — أعضاؤها اختبارات اللغة
   | "programs";              // Optional مجموعة — أعضاؤها برامج القبول
@@ -22,7 +22,7 @@ export type ModuleKind = "core" | "optional";
 export type ModuleShape = "single" | "group";
 
 /* فئة الوحدة — لبناء «+ إضافة» الهرمي ولقواعد الأهلية. */
-export type ModuleCategory = "school" | "university" | "qiyas" | "language" | "program";
+export type ModuleCategory = "university" | "qiyas" | "language" | "program";
 
 /* ─── طبقة Module State — القيم الستّ (قرار المالك) ───
    «غير مضاف» حالةُ الكتالوج فقط؛ ما في مساري يحمل واحدةً من الخمس الباقية. */
