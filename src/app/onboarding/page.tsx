@@ -11,11 +11,11 @@ import { MAJORS, findUniversity, findMajor, UNIVERSITIES } from "@/lib/universit
 import { saveUser, saveResults, loadGoals, saveGoals, ensureWorkspace,
   loadTrackExamDates, saveTrackExamDates, type DarbUser } from "@/lib/storage";
 import { currentAcademicYearId, currentTermGuess, type TermGuess } from "@/lib/academicCalendar";
-import { toBoardStage } from "@/lib/examEligibility";
-import { recommendedExams, type RecommendedExam } from "@/lib/recommendedExams";
+import { requirementsOf } from "@/lib/recommendedExams";
 import { resolveGoals, type PrimaryGoal, type AramcoSub, type MajorLean } from "@/lib/onboarding/goals";
 import { admissionOutlook, OUTLOOK_DISCLAIMER } from "@/lib/onboarding/outlook";
-import { recExamRank, UNDECIDED_EXAM_CARDS } from "@/lib/onboarding/examCatalog";
+import { EXAM_ORDER } from "@/lib/onboarding/examCatalog";
+import { stageExams, examLabelOf, EXAM_TO_TRACK, EXAM_SCORE_KEY, MAX_EXAMS, STAGE_LOCK_REASON, type OnbStage } from "@/lib/onboarding/stageExams";
 import { getQuduratBand, getTahsiliBand } from "@/lib/darbKnowledge";
 import { SA_REGIONS, nearestUniversity } from "@/lib/saRegions";
 import { n } from "@/lib/format";
@@ -26,12 +26,15 @@ import Logo from "@/components/Logo";
 
 /* ── نموذج المراحل ── */
 type Status = "ثانوي" | "جامعي" | "خريج";
-const STAGES: { key: string; label: string; status: Status; grade: string }[] = [
-  { key: "g1",   label: "أول ثانوي",   status: "ثانوي", grade: "أول ثانوي" },
-  { key: "g2",   label: "ثاني ثانوي",  status: "ثانوي", grade: "ثاني ثانوي" },
-  { key: "g3",   label: "ثالث ثانوي",  status: "ثانوي", grade: "ثالث ثانوي" },
-  { key: "grad", label: "خريج",        status: "خريج",  grade: "" },
-  { key: "uni",  label: "طالب جامعي",  status: "جامعي", grade: "" },
+/* المراحل مع نقطتَي الانتقال (الإجازتين) — القدرات تبدأ فعلياً في الإجازة قبل ثاني ثانوي. */
+const STAGES: { key: string; label: string; status: Status; grade: string; term: TermGuess | ""; onb: OnbStage }[] = [
+  { key: "g1",   label: "أول ثانوي",                          status: "ثانوي", grade: "أول ثانوي", term: "first",  onb: "first" },
+  { key: "s2",   label: "الإجازة الصيفية (مقبل على ثاني ثانوي)", status: "ثانوي", grade: "أول ثانوي", term: "summer", onb: "summer2" },
+  { key: "g2",   label: "ثاني ثانوي",                         status: "ثانوي", grade: "ثاني ثانوي", term: "first",  onb: "second" },
+  { key: "s3",   label: "الإجازة الصيفية (مقبل على ثالث ثانوي)", status: "ثانوي", grade: "ثاني ثانوي", term: "summer", onb: "summer3" },
+  { key: "g3",   label: "ثالث ثانوي",                         status: "ثانوي", grade: "ثالث ثانوي", term: "second", onb: "third" },
+  { key: "grad", label: "خريج",                               status: "خريج",  grade: "", term: "", onb: "graduate" },
+  { key: "uni",  label: "طالب جامعي",                          status: "جامعي", grade: "", term: "", onb: "university" },
 ];
 const UNI_YEARS = ["الأولى", "الثانية", "الثالثة", "الرابعة", "الخامسة+"];
 
@@ -43,20 +46,14 @@ const SECONDARY_STEPS: StepKey[] = ["welcome", "stage", "region", "goal", "exams
 const UNI_STEPS: StepKey[] = ["welcome", "stage", "uni", "style", "time", "summary"];
 /* «ما أدري»: نعرض له أوسع فرصٍ ممكنة بدل إخفاء الاختبارات. */
 const ALL_TARGETS = ["university", "aramco", "itc", "military", "scholarship"];
-/* اختبارات القياس/اللغة العامّة — للطالب غير المحدّد هدفه (يُدخل درجاته ويرى مستواه). */
-const UNIVERSAL_SCORABLE: RecommendedExam[] = [
-  { kind: "qudurat", boardId: "qudurat", label: "القدرات", reason: "أساس القبول الجامعي والبرامج", state: "available", priority: 1 },
-  { kind: "tahsili", boardId: "tahsiliRegular", label: "التحصيلي", reason: "مطلوب للتخصصات العلمية والصحية", state: "available", priority: 2 },
-  { kind: "language", label: "STEP", reason: "لوجهات الابتعاث/الوظيفة/تطوير الإنجليزية", state: "available", priority: 3 },
-];
 
 /* ── الهدف الهرمي ── */
 const GOAL_OPTIONS: { id: PrimaryGoal; icon: string; label: string }[] = [
+  { id: "undecided",   icon: "✨", label: "درب يحدد لي (مقترح)" },
   { id: "university",  icon: "🎓", label: "الجامعة" },
   { id: "aramco",      icon: "🏭", label: "أرامكو وبرامجها" },
   { id: "military",    icon: "🪖", label: "الكليات العسكرية" },
   { id: "scholarship", icon: "✈️", label: "الابتعاث" },
-  { id: "undecided",   icon: "⭐", label: "ما أدري — درب يحدّدها لي" },
 ];
 const MAJOR_LEANS: { id: MajorLean; icon: string; label: string }[] = [
   { id: "صحي",       icon: "🩺", label: "صحي" },
@@ -79,21 +76,6 @@ const SCORE_META: Record<ScoreKey, { rangeTitle: string; resultTitle: string }> 
   tahsili: { rangeTitle: "تحصيلي", resultTitle: "التحصيلي" },
   step:    { rangeTitle: "ستيب",   resultTitle: "STEP" },
 };
-const scoreKeyOf = (e: RecommendedExam): ScoreKey | null =>
-  e.kind === "qudurat" ? "qudurat" : e.kind === "tahsili" ? "tahsili" : e.kind === "language" ? "step" : null;
-
-/* recommendedExams → TrackId قديم (لبذر مساري عبر ensureWorkspace). */
-function tracksFromRec(rec: RecommendedExam[]): TrackId[] {
-  const t = new Set<TrackId>();
-  for (const e of rec) {
-    if (e.kind === "qudurat") t.add("قدرات");
-    else if (e.kind === "tahsili") t.add(e.boardId === "tahsiliEarly" ? "تحصيلي مبكر" : "تحصيلي");
-    else if (e.kind === "aramco") t.add("CPC");
-    else if (e.kind === "itc") t.add("ITC");
-    else if (e.kind === "language") t.add("ستيب");
-  }
-  return [...t];
-}
 
 export default function OnboardingPage() {
   const [current, setCurrent] = useState<StepKey>("welcome");
@@ -108,9 +90,15 @@ export default function OnboardingPage() {
     });
   }, []);
   const [status, setStatus] = useState<Status | "">("");
+  const [stageKey, setStageKey] = useState("");
   const [grade, setGrade] = useState("");
   const [term, setTerm] = useState<TermGuess>(() => (typeof window !== "undefined" ? currentTermGuess() : "first"));
   const [gradStage, setGradStage] = useState("");
+
+  /* ── اختيار الاختبارات (منتقٍ حسب المرحلة، حدّ ٣) ── */
+  const [selectedExams, setSelectedExams] = useState<string[]>([]);
+  const [examsInit, setExamsInit] = useState(false);
+  const [capHint, setCapHint] = useState(false);
 
   /* ── المنطقة ── */
   const [region, setRegion] = useState("");
@@ -155,24 +143,36 @@ export default function OnboardingPage() {
 
   /* ── المشتقّات (المصدر الوحيد: الوجهة → recommendedExams) ── */
   const goal = resolveGoals({ primary: primaryGoals, aramcoSub, majorLean: (majorLean || undefined) as MajorLean | undefined });
-  const boardStage = toBoardStage({ studyLevel: status || undefined, grade });
-  const recExams: RecommendedExam[] = boardStage ? recommendedExams({
-    destinations: goal.targets, stage: boardStage,
-    isUniGrad: gradStage === "خريج جامعة",
-    afterFirstTerm: status === "ثانوي" ? term !== "first" : false,
-    today,
-  }) : [];
-  /* الترتيب الرسمي للعرض (قرار المالك) — لا فرز عشوائي. */
-  const orderedRec = [...recExams].sort((a, b) => recExamRank(a) - recExamRank(b));
-  const displayExams = orderedRec; // كل الاختبارات المطلوبة (تشمل CPC/ITC) مرتّبة
-  /* «ما أدري» → اختبارات عامّة لإدخال الدرجة؛ وإلا القابلة للتقييم من المُوصى بها. */
-  const scorableExams = (goal.undecided ? UNIVERSAL_SCORABLE : orderedRec.filter((e) => scoreKeyOf(e) !== null))
-    .sort((a, b) => recExamRank(a) - recExamRank(b));
-  /* أول خطوة موصى بها: أول اختبارٍ مطلوب، وإلا القدرات (للطالب غير المحدّد هدفه). */
-  const firstExamLabel = displayExams[0]?.label ?? scorableExams[0]?.label;
+  const stageObj = STAGES.find((s) => s.key === stageKey);
+  const onbStage: OnbStage = stageObj?.onb ?? "graduate";
+  const stageList = stageExams(onbStage);                 // التسعة بحالاتها (مفتوح/مقفل)
+  const openIds = stageList.filter((e) => e.state === "open").map((e) => e.id);
+
+  /* اقتراح درب: «درب يحدد لي» → الأساسية المفتوحة (قدرات ثم تحصيلي)؛ وإلا اختبارات الهدف
+     المفتوحة — كلاهما بحدّ ٣. المرحلة أولاً ثم الهدف (لا نقترح مقفلاً). */
+  const suggestedExamIds = (() => {
+    if (goal.undecided) return ["qudurat", "tahsili"].filter((id) => openIds.includes(id)).slice(0, MAX_EXAMS);
+    const kinds = requirementsOf(goal.targets);
+    const ids: string[] = [];
+    if (kinds.has("qudurat")) ids.push("qudurat");
+    if (kinds.has("tahsili")) ids.push("tahsili");
+    if (kinds.has("language")) ids.push("step");
+    if (kinds.has("itc")) ids.push("itc");
+    if (kinds.has("aramco")) ids.push("cpc");
+    return ids.filter((id) => openIds.includes(id)).slice(0, MAX_EXAMS);
+  })();
+
+  const orderedSelected = [...selectedExams].sort((a, b) => (EXAM_ORDER[a] ?? 99) - (EXAM_ORDER[b] ?? 99));
+  /* اختبارات إدخال الدرجة من المختارة (قدرات/تحصيلي/step) بلا تكرار مفتاح. */
+  const scorableExams = (() => {
+    const seen = new Set<ScoreKey>(); const out: { id: string; key: ScoreKey }[] = [];
+    for (const id of orderedSelected) { const k = EXAM_SCORE_KEY[id]; if (!k || seen.has(k)) continue; seen.add(k); out.push({ id, key: k }); }
+    return out;
+  })();
+  const firstExamLabel = orderedSelected[0] ? examLabelOf(orderedSelected[0]) : undefined;
 
   const num = (v: string) => { const x = parseFloat(v); return Number.isFinite(x) ? x : null; };
-  /* «ما أدري» → أوسع فرصٍ ممكنة (كل الوجهات) حتى لا يفوّت الطالب فرصة. */
+  /* «درب يحدد لي» → أوسع فرصٍ ممكنة (كل الوجهات) حتى لا يفوّت الطالب فرصة. */
   const outlookTargets = goal.undecided ? ALL_TARGETS : goal.targets;
   const outlookItems = admissionOutlook({
     targets: outlookTargets, trackType: goal.trackType,
@@ -180,6 +180,25 @@ export default function OnboardingPage() {
     tahsili: scores.tahsili.state === "scored" ? num(scores.tahsili.value) : null,
     step: scores.step.state === "scored" ? num(scores.step.value) : null,
   });
+
+  /* اقتراح الاختبارات مرّة عند بلوغ الخطوة؛ يُعاد عند تغيّر المرحلة أو الهدف. */
+  const goalKey = goal.undecided ? "undecided" : [...goal.targets].sort().join(",");
+  useEffect(() => { setExamsInit(false); }, [onbStage, goalKey]);
+  useEffect(() => {
+    if (current === "exams" && !examsInit) { setSelectedExams(suggestedExamIds); setExamsInit(true); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current, examsInit]);
+
+  const toggleExam = (id: string) => {
+    const ex = stageList.find((e) => e.id === id);
+    if (!ex || ex.state !== "open") return;             // المقفل غير قابلٍ للاختيار
+    setCapHint(false);
+    setSelectedExams((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (prev.length >= MAX_EXAMS) { setCapHint(true); return prev; }
+      return [...prev, id];
+    });
+  };
 
   /* ── قائمة الخطوات (متكيّفة) ── */
   const steps = status === "جامعي" ? UNI_STEPS : SECONDARY_STEPS;
@@ -193,7 +212,7 @@ export default function OnboardingPage() {
   const canProceed = (): boolean => {
     switch (current) {
       case "welcome": return name.trim().length > 0;
-      case "stage":   return !!status && (status !== "ثانوي" || !!grade);
+      case "stage":   return !!stageKey && (status !== "خريج" || !!gradStage);
       case "region":  return !!region;
       case "goal":    return primaryGoals.length > 0;
       case "uni":     return !!universityId && !!majorId && !!universityYear;
@@ -231,7 +250,8 @@ export default function OnboardingPage() {
     setIsSubmitting(true);
     try {
       const trimmedName = name.trim();
-      const tracks = status === "جامعي" ? [] : tracksFromRec(recExams);
+      /* الاختبارات المختارة (≤٣) هي مسارات مساري — لا اشتقاق منفصل. */
+      const tracks = status === "جامعي" ? [] : (orderedSelected.map((id) => EXAM_TO_TRACK[id]).filter(Boolean) as TrackId[]);
       const primaryTrack: TrackId = tracks[0] ?? "مدرسه";
       const resolvedTrackType = status === "جامعي" && majorId ? findMajor(majorId)?.category : (goal.trackType || undefined);
 
@@ -341,33 +361,22 @@ export default function OnboardingPage() {
         </div>
       );
 
-      /* ── الصف الدراسي ── */
+      /* ── الصف الدراسي (يشمل نقطتَي الإجازة) ── */
       case "stage": return (
         <div>
-          <p className="label mb-1">وش صفّك الدراسي؟</p>
-          <p className="t-caption mb-4" style={{ color: "var(--text-muted)" }}>نبني رحلتك حسب مرحلتك بالضبط</p>
-          <div className="grid grid-cols-2 gap-2.5">
+          <p className="label mb-1">وش مرحلتك الدراسية؟</p>
+          <p className="t-caption mb-4" style={{ color: "var(--text-muted)" }}>نبني رحلتك حسب مرحلتك بالضبط — القدرات مثلاً تبدأ في الإجازة قبل ثاني ثانوي</p>
+          <div className="flex flex-col gap-2.5">
             {STAGES.map((s) => {
-              const on = status === s.status && (s.status !== "ثانوي" || grade === s.grade);
+              const on = stageKey === s.key;
               return (
                 <button key={s.key}
-                  onClick={() => { if (on) { setStatus(""); setGrade(""); return; } setStatus(s.status); setGrade(s.grade); }}
-                  className={`rounded-2xl py-3.5 font-bold t-body transition active:scale-[0.98] ${s.key === "uni" ? "col-span-2" : ""}`}
+                  onClick={() => { if (on) { setStageKey(""); setStatus(""); setGrade(""); return; } setStageKey(s.key); setStatus(s.status); setGrade(s.grade); if (s.term) setTerm(s.term); }}
+                  className="rounded-2xl py-3.5 px-4 font-bold t-body text-center transition active:scale-[0.98]"
                   style={chipStyle(on)}>{s.label}</button>
               );
             })}
           </div>
-          {status === "ثانوي" && (
-            <div className="mt-5">
-              <p className="label mb-1">أنت الآن في أي فصل؟</p>
-              <p className="t-caption mb-3" style={{ color: "var(--text-muted)" }}>يحدّد ما يناسبك من الاختبارات ومواعيدها</p>
-              <div className="grid grid-cols-3 gap-2">
-                {([["first", "الأول"], ["second", "الثاني"], ["summer", "الصيفية"]] as [TermGuess, string][]).map(([v, label]) => (
-                  <button key={v} onClick={() => setTerm(v)} className="rounded-2xl py-3 px-2 font-bold t-small leading-snug transition active:scale-[0.98]" style={chipStyle(term === v)}>{label}</button>
-                ))}
-              </div>
-            </div>
-          )}
           {status === "خريج" && (
             <div className="mt-5">
               <p className="label mb-3">نوع تخرّجك؟</p>
@@ -482,54 +491,45 @@ export default function OnboardingPage() {
         );
       }
 
-      /* ── الاختبارات المطلوبة (مشتقّة) / كل الفرص («ما أدري») ── */
-      case "exams": return goal.undecided ? (
+      /* ── منتقي الاختبارات (حسب المرحلة، حدّ ٣، المقفل يظهر 🔒) ── */
+      case "exams": return (
         <div>
-          <p className="label mb-1">كل الاختبارات وفُرصها</p>
-          <p className="t-body mb-4 leading-relaxed" style={{ color: "var(--text-muted)" }}>بما أنك لم تحدّد هدفك بعد، هذه جميع الاختبارات التي قد تفتح لك فرصاً مستقبلية.</p>
+          <p className="label mb-1">اختباراتك</p>
+          {goal.undecided
+            ? <p className="t-caption" style={{ color: "var(--text-muted)" }}>بناءً على مرحلتك الحالية، هذه الاختبارات التي يمكنك الاستعداد لها أو إضافتها لمسارك.</p>
+            : <p className="t-caption" style={{ color: "var(--text-muted)" }}>اخترنا لك اختبارات هدفك — عدّلها كما تشاء.</p>}
+          <p className="t-caption mt-2 mb-1 leading-relaxed" style={{ color: "var(--text-muted)" }}>
+            اختر حتى ثلاثة اختبارات فقط، وتقدر تضيف أو تحذف أي اختبار لاحقاً من مساري. المقفلة 🔒 تُفتح تلقائياً عند وصولك للمرحلة المناسبة.
+          </p>
+          <p className="t-caption font-bold mb-3" style={{ color: capHint ? "var(--danger)" : "var(--accent-light)" }}>
+            {capHint ? `الحد الأقصى ${n(MAX_EXAMS)} اختبارات` : `اخترت ${n(selectedExams.length)} من ${n(MAX_EXAMS)}`}
+          </p>
           <div className="flex flex-col gap-2.5">
-            {UNDECIDED_EXAM_CARDS.map((c) => (
-              <div key={c.id} className="rounded-2xl px-4 py-3.5" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-                <p className="font-black t-title" style={{ color: "var(--text)" }}>{c.label}</p>
-                <p className="t-caption font-bold mt-1.5 mb-1" style={{ color: "var(--accent-light)" }}>يفتح لك:</p>
-                <ul className="flex flex-col gap-1">
-                  {c.opens.map((o) => (
-                    <li key={o} className="t-body flex items-start gap-2" style={{ color: "var(--text-muted)" }}>
-                      <span className="flex-shrink-0 mt-2 w-1.5 h-1.5 rounded-full" style={{ background: "var(--accent)" }} />
-                      <span className="leading-relaxed">{o}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-          <p className="t-body font-bold text-center mt-4" style={{ color: "var(--text)" }}>لا تقلق، يمكنك تغيير هدفك لاحقاً في أي وقت.</p>
-        </div>
-      ) : (
-        <div>
-          <p className="label mb-1">اختباراتك المطلوبة</p>
-          <p className="t-caption mb-4" style={{ color: "var(--text-muted)" }}>مشتقّة تلقائياً من هدفك ومرحلتك</p>
-          {displayExams.length === 0 ? (
-            <div className="rounded-2xl px-4 py-4 flex items-start gap-3" style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
-              <span className="text-[22px]">🌱</span>
-              <p className="t-body" style={{ color: "var(--text)" }}>لا اختبارات قبولٍ في مرحلتك الآن — ركّز على أساسك المدرسي، ودرب يجهّزك للاختبارات في وقتها.</p>
-            </div>
-          ) : (
-            <>
-              <p className="t-body font-bold mb-2.5" style={{ color: "var(--text)" }}>ستحتاج إلى:</p>
-              <div className="flex flex-col gap-2.5">
-                {displayExams.map((e) => (
-                  <div key={e.boardId ?? e.kind} className="rounded-2xl px-4 py-3 flex items-center gap-3" style={{ background: "var(--surface)", border: "1.5px solid color-mix(in srgb, var(--accent) 25%, var(--border))" }}>
-                    <span className="text-[18px]">🟢</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold t-body" style={{ color: "var(--text)" }}>{e.label}</p>
-                      <p className="t-caption mt-0.5" style={{ color: "var(--text-muted)" }}>{e.reason}</p>
-                    </div>
+            {stageList.map((e) => {
+              const locked = e.state === "locked";
+              const on = selectedExams.includes(e.id);
+              return (
+                <button key={e.id} onClick={() => toggleExam(e.id)} disabled={locked} aria-pressed={on}
+                  className="rounded-2xl px-4 py-3 flex items-center gap-3 text-right transition active:scale-[0.98]"
+                  style={{
+                    background: on ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
+                    border: `2px solid ${on ? "var(--accent)" : "var(--border)"}`,
+                    opacity: locked ? 0.55 : 1, cursor: locked ? "not-allowed" : "pointer",
+                  }}>
+                  <span className="w-6 h-6 rounded-md flex items-center justify-center t-caption font-black flex-shrink-0"
+                    style={{ background: on ? "var(--accent)" : "var(--surface2)", border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}`, color: on ? "#fff" : "var(--text-muted)" }}>
+                    {locked ? "🔒" : on ? "✓" : "＋"}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold t-body" style={{ color: on ? "var(--accent-light)" : "var(--text)" }}>{e.label}</p>
+                    <p className="t-caption mt-0.5 leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                      {locked ? STAGE_LOCK_REASON : `يفتح لك: ${e.opens.slice(0, 3).join(" · ")}`}
+                    </p>
                   </div>
-                ))}
-              </div>
-            </>
-          )}
+                </button>
+              );
+            })}
+          </div>
         </div>
       );
 
@@ -543,7 +543,7 @@ export default function OnboardingPage() {
           {scorableExams.length === 0 ? (
             <p className="t-body" style={{ color: "var(--text-muted)" }}>لا اختبارات لإدخال درجتها الآن — تقدر تسجّل درجاتك لاحقاً من «نتائجي».</p>
           ) : scorableExams.map((e) => {
-            const k = scoreKeyOf(e)!;
+            const k = e.key;
             const s = scores[k];
             const range = scoreRangeForTitle(SCORE_META[k].rangeTitle);
             const band = k === "qudurat" ? getQuduratBand(num(s.value)) : k === "tahsili" ? getTahsiliBand(num(s.value)) : null;
@@ -685,8 +685,13 @@ export default function OnboardingPage() {
       );
 
       /* ── الملخّص ── */
-      case "summary": return <SummaryStep name={name.trim()} status={status} goal={goal} recExams={displayExams} firstStep={firstExamLabel}
-        scores={scores} region={region} uni={{ name: universityName || (universityId === "other" ? otherUni.trim() : ""), major: findMajor(majorId)?.name, year: universityYear }} />;
+      case "summary": return <SummaryStep name={name.trim()} status={status} goal={goal} firstStep={firstExamLabel}
+        examRows={orderedSelected.map((id) => {
+          const key = EXAM_SCORE_KEY[id];
+          const mark = key ? (scores[key].state === "scored" ? "✅" : scores[key].state === "waiting" ? "⏳" : "❌") : "•";
+          return { label: examLabelOf(id), mark };
+        })}
+        region={region} uni={{ name: universityName || (universityId === "other" ? otherUni.trim() : ""), major: findMajor(majorId)?.name, year: universityYear }} />;
 
       default: return null;
     }
@@ -716,19 +721,14 @@ export default function OnboardingPage() {
 }
 
 /* ════════ الملخّص ════════ */
-function SummaryStep({ name, status, goal, recExams, firstStep, scores, region, uni }: {
-  name: string; status: Status | ""; goal: ReturnType<typeof resolveGoals>; recExams: RecommendedExam[]; firstStep?: string;
-  scores: Record<ScoreKey, { state: "none" | "waiting" | "scored"; value: string }>;
+function SummaryStep({ name, status, goal, examRows, firstStep, region, uni }: {
+  name: string; status: Status | ""; goal: ReturnType<typeof resolveGoals>;
+  examRows: { label: string; mark: string }[]; firstStep?: string;
   region: string; uni: { name?: string; major?: string; year?: string };
 }) {
   const near = nearestUniversity(region);
   const goalLabels = goal.undecided ? ["درب يحدّدها لك"] : goal.targets.map((t) =>
     ({ university: "الجامعة", aramco: "أرامكو CPC", itc: "ITC", military: "الكليات العسكرية", scholarship: "الابتعاث" } as Record<string, string>)[t] ?? t);
-  const examState = (e: RecommendedExam): string => {
-    const k = scoreKeyOf(e);
-    if (!k) return "⏳";
-    return scores[k].state === "scored" ? "✅" : scores[k].state === "waiting" ? "⏳" : "❌";
-  };
   return (
     <div className="flex flex-col gap-4">
       <p className="t-h2 font-black" style={{ color: "var(--text)" }}>أهلاً بك يا {name} 👋</p>
@@ -740,10 +740,10 @@ function SummaryStep({ name, status, goal, recExams, firstStep, scores, region, 
       ) : (
         <>
           <SummaryRow icon="🎯" title="هدفك">{goalLabels.join(" · ")}</SummaryRow>
-          {recExams.length > 0 && (
+          {examRows.length > 0 && (
             <SummaryRow icon="📝" title="اختباراتك">
               <div className="flex flex-col gap-1 mt-1">
-                {recExams.map((e) => <span key={e.boardId ?? e.kind} className="t-body">{examState(e)} {e.label}</span>)}
+                {examRows.map((r) => <span key={r.label} className="t-body">{r.mark} {r.label}</span>)}
               </div>
             </SummaryRow>
           )}
