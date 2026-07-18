@@ -16,6 +16,7 @@ export interface DarbUser {
   studyLevel?: string;      // الحالة التعليمية: ثانوي/جامعي/خريج
   grade?: string;           // الصف (للثانوي): أول/ثاني/ثالث ثانوي
   gradStage?: string;       // نوع الخريج: خريج ثانوي / خريج جامعة
+  gradRecency?: "this-year" | "earlier"; // الخريج: تخرّج هذه السنة أم سنوات سابقة (ملف)
   universityYear?: string;  // السنة الدراسية (للجامعي): الأولى ... الخامسة+
   goal?: StudyGoalType;     // الهدف الأساسي (goals[0]) — يقود تفعيل المسارات والأولويات (SSoT لكل المستهلكين القائمين)
   goals?: StudyGoalType[];  // كل الأهداف المختارة (متعدد بلا حد) — الأساسي منها = goals[0]

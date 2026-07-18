@@ -26,17 +26,46 @@ import Logo from "@/components/Logo";
 
 /* ── نموذج المراحل ── */
 type Status = "ثانوي" | "جامعي" | "خريج";
-/* المراحل مع نقطتَي الانتقال (الإجازتين) — القدرات تبدأ فعلياً في الإجازة قبل ثاني ثانوي. */
-const STAGES: { key: string; label: string; status: Status; grade: string; term: TermGuess | ""; onb: OnbStage }[] = [
-  { key: "g1",   label: "أول ثانوي",                          status: "ثانوي", grade: "أول ثانوي", term: "first",  onb: "first" },
-  { key: "s2",   label: "الإجازة الصيفية (مقبل على ثاني ثانوي)", status: "ثانوي", grade: "أول ثانوي", term: "summer", onb: "summer2" },
-  { key: "g2",   label: "ثاني ثانوي",                         status: "ثانوي", grade: "ثاني ثانوي", term: "first",  onb: "second" },
-  { key: "s3",   label: "الإجازة الصيفية (مقبل على ثالث ثانوي)", status: "ثانوي", grade: "ثاني ثانوي", term: "summer", onb: "summer3" },
-  { key: "g3",   label: "ثالث ثانوي",                         status: "ثانوي", grade: "ثالث ثانوي", term: "second", onb: "third" },
-  { key: "grad", label: "خريج",                               status: "خريج",  grade: "", term: "", onb: "graduate" },
-  { key: "uni",  label: "طالب جامعي",                          status: "جامعي", grade: "", term: "", onb: "university" },
+/* المرحلة هرمية: الصف أولاً، ثم مرحلةٌ فرعية (فصل/إجازة/سنة/تخرّج) — واجهةٌ أنظف. */
+const PRIMARY_STAGES: { key: string; label: string; status: Status; grade: string }[] = [
+  { key: "g1",   label: "أول ثانوي",   status: "ثانوي", grade: "أول ثانوي" },
+  { key: "g2",   label: "ثاني ثانوي",  status: "ثانوي", grade: "ثاني ثانوي" },
+  { key: "g3",   label: "ثالث ثانوي",  status: "ثانوي", grade: "ثالث ثانوي" },
+  { key: "grad", label: "خريج",        status: "خريج",  grade: "" },
+  { key: "uni",  label: "طالب جامعي",  status: "جامعي", grade: "" },
 ];
-const UNI_YEARS = ["الأولى", "الثانية", "الثالثة", "الرابعة", "الخامسة+"];
+interface SubStage { key: string; label: string; term?: TermGuess; onb: OnbStage; gradStage?: string; recency?: "this-year" | "earlier"; uniYear?: string; }
+const SUB_STAGES: Record<string, SubStage[]> = {
+  g1: [
+    { key: "first",  label: "الفصل الأول",  term: "first",  onb: "first" },
+    { key: "second", label: "الفصل الثاني", term: "second", onb: "first" },
+    { key: "summer", label: "الإجازة (مقبل على ثاني)", term: "summer", onb: "summer2" },
+  ],
+  g2: [
+    { key: "first",  label: "الفصل الأول",  term: "first",  onb: "second" },
+    { key: "second", label: "الفصل الثاني", term: "second", onb: "second" },
+    { key: "summer", label: "الإجازة (مقبل على ثالث)", term: "summer", onb: "summer3" },
+  ],
+  g3: [
+    { key: "first",  label: "الفصل الأول",  term: "first",  onb: "third" },
+    { key: "second", label: "الفصل الثاني", term: "second", onb: "third" },
+  ],
+  grad: [
+    { key: "this-year", label: "هذه السنة",   onb: "graduate", gradStage: "خريج ثانوي", recency: "this-year" },
+    { key: "earlier",   label: "سنوات سابقة", onb: "graduate", gradStage: "خريج ثانوي", recency: "earlier" },
+  ],
+  uni: [
+    { key: "الأولى",   label: "السنة الأولى", onb: "university", uniYear: "الأولى" },
+    { key: "الثانية",  label: "الثانية",      onb: "university", uniYear: "الثانية" },
+    { key: "الثالثة",  label: "الثالثة",      onb: "university", uniYear: "الثالثة" },
+    { key: "الرابعة",  label: "الرابعة",      onb: "university", uniYear: "الرابعة" },
+    { key: "الخامسة+", label: "الخامسة+",     onb: "university", uniYear: "الخامسة+" },
+  ],
+};
+const SUB_STAGE_PROMPT: Record<string, string> = {
+  g1: "أنت في أي فصل؟", g2: "أنت في أي فصل؟", g3: "أنت في أي فصل؟",
+  grad: "متى تخرّجت؟", uni: "سنتك الدراسية؟",
+};
 
 /* ── نموذج الخطوات (يُبنى حسب المرحلة) ── */
 type StepKey =
@@ -90,10 +119,12 @@ export default function OnboardingPage() {
     });
   }, []);
   const [status, setStatus] = useState<Status | "">("");
-  const [stageKey, setStageKey] = useState("");
+  const [primaryStage, setPrimaryStage] = useState("");
+  const [subStage, setSubStage] = useState("");
   const [grade, setGrade] = useState("");
   const [term, setTerm] = useState<TermGuess>(() => (typeof window !== "undefined" ? currentTermGuess() : "first"));
   const [gradStage, setGradStage] = useState("");
+  const [gradRecency, setGradRecency] = useState<"this-year" | "earlier" | "">("");
 
   /* ── اختيار الاختبارات (منتقٍ حسب المرحلة، حدّ ٣) ── */
   const [selectedExams, setSelectedExams] = useState<string[]>([]);
@@ -143,8 +174,8 @@ export default function OnboardingPage() {
 
   /* ── المشتقّات (المصدر الوحيد: الوجهة → recommendedExams) ── */
   const goal = resolveGoals({ primary: primaryGoals, aramcoSub, majorLean: (majorLean || undefined) as MajorLean | undefined });
-  const stageObj = STAGES.find((s) => s.key === stageKey);
-  const onbStage: OnbStage = stageObj?.onb ?? "graduate";
+  const subObj = primaryStage ? SUB_STAGES[primaryStage]?.find((s) => s.key === subStage) : undefined;
+  const onbStage: OnbStage = subObj?.onb ?? "graduate";
   const stageList = stageExams(onbStage);                 // التسعة بحالاتها (مفتوح/مقفل)
   const openIds = stageList.filter((e) => e.state === "open").map((e) => e.id);
 
@@ -212,11 +243,12 @@ export default function OnboardingPage() {
   const canProceed = (): boolean => {
     switch (current) {
       case "welcome": return name.trim().length > 0;
-      case "stage":   return !!stageKey && (status !== "خريج" || !!gradStage);
-      case "region":  return !!region;
-      case "goal":    return primaryGoals.length > 0;
-      case "uni":     return !!universityId && !!majorId && !!universityYear;
-      default:        return true; // exams/scores/dates/style/time — غير حاجزة
+      case "stage":   return !!primaryStage && !!subStage;
+      case "region":  return !!region && willingToRelocate !== null; // المدينة/الحي اختياريان فقط
+      case "goal":    return primaryGoals.length > 0 && (!primaryGoals.includes("university") || !!majorLean);
+      case "style":   return !!studyStyle;
+      case "uni":     return !!universityId && !!majorId && !!universityGpa.trim();
+      default:        return true; // exams/scores — غير حاجزة (اختياراتها إجابةٌ بذاتها)
     }
   };
 
@@ -265,6 +297,7 @@ export default function OnboardingPage() {
         gradeYearId: status === "ثانوي" && grade ? (currentAcademicYearId() ?? undefined) : undefined,
         academicTerm: status === "ثانوي" ? term : undefined,
         gradStage: status === "خريج" && gradStage ? gradStage : undefined,
+        gradRecency: status === "خريج" && gradRecency ? gradRecency : undefined,
         universityYear: status === "جامعي" && universityYear ? universityYear : undefined,
         targets: goal.targets.length ? goal.targets : undefined,
         goalUndecided: goal.undecided || undefined,
@@ -361,28 +394,41 @@ export default function OnboardingPage() {
         </div>
       );
 
-      /* ── الصف الدراسي (يشمل نقطتَي الإجازة) ── */
+      /* ── الصف الدراسي (هرمي: صف ← مرحلة فرعية) ── */
       case "stage": return (
         <div>
-          <p className="label mb-1">وش مرحلتك الدراسية؟</p>
-          <p className="t-caption mb-4" style={{ color: "var(--text-muted)" }}>نبني رحلتك حسب مرحلتك بالضبط — القدرات مثلاً تبدأ في الإجازة قبل ثاني ثانوي</p>
-          <div className="flex flex-col gap-2.5">
-            {STAGES.map((s) => {
-              const on = stageKey === s.key;
+          <p className="label mb-1">وش صفّك الدراسي؟</p>
+          <p className="t-caption mb-4" style={{ color: "var(--text-muted)" }}>نبني رحلتك حسب مرحلتك بالضبط</p>
+          <div className="grid grid-cols-2 gap-2.5">
+            {PRIMARY_STAGES.map((p) => {
+              const on = primaryStage === p.key;
               return (
-                <button key={s.key}
-                  onClick={() => { if (on) { setStageKey(""); setStatus(""); setGrade(""); return; } setStageKey(s.key); setStatus(s.status); setGrade(s.grade); if (s.term) setTerm(s.term); }}
-                  className="rounded-2xl py-3.5 px-4 font-bold t-body text-center transition active:scale-[0.98]"
-                  style={chipStyle(on)}>{s.label}</button>
+                <button key={p.key}
+                  onClick={() => {
+                    if (on) { setPrimaryStage(""); setSubStage(""); setStatus(""); setGrade(""); return; }
+                    setPrimaryStage(p.key); setSubStage(""); setStatus(p.status); setGrade(p.grade);
+                    setGradStage(""); setGradRecency(""); setUniversityYear("");
+                  }}
+                  className={`rounded-2xl py-3.5 px-3 font-bold t-body transition active:scale-[0.98] ${p.key === "uni" ? "col-span-2" : ""}`}
+                  style={chipStyle(on)}>{p.label}</button>
               );
             })}
           </div>
-          {status === "خريج" && (
+          {primaryStage && (
             <div className="mt-5">
-              <p className="label mb-3">نوع تخرّجك؟</p>
-              <div className="grid grid-cols-2 gap-2.5">
-                {["خريج ثانوي", "خريج جامعة"].map((g) => (
-                  <button key={g} onClick={() => setGradStage(gradStage === g ? "" : g)} className="rounded-2xl py-3.5 font-bold t-body transition active:scale-[0.98]" style={chipStyle(gradStage === g)}>{g}</button>
+              <p className="label mb-3">{SUB_STAGE_PROMPT[primaryStage]}</p>
+              <div className={`grid gap-2 ${SUB_STAGES[primaryStage].length >= 5 ? "grid-cols-3" : SUB_STAGES[primaryStage].length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
+                {SUB_STAGES[primaryStage].map((s) => (
+                  <button key={s.key}
+                    onClick={() => {
+                      setSubStage(s.key);
+                      if (s.term) setTerm(s.term);
+                      setGradStage(s.gradStage ?? "");
+                      setGradRecency(s.recency ?? "");
+                      setUniversityYear(s.uniYear ?? "");
+                    }}
+                    className="rounded-2xl py-3 px-2 font-bold t-small leading-snug text-center transition active:scale-[0.98]"
+                    style={chipStyle(subStage === s.key)}>{s.label}</button>
                 ))}
               </div>
             </div>
@@ -468,7 +514,7 @@ export default function OnboardingPage() {
             {/* فرع الجامعة: ميل التخصص (اختياري) */}
             {primaryGoals.includes("university") && (
               <div>
-                <p className="label mb-1">وش التخصص اللي يميل له قلبك؟ <span className="t-caption font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+                <p className="label mb-1">وش التخصص اللي يميل له قلبك؟</p>
                 <div className="flex flex-wrap gap-2">
                   {MAJOR_LEANS.map((m) => (
                     <button key={m.id} onClick={() => setMajorLean(majorLean === m.id ? "" : m.id)} className="px-3 py-2 rounded-full font-bold t-small transition active:scale-95" style={chipStyle(majorLean === m.id)}>{m.icon} {m.label}</button>
@@ -672,13 +718,7 @@ export default function OnboardingPage() {
             </div>
           </div>
           <div>
-            <p className="label mb-3">سنتك الدراسية؟</p>
-            <div className="grid grid-cols-3 gap-2">
-              {UNI_YEARS.map((y) => (<button key={y} onClick={() => setUniversityYear(universityYear === y ? "" : y)} className="rounded-2xl py-3 font-bold t-body transition active:scale-[0.98]" style={chipStyle(universityYear === y)}>{y}</button>))}
-            </div>
-          </div>
-          <div>
-            <p className="label mb-1">معدلك الجامعي؟ <span className="t-caption font-normal" style={{ color: "var(--text-muted)" }}>(اختياري، من ٥)</span></p>
+            <p className="label mb-1">معدلك الجامعي؟ <span className="t-caption font-normal" style={{ color: "var(--text-muted)" }}>(من ٥)</span></p>
             <input type="number" value={universityGpa} onChange={(e) => setUniversityGpa(e.target.value)} placeholder="مثال: 3.75" min={0} max={5} step={0.01} className="w-full rounded-2xl px-5 py-4 t-body-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none" style={inputStyle} />
           </div>
         </div>

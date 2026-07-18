@@ -166,8 +166,7 @@ export default function DesktopSidebar() {
           : { href: "/roadmap", label: "مساري", icon: I.roadmap },
     { href: "/plan", label: "خطتي", icon: I.plan },
     { href: "/study-plan", label: "مخطط الدراسة", icon: I.study },
-    { href: "/review", label: "بطاقاتي", icon: I.cards, badge: true },
-    { href: "/vault", label: "أخطائي", icon: I.vault },
+    { href: "/vault", label: "أخطائي", icon: I.vault, badge: true },
   ];
 
   const community: NavLink[] = [

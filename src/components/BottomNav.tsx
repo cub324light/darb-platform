@@ -118,15 +118,6 @@ const BASE_ITEMS: (NavItem | "MID" | "SCHOOL")[] = [
     label: "أخطائي",
     icon: (a: boolean) => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
-        <rect x="4.5" y="10" width="15" height="10.5" rx="2.5" /><path strokeLinecap="round" d="M8 10V7.5a4 4 0 0 1 8 0V10" /><circle cx="12" cy="15.2" r="1.4" fill="currentColor" stroke="none" />
-      </svg>
-    ),
-  },
-  {
-    href: "/review",
-    label: "بطاقاتي",
-    icon: (a: boolean) => (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
         <rect x="5" y="4" width="14" height="17" rx="2.5" /><path strokeLinecap="round" d="M9 4.5V3m6 1.5V3M9 12l2 2 4-4.5" />
       </svg>
     ),
@@ -159,7 +150,7 @@ export default function BottomNav() {
     <nav className="float-nav flex items-stretch px-2" aria-label="التنقل الرئيسي">
       {navItems.map((item) => {
         const active = pathname === item.href;
-        const badge = item.href === "/review" && dueCount > 0 ? dueCount : 0;
+        const badge = item.href === "/vault" && dueCount > 0 ? dueCount : 0;
         return (
           <Link key={item.href} href={item.href}
             className={`float-nav-item ${active ? "active" : ""}`}>
