@@ -389,7 +389,7 @@ export default function OnboardingPage() {
 
   /* شاشة التقرير الشخصي (٥ ثوانٍ) */
   if (showReport) return <ReportScreen name={name.trim()} scores={scores} outlook={outlookItems}
-    firstStep={firstExamLabel} region={region} />;
+    undecided={goal.undecided} firstStep={firstExamLabel} region={region} />;
 
   /* ════════ الخطوات ════════ */
   const stepBody = (() => {
@@ -899,15 +899,15 @@ function SummaryRow({ icon, title, children }: { icon: string; title: string; ch
 }
 
 /* ════════ التقرير الشخصي (٥ ثوانٍ) ════════ */
-function ReportScreen({ name, scores, outlook, firstStep, region }: {
+function ReportScreen({ name, scores, outlook, undecided, firstStep, region }: {
   name: string;
   scores: Record<ScoreKey, { state: "none" | "waiting" | "scored"; value: string }>;
-  outlook: ReturnType<typeof admissionOutlook>; firstStep?: string; region: string;
+  outlook: ReturnType<typeof admissionOutlook>; undecided?: boolean; firstStep?: string; region: string;
 }) {
   const val = (k: ScoreKey) => (scores[k].state === "scored" ? parseFloat(scores[k].value) : null);
   const level = evalBand("qudurat", val("qudurat")) ?? evalBand("tahsili", val("tahsili"));
   const levelPct = percentileText(level);
-  const ready = readiness(outlook);
+  const ready = readiness(outlook, undecided);
   const near = nearestUniversity(region);
   return (
     <div className="min-h-dvh flex flex-col items-center justify-center px-6 py-10 app-col text-center page-enter">

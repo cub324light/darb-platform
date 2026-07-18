@@ -7,7 +7,6 @@ import {
   evaluate, requirementById, ADMISSION_REQUIREMENTS_DISCLAIMER,
   type Scores, type OppIcon, type ReqExam, type OppRequirement,
 } from "../admissionRequirements";
-import { n } from "../format";
 
 export const OUTLOOK_DISCLAIMER = ADMISSION_REQUIREMENTS_DISCLAIMER;
 
@@ -104,25 +103,37 @@ export function whatIfRaise(inp: OutlookInput, exam: ReqExam): WhatIf | null {
   return { exam, target, unlocks };
 }
 
-/* ════════ مستوى الجاهزية — بطاقةٌ واحدة في نهاية التقرير ════════ */
+/* ════════ مستوى الجاهزية — بطاقةٌ واحدة تعتمد على هدف الطالب ════════ */
 export type ReadinessLevel = "ready" | "improve" | "focus";
 export interface Readiness { level: ReadinessLevel; icon: "🟢" | "🟡" | "🔴"; title: string; reason: string; }
 
-/** جاهزية الطالب من فرصه المقيَّمة: جاهزٌ (فرصةٌ مستوفاة) · تحسينٌ بسيط (قريب) · تركيز (بعيد). */
-export function readiness(items: OutlookItem[]): Readiness | null {
+const statusRank = (ic: OutlookIcon): number => (ic === "🟢" ? 0 : ic === "🟡" ? 1 : 2);
+
+/** جاهزية الطالب مرتكزةً على هدفه لا على تقديرٍ عام:
+    • هدفٌ محدّد → الفرصة الأخصّ (نستبعد «الجامعات» العامة إن وُجد هدفٌ أخصّ) وأصعبها حالةً
+      لإبراز فجوة هدفه فعلاً — لا نخفيها خلف فرصةٍ أسهل استوفاها.
+    • «درب يحدد لي» → أفضل فرصةٍ مناسبةٍ له حالياً.
+    الأسباب من شرط كل فرصة (item.note) — لا تقديرٌ عام. */
+export function readiness(items: OutlookItem[], undecided = false): Readiness | null {
   const scored = items.filter((i) => i.icon !== "⚪");
   if (scored.length === 0) return null;              // بلا درجاتٍ لا نقيّم الجاهزية
-  const met = scored.filter((i) => i.icon === "🟢");
-  const near = scored.filter((i) => i.icon === "🟡");
 
-  if (met.length >= 1) {
-    const reason = met.length === scored.length
-      ? "استوفيت شروط كل فرصك الحالية — قدّم بثقة."
-      : `جاهزٌ لـ${n(met.length)} من فرصك: ${met.slice(0, 2).map((m) => m.label).join(" و")}${met.length > 2 ? " وغيرها" : ""}.`;
-    return { level: "ready", icon: "🟢", title: "جاهز للتقديم", reason };
+  let anchor: OutlookItem;
+  if (undecided) {
+    // أفضل فرصةٍ حالياً: الأعلى حالةً ثم الأهمّ (القائمة مرتّبةٌ أصلاً بالأهمية، والفرز ثابت)
+    anchor = [...scored].sort((a, b) => statusRank(a.icon) - statusRank(b.icon))[0];
+  } else {
+    // هدفٌ محدّد: من الفرص الخاصة (بلا «الجامعات» العامة إن وُجدت أخصّ)، وأصعبها حالةً
+    const specific = scored.filter((i) => i.id !== "university");
+    const pool = specific.length > 0 ? specific : scored;
+    anchor = [...pool].sort((a, b) => statusRank(b.icon) - statusRank(a.icon))[0];
   }
-  if (near.length >= 1) {
-    return { level: "improve", icon: "🟡", title: "يحتاج تحسين بسيط", reason: `أنت قريبٌ من ${near[0].label} — رفعٌ بسيط يفتحها لك.` };
+
+  if (anchor.icon === "🟢") {
+    return { level: "ready", icon: "🟢", title: "جاهز للتقديم", reason: `استوفيت شروط ${anchor.label} الحالية.` };
   }
-  return { level: "focus", icon: "🔴", title: "ركّز أولاً على رفع درجاتك", reason: "درجاتك الحالية دون شروط فرصك — ابدأ برفعها خطوةً خطوة." };
+  if (anchor.icon === "🟡") {
+    return { level: "improve", icon: "🟡", title: "يحتاج تحسين بسيط", reason: anchor.note };
+  }
+  return { level: "focus", icon: "🔴", title: "غير جاهز حالياً", reason: anchor.note };
 }

@@ -83,13 +83,31 @@ test("ماذا لو: بلا عتبةٍ أعلى → null · بلا درجة → 
   assert.equal(whatIfRaise({ targets: ["aramco"] }, "qudurat"), null);
 });
 
-test("الجاهزية: جاهز/تحسين بسيط/تركيز حسب فرص الطالب", () => {
-  /* مستوفٍ فرصةً واحدة على الأقل → جاهز */
-  assert.equal(readiness(admissionOutlook({ targets: ["university"], qudurat: 80 }))!.level, "ready");
-  /* لا مستوفى لكن قريب (جامعة ٦٨ = فارق ٢) → تحسين بسيط */
-  assert.equal(readiness(admissionOutlook({ targets: ["university"], qudurat: 68 }))!.level, "improve");
-  /* بعيدٌ عن الكل (جامعة ٥٥) → تركيز */
-  assert.equal(readiness(admissionOutlook({ targets: ["university"], qudurat: 55 }))!.level, "focus");
-  /* بلا درجات → لا بطاقة جاهزية */
+test("الجاهزية تعتمد على هدف الطالب لا على تقديرٍ عام", () => {
+  /* هدف ITC مستوفى → جاهز، والسبب يذكر الفرصة */
+  const itc = readiness(admissionOutlook({ targets: ["itc"], qudurat: 80 }))!;
+  assert.equal(itc.level, "ready");
+  assert.ok(itc.reason.includes("استوفيت") && itc.reason.includes("ITC"));
+
+  /* هدف الطب: الجامعة مستوفاة لكن التخصص الصحي قريب → يحتاج تحسين (لا نخفي فجوة الهدف) */
+  const med = readiness(admissionOutlook({ targets: ["university"], trackType: "صحي", qudurat: 90, tahsili: 88 }))!;
+  assert.equal(med.level, "improve");
+  assert.ok(med.reason.includes("التحصيلي"));
+
+  /* هدف CPC دون ٩٠ → غير جاهز حالياً بالسبب الصريح */
+  const cpc = readiness(admissionOutlook({ targets: ["aramco"], qudurat: 85 }))!;
+  assert.equal(cpc.level, "focus");
+  assert.equal(cpc.title, "غير جاهز حالياً");
+  assert.ok(cpc.reason.includes("القدرات") && cpc.reason.includes("٩٠"));
+});
+
+test("«درب يحدد لي» → الجاهزية على أفضل فرصةٍ مناسبة حالياً", () => {
+  /* بلا هدفٍ محدّد: قدرات ٨٨ يفتح عدّة فرص → جاهز على أفضلها */
+  const r = readiness(admissionOutlook({ targets: ["university", "itc", "aramco"], qudurat: 88 }), true)!;
+  assert.equal(r.level, "ready");
+  assert.ok(r.reason.includes("استوفيت"));
+});
+
+test("الجاهزية: بلا درجات → لا بطاقة", () => {
   assert.equal(readiness(admissionOutlook({ targets: ["university"] })), null);
 });
