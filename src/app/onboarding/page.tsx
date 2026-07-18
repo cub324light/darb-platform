@@ -1,60 +1,94 @@
 "use client";
-import { useState, useEffect } from "react";
-import {
-  TRACKS, scoreRangeForTitle, validateScore, LANGUAGE_TESTS, type TrackId,
-} from "@/lib/tracks";
-import { UNIVERSITIES, MAJORS, findUniversity, findMajor } from "@/lib/university";
-import { saveUser, saveResults, loadGoals, saveGoals, ensureWorkspace, type DarbUser } from "@/lib/storage";
-import { ADMISSION_TARGETS } from "@/lib/targets";
+/* ═══════════════ التسجيل — رحلة متدرّجة متكيّفة بالمرحلة ═══════════════
+   معالجٌ من خطواتٍ مركّزة (شاشة واحدة لكل خطوة) + شريط تقدّم. يتكيّف بالمرحلة:
+   الثانوي/الخريج يمرّ بالرحلة الكاملة (منطقة→هدف→اختبارات→درجات→مواعيد→أسلوب→وقت→
+   ملخّص→تقرير)؛ الجامعي يأخذ مساراً مختصراً (الجامعة/التخصص/السنة→أسلوب→وقت→ملخّص).
+   يبني «ملف الطالب» فقط: الوجهة (targets) تقود recommendedExams ومساري (لا goal اختبار).
+   يعيد استخدام المحرّكات القائمة (recommendedExams/darbKnowledge/outlook/saRegions). */
+import { useState, useEffect, type ReactNode } from "react";
+import { validateScore, scoreRangeForTitle, type TrackId } from "@/lib/tracks";
+import { MAJORS, findUniversity, findMajor, UNIVERSITIES } from "@/lib/university";
+import { saveUser, saveResults, loadGoals, saveGoals, ensureWorkspace,
+  loadTrackExamDates, saveTrackExamDates, type DarbUser } from "@/lib/storage";
 import { currentAcademicYearId, currentTermGuess, type TermGuess } from "@/lib/academicCalendar";
-import { toBoardStage, type ExamBoardId, type ExamMode } from "@/lib/examEligibility";
-import { recommendedExams } from "@/lib/recommendedExams";
-/* registerUser, pushBackup, currentUser مُستورَدة ديناميكياً أسفل */
+import { toBoardStage } from "@/lib/examEligibility";
+import { recommendedExams, type RecommendedExam } from "@/lib/recommendedExams";
+import { resolveGoals, type PrimaryGoal, type AramcoSub, type MajorLean } from "@/lib/onboarding/goals";
+import { admissionOutlook, OUTLOOK_DISCLAIMER } from "@/lib/onboarding/outlook";
+import { getQuduratBand, getTahsiliBand } from "@/lib/darbKnowledge";
+import { SA_REGIONS, nearestUniversity } from "@/lib/saRegions";
+import { n } from "@/lib/format";
 import { trackEvent } from "@/lib/analytics";
 import { redeemPendingRef } from "@/lib/referral";
 import Dome from "@/components/Dome";
 import Logo from "@/components/Logo";
 
+/* ── نموذج المراحل ── */
 type Status = "ثانوي" | "جامعي" | "خريج";
-/* مرحلة واحدة بخمسة خيارات صريحة (تحلّ محل «الحالة» ثم قائمة المواضع) — أبسط وأقل
-   نقرات، ويشتقّ منها studyLevel + grade مباشرةً. الصف القياسي يبقى مصدر الأهلية. */
 const STAGES: { key: string; label: string; status: Status; grade: string }[] = [
   { key: "g1",   label: "أول ثانوي",   status: "ثانوي", grade: "أول ثانوي" },
   { key: "g2",   label: "ثاني ثانوي",  status: "ثانوي", grade: "ثاني ثانوي" },
   { key: "g3",   label: "ثالث ثانوي",  status: "ثانوي", grade: "ثالث ثانوي" },
-  { key: "uni",  label: "طالب جامعي",  status: "جامعي", grade: "" },
   { key: "grad", label: "خريج",        status: "خريج",  grade: "" },
+  { key: "uni",  label: "طالب جامعي",  status: "جامعي", grade: "" },
 ];
-/* المسار = ميول تحدّد المواد والاهتمامات (المعرّف يبقى فئة منطقية؛ العرض أوضح).
-   الهندسة والحاسب مدموجان في خيارٍ واحد (المعرّف «هندسي»، ويُنقّحه التخصص لاحقاً). */
-const TRACK_TYPES: { id: string; label: string }[] = [
-  { id: "عام",   label: "المسار العام" },
-  { id: "صحي",   label: "مسار الصحة والحياة" },
-  { id: "هندسي", label: "مسار الهندسة والحاسب" },
-  { id: "إداري", label: "مسار إدارة الأعمال" },
-];
-const GRAD_STAGES = ["خريج ثانوي", "خريج جامعة"];
 const UNI_YEARS = ["الأولى", "الثانية", "الثالثة", "الرابعة", "الخامسة+"];
-/* اختبارات النتائج السابقة — العناوين تطابق سُلّم الدرجات في tracks.ts */
-const PREV_EXAMS = ["القدرات", "التحصيلي", "ستيب STEP"];
 
-/* بطاقة اختبار القياس تُقرأ من مصدر الحقيقة examEligibility: الاسم (مبكر/عادي) وحالته
-   والظهور — لا اسم ثابت في الواجهة. المخفي لا يظهر أصلاً. */
-const EXAM_TRACK: Record<ExamBoardId, TrackId> = {
-  qudurat: "قدرات", tahsiliEarly: "تحصيلي مبكر", tahsiliRegular: "تحصيلي",
+/* ── نموذج الخطوات (يُبنى حسب المرحلة) ── */
+type StepKey =
+  | "welcome" | "stage" | "region" | "goal" | "exams" | "scores"
+  | "dates" | "style" | "time" | "summary" | "uni";
+const SECONDARY_STEPS: StepKey[] = ["welcome", "stage", "region", "goal", "exams", "scores", "dates", "style", "time", "summary"];
+const UNI_STEPS: StepKey[] = ["welcome", "stage", "uni", "style", "time", "summary"];
+
+/* ── الهدف الهرمي ── */
+const GOAL_OPTIONS: { id: PrimaryGoal; icon: string; label: string }[] = [
+  { id: "university",  icon: "🎓", label: "الجامعة" },
+  { id: "aramco",      icon: "🏭", label: "أرامكو وبرامجها" },
+  { id: "military",    icon: "🪖", label: "الكليات العسكرية" },
+  { id: "scholarship", icon: "✈️", label: "الابتعاث" },
+  { id: "undecided",   icon: "⭐", label: "ما أدري — درب يحدّدها لي" },
+];
+const MAJOR_LEANS: { id: MajorLean; icon: string; label: string }[] = [
+  { id: "صحي",       icon: "🩺", label: "صحي" },
+  { id: "هندسة",     icon: "⚙️", label: "هندسة" },
+  { id: "حاسب",      icon: "💻", label: "حاسب" },
+  { id: "إدارة",     icon: "📊", label: "إدارة" },
+  { id: "أدبي",      icon: "📚", label: "أدبي" },
+  { id: "undecided", icon: "⭐", label: "ما أدري" },
+];
+const ARAMCO_SUBS: { id: AramcoSub; label: string }[] = [
+  { id: "cpc",  label: "CPC (ابتعاث ووظيفة)" },
+  { id: "itc",  label: "ITC (تدرّج مهني)" },
+  { id: "both", label: "الاثنين" },
+];
+
+/* اختبار قياس/لغة قابلٌ لإدخال درجة — نوعه ومفاتيح عرضه وحفظه. */
+type ScoreKey = "qudurat" | "tahsili" | "step";
+const SCORE_META: Record<ScoreKey, { rangeTitle: string; resultTitle: string }> = {
+  qudurat: { rangeTitle: "قدرات",  resultTitle: "القدرات" },
+  tahsili: { rangeTitle: "تحصيلي", resultTitle: "التحصيلي" },
+  step:    { rangeTitle: "ستيب",   resultTitle: "STEP" },
 };
-const MODE_COLOR: Record<ExamMode, string> = {
-  "register-open": "var(--success)",
-  "register-upcoming": "var(--gold)",
-  "prepare": "var(--text-muted)",
-  "pending": "var(--text-muted)",
-};
-/* اختبار القياس المقترَح → عنوان نتيجته السابقة (لإدخال الدرجة داخل بطاقة الاقتراح) */
-const EXAM_PREV_KEY: Record<ExamBoardId, string> = {
-  qudurat: "القدرات", tahsiliEarly: "التحصيلي", tahsiliRegular: "التحصيلي",
-};
+const scoreKeyOf = (e: RecommendedExam): ScoreKey | null =>
+  e.kind === "qudurat" ? "qudurat" : e.kind === "tahsili" ? "tahsili" : e.kind === "language" ? "step" : null;
+
+/* recommendedExams → TrackId قديم (لبذر مساري عبر ensureWorkspace). */
+function tracksFromRec(rec: RecommendedExam[]): TrackId[] {
+  const t = new Set<TrackId>();
+  for (const e of rec) {
+    if (e.kind === "qudurat") t.add("قدرات");
+    else if (e.kind === "tahsili") t.add(e.boardId === "tahsiliEarly" ? "تحصيلي مبكر" : "تحصيلي");
+    else if (e.kind === "aramco") t.add("CPC");
+    else if (e.kind === "itc") t.add("ITC");
+    else if (e.kind === "language") t.add("ستيب");
+  }
+  return [...t];
+}
+
 export default function OnboardingPage() {
-  const [step, setStep] = useState<0 | 1 | 2>(0);
+  const [current, setCurrent] = useState<StepKey>("welcome");
+  const [showReport, setShowReport] = useState(false);
 
   /* ── الأساسيات ── */
   const [name, setName] = useState("");
@@ -65,212 +99,179 @@ export default function OnboardingPage() {
     });
   }, []);
   const [status, setStatus] = useState<Status | "">("");
-
-  /* ── تفاصيل المرحلة ── */
-  const [grade, setGrade] = useState("");                 // ثانوي (مشتق من خيار المرحلة)
-  const [trackType, setTrackType] = useState("");         // ثانوي: المسار
-  /* الفصل الدراسي الحالي — يحكم إتاحة التحصيلي المبكر. افتراضٌ من التقويم يؤكّده الطالب. */
+  const [grade, setGrade] = useState("");
   const [term, setTerm] = useState<TermGuess>(() => (typeof window !== "undefined" ? currentTermGuess() : "first"));
-  const [gradStage, setGradStage] = useState("");         // خريج
-  const [universityYear, setUniversityYear] = useState(""); // جامعي
-  /* الجامعة/التخصص (جامعي + هدف الجامعة/التخصص) */
+  const [gradStage, setGradStage] = useState("");
+
+  /* ── المنطقة ── */
+  const [region, setRegion] = useState("");
+  const [city, setCity] = useState("");
+  const [district, setDistrict] = useState("");
+  const [willingToRelocate, setWillingToRelocate] = useState<boolean | null>(null);
+  const [regionsInterested, setRegionsInterested] = useState<string[]>([]);
+  const [addRegionOpen, setAddRegionOpen] = useState(false);
+
+  /* ── الهدف الهرمي ── */
+  const [primaryGoals, setPrimaryGoals] = useState<PrimaryGoal[]>([]);
+  const [aramcoSub, setAramcoSub] = useState<AramcoSub>("cpc");
+  const [majorLean, setMajorLean] = useState<MajorLean | "">("");
+
+  /* ── الدرجات + الرضا ── */
+  const [scores, setScores] = useState<Record<ScoreKey, { state: "none" | "waiting" | "scored"; value: string }>>({
+    qudurat: { state: "none", value: "" }, tahsili: { state: "none", value: "" }, step: { state: "none", value: "" },
+  });
+  const [scoreErr, setScoreErr] = useState("");
+  const [retakeIntent, setRetakeIntent] = useState<Record<string, boolean>>({});
+
+  /* ── المواعيد (تُحفظ حيّة في trackExamDates) ── */
+  const [examDates, setExamDates] = useState<Record<string, string>>(() => (typeof window !== "undefined" ? loadTrackExamDates() : {}));
+
+  /* ── الجامعي ── */
   const [universityId, setUniversityId] = useState("");
   const [universityName, setUniversityName] = useState("");
   const [majorId, setMajorId] = useState("");
   const [uniQuery, setUniQuery] = useState("");
   const [otherUni, setOtherUni] = useState("");
-  /* نتائج سابقة للخريج: { exam: { tested, score } } */
-  const [prevResults, setPrevResults] = useState<Record<string, { tested: boolean; score: string }>>(
-    Object.fromEntries(PREV_EXAMS.map((e) => [e, { tested: false, score: "" }]))
-  );
-  const [prevErr, setPrevErr] = useState("");
-  /* قرار الطالب لكل اختبار قياس مقترَح: «ابدأ الآن» (start) أو «ليس الآن» (skip).
-     لا يُحفظ في activeTracks إلا ما اختار له «ابدأ الآن» — الاقتراح ليس تفعيلاً. */
-  const [examChoice, setExamChoice] = useState<Record<string, "start" | "skip">>({});
-  /* نيّة الإعادة (ADR-0001 §2.6): بعد إدخال الدرجة، «راضٍ؟» — «لا» ⇒ true (لا Goal).
-     المفتاح = عنوان نتيجة الاختبار (القدرات/التحصيلي/…) لمطابقة retakeExams. */
-  const [retakeIntent, setRetakeIntent] = useState<Record<string, boolean>>({});
-  /* التركيز الأول (ADR-0001 §2.6): يبني الخطة الأولى فقط، لا يغيّر الوجهة. */
-  const [focus, setFocus] = useState("");
-  /* H1: قفل ضغط مزدوج + رسالة فشل واضحة على آخر خطوة */
+  const [universityYear, setUniversityYear] = useState("");
+  const [universityGpa, setUniversityGpa] = useState("");
+
+  /* ── الأسلوب والوقت ── */
+  const [studyStyle, setStudyStyle] = useState<"book" | "video" | "both" | "">("");
+  const [studyHours, setStudyHours] = useState<number>(3);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitErr, setSubmitErr] = useState("");
 
-  const [gapYear, setGapYear] = useState<"" | "yes" | "no">(""); // خريج: إعادة الاختبارات؟
-  /* ── حقول الجامعي (Phase Engine) — المعدل فقط في التسجيل؛ التدريب/الدراسات العليا
-     تُضبط لاحقاً من المنصة لا هنا (أقل أسئلة، لا سؤال قياس للجامعي إطلاقاً) ── */
-  const [universityGpa, setUniversityGpa] = useState("");
-
-  /* الوجهات (متعدّد بلا حد) — الأهداف = وجهات فقط (ADR-0001)؛ منها تُشتق الاختبارات */
-  const [targets, setTargets] = useState<string[]>([]);
-  /* ── اختبارات اللغة الإضافية (متعدد بلا حد) — للثانوي والخريج ── */
-  const [selectedLanguages, setSelectedLanguages] = useState<TrackId[]>([]);
-  const [studyHours, setStudyHours] = useState("3"); // قيمة افتراضية — يعدّلها لاحقاً، لا تحجب الإكمال
-
   const today = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; })();
 
-  /* ── المصدر الوحيد لاختبارات الطالب — ADR-0001 ──
-     الوجهة (targets) → recommendedExams. لا goal اختبار، ولا examBoard/if يدوي في الواجهة.
-     أول ثانوي: لا قياس مهما كانت الوجهة (المحرّك يصفّي بالمرحلة/الفصل/النافذة). */
+  /* ── المشتقّات (المصدر الوحيد: الوجهة → recommendedExams) ── */
+  const goal = resolveGoals({ primary: primaryGoals, aramcoSub, majorLean: (majorLean || undefined) as MajorLean | undefined });
   const boardStage = toBoardStage({ studyLevel: status || undefined, grade });
-  const recExams = boardStage ? recommendedExams({
-    destinations: targets,
-    stage: boardStage,
+  const recExams: RecommendedExam[] = boardStage ? recommendedExams({
+    destinations: goal.targets, stage: boardStage,
     isUniGrad: gradStage === "خريج جامعة",
-    afterFirstTerm: term !== "first",
+    afterFirstTerm: status === "ثانوي" ? term !== "first" : false,
     today,
   }) : [];
-  /* اختبارات القياس المقترحة (قدرات/تحصيلي) — تُعرَض بطاقاتها في الخطوة ٢ */
-  const recQiyas = recExams.filter((e) => e.kind === "qudurat" || e.kind === "tahsili");
+  const scorableExams = recExams.filter((e) => scoreKeyOf(e) !== null);
 
-  /* منظورٌ مُشتقّ من recommendedExams للمقبول (اختار «ابدأ الآن») كـ TrackId — للتوافق
-     الانتقالي مع مساري الحالي فقط (المصدر recommendedExams، لا أهداف). يُزال مع Track. */
-  const finalTracks: TrackId[] = [...new Set<TrackId>([
-    ...recQiyas.filter((e) => e.boardId && examChoice[e.boardId] === "start").map((e) => EXAM_TRACK[e.boardId!]),
-    ...LANGUAGE_TESTS.filter((id) => selectedLanguages.includes(id)),
-  ])];
+  const num = (v: string) => { const x = parseFloat(v); return Number.isFinite(x) ? x : null; };
+  const outlookItems = admissionOutlook({
+    targets: goal.targets, trackType: goal.trackType,
+    qudurat: scores.qudurat.state === "scored" ? num(scores.qudurat.value) : null,
+    tahsili: scores.tahsili.state === "scored" ? num(scores.tahsili.value) : null,
+    step: scores.step.state === "scored" ? num(scores.step.value) : null,
+  });
 
-  const pickUni = (id: string) => {
-    const u = findUniversity(id);
-    if (!u) return;
-    setUniversityId(id);
-    setUniversityName(id === "other" ? (otherUni.trim() || "أخرى") : u.name);
-    setUniQuery("");
-  };
-  const pickMajor = (id: string) => {
-    const m = findMajor(id);
-    if (!m) return;
-    setMajorId(majorId === id ? "" : id);
-  };
+  /* ── قائمة الخطوات (متكيّفة) ── */
+  const steps = status === "جامعي" ? UNI_STEPS : SECONDARY_STEPS;
+  const idx = Math.max(0, steps.indexOf(current));
+  const total = steps.length - 1; // الترحيب = ٠
 
-  const filteredUnis = (() => {
-    const q = uniQuery.trim();
-    if (!q) return UNIVERSITIES;
-    return UNIVERSITIES.filter((u) => u.name.includes(q) || (u.region ?? "").includes(q));
-  })();
+  const filteredUnis = (() => { const q = uniQuery.trim(); return q ? UNIVERSITIES.filter((u) => u.name.includes(q) || (u.region ?? "").includes(q)) : UNIVERSITIES; })();
+  const pickUni = (id: string) => { const u = findUniversity(id); if (!u) return; setUniversityId(id); setUniversityName(id === "other" ? (otherUni.trim() || "أخرى") : u.name); setUniQuery(""); };
 
-  /* ── الإنهاء ── */
-  const finish = async () => {
-    /* H1: امنع الدخول المتزامن/المكرر */
-    if (isSubmitting) return;
-    /* الثانوي: أهدافه اختيار صريح متعدد (غير حاجز — نواته تكفي).
-       الجامعي: بلا هدف قياس إطلاقاً (goal محايد = undefined).
-       الخريج: هدف واحد على الأقل إلزامي (قائمة الأهداف المتعددة). */
-    const isSecondary = status === "ثانوي";
-    const isUniversity = status === "جامعي";
-    /* الوجهة تقود المنطق (ADR-0001): الخريج يلزمه وجهةٌ واحدة على الأقل. */
-    if (!isSecondary && !isUniversity && !targets.length) return;
-    const tracks = finalTracks;
-    /* قد لا يكون للطالب أي اختبار (أول ثانوي · خريج ركّز على القبول) — والمدرسة
-       قسمٌ مستقل. المسار الأساسي (حقل إلزامي) يبقى «مدرسه» كأساسٍ يومي غير محسوب. */
-    const primaryTrack: TrackId = tracks[0] ?? "مدرسه";
-
-    /* تحقّق درجات الخريج السابقة */
-    for (const exam of PREV_EXAMS) {
-      const r = prevResults[exam];
-      if (!r?.tested) continue;
-      const err = validateScore(exam, r.score);
-      if (err) { setPrevErr(`${exam}: ${err}`); return; }
+  /* ── التحقّق لكل خطوة ── */
+  const canProceed = (): boolean => {
+    switch (current) {
+      case "welcome": return name.trim().length > 0;
+      case "stage":   return !!status && (status !== "ثانوي" || !!grade);
+      case "region":  return !!region;
+      case "goal":    return primaryGoals.length > 0;
+      case "uni":     return !!universityId && !!majorId && !!universityYear;
+      default:        return true; // exams/scores/dates/style/time — غير حاجزة
     }
-    setPrevErr("");
+  };
 
-    /* H3: تحقّق برمجي من الحقول الرقمية (لا نعتمد على min/max المتصفح) */
-    const numErr = (() => {
-      if (studyHours) { const h = parseInt(studyHours); if (!Number.isFinite(h) || h < 1 || h > 16) return "ساعات المذاكرة بين ١ و١٦"; }
-      if (status === "جامعي" && universityGpa) { const g = parseFloat(universityGpa); if (!Number.isFinite(g) || g < 0 || g > 5) return "المعدل الجامعي بين ٠ و٥"; }
-      return "";
-    })();
-    if (numErr) { setSubmitErr(numErr); return; }
+  const goNext = () => { const nx = steps[idx + 1]; if (nx) setCurrent(nx); };
+  const goBack = () => { const pv = steps[idx - 1]; if (pv) setCurrent(pv); };
 
+  /* ── حفظ الدرجة داخل خطوة الدرجات ── */
+  const setScore = (k: ScoreKey, patch: Partial<{ state: "none" | "waiting" | "scored"; value: string }>) =>
+    setScores((s) => ({ ...s, [k]: { ...s[k], ...patch } }));
+
+  /* ── تحديث موعد اختبار (حيّ) ── */
+  const setExamDate = (examKey: string, v: string) => {
+    const up = { ...examDates }; if (v) up[examKey] = v; else delete up[examKey];
+    setExamDates(up); saveTrackExamDates(up);
+  };
+
+  /* ════════ الإنهاء ════════ */
+  const finish = async () => {
+    if (isSubmitting) return;
+    /* تحقّق الدرجات المُدخَلة */
+    for (const k of ["qudurat", "tahsili", "step"] as ScoreKey[]) {
+      const s = scores[k];
+      if (s.state !== "scored" || !s.value.trim()) continue;
+      const err = validateScore(SCORE_META[k].rangeTitle, s.value.trim());
+      if (err) { setScoreErr(`${SCORE_META[k].resultTitle}: ${err}`); setCurrent("scores"); return; }
+    }
+    setScoreErr("");
+    if (studyHours < 0.5 || studyHours > 16) { setSubmitErr("ساعات المذاكرة بين نصف ساعة و١٦"); return; }
+    if (status === "جامعي" && universityGpa) { const g = parseFloat(universityGpa); if (!Number.isFinite(g) || g < 0 || g > 5) { setSubmitErr("المعدل الجامعي بين ٠ و٥"); return; } }
     setSubmitErr("");
     setIsSubmitting(true);
     try {
+      const trimmedName = name.trim();
+      const tracks = status === "جامعي" ? [] : tracksFromRec(recExams);
+      const primaryTrack: TrackId = tracks[0] ?? "مدرسه";
+      const resolvedTrackType = status === "جامعي" && majorId ? findMajor(majorId)?.category : (goal.trackType || undefined);
 
-    const trimmedName = name.trim();
-    /* نوع المسار: ثانوي → الاختيار، جامعي → تصنيف التخصص المختار */
-    const resolvedTrackType =
-      status === "جامعي" && majorId ? findMajor(majorId)?.category :
-      (trackType || undefined);
+      const userData: DarbUser = {
+        name: trimmedName,
+        track: primaryTrack,
+        activeTracks: tracks.length ? tracks : undefined,
+        onboarded: true,
+        studyLevel: status || undefined,
+        grade: status === "ثانوي" && grade ? grade : undefined,
+        gradeYearId: status === "ثانوي" && grade ? (currentAcademicYearId() ?? undefined) : undefined,
+        academicTerm: status === "ثانوي" ? term : undefined,
+        gradStage: status === "خريج" && gradStage ? gradStage : undefined,
+        universityYear: status === "جامعي" && universityYear ? universityYear : undefined,
+        targets: goal.targets.length ? goal.targets : undefined,
+        goalUndecided: goal.undecided || undefined,
+        retakeExams: (() => { const r = Object.keys(retakeIntent).filter((k) => retakeIntent[k]); return r.length ? r : undefined; })(),
+        studyHours,
+        studyStyle: studyStyle || undefined,
+        trackType: resolvedTrackType,
+        region: region || undefined,
+        city: city.trim() || undefined,
+        district: district.trim() || undefined,
+        willingToRelocate: willingToRelocate ?? undefined,
+        regionsInterested: regionsInterested.length ? regionsInterested : undefined,
+        universityGpa: status === "جامعي" && universityGpa ? parseFloat(universityGpa) : undefined,
+      };
+      saveUser(ensureWorkspace(userData));
 
-    /* ADR-0001: التسجيل يبني «ملف الطالب» فقط — الوجهة (targets) + النتائج + البيانات
-       الشخصية. لا goal اختبار. track/activeTracks هنا منظورٌ مُشتقّ من recommendedExams
-       (توافق انتقالي مع مساري الحالي فقط، لا مصدر مستقل — يُزالان في مرحلة حذف Track).
-       ensureWorkspace يشتق مساري من المرحلة + المقبول (مصدر واحد). */
-    const userData: DarbUser = {
-      name: trimmedName,
-      track: primaryTrack,
-      activeTracks: tracks.length ? tracks : undefined,
-      onboarded: true,
-      studyLevel: status || undefined,
-      grade: status === "ثانوي" && grade ? grade : undefined,
-      /* مرساة الترقية التلقائية: العام الدراسي الحالي وقت ضبط الصف (للثانوي فقط) */
-      gradeYearId: status === "ثانوي" && grade ? (currentAcademicYearId() ?? undefined) : undefined,
-      academicTerm: status === "ثانوي" ? term : undefined,
-      gradStage: status === "خريج" && gradStage ? gradStage : undefined,
-      universityYear: status === "جامعي" && universityYear ? universityYear : undefined,
-      targets: targets.length ? targets : undefined,
-      /* التركيز + نيّة الإعادة (ADR-0001 §2.6) — يبنيان الخطة الأولى، لا يغيّران الوجهة */
-      focus: focus || undefined,
-      retakeExams: (() => { const r = Object.keys(retakeIntent).filter((k) => retakeIntent[k]); return r.length ? r : undefined; })(),
-      gapYear: status === "خريج" ? gapYear === "yes" : undefined,
-      studyHours: studyHours ? parseInt(studyHours) : undefined,
-      trackType: resolvedTrackType,
-      /* حقول الجامعي — المعدل فقط (التدريب/الدراسات العليا تُضاف لاحقاً من المنصة) */
-      universityGpa: status === "جامعي" && universityGpa ? parseFloat(universityGpa) : undefined,
-    };
-    saveUser(ensureWorkspace(userData));
-
-    /* الوجهة الجامعية/التخصص فقط (درجة الثانوية والموعد تُطلبان لاحقاً داخل المنصة) */
-    if (universityId || majorId) {
-      const g = loadGoals();
-      const next = { ...g };
-      if (universityId) {
-        next.universityId = universityId;
-        next.university = universityId === "other" ? (otherUni.trim() || "أخرى") : (universityName || findUniversity(universityId)?.name);
+      if (status === "جامعي" && (universityId || majorId)) {
+        const g = loadGoals(); const next = { ...g };
+        if (universityId) { next.universityId = universityId; next.university = universityId === "other" ? (otherUni.trim() || "أخرى") : (universityName || findUniversity(universityId)?.name); }
+        if (majorId) { next.majorId = majorId; next.major = findMajor(majorId)?.name; }
+        saveGoals(next);
       }
-      if (majorId) { next.majorId = majorId; next.major = findMajor(majorId)?.name; }
-      saveGoals(next);
-    }
 
-    /* نتائج الاختبارات المُدخَلة (بطاقات الخطوة ٢) → «نتائجي» */
-    const validPrev = PREV_EXAMS.filter((e) => prevResults[e]?.tested && prevResults[e].score.trim());
-    if (validPrev.length) {
-      saveResults(validPrev.map((exam, i) => ({
-        id: `${Date.now()}-${i}`,
-        exam,
-        score: prevResults[exam].score.trim(),
-      })));
-    }
+      /* الدرجات المُدخَلة → نتائجي */
+      const entered = (["qudurat", "tahsili", "step"] as ScoreKey[]).filter((k) => scores[k].state === "scored" && scores[k].value.trim());
+      if (entered.length) {
+        saveResults(entered.map((k, i) => ({ id: `${Date.now()}-${i}`, exam: SCORE_META[k].resultTitle, score: scores[k].value.trim() })));
+      }
 
-    import("@/lib/firestore").then(({ registerUser }) => { registerUser(trimmedName, primaryTrack, {}); });
-    trackEvent("onboarding_completed", { track: primaryTrack, tracks: tracks.length, targets: targets.length, status });
-    import("@/lib/cloud").then(({ pushBackup }) => { pushBackup().catch(() => {}); });
-    await redeemPendingRef().catch(() => 0);
-    window.location.assign("/dashboard");
+      import("@/lib/firestore").then(({ registerUser }) => { registerUser(trimmedName, primaryTrack, {}); });
+      trackEvent("onboarding_completed", { track: primaryTrack, tracks: tracks.length, targets: goal.targets.length, status });
+      import("@/lib/cloud").then(({ pushBackup }) => { pushBackup().catch(() => {}); });
+      await redeemPendingRef().catch(() => 0);
+
+      /* الثانوي/الخريج: تقرير شخصي ٥ ثوانٍ ثم اللوحة. الجامعي: مباشرة للّوحة. */
+      if (status === "جامعي") { window.location.assign("/dashboard"); return; }
+      setShowReport(true);
+      setTimeout(() => window.location.assign("/dashboard"), 5200);
     } catch {
-      /* فشل الحفظ المحلي (مثلاً مساحة ممتلئة/وضع خاص) — لا نترك المستخدم عالقاً */
       setIsSubmitting(false);
       setSubmitErr("تعذّر حفظ بياناتك — تأكد من توفّر مساحة في المتصفح ثم حاول مجدداً");
     }
   };
 
-  const header = (
-    <Dome hideControls>
-      <div className="text-center py-5">
-        <Logo className="font-black text-5xl mb-1 block" />
-      </div>
-    </Dome>
-  );
-
-  const stepDots = (
-    <div className="flex items-center justify-center gap-2 mb-7">
-      {[0, 1, 2].map((s) => (
-        <div key={s} className="h-1.5 rounded-full transition-all duration-300"
-          style={{ width: s === step ? "32px" : "8px", background: s <= step ? "var(--accent)" : "var(--surface2)" }} />
-      ))}
-    </div>
-  );
-
+  /* ════════ عناصر واجهة مشتركة ════════ */
   const inputStyle = { background: "var(--surface)", border: "2px solid var(--border)" };
   const chipStyle = (active: boolean) => ({
     background: active ? "color-mix(in srgb, var(--accent) 14%, transparent)" : "var(--surface)",
@@ -278,573 +279,523 @@ export default function OnboardingPage() {
     color: active ? "var(--accent-light)" : "var(--text)",
   });
 
-  /* منتقي الجامعة + التخصص (مشترك بين الجامعي وهدف الجامعة/التخصص) */
-  const uniMajorPicker = (
-    <div className="flex flex-col gap-5">
-      <div>
-        <p className="label mb-3">🏛️ جامعتك المستهدفة</p>
-        {universityId ? (
-          <div className="rounded-2xl px-4 py-3 flex items-center gap-2"
-            style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid color-mix(in srgb, var(--accent) 28%, transparent)" }}>
-            <span className="font-bold text-[17px] flex-1" style={{ color: "var(--accent-light)" }}>
-              {universityId === "other" ? (otherUni.trim() || "أخرى") : universityName}
-            </span>
-            <button onClick={() => { setUniversityId(""); setUniversityName(""); }}
-              className="text-[15px] font-bold px-2" style={{ color: "var(--text-muted)" }}>تغيير ✕</button>
-          </div>
-        ) : (
-          <>
-            <input value={uniQuery} onChange={(e) => setUniQuery(e.target.value)}
-              placeholder="🔎 ابحث عن جامعتك..."
-              className="w-full rounded-2xl px-4 py-3 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none mb-2.5"
-              style={inputStyle} />
-            <div className="flex flex-wrap gap-2 max-h-52 overflow-y-auto">
-              {filteredUnis.map((u) => (
-                <button key={u.id} onClick={() => pickUni(u.id)}
-                  className="px-3 py-2 rounded-full text-[15px] font-bold transition active:scale-95"
-                  style={{ background: "var(--surface2)", color: "var(--text)", border: "1.5px solid var(--border)" }}>
-                  {u.name}
-                </button>
-              ))}
-              {filteredUnis.length === 0 && (
-                <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>لا نتائج — اختر «أخرى».</p>
-              )}
-            </div>
-          </>
-        )}
-        {universityId === "other" && (
-          <input value={otherUni} onChange={(e) => { setOtherUni(e.target.value); setUniversityName(e.target.value.trim() || "أخرى"); }}
-            placeholder="اكتب اسم جامعتك" maxLength={60}
-            className="w-full mt-2.5 rounded-2xl px-4 py-3 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
-            style={inputStyle} />
-        )}
-      </div>
+  const header = (
+    <Dome hideControls>
+      <div className="text-center py-5"><Logo className="font-black text-5xl mb-1 block" /></div>
+    </Dome>
+  );
 
-      <div>
-        <p className="label mb-3">📚 تخصصك المستهدف</p>
-        <div className="flex flex-wrap gap-2">
-          {MAJORS.map((m) => {
-            const on = majorId === m.id;
-            return (
-              <button key={m.id} onClick={() => pickMajor(m.id)} aria-pressed={on}
-                className="px-3 py-2 rounded-full text-[15px] font-bold transition active:scale-95"
-                style={{
-                  background: on ? "var(--accent)" : "var(--surface2)",
-                  color: on ? "#fff" : "var(--text)",
-                  border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}`,
-                }}>
-                {m.name}
-              </button>
-            );
-          })}
-        </div>
+  const progress = current === "welcome" ? (
+    <p className="t-caption text-center mb-6" style={{ color: "var(--text-muted)" }}>الخطوة {n(0)} من {n(total)}</p>
+  ) : (
+    <div className="mb-7">
+      <div className="flex items-center justify-between mb-2">
+        <span className="t-caption font-bold" style={{ color: "var(--accent-light)" }}>الخطوة {n(idx)} من {n(total)}</span>
+      </div>
+      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--surface2)" }}>
+        <div className="h-full rounded-full transition-all duration-300" style={{ width: `${(idx / total) * 100}%`, background: "var(--accent)" }} />
       </div>
     </div>
   );
 
-  /* ════════ الخطوة 0 — الأساسيات + الحالة ════════ */
-  if (step === 0) return (
-    <div className="min-h-dvh flex flex-col app-col">
-      {header}
-      <div className="flex-1 flex flex-col justify-center px-6 py-8 max-w-sm mx-auto w-full gap-6">
-        {stepDots}
+  /* شاشة التقرير الشخصي (٥ ثوانٍ) */
+  if (showReport) return <ReportScreen name={name.trim()} scores={scores} outlook={outlookItems}
+    firstStep={recExams[0]?.label} region={region} />;
 
-        <div>
-          <p className="label mb-3">وش اسمك؟</p>
-          <input autoFocus type="text" value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="مثال: فهد، سارة، خالد..." maxLength={20}
-            className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
-            style={inputStyle}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
+  /* ════════ الخطوات ════════ */
+  const stepBody = (() => {
+    switch (current) {
+      /* ── الترحيب ── */
+      case "welcome": return (
+        <div className="flex flex-col gap-6">
+          <div className="text-center">
+            <p className="t-h1 font-black mb-2" style={{ color: "var(--text)" }}>مرحبًا بك في درب</p>
+            <p className="t-body" style={{ color: "var(--text-muted)" }}>دقيقة واحدة فقط، ونبني رحلتك خطوةً بخطوة.</p>
+          </div>
+          <div>
+            <p className="label mb-3">وش اسمك؟</p>
+            <input autoFocus type="text" value={name} onChange={(e) => setName(e.target.value)}
+              placeholder="مثال: فهد، سارة، خالد..." maxLength={20}
+              className="w-full rounded-2xl px-5 py-4 t-body-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none" style={inputStyle}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
+          </div>
         </div>
+      );
 
+      /* ── الصف الدراسي ── */
+      case "stage": return (
         <div>
-          <p className="label mb-3">وش مرحلتك؟</p>
+          <p className="label mb-1">وش صفّك الدراسي؟</p>
+          <p className="t-caption mb-4" style={{ color: "var(--text-muted)" }}>نبني رحلتك حسب مرحلتك بالضبط</p>
           <div className="grid grid-cols-2 gap-2.5">
             {STAGES.map((s) => {
               const on = status === s.status && (s.status !== "ثانوي" || grade === s.grade);
               return (
                 <button key={s.key}
-                  onClick={() => {
-                    if (on) { setStatus(""); setGrade(""); return; }
-                    setStatus(s.status);
-                    setGrade(s.grade);
-                  }}
-                  className={`rounded-2xl py-3.5 font-bold text-[17px] transition active:scale-[0.98] ${s.key === "grad" ? "col-span-2" : ""}`}
-                  style={chipStyle(on)}>
-                  {s.label}
-                </button>
+                  onClick={() => { if (on) { setStatus(""); setGrade(""); return; } setStatus(s.status); setGrade(s.grade); }}
+                  className={`rounded-2xl py-3.5 font-bold t-body transition active:scale-[0.98] ${s.key === "uni" ? "col-span-2" : ""}`}
+                  style={chipStyle(on)}>{s.label}</button>
               );
             })}
           </div>
-        </div>
-
-        <button className="btn-primary glow-blue" onClick={() => { if (name.trim() && status) setStep(1); }}
-          disabled={!name.trim() || !status} style={{ opacity: name.trim() && status ? 1 : 0.4 }}>
-          التالي ←
-        </button>
-      </div>
-    </div>
-  );
-
-  /* ════════ الخطوة 1 — تفاصيل المرحلة ════════ */
-  if (step === 1) {
-    const canProceed =
-      status === "ثانوي" ? (!!grade && !!trackType) :
-      status === "خريج"  ? (!!gradStage && !!gapYear) :
-      status === "جامعي" ? (!!universityId && !!majorId && !!universityYear) :
-      false;
-
-    return (
-      <div className="min-h-dvh flex flex-col app-col">
-        {header}
-        <div className="flex-1 px-6 py-8 max-w-sm mx-auto w-full flex flex-col gap-6">
-          {stepDots}
-
-          {/* ── ثانوي ── */}
           {status === "ثانوي" && (
-            <>
-              {/* أول ثانوي: التحصيلي يبدأ من ثاني ثانوي — نطمئنه على ما نفعّله له */}
-              {grade === "أول ثانوي" && (
-                <div className="rounded-2xl px-4 py-3"
-                  style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
-                  <p className="text-[15px] font-bold" style={{ color: "var(--accent-light)" }}>
-                    🌱 القدرات والتحصيلي يبدآن من ثاني ثانوي — الآن نفعّل لك مواد المدرسة لتأسيسٍ قويّ، ونجهّزك للقدرات في وقتها.
-                  </p>
-                </div>
-              )}
-              <div>
-                <p className="label mb-1">مسارك الدراسي؟</p>
-                <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>يساعدنا نرتّب أولوياتك تلقائياً</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {TRACK_TYPES.map((t) => (
-                    <button key={t.id} onClick={() => setTrackType(trackType === t.id ? "" : t.id)}
-                      className="rounded-2xl py-3 px-2 font-bold text-[15px] leading-snug transition active:scale-[0.98]"
-                      style={chipStyle(trackType === t.id)}>
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
+            <div className="mt-5">
+              <p className="label mb-1">أنت الآن في أي فصل؟</p>
+              <p className="t-caption mb-3" style={{ color: "var(--text-muted)" }}>يحدّد ما يناسبك من الاختبارات ومواعيدها</p>
+              <div className="grid grid-cols-3 gap-2">
+                {([["first", "الأول"], ["second", "الثاني"], ["summer", "الصيفية"]] as [TermGuess, string][]).map(([v, label]) => (
+                  <button key={v} onClick={() => setTerm(v)} className="rounded-2xl py-3 px-2 font-bold t-small leading-snug transition active:scale-[0.98]" style={chipStyle(term === v)}>{label}</button>
+                ))}
               </div>
-              {/* الفصل الدراسي الحالي — يحكم إتاحة التحصيلي المبكر وتنبيهات دويرب (افتراضٌ من التقويم) */}
-              <div>
-                <p className="label mb-1">أنت الآن في أي فصل؟</p>
-                <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>يحدّد ما يناسبك من الاختبارات ومواعيدها</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {([["first", "الفصل الأول"], ["second", "الفصل الثاني"], ["summer", "الإجازة الصيفية"]] as [TermGuess, string][]).map(([v, label]) => (
-                    <button key={v} onClick={() => setTerm(v)}
-                      className="rounded-2xl py-3 px-2 font-bold text-[14px] leading-snug transition active:scale-[0.98]"
-                      style={chipStyle(term === v)}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {/* المنطقة/المدرسة أُخرجت من التسجيل — تُطلب لاحقاً في «المدرسة»/الملف (ADR-0001 قاعدة ٣) */}
-              <div className="rounded-2xl px-4 py-3"
-                style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
-                <p className="text-[15px] font-bold" style={{ color: "var(--accent-light)" }}>
-                  🗺️ بالخطوة الجاية: نقترح لك اختباراتك المناسبة — تبدأ ما تريد، وتُدخل درجتك إن اختبرته. بلا فرض.
-                </p>
-              </div>
-            </>
+            </div>
           )}
-
-          {/* ── جامعي ── */}
-          {status === "جامعي" && (
-            <>
-              {uniMajorPicker}
-              <div>
-                <p className="label mb-3">سنتك الدراسية؟</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {UNI_YEARS.map((y) => (
-                    <button key={y} onClick={() => setUniversityYear(universityYear === y ? "" : y)}
-                      className="rounded-2xl py-3 font-bold text-[16px] transition active:scale-[0.98]"
-                      style={chipStyle(universityYear === y)}>
-                      {y}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* المعدل الجامعي — اختياري (السؤال الوحيد بعد الجامعة/التخصص/السنة).
-                 لا سؤال قياس/تحصيلي/step للجامعي؛ التدريب والدراسات العليا تُضبط
-                 لاحقاً من المنصة لا في التسجيل (أقل أسئلة). */}
-              <div>
-                <p className="label mb-1">معدلك الجامعي الحالي؟ <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
-                <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>من 5 — يساعدنا نخصّص توصياتك وأولوياتك</p>
-                <input type="number" value={universityGpa} onChange={(e) => setUniversityGpa(e.target.value)}
-                  placeholder="مثال: 3.75" min={0} max={5} step={0.01}
-                  className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
-                  style={inputStyle}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
-              </div>
-            </>
-          )}
-
-          {/* ── خريج ── */}
           {status === "خريج" && (
-            <>
-              <div>
-                <p className="label mb-3">نوع تخرّجك؟</p>
-                <div className="grid grid-cols-2 gap-2.5">
-                  {GRAD_STAGES.map((g) => (
-                    <button key={g} onClick={() => setGradStage(gradStage === g ? "" : g)}
-                      className="rounded-2xl py-3.5 font-bold text-[17px] transition active:scale-[0.98]"
-                      style={chipStyle(gradStage === g)}>
-                      {g}
+            <div className="mt-5">
+              <p className="label mb-3">نوع تخرّجك؟</p>
+              <div className="grid grid-cols-2 gap-2.5">
+                {["خريج ثانوي", "خريج جامعة"].map((g) => (
+                  <button key={g} onClick={() => setGradStage(gradStage === g ? "" : g)} className="rounded-2xl py-3.5 font-bold t-body transition active:scale-[0.98]" style={chipStyle(gradStage === g)}>{g}</button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+
+      /* ── المنطقة ── */
+      case "region": return (
+        <div className="flex flex-col gap-5">
+          <div>
+            <p className="label mb-1">وش منطقتك؟</p>
+            <p className="t-caption mb-3" style={{ color: "var(--text-muted)" }}>نقترح لك الجامعات الأقرب — وتقدر توسّع لاحقاً</p>
+            <div className="flex flex-wrap gap-2">
+              {SA_REGIONS.map((r) => (
+                <button key={r} onClick={() => setRegion(region === r ? "" : r)} className="px-3 py-2 rounded-full font-bold t-small transition active:scale-95" style={chipStyle(region === r)}>{r}</button>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="label mb-2">المدينة/المحافظة</p>
+              <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="مثال: جدة" maxLength={40}
+                className="w-full rounded-2xl px-4 py-3 t-body text-[var(--text)] placeholder-[var(--text-muted)] outline-none" style={inputStyle} />
+            </div>
+            <div>
+              <p className="label mb-2">الحي <span className="t-caption font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+              <input value={district} onChange={(e) => setDistrict(e.target.value)} placeholder="اختياري" maxLength={40}
+                className="w-full rounded-2xl px-4 py-3 t-body text-[var(--text)] placeholder-[var(--text-muted)] outline-none" style={inputStyle} />
+            </div>
+          </div>
+          <div>
+            <p className="label mb-2">لو كانت أفضل جامعة بعيدة؟</p>
+            <div className="grid grid-cols-2 gap-2.5">
+              <button onClick={() => setWillingToRelocate(true)} className="rounded-2xl py-3 px-3 font-bold t-small leading-snug transition active:scale-[0.98] text-center" style={chipStyle(willingToRelocate === true)}>✅ لا أمانع الغربة</button>
+              <button onClick={() => setWillingToRelocate(false)} className="rounded-2xl py-3 px-3 font-bold t-small leading-snug transition active:scale-[0.98] text-center" style={chipStyle(willingToRelocate === false)}>📍 أفضّل القرب مني</button>
+            </div>
+          </div>
+          <div>
+            {!addRegionOpen ? (
+              <button onClick={() => setAddRegionOpen(true)} className="t-small font-bold" style={{ color: "var(--accent-light)" }}>➕ مناطق أخرى مهتمّ فيها</button>
+            ) : (
+              <>
+                <p className="label mb-2">مناطق أخرى مهتمّ فيها</p>
+                <div className="flex flex-wrap gap-2">
+                  {SA_REGIONS.filter((r) => r !== region).map((r) => {
+                    const on = regionsInterested.includes(r);
+                    return <button key={r} onClick={() => setRegionsInterested((p) => on ? p.filter((x) => x !== r) : [...p, r])} className="px-3 py-1.5 rounded-full font-bold t-caption transition active:scale-95" style={chipStyle(on)}>{r}</button>;
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      );
+
+      /* ── الهدف الهرمي ── */
+      case "goal": {
+        const toggleGoal = (id: PrimaryGoal) => setPrimaryGoals((p) => {
+          if (id === "undecided") return p.includes("undecided") ? [] : ["undecided"];
+          const base = p.filter((x) => x !== "undecided");
+          return base.includes(id) ? base.filter((x) => x !== id) : [...base, id];
+        });
+        return (
+          <div className="flex flex-col gap-5">
+            <div>
+              <p className="label mb-1">وش هدفك بعد الثانوية؟</p>
+              <p className="t-caption mb-3" style={{ color: "var(--text-muted)" }}>تقدر تختار أكثر من هدف — ومنها نعرف اختباراتك المطلوبة</p>
+              <div className="flex flex-col gap-2.5">
+                {GOAL_OPTIONS.map((g) => {
+                  const on = primaryGoals.includes(g.id);
+                  return (
+                    <button key={g.id} onClick={() => toggleGoal(g.id)} aria-pressed={on}
+                      className="rounded-2xl px-4 py-3 flex items-center gap-3 text-right transition active:scale-[0.98]" style={chipStyle(on)}>
+                      <span className="text-[22px]">{g.icon}</span>
+                      <span className="font-bold t-body flex-1">{g.label}</span>
+                      <span className="w-5 h-5 rounded-md flex items-center justify-center t-caption font-black flex-shrink-0" style={{ background: on ? "var(--accent)" : "var(--surface2)", border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}`, color: on ? "#fff" : "transparent" }}>✓</span>
                     </button>
+                  );
+                })}
+              </div>
+            </div>
+            {/* فرع الجامعة: ميل التخصص (اختياري) */}
+            {primaryGoals.includes("university") && (
+              <div>
+                <p className="label mb-1">وش التخصص اللي يميل له قلبك؟ <span className="t-caption font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
+                <div className="flex flex-wrap gap-2">
+                  {MAJOR_LEANS.map((m) => (
+                    <button key={m.id} onClick={() => setMajorLean(majorLean === m.id ? "" : m.id)} className="px-3 py-2 rounded-full font-bold t-small transition active:scale-95" style={chipStyle(majorLean === m.id)}>{m.icon} {m.label}</button>
                   ))}
                 </div>
               </div>
+            )}
+            {/* فرع أرامكو: CPC / ITC / الاثنين */}
+            {primaryGoals.includes("aramco") && (
               <div>
-                <p className="label mb-1">هل تنوي تحسين درجات القدرات أو التحصيلي؟</p>
-                <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>اختر «لا» لو خلّصت اختباراتك وتريد التركيز على القبول الجامعي فقط</p>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <button onClick={() => setGapYear(gapYear === "yes" ? "" : "yes")}
-                    className="rounded-2xl py-3.5 px-3 font-bold text-[16px] transition active:scale-[0.98] text-center leading-snug"
-                    style={chipStyle(gapYear === "yes")}>
-                    نعم، أبي أحسّنها 📈
-                  </button>
-                  <button onClick={() => setGapYear(gapYear === "no" ? "" : "no")}
-                    className="rounded-2xl py-3.5 px-3 font-bold text-[16px] transition active:scale-[0.98] text-center leading-snug"
-                    style={chipStyle(gapYear === "no")}>
-                    لا، ركّز على القبول 🎓
-                  </button>
+                <p className="label mb-2">أي برنامج في أرامكو؟</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {ARAMCO_SUBS.map((s) => (
+                    <button key={s.id} onClick={() => setAramcoSub(s.id)} className="rounded-2xl py-2.5 px-2 font-bold t-caption leading-snug transition active:scale-[0.98] text-center" style={chipStyle(aramcoSub === s.id)}>{s.label}</button>
+                  ))}
                 </div>
               </div>
-              {/* درجات الخريج مصدرها الوحيد بطاقات «ابدأ الآن» في الخطوة ٢ (لا ازدواج إدخال) */}
+            )}
+          </div>
+        );
+      }
+
+      /* ── الاختبارات المطلوبة (مشتقّة) ── */
+      case "exams": return (
+        <div>
+          <p className="label mb-1">اختباراتك المطلوبة</p>
+          <p className="t-caption mb-4" style={{ color: "var(--text-muted)" }}>مشتقّة تلقائياً من هدفك ومرحلتك</p>
+          {goal.undecided ? (
+            <div className="rounded-2xl px-4 py-4 flex items-start gap-3" style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
+              <span className="text-[22px]">⭐</span>
+              <p className="t-body" style={{ color: "var(--text)" }}>لا بأس — درب سيحدّد اختباراتك المطلوبة بعد أن يعرف درجاتك واهتماماتك. نبدأ ببناء أساسك أولاً.</p>
+            </div>
+          ) : recExams.length === 0 ? (
+            <div className="rounded-2xl px-4 py-4 flex items-start gap-3" style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
+              <span className="text-[22px]">🌱</span>
+              <p className="t-body" style={{ color: "var(--text)" }}>لا اختبارات قبولٍ في مرحلتك الآن — ركّز على أساسك المدرسي، ودرب يجهّزك للاختبارات في وقتها.</p>
+            </div>
+          ) : (
+            <>
+              <p className="t-body font-bold mb-2.5" style={{ color: "var(--text)" }}>ستحتاج إلى:</p>
+              <div className="flex flex-col gap-2.5">
+                {recExams.map((e) => (
+                  <div key={e.boardId ?? e.kind} className="rounded-2xl px-4 py-3 flex items-center gap-3" style={{ background: "var(--surface)", border: "1.5px solid color-mix(in srgb, var(--accent) 25%, var(--border))" }}>
+                    <span className="text-[18px]">🟢</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold t-body" style={{ color: "var(--text)" }}>{e.label}</p>
+                      <p className="t-caption mt-0.5" style={{ color: "var(--text-muted)" }}>{e.reason}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </>
           )}
-
-          <button className="btn-primary glow-blue" onClick={() => { if (canProceed) setStep(2); }}
-            disabled={!canProceed} style={{ opacity: canProceed ? 1 : 0.4 }}>
-            التالي ←
-          </button>
-          <button onClick={() => setStep(0)} className="text-[17px] font-semibold w-full text-center py-1"
-            style={{ color: "var(--text-muted)" }}>← رجوع</button>
         </div>
-      </div>
-    );
-  }
+      );
 
-  /* ════════ الخطوة 2 — لوحة اختبارات الثانوي / ملخّص الجامعي / هدف الخريج ════════ */
-  const isSecondary = status === "ثانوي";
-  const isUniversity = status === "جامعي";
-  /* اختبارات اللغة: إضافة/إزالة متعددة بلا أي حد */
-  const toggleLanguage = (id: TrackId) => {
-    setSelectedLanguages((prev) => prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]);
-  };
-  /* ملاحظة (ADR-0001): لا «أهداف اختبارات» في التسجيل. الأهداف = وجهات فقط
-     (targetsSection أدناه)، والاختبارات تُشتق منها عبر recommendedExams — لا goal. */
-
-  /* أهداف ما بعد الثانوية (متعدّد، غير حاجز) — ثالث ثانوي وخريج الثانوي فقط.
-     الطالب يقدّم غالباً على عدّة جهات معاً؛ الرئيسية ترتّب بطاقاته حول اختياره. */
-  const targetsSection = (
-    <div>
-      <p className="label mb-1">🎯 وش وجهتك بعد الثانوية؟ <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(تقدر تختار أكثر من واحدة)</span></p>
-      <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>
-        منها نشتقّ اختباراتك المطلوبة ونرتّب خطتك — تقدر تعدّلها لاحقاً من ملفك
-      </p>
-      <div className="grid grid-cols-2 gap-2.5">
-        {ADMISSION_TARGETS.map((t) => {
-          const on = targets.includes(t.id);
-          return (
-            <button key={t.id} onClick={() => setTargets((prev) => prev.includes(t.id) ? prev.filter((x) => x !== t.id) : [...prev, t.id])}
-              aria-pressed={on}
-              className="rounded-2xl px-3.5 py-3 flex items-center gap-2 text-right transition active:scale-[0.98]"
-              style={chipStyle(on)}>
-              <span className="w-5 h-5 rounded-md flex items-center justify-center text-[12px] font-black flex-shrink-0"
-                style={{
-                  background: on ? "var(--accent)" : "var(--surface2)",
-                  border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}`,
-                  color: on ? "#fff" : "transparent",
-                }}>✓</span>
-              <span className="text-[20px]">{t.icon}</span>
-              <span className="font-bold text-[16px] flex-1 leading-tight">{t.label}</span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-
-  /* شروط الإكمال: ساعات المذاكرة افتراضية (٣) غير حاجزة. الثانوي/الجامعي بلا حاجز
-     إضافي (تحقّق الخطوة ١ يكفي)؛ الخريج يلزمه وجهةٌ واحدة على الأقل. */
-  const canFinish = isSecondary || isUniversity ? true : targets.length > 0;
-
-  /* قسم اختبارات اللغة المشترك (الثانوي والخريج) — متعدد بلا حد، اختياري بالكامل */
-  const languageSection = (
-    <div>
-      <p className="label mb-1">🗣️ اختبارات اللغة <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(اختياري)</span></p>
-      <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>
-        تقدر تضيف أكثر من اختبار بنفس الوقت — كلها اختيارية وبلا حد
-      </p>
-      <div className="flex flex-col gap-2.5">
-        {LANGUAGE_TESTS.map((id) => {
-          const t = TRACKS.find((tr) => tr.id === id)!;
-          const on = selectedLanguages.includes(id);
-          return (
-            <button key={id} onClick={() => toggleLanguage(id)} aria-pressed={on}
-              className="rounded-2xl px-4 py-3 text-right transition active:scale-[0.98]"
-              style={chipStyle(on)}>
-              <div className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-md flex items-center justify-center text-[14px] font-black flex-shrink-0"
-                  style={{
-                    background: on ? "var(--accent)" : "var(--surface2)",
-                    border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}`,
-                    color: on ? "#fff" : "transparent",
-                  }}>✓</span>
-                <span className="font-bold text-[17px] flex-1">{t.title}</span>
-              </div>
-              <p className="text-[14px] mt-1 pr-7" style={{ color: on ? "var(--accent-light)" : "var(--text-muted)" }}>{t.sub}</p>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-
-  /* ── نقترح عليك البدء بـ… — من recommendedExams (المصدر الوحيد، ADR-0001).
-     لا شيء يُضاف تلقائياً؛ «ابدأ الآن» فقط يُسجّل القبول. لا if يدوي يقرّر الظهور. ── */
-  const examSuggestionSection = (
-    <div>
-      <p className="label mb-1">نقترح عليك البدء بـ…</p>
-      <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>
-        {recQiyas.length
-          ? "مشتقّةٌ من وجهتك ومرحلتك — أنت من يقرّر ما يبدأ (لا شيء يُضاف تلقائياً)"
-          : targets.length
-            ? "لا اختبارات قبول في مرحلتك الآن — ركّز على أساسك المدرسي"
-            : "اختر وجهتك فوق لنقترح لك اختباراتك المطلوبة"}
-      </p>
-      {recQiyas.length > 0 && (
-        <div className="flex flex-col gap-2.5">
-          {recQiyas.map((e) => {
-            const bid = e.boardId!;
-            const id = EXAM_TRACK[bid];
-            const t = TRACKS.find((tr) => tr.id === id)!;
-            const choice = examChoice[bid];
-            if (choice === "skip") return null;
-            const prevKey = EXAM_PREV_KEY[bid];
-            const r = prevResults[prevKey] ?? { tested: false, score: "" };
-            const range = scoreRangeForTitle(prevKey);
-            const c = "var(--accent)";
-
-            /* بطاقة مُضافة (اختار «ابدأ الآن») — تتحوّل لسؤال الدرجة */
-            if (choice === "start") return (
-              <div key={bid} className="rounded-2xl px-4 py-3 flex flex-col gap-2.5"
-                style={{ background: `color-mix(in srgb, ${c} 8%, var(--surface))`, border: `1.5px solid color-mix(in srgb, ${c} 34%, var(--border))` }}>
-                <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-md flex items-center justify-center text-[14px] font-black flex-shrink-0"
-                    style={{ background: c, border: `1.5px solid ${c}`, color: "#fff" }}>✓</span>
-                  <span className="font-bold text-[17px] flex-1">{e.label}</span>
-                  <button onClick={() => setExamChoice((m) => { const n = { ...m }; delete n[bid]; return n; })}
-                    className="text-[13px] font-bold px-1" style={{ color: "var(--text-muted)" }}>إزالة ✕</button>
+      /* ── الدرجات (تقييم + يفتح لك + رضا) ── */
+      case "scores": return (
+        <div className="flex flex-col gap-5">
+          <div>
+            <p className="label mb-1">درجاتك</p>
+            <p className="t-caption" style={{ color: "var(--text-muted)" }}>سجّل ما اختبرته لنقيّم مستواك ونعرف ما يفتح لك — وتقدر تتخطّاها.</p>
+          </div>
+          {scorableExams.length === 0 ? (
+            <p className="t-body" style={{ color: "var(--text-muted)" }}>لا اختبارات لإدخال درجتها الآن — تقدر تسجّل درجاتك لاحقاً من «نتائجي».</p>
+          ) : scorableExams.map((e) => {
+            const k = scoreKeyOf(e)!;
+            const s = scores[k];
+            const range = scoreRangeForTitle(SCORE_META[k].rangeTitle);
+            const band = k === "qudurat" ? getQuduratBand(num(s.value)) : k === "tahsili" ? getTahsiliBand(num(s.value)) : null;
+            return (
+              <div key={k} className="rounded-2xl px-4 py-3.5 flex flex-col gap-2.5" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+                <p className="font-bold t-body" style={{ color: "var(--text)" }}>{SCORE_META[k].resultTitle}</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {([["none", "لم أختبر"], ["waiting", "بانتظار النتيجة"], ["scored", "أدخل درجتي"]] as const).map(([st, label]) => (
+                    <button key={st} onClick={() => { setScoreErr(""); setScore(k, { state: st, ...(st !== "scored" ? { value: "" } : {}) }); }}
+                      className="rounded-xl py-2 px-1 font-bold t-caption leading-snug text-center transition"
+                      style={s.state === st ? { background: "var(--accent)", color: "#fff", border: "none" } : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>{label}</button>
+                  ))}
                 </div>
-                <p className="text-[14px] font-bold" style={{ color: "var(--text-dim)" }}>هل سبق أن اختبرته؟</p>
-                <div className="flex gap-2">
-                  <button onClick={() => setPrevResults((p) => ({ ...p, [prevKey]: { ...(p[prevKey] ?? { score: "" }), tested: true } }))}
-                    className="flex-1 py-2 rounded-xl font-bold text-[14px]"
-                    style={r.tested ? { background: c, color: "#fff", border: "none" } : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
-                    نعم، أدخل درجتي
-                  </button>
-                  <button onClick={() => { setPrevErr(""); setPrevResults((p) => ({ ...p, [prevKey]: { tested: false, score: "" } })); }}
-                    className="flex-1 py-2 rounded-xl font-bold text-[14px]"
-                    style={!r.tested ? { background: "var(--success)", color: "#04240f", border: "none" } : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
-                    لا، أضفه لخطتي
-                  </button>
-                </div>
-                {r.tested && (
+                {s.state === "scored" && (
                   <div>
-                    <input value={r.score} inputMode="decimal"
-                      onChange={(ev) => { setPrevErr(""); setPrevResults((p) => ({ ...p, [prevKey]: { ...(p[prevKey] ?? { tested: true }), score: ev.target.value } })); }}
+                    <input value={s.value} inputMode="decimal" onChange={(ev) => { setScoreErr(""); setScore(k, { value: ev.target.value }); }}
                       placeholder="درجتك" maxLength={6}
-                      className="w-full rounded-xl px-3 py-2.5 text-[16px] text-center text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
-                      style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
-                    {range && <p className="text-[12px] mt-1 px-1" style={{ color: "var(--text-muted)" }}>الدرجة: {range.hint}</p>}
-                    {/* سؤال الرضا بعد الدرجة (ADR-0001 §2.6) — «لا» ⇒ نيّة إعادة (لا Goal) */}
-                    {r.score.trim() && (
-                      <div className="mt-2.5">
-                        <p className="text-[13px] font-bold mb-1.5" style={{ color: "var(--text-dim)" }}>راضٍ عن درجتك؟</p>
-                        <div className="flex gap-2">
-                          <button onClick={() => setRetakeIntent((mm) => ({ ...mm, [prevKey]: false }))}
-                            className="flex-1 py-2 rounded-xl font-bold text-[13px]"
-                            style={retakeIntent[prevKey] === false ? { background: "var(--success)", color: "#04240f", border: "none" } : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
-                            نعم، مناسبة لي
-                          </button>
-                          <button onClick={() => setRetakeIntent((mm) => ({ ...mm, [prevKey]: true }))}
-                            className="flex-1 py-2 rounded-xl font-bold text-[13px]"
-                            style={retakeIntent[prevKey] === true ? { background: "var(--accent)", color: "#fff", border: "none" } : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
-                            لا، سأعيد الاختبار 📈
-                          </button>
+                      className="w-full rounded-xl px-3 py-2.5 t-body text-center text-[var(--text)] placeholder-[var(--text-muted)] outline-none" style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
+                    {range && <p className="t-caption mt-1 px-1" style={{ color: "var(--text-muted)" }}>{range.hint}</p>}
+                    {band && s.value.trim() && (
+                      <>
+                        <p className="t-body font-bold mt-2" style={{ color: "var(--text)" }}>التقييم: {band.icon} {band.label}</p>
+                        <p className="t-caption mt-0.5" style={{ color: "var(--text-muted)" }}>{band.note}</p>
+                        <div className="mt-2.5">
+                          <p className="t-caption font-bold mb-1.5" style={{ color: "var(--text-dim)" }}>راضٍ عن درجتك؟</p>
+                          <div className="flex gap-2">
+                            <button onClick={() => setRetakeIntent((m) => ({ ...m, [SCORE_META[k].resultTitle]: false }))} className="flex-1 py-2 rounded-xl font-bold t-caption" style={retakeIntent[SCORE_META[k].resultTitle] === false ? { background: "var(--success)", color: "#04240f", border: "none" } : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>نعم، مناسبة</button>
+                            <button onClick={() => setRetakeIntent((m) => ({ ...m, [SCORE_META[k].resultTitle]: true }))} className="flex-1 py-2 rounded-xl font-bold t-caption" style={retakeIntent[SCORE_META[k].resultTitle] === true ? { background: "var(--accent)", color: "#fff", border: "none" } : { background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>لا، سأعيد 📈</button>
+                          </div>
                         </div>
-                      </div>
+                      </>
                     )}
                   </div>
                 )}
               </div>
             );
+          })}
+          {/* يفتح لك */}
+          {outlookItems.some((o) => o.icon !== "⚪") && (
+            <div className="rounded-2xl px-4 py-3.5" style={{ background: "color-mix(in srgb, var(--accent) 6%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
+              <p className="eyebrow mb-2.5">يفتح لك</p>
+              <div className="flex flex-col gap-1.5">
+                {outlookItems.filter((o) => o.icon !== "⚪").map((o) => (
+                  <div key={o.id} className="flex items-center gap-2">
+                    <span className="text-[16px]">{o.icon}</span>
+                    <span className="font-bold t-body" style={{ color: "var(--text)" }}>{o.label}</span>
+                    <span className="t-caption" style={{ color: "var(--text-muted)" }}>· {o.note}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="t-caption mt-2.5" style={{ color: "var(--text-muted)" }}>{OUTLOOK_DISCLAIMER}</p>
+            </div>
+          )}
+          {scoreErr && <p className="t-small text-center font-bold" style={{ color: "var(--danger)" }}>{scoreErr}</p>}
+        </div>
+      );
 
-            /* بطاقة اقتراح (مبدئية) — ابدأ الآن / ليس الآن */
+      /* ── المواعيد ── */
+      case "dates": return (
+        <div className="flex flex-col gap-4">
+          <div>
+            <p className="label mb-1">مواعيد اختباراتك</p>
+            <p className="t-caption" style={{ color: "var(--text-muted)" }}>لو حجزت موعداً، حدّده لنعدّ معك الأيام — وإلا تخطّها.</p>
+          </div>
+          {scorableExams.length === 0 ? (
+            <p className="t-body" style={{ color: "var(--text-muted)" }}>لا مواعيد الآن — تقدر تحدّدها لاحقاً من مساري.</p>
+          ) : scorableExams.map((e) => {
+            const key = SCORE_META[scoreKeyOf(e)!].rangeTitle;
+            const booked = !!examDates[key];
             return (
-              <div key={bid} className="rounded-2xl px-4 py-3 flex flex-col gap-2.5"
-                style={{ background: "var(--surface)", border: "1.5px dashed color-mix(in srgb, var(--accent) 34%, var(--border))" }}>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-[17px] flex-1" style={{ color: "var(--text)" }}>{e.label}</span>
-                </div>
-                <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>{t.sub} · <span style={{ color: e.mode ? MODE_COLOR[e.mode] : "var(--text-muted)" }}>{e.hint}</span></p>
-                <div className="flex gap-2">
-                  <button onClick={() => setExamChoice((m) => ({ ...m, [bid]: "start" }))}
-                    className="flex-1 py-2.5 rounded-xl font-bold text-[14px]" style={{ background: "var(--accent)", color: "#fff", border: "none" }}>
-                    ابدأ الآن
-                  </button>
-                  <button onClick={() => setExamChoice((m) => ({ ...m, [bid]: "skip" }))}
-                    className="flex-1 py-2.5 rounded-xl font-bold text-[14px]" style={{ background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
-                    ليس الآن
-                  </button>
-                </div>
+              <div key={key} className="rounded-2xl px-4 py-3.5" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+                <p className="font-bold t-body mb-2" style={{ color: "var(--text)" }}>{e.label}</p>
+                <p className="t-caption mb-2" style={{ color: "var(--text-muted)" }}>هل حجزت موعده؟</p>
+                {booked ? (
+                  <div className="flex items-center gap-2">
+                    <input type="date" value={examDates[key]} min={today} onChange={(ev) => setExamDate(key, ev.target.value)}
+                      className="flex-1 rounded-xl px-3 py-2 t-body outline-none" style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
+                    <button onClick={() => setExamDate(key, "")} className="t-caption font-bold px-2" style={{ color: "var(--text-muted)" }}>مسح ✕</button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <button onClick={() => setExamDate(key, today)} className="flex-1 py-2 rounded-xl font-bold t-caption" style={{ background: "var(--accent)", color: "#fff", border: "none" }}>نعم، أحدّد التاريخ</button>
+                    <button onClick={() => setExamDate(key, "")} className="flex-1 py-2 rounded-xl font-bold t-caption" style={{ background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>لا، ليس بعد</button>
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
-      )}
-    </div>
-  );
+      );
 
-  /* المدرسة: قسم مستقل، ليست اختباراً (Core بالمرحلة) */
-  const schoolNoteSection = (
-    <div className="rounded-2xl px-4 py-3.5 flex items-start gap-3"
-      style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
-      <span className="text-[22px] flex-shrink-0">🏫</span>
-      <div>
-        <p className="font-bold text-[16px]" style={{ color: "var(--text)" }}>المدرسة — قسمك اليومي المستقل</p>
-        <p className="text-[14px] mt-0.5" style={{ color: "var(--text-muted)" }}>
-          موادك وواجباتك وجدولك وتقويم الوزارة في «المدرسة» — دائمة معك، وليست اختباراً.
-        </p>
-      </div>
-    </div>
-  );
+      /* ── أسلوب المذاكرة ── */
+      case "style": return (
+        <div>
+          <p className="label mb-1">كيف تحبّ تذاكر؟</p>
+          <p className="t-caption mb-4" style={{ color: "var(--text-muted)" }}>نرتّب لك المصادر على ذوقك</p>
+          <div className="flex flex-col gap-2.5">
+            {([["book", "📘 بالقراءة والكتب"], ["video", "🎬 بالفيديو والشرح"], ["both", "🧩 الاثنين معاً"]] as const).map(([v, label]) => (
+              <button key={v} onClick={() => setStudyStyle(studyStyle === v ? "" : v)} className="rounded-2xl px-4 py-3.5 flex items-center gap-3 text-right font-bold t-body transition active:scale-[0.98]" style={chipStyle(studyStyle === v)}>{label}</button>
+            ))}
+          </div>
+        </div>
+      );
 
-  /* ── سؤال التركيز (ADR-0001 §2.6) — يبني الخطة الأولى فقط، لا يغيّر الوجهة ──
-     خياراته حسب ما يخصّ الطالب (من recommendedExams + الوجهة). */
-  const focusOptions = [
-    { id: "qudurat",    label: "تحسين القدرات",    show: recQiyas.some((e) => e.kind === "qudurat") },
-    { id: "tahsili",    label: "تحسين التحصيلي",   show: recQiyas.some((e) => e.kind === "tahsili") },
-    { id: "english",    label: "اللغة الإنجليزية", show: true },
-    { id: "university", label: "القبول الجامعي",   show: targets.includes("university") },
-    { id: "programs",   label: "البرامج",          show: recExams.some((e) => e.kind === "aramco" || e.kind === "itc") },
-  ].filter((o) => o.show);
-  const focusSection = focusOptions.length > 0 ? (
-    <div>
-      <p className="label mb-1">🎯 وش تركيزك الأول؟ <span className="text-[14px] font-normal" style={{ color: "var(--text-muted)" }}>(نبني عليه خطتك الأولى)</span></p>
-      <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>يرتّب خطتك الأولى فقط — لا يغيّر وجهتك، وتقدر تعدّله لاحقاً</p>
-      <div className="flex flex-col gap-2.5">
-        {focusOptions.map((o) => {
-          const on = focus === o.id;
-          return (
-            <button key={o.id} onClick={() => setFocus(on ? "" : o.id)} aria-pressed={on}
-              className="rounded-2xl px-4 py-3 flex items-center gap-3 text-right transition active:scale-[0.98]"
-              style={chipStyle(on)}>
-              <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px] font-black flex-shrink-0"
-                style={{ background: on ? "var(--accent)" : "var(--surface2)", border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}`, color: on ? "#fff" : "transparent" }}>●</span>
-              <span className="font-bold text-[16px] flex-1">{o.label}</span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  ) : null;
+      /* ── الوقت اليومي ── */
+      case "time": return (
+        <div>
+          <p className="label mb-1">كم ساعة تقدر تذاكر باليوم؟</p>
+          <p className="t-caption mb-4" style={{ color: "var(--text-muted)" }}>نبني خطتك على وقتك الحقيقي — تقدر تعدّلها لاحقاً</p>
+          <div className="grid grid-cols-2 gap-2.5">
+            {([[0.5, "نصف ساعة"], [1, "ساعة"], [2, "ساعتان"], [3, "٣ ساعات فأكثر"]] as [number, string][]).map(([v, label]) => (
+              <button key={v} onClick={() => setStudyHours(v)} className="rounded-2xl py-4 font-bold t-body transition active:scale-[0.98]" style={chipStyle(studyHours === v)}>{label}</button>
+            ))}
+          </div>
+        </div>
+      );
 
+      /* ── الجامعي (مختصر) ── */
+      case "uni": return (
+        <div className="flex flex-col gap-5">
+          <div>
+            <p className="label mb-3">🏛️ جامعتك</p>
+            {universityId ? (
+              <div className="rounded-2xl px-4 py-3 flex items-center gap-2" style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid color-mix(in srgb, var(--accent) 28%, transparent)" }}>
+                <span className="font-bold t-body-lg flex-1" style={{ color: "var(--accent-light)" }}>{universityId === "other" ? (otherUni.trim() || "أخرى") : universityName}</span>
+                <button onClick={() => { setUniversityId(""); setUniversityName(""); }} className="t-small font-bold px-2" style={{ color: "var(--text-muted)" }}>تغيير ✕</button>
+              </div>
+            ) : (
+              <>
+                <input value={uniQuery} onChange={(e) => setUniQuery(e.target.value)} placeholder="🔎 ابحث عن جامعتك..." className="w-full rounded-2xl px-4 py-3 t-body text-[var(--text)] placeholder-[var(--text-muted)] outline-none mb-2.5" style={inputStyle} />
+                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
+                  {filteredUnis.map((u) => (<button key={u.id} onClick={() => pickUni(u.id)} className="px-3 py-2 rounded-full font-bold t-small transition active:scale-95" style={{ background: "var(--surface2)", color: "var(--text)", border: "1.5px solid var(--border)" }}>{u.name}</button>))}
+                </div>
+              </>
+            )}
+            {universityId === "other" && (
+              <input value={otherUni} onChange={(e) => { setOtherUni(e.target.value); setUniversityName(e.target.value.trim() || "أخرى"); }} placeholder="اكتب اسم جامعتك" maxLength={60} className="w-full mt-2.5 rounded-2xl px-4 py-3 t-body text-[var(--text)] placeholder-[var(--text-muted)] outline-none" style={inputStyle} />
+            )}
+          </div>
+          <div>
+            <p className="label mb-3">📚 تخصصك</p>
+            <div className="flex flex-wrap gap-2">
+              {MAJORS.map((m) => { const on = majorId === m.id; return (<button key={m.id} onClick={() => setMajorId(on ? "" : m.id)} className="px-3 py-2 rounded-full font-bold t-small transition active:scale-95" style={{ background: on ? "var(--accent)" : "var(--surface2)", color: on ? "#fff" : "var(--text)", border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}` }}>{m.name}</button>); })}
+            </div>
+          </div>
+          <div>
+            <p className="label mb-3">سنتك الدراسية؟</p>
+            <div className="grid grid-cols-3 gap-2">
+              {UNI_YEARS.map((y) => (<button key={y} onClick={() => setUniversityYear(universityYear === y ? "" : y)} className="rounded-2xl py-3 font-bold t-body transition active:scale-[0.98]" style={chipStyle(universityYear === y)}>{y}</button>))}
+            </div>
+          </div>
+          <div>
+            <p className="label mb-1">معدلك الجامعي؟ <span className="t-caption font-normal" style={{ color: "var(--text-muted)" }}>(اختياري، من ٥)</span></p>
+            <input type="number" value={universityGpa} onChange={(e) => setUniversityGpa(e.target.value)} placeholder="مثال: 3.75" min={0} max={5} step={0.01} className="w-full rounded-2xl px-5 py-4 t-body-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none" style={inputStyle} />
+          </div>
+        </div>
+      );
+
+      /* ── الملخّص ── */
+      case "summary": return <SummaryStep name={name.trim()} status={status} goal={goal} recExams={recExams}
+        scores={scores} region={region} uni={{ name: universityName || (universityId === "other" ? otherUni.trim() : ""), major: findMajor(majorId)?.name, year: universityYear }} />;
+
+      default: return null;
+    }
+  })();
+
+  const isLast = current === "summary";
   return (
     <div className="min-h-dvh flex flex-col app-col">
       {header}
-      <div className="flex-1 px-6 py-8 max-w-sm mx-auto w-full flex flex-col gap-6">
-        {stepDots}
+      <div className="flex-1 px-6 py-8 max-w-md mx-auto w-full flex flex-col">
+        {progress}
+        <div className="flex-1">{stepBody}</div>
+        {submitErr && <p className="t-small text-center font-bold mt-4" style={{ color: "var(--danger)" }}>{submitErr}</p>}
+        <div className="flex flex-col gap-2 mt-7">
+          {isLast ? (
+            <button className="btn-primary glow-blue" onClick={finish} disabled={isSubmitting} style={{ opacity: isSubmitting ? 0.5 : 1 }}>
+              {isSubmitting ? "جارٍ الحفظ…" : "🚀 ابدأ رحلتك"}
+            </button>
+          ) : (
+            <button className="btn-primary glow-blue" onClick={goNext} disabled={!canProceed()} style={{ opacity: canProceed() ? 1 : 0.4 }}>التالي ←</button>
+          )}
+          {current !== "welcome" && <button onClick={goBack} className="t-body font-semibold w-full text-center py-1" style={{ color: "var(--text-muted)" }}>← رجوع</button>}
+        </div>
+      </div>
+    </div>
+  );
+}
 
-        {/* ── الثانوي: أهداف صريحة متعددة + نواة ثابتة (مفعّلة تلقائياً) + قسم لغة اختياري ── */}
-        {isSecondary ? (
-          <>
-            {targetsSection}
-            {examSuggestionSection}
-            {focusSection}
-            {schoolNoteSection}
-            {languageSection}
-          </>
-        ) : isUniversity ? (
-          /* ── الجامعي: بلا سؤال قياس/هدف — ملخّص تأكيدي فقط ثم ساعات المذاكرة ── */
-          <div>
-            <p className="label mb-1">جاهز يا طالب الجامعة 🎓</p>
-            <p className="text-[14px] mb-3" style={{ color: "var(--text-muted)" }}>
-              ركّزنا لك على عالمك الجامعي — معدلك وتدريبك ومهاراتك وسوق العمل. بلا قدرات ولا تحصيلي ولا قبول.
-            </p>
-            <div className="rounded-2xl px-4 py-3 flex flex-wrap gap-2"
-              style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-              {([universityName, findMajor(majorId)?.name, universityYear ? `السنة ${universityYear}` : ""]
-                .filter(Boolean) as string[])
-                .map((chip) => (
-                  <span key={chip} className="px-3 py-1.5 rounded-full text-[15px] font-bold"
-                    style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)", border: "1.5px solid color-mix(in srgb, var(--accent) 28%, transparent)" }}>
-                    {chip}
-                  </span>
-                ))}
+/* ════════ الملخّص ════════ */
+function SummaryStep({ name, status, goal, recExams, scores, region, uni }: {
+  name: string; status: Status | ""; goal: ReturnType<typeof resolveGoals>; recExams: RecommendedExam[];
+  scores: Record<ScoreKey, { state: "none" | "waiting" | "scored"; value: string }>;
+  region: string; uni: { name?: string; major?: string; year?: string };
+}) {
+  const near = nearestUniversity(region);
+  const goalLabels = goal.undecided ? ["درب يحدّدها لك"] : goal.targets.map((t) =>
+    ({ university: "الجامعة", aramco: "أرامكو CPC", itc: "ITC", military: "الكليات العسكرية", scholarship: "الابتعاث" } as Record<string, string>)[t] ?? t);
+  const examState = (e: RecommendedExam): string => {
+    const k = scoreKeyOf(e);
+    if (!k) return "⏳";
+    return scores[k].state === "scored" ? "✅" : scores[k].state === "waiting" ? "⏳" : "❌";
+  };
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="t-h2 font-black" style={{ color: "var(--text)" }}>أهلاً بك يا {name} 👋</p>
+      {status === "جامعي" ? (
+        <div className="rounded-2xl px-4 py-4 flex flex-col gap-2" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+          <p className="t-body" style={{ color: "var(--text)" }}>🎓 {[uni.name, uni.major, uni.year ? `السنة ${uni.year}` : ""].filter(Boolean).join(" · ")}</p>
+          <p className="t-caption" style={{ color: "var(--text-muted)" }}>ركّزنا لك عالمك الجامعي — معدّلك وتدريبك ومهاراتك. بلا قدرات ولا تحصيلي.</p>
+        </div>
+      ) : (
+        <>
+          <SummaryRow icon="🎯" title="هدفك">{goalLabels.join(" · ")}</SummaryRow>
+          {recExams.length > 0 && (
+            <SummaryRow icon="📝" title="اختباراتك">
+              <div className="flex flex-col gap-1 mt-1">
+                {recExams.map((e) => <span key={e.boardId ?? e.kind} className="t-body">{examState(e)} {e.label}</span>)}
+              </div>
+            </SummaryRow>
+          )}
+          {near && <SummaryRow icon="🏛️" title="أقرب جامعة">{near.name}</SummaryRow>}
+          <SummaryRow icon="🗺️" title="خطة درب">
+            {recExams[0] ? `ابدأ بـ${recExams[0].label}` : "ابدأ ببناء أساسك المدرسي"}
+          </SummaryRow>
+        </>
+      )}
+    </div>
+  );
+}
+function SummaryRow({ icon, title, children }: { icon: string; title: string; children: ReactNode }) {
+  return (
+    <div className="rounded-2xl px-4 py-3 flex items-start gap-3" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+      <span className="text-[20px] flex-shrink-0">{icon}</span>
+      <div className="flex-1 min-w-0">
+        <p className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>{title}</p>
+        <div className="t-body font-bold" style={{ color: "var(--text)" }}>{children}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ════════ التقرير الشخصي (٥ ثوانٍ) ════════ */
+function ReportScreen({ name, scores, outlook, firstStep, region }: {
+  name: string;
+  scores: Record<ScoreKey, { state: "none" | "waiting" | "scored"; value: string }>;
+  outlook: ReturnType<typeof admissionOutlook>; firstStep?: string; region: string;
+}) {
+  const val = (k: ScoreKey) => (scores[k].state === "scored" ? parseFloat(scores[k].value) : null);
+  const qBand = getQuduratBand(val("qudurat"));
+  const tBand = getTahsiliBand(val("tahsili"));
+  const level = qBand ?? tBand;
+  const near = nearestUniversity(region);
+  return (
+    <div className="min-h-dvh flex flex-col items-center justify-center px-6 py-10 app-col text-center page-enter">
+      <div className="max-w-sm w-full flex flex-col gap-5">
+        <p className="t-caption font-bold" style={{ color: "var(--accent-light)" }}>درب فهمك 👇</p>
+        <p className="t-h1 font-black" style={{ color: "var(--text)" }}>جاهزٌ يا {name}</p>
+
+        {level && (
+          <div className="rounded-2xl px-4 py-4" style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--accent) 25%, var(--border))" }}>
+            <p className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>مستواك الحالي</p>
+            <p className="t-h2 font-black mt-1" style={{ color: "var(--text)" }}>{level.icon} {level.label}</p>
+          </div>
+        )}
+
+        {outlook.some((o) => o.icon !== "⚪") && (
+          <div className="rounded-2xl px-4 py-4 text-right" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+            <p className="t-caption font-bold mb-2" style={{ color: "var(--text-muted)" }}>فرصك الحالية</p>
+            <div className="flex flex-col gap-1.5">
+              {outlook.filter((o) => o.icon !== "⚪").map((o) => (
+                <div key={o.id} className="flex items-center gap-2">
+                  <span className="text-[16px]">{o.icon}</span>
+                  <span className="font-bold t-body" style={{ color: "var(--text)" }}>{o.label}</span>
+                  <span className="t-caption" style={{ color: "var(--text-muted)" }}>· {o.note}</span>
+                </div>
+              ))}
             </div>
           </div>
-        ) : (
-          <>
-            {gradStage === "خريج ثانوي" && (
-              <>
-                {targetsSection}
-                {examSuggestionSection}
-                {focusSection}
-              </>
-            )}
-            {languageSection}
-          </>
         )}
 
-        {/* منتقي الجامعة/التخصص المستهدف أُخرج من التسجيل (ADR-0001 §3): الوجهة العامة تكفي،
-           والتفصيل (أي جامعة/تخصص/ترتيب الرغبات) ينتقل إلى «خطتي» عند تخطيط القبول. */}
-
-        {/* ساعات المذاكرة (إلزامي — يقود حساب الخطة والجدول) */}
-        <div>
-          <p className="label mb-3">كم ساعة تقدر تذاكر باليوم؟</p>
-          <input type="number" value={studyHours} onChange={(e) => setStudyHours(e.target.value)}
-            placeholder="مثال: 3" min={1} max={16}
-            className="w-full rounded-2xl px-5 py-4 text-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
-            style={inputStyle}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")} />
+        <div className="rounded-2xl px-4 py-3 text-right" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+          <p className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>أول خطوة ننصح بها</p>
+          <p className="t-body font-bold mt-0.5" style={{ color: "var(--text)" }}>{firstStep ? `ابدأ بـ${firstStep}` : "ابدأ ببناء أساسك المدرسي"}{near ? ` · أقرب جامعة: ${near.name}` : ""}</p>
         </div>
 
-        {/* درجة الثانوية · المدينة · الجوال · المنطقة/المدرسة · موعد الاختبار:
-           أُخرجت من التسجيل (ADR-0001 قاعدة ٣ — تُطلب لاحقاً داخل المنصة). */}
-
-        {/* الإلزامي فقط: الثانوي → ساعات · الجامعي → ساعات · الخريج → هدف + ساعات */}
-        {!canFinish && (
-          <p className="text-[14px] text-center" style={{ color: "var(--text-muted)" }}>
-            {isSecondary ? "حدّد ساعات مذاكرتك للمتابعة"
-              : isUniversity ? "حدّد ساعات مذاكرتك للمتابعة"
-              : "اختر هدفاً واحداً على الأقل وحدّد ساعات مذاكرتك للمتابعة"}
-          </p>
-        )}
-
-        {prevErr && (
-          <p className="text-[15px] text-center font-bold" style={{ color: "var(--danger)" }}>{prevErr}</p>
-        )}
-        {submitErr && (
-          <p className="text-[15px] text-center font-bold" style={{ color: "var(--danger)" }}>{submitErr}</p>
-        )}
-
-        <button className="btn-primary glow-blue" onClick={finish}
-          disabled={isSubmitting || !canFinish}
-          style={{ opacity: !isSubmitting && canFinish ? 1 : 0.4 }}>
-          {isSubmitting ? "جارٍ الحفظ…" : "يلا نبدأ ←"}
-        </button>
-        <button onClick={() => setStep(1)} className="text-[17px] font-semibold w-full text-center py-1"
-          style={{ color: "var(--text-muted)" }}>← رجوع</button>
+        <p className="t-caption" style={{ color: "var(--text-muted)" }}>نجهّز لوحتك…</p>
       </div>
     </div>
   );
