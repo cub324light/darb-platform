@@ -1072,6 +1072,10 @@ body[data-nav-hidden="1"] .float-nav { display: none; }
   animation: riseIn 0.55s cubic-bezier(.16,.84,.44,1) forwards;
 }
 
+/* شريط التقييم العام: يُملأ من اليمين (RTL) عند الظهور — يكبحه المعطّل العام أدناه */
+@keyframes evalBarFill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.eval-bar-fill { transform-origin: right; animation: evalBarFill 0.9s cubic-bezier(.16,.84,.44,1) both; }
+
 /* بطاقات المواد */
 @keyframes subjectIn {
   from { opacity: 0; transform: scale(0.94) translateY(12px); }

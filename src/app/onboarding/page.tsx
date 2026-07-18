@@ -9,15 +9,15 @@ import { useState, useEffect, type ReactNode } from "react";
 import { validateScore, scoreRangeForTitle, type TrackId } from "@/lib/tracks";
 import { MAJORS, findUniversity, findMajor, UNIVERSITIES } from "@/lib/university";
 import { saveUser, saveResults, loadGoals, saveGoals, ensureWorkspace,
-  loadTrackExamDates, saveTrackExamDates, type DarbUser } from "@/lib/storage";
+  loadTrackExamDates, saveTrackExamDates, currentScoreMap, type DarbUser } from "@/lib/storage";
 import { currentAcademicYearId, currentTermGuess, type TermGuess } from "@/lib/academicCalendar";
 import { requirementsOf } from "@/lib/recommendedExams";
 import { resolveGoals, type PrimaryGoal, type AramcoSub, type MajorLean } from "@/lib/onboarding/goals";
-import { admissionOutlook, OUTLOOK_DISCLAIMER } from "@/lib/onboarding/outlook";
+import { admissionOutlook, OUTLOOK_DISCLAIMER, whatIfRaise, readiness } from "@/lib/onboarding/outlook";
 import { EXAM_ORDER } from "@/lib/onboarding/examCatalog";
 import { stageExams, examLabelOf, EXAM_TO_TRACK, EXAM_SCORE_KEY, MAX_EXAMS, STAGE_LOCK_REASON, type OnbStage } from "@/lib/onboarding/stageExams";
 import { ACADEMIC_TRACKS, type AcademicTrack } from "@/lib/curriculum";
-import { getQuduratBand, getTahsiliBand } from "@/lib/darbKnowledge";
+import { evalBand, percentileText, evalBarPct, scoreOutOf } from "@/lib/scoreEvaluation";
 import { SA_REGIONS, nearestUniversity } from "@/lib/saRegions";
 import { n } from "@/lib/format";
 import { trackEvent } from "@/lib/analytics";
@@ -109,6 +109,10 @@ const SCORE_META: Record<ScoreKey, { rangeTitle: string; resultTitle: string }> 
   step:    { rangeTitle: "ستيب",   resultTitle: "STEP" },
 };
 
+/* لون مؤشّر التقييم (🟢/🟡/🔴) — من رموز واحدة موحّدة عبر المشروع. */
+const bandColor = (icon: string): string =>
+  icon === "🟢" ? "var(--success)" : icon === "🟡" ? "var(--gold)" : "var(--danger)";
+
 export default function OnboardingPage() {
   const [current, setCurrent] = useState<StepKey>("welcome");
   const [showReport, setShowReport] = useState(false);
@@ -154,6 +158,13 @@ export default function OnboardingPage() {
   });
   const [scoreErr, setScoreErr] = useState("");
   const [retakeIntent, setRetakeIntent] = useState<Record<string, boolean>>({});
+  /* أعلى درجةٍ سابقة لكل اختبار (لمقارنة الطالب بنفسه) — تُقرأ مرّة على العميل. */
+  const [priorScores] = useState<Record<string, number>>(() => {
+    if (typeof window === "undefined") return {};
+    const out: Record<string, number> = {};
+    for (const [title, v] of Object.entries(currentScoreMap())) out[title] = v.score;
+    return out;
+  });
 
   /* ── المواعيد (تُحفظ حيّة في trackExamDates) ── */
   const [examDates, setExamDates] = useState<Record<string, string>>(() => (typeof window !== "undefined" ? loadTrackExamDates() : {}));
@@ -207,14 +218,14 @@ export default function OnboardingPage() {
   const firstExamLabel = orderedSelected[0] ? examLabelOf(orderedSelected[0]) : undefined;
 
   const num = (v: string) => { const x = parseFloat(v); return Number.isFinite(x) ? x : null; };
+  const scoreOf = (k: ScoreKey) => (scores[k].state === "scored" ? num(scores[k].value) : null);
   /* «درب يحدد لي» → أوسع فرصٍ ممكنة (كل الوجهات) حتى لا يفوّت الطالب فرصة. */
   const outlookTargets = goal.undecided ? ALL_TARGETS : goal.targets;
-  const outlookItems = admissionOutlook({
+  const outlookInput = {
     targets: outlookTargets, trackType: goal.trackType,
-    qudurat: scores.qudurat.state === "scored" ? num(scores.qudurat.value) : null,
-    tahsili: scores.tahsili.state === "scored" ? num(scores.tahsili.value) : null,
-    step: scores.step.state === "scored" ? num(scores.step.value) : null,
-  });
+    qudurat: scoreOf("qudurat"), tahsili: scoreOf("tahsili"), step: scoreOf("step"),
+  };
+  const outlookItems = admissionOutlook(outlookInput);
 
   /* اقتراح الاختبارات مرّة عند بلوغ الخطوة؛ يُعاد عند تغيّر المرحلة أو الهدف. */
   const goalKey = goal.undecided ? "undecided" : [...goal.targets].sort().join(",");
@@ -632,7 +643,12 @@ export default function OnboardingPage() {
             const k = e.key;
             const s = scores[k];
             const range = scoreRangeForTitle(SCORE_META[k].rangeTitle);
-            const band = k === "qudurat" ? getQuduratBand(num(s.value)) : k === "tahsili" ? getTahsiliBand(num(s.value)) : null;
+            const scoreVal = s.state === "scored" ? num(s.value) : null;
+            const band = evalBand(k, scoreVal);
+            const pctText = percentileText(band);
+            const prior = priorScores[SCORE_META[k].resultTitle];
+            const delta = band && scoreVal != null && prior != null ? Math.round((scoreVal - prior) * 10) / 10 : null;
+            const whatIf = band && scoreVal != null ? whatIfRaise(outlookInput, k) : null;
             return (
               <div key={k} className="rounded-2xl px-4 py-3.5 flex flex-col gap-2.5" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
                 <p className="font-bold t-body" style={{ color: "var(--text)" }}>{SCORE_META[k].resultTitle}</p>
@@ -649,10 +665,44 @@ export default function OnboardingPage() {
                       placeholder="درجتك" maxLength={6}
                       className="w-full rounded-xl px-3 py-2.5 t-body text-center text-[var(--text)] placeholder-[var(--text-muted)] outline-none" style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
                     {range && <p className="t-caption mt-1 px-1" style={{ color: "var(--text-muted)" }}>{range.hint}</p>}
-                    {band && s.value.trim() && (
+                    {band && scoreVal != null && s.value.trim() && (
                       <>
-                        <p className="t-body font-bold mt-2" style={{ color: "var(--text)" }}>التقييم: {band.icon} {band.label}</p>
-                        <p className="t-caption mt-0.5" style={{ color: "var(--text-muted)" }}>{band.note}</p>
+                        {/* بطاقة التقييم العام: درجة/١٠٠ + شريط + مستوى + نسبة مئوية رسمية */}
+                        <div className="rounded-xl px-3.5 py-3 mt-2 rise" style={{ background: "var(--surface2)", border: "1.5px solid color-mix(in srgb, var(--accent) 20%, var(--border))" }}>
+                          <div className="flex items-baseline justify-between gap-2">
+                            <span className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>التقييم العام</span>
+                            <span className="t-h3 font-black font-mono-nums" style={{ color: "var(--text)" }}>{scoreOutOf(scoreVal)}</span>
+                          </div>
+                          <div className="mt-2 h-2.5 rounded-full overflow-hidden" style={{ background: "color-mix(in srgb, var(--text-muted) 22%, transparent)" }}>
+                            <div className="h-full rounded-full eval-bar-fill" style={{ width: `${evalBarPct(scoreVal)}%`, background: bandColor(band.icon) }} />
+                          </div>
+                          <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                            <span className="text-[15px]">{band.icon}</span>
+                            <span className="t-body font-bold" style={{ color: "var(--text)" }}>{band.label}</span>
+                            {pctText && <span className="t-caption" style={{ color: "var(--text-muted)" }}>· {pctText}</span>}
+                          </div>
+                          {/* مقارنة الطالب بنفسه — تظهر فقط إن كانت له محاولةٌ سابقة */}
+                          {delta != null && delta > 0 && (
+                            <p className="t-caption font-bold mt-1.5" style={{ color: "var(--success)" }}>▲ أفضل من نتيجتك السابقة بـ +{n(delta)}</p>
+                          )}
+                          {delta != null && delta < 0 && (
+                            <p className="t-caption mt-1.5" style={{ color: "var(--text-muted)" }}>▼ أقل من نتيجتك السابقة بـ {n(Math.abs(delta))}</p>
+                          )}
+                          {delta === 0 && (
+                            <p className="t-caption mt-1.5" style={{ color: "var(--text-muted)" }}>= مثل نتيجتك السابقة</p>
+                          )}
+                        </div>
+                        {/* ماذا لو رفعت درجتك؟ — من شروط الفرص الفعلية لا أرقامٍ مخترعة */}
+                        {whatIf && (
+                          <div className="rounded-xl px-3.5 py-3 mt-2.5 rise" style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface2))", border: "1px dashed color-mix(in srgb, var(--accent) 35%, transparent)" }}>
+                            <p className="t-caption font-bold mb-1.5" style={{ color: "var(--accent-light)" }}>✨ لو رفعت درجتك إلى {n(whatIf.target)}</p>
+                            <div className="flex flex-col gap-1">
+                              {whatIf.unlocks.map((u) => (
+                                <span key={u.id} className="t-caption font-bold" style={{ color: "var(--text)" }}>✅ يفتح لك: {u.label}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                         <div className="mt-2.5">
                           <p className="t-caption font-bold mb-1.5" style={{ color: "var(--text-dim)" }}>راضٍ عن درجتك؟</p>
                           <div className="flex gap-2">
@@ -855,25 +905,26 @@ function ReportScreen({ name, scores, outlook, firstStep, region }: {
   outlook: ReturnType<typeof admissionOutlook>; firstStep?: string; region: string;
 }) {
   const val = (k: ScoreKey) => (scores[k].state === "scored" ? parseFloat(scores[k].value) : null);
-  const qBand = getQuduratBand(val("qudurat"));
-  const tBand = getTahsiliBand(val("tahsili"));
-  const level = qBand ?? tBand;
+  const level = evalBand("qudurat", val("qudurat")) ?? evalBand("tahsili", val("tahsili"));
+  const levelPct = percentileText(level);
+  const ready = readiness(outlook);
   const near = nearestUniversity(region);
   return (
     <div className="min-h-dvh flex flex-col items-center justify-center px-6 py-10 app-col text-center page-enter">
-      <div className="max-w-sm w-full flex flex-col gap-5">
+      <div className="max-w-sm w-full flex flex-col gap-4">
         <p className="t-caption font-bold" style={{ color: "var(--accent-light)" }}>درب فهمك 👇</p>
         <p className="t-h1 font-black" style={{ color: "var(--text)" }}>جاهزٌ يا {name}</p>
 
         {level && (
-          <div className="rounded-2xl px-4 py-4" style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--accent) 25%, var(--border))" }}>
+          <div className="rounded-2xl px-4 py-4 rise rise-1" style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--accent) 25%, var(--border))" }}>
             <p className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>مستواك الحالي</p>
             <p className="t-h2 font-black mt-1" style={{ color: "var(--text)" }}>{level.icon} {level.label}</p>
+            {levelPct && <p className="t-caption mt-1" style={{ color: "var(--text-muted)" }}>{levelPct}</p>}
           </div>
         )}
 
         {outlook.some((o) => o.icon !== "⚪") && (
-          <div className="rounded-2xl px-4 py-4 text-right" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+          <div className="rounded-2xl px-4 py-4 text-right rise rise-2" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
             <p className="t-caption font-bold mb-2" style={{ color: "var(--text-muted)" }}>فرصك الحالية</p>
             <div className="flex flex-col gap-1.5">
               {outlook.filter((o) => o.icon !== "⚪").map((o) => (
@@ -887,12 +938,25 @@ function ReportScreen({ name, scores, outlook, firstStep, region }: {
           </div>
         )}
 
-        <div className="rounded-2xl px-4 py-3 text-right" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+        <div className="rounded-2xl px-4 py-3 text-right rise rise-3" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
           <p className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>أول خطوة ننصح بها</p>
           <p className="t-body font-bold mt-0.5" style={{ color: "var(--text)" }}>{firstStep ? `ابدأ بـ${firstStep}` : "ابدأ ببناء أساسك المدرسي"}{near ? ` · أقرب جامعة: ${near.name}` : ""}</p>
         </div>
 
-        <p className="t-caption" style={{ color: "var(--text-muted)" }}>نجهّز لوحتك…</p>
+        {/* مستوى الجاهزية — بطاقةٌ واحدة تلخّص أين يقف الطالب من فرصه */}
+        {ready && (
+          <div className="rounded-2xl px-4 py-4 text-right rise rise-4" style={{ background: `color-mix(in srgb, ${bandColor(ready.icon)} 10%, var(--surface))`, border: `1.5px solid color-mix(in srgb, ${bandColor(ready.icon)} 40%, var(--border))` }}>
+            <div className="flex items-center gap-2">
+              <span className="text-[20px]">{ready.icon}</span>
+              <p className="t-title font-black" style={{ color: "var(--text)" }}>{ready.title}</p>
+            </div>
+            <p className="t-caption mt-1.5" style={{ color: "var(--text-muted)" }}>{ready.reason}</p>
+          </div>
+        )}
+
+        {/* تنبيهٌ رسمي ثابت في نهاية التقرير */}
+        <p className="t-caption rise rise-5" style={{ color: "var(--text-muted)" }}>هذا التقرير إرشادي فقط، وتعتمد الحدود النهائية للقبول على الجهات الرسمية التي تُحدّث شروطها سنوياً.</p>
+        <p className="t-caption" style={{ color: "var(--text-dim)" }}>نجهّز لوحتك…</p>
       </div>
     </div>
   );
