@@ -20,18 +20,23 @@ export interface DarbUser {
   goal?: StudyGoalType;     // الهدف الأساسي (goals[0]) — يقود تفعيل المسارات والأولويات (SSoT لكل المستهلكين القائمين)
   goals?: StudyGoalType[];  // كل الأهداف المختارة (متعدد بلا حد) — الأساسي منها = goals[0]
   targets?: string[];       // الوجهات النهائية (متعدّد): معرّفات ثابتة من lib/targets — الوجهة تقود recommendedExams (ADR-0001)
+  goalUndecided?: boolean;  // اختار «ما أدري» في التسجيل — درب يحدّد الوجهة لاحقاً حسب الدرجات/الاهتمامات
   focus?: string;           // التركيز الأول (ADR-0001 §2.6): يبني الخطة الأولى فقط، لا يغيّر الوجهة — qudurat/tahsili/english/university/programs
   retakeExams?: string[];   // نيّة الإعادة (retakeIntent): اختبارات غير راضٍ عنها من سؤال الرضا — يقرؤها Life Engine/الخطة (لا Goal)
   finalizedExams?: string[]; // اختبارات اعتمد الطالب درجتها نهائيةً صراحةً (الحالة الثالثة مقابل «لم أقرّر»)
   gapYear?: boolean;        // خريج ينوي إعادة القدرات/التحصيلي (سنة استدراك)
   studyHours?: number;
+  studyStyle?: "book" | "video" | "both"; // أسلوب المذاكرة المفضّل (التسجيل) — يقرؤه دويرب/الخطة
   subjects?: string[];
   activeTracks?: TrackId[]; // (نظام Track القديم — يُرحَّل إلى workspace ثم يُزال في المرحلة الأخيرة)
   workspace?: Workspace;    // مساري: لوحة عمل الطالب من وحداتٍ مستقلة (النظام الجديد)
   plan?: PlanId;
   school?: string;
-  region?: string;
-  city?: string;
+  region?: string;              // المنطقة الرسمية (من saRegions) — تُجمع في التسجيل
+  city?: string;                // المدينة/المحافظة
+  district?: string;            // الحي (اختياري)
+  willingToRelocate?: boolean;  // «لا أمانع الغربة» — يوسّع اقتراح الجامعات خارج منطقته
+  regionsInterested?: string[]; // مناطق أخرى يهتمّ بالدراسة فيها (اختياري)
   phone?: string;
   bio?: string;        // سيرة قصيرة اختيارية (≤ ١٦٠ حرف)
   avatar?: string;     // معرّف أفاتار جاهز (وإلا صورة Google أو أول حرف)
