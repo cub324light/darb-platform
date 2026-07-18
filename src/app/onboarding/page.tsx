@@ -9,7 +9,7 @@ import { useState, useEffect, type ReactNode } from "react";
 import { validateScore, scoreRangeForTitle, type TrackId } from "@/lib/tracks";
 import { MAJORS, findUniversity, findMajor, UNIVERSITIES } from "@/lib/university";
 import { saveUser, saveResults, loadGoals, saveGoals, ensureWorkspace,
-  loadTrackExamDates, saveTrackExamDates, currentScoreMap, savePendingResults,
+  loadTrackExamDates, saveTrackExamDates, currentScoreMap,
   type DarbUser, type PendingResultRecord } from "@/lib/storage";
 import { currentAcademicYearId, currentTermGuess, type TermGuess } from "@/lib/academicCalendar";
 import { requirementsOf } from "@/lib/recommendedExams";
@@ -148,10 +148,11 @@ export default function OnboardingPage() {
   const [gradStage, setGradStage] = useState("");
   const [gradRecency, setGradRecency] = useState<"this-year" | "earlier" | "">("");
   const [academicTrack, setAcademicTrack] = useState<AcademicTrack | "">("");
-  /* ── الخريج: حاسبة المعدل (اختيارية) ── */
+  /* ── الخريج: حاسبة المعدل (اختيارية) + سنة الفجوة ── */
   const [wantGpa, setWantGpa] = useState<boolean | null>(null);
   const [gpaRows, setGpaRows] = useState<{ subject: string; grade: string }[]>(
     () => Array.from({ length: 5 }, () => ({ subject: "", grade: "" })));
+  const [gapYear, setGapYear] = useState<boolean | null>(null);
 
   /* ── اختيار الاختبارات (منتقٍ حسب المرحلة، حدّ ٣) ── */
   const [selectedExams, setSelectedExams] = useState<string[]>([]);
@@ -283,7 +284,7 @@ export default function OnboardingPage() {
       case "welcome": return name.trim().length > 0;
       case "stage":   return !!primaryStage && !!subStage;
       case "track":   return !!academicTrack;
-      case "gpa":     return wantGpa !== null; // نعم/لا إلزامي؛ إدخال الدرجات نفسه اختياري
+      case "gpa":     return wantGpa !== null && gapYear !== null; // السؤالان إلزاميان؛ إدخال الدرجات نفسه اختياري
       case "region":  return !!region && willingToRelocate !== null; // المدينة/الحي اختياريان فقط
       case "goal":    return primaryGoals.length > 0 && (!primaryGoals.includes("university") || !!majorLean);
       case "style":   return !!studyStyle;
@@ -326,6 +327,10 @@ export default function OnboardingPage() {
       const tracks = status === "جامعي" ? [] : (orderedSelected.map((id) => EXAM_TO_TRACK[id]).filter(Boolean) as TrackId[]);
       const primaryTrack: TrackId = tracks[0] ?? "مدرسه";
       const resolvedTrackType = status === "جامعي" && majorId ? findMajor(majorId)?.category : (goal.trackType || undefined);
+      /* انتظار النتيجة → داخل البروفايل (النوع + النمط + تاريخ الاختبار) لبطاقة العدّ التنازلي لاحقاً */
+      const pending: PendingResultRecord[] = (["qudurat", "tahsili", "step"] as ScoreKey[])
+        .filter((k) => scores[k].status === "waiting_result")
+        .map((k) => ({ exam: k, mode: (scores[k].mode || "paper") as "computer" | "paper", testDate: scores[k].testDate || "", savedAt: today }));
 
       const userData: DarbUser = {
         name: trimmedName,
@@ -353,6 +358,8 @@ export default function OnboardingPage() {
         regionsInterested: regionsInterested.length ? regionsInterested : undefined,
         universityGpa: status === "جامعي" && universityGpa ? parseFloat(universityGpa) : undefined,
         secondaryGpa: status === "خريج" && wantGpa && gpaPercent != null ? gpaPercent : undefined,
+        gapYear: status === "خريج" ? (gapYear ?? undefined) : undefined,
+        pendingResults: pending.length ? pending : undefined,
       };
       saveUser(ensureWorkspace(userData));
 
@@ -368,12 +375,6 @@ export default function OnboardingPage() {
       if (entered.length) {
         saveResults(entered.map((k, i) => ({ id: `${Date.now()}-${i}`, exam: SCORE_META[k].resultTitle, score: scores[k].value.trim() })));
       }
-      /* انتظار النتيجة → حالةٌ مستقلّة محفوظة (لبطاقة العدّ التنازلي لاحقاً) */
-      const pending: PendingResultRecord[] = (["qudurat", "tahsili", "step"] as ScoreKey[])
-        .filter((k) => scores[k].status === "waiting_result")
-        .map((k) => ({ exam: k, mode: (scores[k].mode || "paper") as "computer" | "paper", testDate: scores[k].testDate || "", savedAt: today }));
-      savePendingResults(pending);
-
       import("@/lib/firestore").then(({ registerUser }) => { registerUser(trimmedName, primaryTrack, {}); });
       trackEvent("onboarding_completed", { track: primaryTrack, tracks: tracks.length, targets: goal.targets.length, status });
       import("@/lib/cloud").then(({ pushBackup }) => { pushBackup().catch(() => {}); });
@@ -431,7 +432,7 @@ export default function OnboardingPage() {
             <p className="t-body" style={{ color: "var(--text-muted)" }}>دقيقة واحدة فقط، ونبني رحلتك خطوةً بخطوة.</p>
           </div>
           <div>
-            <p className="label mb-3">وش اسمك؟</p>
+            <p className="t-h3 font-bold mb-3" style={{ color: "var(--text)" }}>وش اسمك؟</p>
             <input autoFocus type="text" value={name} onChange={(e) => setName(e.target.value)}
               placeholder="مثال: فهد، سارة، خالد..." maxLength={20}
               className="w-full rounded-2xl px-5 py-4 t-body-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none" style={inputStyle}
@@ -444,8 +445,8 @@ export default function OnboardingPage() {
       /* ── الصف الدراسي (هرمي: صف ← مرحلة فرعية) ── */
       case "stage": return (
         <div>
-          <p className="label mb-1">وش صفّك الدراسي؟</p>
-          <p className="t-caption mb-4" style={{ color: "var(--text-muted)" }}>نبني رحلتك حسب مرحلتك بالضبط</p>
+          <p className="t-h1 font-black text-balance mb-2" style={{ color: "var(--text)" }}>وش صفّك الدراسي؟</p>
+          <p className="t-body mb-5" style={{ color: "var(--text-muted)" }}>نبني رحلتك حسب مرحلتك بالضبط</p>
           <div className="grid grid-cols-2 gap-2.5">
             {PRIMARY_STAGES.map((p) => {
               const on = primaryStage === p.key;
@@ -463,7 +464,7 @@ export default function OnboardingPage() {
           </div>
           {primaryStage && (
             <div className="mt-5">
-              <p className="label mb-3">{SUB_STAGE_PROMPT[primaryStage]}</p>
+              <p className="t-h3 font-bold text-balance mb-3" style={{ color: "var(--text)" }}>{SUB_STAGE_PROMPT[primaryStage]}</p>
               <div className={`grid gap-2 ${SUB_STAGES[primaryStage].length >= 5 ? "grid-cols-3" : SUB_STAGES[primaryStage].length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
                 {SUB_STAGES[primaryStage].map((s) => (
                   <button key={s.key}
@@ -486,8 +487,8 @@ export default function OnboardingPage() {
       /* ── المسار الدراسي (ثاني/ثالث ثانوي) ── */
       case "track": return (
         <div>
-          <p className="label mb-1">ما هو مسارك الدراسي؟</p>
-          <p className="t-caption mb-4" style={{ color: "var(--text-muted)" }}>نجلب مواد فصلك تلقائياً، ويركّز دويرب على ما يناسب مسارك</p>
+          <p className="t-h1 font-black text-balance mb-2" style={{ color: "var(--text)" }}>ما هو مسارك الدراسي؟</p>
+          <p className="t-body mb-5" style={{ color: "var(--text-muted)" }}>نجلب مواد فصلك تلقائياً، ويركّز دويرب على ما يناسب مسارك</p>
           <div className="flex flex-col gap-3">
             {ACADEMIC_TRACKS.map((t) => {
               const on = academicTrack === t.id;
@@ -520,12 +521,12 @@ export default function OnboardingPage() {
       case "gpa": return (
         <div className="flex flex-col gap-5">
           <div>
-            <p className="label mb-1">حاسبة المعدل</p>
-            <p className="t-caption" style={{ color: "var(--text-muted)" }}>تحب نحسب لك نسبتك من درجات موادك؟</p>
+            <p className="t-h1 font-black text-balance mb-2" style={{ color: "var(--text)" }}>حاسبة المعدل</p>
+            <p className="t-body" style={{ color: "var(--text-muted)" }}>تحب نحسب لك نسبتك من درجات موادك؟</p>
           </div>
           <div className="grid grid-cols-2 gap-2.5">
-            <button onClick={() => setWantGpa(true)} className="rounded-2xl py-3 font-bold t-body transition active:scale-[0.98]" style={chipStyle(wantGpa === true)}>نعم، احسبها</button>
-            <button onClick={() => setWantGpa(false)} className="rounded-2xl py-3 font-bold t-body transition active:scale-[0.98]" style={chipStyle(wantGpa === false)}>لا، أكمل التسجيل</button>
+            <button onClick={() => setWantGpa(true)} className="rounded-2xl py-3.5 font-bold t-body transition active:scale-[0.98]" style={chipStyle(wantGpa === true)}>نعم، احسبه لي</button>
+            <button onClick={() => setWantGpa(false)} className="rounded-2xl py-3.5 font-bold t-body transition active:scale-[0.98]" style={chipStyle(wantGpa === false)}>لا، أكمل التسجيل</button>
           </div>
           {wantGpa === false && (
             <p className="t-caption rise" style={{ color: "var(--text-muted)" }}>تمام 👍 — نكمّل تسجيلك، وتقدر تحسب معدلك لاحقاً.</p>
@@ -561,6 +562,15 @@ export default function OnboardingPage() {
               <p className="t-caption" style={{ color: "var(--text-muted)" }}>النسبة تقديرية من متوسط الدرجات المُدخَلة — قد تختلف عن نسبتك الرسمية.</p>
             </div>
           )}
+          {/* سؤالٌ آخر: سنة الفجوة */}
+          <div className="pt-4" style={{ borderTop: "1px solid var(--border)" }}>
+            <p className="t-h1 font-black text-balance mb-2" style={{ color: "var(--text)" }}>هل لديك سنة فجوة (Gap Year)؟</p>
+            <p className="t-body mb-4" style={{ color: "var(--text-muted)" }}>سنةٌ توقّفت فيها عن الدراسة بعد الثانوية — نراعيها في خطتك.</p>
+            <div className="grid grid-cols-2 gap-2.5">
+              <button onClick={() => setGapYear(true)} className="rounded-2xl py-3.5 font-bold t-body transition active:scale-[0.98]" style={chipStyle(gapYear === true)}>نعم</button>
+              <button onClick={() => setGapYear(false)} className="rounded-2xl py-3.5 font-bold t-body transition active:scale-[0.98]" style={chipStyle(gapYear === false)}>لا</button>
+            </div>
+          </div>
         </div>
       );
 
@@ -568,8 +578,8 @@ export default function OnboardingPage() {
       case "region": return (
         <div className="flex flex-col gap-5">
           <div>
-            <p className="label mb-1">وش منطقتك؟</p>
-            <p className="t-caption mb-3" style={{ color: "var(--text-muted)" }}>نقترح لك الجامعات الأقرب — وتقدر توسّع لاحقاً</p>
+            <p className="t-h1 font-black text-balance mb-2" style={{ color: "var(--text)" }}>وش منطقتك؟</p>
+            <p className="t-body mb-4" style={{ color: "var(--text-muted)" }}>نقترح لك الجامعات الأقرب — وتقدر توسّع لاحقاً</p>
             <div className="flex flex-wrap gap-2">
               {SA_REGIONS.map((r) => (
                 <button key={r} onClick={() => setRegion(region === r ? "" : r)} className="px-3 py-2 rounded-full font-bold t-small transition active:scale-95" style={chipStyle(region === r)}>{r}</button>
@@ -589,7 +599,7 @@ export default function OnboardingPage() {
             </div>
           </div>
           <div>
-            <p className="label mb-2">لو كانت أفضل جامعة بعيدة؟</p>
+            <p className="t-title font-bold mb-2" style={{ color: "var(--text)" }}>لو كانت أفضل جامعة بعيدة؟</p>
             <div className="grid grid-cols-2 gap-2.5">
               <button onClick={() => setWillingToRelocate(true)} className="rounded-2xl py-3 px-3 font-bold t-small leading-snug transition active:scale-[0.98] text-center" style={chipStyle(willingToRelocate === true)}>✅ لا أمانع الغربة</button>
               <button onClick={() => setWillingToRelocate(false)} className="rounded-2xl py-3 px-3 font-bold t-small leading-snug transition active:scale-[0.98] text-center" style={chipStyle(willingToRelocate === false)}>📍 أفضّل القرب مني</button>
@@ -623,8 +633,8 @@ export default function OnboardingPage() {
         return (
           <div className="flex flex-col gap-5">
             <div>
-              <p className="label mb-1">وش هدفك بعد الثانوية؟</p>
-              <p className="t-caption mb-3" style={{ color: "var(--text-muted)" }}>تقدر تختار أكثر من هدف — ومنها نعرف اختباراتك المطلوبة</p>
+              <p className="t-h1 font-black text-balance mb-2" style={{ color: "var(--text)" }}>وش هدفك بعد الثانوية؟</p>
+              <p className="t-body mb-4" style={{ color: "var(--text-muted)" }}>تقدر تختار أكثر من هدف — ومنها نعرف اختباراتك المطلوبة</p>
               <div className="flex flex-col gap-2.5">
                 {GOAL_OPTIONS.map((g) => {
                   const on = primaryGoals.includes(g.id);
@@ -642,7 +652,7 @@ export default function OnboardingPage() {
             {/* فرع الجامعة: ميل التخصص (اختياري) */}
             {primaryGoals.includes("university") && (
               <div>
-                <p className="label mb-1">وش التخصص اللي يميل له قلبك؟</p>
+                <p className="t-h3 font-bold text-balance mb-2" style={{ color: "var(--text)" }}>وش التخصص اللي يميل له قلبك؟</p>
                 <div className="flex flex-wrap gap-2">
                   {MAJOR_LEANS.map((m) => (
                     <button key={m.id} onClick={() => setMajorLean(majorLean === m.id ? "" : m.id)} className="px-3 py-2 rounded-full font-bold t-small transition active:scale-95" style={chipStyle(majorLean === m.id)}>{m.icon} {m.label}</button>
@@ -653,7 +663,7 @@ export default function OnboardingPage() {
             {/* فرع أرامكو: CPC / ITC / الاثنين */}
             {primaryGoals.includes("aramco") && (
               <div>
-                <p className="label mb-2">أي برنامج في أرامكو؟</p>
+                <p className="t-title font-bold mb-2" style={{ color: "var(--text)" }}>أي برنامج في أرامكو؟</p>
                 <div className="grid grid-cols-3 gap-2">
                   {ARAMCO_SUBS.map((s) => (
                     <button key={s.id} onClick={() => setAramcoSub(s.id)} className="rounded-2xl py-2.5 px-2 font-bold t-caption leading-snug transition active:scale-[0.98] text-center" style={chipStyle(aramcoSub === s.id)}>{s.label}</button>
@@ -668,7 +678,7 @@ export default function OnboardingPage() {
       /* ── منتقي الاختبارات (حسب المرحلة، حدّ ٣، المقفل يظهر 🔒) ── */
       case "exams": return (
         <div>
-          <p className="label mb-1">اختباراتك</p>
+          <p className="t-h1 font-black text-balance mb-2" style={{ color: "var(--text)" }}>اختباراتك</p>
           {goal.undecided
             ? <p className="t-caption" style={{ color: "var(--text-muted)" }}>بناءً على مرحلتك الحالية، هذه الاختبارات التي يمكنك الاستعداد لها أو إضافتها لمسارك.</p>
             : <p className="t-caption" style={{ color: "var(--text-muted)" }}>اخترنا لك اختبارات هدفك — عدّلها كما تشاء.</p>}
@@ -711,8 +721,8 @@ export default function OnboardingPage() {
       case "scores": return (
         <div className="flex flex-col gap-5">
           <div>
-            <p className="label mb-1">درجاتك</p>
-            <p className="t-caption" style={{ color: "var(--text-muted)" }}>سجّل ما اختبرته لنقيّم مستواك ونعرف ما يفتح لك — وتقدر تتخطّاها.</p>
+            <p className="t-h1 font-black text-balance mb-2" style={{ color: "var(--text)" }}>درجاتك</p>
+            <p className="t-body" style={{ color: "var(--text-muted)" }}>سجّل ما اختبرته لنقيّم مستواك ونعرف ما يفتح لك — وتقدر تتخطّاها.</p>
           </div>
           {scorableExams.length === 0 ? (
             <p className="t-body" style={{ color: "var(--text-muted)" }}>لا اختبارات لإدخال درجتها الآن — تقدر تسجّل درجاتك لاحقاً من «نتائجي».</p>
@@ -880,8 +890,8 @@ export default function OnboardingPage() {
       /* ── أسلوب المذاكرة ── */
       case "style": return (
         <div>
-          <p className="label mb-1">كيف تحبّ تذاكر؟</p>
-          <p className="t-caption mb-4" style={{ color: "var(--text-muted)" }}>نرتّب لك المصادر على ذوقك</p>
+          <p className="t-h1 font-black text-balance mb-2" style={{ color: "var(--text)" }}>كيف تحبّ تذاكر؟</p>
+          <p className="t-body mb-5" style={{ color: "var(--text-muted)" }}>نرتّب لك المصادر على ذوقك</p>
           <div className="flex flex-col gap-2.5">
             {([["book", "📘 بالقراءة والكتب"], ["video", "🎬 بالفيديو والشرح"], ["both", "🧩 الاثنين معاً"]] as const).map(([v, label]) => (
               <button key={v} onClick={() => setStudyStyle(studyStyle === v ? "" : v)} className="rounded-2xl px-4 py-3.5 flex items-center gap-3 text-right font-bold t-body transition active:scale-[0.98]" style={chipStyle(studyStyle === v)}>{label}</button>
@@ -893,8 +903,8 @@ export default function OnboardingPage() {
       /* ── الوقت اليومي (شريط ١–١٦) ── */
       case "time": return (
         <div>
-          <p className="label mb-1">كم ساعة تستطيع المذاكرة يومياً؟</p>
-          <p className="t-caption mb-6" style={{ color: "var(--text-muted)" }}>نبني خطتك على وقتك الحقيقي — تقدر تعدّلها لاحقاً</p>
+          <p className="t-h1 font-black text-balance mb-2" style={{ color: "var(--text)" }}>كم ساعة تستطيع المذاكرة يومياً؟</p>
+          <p className="t-body mb-6" style={{ color: "var(--text-muted)" }}>نبني خطتك على وقتك الحقيقي — تقدر تعدّلها لاحقاً</p>
           <div className="text-center mb-5">
             <span className="t-display font-black font-mono-nums" style={{ color: "var(--accent-light)" }}>{n(studyHours)}</span>
             <span className="t-body font-bold mr-2" style={{ color: "var(--text-muted)" }}>ساعة يومياً</span>
@@ -914,7 +924,7 @@ export default function OnboardingPage() {
       case "uni": return (
         <div className="flex flex-col gap-5">
           <div>
-            <p className="label mb-3">🏛️ جامعتك</p>
+            <p className="t-h2 font-black mb-3" style={{ color: "var(--text)" }}>🏛️ جامعتك</p>
             {universityId ? (
               <div className="rounded-2xl px-4 py-3 flex items-center gap-2" style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid color-mix(in srgb, var(--accent) 28%, transparent)" }}>
                 <span className="font-bold t-body-lg flex-1" style={{ color: "var(--accent-light)" }}>{universityId === "other" ? (otherUni.trim() || "أخرى") : universityName}</span>
@@ -933,7 +943,7 @@ export default function OnboardingPage() {
             )}
           </div>
           <div>
-            <p className="label mb-3">📚 تخصصك</p>
+            <p className="t-h2 font-black mb-3" style={{ color: "var(--text)" }}>📚 تخصصك</p>
             <div className="flex flex-wrap gap-2">
               {MAJORS.map((m) => { const on = majorId === m.id; return (<button key={m.id} onClick={() => setMajorId(on ? "" : m.id)} className="px-3 py-2 rounded-full font-bold t-small transition active:scale-95" style={{ background: on ? "var(--accent)" : "var(--surface2)", color: on ? "#fff" : "var(--text)", border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}` }}>{m.name}</button>); })}
             </div>
