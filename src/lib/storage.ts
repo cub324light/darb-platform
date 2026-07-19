@@ -48,6 +48,13 @@ export interface DarbUser {
   academicTrack?: import("./curriculum").AcademicTrack; // المسار الدراسي الثانوي (يقود المنهج) — لثاني/ثالث ثانوي
   secondaryGpa?: number; // نسبة الثانوية العامة (٠–١٠٠) — للخريج عند اختيار حساب معدله
   pendingResults?: PendingResultRecord[]; // اختبارات بانتظار النتيجة (لبطاقة العدّ التنازلي لاحقاً)
+  /* ── معلومات إضافية (اختيارية، من البروفايل لا التسجيل) — تُجهّز لدويرب مستقبلاً ── */
+  hobbies?: string[];        // الهوايات
+  interests?: string[];      // الاهتمامات
+  favSubjects?: string[];    // المواد المفضّلة
+  learnPref?: string;        // طريقة التعلّم المفضّلة (نص واحد)
+  awardedProfileInfo?: boolean;     // صُرفت مكافأة إكمال المعلومات الإضافية (+٥٠ فضة) مرّة
+  awardedProfileComplete?: boolean; // صُرف وسام + فضة اكتمال الملف ١٠٠٪ مرّة
   /* ── حقول الجامعي (Phase Engine) — لا تظهر للثانوي أبداً ── */
   universityGpa?: number;        // المعدل الجامعي من 5
   creditHoursCompleted?: number; // الساعات المعتمدة المنجزة

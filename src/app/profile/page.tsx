@@ -20,6 +20,7 @@ import ProfileSkeleton from "@/components/profile/ProfileSkeleton";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfilePreferences from "@/components/profile/ProfilePreferences";
 import ProfileAchievements from "@/components/profile/ProfileAchievements";
+import ProfileExtra from "@/components/profile/ProfileExtra";
 import ProfileAccount from "@/components/profile/ProfileAccount";
 import dynamic from "next/dynamic";
 const CalendarSettings = dynamic(() => import("@/components/CalendarSettings"), { ssr: false });
@@ -110,6 +111,12 @@ export default function ProfilePage() {
         {tab === "achievements" && (
           <div id="profile-panel-achievements" role="tabpanel" aria-labelledby="profile-tab-achievements" className="profile-tab-panel">
             <ProfileAchievements unlockedIds={unlockedIds} stats={stats} vaultCount={vaultCount} />
+          </div>
+        )}
+
+        {tab === "info" && (
+          <div id="profile-panel-info" role="tabpanel" aria-labelledby="profile-tab-info" className="profile-tab-panel">
+            <ProfileExtra />
           </div>
         )}
 
