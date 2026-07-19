@@ -52,6 +52,16 @@ const STATE_COLOR: Record<ModuleState, string> = {
   paused: "#F59E0B", completed: "#10B981", "needs-retake": "#EF4444",
 };
 
+/* ترتيب البطاقات حسب الأولوية: المثبّتة أولاً، ثم الأكثر إلحاحاً (نشط/يحتاج إعادة)
+   فالمضاف فالمتوقّف فالمكتمل. عرضٌ فقط — لا يمسّ ترتيب البيانات في Workspace. */
+const STATE_ORDER: Record<ModuleState, number> = {
+  active: 0, "needs-retake": 1, added: 2, paused: 3, completed: 4, "not-added": 5,
+};
+function byPriority(a: ModuleInstance, b: ModuleInstance): number {
+  if (!!a.priority !== !!b.priority) return a.priority ? -1 : 1;
+  return (STATE_ORDER[a.state] ?? 9) - (STATE_ORDER[b.state] ?? 9);
+}
+
 /* وجهة recommendedExam → هدف إضافة (لاقتراح سريع من الوجهة) */
 function recTarget(r: RecommendedExam): AddTarget | null {
   switch (r.kind) {
@@ -74,6 +84,8 @@ export default function RoadmapPage() {
     return ensured.workspace ?? null;
   });
   const [sel, setSel] = useState<{ kind: "module" | "member"; id: string } | null>(null);
+  /* بطاقة الخيارات المفتوحة (تثبيت/إخفاء/حذف) — واحدةٌ في أي لحظة، لتقليل التشتيت */
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
   /* أولوية Life Engine (ماذا الآن) — تُقرأ مرّة (لقطة العميل) */
   const [top] = useState(() => (typeof window === "undefined" ? null : lifeEngine(readLifeContext())[0] ?? null));
 
@@ -151,28 +163,31 @@ export default function RoadmapPage() {
       (r.kind === "language" && m.id === "english") ||
       (["aramco", "itc"].includes(r.kind) && m.id === "programs"));
 
+    const menuOpen = openMenu === m.id;
     return (
       <div key={m.id} className="rounded-2xl overflow-hidden" style={{ background: "var(--surface)", border: `1.5px solid ${v.color}33` }}>
-        <button onClick={() => !group && setSel({ kind: "module", id: m.id })}
-          className="w-full p-4 flex items-center gap-3 text-right transition active:scale-[0.99]"
-          style={{ cursor: group ? "default" : "pointer" }}>
-          <span className="text-[26px] flex-shrink-0" aria-hidden="true">{v.icon}</span>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="font-black t-title" style={{ color: "var(--text)" }}>{v.label}</p>
-              {m.priority && <span className="t-caption" title="أولوية مثبّتة">📌</span>}
+        <div className="flex items-stretch">
+          <button onClick={() => !group && setSel({ kind: "module", id: m.id })}
+            className="flex-1 min-w-0 p-4 flex items-center gap-3 text-right transition active:scale-[0.99]"
+            style={{ cursor: group ? "default" : "pointer" }}>
+            <span className="text-[26px] flex-shrink-0" aria-hidden="true">{v.icon}</span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="font-black t-title" style={{ color: "var(--text)" }}>{v.label}</p>
+                {m.priority && <span className="t-caption" title="أولوية مثبّتة">📌</span>}
+              </div>
+              <p className="t-caption mt-0.5" style={{ color: STATE_COLOR[m.state] }}>
+                {MODULE_STATE_LABEL[m.state]}{recHint?.hint ? ` · ${recHint.hint}` : ""}
+              </p>
             </div>
-            <p className="t-caption mt-0.5" style={{ color: STATE_COLOR[m.state] }}>
-              {MODULE_STATE_LABEL[m.state]}{recHint?.hint ? ` · ${recHint.hint}` : ""}
-            </p>
-          </div>
-          {!group && (
-            <div className="flex flex-col items-end gap-1 flex-shrink-0">
-              <span className="font-mono-nums font-black t-body" style={{ color: v.color }}>{pct}%</span>
-              <span className="text-[16px] font-black" style={{ color: "var(--text-muted)" }}>←</span>
-            </div>
-          )}
-        </button>
+            {!group && pct > 0 && <span className="font-mono-nums font-black t-body flex-shrink-0" style={{ color: v.color }}>{pct}%</span>}
+            {!group && <span className="text-[16px] font-black flex-shrink-0" style={{ color: "var(--text-muted)" }}>←</span>}
+          </button>
+          {/* خيارات الوحدة — مطويّة افتراضياً لتقليل التشتيت */}
+          <button onClick={() => setOpenMenu(menuOpen ? null : m.id)} aria-label="خيارات الوحدة" aria-expanded={menuOpen}
+            className="px-3 flex items-center justify-center flex-shrink-0 text-[20px] font-black transition active:scale-90"
+            style={{ color: menuOpen ? "var(--accent-light)" : "var(--text-muted)", borderInlineStart: "1px solid var(--border)" }}>⋯</button>
+        </div>
 
         {/* أعضاء المجموعة (اللغة/البرامج) — كلٌّ فضاءٌ مستقل */}
         {group && (
@@ -180,6 +195,7 @@ export default function RoadmapPage() {
             {members.length === 0 && <p className="t-caption px-1" style={{ color: "var(--text-muted)" }}>أضف اختباراً من «إضافة وحدة».</p>}
             {members.map((x) => {
               const mv = memberView(x.id);
+              const mp = studyPct(mv.content.subjects);
               return (
                 <button key={x.id} onClick={() => setSel({ kind: "member", id: x.id })}
                   className="rounded-xl px-3.5 py-3 flex items-center gap-3 text-right transition active:scale-[0.98]"
@@ -189,7 +205,7 @@ export default function RoadmapPage() {
                     <p className="font-bold t-body" style={{ color: "var(--text)" }}>{mv.label}</p>
                     <p className="t-caption mt-0.5" style={{ color: STATE_COLOR[x.state] }}>{MODULE_STATE_LABEL[x.state]}</p>
                   </div>
-                  <span className="font-mono-nums font-black t-small flex-shrink-0" style={{ color: mv.color }}>{studyPct(mv.content.subjects)}%</span>
+                  {mp > 0 && <span className="font-mono-nums font-black t-small flex-shrink-0" style={{ color: mv.color }}>{mp}%</span>}
                   <button onClick={(e) => { e.stopPropagation(); apply((w) => removeMember(w, x.id)); }}
                     className="text-[15px] px-1.5 min-h-[36px] flex-shrink-0" style={{ color: "var(--text-muted)" }} aria-label="حذف">✕</button>
                 </button>
@@ -198,21 +214,23 @@ export default function RoadmapPage() {
           </div>
         )}
 
-        {/* شريط التحكّم: أولوية · إخفاء · حذف (Core لا يُحذف/يُخفى) */}
-        <div className="px-4 pb-3 flex items-center gap-2 flex-wrap" style={{ borderTop: "1px solid var(--border)", paddingTop: "10px" }}>
-          <button onClick={() => apply((w) => setPriority(w, m.id, !m.priority))}
-            className="t-caption font-bold px-2.5 py-1 rounded-lg" style={{ background: "var(--surface2)", color: m.priority ? "var(--accent-light)" : "var(--text-muted)" }}>
-            {m.priority ? "إلغاء التثبيت" : "تثبيت أولوية"}
-          </button>
-          {m.kind !== "core" && (
-            <>
-              <button onClick={() => apply((w) => hideModule(w, m.id, true))}
-                className="t-caption font-bold px-2.5 py-1 rounded-lg" style={{ background: "var(--surface2)", color: "var(--text-muted)" }}>إخفاء</button>
-              <button onClick={() => { if (confirm(`حذف وحدة ${v.label} من مساري؟`)) apply((w) => removeModule(w, m.id)); }}
-                className="t-caption font-bold px-2.5 py-1 rounded-lg ms-auto" style={{ background: "transparent", color: "#EF4444" }}>حذف</button>
-            </>
-          )}
-        </div>
+        {/* شريط التحكّم — يظهر فقط عند فتح «⋯» */}
+        {menuOpen && (
+          <div className="px-4 pb-3 flex items-center gap-2 flex-wrap rise" style={{ borderTop: "1px solid var(--border)", paddingTop: "10px" }}>
+            <button onClick={() => apply((w) => setPriority(w, m.id, !m.priority))}
+              className="t-caption font-bold px-2.5 py-1 rounded-lg" style={{ background: "var(--surface2)", color: m.priority ? "var(--accent-light)" : "var(--text-muted)" }}>
+              {m.priority ? "📌 إلغاء التثبيت" : "📌 تثبيت أولوية"}
+            </button>
+            {m.kind !== "core" && (
+              <>
+                <button onClick={() => apply((w) => hideModule(w, m.id, true))}
+                  className="t-caption font-bold px-2.5 py-1 rounded-lg" style={{ background: "var(--surface2)", color: "var(--text-muted)" }}>🙈 إخفاء</button>
+                <button onClick={() => { if (confirm(`حذف وحدة ${v.label} من مساري؟`)) apply((w) => removeModule(w, m.id)); }}
+                  className="t-caption font-bold px-2.5 py-1 rounded-lg ms-auto" style={{ background: "transparent", color: "#EF4444" }}>🗑️ حذف</button>
+              </>
+            )}
+          </div>
+        )}
       </div>
     );
   };
@@ -221,44 +239,34 @@ export default function RoadmapPage() {
     <div className="min-h-dvh pb-nav relative z-[1] page-enter">
       <div className="max-w-2xl mx-auto w-full">
         <PageGuide pageKey="roadmap" steps={[
-          { title: "مساري = لوحة عملك", desc: "كل اختبار/عالم وحدةٌ مستقلة. أضِف ما يخصّك، ثبّت أولويتك، وافتح أي وحدة لتذاكر فيها." },
-          { title: "أضف وحداتك", desc: "من «إضافة وحدة» تختار اختبارات القبول واللغة والبرامج المتاحة لمرحلتك." },
-          { title: "درب يقترح", desc: "«ماذا أفعل الآن» يأتي من محرّك درب، والوحدات المقترحة تنبع من وجهتك." },
+          { title: "مساري = طريقك خطوة بخطوة", desc: "في الأعلى «خطوتك الآن» تقول لك ماذا تفعل اليوم، وتحتها وحداتك مرتّبةً حسب الأولوية." },
+          { title: "أضف ما يخصّك", desc: "من «إضافة وحدة» تختار اختبارات القبول واللغة والبرامج المتاحة لمرحلتك." },
+          { title: "افتح أي وحدة", desc: "اضغط الوحدة لتذاكر فيها، وزر «⋯» لخيارات التثبيت والإخفاء والحذف." },
         ]} />
         <Dome compact>
-          <div className="flex items-center justify-between">
-            <h1 className="title-lg grad-title">مساري</h1>
-            <span className="dome-chip t-body font-bold" style={{ color: "var(--text-dim)" }}>{cards.length} وحدة</span>
-          </div>
+          <h1 className="title-lg grad-title">مساري</h1>
         </Dome>
         <div className="h-4" />
 
-        <div className="px-5 flex flex-col gap-4">
-          {/* ماذا أفعل الآن — من Life Engine */}
+        <div className="px-5 flex flex-col gap-5">
+          {/* خطوتك الآن — الهيرو (من Life Engine): أوّل ما يراه الطالب */}
           {top && (
-            <Link href={top.href} className="rounded-2xl p-3.5 flex items-center gap-3 no-underline transition active:scale-[0.99]"
-              style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--accent) 22%, var(--border))" }}>
-              <span className="text-[22px] flex-shrink-0" aria-hidden="true">{top.icon}</span>
-              <div className="flex-1 min-w-0">
-                <p className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>ماذا أفعل الآن</p>
-                <p className="t-body font-black leading-snug" style={{ color: "var(--text)" }}>{top.title}</p>
+            <Link href={top.href} className="rounded-3xl p-5 no-underline block transition active:scale-[0.99]"
+              style={{ background: "color-mix(in srgb, var(--accent) 12%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--accent) 34%, var(--border))" }}>
+              <p className="eyebrow mb-2.5" style={{ color: "var(--accent-light)" }}>🧭 خطوتك الآن</p>
+              <div className="flex items-start gap-3">
+                <span className="text-[30px] leading-none flex-shrink-0" aria-hidden="true">{top.icon}</span>
+                <p className="t-h3 font-black flex-1 min-w-0 leading-snug" style={{ color: "var(--text)" }}>{top.title}</p>
               </div>
-              <span className="t-caption font-black px-3 rounded-lg flex-shrink-0 flex items-center whitespace-nowrap"
-                style={{ height: "var(--btn-h-sm)", background: "var(--accent)", color: "#fff" }}>{top.cta} ←</span>
+              <div className="btn-primary glow-blue mt-4 w-full text-center pointer-events-none">{top.cta} ←</div>
             </Link>
           )}
 
-          {/* تعريفات مختصرة */}
-          <div className="flex flex-col gap-2">
-            <DefCard id="qudurat" q="ما هو اختبار القدرات؟" a="يقيس مهارات التفكير والتحليل، وتستخدمه معظم الجامعات السعودية في القبول." />
-            <DefCard id="tahsili" q="ما هو التحصيلي؟" a="يقيس فهمك لمواد المرحلة الثانوية، ويستخدم خصوصاً في التخصصات العلمية والصحية." />
-          </div>
-
           {/* اقتراحات الوجهة (من recommendedExams) */}
           {suggestions.length > 0 && (
-            <div className="rounded-2xl p-4" style={{ background: "color-mix(in srgb, var(--accent) 6%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--accent) 20%, var(--border))" }}>
-              <p className="eyebrow mb-2.5 px-1">مقترحة لوجهتك</p>
-              <div className="flex flex-col gap-2">
+            <section>
+              <p className="eyebrow mb-2.5 px-1">✨ مقترحة لوجهتك</p>
+              <div className="rounded-2xl p-3 flex flex-col gap-2" style={{ background: "color-mix(in srgb, var(--accent) 6%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--accent) 20%, var(--border))" }}>
                 {suggestions.map(({ r, t }) => (
                   <div key={t.id} className="flex items-center gap-3 rounded-xl px-3.5 py-2.5" style={{ background: "var(--surface2)" }}>
                     <div className="flex-1 min-w-0">
@@ -270,13 +278,18 @@ export default function RoadmapPage() {
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
-          {/* بطاقات الوحدات */}
-          <div className="flex flex-col gap-3">
-            {cards.map(renderCard)}
-          </div>
+          {/* وحداتك — مرتّبة حسب الأولوية (المثبّتة ثم الأكثر إلحاحاً) */}
+          <section>
+            <p className="eyebrow mb-2.5 px-1">📚 وحداتك</p>
+            <div className="flex flex-col gap-3">
+              {cards.length > 0
+                ? [...cards].sort(byPriority).map(renderCard)
+                : <p className="t-body px-1" style={{ color: "var(--text-muted)" }}>لا وحدات بعد — أضف أوّل وحدة من الأسفل لتبدأ رحلتك.</p>}
+            </div>
+          </section>
 
           {/* إضافة وحدة (هرمي، مقيّد بالأهلية) */}
           {ctx && <AddModuleMenu ws={ws} ctx={ctx} onAdd={(t) => apply((w) => (t.kind === "module" ? addModule(w, t.id) : addMember(w, t.id)))} />}
@@ -293,6 +306,12 @@ export default function RoadmapPage() {
               ))}
             </div>
           )}
+
+          {/* تعريفات سريعة — في الأسفل، مطويّة بعد أوّل مرّة (لا تزاحم الفعل) */}
+          <div className="flex flex-col gap-2">
+            <DefCard id="qudurat" q="ما هو اختبار القدرات؟" a="يقيس مهارات التفكير والتحليل، وتستخدمه معظم الجامعات السعودية في القبول." />
+            <DefCard id="tahsili" q="ما هو التحصيلي؟" a="يقيس فهمك لمواد المرحلة الثانوية، ويستخدم خصوصاً في التخصصات العلمية والصحية." />
+          </div>
         </div>
 
         <div className="h-6" />
