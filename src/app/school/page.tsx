@@ -7,7 +7,6 @@
 import { useMemo, useSyncExternalStore } from "react";
 import Link from "next/link";
 import Dome from "@/components/Dome";
-import BackButton from "@/components/BackButton";
 import PageFooter from "@/components/PageFooter";
 import HomeworkPlanner from "@/components/school/HomeworkPlanner";
 import SchoolChecklist from "@/components/school/SchoolChecklist";
@@ -105,9 +104,7 @@ export default function SchoolPage() {
   if (isUniversityPhase(user) || isGraduatePhase(user)) {
     return (
       <div className="page desk-wide">
-        <Dome compact>
-          <div className="flex items-center gap-3"><BackButton /></div>
-        </Dome>
+        <Dome compact>{null}</Dome>
         <div className="px-5 mt-8">
           <div className="rounded-3xl p-6 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
             <p className="text-[45px] mb-2">🎓</p>
@@ -129,9 +126,7 @@ export default function SchoolPage() {
 
   return (
     <div className="page desk-wide">
-      <Dome compact>
-        <div className="flex items-center gap-3"><BackButton /></div>
-      </Dome>
+      <Dome compact>{null}</Dome>
       <div className="h-4" />
       <div className="page-content flex flex-col gap-3">
         <header className="ds-card ds-card-lg flex flex-col gap-1"
