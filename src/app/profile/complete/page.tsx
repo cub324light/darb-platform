@@ -1,11 +1,11 @@
 "use client";
 /* ─── 🎉 صفحة احتفال اكتمال الملف الشخصي — مستقلّة، تظهر مرّةً واحدة فقط ───
    تُبلَّغ بإشارةٍ عابرة في sessionStorage يضعها «حفظ» بعد اكتمال الملف أوّل مرّة.
-   دخولٌ مباشر بلا إشارة → إعادة توجيهٍ فوريّة إلى «معلوماتي». متابعة (أو تلقائياً) ← «معلوماتي». */
+   لا انتقال تلقائي إطلاقاً — تبقى حتى يضغط الطالب «متابعة». دخولٌ مباشر بلا إشارة
+   → إعادة توجيهٍ فوريّة إلى «معلوماتي». */
 import { useEffect, useState } from "react";
 import { n } from "@/lib/format";
 
-const AUTO_MS = 2000; // تُتابِع تلقائياً بعدها (أو فوراً بزر «متابعة»)
 const back = () => window.location.assign("/profile?tab=info");
 
 export default function ProfileCompletePage() {
@@ -21,9 +21,7 @@ export default function ProfileCompletePage() {
 
   useEffect(() => {
     try { sessionStorage.removeItem("darb_celebrate_complete"); } catch {}
-    if (!state.valid) { window.location.replace("/profile?tab=info"); return; }
-    const id = setTimeout(back, AUTO_MS);
-    return () => clearTimeout(id);
+    if (!state.valid) window.location.replace("/profile?tab=info");
   }, [state.valid]);
 
   if (!state.valid) return null;
@@ -51,7 +49,7 @@ export default function ProfileCompletePage() {
         وسيستخدم دويرب هذه المعلومات لتخصيص خططك ومراجعتك بشكلٍ أفضل.
       </p>
 
-      <button onClick={back} className="btn-primary glow-blue w-full max-w-xs">متابعة</button>
+      <button onClick={back} className="btn-primary glow-blue w-full max-w-xs">✨ متابعة</button>
     </div>
   );
 }
