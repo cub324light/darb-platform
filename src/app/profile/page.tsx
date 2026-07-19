@@ -45,6 +45,16 @@ export default function ProfilePage() {
     return "achievements";
   });
 
+  /* توست نجاح الحفظ — يظهر ثانيتين ثم يختفي (يُقرأ من ?saved=1 بعد الرجوع من صفحة التعديل) */
+  const [savedToast, setSavedToast] = useState(() =>
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("saved") === "1");
+  useEffect(() => {
+    if (!savedToast) return;
+    try { window.history.replaceState(null, "", "/profile?tab=info"); } catch {}
+    const id = setTimeout(() => setSavedToast(false), 2000);
+    return () => clearTimeout(id);
+  }, [savedToast]);
+
   /* تهيئة كسولة SSR-safe (لا setState متزامن في effect — يوافق React Compiler) */
   const [user, setUser] = useState<DarbUser | null>(() => (typeof window !== "undefined" ? loadUser() : null));
   const [stats] = useState<DarbStats | null>(() => (typeof window !== "undefined" ? loadStats() : null));
@@ -100,6 +110,15 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-dvh pb-nav desk-wide">
+      {savedToast && (
+        <div className="fixed top-4 inset-x-0 z-[60] flex justify-center px-4 pointer-events-none" role="status" aria-live="polite">
+          <div className="slide-up pointer-events-auto flex items-center gap-2 rounded-full px-4 py-2.5"
+            style={{ background: "color-mix(in srgb, var(--success) 16%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--success) 48%, var(--border))", boxShadow: "0 10px 30px rgba(0,0,0,0.28)" }}>
+            <span className="text-[17px] leading-none">✅</span>
+            <span className="t-body font-black" style={{ color: "var(--text)" }}>تم حفظ معلوماتك بنجاح</span>
+          </div>
+        </div>
+      )}
       {header}
       <div className="profile-shell px-5 py-5 max-w-lg mx-auto flex flex-col gap-5">
         <ProfileHeader

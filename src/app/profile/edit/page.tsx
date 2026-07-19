@@ -15,7 +15,7 @@ export default function ProfileEditPage() {
 
   return (
     <div className="page">
-      <div className="page-content pb-nav">
+      <div className="page-content pb-nav page-enter">
         <div className="flex items-center gap-2 pt-2 mb-1">
           <BackButton />
           <h1 className="t-h2 font-black" style={{ color: "var(--text)" }}>أكمل معلوماتك</h1>
@@ -28,7 +28,7 @@ export default function ProfileEditPage() {
           <ProfileLearnPrefs prefs={prefs} onPrefsChange={updatePrefs} />
         </div>
 
-        <button onClick={() => window.location.assign("/profile?tab=info")}
+        <button onClick={() => window.location.assign("/profile?tab=info&saved=1")}
           className="btn-primary glow-blue mt-6 w-full">حفظ ✓</button>
       </div>
       <PageFooter />

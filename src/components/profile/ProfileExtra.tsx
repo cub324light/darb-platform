@@ -1,6 +1,7 @@
 "use client";
-/* ─── ✨ معلوماتي — عرضٌ بسيط (نمط Duolingo): بطاقة بيانات + زر إلى صفحة التعديل ───
-   لا نموذج مفتوح هنا. البيانات في DarbUser (مصدرٌ واحد). التعديل في /profile/edit ثم رجوع. */
+/* ─── ✨ معلوماتي — عرضٌ بسيط (نمط Duolingo): بطاقاتٌ صغيرة + زر إلى صفحة التعديل ───
+   لا نموذج مفتوح هنا. البيانات في DarbUser (مصدرٌ واحد). التعديل في /profile/edit ثم رجوع.
+   المعلومة الفارغة تُعرض «➕ أضفها الآن» بلونٍ محفِّز وتنقل مباشرةً لصفحة التعديل. */
 import { useState } from "react";
 import Link from "next/link";
 import { loadUser, type DarbUser } from "@/lib/storage";
@@ -19,7 +20,7 @@ function goalText(u: DarbUser): string {
   return t.join(" · ");
 }
 
-interface Row { label: string; value: string; }
+interface Field { icon: string; label: string; value: string; wide?: boolean; }
 
 export default function ProfileExtra() {
   const [user] = useState<DarbUser | null>(() => (typeof window !== "undefined" ? loadUser() : null));
@@ -28,18 +29,18 @@ export default function ProfileExtra() {
   const done = comp.pct === 100;
 
   const list = (a?: string[]) => (a && a.length ? a.join("، ") : "");
-  const rows: Row[] = [
-    { label: "الاسم", value: user.name ?? "" },
-    { label: "المرحلة الدراسية", value: user.grade || user.studyLevel || "" },
-    { label: "المسار الدراسي", value: user.academicTrack ? trackLabel(user.academicTrack) : "" },
-    { label: "الهدف", value: goalText(user) },
-    { label: "المنطقة", value: user.region ?? "" },
-    { label: "طريقة المذاكرة", value: user.studyStyle ? STYLE_LABEL[user.studyStyle] ?? "" : "" },
-    { label: "ساعات المذاكرة", value: user.studyHours ? `${n(user.studyHours)} ساعة` : "" },
-    { label: "الهوايات", value: list(user.hobbies) },
-    { label: "الاهتمامات", value: list(user.interests) },
-    { label: "المواد المفضّلة", value: list(user.favSubjects) },
-    { label: "طريقة التعلّم", value: list(user.learningStyle) },
+  const fields: Field[] = [
+    { icon: "👤", label: "الاسم", value: user.name ?? "", wide: true },
+    { icon: "🎓", label: "المرحلة", value: user.grade || user.studyLevel || "" },
+    { icon: "🧭", label: "المسار الدراسي", value: user.academicTrack ? trackLabel(user.academicTrack) : "" },
+    { icon: "🎯", label: "الهدف", value: goalText(user) },
+    { icon: "📍", label: "المنطقة", value: user.region ?? "" },
+    { icon: "📚", label: "طريقة المذاكرة", value: user.studyStyle ? STYLE_LABEL[user.studyStyle] ?? "" : "" },
+    { icon: "⏰", label: "ساعات المذاكرة", value: user.studyHours ? `${n(user.studyHours)} ساعات` : "" },
+    { icon: "🎨", label: "الهوايات", value: list(user.hobbies) },
+    { icon: "💡", label: "الاهتمامات", value: list(user.interests) },
+    { icon: "📗", label: "المواد المفضّلة", value: list(user.favSubjects) },
+    { icon: "🧠", label: "طريقة التعلّم", value: list(user.learningStyle) },
   ];
 
   return (
@@ -68,18 +69,29 @@ export default function ProfileExtra() {
         </div>
       )}
 
-      {/* بطاقة عرض البيانات (للقراءة فقط) */}
-      <div className="ds-card">
+      {/* بطاقاتٌ صغيرة لكل معلومة */}
+      <div>
         <p className="eyebrow mb-3">👤 معلوماتي</p>
-        <div className="flex flex-col">
-          {rows.map((r, i) => (
-            <div key={r.label} className="flex items-start justify-between gap-3 py-2.5"
-              style={i < rows.length - 1 ? { borderBottom: "1px solid var(--border)" } : undefined}>
-              <span className="t-body font-bold flex-shrink-0" style={{ color: "var(--text-muted)" }}>{r.label}</span>
-              <span className="t-body font-bold text-left min-w-0" style={{ color: r.value ? "var(--text)" : "var(--text-dim)" }}>
-                {r.value || "لم تُحدَّد"}
-              </span>
+        <div className="grid grid-cols-2 gap-3">
+          {fields.map((f) => f.value ? (
+            <div key={f.label} className={`rounded-2xl p-3.5 ${f.wide ? "col-span-2" : ""}`}
+              style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <span className="text-[15px] leading-none">{f.icon}</span>
+                <span className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>{f.label}</span>
+              </div>
+              <p className="t-body font-black leading-snug" style={{ color: "var(--text)" }}>{f.value}</p>
             </div>
+          ) : (
+            <Link key={f.label} href="/profile/edit" aria-label={`أضف ${f.label}`}
+              className={`rounded-2xl p-3.5 no-underline block active:scale-95 transition ${f.wide ? "col-span-2" : ""}`}
+              style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface2))", border: "1.5px dashed color-mix(in srgb, var(--accent) 50%, var(--border))" }}>
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <span className="text-[15px] leading-none">{f.icon}</span>
+                <span className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>{f.label}</span>
+              </div>
+              <p className="t-body font-black leading-snug" style={{ color: "var(--accent-light)" }}>➕ أضفها الآن</p>
+            </Link>
           ))}
         </div>
       </div>
