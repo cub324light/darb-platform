@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { loadUser, showsUniversityUI } from "@/lib/storage";
+import { loadUser } from "@/lib/storage";
 import { isUniversityPhase, isGraduatePhase, isUniversityGraduate } from "@/lib/phase";
 
 function calcDue(): number {
@@ -30,18 +30,6 @@ const ROADMAP_ITEM: NavItem = {
   icon: (a: boolean) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 20 3.5 17.5v-13L9 7m0 13 6-3m-6 3V7m6 10 5.5 2.5v-13L15 4m0 13V4M9 7l6-3" />
-    </svg>
-  ),
-};
-
-const ADMISSION_ITEM: NavItem = {
-  href: "/university",
-  label: "القبول",
-  icon: (a: boolean) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3 2 8.5l10 5.5 10-5.5L12 3z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M2 8.5v7M22 8.5v3" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 10.8v5.2a8 8 0 0 0 12 0v-5.2" />
     </svg>
   ),
 };
@@ -134,9 +122,9 @@ export default function BottomNav() {
     if (typeof window === "undefined") return { midItem: ROADMAP_ITEM, schoolItem: SCHOOL_ITEM };
     const u = loadUser();
     /* خريج الجامعة: مهني بحت — لا قبول (admission) ولا مساري (قدرات/تحصيلي) */
+    /* الثانوي والخريج (ثانوي): «مساري» (يضمّ القبول/الجامعات/الاختبارات) · الجامعي: أدوات · خريج الجامعة: مهارات */
     const mid = isUniversityPhase(u) ? UNI_TOOLS_ITEM
       : isUniversityGraduate(u) ? SKILLS_ITEM
-      : showsUniversityUI(u) ? ADMISSION_ITEM
       : ROADMAP_ITEM;
     /* الثانوي: «المدرسة» · الجامعي والخريج: «المستقبل» */
     const school = isUniversityPhase(u) || isGraduatePhase(u) ? FUTURE_ITEM : SCHOOL_ITEM;

@@ -1,57 +1,66 @@
-/* ─── اكتمال الملف الشخصي + مكافآته — منطقٌ نقيّ (لا localStorage، قابلٌ للاختبار) ───
-   قائمةٌ من ٨ معلومات: ٤ أساسية (من التسجيل) + ٤ إضافية (اختيارية من البروفايل، تُجهّز
-   لدويرب مستقبلاً). المكافآت: +٥٠ فضة عند إكمال المعلومات الإضافية، ووسام + فضة عند ١٠٠٪. */
+/* ─── اكتمال الملف الشخصي + مكافآته التدريجية — منطقٌ نقيّ (لا localStorage) ───
+   ٨ معلومات: ٤ أساسية (من التسجيل) + ٤ شخصية (البروفايل: هوايات/اهتمامات/مواد/طريقة مذاكرة).
+   مكافآت تدريجية: +٥ فضة مع كل معلومةٍ شخصية تُضاف (مرّة لكلٍّ)، ووسام + ٣٠ فضة عند ١٠٠٪.
+   مصدرٌ واحد: كل الحقول من DarbUser (لا تكرار). */
 
 export interface FullProfile {
   name?: string; grade?: string; studyLevel?: string; region?: string;
   targets?: string[]; goalUndecided?: boolean;
-  hobbies?: string[]; interests?: string[]; favSubjects?: string[]; learnPref?: string;
-  awardedProfileInfo?: boolean; awardedProfileComplete?: boolean;
+  hobbies?: string[]; interests?: string[]; favSubjects?: string[];
+  studyStyle?: string; // طريقة المذاكرة (بالقراءة/بالفيديو/الاثنين)
+  rewardedFields?: string[]; awardedProfileComplete?: boolean;
 }
 
-export interface ProfileFieldState { id: string; label: string; group: "core" | "extra"; done: boolean; }
-export interface CompletionResult { total: number; done: number; pct: number; extraDone: boolean; fields: ProfileFieldState[]; }
+export interface ProfileFieldState { id: string; label: string; group: "core" | "personal"; done: boolean; }
+export interface CompletionResult { total: number; done: number; pct: number; fields: ProfileFieldState[]; }
 
 const has = (a?: unknown[]): boolean => Array.isArray(a) && a.length > 0;
+
+/** الحقول الشخصية التي تُكافأ بـ+٥ عند أول إضافة (طريقة المذاكرة تُملأ غالباً من التسجيل). */
+export const REWARDED_FIELDS = ["hobbies", "interests", "favSubjects"] as const;
 
 /** حالة اكتمال الملف: منجز/الكل، النسبة، وحالة كل معلومة. */
 export function profileCompletion(u?: FullProfile | null): CompletionResult {
   const fields: ProfileFieldState[] = [
-    { id: "name",       label: "الاسم",            group: "core",  done: !!u?.name },
-    { id: "stage",      label: "المرحلة الدراسية", group: "core",  done: !!(u?.grade || u?.studyLevel) },
-    { id: "region",     label: "المنطقة",          group: "core",  done: !!u?.region },
-    { id: "goal",       label: "الهدف",            group: "core",  done: !!(has(u?.targets) || u?.goalUndecided) },
-    { id: "hobbies",    label: "الهوايات",         group: "extra", done: has(u?.hobbies) },
-    { id: "interests",  label: "الاهتمامات",       group: "extra", done: has(u?.interests) },
-    { id: "favSubjects",label: "المواد المفضّلة",  group: "extra", done: has(u?.favSubjects) },
-    { id: "learnPref",  label: "طريقة التعلّم",    group: "extra", done: !!u?.learnPref },
+    { id: "name",       label: "الاسم",            group: "core",     done: !!u?.name },
+    { id: "stage",      label: "المرحلة الدراسية", group: "core",     done: !!(u?.grade || u?.studyLevel) },
+    { id: "region",     label: "المنطقة",          group: "core",     done: !!u?.region },
+    { id: "goal",       label: "الهدف",            group: "core",     done: !!(has(u?.targets) || u?.goalUndecided) },
+    { id: "studyStyle", label: "طريقة المذاكرة",   group: "personal", done: !!u?.studyStyle },
+    { id: "hobbies",    label: "الهوايات",         group: "personal", done: has(u?.hobbies) },
+    { id: "interests",  label: "الاهتمامات",       group: "personal", done: has(u?.interests) },
+    { id: "favSubjects",label: "المواد المفضّلة",  group: "personal", done: has(u?.favSubjects) },
   ];
   const done = fields.filter((f) => f.done).length;
   const total = fields.length;
-  const extraDone = fields.filter((f) => f.group === "extra").every((f) => f.done);
-  return { total, done, pct: Math.round((done / total) * 100), extraDone, fields };
+  return { total, done, pct: Math.round((done / total) * 100), fields };
 }
 
-/* ── المكافآت (تُصرف مرّة واحدة لكلٍّ عبر علمَي DarbUser) ── */
+/* ── المكافآت التدريجية (تُصرف مرّة واحدة لكلٍّ عبر rewardedFields + awardedProfileComplete) ── */
 export interface RewardOutcome {
   silver: number; badge: boolean; message: string;
-  setInfoFlag: boolean; setCompleteFlag: boolean;
+  newRewardedFields: string[]; setCompleteFlag: boolean;
 }
 
-const AR = "ar-u-nu-arab";
-const ar = (x: number) => x.toLocaleString(AR);
+const ar = (x: number) => x.toLocaleString("ar-u-nu-arab");
 
-/** ما الذي يُصرف الآن لهذا الملف (بحسب علمَي الصرف)؟ null إن لا شيء. */
+/** ما الذي يُصرف الآن؟ +٥ لكل معلومةٍ شخصية جديدة، ووسام + ٣٠ عند ١٠٠٪. null إن لا شيء. */
 export function pendingProfileRewards(u: FullProfile): RewardOutcome | null {
   const c = profileCompletion(u);
-  let silver = 0, badge = false, setInfoFlag = false, setCompleteFlag = false;
+  const doneById = new Map(c.fields.map((f) => [f.id, f.done]));
+  const rewarded = new Set(u.rewardedFields ?? []);
+  const newRewardedFields: string[] = [];
+  for (const id of REWARDED_FIELDS) if (doneById.get(id) && !rewarded.has(id)) newRewardedFields.push(id);
+
+  let silver = newRewardedFields.length * 5;
   const parts: string[] = [];
-  if (c.extraDone && !u.awardedProfileInfo) {
-    silver += 50; setInfoFlag = true; parts.push(`أكملت معلوماتك الإضافية (+${ar(50)} فضة)`);
-  }
+  if (newRewardedFields.length) parts.push(`+${ar(silver)} فضة`);
+
+  let badge = false, setCompleteFlag = false;
   if (c.pct === 100 && !u.awardedProfileComplete) {
-    silver += 30; badge = true; setCompleteFlag = true; parts.push(`اكتمل ملفك ١٠٠٪ — وسام + ${ar(30)} فضة`);
+    silver += 30; badge = true; setCompleteFlag = true;
+    parts.push(`🏅 وسام اكتمال الملف + ${ar(30)} فضة`);
   }
   if (silver === 0 && !badge) return null;
-  return { silver, badge, message: `🎉 أحسنت! ${parts.join(" · ")}.`, setInfoFlag, setCompleteFlag };
+  return { silver, badge, message: `🎉 ${parts.join(" · ")}`, newRewardedFields, setCompleteFlag };
 }

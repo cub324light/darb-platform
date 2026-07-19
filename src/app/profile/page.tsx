@@ -21,6 +21,7 @@ import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfilePreferences from "@/components/profile/ProfilePreferences";
 import ProfileAchievements from "@/components/profile/ProfileAchievements";
 import ProfileExtra from "@/components/profile/ProfileExtra";
+import ProfileLearnPrefs from "@/components/profile/ProfileLearnPrefs";
 import ProfileAccount from "@/components/profile/ProfileAccount";
 import dynamic from "next/dynamic";
 const CalendarSettings = dynamic(() => import("@/components/CalendarSettings"), { ssr: false });
@@ -115,14 +116,15 @@ export default function ProfilePage() {
         )}
 
         {tab === "info" && (
-          <div id="profile-panel-info" role="tabpanel" aria-labelledby="profile-tab-info" className="profile-tab-panel">
+          <div id="profile-panel-info" role="tabpanel" aria-labelledby="profile-tab-info" className="profile-tab-panel flex flex-col gap-5">
             <ProfileExtra />
+            <ProfileLearnPrefs prefs={prefs} onPrefsChange={updatePrefs} />
           </div>
         )}
 
         {tab === "prefs" && (
           <div id="profile-panel-prefs" role="tabpanel" aria-labelledby="profile-tab-prefs" className="profile-tab-panel flex flex-col gap-5">
-            <ProfilePreferences prefs={prefs} onPrefsChange={updatePrefs} isPrivate={isPrivate} onTogglePrivacy={togglePrivacy} />
+            <ProfilePreferences isPrivate={isPrivate} onTogglePrivacy={togglePrivacy} />
             <CalendarSettings />
             <ProfileAccount />
           </div>
