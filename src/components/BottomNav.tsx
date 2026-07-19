@@ -58,13 +58,14 @@ const UNI_TOOLS_ITEM: NavItem = {
   ),
 };
 
-/* المدرسة — للثانوي فقط (الجامعي والخريج لا يرونها إطلاقاً) */
-const SCHOOL_ITEM: NavItem = {
-  href: "/school",
-  label: "المدرسة",
+/* خطتي — للثانوي (حلّت محلّ «المدرسة» في الشريط؛ المدرسة تُعاد لاحقاً في مكانٍ خاص) */
+const PLAN_ITEM: NavItem = {
+  href: "/plan",
+  label: "خطتي",
   icon: (a: boolean) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.5 3.5 4v13.5L12 20m0-13.5L20.5 4v13.5L12 20m0-13.5V20" />
+      <rect x="4" y="3.5" width="16" height="17" rx="2.5" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 8.5l1.5 1.5 3-3M8 15l1.5 1.5 3-3M15.5 8.5h1.5M15.5 15h1.5" />
     </svg>
   ),
 };
@@ -131,15 +132,15 @@ export default function BottomNav() {
      جامعي → أدوات الجامعة، ثالث ثانوي/خريج → القبول، وإلا مساري.
      تهيئة كسولة بنمط DesktopSidebar — لا setState داخل effect. */
   const [{ midItem, schoolItem }] = useState<{ midItem: NavItem; schoolItem: NavItem }>(() => {
-    if (typeof window === "undefined") return { midItem: ROADMAP_ITEM, schoolItem: SCHOOL_ITEM };
+    if (typeof window === "undefined") return { midItem: ROADMAP_ITEM, schoolItem: PLAN_ITEM };
     const u = loadUser();
     /* خريج الجامعة: مهني بحت — لا قبول (admission) ولا مساري (قدرات/تحصيلي) */
     const mid = isUniversityPhase(u) ? UNI_TOOLS_ITEM
       : isUniversityGraduate(u) ? SKILLS_ITEM
       : showsUniversityUI(u) ? ADMISSION_ITEM
       : ROADMAP_ITEM;
-    /* الجامعي والخريج لا يرون «المدرسة» — تُستبدل بـ«المستقبل» */
-    const school = isUniversityPhase(u) || isGraduatePhase(u) ? FUTURE_ITEM : SCHOOL_ITEM;
+    /* الثانوي: «خطتي» (بدل المدرسة) · الجامعي والخريج: «المستقبل» */
+    const school = isUniversityPhase(u) || isGraduatePhase(u) ? FUTURE_ITEM : PLAN_ITEM;
     return { midItem: mid, schoolItem: school };
   });
 
