@@ -255,6 +255,14 @@ export default function OnboardingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current, examsInit]);
 
+  /* عند تغيّر الخطوة (التالي/السابق/انتقال تلقائي) أو دخول التقرير: تمرير ناعم لأعلى الصفحة
+     قبل إظهار محتوى الخطوة الجديدة — كتجربة Duolingo/Typeform (لا «قفزة»). */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+  }, [current, showReport]);
+
   const toggleExam = (id: string) => {
     const ex = stageList.find((e) => e.id === id);
     if (!ex || ex.state !== "open") return;             // المقفل غير قابلٍ للاختيار
