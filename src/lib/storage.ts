@@ -48,10 +48,19 @@ export interface DarbUser {
   academicTrack?: import("./curriculum").AcademicTrack; // المسار الدراسي الثانوي (يقود المنهج) — لثاني/ثالث ثانوي
   secondaryGpa?: number; // نسبة الثانوية العامة (٠–١٠٠) — للخريج عند اختيار حساب معدله
   pendingResults?: PendingResultRecord[]; // اختبارات بانتظار النتيجة (لبطاقة العدّ التنازلي لاحقاً)
-  /* ── معلومات إضافية (اختيارية، من البروفايل لا التسجيل) — مصدرٌ واحد يقرؤه البروفايل/دويرب/الخطة ── */
+  /* ── معلومات الطالب الشخصية (البروفايل لا التسجيل) — مصدرٌ واحد يقرؤه البروفايل/دويرب/الخطة ── */
   hobbies?: string[];        // الهوايات
   interests?: string[];      // الاهتمامات
   favSubjects?: string[];    // المواد المفضّلة
+  /* تفضيلات التعلّم — نُقلت من DarbPrefs إلى هنا (مصدر الحقيقة الوحيد لبيانات الطالب) */
+  studyTime?: StudyTime;
+  sessionLen?: SessionLen;
+  learningStyle?: LearningStyle[];   // متعدّد الاختيار
+  device?: StudyDevice;
+  format?: StudyFormat;
+  studyDays?: number;                // أيام المذاكرة الأسبوعية (٣–٧)
+  vacationMode?: boolean;            // وضع الإجازة
+  subjectFocus?: "auto" | "single" | "parallel" | "rotating"; // توزيع المواد
   rewardedFields?: string[];        // حقولٌ صُرف عنها +٥ فضة (مرّة لكلٍّ)
   awardedProfileComplete?: boolean; // صُرف وسام + فضة اكتمال الملف ١٠٠٪ مرّة
   /* ── حقول الجامعي (Phase Engine) — لا تظهر للثانوي أبداً ── */
@@ -565,28 +574,56 @@ export type LearningStyle = "فيديو" | "قراءة" | "أسئلة" | "شرح
 export type StudyDevice  = "جوال" | "تابلت" | "لابتوب" | "مكتبي";
 export type StudyFormat  = "ورقي" | "رقمي" | "الاثنان";
 
-export interface DarbPrefs {
+/* عرضٌ مطبوع لتفضيلات التعلّم — بياناتها الفعلية داخل DarbUser (مصدرٌ واحد، لا تكرار).
+   DarbPrefs (اسم محجوز لإعدادات التطبيق مستقبلاً: Theme/Notifications/Language) لا يحوي بيانات الطالب. */
+export interface LearningPrefs {
   studyTime?: StudyTime;
   sessionLen?: SessionLen;
-  learningStyle?: LearningStyle[]; // متعدّد الاختيار
+  learningStyle?: LearningStyle[];
   device?: StudyDevice;
   format?: StudyFormat;
-  /* مدخلات محرّك الاستراتيجية (كلها اختيارية — للمحرّك افتراضات ذكية) */
-  studyDays?: number;              // أيام المذاكرة الأسبوعية (3–7)
-  vacationMode?: boolean;          // وضع الإجازة → طاقة أعلى وأيام أكثر
-  subjectFocus?: "auto" | "single" | "parallel" | "rotating"; // تجاوز توزيع المواد
+  studyDays?: number;
+  vacationMode?: boolean;
+  subjectFocus?: "auto" | "single" | "parallel" | "rotating";
 }
+/** توافق: الاسم القديم يشير إلى تفضيلات التعلّم (بياناتها في DarbUser الآن). */
+export type DarbPrefs = LearningPrefs;
 
-const PREFS_KEY = "darb_prefs";
-export function loadPrefs(): DarbPrefs {
-  if (typeof window === "undefined") return {};
-  try {
-    const raw = localStorage.getItem(PREFS_KEY);
-    return raw ? (JSON.parse(raw) as DarbPrefs) : {};
-  } catch { return {}; }
+const LEARNING_KEYS = ["studyTime", "sessionLen", "learningStyle", "device", "format", "studyDays", "vacationMode", "subjectFocus"] as const;
+const pickLearning = (src: Record<string, unknown>): LearningPrefs => {
+  const out: Record<string, unknown> = {};
+  for (const k of LEARNING_KEYS) if (src[k] != null) out[k] = src[k];
+  return out as LearningPrefs;
+};
+
+const PREFS_KEY = "darb_prefs"; // مفتاحٌ قديم — يُرحَّل مرّة إلى DarbUser ثم يُحذف
+/** تفضيلات التعلّم من DarbUser (المصدر الوحيد). يُرحّل darb_prefs القديم مرّة إن وُجد. */
+export function loadPrefs(): LearningPrefs {
+  const u = loadUser();
+  if (!u) return {};
+  const view = pickLearning(u as unknown as Record<string, unknown>);
+  if (Object.keys(view).length === 0 && typeof window !== "undefined") {
+    try {
+      const raw = localStorage.getItem(PREFS_KEY);
+      const legacy = raw ? (JSON.parse(raw) as Record<string, unknown>) : null;
+      if (legacy && Object.keys(pickLearning(legacy)).length) {
+        const migrated = pickLearning(legacy);
+        saveUser({ ...u, ...migrated });
+        localStorage.removeItem(PREFS_KEY);
+        return migrated;
+      }
+    } catch {}
+  }
+  return view;
 }
-export function savePrefs(p: DarbPrefs) {
-  try { localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch {}
+/** حفظ تفضيلات التعلّم داخل DarbUser (لا مخزنٌ منفصل). */
+export function savePrefs(p: LearningPrefs) {
+  const u = loadUser();
+  if (!u) return;
+  const next = { ...u } as unknown as Record<string, unknown>;
+  const src = p as unknown as Record<string, unknown>;
+  for (const k of LEARNING_KEYS) next[k] = src[k];
+  saveUser(next as unknown as DarbUser);
 }
 
 /* ── تفضيلات التقويم الدراسي (تجاوزات اختيارية فوق التقويم الرسمي) ── */

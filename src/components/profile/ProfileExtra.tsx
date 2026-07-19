@@ -39,7 +39,8 @@ export default function ProfileExtra() {
   const comp = profileCompletion(user);
 
   const commit = (patch: Partial<DarbUser>) => {
-    const next: DarbUser = { ...user, ...patch };
+    /* ندمج على أحدث نسخةٍ مخزّنة (لا حالة المكوّن) كي لا نطمس حقولاً حرّرها قسمٌ آخر (طريقة التعلّم). */
+    const next: DarbUser = { ...(loadUser() ?? user), ...patch };
     const reward = pendingProfileRewards(next);
     if (reward) {
       if (reward.silver) addSilver(reward.silver);
@@ -59,19 +60,30 @@ export default function ProfileExtra() {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* اكتمال الملف */}
-      <div className="ds-card">
-        <div className="flex items-center justify-between mb-2">
-          <p className="t-title font-black" style={{ color: "var(--text)" }}>اكتمال الملف الشخصي</p>
-          <span className="t-h3 font-black font-mono-nums" style={{ color: comp.pct === 100 ? "var(--success)" : "var(--accent-light)" }}>
-            {comp.pct === 100 ? "🏅 " : ""}{n(comp.pct)}٪
-          </span>
+      {/* اكتمال الملف — بطاقة تهنئة عند ١٠٠٪، وإلا تقدّمٌ مع «باقي كذا معلومة» */}
+      {comp.pct === 100 ? (
+        <div className="ds-card flex items-center gap-3" style={{ background: "color-mix(in srgb, var(--gold) 12%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--gold) 40%, var(--border))" }}>
+          <span className="text-[26px] flex-shrink-0">🏅</span>
+          <div className="min-w-0">
+            <p className="t-title font-black" style={{ color: "var(--text)" }}>ملفك الشخصي مكتمل</p>
+            <p className="t-caption" style={{ color: "var(--text-muted)" }}>يمكنك تعديل معلوماتك متى شئت.</p>
+          </div>
         </div>
-        <div className="h-2.5 rounded-full overflow-hidden mb-2" style={{ background: "color-mix(in srgb, var(--text-muted) 22%, transparent)" }}>
-          <div className="h-full rounded-full eval-bar-fill" style={{ width: `${comp.pct}%`, background: comp.pct === 100 ? "var(--success)" : "var(--accent)" }} />
+      ) : (
+        <div className="ds-card">
+          <div className="flex items-center justify-between mb-2">
+            <p className="t-title font-black" style={{ color: "var(--text)" }}>اكتمال الملف الشخصي</p>
+            <span className="t-h3 font-black font-mono-nums" style={{ color: "var(--accent-light)" }}>{n(comp.pct)}٪</span>
+          </div>
+          <div className="h-2.5 rounded-full overflow-hidden mb-2" style={{ background: "color-mix(in srgb, var(--text-muted) 22%, transparent)" }}>
+            <div className="h-full rounded-full eval-bar-fill" style={{ width: `${comp.pct}%`, background: "var(--accent)" }} />
+          </div>
+          <p className="t-caption font-bold" style={{ color: "var(--accent-light)" }}>
+            {(() => { const r = comp.total - comp.done; return `باقي ${r === 1 ? "معلومة واحدة" : r === 2 ? "معلومتان" : `${n(r)} معلومات`} ويكتمل ملفك`; })()}
+          </p>
+          <p className="t-caption mt-0.5" style={{ color: "var(--text-muted)" }}>{n(comp.done)} من {n(comp.total)} — كل معلومةٍ تضيفها = +٥ فضة.</p>
         </div>
-        <p className="t-caption" style={{ color: "var(--text-muted)" }}>{n(comp.done)} من {n(comp.total)} معلومات مكتملة — كل معلومةٍ تضيفها = +٥ فضة.</p>
-      </div>
+      )}
 
       {celebrate && (
         <div className="ds-card rise flex items-start gap-3" style={{ background: "color-mix(in srgb, var(--gold) 12%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--gold) 40%, var(--border))" }}>
