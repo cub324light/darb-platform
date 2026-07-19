@@ -2,6 +2,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { ThemeToggle } from "@/components/Profile";
 import SettingsButton from "@/components/SettingsPanel";
+import SilverCounter from "@/components/SilverCounter";
 import { Meteors } from "@/components/ui/meteors";
 
 /* ── ساعة صغيرة — ضغطة واحدة تبدّل بين 12 و24 ── */
@@ -157,8 +158,11 @@ export default function Dome({
       <div className="dome-content" style={{ padding: compact ? "calc(18px + env(safe-area-inset-top)) 18px 16px" : "calc(26px + env(safe-area-inset-top)) 18px 22px" }}>
         {!hideControls && (
           <div className="flex justify-between items-center gap-2 mb-3">
-            {/* يمين: الساعة بارزة */}
-            <ClockWidget />
+            {/* يمين: الساعة + عدّاد الفضة */}
+            <div className="flex items-center gap-2">
+              <ClockWidget />
+              <SilverCounter />
+            </div>
             {/* يسار: الإعدادات والثيم — البروفايل يُفتح من اسم الترحيب في الرئيسية */}
             <div className="flex items-center gap-2">
               <ThemeToggle className="" />

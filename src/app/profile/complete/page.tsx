@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import { n } from "@/lib/format";
 
-const AUTO_MS = 4000; // تُتابِع تلقائياً بعدها (أو فوراً بزر «متابعة»)
+const AUTO_MS = 2000; // تُتابِع تلقائياً بعدها (أو فوراً بزر «متابعة»)
 const back = () => window.location.assign("/profile?tab=info");
 
 export default function ProfileCompletePage() {

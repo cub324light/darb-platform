@@ -10,6 +10,7 @@ import PageViewTracker from "@/components/PageViewTracker";
 import DuirbFloat from "@/components/DuirbFloat";
 import DuirbTour from "@/components/DuirbTour";
 import BroadcastHost from "@/components/BroadcastHost";
+import ThemeGuard from "@/components/ThemeGuard";
 
 /* خطٌّ واحدٌ للهوية كلها: IBM Plex Sans Arabic — يُستضاف ذاتياً عبر next/font (صفر
    طلبات خارجية، بلا انزياح). أربعة أوزانٍ فقط (Regular/Medium/SemiBold/Bold) —
@@ -81,6 +82,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
+        <ThemeGuard />
         <a href="#darb-main" className="skip-link">تخطى للمحتوى</a>
         <div id="darb-main" tabIndex={-1} style={{ outline: "none" }}>
           <AuthGate>{children}</AuthGate>

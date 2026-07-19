@@ -150,11 +150,6 @@ export default function DesktopSidebar() {
 
   const primary: NavLink[] = [
     { href: "/dashboard", label: "الرئيسية", icon: I.home },
-    /* المدرسة للثانوي فقط — الجامعي/الخريج يرون «المستقبل» بدلاً منها */
-    (isUniversityPhase(user) || isGraduatePhase(user))
-      ? { href: "/future", label: "المستقبل", icon: I.future }
-      : { href: "/school", label: "المدرسة", icon: I.school },
-    { href: "/orbit", label: "أوربت", icon: I.orbit },
     /* العنصر الأوسط حسب المرحلة: جامعي → أدوات · خريج جامعة → مهاراتي (مهني) ·
        ثالث ثانوي/خريج ثانوي → القبول · وإلا مساري */
     isUniversityPhase(user)
@@ -164,6 +159,11 @@ export default function DesktopSidebar() {
         : uniMode
           ? { href: "/university", label: "القبول الجامعي", icon: I.university }
           : { href: "/roadmap", label: "مساري", icon: I.roadmap },
+    { href: "/orbit", label: "تركيز", icon: I.orbit },
+    /* المدرسة للثانوي فقط — الجامعي/الخريج يرون «المستقبل» بدلاً منها */
+    (isUniversityPhase(user) || isGraduatePhase(user))
+      ? { href: "/future", label: "المستقبل", icon: I.future }
+      : { href: "/school", label: "المدرسة", icon: I.school },
     { href: "/plan", label: "خطتي", icon: I.plan },
     { href: "/study-plan", label: "مخطط الدراسة", icon: I.study },
     { href: "/vault", label: "أخطائي", icon: I.vault, badge: true },

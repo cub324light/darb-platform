@@ -1027,6 +1027,20 @@ body[data-nav-hidden="1"] .float-nav { display: none; }
   .silver-medal::after { animation: none; }
 }
 
+/* عدّاد الفضة — نبضة عند التغيّر + شارة ±N عابرة */
+@keyframes silverCountPop { 0% { transform: scale(1); } 40% { transform: scale(1.28); } 100% { transform: scale(1); } }
+.silver-pop { animation: silverCountPop 0.55s cubic-bezier(.22,.68,0,1.3); }
+@keyframes silverDeltaFloat {
+  0%   { opacity: 0; transform: translate(-50%, 6px); }
+  22%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -16px); }
+}
+.silver-delta { animation: silverDeltaFloat 1.2s ease forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .silver-pop { animation: none; }
+  .silver-delta { animation: none; opacity: 0; }
+}
+
 /* دخول الصفحة — انتقال ناعم عند التنقل (أوربت ↔ الخريطة وغيرها) */
 @keyframes pageEnter {
   from { opacity: 0; transform: translateY(8px) scale(0.992); }

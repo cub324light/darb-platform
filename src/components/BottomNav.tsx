@@ -90,17 +90,17 @@ const BASE_ITEMS: (NavItem | "MID" | "SCHOOL")[] = [
       </svg>
     ),
   },
-  "SCHOOL",
+  "MID",
   {
     href: "/orbit",
-    label: "أوربت",
+    label: "تركيز",
     icon: (a: boolean) => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
         <circle cx="12" cy="13" r="8" /><path strokeLinecap="round" d="M12 9.5V13l2.5 2M10 2h4" />
       </svg>
     ),
   },
-  "MID",
+  "SCHOOL",
   {
     href: "/vault",
     label: "أخطائي",
