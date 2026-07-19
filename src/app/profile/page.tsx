@@ -7,8 +7,8 @@ import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import PageFooter from "@/components/PageFooter";
 import {
-  loadUser, saveUser, loadStats, ensureJoinDate, loadPrefs, savePrefs,
-  type DarbUser, type DarbStats, type DarbPrefs,
+  loadUser, saveUser, loadStats, ensureJoinDate,
+  type DarbUser, type DarbStats,
 } from "@/lib/storage";
 import { getTrack } from "@/lib/tracks";
 import { getPlan } from "@/lib/plan";
@@ -21,7 +21,6 @@ import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfilePreferences from "@/components/profile/ProfilePreferences";
 import ProfileAchievements from "@/components/profile/ProfileAchievements";
 import ProfileExtra from "@/components/profile/ProfileExtra";
-import ProfileLearnPrefs from "@/components/profile/ProfileLearnPrefs";
 import ProfileAccount from "@/components/profile/ProfileAccount";
 import dynamic from "next/dynamic";
 const CalendarSettings = dynamic(() => import("@/components/CalendarSettings"), { ssr: false });
@@ -38,7 +37,13 @@ function readVaultCount(): number {
 }
 
 export default function ProfilePage() {
-  const [tab, setTab] = useState<ProfileTab>("achievements");
+  const [tab, setTab] = useState<ProfileTab>(() => {
+    if (typeof window !== "undefined") {
+      const t = new URLSearchParams(window.location.search).get("tab");
+      if (t === "info" || t === "prefs" || t === "achievements") return t;
+    }
+    return "achievements";
+  });
 
   /* تهيئة كسولة SSR-safe (لا setState متزامن في effect — يوافق React Compiler) */
   const [user, setUser] = useState<DarbUser | null>(() => (typeof window !== "undefined" ? loadUser() : null));
@@ -48,7 +53,6 @@ export default function ProfilePage() {
   const [planId] = useState<PlanId>(() => (typeof window !== "undefined" ? getPlan() : "free"));
   const [isPrivate, setIsPrivate] = useState(() =>
     typeof window !== "undefined" ? ((loadUser() as (DarbUser & { isPrivate?: boolean }))?.isPrivate ?? false) : false);
-  const [prefs, setPrefs] = useState<DarbPrefs>(() => (typeof window !== "undefined" ? loadPrefs() : {}));
   const [photoURL, setPhotoURL] = useState<string | null>(null);
 
   /* صورة Google (إن وُجدت) */
@@ -71,9 +75,6 @@ export default function ProfilePage() {
       if (partial.name !== undefined) import("@/lib/firestore").then(({ syncUser }) => { syncUser({ name: next.name }); });
       return next;
     });
-  };
-  const updatePrefs = (partial: Partial<DarbPrefs>) => {
-    setPrefs((prev) => { const next = { ...prev, ...partial }; savePrefs(next); return next; });
   };
   const togglePrivacy = () => {
     setIsPrivate((prev) => {
@@ -116,9 +117,8 @@ export default function ProfilePage() {
         )}
 
         {tab === "info" && (
-          <div id="profile-panel-info" role="tabpanel" aria-labelledby="profile-tab-info" className="profile-tab-panel flex flex-col gap-5">
+          <div id="profile-panel-info" role="tabpanel" aria-labelledby="profile-tab-info" className="profile-tab-panel">
             <ProfileExtra />
-            <ProfileLearnPrefs prefs={prefs} onPrefsChange={updatePrefs} />
           </div>
         )}
 
