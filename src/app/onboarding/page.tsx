@@ -607,7 +607,7 @@ export default function OnboardingPage() {
             </div>
           </div>
           <div>
-            <p className="t-title font-bold mb-2" style={{ color: "var(--text)" }}>لو كانت أفضل جامعة بعيدة؟</p>
+            <p className="t-title font-bold mb-2" style={{ color: "var(--text)" }}>هل تفضّل الدراسة في جامعة بعيدة عن منطقتك؟</p>
             <div className="grid grid-cols-2 gap-2.5">
               <button onClick={() => setWillingToRelocate(true)} className="rounded-2xl py-3 px-3 font-bold t-small leading-snug transition active:scale-[0.98] text-center" style={chipStyle(willingToRelocate === true)}>✅ لا أمانع الغربة</button>
               <button onClick={() => setWillingToRelocate(false)} className="rounded-2xl py-3 px-3 font-bold t-small leading-snug transition active:scale-[0.98] text-center" style={chipStyle(willingToRelocate === false)}>📍 أفضّل القرب مني</button>

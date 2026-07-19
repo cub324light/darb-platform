@@ -34,7 +34,7 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
 
 export default function ProfileEditor() {
   const [user, setUser] = useState<DarbUser | null>(() => (typeof window !== "undefined" ? loadUser() : null));
-  const [celebrate, setCelebrate] = useState<{ message: string; complete: boolean } | null>(null);
+  const [celebrate, setCelebrate] = useState<string | null>(null);
   if (!user) return null;
   const comp = profileCompletion(user);
 
@@ -45,7 +45,13 @@ export default function ProfileEditor() {
       if (reward.silver) addSilver(reward.silver);
       if (reward.newRewardedFields.length) next.rewardedFields = [...(next.rewardedFields ?? []), ...reward.newRewardedFields];
       if (reward.setCompleteFlag) next.awardedProfileComplete = true;
-      setCelebrate({ message: reward.message, complete: reward.badge });
+      if (reward.badge) {
+        /* اكتمل الملف أوّل مرّة: نُسجّل إشارةً عابرة ليعرضها «حفظ» في صفحة احتفالٍ مستقلّة */
+        try { sessionStorage.setItem("darb_celebrate_complete", JSON.stringify({ silver: reward.silver })); } catch {}
+        setCelebrate("🎉 اكتمل ملفك الشخصي — اضغط «حفظ ✓» لرؤية مكافأتك");
+      } else {
+        setCelebrate(reward.message);
+      }
     }
     saveUser(next); setUser(next);
   };
@@ -69,22 +75,13 @@ export default function ProfileEditor() {
         </div>
       </div>
 
-      {celebrate && (celebrate.complete ? (
-        /* رسالة اكتمال الملف — تظهر مرّةً واحدة فقط (تُحكَم بـawardedProfileComplete) */
-        <div className="ds-card rise text-center" style={{ background: "color-mix(in srgb, var(--gold) 14%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--gold) 45%, var(--border))" }}>
-          <div className="text-[40px] mb-1 leading-none">🎉</div>
-          <p className="t-h3 font-black mb-2" style={{ color: "var(--text)" }}>رائع! ملفك الشخصي أصبح مكتملًا</p>
-          <p className="t-body font-bold" style={{ color: "var(--text-muted)" }}>سيستخدم دويرب هذه المعلومات لتخصيص الخطط والمراجعة والاقتراحات لك بشكلٍ أفضل.</p>
-          <p className="t-caption font-black mt-3" style={{ color: "var(--gold)" }}>🏅 وسام اكتمال الملف + ٣٠ فضة</p>
-          <button onClick={() => setCelebrate(null)} className="btn-primary glow-blue mt-4 w-full">حسناً ✓</button>
-        </div>
-      ) : (
+      {celebrate && (
         <div className="ds-card rise flex items-start gap-3" style={{ background: "color-mix(in srgb, var(--gold) 12%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--gold) 40%, var(--border))" }}>
           <span className="text-[22px] flex-shrink-0">🎉</span>
-          <p className="t-body font-black flex-1 min-w-0" style={{ color: "var(--text)" }}>{celebrate.message}</p>
+          <p className="t-body font-black flex-1 min-w-0" style={{ color: "var(--text)" }}>{celebrate}</p>
           <button onClick={() => setCelebrate(null)} className="t-caption font-bold px-2" style={{ color: "var(--text-muted)" }}>✕</button>
         </div>
-      ))}
+      )}
 
       <div className="ds-card flex flex-col gap-5">
         <Group title="طريقة المذاكرة">

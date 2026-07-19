@@ -28,7 +28,10 @@ export default function ProfileEditPage() {
           <ProfileLearnPrefs prefs={prefs} onPrefsChange={updatePrefs} />
         </div>
 
-        <button onClick={() => window.location.assign("/profile?tab=info&saved=1")}
+        <button onClick={() => {
+            const celebrate = (() => { try { return !!sessionStorage.getItem("darb_celebrate_complete"); } catch { return false; } })();
+            window.location.assign(celebrate ? "/profile/complete" : "/profile?tab=info&saved=1");
+          }}
           className="btn-primary glow-blue mt-6 w-full">حفظ ✓</button>
       </div>
       <PageFooter />
