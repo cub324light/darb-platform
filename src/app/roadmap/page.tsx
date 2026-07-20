@@ -9,7 +9,6 @@ import Link from "next/link";
 import Dome from "@/components/Dome";
 import PageFooter from "@/components/PageFooter";
 import PageGuide from "@/components/PageGuide";
-import DefCard from "@/components/DefCard";
 import ModuleWorkspace from "@/components/roadmap/ModuleWorkspace";
 import AddModuleMenu from "@/components/roadmap/AddModuleMenu";
 import JourneyTimeline from "@/components/roadmap/JourneyTimeline";
@@ -333,12 +332,6 @@ export default function RoadmapPage() {
               ))}
             </div>
           )}
-
-          {/* تعريفات سريعة — في الأسفل، مطويّة بعد أوّل مرّة (لا تزاحم الفعل) */}
-          <div className="flex flex-col gap-2">
-            <DefCard id="qudurat" q="ما هو اختبار القدرات؟" a="يقيس مهارات التفكير والتحليل، وتستخدمه معظم الجامعات السعودية في القبول." />
-            <DefCard id="tahsili" q="ما هو التحصيلي؟" a="يقيس فهمك لمواد المرحلة الثانوية، ويستخدم خصوصاً في التخصصات العلمية والصحية." />
-          </div>
         </div>
 
         <div className="h-6" />
