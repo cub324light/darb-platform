@@ -114,12 +114,25 @@ export default function RoadmapPage() {
     if (sel.kind === "module") {
       const id = sel.id as ModuleId;
       const inst = ws.modules.find((m) => m.id === id);
+      /* التقدّم + الوحدة التالية + عدّاد الاكتمال (لشاشة النجاح) — من بياناتٍ قائمة */
+      const pct = studyPct(moduleContent(id).subjects);
+      const sorted = [...visibleModules(ws)].sort(byPriority);
+      const doneCount = sorted.filter((m) => m.state === "completed").length;
+      const idx = sorted.findIndex((m) => m.id === id);
+      let nextUnit: { label: string; icon?: string; onOpen: () => void } | undefined;
+      for (let i = idx + 1; i < sorted.length; i++) {
+        if (!isGroup(sorted[i].id)) { const nid = sorted[i].id; const nv = moduleView(nid); nextUnit = { label: nv.label, icon: nv.icon, onOpen: () => setSel({ kind: "module", id: nid }) }; break; }
+      }
       return (
         <div className="min-h-dvh pb-nav relative z-[1] page-enter">
           <div className="px-5 py-6 max-w-2xl mx-auto w-full">
             <ModuleWorkspace
               view={moduleView(id)}
               state={inst?.state ?? "added"}
+              progressPct={pct}
+              next={nextUnit}
+              completedCount={doneCount}
+              totalCount={sorted.length}
               onBack={() => setSel(null)}
               onRecordScore={(s) => apply((w) => recordScore(w, id, s))}
               onToggleRetake={() => apply((w) => wsSetState(w, id, inst?.state === "needs-retake" ? "active" : "needs-retake"))}
@@ -136,6 +149,7 @@ export default function RoadmapPage() {
           <ModuleWorkspace
             view={memberView(mid)}
             state={member?.state ?? "added"}
+            progressPct={studyPct(memberView(mid).content.subjects)}
             onBack={() => setSel(null)}
             onRecordScore={(s) => apply((w) => recordMemberScore(w, mid, s))}
             onToggleRetake={() => apply((w) => setMemberState(w, mid, member?.state === "needs-retake" ? "active" : "needs-retake"))}

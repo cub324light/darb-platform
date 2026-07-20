@@ -1,16 +1,18 @@
 "use client";
 /* ─── قالب فضاء الوحدة الواحد (Module Workspace Template) ───
-   قالبٌ واحد يعرض أي وحدة/عضو من واصفها (لا صفحة لكل وحدة). أقسامٌ ثابتة:
-   الرأس · ماذا أفعل الآن (من Life Engine) · الخطة (موعد + جدول) · نتائجي ·
-   الفضاء (study: مواد الواصف عبر StudyBody · hub: روابط العالم القائم) · الإحصائيات.
-   يقرأ من: الواصف + Life Engine + نتائج الطالب. لا Track/goal. */
+   قالبٌ واحد يعرض أي وحدة/عضو من واصفها. أُعيد تصميم تجربته (UX فقط، بلا تغيير منطق):
+   هيرو واضح (عنوان كبير · لماذا · ماذا ستذاكر · كم أنجزت · زرٌّ أساسيٌّ واحد) ثم أدوات
+   ثانوية (الدليل/التجميعات/النتائج/الخطة). حالة «لم يبدأ» تحفيزية، وحالة «اكتمل» احتفالية.
+   يقرأ من: الواصف + Life Engine + نتائج الطالب + الإحصائيات. لا Track/goal. */
 import { useState } from "react";
 import Link from "next/link";
 import { readLifeContext, lifeEngine } from "@/lib/lifeEngine";
-import { loadTrackExamDates, saveTrackExamDates, loadResults, saveResults, currentScoreMap } from "@/lib/storage";
+import { loadTrackExamDates, saveTrackExamDates, loadResults, saveResults, currentScoreMap, loadStats } from "@/lib/storage";
+import { computeXP, getLevel } from "@/lib/xp";
 import { trackEvent } from "@/lib/analytics";
 import { MODULE_STATE_LABEL, type ModuleState } from "@/lib/modules";
 import type { ModuleContent, GuideSection } from "@/lib/modules";
+import { n } from "@/lib/format";
 import ExamDateButton from "@/components/ExamDateButton";
 import dynamic from "next/dynamic";
 const LeaksPlanner = dynamic(() => import("@/components/LeaksPlanner"), { ssr: false });
@@ -23,6 +25,8 @@ export interface WorkspaceView {
   content: ModuleContent;
 }
 
+export interface NextUnit { label: string; icon?: string; onOpen: () => void; }
+
 const todayStr = () => new Date().toISOString().slice(0, 10);
 const daysLeft = (d: string) =>
   Math.round((new Date(d + "T00:00:00").getTime() - new Date(todayStr() + "T00:00:00").getTime()) / 86400000);
@@ -32,17 +36,28 @@ const STATE_COLOR: Record<ModuleState, string> = {
   paused: "#F59E0B", completed: "#10B981", "needs-retake": "#EF4444",
 };
 
+const scrollToStudy = () => document.getElementById("ws-study")?.scrollIntoView({ behavior: "smooth", block: "start" });
+
 export default function ModuleWorkspace({
   view, state, onBack, onRecordScore, onToggleRetake,
+  progressPct = 0, next, completedCount, totalCount,
 }: {
   view: WorkspaceView;
   state: ModuleState;
   onBack: () => void;
   onRecordScore: (score: string) => void;
   onToggleRetake: () => void;
+  progressPct?: number;
+  next?: NextUnit;
+  completedCount?: number;
+  totalCount?: number;
 }) {
   const { label, icon, color, content } = view;
   const examKey = content.examKey;
+  const isStudy = content.kind === "study";
+  const done = state === "completed" || progressPct >= 100;
+  const notStarted = isStudy && progressPct <= 0 && state !== "completed";
+  const subjects = content.subjects ?? [];
 
   const [dates, setDates] = useState<Record<string, string>>(() => (typeof window !== "undefined" ? loadTrackExamDates() : {}));
   const [scoreInput, setScoreInput] = useState("");
@@ -53,14 +68,8 @@ export default function ModuleWorkspace({
   const dl = d ? daysLeft(d) : null;
   const myScore = scores[label]?.score;
 
-  const setExamDate = (v: string) => {
-    if (!examKey) return;
-    const up = { ...dates, [examKey]: v }; setDates(up); saveTrackExamDates(up);
-  };
-  const clearExamDate = () => {
-    if (!examKey) return;
-    const up = { ...dates }; delete up[examKey]; setDates(up); saveTrackExamDates(up);
-  };
+  const setExamDate = (v: string) => { if (!examKey) return; const up = { ...dates, [examKey]: v }; setDates(up); saveTrackExamDates(up); };
+  const clearExamDate = () => { if (!examKey) return; const up = { ...dates }; delete up[examKey]; setDates(up); saveTrackExamDates(up); };
 
   const recordScore = () => {
     const g = parseFloat(scoreInput);
@@ -75,44 +84,93 @@ export default function ModuleWorkspace({
 
   return (
     <div className="flex flex-col gap-5 pb-8">
-      {/* ── ١) الرأس ── */}
-      <div className="rounded-2xl p-4" style={{ background: `color-mix(in srgb, ${color} 8%, var(--surface))`, border: `1.5px solid ${color}40` }}>
-        <div className="flex items-center gap-3">
-          <button onClick={onBack} className="dome-chip t-body font-bold flex-shrink-0" style={{ color: "var(--text)" }}>← مساري</button>
-          <span className="text-[26px] flex-shrink-0" aria-hidden="true">{icon ?? "📄"}</span>
-          <div className="flex-1 min-w-0">
-            <h2 className="t-h3 font-black leading-tight" style={{ color: "var(--text)" }}>{label}</h2>
-          </div>
-          <span className="t-caption font-black px-3 py-1 rounded-full flex-shrink-0" style={{ background: `color-mix(in srgb, ${STATE_COLOR[state]} 16%, transparent)`, color: STATE_COLOR[state] }}>
+      {/* رجوع خفيف أعلى الصفحة */}
+      <button onClick={onBack} className="dome-chip t-body font-bold self-start" style={{ color: "var(--text)" }}>← مساري</button>
+
+      {/* ── شاشة الاكتمال (احتفالية) ── */}
+      {done && <CompletionCard label={label} color={color} next={next} completedCount={completedCount} totalCount={totalCount} onBack={onBack} />}
+
+      {/* ── الهيرو: عنوان كبير · لماذا · ماذا ستذاكر · كم أنجزت · زرٌّ واحد ── */}
+      <div className="rounded-3xl p-5" style={{ background: `color-mix(in srgb, ${color} 9%, var(--surface))`, border: `1.5px solid ${color}40` }}>
+        <div className="flex items-center gap-3 mb-1">
+          <span className="text-[32px] leading-none flex-shrink-0" aria-hidden="true">{icon ?? "📄"}</span>
+          <h2 className="t-h2 font-black leading-tight flex-1 min-w-0" style={{ color: "var(--text)" }}>{label}</h2>
+          <span className="t-caption font-black px-2.5 py-1 rounded-full flex-shrink-0" style={{ background: `color-mix(in srgb, ${STATE_COLOR[state]} 16%, transparent)`, color: STATE_COLOR[state] }}>
             {MODULE_STATE_LABEL[state]}
           </span>
         </div>
-        <p className="t-caption mt-2.5 leading-relaxed" style={{ color: "var(--text-muted)" }}>{content.intro}</p>
+        <p className="t-body leading-relaxed" style={{ color: "var(--text-muted)" }}>{content.intro}</p>
+
+        {isStudy && (
+          <>
+            {/* نطاق + تقدّم */}
+            <div className="flex items-center gap-2 flex-wrap mt-4">
+              {subjects.length > 0 && (
+                <span className="t-caption font-bold px-2.5 py-1 rounded-full" style={{ background: "var(--surface2)", color: "var(--text-muted)" }}>📚 {n(subjects.length)} مواد</span>
+              )}
+              <span className="t-caption font-bold px-2.5 py-1 rounded-full font-mono-nums" style={{ background: `color-mix(in srgb, ${color} 14%, transparent)`, color }}>
+                {done ? "اكتملت ✓" : `أنجزت ${n(progressPct)}٪`}
+              </span>
+            </div>
+            {/* شريط التقدّم */}
+            <div className="h-2.5 rounded-full overflow-hidden mt-3" style={{ background: "color-mix(in srgb, var(--text-muted) 20%, transparent)" }}>
+              <div className="h-full rounded-full" style={{ width: `${Math.max(progressPct, done ? 100 : 0)}%`, background: done ? "var(--success)" : color }} />
+            </div>
+            {/* ماذا ستذاكر */}
+            {subjects.length > 0 && (
+              <div className="mt-4">
+                <p className="t-caption font-bold mb-2" style={{ color: "var(--text-dim)" }}>ماذا ستذاكر</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {subjects.map((s) => (
+                    <span key={s.name} className="t-caption font-bold px-2.5 py-1 rounded-lg"
+                      style={{ background: "var(--surface2)", color: "var(--text)", border: `1px solid ${(s.color ?? color)}44` }}>{s.name}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* زرٌّ أساسيٌّ واحد */}
+            <button onClick={scrollToStudy} className="btn-primary glow-blue mt-5 w-full">
+              {progressPct <= 0 ? "▶ ابدأ المذاكرة" : done ? "🔁 راجع المذاكرة" : "▶ أكمل المذاكرة"}
+            </button>
+          </>
+        )}
       </div>
 
-      {content.kind === "study" ? (
+      {isStudy ? (
         <>
-          {/* ── ابدأ من هنا: الدليل الكامل (أول تبويب، دائمٌ في الوحدة) ── */}
-          {content.guide && <StartHereGuide sections={content.guide} color={color} />}
-
-          {/* ── ماذا أفعل الآن (من Life Engine) ── */}
+          {/* ماذا أفعل الآن (من Life Engine) */}
           <NowFromLifeEngine />
 
-          {/* ── التأسيس + التدريب ── */}
-          <section className="flex flex-col gap-3">
-            <p className="eyebrow px-1">المذاكرة</p>
+          {/* لم تبدأ بعد — رسالة تحفيزية بدل فراغ */}
+          {notStarted && (
+            <div className="rounded-2xl p-4 flex items-start gap-3" style={{ background: "color-mix(in srgb, var(--gold) 10%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--gold) 32%, var(--border))" }}>
+              <span className="text-[24px] flex-shrink-0" aria-hidden="true">🚀</span>
+              <div className="min-w-0">
+                <p className="t-title font-black mb-1" style={{ color: "var(--text)" }}>ابدأ أوّل خطوة اليوم</p>
+                <p className="t-body leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                  أضِف دروسك ونظّم مذاكرتك من الأسفل — كل درسٍ تنهيه يرفع نسبتك ويقرّبك من درجتك المستهدفة. البداية أصعب خطوة، وأنت الآن عندها.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* ── المذاكرة (الفعل الأساسي) ── */}
+          <section id="ws-study" className="flex flex-col gap-3">
+            <p className="eyebrow px-1">📖 المذاكرة</p>
             {content.subjects && <StudyBody subjects={content.subjects} />}
           </section>
 
-          {/* ── التجميعات ── */}
+          {/* ── أدوات مساعِدة (ثانوية) ── */}
+          {content.guide && <StartHereGuide sections={content.guide} color={color} />}
+
           <section className="flex flex-col gap-3">
-            <p className="eyebrow px-1">التجميعات</p>
+            <p className="eyebrow px-1">🎯 التجميعات</p>
             <LeaksPlanner color="var(--gold)" daysLeft={d ? daysLeft(d) : null} />
           </section>
 
-          {/* ── نتائجي: الدرجة + الرضا/الإعادة ── */}
+          {/* نتائجي: الدرجة + الرضا/الإعادة */}
           <section className="flex flex-col gap-3">
-            <p className="eyebrow px-1">نتائجي</p>
+            <p className="eyebrow px-1">📊 نتائجي</p>
             <div className="rounded-2xl p-4" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
               {myScore != null ? (
                 <div className="flex items-center gap-3 mb-3">
@@ -137,9 +195,9 @@ export default function ModuleWorkspace({
             </div>
           </section>
 
-          {/* ── خطتي: موعد الاختبار + جدولي ── */}
+          {/* خطتي: موعد الاختبار + جدولي */}
           <section className="flex flex-col gap-3">
-            <p className="eyebrow px-1">خطتي</p>
+            <p className="eyebrow px-1">🗓️ خطتي</p>
             {examKey && (
               <div className="rounded-2xl px-4 py-3 flex items-center gap-3" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
                 <div className="flex-1 min-w-0">
@@ -183,6 +241,43 @@ export default function ModuleWorkspace({
   );
 }
 
+/* شاشة نجاح الوحدة — احتفالٌ ببياناتٍ حقيقية (رصيدٌ حالي، لا مكافأةً جديدة تُصرف). */
+function CompletionCard({ label, color, next, completedCount, totalCount, onBack }: {
+  label: string; color: string; next?: NextUnit; completedCount?: number; totalCount?: number; onBack: () => void;
+}) {
+  const [{ silver, levelName }] = useState(() => {
+    if (typeof window === "undefined") return { silver: 0, levelName: "" };
+    const st = loadStats();
+    return { silver: st?.silver ?? 0, levelName: st ? getLevel(computeXP(st)).name : "" };
+  });
+  return (
+    <div className="ds-card rise text-center" style={{ background: "color-mix(in srgb, var(--success) 12%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--success) 42%, var(--border))" }}>
+      <div className="text-[46px] leading-none mb-1">✅</div>
+      <h2 className="t-h2 font-black" style={{ color: "var(--text)" }}>أحسنت!</h2>
+      <p className="t-body font-bold mt-1 mb-4" style={{ color: "var(--text-muted)" }}>أكملت وحدة {label} 🎉</p>
+
+      <p className="t-caption font-bold mb-2" style={{ color: "var(--text-dim)" }}>رصيدك الآن</p>
+      <div className="flex items-center justify-center gap-2.5 flex-wrap mb-4">
+        <span className="t-title font-black px-3 py-1.5 rounded-xl flex items-center gap-1.5" style={{ background: "var(--surface2)", color: "var(--text)" }}>🥈 <span className="font-mono-nums">{n(silver)}</span></span>
+        {levelName && <span className="t-title font-black px-3 py-1.5 rounded-xl flex items-center gap-1.5" style={{ background: "var(--surface2)", color: "var(--text)" }}>⭐ {levelName}</span>}
+      </div>
+
+      {typeof completedCount === "number" && typeof totalCount === "number" && totalCount > 0 && (
+        <p className="t-body font-bold mb-4" style={{ color: color }}>تقدّمك في الرحلة: أكملت {n(completedCount)} من {n(totalCount)} وحدة</p>
+      )}
+
+      {next ? (
+        <>
+          <p className="t-caption font-bold mb-2" style={{ color: "var(--text-muted)" }}>الوحدة التالية: {next.icon} {next.label}</p>
+          <button onClick={next.onOpen} className="btn-primary glow-blue w-full">ابدأ الوحدة التالية ←</button>
+        </>
+      ) : (
+        <button onClick={onBack} className="btn-primary glow-blue w-full">رجوع إلى مساري ←</button>
+      )}
+    </div>
+  );
+}
+
 /* «ماذا أفعل الآن» — أعلى أولوية من العقل المركزي (يقرأ Life Engine مباشرةً). */
 function NowFromLifeEngine() {
   const [top] = useState(() => (typeof window === "undefined" ? null : lifeEngine(readLifeContext())[0] ?? null));
@@ -201,7 +296,7 @@ function NowFromLifeEngine() {
   );
 }
 
-/* «ابدأ من هنا» — الدليل الكامل للوحدة، أول تبويبٍ قابلٍ للطيّ (دائمٌ ومتاحٌ في أي وقت). */
+/* «ابدأ من هنا» — الدليل الكامل للوحدة، تبويبٌ قابلٌ للطيّ (ثانويٌّ الآن، أسفل المذاكرة). */
 function StartHereGuide({ sections, color }: { sections: GuideSection[]; color: string }) {
   const [open, setOpen] = useState(false);
   return (
@@ -210,9 +305,9 @@ function StartHereGuide({ sections, color }: { sections: GuideSection[]; color: 
         className="w-full p-4 flex items-center gap-3 text-right transition active:scale-[0.99]">
         <span className="text-[24px] flex-shrink-0" aria-hidden="true">📖</span>
         <div className="flex-1 min-w-0">
-          <p className="t-title font-black" style={{ color: "var(--text)" }}>ابدأ من هنا</p>
+          <p className="t-title font-black" style={{ color: "var(--text)" }}>الدليل الكامل</p>
           <p className="t-caption mt-0.5 leading-relaxed" style={{ color: "var(--text-muted)" }}>
-            الدليل الكامل — ما هو الاختبار؟ الفرص، المحوسب والورقي، الرسوم، التسجيل، متى تبدأ، أفضل المصادر، والأسئلة الشائعة.
+            ما هو الاختبار؟ الفرص، المحوسب والورقي، الرسوم، التسجيل، متى تبدأ، أفضل المصادر، والأسئلة الشائعة.
           </p>
         </div>
         <span className="t-body font-black flex-shrink-0" style={{ color }}>{open ? "▲" : "▼"}</span>
