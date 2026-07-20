@@ -12,7 +12,8 @@ import PageGuide from "@/components/PageGuide";
 import DefCard from "@/components/DefCard";
 import ModuleWorkspace from "@/components/roadmap/ModuleWorkspace";
 import AddModuleMenu from "@/components/roadmap/AddModuleMenu";
-import { loadUser, saveUser, ensureWorkspace, saveWorkspace, loadList, localDayKey } from "@/lib/storage";
+import JourneyTimeline from "@/components/roadmap/JourneyTimeline";
+import { loadUser, saveUser, ensureWorkspace, saveWorkspace, loadList, localDayKey, loadResults } from "@/lib/storage";
 import { toBoardStage, type BoardStage } from "@/lib/examEligibility";
 import { recommendedExamsForUser, type RecommendedExam } from "@/lib/recommendedExams";
 import { readLifeContext, lifeEngine } from "@/lib/lifeEngine";
@@ -153,6 +154,15 @@ export default function RoadmapPage() {
     .map((r) => ({ r, t: recTarget(r) }))
     .filter((x): x is { r: RecommendedExam; t: AddTarget } => !!x.t && !present.has(x.t.id));
 
+  /* مرحلة الرحلة الحالية (خط الرحلة) — مشتقّة من بياناتٍ قائمة، عرضٌ فقط بلا منطقٍ جديد:
+     بدأت(٠) · تذاكر(١) · اختبرت(٢) · بانتظار النتيجة(٣) · جاهز للتقديم(٤) · القبول(٥ الهدف). */
+  const jResults = typeof window !== "undefined" ? loadResults() : [];
+  const jStudied = ws.modules.some((m) => (m.progress ?? 0) > 0 || m.state === "active" || m.state === "completed");
+  const jScore = jResults.length > 0;
+  const jPending = (user?.pendingResults?.length ?? 0) > 0;
+  const jFinal = (user?.finalizedExams?.length ?? 0) > 0;
+  const journeyStage = jFinal ? 4 : jPending ? 3 : jScore ? 2 : jStudied ? 1 : 0;
+
   const renderCard = (m: ModuleInstance) => {
     const v = moduleView(m.id);
     const group = isGroup(m.id);
@@ -261,6 +271,9 @@ export default function RoadmapPage() {
               <div className="btn-primary glow-blue mt-4 w-full text-center pointer-events-none">{top.cta} ←</div>
             </Link>
           )}
+
+          {/* خط الرحلة — إحساس السير في رحلةٍ لا مجرّد بطاقات */}
+          <JourneyTimeline stage={journeyStage} />
 
           {/* اقتراحات الوجهة (من recommendedExams) */}
           {suggestions.length > 0 && (
