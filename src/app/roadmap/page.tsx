@@ -12,17 +12,20 @@ import PageGuide from "@/components/PageGuide";
 import ModuleWorkspace from "@/components/roadmap/ModuleWorkspace";
 import AddModuleMenu from "@/components/roadmap/AddModuleMenu";
 import JourneyTimeline from "@/components/roadmap/JourneyTimeline";
+import ExamDashboard from "@/components/roadmap/ExamDashboard";
 import { loadUser, saveUser, ensureWorkspace, saveWorkspace, loadList, localDayKey, loadResults } from "@/lib/storage";
 import { toBoardStage, type BoardStage } from "@/lib/examEligibility";
 import { recommendedExamsForUser, type RecommendedExam } from "@/lib/recommendedExams";
 import { readLifeContext, lifeEngine } from "@/lib/lifeEngine";
 import {
-  moduleView, memberView, moduleContent, isGroup, groupMembers, MODULE_STATE_LABEL,
+  moduleView, memberView, moduleContent, memberContent, isGroup, groupMembers, MODULE_STATE_LABEL,
   addModule, addMember, removeModule, removeMember, hideModule, setPriority,
   recordScore, setState as wsSetState, recordMemberScore, setMemberState, visibleModules, examCount,
   type Workspace, type ModuleId, type ExamMemberId, type ModuleInstance, type ModuleState,
   type AddTarget, type EligibilityContext,
 } from "@/lib/modules";
+import { readExamInputs } from "@/lib/roadmap/read";
+import { computeExamDashboard } from "@/lib/roadmap/metrics";
 import {
   atMax, remainingSlots, MAX_EXAMS, onExamAdded, onExamRemoved, DELETE_REASONS,
   setStudyMode, setVacation, clearVacation, vacationState,
@@ -105,6 +108,8 @@ export default function RoadmapPage() {
   const [del, setDel] = useState<{ kind: "module" | "member"; id: string; label: string } | null>(null);
   /* إعداد مساري (نمط المذاكرة · الإجازة · الأولوية) — من DarbUser.roadmap */
   const [cfg, setCfg] = useState<RoadmapConfig>(() => (typeof window !== "undefined" ? loadRoadmapConfig() : {}));
+  /* التبويب النشط بين لوحات الاختبارات (Tabs) — أفضل للجوال من لوحاتٍ مكدّسة */
+  const [activeExamId, setActiveExamId] = useState<string | null>(null);
   /* أولوية Life Engine (ماذا الآن) — تُقرأ مرّة (لقطة العميل) */
   const [top] = useState(() => (typeof window === "undefined" ? null : lifeEngine(readLifeContext())[0] ?? null));
 
@@ -222,6 +227,29 @@ export default function RoadmapPage() {
   const jPending = (user?.pendingResults?.length ?? 0) > 0;
   const jFinal = (user?.finalizedExams?.length ?? 0) > 0;
   const journeyStage = jFinal ? 4 : jPending ? 3 : jScore ? 2 : jStudied ? 1 : 0;
+
+  /* ── لوحات الاختبارات (Tabs + Dashboard) ──
+     الاختبار = وحدةٌ مفردةٌ اختيارية (قدرات/تحصيلي) أو عضوٌ في مجموعة (لغة/برنامج).
+     الـCore/hub (الجامعة) ليس اختباراً — يُعرض ببطاقةٍ منفصلة أسفل. */
+  const examEntries: { kind: "module" | "member"; id: string; label: string; icon?: string; color: string }[] = [];
+  for (const m of cards) {
+    if (m.kind === "core") continue;
+    if (isGroup(m.id)) groupMembers(ws, m.id).forEach((x) => { const mv = memberView(x.id); examEntries.push({ kind: "member", id: x.id, label: mv.label, color: mv.color }); });
+    else { const v = moduleView(m.id); examEntries.push({ kind: "module", id: m.id, label: v.label, icon: v.icon, color: v.color }); }
+  }
+  const hubCards = cards.filter((m) => m.kind === "core");
+  const activeId = activeExamId && examEntries.some((e) => e.id === activeExamId) ? activeExamId : examEntries[0]?.id ?? null;
+  const activeEntry = examEntries.find((e) => e.id === activeId) ?? null;
+
+  /* حساب لوحة الاختبار النشط: القارئ يجمّع المدخلات ثم الجسر النقيّ ينتج كائن العرض. */
+  let activeDash: ReturnType<typeof computeExamDashboard> | null = null;
+  let activeSubjects: { name: string; color: string; pct: number }[] = [];
+  if (activeEntry) {
+    const content = activeEntry.kind === "module" ? moduleContent(activeEntry.id as ModuleId) : memberContent(activeEntry.id as ExamMemberId);
+    activeDash = computeExamDashboard(readExamInputs({ examId: activeEntry.id, subjects: content.subjects, examKey: content.examKey, label: activeEntry.label }));
+    activeSubjects = (content.subjects ?? []).map((s) => ({ name: s.name, color: s.color, pct: studyPct([s]) }));
+  }
+  const openExam = (e: { kind: "module" | "member"; id: string }) => setSel({ kind: e.kind, id: e.id });
 
   const renderCard = (m: ModuleInstance) => {
     const v = moduleView(m.id);
@@ -373,7 +401,7 @@ export default function RoadmapPage() {
             </section>
           )}
 
-          {/* اختباراتك — مرتّبة حسب الأولوية (المثبّتة ثم الأكثر إلحاحاً)، بحدٍّ أقصى ٣ */}
+          {/* اختباراتك — Tabs للتنقّل + لوحة الاختبار النشط (بحدٍّ أقصى ٣) */}
           <section>
             <div className="flex items-center justify-between mb-2.5 px-1">
               <p className="eyebrow">📚 اختباراتك</p>
@@ -381,11 +409,37 @@ export default function RoadmapPage() {
                 {n(count)}/{n(MAX_EXAMS)}
               </span>
             </div>
-            <div className="flex flex-col gap-3">
-              {cards.length > 0
-                ? [...cards].sort(byPriority).map(renderCard)
-                : <p className="t-body px-1" style={{ color: "var(--text-muted)" }}>لا وحدات بعد — أضف أوّل وحدة من الأسفل لتبدأ رحلتك.</p>}
-            </div>
+
+            {/* Tabs — تظهر عند وجود أكثر من اختبار (أفضل للجوال من لوحاتٍ مكدّسة) */}
+            {examEntries.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-2 mb-3 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
+                {examEntries.map((e) => {
+                  const on = e.id === activeId;
+                  return (
+                    <button key={e.id} onClick={() => setActiveExamId(e.id)}
+                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-full flex-shrink-0 transition active:scale-[0.97]"
+                      style={{ background: on ? "color-mix(in srgb, var(--accent) 14%, var(--surface))" : "var(--surface2)",
+                        border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}` }}>
+                      {e.icon && <span className="text-[15px]" aria-hidden="true">{e.icon}</span>}
+                      <span className="t-caption font-black whitespace-nowrap" style={{ color: on ? "var(--accent-light)" : "var(--text)" }}>{e.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* لوحة الاختبار النشط */}
+            {activeEntry && activeDash
+              ? <ExamDashboard label={activeEntry.label} icon={activeEntry.icon} color={activeEntry.color}
+                  d={activeDash} subjects={activeSubjects}
+                  onOpen={() => openExam(activeEntry)}
+                  onDelete={() => setDel({ kind: activeEntry.kind, id: activeEntry.id, label: activeEntry.label })} />
+              : hubCards.length === 0 && <p className="t-body px-1" style={{ color: "var(--text-muted)" }}>لا اختبارات بعد — أضف أوّل اختبار من الأسفل لتبدأ رحلتك.</p>}
+
+            {/* وحدات hub (الجامعة) — بطاقةٌ منفصلة (ليست اختباراً) */}
+            {hubCards.length > 0 && (
+              <div className="flex flex-col gap-3 mt-3">{[...hubCards].sort(byPriority).map(renderCard)}</div>
+            )}
           </section>
 
           {/* إضافة اختبار (هرمي، مقيّد بالأهلية + الحدّ الأقصى ٣) */}
