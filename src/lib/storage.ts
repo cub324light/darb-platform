@@ -31,6 +31,7 @@ export interface DarbUser {
   subjects?: string[];
   activeTracks?: TrackId[]; // (نظام Track القديم — يُرحَّل إلى workspace ثم يُزال في المرحلة الأخيرة)
   workspace?: Workspace;    // مساري: لوحة عمل الطالب من وحداتٍ مستقلة (النظام الجديد)
+  roadmap?: import("./roadmap/model").RoadmapConfig; // مساري: تخطيط الاختبارات (هدف/أولوية/قفل/نمط) — ميتاداتا مفتوحة للتوسعة
   plan?: PlanId;
   school?: string;
   region?: string;              // المنطقة الرسمية (من saRegions) — تُجمع في التسجيل
