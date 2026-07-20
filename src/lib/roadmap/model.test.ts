@@ -4,6 +4,7 @@ import {
   remainingSlots, atMax, MAX_EXAMS, PRIORITY_LOCK_DAYS,
   getExamMeta, setExamMeta, onExamAdded, onExamRemoved,
   setPriorityOrder, priorityLock, orderByPriority, setStudyMode,
+  setVacation, clearVacation, vacationState, isOnVacation,
   examStatus, type RoadmapConfig,
 } from "./model";
 
@@ -68,6 +69,24 @@ test("orderByPriority: المرتّب أولاً ثم غير المرتّب بث
 
 test("setStudyMode", () => {
   assert.equal(setStudyMode(empty, "smart").studyMode, "smart");
+});
+
+test("وضع الإجازة: تفعيلٌ مفتوح + عدّاد + انتهاءٌ تلقائيّ + إلغاء", () => {
+  // إجازةٌ مفتوحة (بلا تاريخ عودة) ⇒ نشطةٌ دائماً، بلا عدّاد
+  const open = setVacation(empty, "2026-06-01");
+  assert.equal(isOnVacation(open, "2026-06-10"), true);
+  assert.equal(vacationState(open, "2026-06-10").daysLeft, null);
+
+  // إجازةٌ محدّدة ⇒ نشطةٌ حتى until، ثم تنتهي تلقائياً بلا كتابةٍ للتخزين
+  const bound = setVacation(empty, "2026-06-01", "2026-06-15");
+  assert.equal(isOnVacation(bound, "2026-06-10"), true);
+  assert.equal(vacationState(bound, "2026-06-10").daysLeft, 5);
+  assert.equal(vacationState(bound, "2026-06-15").active, true);   // اليوم الأخير ضمنها
+  assert.equal(isOnVacation(bound, "2026-06-16"), false);          // انتهت
+
+  // إلغاءٌ صريح ⇒ لا إجازة
+  assert.equal(isOnVacation(clearVacation(bound), "2026-06-10"), false);
+  assert.deepEqual(vacationState(empty, "2026-06-10"), { active: false, since: null, until: null, daysLeft: null });
 });
 
 test("examStatus: الاشتقاق من الحقائق (الأبعد وصولاً)", () => {

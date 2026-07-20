@@ -14,6 +14,11 @@ import { ROADMAP_TUNING } from "./config";
 /** نمط المذاكرة (اختيارٌ واحدٌ لمساري الآن؛ per-exam مستقبلاً عبر meta بلا إعادة تصميم). */
 export type StudyMode = "focus" | "distribute" | "smart";
 
+/** وضع الإجازة — توقّفٌ مؤقّتٌ معلنٌ للمذاكرة. حين يكون نشطاً لا يُحاسَب الطالب على قلّة
+    الالتزام ولا تُطلق إنذارات الخطر (الطبقات الأعلى تقرأ isOnVacation فتُهدّئ نبرتها).
+    since = بداية الإجازة، until = تاريخ عودةٍ اختياريّ (تنتهي الإجازة تلقائياً بعده). */
+export interface VacationState { since: string; until?: string; }
+
 /** ميتاداتا اختبارٍ مستقلّة — الحقول الجديدة فقط. مفتوحةٌ للتوسعة عبر meta. */
 export interface ExamPlanMeta {
   goal?: string;              // الهدف/الفرصة التي يخدمها هذا الاختبار
@@ -30,6 +35,7 @@ export interface RoadmapConfig {
   examMeta?: Record<string, ExamPlanMeta>; // ميتاداتا لكل اختبار (مفتاحها examId)
   priorityLockedAt?: number;               // ms — قفل الأولوية (٧ أيام)
   studyMode?: StudyMode;                    // نمط المذاكرة
+  vacation?: VacationState;                 // وضع الإجازة (توقّفٌ مؤقّت معلن)
   meta?: Record<string, unknown>;           // مفتوح: دراسة جماعية · توصيات دويرب · ...
 }
 
@@ -112,6 +118,31 @@ export function orderByPriority(c: RoadmapConfig, ids: string[]): string[] {
 
 export function setStudyMode(c: RoadmapConfig, mode: StudyMode): RoadmapConfig {
   return { ...c, studyMode: mode };
+}
+
+/* ── وضع الإجازة (نقيّ) — إعلانٌ صريحٌ بالتوقّف المؤقّت ── */
+export function setVacation(c: RoadmapConfig, since: string, until?: string): RoadmapConfig {
+  return { ...c, vacation: until ? { since, until } : { since } };
+}
+export function clearVacation(c: RoadmapConfig): RoadmapConfig {
+  const { vacation: _drop, ...rest } = c; void _drop;
+  return rest;
+}
+
+export interface VacationView { active: boolean; since: string | null; until: string | null; daysLeft: number | null; }
+/** حالة الإجازة اليوم — تنتهي تلقائياً بعد until (إن وُجد) بلا كتابةٍ للتخزين. */
+export function vacationState(c: RoadmapConfig, today: string): VacationView {
+  const v = c.vacation;
+  if (!v) return { active: false, since: null, until: null, daysLeft: null };
+  const active = !v.until || today <= v.until;
+  const daysLeft = v.until && active
+    ? Math.max(0, Math.round((Date.parse(v.until + "T00:00:00Z") - Date.parse(today + "T00:00:00Z")) / 86_400_000))
+    : null;
+  return { active, since: v.since, until: v.until ?? null, daysLeft };
+}
+/** اختصارٌ منطقيّ: هل الطالب في إجازةٍ اليوم؟ (تقرؤه الطبقات الأعلى لتهدئة النبرة). */
+export function isOnVacation(c: RoadmapConfig, today: string): boolean {
+  return vacationState(c, today).active;
 }
 
 /* ── حالة الاختبار المشتقّة (نقيّة) ── */
