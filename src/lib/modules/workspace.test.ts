@@ -4,7 +4,7 @@ import {
   buildInitialWorkspace, syncCoreModules, addModule, addMember, removeModule, removeMember,
   hideModule, reorderModules, setPriority, setProgress, setState, setMemberProgress,
   getInstance, getMember, hasModule, hasMember, groupMembers,
-  visibleModules, orderedModules, optionalInstances,
+  visibleModules, orderedModules, optionalInstances, examCount,
 } from "./workspace";
 
 const NOW = 1_700_000_000_000;
@@ -25,6 +25,20 @@ test("addModule: للمفردة فقط — يرفض Core والمجموعة وا
   assert.ok(hasModule(ws, "qudurat"));
   ws = addModule(ws, "qudurat", NOW);  // تكرار
   assert.equal(ws.modules.filter((m) => m.id === "qudurat").length, 1);
+});
+
+test("examCount: يعدّ المفردة + كل عضو، ويتجاهل Core وحاويات المجموعات", () => {
+  let ws = buildInitialWorkspace("university", NOW); // الجامعة Core
+  assert.equal(examCount(ws), 0);                     // Core لا يُعدّ
+  ws = addModule(ws, "qudurat", NOW);
+  ws = addModule(ws, "tahsili", NOW);
+  assert.equal(examCount(ws), 2);                     // مفردتان
+  ws = addMember(ws, "step", NOW);                    // عضوٌ في مجموعة اللغة
+  assert.equal(examCount(ws), 3);                     // العضو اختبار (لا الحاوية)
+  ws = addMember(ws, "ielts", NOW);
+  assert.equal(examCount(ws), 4);                     // عضوٌ آخر ⇒ ٤ (فوق الحدّ ٣)
+  ws = removeMember(ws, "step", NOW);
+  assert.equal(examCount(ws), 3);
 });
 
 test("addMember: يُنشئ الوحدة المجموعة الأمّ ويضيف العضو (بطاقة واحدة لا أربع)", () => {

@@ -19,10 +19,14 @@ import { readLifeContext, lifeEngine } from "@/lib/lifeEngine";
 import {
   moduleView, memberView, moduleContent, isGroup, groupMembers, MODULE_STATE_LABEL,
   addModule, addMember, removeModule, removeMember, hideModule, setPriority,
-  recordScore, setState as wsSetState, recordMemberScore, setMemberState, visibleModules,
+  recordScore, setState as wsSetState, recordMemberScore, setMemberState, visibleModules, examCount,
   type Workspace, type ModuleId, type ExamMemberId, type ModuleInstance, type ModuleState,
   type AddTarget, type EligibilityContext,
 } from "@/lib/modules";
+import { atMax, remainingSlots, MAX_EXAMS, onExamAdded, onExamRemoved, DELETE_REASONS, type DeleteReasonId } from "@/lib/roadmap/model";
+import { updateRoadmapConfig } from "@/lib/roadmap/store";
+import { trackEvent } from "@/lib/analytics";
+import { n } from "@/lib/format";
 
 /* مفاتيح تخزين الدروس/التمارين (تطابق StudyBody — لحساب تقدّم البطاقة) */
 const DONE_KEY = "darb_done_lessons";
@@ -86,6 +90,8 @@ export default function RoadmapPage() {
   const [sel, setSel] = useState<{ kind: "module" | "member"; id: string } | null>(null);
   /* بطاقة الخيارات المفتوحة (تثبيت/إخفاء/حذف) — واحدةٌ في أي لحظة، لتقليل التشتيت */
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  /* ورقة سبب الحذف — نلتقط السبب للتحليلات قبل الحذف (لا حذفٌ صامت) */
+  const [del, setDel] = useState<{ kind: "module" | "member"; id: string; label: string } | null>(null);
   /* أولوية Life Engine (ماذا الآن) — تُقرأ مرّة (لقطة العميل) */
   const [top] = useState(() => (typeof window === "undefined" ? null : lifeEngine(readLifeContext())[0] ?? null));
 
@@ -93,6 +99,29 @@ export default function RoadmapPage() {
 
   const apply = (fn: (w: Workspace) => Workspace) =>
     setWs((cur) => { if (!cur) return cur; const next = fn(cur); saveWorkspace(next); return next; });
+
+  /* عدد الاختبارات + الحدّ الأقصى ٣ (من نموذج مساري النقيّ) */
+  const count = examCount(ws);
+  const capReached = atMax(count);
+  const remaining = remainingSlots(count);
+
+  /* إضافة اختبار: Workspace + مزامنة إعداد مساري (يُلغي قفل الأولوية) + حدثٌ للتحليلات */
+  const addExam = (t: AddTarget) => {
+    apply((w) => (t.kind === "module" ? addModule(w, t.id) : addMember(w, t.id)));
+    updateRoadmapConfig((c) => onExamAdded(c, t.id));
+    trackEvent("exam_added", { exam: t.id });
+  };
+
+  /* حذف اختبار بعد اختيار السبب: حدثٌ للتحليلات ثم Workspace + مزامنة الإعداد */
+  const confirmDelete = (reason: DeleteReasonId) => {
+    if (!del) return;
+    const { kind, id } = del;
+    trackEvent("exam_removed", { exam: id, reason });
+    apply((w) => (kind === "module" ? removeModule(w, id as ModuleId) : removeMember(w, id as ExamMemberId)));
+    updateRoadmapConfig((c) => onExamRemoved(c, id));
+    setDel(null);
+    setOpenMenu(null);
+  };
 
   const today = localDayKey();
   const stage: BoardStage | null = toBoardStage({ studyLevel: user?.studyLevel, grade: user?.grade });
@@ -229,7 +258,7 @@ export default function RoadmapPage() {
                     <p className="t-caption mt-0.5" style={{ color: STATE_COLOR[x.state] }}>{MODULE_STATE_LABEL[x.state]}</p>
                   </div>
                   {mp > 0 && <span className="font-mono-nums font-black t-small flex-shrink-0" style={{ color: mv.color }}>{mp}%</span>}
-                  <button onClick={(e) => { e.stopPropagation(); apply((w) => removeMember(w, x.id)); }}
+                  <button onClick={(e) => { e.stopPropagation(); setDel({ kind: "member", id: x.id, label: mv.label }); }}
                     className="text-[15px] px-1.5 min-h-[36px] flex-shrink-0" style={{ color: "var(--text-muted)" }} aria-label="حذف">✕</button>
                 </button>
               );
@@ -248,7 +277,7 @@ export default function RoadmapPage() {
               <>
                 <button onClick={() => apply((w) => hideModule(w, m.id, true))}
                   className="t-caption font-bold px-2.5 py-1 rounded-lg" style={{ background: "var(--surface2)", color: "var(--text-muted)" }}>🙈 إخفاء</button>
-                <button onClick={() => { if (confirm(`حذف وحدة ${v.label} من مساري؟`)) apply((w) => removeModule(w, m.id)); }}
+                <button onClick={() => setDel({ kind: "module", id: m.id, label: v.label })}
                   className="t-caption font-bold px-2.5 py-1 rounded-lg ms-auto" style={{ background: "transparent", color: "#EF4444" }}>🗑️ حذف</button>
               </>
             )}
@@ -299,17 +328,24 @@ export default function RoadmapPage() {
                       <p className="font-bold t-body" style={{ color: "var(--text)" }}>{r.label}</p>
                       <p className="t-caption mt-0.5" style={{ color: "var(--text-muted)" }}>{r.reason}</p>
                     </div>
-                    <button onClick={() => apply((w) => (t.kind === "module" ? addModule(w, t.id) : addMember(w, t.id)))}
-                      className="t-caption font-black px-3 py-1.5 rounded-lg flex-shrink-0" style={{ background: "var(--accent)", color: "#fff" }}>أضف ＋</button>
+                    <button onClick={() => addExam(t)} disabled={capReached}
+                      className="t-caption font-black px-3 py-1.5 rounded-lg flex-shrink-0"
+                      style={{ background: capReached ? "var(--surface2)" : "var(--accent)", color: capReached ? "var(--text-muted)" : "#fff", opacity: capReached ? 0.6 : 1 }}>
+                      {capReached ? "ممتلئ" : "أضف ＋"}</button>
                   </div>
                 ))}
               </div>
             </section>
           )}
 
-          {/* وحداتك — مرتّبة حسب الأولوية (المثبّتة ثم الأكثر إلحاحاً) */}
+          {/* اختباراتك — مرتّبة حسب الأولوية (المثبّتة ثم الأكثر إلحاحاً)، بحدٍّ أقصى ٣ */}
           <section>
-            <p className="eyebrow mb-2.5 px-1">📚 وحداتك</p>
+            <div className="flex items-center justify-between mb-2.5 px-1">
+              <p className="eyebrow">📚 اختباراتك</p>
+              <span className="t-caption font-bold font-mono-nums" style={{ color: capReached ? "#B45309" : "var(--text-muted)" }}>
+                {n(count)}/{n(MAX_EXAMS)}
+              </span>
+            </div>
             <div className="flex flex-col gap-3">
               {cards.length > 0
                 ? [...cards].sort(byPriority).map(renderCard)
@@ -317,8 +353,8 @@ export default function RoadmapPage() {
             </div>
           </section>
 
-          {/* إضافة وحدة (هرمي، مقيّد بالأهلية) */}
-          {ctx && <AddModuleMenu ws={ws} ctx={ctx} onAdd={(t) => apply((w) => (t.kind === "module" ? addModule(w, t.id) : addMember(w, t.id)))} />}
+          {/* إضافة اختبار (هرمي، مقيّد بالأهلية + الحدّ الأقصى ٣) */}
+          {ctx && <AddModuleMenu ws={ws} ctx={ctx} onAdd={addExam} capReached={capReached} remaining={remaining} />}
 
           {/* وحدات مخفيّة — إظهار سريع */}
           {ws.modules.some((m) => m.hidden) && (
@@ -337,6 +373,37 @@ export default function RoadmapPage() {
         <div className="h-6" />
         <PageFooter />
       </div>
+
+      {/* ورقة سبب الحذف — «لماذا تحذف؟» يُلتقط للتحليلات (لا حذفٌ صامت) */}
+      {del && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: "rgba(0,0,0,0.45)" }}
+          onClick={() => setDel(null)} role="dialog" aria-modal="true">
+          <div className="w-full max-w-md rounded-t-3xl p-5 pb-8 rise" style={{ background: "var(--surface)", borderTop: "1.5px solid var(--border)" }}
+            onClick={(e) => e.stopPropagation()}>
+            <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ background: "var(--border)" }} />
+            <p className="t-title font-black text-center" style={{ color: "var(--text)" }}>حذف «{del.label}»؟</p>
+            <p className="t-caption text-center mt-1 mb-4" style={{ color: "var(--text-muted)" }}>اختر السبب — يساعدنا لنحسّن اقتراحاتنا لك.</p>
+            <div className="flex flex-col gap-2">
+              {DELETE_REASONS.map((r) => (
+                <button key={r.id} onClick={() => confirmDelete(r.id)}
+                  className="w-full rounded-xl px-4 py-3 text-right font-bold t-body transition active:scale-[0.98]"
+                  style={{ background: "var(--surface2)", color: "var(--text)", border: "1.5px solid var(--border)" }}>
+                  {r.label}
+                </button>
+              ))}
+              <button onClick={() => confirmDelete("other")}
+                className="w-full rounded-xl px-4 py-3 text-right font-bold t-body transition active:scale-[0.98]"
+                style={{ background: "var(--surface2)", color: "var(--text)", border: "1.5px solid var(--border)" }}>
+                سببٌ آخر
+              </button>
+            </div>
+            <button onClick={() => setDel(null)}
+              className="w-full mt-3 py-3 t-body font-bold rounded-xl" style={{ color: "var(--text-muted)" }}>
+              تراجع
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

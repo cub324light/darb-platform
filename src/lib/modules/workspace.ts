@@ -179,3 +179,13 @@ export const orderedModules = (ws: Workspace): ModuleInstance[] =>
 export const visibleModules = (ws: Workspace): ModuleInstance[] => orderedModules(ws).filter((m) => !m.hidden);
 export const coreInstances = (ws: Workspace): ModuleInstance[] => ws.modules.filter((m) => m.kind === "core");
 export const optionalInstances = (ws: Workspace): ModuleInstance[] => ws.modules.filter((m) => m.kind === "optional");
+
+/* عدد الاختبارات المختارة (لحدّ مساري الأقصى): كل وحدةٍ مفردةٍ اختيارية (قدرات/تحصيلي)
+   + كل عضوٍ في مجموعة (لغة/برنامج). الـCore (الجامعة) وحاويات المجموعات لا تُعدّ اختباراً
+   بذاتها — العضو هو الاختبار. مصدرٌ واحد لعدّ الحدّ الأقصى ٣ (atMax/remainingSlots). */
+export function examCount(ws: Workspace): number {
+  return ws.modules.reduce((n, m) => {
+    if (m.kind === "core") return n;
+    return n + (isGroup(m.id) ? (m.members?.length ?? 0) : 1);
+  }, 0);
+}

@@ -20,6 +20,8 @@ export type EventName =
   | "session_completed"
   | "exam_started"
   | "exam_completed"
+  | "exam_added"
+  | "exam_removed"
   | "question_answered"
   | "skill_rated"
   | "skill_improved"
