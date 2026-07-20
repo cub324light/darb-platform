@@ -7,7 +7,9 @@
    - منطقٌ نقيٌّ فقط هنا (لا localStorage، لا واجهة). القراءة/الحفظ في store.ts.
    - لا تكرار: «مجموعة الاختبارات» تبقى في Workspace، و«تاريخ الاختبار» في trackExamDates؛
      هنا نخزّن الميتاداتا الجديدة فقط (هدف/درجة مستهدفة/أولوية/تسجيل/بداية-نهاية الخطة).
-   - «حالة الاختبار» تُشتقّ من الحقائق (examStatus) ولا تُخزَّن — فلا تتقادم ولا تتعارض. */
+   - «حالة الاختبار» تُشتقّ من الحقائق (examStatus) ولا تُخزَّن — فلا تتقادم ولا تتعارض.
+   - لا رقمٌ ثابت: الحدود (max ٣ · قفل ٧ أيام) من config.ts (مصدرٌ واحد للأرقام). */
+import { ROADMAP_TUNING } from "./config";
 
 /** نمط المذاكرة (اختيارٌ واحدٌ لمساري الآن؛ per-exam مستقبلاً عبر meta بلا إعادة تصميم). */
 export type StudyMode = "focus" | "distribute" | "smart";
@@ -34,8 +36,8 @@ export interface RoadmapConfig {
 /** حالة الاختبار — مشتقّةٌ من الحقائق (لا تُخزَّن). */
 export type ExamStatus = "not-started" | "studying" | "registered" | "taken" | "waiting-result" | "done";
 
-export const MAX_EXAMS = 3;
-export const PRIORITY_LOCK_DAYS = 7;
+export const MAX_EXAMS = ROADMAP_TUNING.maxExams;
+export const PRIORITY_LOCK_DAYS = ROADMAP_TUNING.priorityLockDays;
 const DAY_MS = 86_400_000;
 
 /** أسباب حذف اختبارٍ — تُلتقط للتحليلات (لا تُخزَّن في النموذج؛ تُرسَل حدثاً). */

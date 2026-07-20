@@ -7,10 +7,10 @@ import { EXAM_PROVIDER } from "../examProvider";
 import { loadRoadmapConfig } from "./store";
 import { getExamMeta } from "./model";
 import { daysBetween, type ExamInputs } from "./metrics";
+import { ROADMAP_TUNING } from "./config";
 
 const DONE_KEY = "darb_done_lessons";
 const CUSTOM_KEY = "darb_lessons";
-const DEFAULT_PREP_DAYS = 45; // مدّة تحضيرٍ مرجعية للاقتراح (يصقلها محرّك الـTimeline لاحقاً)
 
 interface ExamDescriptor { examId: string; subjects?: { name: string }[]; examKey?: string; label: string; scoreMax?: number }
 
@@ -31,14 +31,16 @@ function itemCounts(subjects: { name: string }[] | undefined): { done: number; t
   return { done: hit, total };
 }
 
-/** أخطاء «أخطائي»: العدد + هل استُعمل الدفتر أصلاً. */
-function vaultInfo(): { count: number; ever: boolean } {
-  if (typeof window === "undefined") return { count: 0, ever: false };
+/** أخطاء «أخطائي»: العدد + هل استُعمل الدفتر أصلاً + طابع آخر خطأ (ms) لحساب «آخر خطأ قبل...». */
+function vaultInfo(): { count: number; ever: boolean; lastErrorAt: number | null } {
+  if (typeof window === "undefined") return { count: 0, ever: false, lastErrorAt: null };
   try {
     const raw = localStorage.getItem("darb_vault");
     const arr = raw ? JSON.parse(raw) : null;
-    return { count: Array.isArray(arr) ? arr.length : 0, ever: raw != null };
-  } catch { return { count: 0, ever: false }; }
+    if (!Array.isArray(arr)) return { count: 0, ever: raw != null, lastErrorAt: null };
+    const stamps = arr.map((e) => (typeof e?.createdAt === "number" ? e.createdAt : 0)).filter((t) => t > 0);
+    return { count: arr.length, ever: raw != null, lastErrorAt: stamps.length ? Math.max(...stamps) : null };
+  } catch { return { count: 0, ever: false, lastErrorAt: null }; }
 }
 
 /** نوافذ تسجيلٍ قادمة لهذا الاختبار من الجهة الرسمية (examProvider). */
@@ -51,10 +53,11 @@ function futureWindows(examKey: string | undefined, today: string): { start: str
     .map((w) => ({ start: w.registrationStart as string, end: w.registrationEnd as string }));
 }
 
-/** الالتزام (زمن) على نافذةٍ من الأيام النشطة الأخيرة — محايد النطاق (إجماليٌّ الآن). */
+/** الالتزام (زمن) على نافذةٍ من الأيام النشطة الأخيرة — محايد النطاق (إجماليٌّ الآن).
+    عرض النافذة من config (commitmentWindowDays) لا رقمٌ ثابت. */
 function commitmentWindow(studyHours: number | undefined): { plannedMins: number; doneMins: number; started: boolean } {
   const dm = loadStats().dayMins ?? {};
-  const recent = Object.keys(dm).filter((k) => (dm[k] ?? 0) > 0).sort().slice(-7);
+  const recent = Object.keys(dm).filter((k) => (dm[k] ?? 0) > 0).sort().slice(-ROADMAP_TUNING.commitmentWindowDays);
   const doneMins = recent.reduce((a, k) => a + (dm[k] ?? 0), 0);
   const days = Math.max(1, recent.length);
   return { plannedMins: (studyHours ?? 0) * 60 * days, doneMins, started: recent.length > 0 };
@@ -77,6 +80,9 @@ export function readExamInputs(exam: ExamDescriptor, now: Date = new Date()): Ex
   );
   const joinDate = ensureJoinDate();
   const elapsedDays = joinDate ? Math.max(0, daysBetween(joinDate, today)) : 0;
+  const lastErrorDaysAgo = vault.lastErrorAt != null
+    ? Math.max(0, daysBetween(new Date(vault.lastErrorAt).toISOString().slice(0, 10), today))
+    : null;
 
   return {
     today,
@@ -90,11 +96,12 @@ export function readExamInputs(exam: ExamDescriptor, now: Date = new Date()): Ex
     started: commit.started,
     activeErrors: vault.count,
     everLoggedErrors: vault.ever,
+    lastErrorDaysAgo,
     lastScore: scoreEntry ? scoreEntry.score : null,
     scoreMax: exam.scoreMax && exam.scoreMax > 0 ? exam.scoreMax : 100,
     waitingResult,
     elapsedDays,
     examWindows: examDate ? [] : futureWindows(exam.examKey, today),
-    prepDays: DEFAULT_PREP_DAYS,
+    prepDays: ROADMAP_TUNING.suggestedPrepDays,
   };
 }

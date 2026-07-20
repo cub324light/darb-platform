@@ -23,21 +23,25 @@ test("finishForecast: تاريخٌ بمعدّل الطالب", () => {
   assert.equal(f.date, "2026-03-11");
 });
 
-test("suggestedExamDate: فارغٌ بلا نوافذ", () => {
-  assert.equal(suggestedExamDate({ windows: [], prepDays: 30, today: "2026-01-01" }).available, false);
+test("suggestedExamDate: فارغٌ بلا نافذةٍ واثقة (لا نوافذ · ماضية · قريبةٌ جداً)", () => {
+  assert.equal(suggestedExamDate({ windows: [], today: "2026-01-01" }, 30).available, false);
   // كل النوافذ ماضية
-  assert.equal(suggestedExamDate({ windows: [{ start: "2025-01-01", end: "2025-02-01" }], prepDays: 10, today: "2026-01-01" }).available, false);
+  assert.equal(suggestedExamDate({ windows: [{ start: "2025-01-01", end: "2025-02-01" }], today: "2026-01-01" }, 10).available, false);
+  // نافذةٌ قريبةٌ جداً لا تعطي تحضيراً كافياً ⇒ لا اقتراح (لا نخمّن موعداً غير واقعيّ)
+  const near = suggestedExamDate({ windows: [{ start: "2026-01-10", end: "2026-01-20" }], today: "2026-01-01" }, 45);
+  assert.equal(near.available, false);
+  assert.equal(near.hint, "حدد موعد اختبارك أولاً.");
 });
-test("suggestedExamDate: أقرب نافذةٍ تعطي تحضيراً كافياً", () => {
+test("suggestedExamDate: نافذةٌ تبدأ بعد اكتمال التحضير ⇒ اقتراحٌ واثق", () => {
   const s = suggestedExamDate({
     windows: [
-      { start: "2026-01-10", end: "2026-01-20" }, // قريبةٌ جداً (تحضيرٌ غير كافٍ)
-      { start: "2026-03-01", end: "2026-03-20" }, // بعد ٦٠ يوماً — مناسبة
+      { start: "2026-01-10", end: "2026-01-20" }, // قريبةٌ جداً (تحضيرٌ غير كافٍ) — تُستبعد
+      { start: "2026-03-01", end: "2026-03-20" }, // تبدأ بعد ٦٠ يوماً — واثقة
     ],
-    prepDays: 45, today: "2026-01-01",
-  });
+    today: "2026-01-01",
+  }, 45);
   assert.equal(s.available, true);
-  assert.equal(s.date, "2026-03-01"); // النافذة التي تعطي ≥٤٥ يوم تحضير
+  assert.equal(s.date, "2026-03-01"); // بداية النافذة التي تعطي ≥٤٥ يوم تحضير
 });
 
 /* ── الجسر الأساسي ── */
@@ -45,7 +49,7 @@ test("computeExamDashboard: طالبٌ جديد ⇒ حالاتٌ فارغة صا
   const inp: ExamInputs = {
     today: "2026-01-01", examDate: null, registrationDate: null, targetScore: null,
     doneItems: 0, totalItems: 0, plannedMins: 0, doneMins: 0, started: false,
-    activeErrors: 0, everLoggedErrors: false, lastScore: null, scoreMax: 100, waitingResult: false,
+    activeErrors: 0, everLoggedErrors: false, lastErrorDaysAgo: null, lastScore: null, scoreMax: 100, waitingResult: false,
     elapsedDays: 0, examWindows: [], prepDays: 30,
   };
   const d = computeExamDashboard(inp);
@@ -64,7 +68,7 @@ test("computeExamDashboard: طالبٌ نشطٌ مسجّل ⇒ مؤشّراتٌ 
   const inp: ExamInputs = {
     today: "2026-01-01", examDate: "2026-03-02", registrationDate: "2025-12-20", targetScore: 90,
     doneItems: 30, totalItems: 40, plannedMins: 180, doneMins: 150, started: true,
-    activeErrors: 8, everLoggedErrors: true, lastScore: null, scoreMax: 100, waitingResult: false,
+    activeErrors: 8, everLoggedErrors: true, lastErrorDaysAgo: 2, lastScore: null, scoreMax: 100, waitingResult: false,
     elapsedDays: 15, examWindows: [], prepDays: 30,
   };
   const d = computeExamDashboard(inp);
@@ -75,6 +79,7 @@ test("computeExamDashboard: طالبٌ نشطٌ مسجّل ⇒ مؤشّراتٌ 
   assert.equal(d.planProgress.pct, 75);
   assert.equal(d.activeErrors.available, true);
   assert.equal(d.activeErrors.count, 8);
+  assert.equal(d.activeErrors.lastErrorDaysAgo, 2); // «آخر خطأ قبل يومين»
   assert.equal(d.target.value, 90);
   assert.equal(d.countdown.available, true);
   assert.equal(d.countdown.daysLeft, daysBetween("2026-01-01", "2026-03-02"));
@@ -91,7 +96,7 @@ test("computeExamDashboard: يقترح تاريخاً فقط إن لم يوجد 
   const base: ExamInputs = {
     today: "2026-01-01", examDate: null, registrationDate: null, targetScore: null,
     doneItems: 0, totalItems: 0, plannedMins: 0, doneMins: 0, started: false,
-    activeErrors: 0, everLoggedErrors: false, lastScore: null, scoreMax: 100, waitingResult: false,
+    activeErrors: 0, everLoggedErrors: false, lastErrorDaysAgo: null, lastScore: null, scoreMax: 100, waitingResult: false,
     elapsedDays: 0, examWindows: [{ start: "2026-03-01", end: "2026-03-20" }], prepDays: 30,
   };
   assert.equal(computeExamDashboard(base).suggestedDate.available, true);

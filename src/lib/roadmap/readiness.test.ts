@@ -106,15 +106,17 @@ test("computePrediction: بلا نتيجةٍ حقيقية ⇐ غير متاح + 
   const p = computePrediction({
     results: resultsFactor({ lastScore: null }),
     progress: progressFactor({ doneItems: 5, totalItems: 10 }),
+    commitment: commitmentFactor({ plannedMins: 100, doneMins: 80, started: true }),
     errors: errorsFactor({ activeErrors: 0, everLogged: false }),
   });
   assert.equal(p.available, false);
   assert.ok(p.hint.includes("لم نكوّن توقّعاً بعد"));
 });
-test("computePrediction: يرتكز على النتيجة ويُعدَّل بالتقدّم/الأخطاء", () => {
+test("computePrediction: يرتكز على النتيجة ويُعدَّل بالتقدّم/الالتزام/الأخطاء", () => {
   const p = computePrediction({
     results: resultsFactor({ lastScore: 80, max: 100 }),
     progress: progressFactor({ doneItems: 10, totalItems: 10 }),   // ١.٠ يرفع قليلاً
+    commitment: commitmentFactor({ plannedMins: 100, doneMins: 100, started: true }), // ١.٠ يرفع قليلاً
     errors: errorsFactor({ activeErrors: 0, everLogged: true }),   // ١.٠ لا يخفض
   });
   assert.equal(p.available, true);
