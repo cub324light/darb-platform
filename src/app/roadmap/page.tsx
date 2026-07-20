@@ -23,10 +23,21 @@ import {
   type Workspace, type ModuleId, type ExamMemberId, type ModuleInstance, type ModuleState,
   type AddTarget, type EligibilityContext,
 } from "@/lib/modules";
-import { atMax, remainingSlots, MAX_EXAMS, onExamAdded, onExamRemoved, DELETE_REASONS, type DeleteReasonId } from "@/lib/roadmap/model";
-import { updateRoadmapConfig } from "@/lib/roadmap/store";
+import {
+  atMax, remainingSlots, MAX_EXAMS, onExamAdded, onExamRemoved, DELETE_REASONS,
+  setStudyMode, setVacation, clearVacation, vacationState,
+  type DeleteReasonId, type StudyMode, type RoadmapConfig,
+} from "@/lib/roadmap/model";
+import { loadRoadmapConfig, updateRoadmapConfig } from "@/lib/roadmap/store";
 import { trackEvent } from "@/lib/analytics";
 import { n } from "@/lib/format";
+
+/* أنماط المذاكرة — عرضٌ للطالب (المنطق يقرأ studyMode لاحقاً في محرّك الـTimeline) */
+const STUDY_MODES: { id: StudyMode; label: string; desc: string; icon: string }[] = [
+  { id: "focus", label: "مركّز", desc: "الأهم أولاً", icon: "🎯" },
+  { id: "distribute", label: "موزّع", desc: "وقتٌ لكلٍّ", icon: "⚖️" },
+  { id: "smart", label: "ذكي", desc: "درب يرتّب لك", icon: "✨" },
+];
 
 /* مفاتيح تخزين الدروس/التمارين (تطابق StudyBody — لحساب تقدّم البطاقة) */
 const DONE_KEY = "darb_done_lessons";
@@ -92,6 +103,8 @@ export default function RoadmapPage() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   /* ورقة سبب الحذف — نلتقط السبب للتحليلات قبل الحذف (لا حذفٌ صامت) */
   const [del, setDel] = useState<{ kind: "module" | "member"; id: string; label: string } | null>(null);
+  /* إعداد مساري (نمط المذاكرة · الإجازة · الأولوية) — من DarbUser.roadmap */
+  const [cfg, setCfg] = useState<RoadmapConfig>(() => (typeof window !== "undefined" ? loadRoadmapConfig() : {}));
   /* أولوية Life Engine (ماذا الآن) — تُقرأ مرّة (لقطة العميل) */
   const [top] = useState(() => (typeof window === "undefined" ? null : lifeEngine(readLifeContext())[0] ?? null));
 
@@ -105,10 +118,13 @@ export default function RoadmapPage() {
   const capReached = atMax(count);
   const remaining = remainingSlots(count);
 
+  /* مسارٌ واحد لتعديل إعداد مساري (قراءة-تعديل-حفظ) + تحديث الحالة المعروضة */
+  const applyCfg = (fn: (c: RoadmapConfig) => RoadmapConfig) => setCfg(updateRoadmapConfig(fn));
+
   /* إضافة اختبار: Workspace + مزامنة إعداد مساري (يُلغي قفل الأولوية) + حدثٌ للتحليلات */
   const addExam = (t: AddTarget) => {
     apply((w) => (t.kind === "module" ? addModule(w, t.id) : addMember(w, t.id)));
-    updateRoadmapConfig((c) => onExamAdded(c, t.id));
+    applyCfg((c) => onExamAdded(c, t.id));
     trackEvent("exam_added", { exam: t.id });
   };
 
@@ -118,12 +134,14 @@ export default function RoadmapPage() {
     const { kind, id } = del;
     trackEvent("exam_removed", { exam: id, reason });
     apply((w) => (kind === "module" ? removeModule(w, id as ModuleId) : removeMember(w, id as ExamMemberId)));
-    updateRoadmapConfig((c) => onExamRemoved(c, id));
+    applyCfg((c) => onExamRemoved(c, id));
     setDel(null);
     setOpenMenu(null);
   };
 
   const today = localDayKey();
+  const vac = vacationState(cfg, today);           // وضع الإجازة اليوم (يهدّئ نبرة اللوحة)
+  const mode: StudyMode = cfg.studyMode ?? "smart"; // النمط الافتراضيّ: ذكي
   const stage: BoardStage | null = toBoardStage({ studyLevel: user?.studyLevel, grade: user?.grade });
   const rec = recommendedExamsForUser(
     { studyLevel: user?.studyLevel, grade: user?.grade, gradStage: user?.gradStage, targets: user?.targets, academicTerm: user?.academicTerm },
@@ -301,6 +319,23 @@ export default function RoadmapPage() {
         <div className="h-4" />
 
         <div className="px-5 flex flex-col gap-5">
+          {/* وضع الإجازة — بانرٌ هادئ (حين ينشط لا نضغط على الطالب) */}
+          {vac.active && (
+            <div className="rounded-2xl p-4 flex items-center gap-3" style={{ background: "color-mix(in srgb, #10B981 10%, var(--surface))", border: "1.5px solid color-mix(in srgb, #10B981 30%, var(--border))" }}>
+              <span className="text-[26px]" aria-hidden="true">🌴</span>
+              <div className="flex-1 min-w-0">
+                <p className="font-black t-title" style={{ color: "var(--text)" }}>أنت في وضع الإجازة</p>
+                <p className="t-caption mt-0.5" style={{ color: "var(--text-muted)" }}>
+                  {vac.daysLeft != null ? `لن نضغط عليك — باقٍ ${n(vac.daysLeft)} يوم على عودتك.` : "لن نضغط عليك — عُد للمذاكرة متى شئت."}
+                </p>
+              </div>
+              <button onClick={() => applyCfg((c) => clearVacation(c))}
+                className="t-caption font-black px-3 py-1.5 rounded-lg flex-shrink-0" style={{ background: "var(--surface2)", color: "#10B981" }}>
+                إنهاء الإجازة
+              </button>
+            </div>
+          )}
+
           {/* خطوتك الآن — الهيرو (من Life Engine): أوّل ما يراه الطالب */}
           {top && (
             <Link href={top.href} className="rounded-3xl p-5 no-underline block transition active:scale-[0.99]"
@@ -355,6 +390,38 @@ export default function RoadmapPage() {
 
           {/* إضافة اختبار (هرمي، مقيّد بالأهلية + الحدّ الأقصى ٣) */}
           {ctx && <AddModuleMenu ws={ws} ctx={ctx} onAdd={addExam} capReached={capReached} remaining={remaining} />}
+
+          {/* إعدادات مساري — نمط المذاكرة + الإجازة (يقرؤهما محرّك الخطة/الـTimeline لاحقاً) */}
+          <section>
+            <p className="eyebrow mb-2.5 px-1">⚙️ إعدادات مساري</p>
+            <div className="rounded-2xl p-4 flex flex-col gap-4" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+              <div>
+                <p className="t-caption font-bold mb-2" style={{ color: "var(--text-muted)" }}>نمط المذاكرة</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {STUDY_MODES.map((sm) => {
+                    const on = mode === sm.id;
+                    return (
+                      <button key={sm.id} onClick={() => applyCfg((c) => setStudyMode(c, sm.id))}
+                        className="rounded-xl px-2 py-3 flex flex-col items-center gap-1 transition active:scale-[0.97]"
+                        style={{ background: on ? "color-mix(in srgb, var(--accent) 12%, var(--surface2))" : "var(--surface2)",
+                          border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}` }}>
+                        <span className="text-[20px]" aria-hidden="true">{sm.icon}</span>
+                        <span className="font-black t-caption" style={{ color: on ? "var(--accent-light)" : "var(--text)" }}>{sm.label}</span>
+                        <span className="t-caption" style={{ color: "var(--text-muted)" }}>{sm.desc}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              {!vac.active && (
+                <button onClick={() => applyCfg((c) => setVacation(c, today))}
+                  className="w-full rounded-xl py-3 flex items-center justify-center gap-2 t-body font-bold transition active:scale-[0.98]"
+                  style={{ background: "var(--surface2)", color: "var(--text)", border: "1.5px solid var(--border)" }}>
+                  🌴 تفعيل وضع الإجازة
+                </button>
+              )}
+            </div>
+          </section>
 
           {/* وحدات مخفيّة — إظهار سريع */}
           {ws.modules.some((m) => m.hidden) && (
