@@ -24,6 +24,13 @@ export interface RoadmapTuning {
   forecast: { minElapsedDays: number; minDone: number; }; // أدنى بياناتٍ لتقدير تاريخ الانتهاء
   suggestedPrepDays: number;      // مدّة التحضير المطلوبة قبل اقتراح تاريخ تسجيلٍ بثقة
   prediction: { anchorWeight: number; errorsFloor: number; }; // وزن المرتكز + أدنى تأثيرٍ للأخطاء
+
+  /* التقويم → الخطة: كم يخفّض حدث reduce الوقت المتاح (٠..١) */
+  planning: { reduceFactor: number; };
+  /* جلسة المذاكرة: مدّة افتراضية بلا خطّة · أدنى وقتٍ لجلسة · تقدير دقائق السؤال الواحد */
+  session: { fallbackMins: number; minTaskMins: number; drillPerQuestionMins: number; };
+  /* الإحصائيات: عدد أيام الـHeatmap + عتبات مستويات النشاط (دقائق) */
+  stats: { heatmapDays: number; heatThresholds: [number, number, number, number]; };
 }
 
 /* القيم الافتراضية — «تعريف المؤشّرات». عدّلها هنا فقط. */
@@ -42,4 +49,7 @@ export const ROADMAP_TUNING: RoadmapTuning = {
   forecast: { minElapsedDays: 3, minDone: 3 },
   suggestedPrepDays: 45,
   prediction: { anchorWeight: 0.7, errorsFloor: 0.9 },
+  planning: { reduceFactor: 0.5 },
+  session: { fallbackMins: 60, minTaskMins: 10, drillPerQuestionMins: 1 },
+  stats: { heatmapDays: 84, heatThresholds: [1, 30, 60, 120] },
 };
