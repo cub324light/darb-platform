@@ -5,6 +5,7 @@
    (اسم + باقٍ + «جاهز تبدأ؟» — بلا مؤشّرات) · زرٌّ كبيرٌ واحد · شريط الأقسام أسفل.
    كل المنطق من الطبقة النقيّة (pickDailyMessage · Life Engine)؛ الصفحة تعرض فقط. */
 import { useState } from "react";
+import Link from "next/link";
 import PageFooter from "@/components/PageFooter";
 import PageGuide from "@/components/PageGuide";
 import ModuleWorkspace from "@/components/roadmap/ModuleWorkspace";
@@ -43,6 +44,25 @@ function studyPct(subjects: { name: string }[] | undefined): number {
   return total === 0 ? 0 : Math.round((hit / total) * 100);
 }
 
+/* عدد أخطاء «أخطائي» (لأولوية خطوتك الآن) */
+function vaultCount(): number {
+  if (typeof window === "undefined") return 0;
+  try { const v = JSON.parse(localStorage.getItem("darb_vault") ?? "[]"); return Array.isArray(v) ? v.length : 0; } catch { return 0; }
+}
+
+/* خطوتك الآن — دراسيّةٌ دائماً حين يوجد ما يُذاكَر (مذاكرة ← أخطاء ← تدريب)؛ الإداريّ أخيراً.
+   يعيد null إن لم توجد أيّ مهمّةٍ دراسية (فتظهر خطوة Life Engine الإدارية). */
+function studyStepFor(subjects: { name: string }[] | undefined): { icon: string; title: string } | null {
+  if (!subjects?.length) return null;
+  const weakest = [...subjects].sort((a, b) => studyPct([a]) - studyPct([b]))[0];
+  if (studyPct(subjects) < 100) return { icon: "📖", title: `أقترح تبدأ بمراجعة ${weakest.name}` };
+  if (vaultCount() > 0) return { icon: "❌", title: "عندك أخطاء تحتاج مراجعة" };
+  const tItems = loadList<Train>("darb_tadreeb_items").filter((t) => subjects.some((s) => s.name === t.subject));
+  const tDone = new Set(loadList<string>("darb_tadreeb_done"));
+  if (tItems.some((t) => !tDone.has(t.id))) return { icon: "📝", title: `عندك جلسة تدريب ${weakest.name}` };
+  return null;
+}
+
 /* ترتيب شاشة المذاكرة (الوحدة التالية/الاكتمال) */
 const STATE_ORDER: Record<ModuleState, number> = { active: 0, "needs-retake": 1, added: 2, paused: 3, completed: 4, "not-added": 5 };
 const byPriority = (a: ModuleInstance, b: ModuleInstance): number =>
@@ -69,6 +89,7 @@ export default function RoadmapPage() {
     return ensured.workspace ?? null;
   });
   const [sel, setSel] = useState<{ kind: "module" | "member"; id: string } | null>(null);
+  const [devMsg, setDevMsg] = useState(false);
   const [top] = useState(() => (typeof window === "undefined" ? null : lifeEngine(readLifeContext())[0] ?? null));
 
   if (!ws) return <div className="min-h-dvh" />;
@@ -130,6 +151,10 @@ export default function RoadmapPage() {
   const examDate = priority?.examKey ? (loadTrackExamDates()[priority.examKey] ?? null) : null;
   const daysLeft = examDate ? daysBetween(today, examDate) : null;
 
+  /* خطوتك الآن: المذاكرة أولاً؛ الإداريّ (Life Engine) فقط إن لم توجد مهمّةٌ دراسية */
+  const pSubjects = priority ? (priority.kind === "module" ? moduleContent(priority.id as ModuleId).subjects : memberContent(priority.id as ExamMemberId).subjects) ?? [] : [];
+  const studyStep = studyStepFor(pSubjects);
+
   /* ── رسالة دويرب — من إشاراتٍ حقيقية فقط ── */
   const dm = loadStats().dayMins ?? {};
   const everStarted = Object.values(dm).some((v) => v > 0) || ws.modules.some((m) => (m.progress ?? 0) > 0);
@@ -153,8 +178,8 @@ export default function RoadmapPage() {
         <div>
           <h1 className="t-h2 font-black leading-tight" style={{ color: "var(--text)" }}>{daily.greeting}</h1>
           {priority && (
-            <p className="t-body mt-1.5 leading-relaxed" style={{ color: "var(--text-muted)" }}>
-              اليوم عندك فرصة ترفع جاهزيتك في <span className="font-bold" style={{ color: "var(--text)" }}>{priority.label}</span>.
+            <p className="t-body mt-1.5" style={{ color: "var(--text-muted)" }}>
+              اليوم تركيزك على <span className="font-bold" style={{ color: "var(--text)" }}>{priority.label}</span>.
             </p>
           )}
         </div>
@@ -165,32 +190,37 @@ export default function RoadmapPage() {
           <p className="t-title font-black leading-snug" style={{ color: "var(--text)" }}>{daily.message}</p>
         </div>
 
-        {/* 🧭 خطوتك الآن — Life Engine (شيءٌ واحد) */}
-        {top && (
+        {/* 🧭 خطوتك الآن — المذاكرة أولاً؛ الإداريّ فقط إن لا مهمّة دراسية (شيءٌ واحد) */}
+        {(studyStep || top) && (
           <div>
             <p className="eyebrow mb-2 px-1">🧭 خطوتك الآن</p>
-            <div className="rounded-2xl p-4 flex items-center gap-3" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-              <span className="text-[26px] flex-shrink-0" aria-hidden="true">{top.icon}</span>
-              <p className="t-body font-black flex-1 min-w-0 leading-snug" style={{ color: "var(--text)" }}>{top.title}</p>
-            </div>
+            {studyStep ? (
+              <button onClick={startStudy} className="w-full rounded-2xl p-4 flex items-center gap-3 text-right transition active:scale-[0.99]" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+                <span className="text-[26px] flex-shrink-0" aria-hidden="true">{studyStep.icon}</span>
+                <p className="t-body font-black flex-1 min-w-0 leading-snug" style={{ color: "var(--text)" }}>{studyStep.title}</p>
+              </button>
+            ) : top ? (
+              <Link href={top.href} className="rounded-2xl p-4 flex items-center gap-3 no-underline transition active:scale-[0.99]" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+                <span className="text-[26px] flex-shrink-0" aria-hidden="true">{top.icon}</span>
+                <p className="t-body font-black flex-1 min-w-0 leading-snug" style={{ color: "var(--text)" }}>{top.title}</p>
+              </Link>
+            ) : null}
           </div>
         )}
 
         {/* 🧠 بطاقة الاختبار — اسم + باقٍ + «جاهز تبدأ؟» (بلا مؤشّرات) */}
         {priority ? (
-          <div className="rounded-2xl p-4 flex items-center gap-3" style={{ background: "var(--surface)", border: `1.5px solid ${priority.color}33` }}>
-            <span className="text-[26px] flex-shrink-0" aria-hidden="true">{priority.icon ?? "🧠"}</span>
-            <div className="flex-1 min-w-0">
-              <p className="t-title font-black" style={{ color: "var(--text)" }}>{priority.label}</p>
-              <p className="t-caption mt-0.5" style={{ color: "var(--text-muted)" }}>
-                {daysLeft != null && daysLeft > 0 ? `باقي ${daysWord(daysLeft)} · جاهز تبدأ؟`
-                  : daysLeft === 0 ? "موعدك اليوم · بالتوفيق"
-                  : "جاهز تبدأ؟"}
-              </p>
+          <div className="rounded-2xl p-5 flex flex-col items-center text-center gap-2" style={{ background: "var(--surface)", border: `1.5px solid ${priority.color}33` }}>
+            <div className="flex items-center gap-2">
+              <span className="text-[26px]" aria-hidden="true">{priority.icon ?? "🧠"}</span>
+              <span className="t-h3 font-black" style={{ color: "var(--text)" }}>{priority.label}</span>
             </div>
+            {daysLeft != null && daysLeft > 0 && <span className="t-body font-bold" style={{ color: "var(--text-muted)" }}>{`باقي ${daysWord(daysLeft)}`}</span>}
+            {daysLeft === 0 && <span className="t-body font-bold" style={{ color: "var(--text-muted)" }}>موعدك اليوم · بالتوفيق</span>}
+            <span className="t-body font-bold" style={{ color: priority.color }}>جاهز تبدأ؟</span>
           </div>
         ) : (
-          <p className="t-body px-1" style={{ color: "var(--text-muted)" }}>لا اختبارات بعد — ستضيفها من الإعدادات قريباً.</p>
+          <p className="t-body px-1" style={{ color: "var(--text-muted)" }}>لا اختبارات بعد — ستضيفها من الإعدادات لاحقاً.</p>
         )}
 
         {/* ▶ ابدأ المذاكرة — أكبر عنصرٍ في الصفحة */}
@@ -203,16 +233,24 @@ export default function RoadmapPage() {
         {/* شريط الأقسام (أسفل) — تُفعّل صفحاتها في المراحل التالية */}
         <div className="grid grid-cols-4 gap-2 mt-2">
           {SECTIONS.map((s) => (
-            <div key={s.id} className="rounded-2xl py-3 flex flex-col items-center gap-1.5" style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", opacity: 0.7 }}>
-              <span className="text-[20px]" aria-hidden="true">{s.icon}</span>
-              <span className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>{s.label}</span>
-              <span className="t-caption" style={{ color: "var(--text-dim)", fontSize: "0.62rem" }}>قريباً</span>
-            </div>
+            <button key={s.id} onClick={() => { setDevMsg(true); setTimeout(() => setDevMsg(false), 2400); }}
+              className="rounded-2xl py-4 flex flex-col items-center gap-1.5 transition active:scale-[0.97]" style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }}>
+              <span className="text-[22px]" aria-hidden="true">{s.icon}</span>
+              <span className="t-caption font-bold" style={{ color: "var(--text)" }}>{s.label}</span>
+            </button>
           ))}
         </div>
 
         <PageFooter />
       </div>
+
+      {/* رسالة تطويرٍ لطيفة عند الضغط على قسمٍ لم يُبنَ بعد */}
+      {devMsg && (
+        <div className="fixed left-1/2 -translate-x-1/2 rounded-xl px-4 py-2.5 t-caption font-bold z-50 rise"
+          style={{ bottom: "88px", background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)", boxShadow: "0 8px 24px rgba(0,0,0,.18)" }}>
+          هذه الصفحة ما زالت قيد التطوير.
+        </div>
+      )}
     </div>
   );
 }
