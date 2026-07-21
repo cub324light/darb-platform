@@ -19,6 +19,10 @@ export type StudyMode = "focus" | "distribute" | "smart";
     since = بداية الإجازة، until = تاريخ عودةٍ اختياريّ (تنتهي الإجازة تلقائياً بعده). */
 export interface VacationState { since: string; until?: string; }
 
+/** وجهتي — الجامعة/التخصص الهدف. مستقبلاً تُربط بمتطلبات القبول فتضبط الدرجة المستهدفة
+    تلقائياً (معلّقٌ على ملف الجامعات). الآن: تخزين الاختيار فقط. */
+export interface Destination { university?: string; major?: string; }
+
 /** ميتاداتا اختبارٍ مستقلّة — الحقول الجديدة فقط. مفتوحةٌ للتوسعة عبر meta. */
 export interface ExamPlanMeta {
   goal?: string;              // الهدف/الفرصة التي يخدمها هذا الاختبار
@@ -36,6 +40,7 @@ export interface RoadmapConfig {
   priorityLockedAt?: number;               // ms — قفل الأولوية (٧ أيام)
   studyMode?: StudyMode;                    // نمط المذاكرة
   vacation?: VacationState;                 // وضع الإجازة (توقّفٌ مؤقّت معلن)
+  destination?: Destination;                // وجهتي (الجامعة/التخصص الهدف)
   meta?: Record<string, unknown>;           // مفتوح: دراسة جماعية · توصيات دويرب · ...
 }
 
@@ -118,6 +123,11 @@ export function orderByPriority(c: RoadmapConfig, ids: string[]): string[] {
 
 export function setStudyMode(c: RoadmapConfig, mode: StudyMode): RoadmapConfig {
   return { ...c, studyMode: mode };
+}
+
+/* ── وجهتي (نقيّ) ── */
+export function setDestination(c: RoadmapConfig, dest: Destination): RoadmapConfig {
+  return { ...c, destination: dest };
 }
 
 /* ── وضع الإجازة (نقيّ) — إعلانٌ صريحٌ بالتوقّف المؤقّت ── */

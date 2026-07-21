@@ -4,7 +4,7 @@ import {
   remainingSlots, atMax, MAX_EXAMS, PRIORITY_LOCK_DAYS,
   getExamMeta, setExamMeta, onExamAdded, onExamRemoved,
   setPriorityOrder, priorityLock, orderByPriority, setStudyMode,
-  setVacation, clearVacation, vacationState, isOnVacation,
+  setVacation, clearVacation, vacationState, isOnVacation, setDestination,
   examStatus, type RoadmapConfig,
 } from "./model";
 
@@ -69,6 +69,12 @@ test("orderByPriority: المرتّب أولاً ثم غير المرتّب بث
 
 test("setStudyMode", () => {
   assert.equal(setStudyMode(empty, "smart").studyMode, "smart");
+});
+
+test("setDestination: وجهتي (جامعة/تخصص)", () => {
+  const c = setDestination(empty, { university: "جامعة الملك فيصل", major: "هندسة ميكانيكية" });
+  assert.equal(c.destination?.university, "جامعة الملك فيصل");
+  assert.equal(c.destination?.major, "هندسة ميكانيكية");
 });
 
 test("وضع الإجازة: تفعيلٌ مفتوح + عدّاد + انتهاءٌ تلقائيّ + إلغاء", () => {
