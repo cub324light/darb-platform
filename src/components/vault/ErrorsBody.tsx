@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
+import { n } from "@/lib/format";
 import PageGuide from "@/components/PageGuide";
 import { ERROR_CATEGORIES } from "@/lib/constants";
 import { subjectsForTracks, colorForSubject, type TrackId } from "@/lib/tracks";
@@ -172,7 +173,7 @@ export default function ErrorsBody({ embedded = false }: { embedded?: boolean })
                   {sortBy === "priority" ? "أولوية" : "أحدث"}
                 </button>
                 <div className="dome-chip">
-                  <span className="num-hero text-base" style={{ color: "var(--gold-light)" }}>{errors.length}</span>
+                  <span className="num-hero text-base" style={{ color: "var(--gold-light)" }}>{n(errors.length)}</span>
                   <span className="text-[17px] font-semibold" style={{ color: "var(--text-dim)" }}>خطأ</span>
                 </div>
               </div>
@@ -182,7 +183,7 @@ export default function ErrorsBody({ embedded = false }: { embedded?: boolean })
       )}
       {embedded && (
         <div className="px-5 pt-4 pb-1 flex items-center justify-between">
-          <span className="t-body font-bold" style={{ color: "var(--text-dim)" }}>{errors.length} خطأ</span>
+          <span className="t-body font-bold" style={{ color: "var(--text-dim)" }}>{n(errors.length)} خطأ</span>
           <button onClick={() => setSortBy((s) => s === "recent" ? "priority" : "recent")}
             className="dome-chip text-[15px] font-bold transition" style={{ color: sortBy === "priority" ? "var(--gold)" : "var(--text-dim)" }}>
             {sortBy === "priority" ? "أولوية" : "أحدث"}
@@ -190,6 +191,20 @@ export default function ErrorsBody({ embedded = false }: { embedded?: boolean })
         </div>
       )}
       <div className="h-5" />
+
+      {/* ── بطل الصفحة: إضافة خطأ — وظيفة الصفحة الأساسية، فأكبر عنصرٍ فيها ── */}
+      {!showAdd && (
+        <div className="px-5 mb-4 rise">
+          <p className="t-body mb-3 leading-relaxed" style={{ color: "var(--text-muted)" }}>
+            كل خطأ تسجّله اليوم، درجةٌ تكسبها في الاختبار.
+          </p>
+          <button onClick={() => setShowAdd(true)}
+            className="w-full rounded-2xl transition active:scale-[0.98] glow-gold"
+            style={{ background: "var(--gold)", color: "#1A1206", border: "none", padding: "19px", boxShadow: "0 10px 28px color-mix(in srgb, var(--gold) 40%, transparent)" }}>
+            <span className="block font-black" style={{ fontSize: "1.25rem" }}>＋ أضف خطأً جديداً</span>
+          </button>
+        </div>
+      )}
 
       {/* ── شريط البحث ── */}
       <div className="px-5 mb-5 rise rise-1">
@@ -230,7 +245,7 @@ export default function ErrorsBody({ embedded = false }: { embedded?: boolean })
                 style={active
                   ? { background: "rgba(245,158,11,0.08)", color: "#F59E0B", border: "1.5px solid #F59E0B", boxShadow: "0 4px 14px rgba(245,158,11,0.3)" }
                   : { background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text-dim)" }}>
-                {cat}{count > 0 && <span className="mr-1 text-sm opacity-80">({count})</span>}
+                {cat}{count > 0 && <span className="mr-1 text-sm opacity-80">({n(count)})</span>}
               </button>
             );
           })}
@@ -259,13 +274,7 @@ export default function ErrorsBody({ embedded = false }: { embedded?: boolean })
 
       {/* ── زر الإضافة — متاح دائماً (الحد لكل مادة على حدة) ── */}
       <div className="px-5 mb-6 rise rise-4">
-          {!showAdd ? (
-            <button onClick={() => setShowAdd(true)}
-              className="w-full py-5 rounded-2xl text-lg font-bold text-[var(--text-dim)] transition min-h-[60px]"
-              style={{ background: "var(--surface)", border: "1.5px dashed var(--border)" }}>
-              + أضف خطأً جديداً
-            </button>
-          ) : (
+          {showAdd && (
             <div className="rounded-2xl p-5 flex flex-col gap-4"
               style={{ background: "var(--surface)", border: "1.5px solid rgba(245,158,11,0.35)" }}>
               <p className="font-bold text-base text-[var(--gold)]">خطأ جديد في أخطائي</p>

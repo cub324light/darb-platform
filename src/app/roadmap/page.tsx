@@ -1,241 +1,205 @@
 "use client";
-/* ═══════════════ مساري — «🧭 الآن» (إعادة بناء · المرحلة B) ═══════════════
-   مساري ليس Dashboard؛ هو مدير حياة الطالب. «الآن» تجيب خلال ٥ ثوانٍ عن «وش أسوي الآن؟»:
-   ترحيبٌ من دويرب · رسالته اليوم · خطوتك الآن (Life Engine) · بطاقة الاختبار الأولوية
-   (اسم + باقٍ + «جاهز تبدأ؟» — بلا مؤشّرات) · زرٌّ كبيرٌ واحد · شريط الأقسام أسفل.
-   كل المنطق من الطبقة النقيّة (pickDailyMessage · Life Engine)؛ الصفحة تعرض فقط. */
+/* ═══════════════ مساري — «🧭 الآن» V2 (الأغنى، وما زال هادئاً) ═══════════════
+   مدير حياة الطالب لا Dashboard: ترحيبٌ ورسالة دويرب ← شبكة أفعالٍ ٢×٢ (هدف اليوم ·
+   ماذا ينقصك · التقويم · اختبارك) ← «هذا الأسبوع» شريطٌ خافت ← زرٌّ واحدٌ بطل ←
+   مداخل الأقسام. كل رقمٍ من محرّكٍ نقيّ، وأي بياناتٍ ناقصة = حالةٌ صادقة لا صفر. */
 import { useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import PageFooter from "@/components/PageFooter";
 import PageGuide from "@/components/PageGuide";
 import ModuleWorkspace from "@/components/roadmap/ModuleWorkspace";
-import { loadUser, saveUser, ensureWorkspace, saveWorkspace, loadList, localDayKey, loadStats, loadTrackExamDates } from "@/lib/storage";
-import { readLifeContext, lifeEngine } from "@/lib/lifeEngine";
+import { loadUser, saveUser, ensureWorkspace, saveWorkspace, loadStats, loadTrackExamDates, localDayKey } from "@/lib/storage";
 import {
-  moduleView, memberView, moduleContent, memberContent, isGroup, groupMembers, visibleModules,
+  moduleView, memberView, groupMembers, visibleModules,
   recordScore, setState as wsSetState, recordMemberScore, setMemberState,
   type Workspace, type ModuleId, type ExamMemberId, type ModuleInstance, type ModuleState,
 } from "@/lib/modules";
-import { orderByPriority } from "@/lib/roadmap/model";
-import { loadRoadmapConfig } from "@/lib/roadmap/store";
 import { pickDailyMessage } from "@/lib/roadmap/dailyMessage";
-import { daysBetween, addDays } from "@/lib/roadmap/metrics";
-import { days as daysWord } from "@/lib/format";
+import { buildSessionPlan } from "@/lib/roadmap/session";
+import { remainingSteps, arCount } from "@/lib/roadmap/remainingSteps";
+import { computeStats } from "@/lib/roadmap/stats";
+import { loadSessions } from "@/lib/roadmap/sessionStore";
+import { loadCalendar } from "@/lib/roadmap/calendarStore";
+import { groupUpcoming, kindMeta, warnsPlanChange, type CalendarEvent } from "@/lib/roadmap/calendar";
+import { readPriorityExam, countRemaining, vaultCount, readTodayAvailability, readDailySignals } from "@/lib/roadmap/nowRead";
+import { loadRoadmapConfig } from "@/lib/roadmap/store";
+import { daysBetween } from "@/lib/roadmap/metrics";
+import { n, pct, days as daysWord } from "@/lib/format";
 
-const DONE_KEY = "darb_done_lessons";
-const CUSTOM_KEY = "darb_lessons";
-interface Lesson { subject: string; id: string; }
-interface Train { id: string; subject: string; }
-
-/* تقدّم مادةٍ (لشاشة المذاكرة فقط — لا يظهر في «الآن») */
-function studyPct(subjects: { name: string }[] | undefined): number {
-  if (!subjects?.length || typeof window === "undefined") return 0;
-  const done = new Set(loadList<string>(DONE_KEY));
-  const custom = loadList<Lesson>(CUSTOM_KEY);
-  const tItems = loadList<Train>("darb_tadreeb_items");
-  const tDone = new Set(loadList<string>("darb_tadreeb_done"));
-  let total = 0, hit = 0;
-  for (const s of subjects) {
-    const keys = custom.filter((c) => c.subject === s.name).map((c) => `custom-${c.id}`);
-    const tr = tItems.filter((t) => t.subject === s.name).map((t) => t.id);
-    total += keys.length + tr.length;
-    hit += keys.filter((k) => done.has(k)).length + tr.filter((k) => tDone.has(k)).length;
-  }
-  return total === 0 ? 0 : Math.round((hit / total) * 100);
-}
-
-/* عدد أخطاء «أخطائي» (لأولوية خطوتك الآن) */
-function vaultCount(): number {
-  if (typeof window === "undefined") return 0;
-  try { const v = JSON.parse(localStorage.getItem("darb_vault") ?? "[]"); return Array.isArray(v) ? v.length : 0; } catch { return 0; }
-}
-
-/* خطوتك الآن — دراسيّةٌ دائماً حين يوجد ما يُذاكَر (مذاكرة ← أخطاء ← تدريب)؛ الإداريّ أخيراً.
-   يعيد null إن لم توجد أيّ مهمّةٍ دراسية (فتظهر خطوة Life Engine الإدارية). */
-function studyStepFor(subjects: { name: string }[] | undefined): { icon: string; title: string } | null {
-  if (!subjects?.length) return null;
-  const weakest = [...subjects].sort((a, b) => studyPct([a]) - studyPct([b]))[0];
-  if (studyPct(subjects) < 100) return { icon: "📖", title: `أقترح تبدأ بمراجعة ${weakest.name}` };
-  if (vaultCount() > 0) return { icon: "❌", title: "عندك أخطاء تحتاج مراجعة" };
-  const tItems = loadList<Train>("darb_tadreeb_items").filter((t) => subjects.some((s) => s.name === t.subject));
-  const tDone = new Set(loadList<string>("darb_tadreeb_done"));
-  if (tItems.some((t) => !tDone.has(t.id))) return { icon: "📝", title: `عندك جلسة تدريب ${weakest.name}` };
-  return null;
-}
-
-/* ترتيب شاشة المذاكرة (الوحدة التالية/الاكتمال) */
+/* ترتيب شاشة المذاكرة (تُفتح من بطاقة الاختبار) */
 const STATE_ORDER: Record<ModuleState, number> = { active: 0, "needs-retake": 1, added: 2, paused: 3, completed: 4, "not-added": 5 };
 const byPriority = (a: ModuleInstance, b: ModuleInstance): number =>
   (!!a.priority !== !!b.priority ? (a.priority ? -1 : 1) : (STATE_ORDER[a.state] ?? 9) - (STATE_ORDER[b.state] ?? 9));
 
-/* أقسام مساري — تُبنى صفحاتها في المراحل التالية (C فصاعداً) */
-const SECTIONS = [
-  { id: "calendar", icon: "🗓️", label: "التقويم" },
-  { id: "settings", icon: "⚙️", label: "الإعدادات" },
-  { id: "resources", icon: "📚", label: "المصادر" },
-  { id: "stats", icon: "📈", label: "الإحصائيات" },
-] as const;
+function studyPctOf(subjects: { name: string }[] | undefined): number {
+  const c = countRemaining(subjects ?? []);
+  return c.totalItems === 0 ? 0 : Math.round((c.doneItems / c.totalItems) * 100);
+}
 
-interface ExamEntry { kind: "module" | "member"; id: string; label: string; icon?: string; color: string; examKey?: string }
+/* بطاقة فعلٍ في الشبكة — أيقونة ← تسمية ← قيمة ← سياق (٣ طبقات، لمسةٌ تفتح) */
+function Tile({ icon, label, value, sub, onClick }: { icon: string; label: string; value: string; sub?: string; onClick?: () => void }) {
+  return (
+    <button onClick={onClick} className="rounded-2xl p-4 min-h-[108px] flex flex-col text-right transition active:scale-[0.98]"
+      style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+      <span className="text-[20px]" aria-hidden="true">{icon}</span>
+      <span className="t-caption font-bold mt-1.5" style={{ color: "var(--text-muted)" }}>{label}</span>
+      <span className="t-body font-black mt-0.5 leading-snug" style={{ color: "var(--text)" }}>{value}</span>
+      {sub && <span className="t-caption mt-auto pt-1 leading-snug" style={{ color: "var(--text-dim)" }}>{sub}</span>}
+    </button>
+  );
+}
 
 export default function RoadmapPage() {
-  const [user] = useState(() => (typeof window !== "undefined" ? loadUser() : null));
+  const router = useRouter();
   const [ws, setWs] = useState<Workspace | null>(() => {
     if (typeof window === "undefined") return null;
-    const u = loadUser();
-    if (!u) return null;
+    const u = loadUser(); if (!u) return null;
     const ensured = ensureWorkspace(u);
     if (!u.workspace && ensured.workspace) saveUser(ensured);
     return ensured.workspace ?? null;
   });
   const [sel, setSel] = useState<{ kind: "module" | "member"; id: string } | null>(null);
   const [devMsg, setDevMsg] = useState(false);
-  const [top] = useState(() => (typeof window === "undefined" ? null : lifeEngine(readLifeContext())[0] ?? null));
 
   if (!ws) return <div className="min-h-dvh" />;
 
   const apply = (fn: (w: Workspace) => Workspace) =>
     setWs((cur) => { if (!cur) return cur; const next = fn(cur); saveWorkspace(next); return next; });
 
-  const today = localDayKey();
-
-  /* ── شاشة المذاكرة (تُفتح من «ابدأ المذاكرة» — مؤقّتاً حتى تُبنى «ماذا ستفعل اليوم؟» في C) ── */
+  /* ── شاشة مذاكرة الاختبار (تفاصيل + دروس) — تُفتح من بطاقة الاختبار ── */
   if (sel) {
-    if (sel.kind === "module") {
-      const id = sel.id as ModuleId;
-      const inst = ws.modules.find((m) => m.id === id);
-      const pct = studyPct(moduleContent(id).subjects);
-      const sorted = [...visibleModules(ws)].sort(byPriority);
-      const doneCount = sorted.filter((m) => m.state === "completed").length;
-      const idx = sorted.findIndex((m) => m.id === id);
-      let nextUnit: { label: string; icon?: string; onOpen: () => void } | undefined;
-      for (let i = idx + 1; i < sorted.length; i++) {
-        if (!isGroup(sorted[i].id)) { const nid = sorted[i].id; const nv = moduleView(nid); nextUnit = { label: nv.label, icon: nv.icon, onOpen: () => setSel({ kind: "module", id: nid }) }; break; }
-      }
-      return (
-        <div className="min-h-dvh pb-nav relative z-[1] page-enter">
-          <div className="px-5 py-6 max-w-2xl mx-auto w-full">
-            <ModuleWorkspace view={moduleView(id)} state={inst?.state ?? "added"} progressPct={pct} next={nextUnit}
-              completedCount={doneCount} totalCount={sorted.length} onBack={() => setSel(null)}
-              onRecordScore={(s) => apply((w) => recordScore(w, id, s))}
-              onToggleRetake={() => apply((w) => wsSetState(w, id, inst?.state === "needs-retake" ? "active" : "needs-retake"))} />
-          </div>
-        </div>
-      );
-    }
-    const mid = sel.id as ExamMemberId;
-    const member = groupMembers(ws, moduleView("english").id).concat(groupMembers(ws, "programs")).find((x) => x.id === mid);
+    const view = sel.kind === "module" ? moduleView(sel.id as ModuleId) : memberView(sel.id as ExamMemberId);
+    const inst = sel.kind === "module" ? ws.modules.find((m) => m.id === sel.id) : undefined;
+    const member = sel.kind === "member"
+      ? groupMembers(ws, "english").concat(groupMembers(ws, "programs")).find((x) => x.id === sel.id) : undefined;
+    const state = (sel.kind === "module" ? inst?.state : member?.state) ?? "added";
+    const sorted = [...visibleModules(ws)].sort(byPriority);
     return (
       <div className="min-h-dvh pb-nav relative z-[1] page-enter">
         <div className="px-5 py-6 max-w-2xl mx-auto w-full">
-          <ModuleWorkspace view={memberView(mid)} state={member?.state ?? "added"} progressPct={studyPct(memberView(mid).content.subjects)}
+          <ModuleWorkspace view={view} state={state}
+            progressPct={studyPctOf(view.content.subjects)}
+            completedCount={sorted.filter((m) => m.state === "completed").length} totalCount={sorted.length}
             onBack={() => setSel(null)}
-            onRecordScore={(s) => apply((w) => recordMemberScore(w, mid, s))}
-            onToggleRetake={() => apply((w) => setMemberState(w, mid, member?.state === "needs-retake" ? "active" : "needs-retake"))} />
+            onRecordScore={(s) => apply((w) => (sel.kind === "module" ? recordScore(w, sel.id as ModuleId, s) : recordMemberScore(w, sel.id as ExamMemberId, s)))}
+            onToggleRetake={() => apply((w) => (sel.kind === "module"
+              ? wsSetState(w, sel.id as ModuleId, state === "needs-retake" ? "active" : "needs-retake")
+              : setMemberState(w, sel.id as ExamMemberId, state === "needs-retake" ? "active" : "needs-retake")))} />
         </div>
       </div>
     );
   }
 
-  /* ── الاختبار صاحب الأولوية #١ (بلا مؤشّرات — اسم + باقٍ فقط) ── */
-  const cfg = loadRoadmapConfig();
-  const entries: ExamEntry[] = [];
-  for (const m of visibleModules(ws)) {
-    if (m.kind === "core") continue;
-    if (isGroup(m.id)) groupMembers(ws, m.id).forEach((x) => { const v = memberView(x.id); entries.push({ kind: "member", id: x.id, label: v.label, color: v.color, examKey: memberContent(x.id).examKey }); });
-    else { const v = moduleView(m.id); entries.push({ kind: "module", id: m.id, label: v.label, icon: v.icon, color: v.color, examKey: moduleContent(m.id).examKey }); }
-  }
-  const ordered = orderByPriority(cfg, entries.map((e) => e.id));
-  const priority = entries.find((e) => e.id === ordered[0]) ?? entries[0] ?? null;
+  /* ── لقطة «الآن» — كل الأرقام من مصادر حقيقية ── */
+  const today = localDayKey();
+  const priority = readPriorityExam(ws);
+  const signals = readDailySignals(ws);
+  const daily = pickDailyMessage(signals);
 
   const examDate = priority?.examKey ? (loadTrackExamDates()[priority.examKey] ?? null) : null;
   const daysLeft = examDate ? daysBetween(today, examDate) : null;
 
-  /* خطوتك الآن: المذاكرة أولاً؛ الإداريّ (Life Engine) فقط إن لم توجد مهمّةٌ دراسية */
-  const pSubjects = priority ? (priority.kind === "module" ? moduleContent(priority.id as ModuleId).subjects : memberContent(priority.id as ExamMemberId).subjects) ?? [] : [];
-  const studyStep = studyStepFor(pSubjects);
+  const counts = priority ? countRemaining(priority.subjects) : { remainingLessons: 0, remainingDrills: 0, weakestSubject: null, totalItems: 0, doneItems: 0 };
+  const avail = readTodayAvailability();
+  const plan = priority ? buildSessionPlan({
+    subjects: priority.subjects.map((s) => s.name), weakestSubject: counts.weakestSubject,
+    remainingLessons: counts.remainingLessons, remainingDrills: counts.remainingDrills,
+    activeErrors: vaultCount(), availableMinutes: avail.minutes, mode: loadRoadmapConfig().studyMode,
+  }) : null;
 
-  /* ── رسالة دويرب — من إشاراتٍ حقيقية فقط ── */
-  const dm = loadStats().dayMins ?? {};
-  const everStarted = Object.values(dm).some((v) => v > 0) || ws.modules.some((m) => (m.progress ?? 0) > 0);
-  let streakDays = 0;
-  for (let k = 0; ; k++) { if ((dm[addDays(today, -k)] ?? 0) > 0) streakDays++; else break; }
-  const daily = pickDailyMessage({
-    name: user?.name, everStarted, yesterdayMins: dm[addDays(today, -1)] ?? 0, streakDays,
-    daysToExam: daysLeft != null && daysLeft >= 0 ? daysLeft : null,
-  });
+  const steps = remainingSteps({ remainingLessons: counts.remainingLessons, remainingDrills: counts.remainingDrills, unreviewedErrors: vaultCount() });
 
-  const startStudy = () => { if (priority) setSel({ kind: priority.kind, id: priority.id }); };
+  const upcoming = groupUpcoming(loadCalendar(), today);
+  const nextEv: { ev: CalendarEvent; when: string } | null =
+    upcoming.today[0] ? { ev: upcoming.today[0], when: "اليوم" }
+    : upcoming.tomorrow[0] ? { ev: upcoming.tomorrow[0], when: "غداً" }
+    : upcoming.week[0] ? { ev: upcoming.week[0], when: "هذا الأسبوع" } : null;
+
+  const stats = computeStats({ dayMins: loadStats().dayMins ?? {}, sessions: loadSessions(), today, plannedDailyMins: ((loadUser()?.studyHours ?? 0) * 60) || null });
+  const hasWeek = stats.week.hours > 0 || stats.week.sessions > 0;
+
+  const goSession = () => router.push("/roadmap/session");
+  const openExam = () => priority && setSel({ kind: priority.kind, id: priority.id });
+  const dev = () => { setDevMsg(true); setTimeout(() => setDevMsg(false), 2400); };
 
   return (
     <div className="min-h-dvh pb-nav relative z-[1] page-enter">
-      <div className="max-w-xl mx-auto w-full px-5 pt-8 pb-6 flex flex-col gap-6">
+      <div className="max-w-xl mx-auto w-full px-5 pt-7 pb-6 flex flex-col gap-4">
         <PageGuide pageKey="roadmap" steps={[
-          { title: "مساري = دربك خطوة بخطوة", desc: "هنا تعرف ماذا تفعل الآن. اضغط «ابدأ المذاكرة» لتبدأ جلستك مباشرة." },
+          { title: "مساري = دربك خطوة بخطوة", desc: "بطاقات اليوم فوق، وزر «ابدأ المذاكرة» يفتح جلستك الجاهزة مباشرة." },
         ]} />
 
-        {/* ترحيب دويرب */}
-        <div>
-          <h1 className="t-h2 font-black leading-tight" style={{ color: "var(--text)" }}>{daily.greeting}</h1>
-          {priority && (
-            <p className="t-body mt-1.5" style={{ color: "var(--text-muted)" }}>
-              اليوم تركيزك على <span className="font-bold" style={{ color: "var(--text)" }}>{priority.label}</span>.
-            </p>
+        {/* الترحيب + رسالة دويرب */}
+        <h1 className="t-h2 font-black leading-tight" style={{ color: "var(--text)" }}>{daily.greeting}</h1>
+        <div className="rounded-2xl px-4 py-3.5 -mt-1" style={{ background: "color-mix(in srgb, var(--accent) 9%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--accent) 26%, var(--border))" }}>
+          <p className="t-caption font-black mb-1" style={{ color: "var(--accent-light)" }}>💬 دويرب</p>
+          <p className="t-body font-bold leading-relaxed" style={{ color: "var(--text)" }}>{daily.message}</p>
+        </div>
+
+        {/* شبكة الأفعال ٢×٢ */}
+        <div className="grid grid-cols-2 gap-2.5">
+          <Tile icon="🎯" label="هدف اليوم"
+            value={plan?.available ? `جلسة ${n(plan.totalMins)} دقيقة` : "يومك مشغول"}
+            sub={plan?.available ? plan.tasks.map((t) => t.label).join("، ") : plan?.hint}
+            onClick={goSession} />
+          <Tile icon="🧩" label="ماذا ينقصك"
+            value={steps.length > 0 ? arCount(steps.length, "خطوة واحدة", "خطوتان", "خطوات", "خطوة") : "لا شيء عالق"}
+            sub={steps.length > 0 ? steps.join("، ") : "أضف دروسك وتدريبك لتتكوّن خطتك"}
+            onClick={openExam} />
+          <Tile icon="🗓️" label="التقويم"
+            value={nextEv ? `${kindMeta(nextEv.ev.kind).icon} ${nextEv.ev.title}` : "لا أحداث قريبة"}
+            sub={nextEv ? (warnsPlanChange(nextEv.ev) ? "سيتم تعديل خطتك تلقائياً" : nextEv.when) : "سجّل أحداث حياتك ليخطط دويرب حولها"}
+            onClick={() => router.push("/roadmap/calendar")} />
+          {priority ? (
+            <Tile icon={priority.icon ?? "🧠"} label="اختبارك" value={priority.label}
+              sub={daysLeft != null && daysLeft > 0 ? `باقي ${daysWord(daysLeft)} — جاهز تبدأ؟` : daysLeft === 0 ? "موعدك اليوم — بالتوفيق" : "جاهز تبدأ؟"}
+              onClick={openExam} />
+          ) : (
+            <Tile icon="🧠" label="اختبارك" value="لا اختبار بعد" sub="أضف اختبارك الأول" onClick={dev} />
           )}
         </div>
 
-        {/* 💬 رسالة دويرب — تتغيّر يومياً حسب حالة الطالب الحقيقية */}
-        <div className="rounded-3xl p-5" style={{ background: "color-mix(in srgb, var(--accent) 9%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--accent) 26%, var(--border))" }}>
-          <p className="eyebrow mb-2" style={{ color: "var(--accent-light)" }}>💬 رسالة دويرب</p>
-          <p className="t-title font-black leading-snug" style={{ color: "var(--text)" }}>{daily.message}</p>
+        {/* هذا الأسبوع — شريطٌ خافتٌ واحد (أو دعوةٌ صادقة) */}
+        <div>
+          <p className="eyebrow mb-2 px-1">هذا الأسبوع</p>
+          {hasWeek ? (
+            <div className="rounded-2xl py-3.5 px-2 flex" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+              {[
+                { v: n(stats.week.hours), l: "ساعة" },
+                { v: n(stats.week.sessions), l: "جلسات" },
+                { v: `🔥 ${n(stats.week.streakDays)}`, l: "أيام متتالية" },
+                ...(stats.week.commitmentPct != null ? [{ v: pct(stats.week.commitmentPct), l: "التزام" }] : []),
+              ].map((s, i) => (
+                <div key={s.l} className="flex-1 text-center" style={i > 0 ? { borderInlineStart: "1px solid var(--border)" } : undefined}>
+                  <p className="t-title font-black font-mono-nums" style={{ color: "var(--text)" }}>{s.v}</p>
+                  <p className="t-caption mt-0.5" style={{ color: "var(--text-muted)" }}>{s.l}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="t-body px-1" style={{ color: "var(--text-muted)" }}>ابدأ أول جلسة، وسنعرض تقدمك هنا.</p>
+          )}
         </div>
 
-        {/* 🧭 خطوتك الآن — المذاكرة أولاً؛ الإداريّ فقط إن لا مهمّة دراسية (شيءٌ واحد) */}
-        {(studyStep || top) && (
-          <div>
-            <p className="eyebrow mb-2 px-1">🧭 خطوتك الآن</p>
-            {studyStep ? (
-              <button onClick={startStudy} className="w-full rounded-2xl p-4 flex items-center gap-3 text-right transition active:scale-[0.99]" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-                <span className="text-[26px] flex-shrink-0" aria-hidden="true">{studyStep.icon}</span>
-                <p className="t-body font-black flex-1 min-w-0 leading-snug" style={{ color: "var(--text)" }}>{studyStep.title}</p>
-              </button>
-            ) : top ? (
-              <Link href={top.href} className="rounded-2xl p-4 flex items-center gap-3 no-underline transition active:scale-[0.99]" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-                <span className="text-[26px] flex-shrink-0" aria-hidden="true">{top.icon}</span>
-                <p className="t-body font-black flex-1 min-w-0 leading-snug" style={{ color: "var(--text)" }}>{top.title}</p>
-              </Link>
-            ) : null}
-          </div>
-        )}
-
-        {/* 🧠 بطاقة الاختبار — اسم + باقٍ + «جاهز تبدأ؟» (بلا مؤشّرات) */}
-        {priority ? (
-          <div className="rounded-2xl p-5 flex flex-col items-center text-center gap-2" style={{ background: "var(--surface)", border: `1.5px solid ${priority.color}33` }}>
-            <div className="flex items-center gap-2">
-              <span className="text-[26px]" aria-hidden="true">{priority.icon ?? "🧠"}</span>
-              <span className="t-h3 font-black" style={{ color: "var(--text)" }}>{priority.label}</span>
-            </div>
-            {daysLeft != null && daysLeft > 0 && <span className="t-body font-bold" style={{ color: "var(--text-muted)" }}>{`باقي ${daysWord(daysLeft)}`}</span>}
-            {daysLeft === 0 && <span className="t-body font-bold" style={{ color: "var(--text-muted)" }}>موعدك اليوم · بالتوفيق</span>}
-            <span className="t-body font-bold" style={{ color: priority.color }}>جاهز تبدأ؟</span>
-          </div>
-        ) : (
-          <p className="t-body px-1" style={{ color: "var(--text-muted)" }}>لا اختبارات بعد — ستضيفها من الإعدادات لاحقاً.</p>
-        )}
-
-        {/* ▶ ابدأ المذاكرة — أكبر عنصرٍ في الصفحة */}
-        <button onClick={startStudy} disabled={!priority}
-          className="w-full rounded-3xl glow-blue transition active:scale-[0.98]"
-          style={{ background: "var(--accent)", color: "#fff", padding: "22px", opacity: priority ? 1 : 0.6, boxShadow: "0 10px 30px color-mix(in srgb, var(--accent) 45%, transparent)" }}>
-          <span className="block font-black" style={{ fontSize: "1.4rem" }}>▶ ابدأ المذاكرة</span>
+        {/* ▶ البطل الوحيد */}
+        <button onClick={goSession}
+          className="w-full rounded-3xl glow-blue transition active:scale-[0.98] mt-1"
+          style={{ background: "var(--accent)", color: "#fff", padding: "20px", boxShadow: "0 10px 30px color-mix(in srgb, var(--accent) 45%, transparent)" }}>
+          <span className="block font-black" style={{ fontSize: "1.35rem" }}>▶ ابدأ المذاكرة</span>
         </button>
 
-        {/* شريط الأقسام (أسفل) — تُفعّل صفحاتها في المراحل التالية */}
-        <div className="grid grid-cols-4 gap-2 mt-2">
-          {SECTIONS.map((s) => (
-            <button key={s.id} onClick={() => { setDevMsg(true); setTimeout(() => setDevMsg(false), 2400); }}
-              className="rounded-2xl py-4 flex flex-col items-center gap-1.5 transition active:scale-[0.97]" style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }}>
-              <span className="text-[22px]" aria-hidden="true">{s.icon}</span>
+        {/* مداخل الأقسام */}
+        <div className="grid grid-cols-4 gap-2 mt-1">
+          {[
+            { icon: "🗓️", label: "التقويم", go: () => router.push("/roadmap/calendar") },
+            { icon: "📈", label: "الإحصائيات", go: () => router.push("/roadmap/stats") },
+            { icon: "📚", label: "المصادر", go: () => router.push("/roadmap/resources") },
+            { icon: "⚙️", label: "الإعدادات", go: dev },
+          ].map((s) => (
+            <button key={s.label} onClick={s.go}
+              className="rounded-2xl py-3.5 flex flex-col items-center gap-1.5 transition active:scale-[0.97]"
+              style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }}>
+              <span className="text-[20px]" aria-hidden="true">{s.icon}</span>
               <span className="t-caption font-bold" style={{ color: "var(--text)" }}>{s.label}</span>
             </button>
           ))}
@@ -244,7 +208,6 @@ export default function RoadmapPage() {
         <PageFooter />
       </div>
 
-      {/* رسالة تطويرٍ لطيفة عند الضغط على قسمٍ لم يُبنَ بعد */}
       {devMsg && (
         <div className="fixed left-1/2 -translate-x-1/2 rounded-xl px-4 py-2.5 t-caption font-bold z-50 rise"
           style={{ bottom: "88px", background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)", boxShadow: "0 8px 24px rgba(0,0,0,.18)" }}>

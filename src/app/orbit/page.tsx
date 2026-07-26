@@ -447,7 +447,7 @@ export default function OrbitPage() {
           : `radial-gradient(ellipse 65% 45% at 50% 45%, ${strokeColor === "var(--accent)" ? "rgba(37,99,235,0.14)" : "rgba(245,158,11,0.12)"} 0%, transparent 70%)` }} />
 
       <Dome compact>
-        <h1 className="title-lg grad-title">تركيز {focusMins}/{breakMins}</h1>
+        <h1 className="title-lg grad-title">تركيز</h1>
       </Dome>
       <div className="h-4" />
 

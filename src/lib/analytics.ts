@@ -18,6 +18,7 @@ export type EventName =
   | "onboarding_completed"
   | "session_started"
   | "session_completed"
+  | "session_task_skipped"
   | "exam_started"
   | "exam_completed"
   | "exam_added"

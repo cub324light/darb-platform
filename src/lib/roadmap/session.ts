@@ -74,7 +74,9 @@ export function buildSessionPlan(
   if (i.activeErrors > 0 && mins - used >= cfg.minTaskMins) {
     const errMins = clampInt(mins - used, cfg.minTaskMins, mins - used);
     const errCount = Math.min(i.activeErrors, Math.max(2, Math.round(errMins / cfg.minTaskMins)));
-    tasks.push({ kind: "errors", label: `مراجعة ${errCount} من أخطائك السابقة`, goalMins: errMins });
+    const errWord = errCount === 1 ? "خطأ واحد" : errCount === 2 ? "خطأين"
+      : `${new Intl.NumberFormat("ar-EG-u-nu-arab").format(errCount)} ${errCount <= 10 ? "أخطاء" : "خطأً"}`;
+    tasks.push({ kind: "errors", label: `مراجعة ${errWord} من أخطائك السابقة`, goalMins: errMins });
     used += errMins;
   }
 
