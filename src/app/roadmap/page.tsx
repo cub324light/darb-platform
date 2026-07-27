@@ -42,21 +42,24 @@ function studyPctOf(subjects: { name: string }[] | undefined): number {
   return c.totalItems === 0 ? 0 : Math.round((c.doneItems / c.totalItems) * 100);
 }
 
-/* بطاقةُ شبكةٍ غنيّة: أيقونة + تسمية · قيمةٌ بارزة · سطرا معلومةٍ حقيقيّة */
+/* بطاقةُ شبكةٍ غنيّة — تسلسلٌ واحدٌ لا يتغيّر: رقاقة أيقونة ← تسمية ← قيمةٌ بارزة ← وصفٌ صغير.
+   ▸ الوزن البصريّ يأتي من الرقاقة والتنفّس والتباين، لا من نقطة خطٍّ زائدة: القيمة `t-h3`
+     (١.٢٢rem) تبقى دون زرّ «ابدأ المذاكرة» (١.٤٥rem) فلا تنقلب هرمية الصفحة.
+   ▸ `line-clamp-2` + `min-w-0` لأن عناوين أحداث التقويم نصٌّ حرٌّ من الطالب: بلا الحدّين
+     تمدّ الكلمةُ الطويلة عمود الشبكة وتكسر الصفّ. */
 function Tile({ icon, label, value, lines, tint, onClick }: {
   icon: string; label: string; value: string; lines: string[]; tint: string; onClick: () => void;
 }) {
   return (
-    <button onClick={onClick} className="ds-card ds-card-interactive flex flex-col text-right"
-      style={{ ["--tint" as string]: tint, minHeight: "116px", gap: "var(--sp-1, 4px)" }}>
-      <span className="flex items-center gap-1.5">
-        <span className="text-[17px]" aria-hidden="true">{icon}</span>
-        <span className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>{label}</span>
-      </span>
-      <span className="t-title font-black leading-snug" style={{ color: "var(--text)" }}>{value}</span>
+    <button onClick={onClick} className="ds-card ds-card-interactive ds-tile text-right min-w-0"
+      style={{ ["--tint" as string]: tint, minHeight: "148px" }}>
+      <span className="w-9 h-9 rounded-2xl grid place-items-center text-[20px] flex-shrink-0"
+        style={{ background: "color-mix(in srgb, var(--tint) 12%, var(--surface2))" }} aria-hidden="true">{icon}</span>
+      <span className="eyebrow" style={{ color: "var(--text-dim)" }}>{label}</span>
+      <span className="t-h3 font-black leading-snug line-clamp-2" style={{ color: "var(--text)" }}>{value}</span>
       <span className="flex flex-col gap-0.5 mt-auto">
         {lines.filter(Boolean).slice(0, 2).map((l, i) => (
-          <span key={i} className="t-caption leading-snug" style={{ color: i === 0 ? "var(--text-muted)" : "var(--text-dim)" }}>{l}</span>
+          <span key={i} className="t-caption leading-snug" style={{ color: "var(--text-muted)" }}>{l}</span>
         ))}
       </span>
     </button>
@@ -129,13 +132,18 @@ export default function RoadmapPage() {
   const totalTasks = plan?.tasks.length ?? 0;
   const allDone = totalTasks > 0 && doneToday >= totalTasks;
 
-  /* 🗓️ التقويم — ماذا عندي؟ */
+  /* 🗓️ التقويم — ماذا عندي؟ عنوانُ أقرب حدثٍ وحده هو القيمة (قصيرٌ يحتمل الخطّ الكبير)،
+     والظرف («اليوم»/«غداً») ينزل إلى الوصف مع الحدث الذي يليه — لا دمجَ في سطرٍ واحد. */
   const up = groupUpcoming(loadCalendar(), today);
+  const upNext = [...up.today, ...up.tomorrow, ...up.week];
+  const whenOf = (e: (typeof upNext)[number]) =>
+    up.today.includes(e) ? "اليوم" : up.tomorrow.includes(e) ? "غداً" : "هذا الأسبوع";
+  const nextEvent = upNext[0] ?? null;
+  const afterNext = upNext[1] ?? null;
   const calLines = [
-    up.today[0] ? `اليوم ${kindMeta(up.today[0].kind).icon} ${up.today[0].title}` : "",
-    up.tomorrow[0] ? `غداً ${kindMeta(up.tomorrow[0].kind).icon} ${up.tomorrow[0].title}` : "",
-    up.week[0] ? `هذا الأسبوع ${kindMeta(up.week[0].kind).icon} ${up.week[0].title}` : "",
-  ].filter(Boolean);
+    nextEvent ? whenOf(nextEvent) : "سجّل أحداث حياتك",
+    afterNext ? `ثمّ ${whenOf(afterNext)} ${kindMeta(afterNext.kind).icon} ${afterNext.title}` : "عرض التقويم ←",
+  ];
 
   /* 📚 المصادر — من أين أتعلم؟ (المستخدَمة فعلاً، وإلا أبرز الجهات) */
   const recentIds = recentResourceIds();
@@ -198,8 +206,8 @@ export default function RoadmapPage() {
                 <span key={m.l} className="flex flex-col items-center gap-0.5 px-1"
                   style={i > 0 ? { borderInlineStart: "1px solid var(--border)" } : undefined}>
                   <span className="text-[15px] leading-none" aria-hidden="true">{m.icon}</span>
-                  <span className="t-h3 font-black font-mono-nums leading-tight" style={{ color: "var(--text)" }}>{m.v}</span>
-                  <span className="t-caption text-center leading-tight" style={{ color: "var(--text-muted)", fontSize: "0.68rem" }}>{m.l}</span>
+                  <span className="t-h2 font-black font-mono-nums leading-tight" style={{ color: "var(--text)" }}>{m.v}</span>
+                  <span className="t-caption text-center leading-tight" style={{ color: "var(--text-dim)" }}>{m.l}</span>
                 </span>
               ))}
             </span>
@@ -215,8 +223,8 @@ export default function RoadmapPage() {
           <span className="w-11 h-11 rounded-2xl grid place-items-center text-[20px] flex-shrink-0"
             style={{ background: "color-mix(in srgb, var(--accent) 12%, var(--surface2))" }} aria-hidden="true">🎯</span>
           <span className="flex-1 min-w-0 flex flex-col gap-0.5">
-            <span className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>هدف اليوم</span>
-            <span className="t-title font-black leading-snug" style={{ color: "var(--text)" }}>
+            <span className="eyebrow" style={{ color: "var(--text-dim)" }}>هدف اليوم</span>
+            <span className="t-h3 font-black leading-snug" style={{ color: "var(--text)" }}>
               {plan?.available ? `${n(totalTasks)} مهام` : "يومك مشغول"}
             </span>
             <span className="t-caption leading-snug" style={{ color: "var(--text-muted)" }}>
@@ -246,8 +254,8 @@ export default function RoadmapPage() {
             onClick={openExam} />
 
           <Tile icon="🗓️" label="التقويم" tint="#3B82F6"
-            value={calLines[0] ?? "لا أحداث قريبة"}
-            lines={calLines.length > 1 ? [calLines[1], "عرض التقويم ←"] : [calLines.length === 1 ? "لا أحداث أخرى قريبة" : "سجّل أحداث حياتك", "عرض التقويم ←"]}
+            value={nextEvent ? nextEvent.title : "لا أحداث قريبة"}
+            lines={calLines}
             onClick={() => router.push("/roadmap/calendar")} />
 
           <Tile icon="📚" label="المصادر" tint="#10B981"
