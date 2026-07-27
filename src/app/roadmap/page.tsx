@@ -141,7 +141,7 @@ export default function RoadmapPage() {
   const recentIds = recentResourceIds();
   const shortOf = (l: { name: string; short?: string }) => l.short ?? l.name;
   const usedNames = recentIds.map((id) => OFFICIAL_LINKS.find((l) => l.id === id)).filter(Boolean).map((l) => shortOf(l!));
-  const shownNames = (usedNames.length > 0 ? usedNames : OFFICIAL_LINKS.map(shortOf)).slice(0, 2);
+  const shownNames = (usedNames.length > 0 ? usedNames : OFFICIAL_LINKS.map(shortOf)).slice(0, 3);
   const restCount = Math.max(0, OFFICIAL_LINKS.length - shownNames.length);
 
   const openExam = () => { if (priority) setSel({ kind: priority.kind, id: priority.id }); else setDevToast(); };
@@ -247,17 +247,20 @@ export default function RoadmapPage() {
 
           <Tile icon="🗓️" label="التقويم" tint="#3B82F6"
             value={calLines[0] ?? "لا أحداث قريبة"}
-            lines={calLines.length > 1 ? [calLines[1], "عرض التقويم ←"] : ["سجّل أحداث حياتك", "عرض التقويم ←"]}
+            lines={calLines.length > 1 ? [calLines[1], "عرض التقويم ←"] : [calLines.length === 1 ? "لا أحداث أخرى قريبة" : "سجّل أحداث حياتك", "عرض التقويم ←"]}
             onClick={() => router.push("/roadmap/calendar")} />
 
           <Tile icon="📚" label="المصادر" tint="#10B981"
             value={shownNames[0] ?? "الجهات الرسمية"}
-            lines={[shownNames[1] ?? "", restCount > 0 ? `+${n(restCount)} مصدر آخر` : "افتح المواقع الرسمية ↗"]}
+            lines={[shownNames.slice(1).join("، "), restCount > 0 ? "+ باقي المصادر ←" : "افتح المواقع الرسمية ↗"]}
             onClick={() => router.push("/roadmap/resources")} />
         </div>
 
         {/* ▶ البطل — أضخم عنصرٍ في الصفحة */}
-        <button onClick={() => router.push("/roadmap/session")}
+        <button onClick={() => {
+            const subj = plan?.tasks[0]?.subject ?? counts.weakestSubject ?? "";
+            router.push(`/orbit?from=masari&auto=1${subj ? `&subject=${encodeURIComponent(subj)}` : ""}`);
+          }}
           className="w-full transition active:scale-[0.98] rise rise-4"
           style={{
             background: "linear-gradient(135deg, var(--accent), var(--accent-hi, var(--accent-light)))",
@@ -266,7 +269,7 @@ export default function RoadmapPage() {
           }}>
           <span className="block font-black" style={{ fontSize: "1.45rem", letterSpacing: "0" }}>▶ ابدأ المذاكرة</span>
           <span className="block t-caption font-bold mt-1.5" style={{ color: "rgba(255,255,255,.86)" }}>
-            {plan?.available ? (allDone ? "أنهيت مهامّ اليوم — راجع أو أضف جلسة" : "جلسة اليوم جاهزة") : "افتح جلستك"}
+            {plan?.available ? (allDone ? "أنهيت مهامّ اليوم — جلسةٌ إضافية؟" : "تبدأ جلسة تركيزٍ الآن") : "افتح جلستك"}
           </span>
         </button>
 

@@ -6,7 +6,9 @@ import PageGuide from "@/components/PageGuide";
 import Confetti from "@/components/Confetti";
 import { subjectsForTracks, getTrack } from "@/lib/tracks";
 import type { TrackId, Track } from "@/lib/tracks";
+import { useRouter } from "next/navigation";
 import { activeTrackIds, loadStats, recordSession, loadSessionLog, type SessionLogEntry } from "@/lib/storage";
+import { appendSession } from "@/lib/roadmap/sessionStore";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { trackEvent } from "@/lib/analytics";
 
@@ -55,10 +57,10 @@ function durationLabel(mins: number): string {
 /* أرقامٌ عربية-هندية (قاعدة الخطوط) */
 const arNum = (x: number): string => new Intl.NumberFormat("ar-EG-u-nu-arab").format(x);
 
-/* صيغة الدقائق حسب العدد: 3-10 → دقائق، غير ذلك → دقيقة */
+/* صيغة الدقائق حسب العدد: 3-10 → دقائق، غير ذلك → دقيقة (بأرقامٍ عربية-هندية) */
 function arabicMins(n: number): string {
-  if (n >= 3 && n <= 10) return `${n} دقائق`;
-  return `${n} دقيقة`;
+  if (n >= 3 && n <= 10) return `${arNum(n)} دقائق`;
+  return `${arNum(n)} دقيقة`;
 }
 
 /* ─── متجر الثواني (Timer Store) ───
@@ -192,6 +194,19 @@ function saveDurPref(p: DurPref): void {
 }
 
 export default function OrbitPage() {
+  const router = useRouter();
+  /* تسليمٌ من مساري: «ابدأ المذاكرة» يبدأ جلسة تركيزٍ حقيقية (نظام توقيتٍ واحد لا اثنان).
+     يُقرأ بعد التركيب (لا في مُهيّئ الحالة) لأن العرض الأوّل يجري على الخادم بلا window. */
+  const [handoff, setHandoff] = useState({ from: "", subject: "", auto: false });
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const from = q.get("from") ?? "";
+    if (!from && q.get("auto") !== "1") return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHandoff({ from, subject: q.get("subject") ?? "", auto: q.get("auto") === "1" });
+  }, []);
+  const fromMasari = handoff.from === "masari";
+
   const [phase, setPhase]           = useState<Phase>("idle");
   const [durMode, setDurMode]       = useState<DurMode>(() => loadDurPref()?.mode ?? "50");
   const [customMins, setCustomMins] = useState(() => loadDurPref()?.custom ?? 50);
@@ -304,6 +319,18 @@ export default function OrbitPage() {
     setPhase("focus"); timer.set(focusSecs);
   }, [focusSecs, timer]);
 
+  /* تسليمٌ من مساري: إن كانت المدّة محفوظةً سابقاً نبدأ فوراً بلا سؤال؛
+     وإلا يظهر مُنتقي المدّة أوّلاً ثم تبدأ الجلسة بعد اختياره. */
+  const autoStartedRef = useRef(false);
+  useEffect(() => {
+    if (!handoff.auto || autoStartedRef.current) return;
+    if (askDur || phase !== "idle") return;
+    autoStartedRef.current = true;
+    /* مزامنةٌ مع نيّةٍ خارجية (وسيط العنوان) لا حلقة رسم: تبدأ مرّةً واحدة بحارس ref */
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    startFocus();
+  }, [handoff.auto, askDur, phase, startFocus]);
+
   const startBreak = useCallback(() => {
     endAtRef.current = Date.now() + breakSecs * 1000;
     setPhase("break"); timer.set(breakSecs);
@@ -313,11 +340,16 @@ export default function OrbitPage() {
     setTotalFocusMins(s.todayFocusMins);
     setSessionsToday((p) => p + 1);
     setSessionLog(loadSessionLog());
-    trackEvent("session_completed", { focusMins, silver: s.earned });
+    trackEvent("session_completed", { focusMins, silver: s.earned, source: fromMasari ? "masari" : "orbit" });
+    /* سجلّ مساري — يغذّي الإحصائيات والجاهزية (مصدرٌ واحد للجلسات) */
+    appendSession({ id: `${Date.now()}`, examId: handoff.from === "masari" ? "masari" : "orbit",
+      subject, taskKind: "review", startedAt: Date.now() - focusMins * 60000, durationMins: focusMins });
     playBeep();
     vibrate([100, 50, 100]);
     notify("انتهت جلسة التركيز", `أحسنت! خذ راحة ${arabicMins(calcBreak(focusMins))}`);
-  }, [focusMins, breakSecs, subject, timer, playBeep, notify, vibrate]);
+    /* جاء من مساري ⇒ شاشة النجاح ثم الرجوع إلى «الآن» */
+    if (fromMasari) router.push(`/roadmap/session?done=${focusMins}`);
+  }, [focusMins, breakSecs, subject, timer, playBeep, notify, vibrate, fromMasari, handoff.from, router]);
 
   const finishBreak = useCallback(() => {
     setPhase("done"); playBeep();

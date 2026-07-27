@@ -1,14 +1,14 @@
 "use client";
 /* ═══════════ 🎯 ماذا ستفعل اليوم؟ — جلسة المذاكرة (V2) ═══════════
    أهم شاشةٍ في درب: مدرّبٌ شخصيّ لا قائمة مهام. التدفّق:
-   الخطة (مدة كبيرة + مهامّ بأسباب + تخطٍّ بسبب + Sticky CTA) ← الجلسة (مهمةٌ واحدة + مؤقّت)
-   ← النجاح (إنجازٌ هادئ: الاستغراق الفعليّ + ما بقي). كل الحساب في المحرّكات النقيّة
-   (buildSessionPlan · remainingSteps)؛ الوقت يُسجَّل عبر recordSession وسجلّ الجلسات. */
-import { useEffect, useRef, useState } from "react";
+   الخطة (مهامّ بأسباب + تخطٍّ بسبب + Sticky CTA) ← «ابدأ الآن» يسلّم الجلسة إلى صفحة
+   ⏱️ التركيز (نظام توقيتٍ واحدٌ للتطبيق كلّه، لا مؤقّتان) ← عند انتهائها تعود إلى هنا
+   بـ?done=N فتظهر شاشة النجاح (الاستغراق الفعليّ + ما بقي) ثم «العودة إلى الآن».
+   كل الحساب في المحرّكات النقيّة (buildSessionPlan · remainingSteps). */
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { loadUser, ensureWorkspace, recordSession } from "@/lib/storage";
+import { loadUser, ensureWorkspace } from "@/lib/storage";
 import { buildSessionPlan, type SessionPlan, type SessionTask } from "@/lib/roadmap/session";
-import { appendSession } from "@/lib/roadmap/sessionStore";
 import { remainingSteps } from "@/lib/roadmap/remainingSteps";
 import { readPriorityExam, countRemaining, vaultCount, readTodayAvailability, type PriorityExam } from "@/lib/roadmap/nowRead";
 import { loadRoadmapConfig } from "@/lib/roadmap/store";
@@ -16,7 +16,7 @@ import { ROADMAP_TUNING } from "@/lib/roadmap/config";
 import { trackEvent } from "@/lib/analytics";
 import { n } from "@/lib/format";
 
-type Stage = "plan" | "active" | "done";
+type Stage = "plan" | "done";
 const TASK_ICON: Record<SessionTask["kind"], string> = { review: "📖", drill: "📝", errors: "❌" };
 const SKIP_REASONS = [
   { id: "cant-now", label: "لا أستطيع الآن" },
@@ -32,14 +32,6 @@ function reasonOf(t: SessionTask, weakest: string | null, subjects: string[]): s
   if (t.kind === "drill") return "لأن التدريب يثبّت ما راجعته اليوم.";
   return "";
 }
-
-const mmss = (secs: number) => {
-  const m = Math.floor(secs / 60), s = secs % 60;
-  const two = (x: number) => new Intl.NumberFormat("ar-EG-u-nu-arab", { minimumIntegerDigits: 2 }).format(x);
-  return `${two(m)}:${two(s)}`;
-};
-const taskSecs = (t: SessionTask) =>
-  (t.goalMins ?? Math.max(ROADMAP_TUNING.session.minTaskMins, (t.goalCount ?? 0) * ROADMAP_TUNING.session.drillPerQuestionMins)) * 60;
 
 export default function SessionPage() {
   const router = useRouter();
@@ -64,20 +56,13 @@ export default function SessionPage() {
     });
   });
 
-  const [stage, setStage] = useState<Stage>("plan");
+  /* عائدٌ من التركيز؟ ?done=N ⇒ شاشة النجاح بالمدّة الفعليّة التي سجّلها التركيز */
+  const [doneMins] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    return Number(new URLSearchParams(window.location.search).get("done")) || 0;
+  });
+  const [stage] = useState<Stage>(() => (doneMins > 0 ? "done" : "plan"));
   const [skipIdx, setSkipIdx] = useState<number | null>(null);
-  const [taskIdx, setTaskIdx] = useState(0);
-  const [secsLeft, setSecsLeft] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const [actualMins, setActualMins] = useState(0);
-  const taskStartRef = useRef(0);
-
-  /* المؤقّت — عدٌّ تنازليّ يتوقف عند الإيقاف المؤقّت (لا يُنهي المهمة تلقائياً — الطالب يقرّر) */
-  useEffect(() => {
-    if (stage !== "active" || paused) return;
-    const iv = setInterval(() => setSecsLeft((s) => Math.max(0, s - 1)), 1000);
-    return () => clearInterval(iv);
-  }, [stage, paused, taskIdx]);
 
   if (!exam || !plan) {
     return (
@@ -92,28 +77,12 @@ export default function SessionPage() {
 
   const tasks = plan.tasks;
 
+  /* «ابدأ الآن» — تسليمٌ إلى ⏱️ التركيز (نظام التوقيت الوحيد)، ويعود بـ?done=N */
   const startSession = () => {
     if (tasks.length === 0) return;
-    trackEvent("session_started", { source: "masari", tasks: tasks.length, plannedMins: plan.totalMins });
-    setTaskIdx(0); setSecsLeft(taskSecs(tasks[0])); setPaused(false);
-    taskStartRef.current = Date.now();
-    setStage("active");
-  };
-
-  /* إنهاء المهمة الحالية: تسجيل الوقت الفعليّ (سجلّ الجلسات + الإحصاءات) ثم التالية/النجاح */
-  const finishTask = () => {
-    const t = tasks[taskIdx];
-    const elapsedMins = Math.max(1, Math.round((Date.now() - taskStartRef.current) / 60000));
-    appendSession({ id: `${Date.now()}`, examId: exam.id, subject: t.subject, taskKind: t.kind, startedAt: taskStartRef.current, durationMins: elapsedMins });
-    recordSession(elapsedMins, t.subject);
-    setActualMins((m) => m + elapsedMins);
-    if (taskIdx + 1 < tasks.length) {
-      setTaskIdx((i) => i + 1); setSecsLeft(taskSecs(tasks[taskIdx + 1])); setPaused(false);
-      taskStartRef.current = Date.now();
-    } else {
-      trackEvent("session_completed", { source: "masari", focusMins: actualMins + elapsedMins });
-      setStage("done");
-    }
+    trackEvent("session_started", { source: "masari", tasks: tasks.length });
+    const subj = tasks[0]?.subject ?? "";
+    router.push(`/orbit?from=masari&auto=1${subj ? `&subject=${encodeURIComponent(subj)}` : ""}`);
   };
 
   /* تخطٍّ بسبب: استبدالٌ إن طلب (مادةٌ أخرى للمراجعة/التدريب)، وإلا حذفٌ — ودويرب يتعلّم */
@@ -159,7 +128,7 @@ export default function SessionPage() {
               style={{ background: "color-mix(in srgb, var(--success) 13%, transparent)", color: "var(--success)" }}>✓</div>
             <h1 className="t-h2 font-black mt-6" style={{ color: "var(--text)" }}>أحسنت.</h1>
             <p className="t-body mt-1.5" style={{ color: "var(--text-muted)" }}>أنهيت جلسة اليوم.</p>
-            <p className="t-display font-black font-mono-nums mt-5" style={{ color: "var(--text)" }}>{n(actualMins)} دقيقة</p>
+            <p className="t-display font-black font-mono-nums mt-5" style={{ color: "var(--text)" }}>{n(doneMins)} دقيقة</p>
             {rest.length > 0 && (
               <div className="mt-6">
                 <p className="t-caption font-black" style={{ color: "var(--text)" }}>بقي عليك</p>
@@ -177,42 +146,6 @@ export default function SessionPage() {
     );
   }
 
-  /* ── ٢) الجلسة النشطة — مهمةٌ واحدة، لا شيء غيرها ── */
-  if (stage === "active") {
-    const t = tasks[taskIdx];
-    return (
-      <div className="min-h-dvh pb-nav relative z-[1] page-enter">
-        <div className="max-w-xl mx-auto w-full px-5 pt-6 flex flex-col" style={{ minHeight: "88dvh" }}>
-          <div className="flex items-center justify-between">
-            <button onClick={() => setStage("plan")} className="t-body font-bold" style={{ color: "var(--text-muted)" }}>← إنهاء</button>
-            <span className="t-caption font-black px-4 py-1.5 rounded-full font-mono-nums"
-              style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}>
-              {n(taskIdx + 1)} / {n(tasks.length)}
-            </span>
-          </div>
-          <div className="flex-1 flex flex-col items-center justify-center text-center -mt-8">
-            <span className="text-[40px]" aria-hidden="true">{TASK_ICON[t.kind]}</span>
-            <h1 className="t-h3 font-black mt-3.5" style={{ color: "var(--text)" }}>{t.label}</h1>
-            {reasonOf(t, counts.weakestSubject, exam.subjects.map((s) => s.name)) && (
-              <p className="t-caption mt-2" style={{ color: "var(--text-muted)" }}>{reasonOf(t, counts.weakestSubject, exam.subjects.map((s) => s.name))}</p>
-            )}
-            <p className="font-black font-mono-nums mt-9" style={{ color: paused ? "var(--text-muted)" : "var(--text)", fontSize: "var(--fs-display, 3.6rem)", lineHeight: 1 }}>
-              {mmss(secsLeft)}
-            </p>
-            {t.goalCount != null && <p className="t-caption mt-2" style={{ color: "var(--text-dim)" }}>الهدف: {n(t.goalCount)} سؤالاً</p>}
-          </div>
-          <div className="mb-8 flex flex-col gap-2.5">
-            <button onClick={finishTask} className="btn-primary glow-blue w-full">إنهاء المهمة ✓</button>
-            <button onClick={() => setPaused((p) => !p)} className="w-full rounded-2xl py-3.5 t-body font-bold"
-              style={{ background: "transparent", color: "var(--text-muted)", border: "1.5px solid var(--border)" }}>
-              {paused ? "متابعة" : "إيقاف مؤقت"}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   /* ── ١) الخطة — «ماذا ستفعل اليوم؟» ── */
   return (
     <div className="min-h-dvh relative z-[1] page-enter">
@@ -222,10 +155,11 @@ export default function SessionPage() {
         <h1 className="t-h2 font-black mt-5" style={{ color: "var(--text)" }}>🎯 ماذا ستفعل اليوم؟</h1>
         <p className="t-body mt-1.5" style={{ color: "var(--text-muted)" }}>جهّزت لك جلسة على قدّ يومك.</p>
 
-        {/* مدة الجلسة — البطل الرقميّ الوحيد */}
+        {/* ما ستنجزه — البطل الرقميّ الوحيد. المدّة ليست هنا: هي تفضيلٌ محفوظٌ في ⏱️ التركيز،
+            فلو أعلنّا رقماً هنا لناقض المؤقّت الحقيقيّ الذي سيبدأ بعد «ابدأ الآن». */}
         <div className="rounded-3xl mt-5 py-5 text-center" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-          <p className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>مدة الجلسة</p>
-          <p className="t-display font-black font-mono-nums mt-0.5" style={{ color: "var(--text)" }}>{n(plan.totalMins)} دقيقة</p>
+          <p className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>جلسة اليوم</p>
+          <p className="t-display font-black font-mono-nums mt-0.5" style={{ color: "var(--text)" }}>{n(tasks.length)} مهام</p>
         </div>
 
         {/* وقتٌ محدود ⇒ المحرّك أعاد البناء فعلاً */}
@@ -267,7 +201,7 @@ export default function SessionPage() {
         <div className="max-w-xl mx-auto w-full">
           <p className="t-caption text-center" style={{ color: "var(--text-muted)" }}>{plan.motivation}</p>
           <p className="t-caption font-black text-center mt-1 mb-3" style={{ color: "var(--text)" }}>
-            {n(tasks.length)} مهام و{n(plan.totalMins)} دقيقة
+            {n(tasks.length)} مهام — تبدأ بجلسة تركيز
           </p>
           <button onClick={startSession}
             className="w-full rounded-2xl transition active:scale-[0.98]"
