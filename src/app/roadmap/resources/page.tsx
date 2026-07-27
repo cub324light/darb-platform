@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { OFFICIAL_LINKS, LINK_CATEGORY_LABEL, LINK_CATEGORY_ORDER, searchLinks, type LinkCategory } from "@/lib/officialLinks";
+import { recordResourceUse } from "@/lib/roadmap/resourceUse";
 import { n } from "@/lib/format";
 
 export default function ResourcesPage() {
@@ -36,7 +37,7 @@ export default function ResourcesPage() {
                   <div key={l.id} className="rounded-2xl p-4" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
                     <p className="t-title font-black" style={{ color: "var(--text)" }}>{l.name}</p>
                     <p className="t-caption mt-1 leading-relaxed" style={{ color: "var(--text-muted)" }}>{l.desc}</p>
-                    <a href={l.url} target="_blank" rel="noopener noreferrer"
+                    <a href={l.url} target="_blank" rel="noopener noreferrer" onClick={() => recordResourceUse(l.id)}
                       className="inline-block t-caption font-black px-3.5 py-2 rounded-xl mt-3 no-underline"
                       style={{ color: "var(--accent-light)", border: "1.5px solid color-mix(in srgb, var(--accent) 35%, var(--border))" }}>
                       فتح الموقع الرسمي ↗

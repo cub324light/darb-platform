@@ -52,6 +52,9 @@ function durationLabel(mins: number): string {
   return `${hText}\nو${m} د`;
 }
 
+/* أرقامٌ عربية-هندية (قاعدة الخطوط) */
+const arNum = (x: number): string => new Intl.NumberFormat("ar-EG-u-nu-arab").format(x);
+
 /* صيغة الدقائق حسب العدد: 3-10 → دقائق، غير ذلك → دقيقة */
 function arabicMins(n: number): string {
   if (n >= 3 && n <= 10) return `${n} دقائق`;
@@ -175,10 +178,25 @@ function LiveCountdown({ store }: { store: TimerStore }) {
   return <>{m}:{String(s).padStart(2, "0")}</>;
 }
 
+/* تفضيل مدّة الجلسة — يُسأل الطالب مرّةً واحدة ثم يُحفظ (المدّة وظيفة هذه الصفحة وحدها). */
+const DUR_PREF_KEY = "darb_focus_duration";
+interface DurPref { mode: DurMode; custom: number }
+function loadDurPref(): DurPref | null {
+  if (typeof window === "undefined") return null;
+  try { const raw = localStorage.getItem(DUR_PREF_KEY); const p = raw ? JSON.parse(raw) : null;
+    return p && typeof p.mode === "string" ? { mode: p.mode as DurMode, custom: Number(p.custom) || 50 } : null; }
+  catch { return null; }
+}
+function saveDurPref(p: DurPref): void {
+  try { localStorage.setItem(DUR_PREF_KEY, JSON.stringify(p)); } catch { /* تجاهل */ }
+}
+
 export default function OrbitPage() {
   const [phase, setPhase]           = useState<Phase>("idle");
-  const [durMode, setDurMode]       = useState<DurMode>("50");
-  const [customMins, setCustomMins] = useState(50);
+  const [durMode, setDurMode]       = useState<DurMode>(() => loadDurPref()?.mode ?? "50");
+  const [customMins, setCustomMins] = useState(() => loadDurPref()?.custom ?? 50);
+  /* أول دخول: نسأل عن المدّة الافتراضية مرّةً واحدة، ثم لا نسأل بعدها */
+  const [askDur, setAskDur] = useState(() => (typeof window === "undefined" ? false : loadDurPref() === null));
   const [customEditing, setCustomEditing] = useState(false);
   const [customInput, setCustomInput]     = useState("50");
   const [showEdit, setShowEdit]           = useState(false);
@@ -414,6 +432,15 @@ export default function OrbitPage() {
     const clamped = Math.max(5, Math.min(360, Math.round(val / 5) * 5));
     setCustomMins(clamped);
     setCustomInput(String(clamped));
+    saveDurPref({ mode: "custom", custom: clamped });
+  };
+
+  /* أول دخول: يختار مدّته الافتراضية مرّةً واحدة ثم تُحفظ */
+  const pickDefaultDur = (mode: DurMode) => {
+    setDurMode(mode);
+    saveDurPref({ mode, custom: customMins });
+    setAskDur(false);
+    if (mode === "custom") setShowEdit(true);
   };
 
   const currentColor = subjects.find(s => s.name === subject)?.color ?? "var(--accent)";
@@ -527,14 +554,39 @@ export default function OrbitPage() {
           </div>
         )}
 
+        {/* أوّل دخول: اختيار مدّة الجلسة الافتراضية — يُسأل مرّةً واحدة ثم تُحفظ */}
+        {phase === "idle" && askDur && (
+          <div className="w-full max-w-xs mb-5 rounded-2xl p-4 flex flex-col gap-3 rise"
+            style={{ background: "var(--surface)", border: "1.5px solid color-mix(in srgb, var(--accent) 30%, var(--border))" }}>
+            <div>
+              <p className="t-title font-black" style={{ color: "var(--text)" }}>اختر مدة الجلسة الافتراضية</p>
+              <p className="t-caption mt-1 leading-relaxed" style={{ color: "var(--text-muted)" }}>نحفظها لك، ونستخدمها في كل جلسة — تقدر تغيّرها متى شئت.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {(["25", "50", "90"] as DurMode[]).map((v) => (
+                <button key={v} onClick={() => pickDefaultDur(v)}
+                  className="py-3 rounded-xl t-body font-black transition active:scale-[0.97]"
+                  style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
+                  {arNum(Number(v))} دقيقة
+                </button>
+              ))}
+              <button onClick={() => pickDefaultDur("custom")}
+                className="py-3 rounded-xl t-body font-black transition active:scale-[0.97]"
+                style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
+                مدة مخصصة
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* لوحة التعديل — idle فقط */}
-        {phase === "idle" && (
+        {phase === "idle" && !askDur && (
           <div className="w-full max-w-xs mb-5">
             <button
               onClick={() => { if (!showEdit) setPrevDur({mode: durMode, custom: customMins}); setShowEdit((v) => !v); }}
               className="w-full py-3 rounded-2xl text-sm font-bold transition"
               style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
-              {showEdit ? "إخفاء ↑" : "تعديل المدة ↓"}
+              {showEdit ? "إخفاء ↑" : "✏️ تعديل المدة"}
             </button>
 
             {showEdit && (
@@ -543,7 +595,7 @@ export default function OrbitPage() {
                 {/* الخيارات */}
                 <div className="flex gap-2">
                   {(["25", "50", "90"] as DurMode[]).map((v) => (
-                    <button key={v} onClick={() => setDurMode(v)}
+                    <button key={v} onClick={() => { setDurMode(v); saveDurPref({ mode: v, custom: customMins }); }}
                       className="flex-1 py-2.5 rounded-xl text-sm font-bold transition"
                       style={durMode === v
                         ? { background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }
@@ -551,7 +603,7 @@ export default function OrbitPage() {
                       {v} د
                     </button>
                   ))}
-                  <button onClick={() => setDurMode("custom")}
+                  <button onClick={() => { setDurMode("custom"); saveDurPref({ mode: "custom", custom: customMins }); }}
                     className="flex-1 py-2.5 rounded-xl text-sm font-bold transition"
                     style={durMode === "custom"
                       ? { background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }

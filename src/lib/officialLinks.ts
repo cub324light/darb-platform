@@ -8,7 +8,8 @@ export type LinkCategory = "assessment" | "ministry" | "universities" | "program
 
 export interface OfficialLink {
   id: string;
-  name: string;      // اسم الجهة
+  name: string;      // اسم الجهة (كاملاً — لصفحة المصادر)
+  short?: string;    // اسمٌ قصير للبطاقات الضيّقة (مساري)
   desc: string;      // وصفٌ بسيط
   url: string;       // النطاق الرسميّ
   category: LinkCategory;
@@ -23,23 +24,23 @@ export const LINK_CATEGORY_LABEL: Record<LinkCategory, string> = {
 
 /* نطاقاتٌ رسميةٌ مستقرّة وموثّقة. (تُوسَّع لاحقاً بروابطَ يؤكّدها المالك.) */
 export const OFFICIAL_LINKS: OfficialLink[] = [
-  { id: "etec",  name: "قياس (هيئة تقويم التعليم والتدريب)", desc: "التسجيل في القدرات والتحصيلي ونتائجها.", url: "https://etec.gov.sa", category: "assessment" },
-  { id: "moe",   name: "وزارة التعليم", desc: "البوابة الرسمية لوزارة التعليم.", url: "https://moe.gov.sa", category: "ministry" },
+  { id: "etec",  name: "قياس (هيئة تقويم التعليم والتدريب)", short: "قياس", desc: "التسجيل في القدرات والتحصيلي ونتائجها.", url: "https://etec.gov.sa", category: "assessment" },
+  { id: "moe",   name: "وزارة التعليم", short: "وزارة التعليم", desc: "البوابة الرسمية لوزارة التعليم.", url: "https://moe.gov.sa", category: "ministry" },
 
-  { id: "kfu",     name: "جامعة الملك فيصل", desc: "الأحساء — القبول والبرامج الأكاديمية.", url: "https://kfu.edu.sa", category: "universities" },
-  { id: "iau",     name: "جامعة الإمام عبدالرحمن بن فيصل", desc: "الدمام — القبول والبرامج.", url: "https://iau.edu.sa", category: "universities" },
-  { id: "kfupm",   name: "جامعة الملك فهد للبترول والمعادن", desc: "الظهران — الهندسة والحاسب والعلوم.", url: "https://kfupm.edu.sa", category: "universities" },
-  { id: "ksu",     name: "جامعة الملك سعود", desc: "الرياض — القبول والبرامج.", url: "https://ksu.edu.sa", category: "universities" },
-  { id: "uqu",     name: "جامعة أم القرى", desc: "مكة المكرمة — القبول والبرامج.", url: "https://uqu.edu.sa", category: "universities" },
-  { id: "qu",      name: "جامعة القصيم", desc: "القصيم — القبول والبرامج.", url: "https://qu.edu.sa", category: "universities" },
-  { id: "taibahu", name: "جامعة طيبة", desc: "المدينة المنورة — القبول والبرامج.", url: "https://taibahu.edu.sa", category: "universities" },
-  { id: "jazanu",  name: "جامعة جازان", desc: "جازان — القبول والبرامج.", url: "https://jazanu.edu.sa", category: "universities" },
-  { id: "ut",      name: "جامعة تبوك", desc: "تبوك — القبول والبرامج.", url: "https://ut.edu.sa", category: "universities" },
-  { id: "nu",      name: "جامعة نجران", desc: "نجران — القبول والبرامج.", url: "https://nu.edu.sa", category: "universities" },
+  { id: "kfu",     name: "جامعة الملك فيصل", short: "الملك فيصل", desc: "الأحساء — القبول والبرامج الأكاديمية.", url: "https://kfu.edu.sa", category: "universities" },
+  { id: "iau",     name: "جامعة الإمام عبدالرحمن بن فيصل", short: "الإمام عبدالرحمن", desc: "الدمام — القبول والبرامج.", url: "https://iau.edu.sa", category: "universities" },
+  { id: "kfupm",   name: "جامعة الملك فهد للبترول والمعادن", short: "الملك فهد", desc: "الظهران — الهندسة والحاسب والعلوم.", url: "https://kfupm.edu.sa", category: "universities" },
+  { id: "ksu",     name: "جامعة الملك سعود", short: "الملك سعود", desc: "الرياض — القبول والبرامج.", url: "https://ksu.edu.sa", category: "universities" },
+  { id: "uqu",     name: "جامعة أم القرى", short: "أم القرى", desc: "مكة المكرمة — القبول والبرامج.", url: "https://uqu.edu.sa", category: "universities" },
+  { id: "qu",      name: "جامعة القصيم", short: "القصيم", desc: "القصيم — القبول والبرامج.", url: "https://qu.edu.sa", category: "universities" },
+  { id: "taibahu", name: "جامعة طيبة", short: "طيبة", desc: "المدينة المنورة — القبول والبرامج.", url: "https://taibahu.edu.sa", category: "universities" },
+  { id: "jazanu",  name: "جامعة جازان", short: "جازان", desc: "جازان — القبول والبرامج.", url: "https://jazanu.edu.sa", category: "universities" },
+  { id: "ut",      name: "جامعة تبوك", short: "تبوك", desc: "تبوك — القبول والبرامج.", url: "https://ut.edu.sa", category: "universities" },
+  { id: "nu",      name: "جامعة نجران", short: "نجران", desc: "نجران — القبول والبرامج.", url: "https://nu.edu.sa", category: "universities" },
 
-  { id: "aramco", name: "أرامكو السعودية", desc: "برامج التوظيف والتحضير الجامعي (CPC).", url: "https://aramco.com", category: "programs" },
-  { id: "sabic",  name: "سابك", desc: "برامج التوظيف والتدريب.", url: "https://sabic.com", category: "programs" },
-  { id: "neom",   name: "نيوم", desc: "الفرص والبرامج والوظائف.", url: "https://neom.com", category: "programs" },
+  { id: "aramco", name: "أرامكو السعودية", short: "أرامكو", desc: "برامج التوظيف والتحضير الجامعي (CPC).", url: "https://aramco.com", category: "programs" },
+  { id: "sabic",  name: "سابك", short: "سابك", desc: "برامج التوظيف والتدريب.", url: "https://sabic.com", category: "programs" },
+  { id: "neom",   name: "نيوم", short: "نيوم", desc: "الفرص والبرامج والوظائف.", url: "https://neom.com", category: "programs" },
 ];
 
 /* ترتيب عرض التصنيفات */

@@ -22,8 +22,12 @@ import { remainingSteps } from "@/lib/roadmap/remainingSteps";
 import { computeStats } from "@/lib/roadmap/stats";
 import { loadSessions } from "@/lib/roadmap/sessionStore";
 import { OFFICIAL_LINKS } from "@/lib/officialLinks";
+import { recentResourceIds } from "@/lib/roadmap/resourceUse";
+import { loadCalendar } from "@/lib/roadmap/calendarStore";
+import { groupUpcoming, kindMeta } from "@/lib/roadmap/calendar";
 import {
-  readPriorityExam, countRemaining, vaultCount, readTodayAvailability, readDailySignals, solvedQuestions,
+  readPriorityExam, countRemaining, vaultCount, readTodayAvailability, readDailySignals,
+  solvedQuestions, tasksDoneToday,
 } from "@/lib/roadmap/nowRead";
 import { loadRoadmapConfig } from "@/lib/roadmap/store";
 import { daysBetween } from "@/lib/roadmap/metrics";
@@ -120,6 +124,26 @@ export default function RoadmapPage() {
   const solved = solvedQuestions();
   const hasWeek = stats.week.hours > 0 || stats.week.sessions > 0 || solved > 0;
 
+  /* 🎯 هدف اليوم — ماذا سأفعل؟ (بلا مدّة: المدّة وظيفة صفحة التركيز) */
+  const doneToday = tasksDoneToday();
+  const totalTasks = plan?.tasks.length ?? 0;
+  const allDone = totalTasks > 0 && doneToday >= totalTasks;
+
+  /* 🗓️ التقويم — ماذا عندي؟ */
+  const up = groupUpcoming(loadCalendar(), today);
+  const calLines = [
+    up.today[0] ? `اليوم ${kindMeta(up.today[0].kind).icon} ${up.today[0].title}` : "",
+    up.tomorrow[0] ? `غداً ${kindMeta(up.tomorrow[0].kind).icon} ${up.tomorrow[0].title}` : "",
+    up.week[0] ? `هذا الأسبوع ${kindMeta(up.week[0].kind).icon} ${up.week[0].title}` : "",
+  ].filter(Boolean);
+
+  /* 📚 المصادر — من أين أتعلم؟ (المستخدَمة فعلاً، وإلا أبرز الجهات) */
+  const recentIds = recentResourceIds();
+  const shortOf = (l: { name: string; short?: string }) => l.short ?? l.name;
+  const usedNames = recentIds.map((id) => OFFICIAL_LINKS.find((l) => l.id === id)).filter(Boolean).map((l) => shortOf(l!));
+  const shownNames = (usedNames.length > 0 ? usedNames : OFFICIAL_LINKS.map(shortOf)).slice(0, 2);
+  const restCount = Math.max(0, OFFICIAL_LINKS.length - shownNames.length);
+
   const openExam = () => { if (priority) setSel({ kind: priority.kind, id: priority.id }); else setDevToast(); };
   const setDevToast = () => { setDevMsg(true); setTimeout(() => setDevMsg(false), 2400); };
 
@@ -144,19 +168,14 @@ export default function RoadmapPage() {
         <header className="ds-card flex flex-col gap-1.5 rise"
           style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface))", borderColor: "color-mix(in srgb, var(--accent) 24%, var(--border))" }}>
           <div className="flex items-center gap-2">
-            <span className="eyebrow flex-1" style={{ color: "var(--accent-light)" }}>🧭 مساري</span>
-            {[
-              { icon: "🗓️", label: "التقويم", go: () => router.push("/roadmap/calendar") },
-              { icon: "⚙️", label: "إعدادات مساري", go: setDevToast },
-            ].map((a) => (
-              <button key={a.label} onClick={a.go} aria-label={a.label} title={a.label}
-                className="w-9 h-9 rounded-full grid place-items-center text-[16px] transition active:scale-90 flex-shrink-0"
-                style={{ background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "var(--elev-1)" }}>
-                {a.icon}
-              </button>
-            ))}
+            <h1 className="t-h1 flex-1" style={{ color: "var(--text)" }}>🧭 مساري</h1>
+            <button onClick={setDevToast} aria-label="إعدادات مساري" title="إعدادات مساري"
+              className="w-9 h-9 rounded-full grid place-items-center text-[16px] transition active:scale-90 flex-shrink-0"
+              style={{ background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "var(--elev-1)" }}>
+              ⚙️
+            </button>
           </div>
-          <h1 className="t-h2" style={{ color: "var(--text)" }}>{daily.greeting}</h1>
+          <p className="t-title font-black" style={{ color: "var(--text)" }}>{daily.greeting}</p>
           <p className="t-body leading-relaxed" style={{ color: "var(--text-dim)" }}>{daily.message}</p>
         </header>
 
@@ -189,15 +208,31 @@ export default function RoadmapPage() {
           )}
         </button>
 
-        {/* الشبكة ٢×٢ — معلومةٌ حيّة في كل بطاقة */}
-        <div className="grid grid-cols-2 gap-2.5 rise rise-2">
-          <Tile icon="🎯" label="هدف اليوم" tint="var(--accent)"
-            value={plan?.available ? `${n(plan.totalMins)} دقيقة` : "يومك مشغول"}
-            lines={plan?.available
-              ? [`${n(plan.tasks.length)} مهام`, plan.tasks[0]?.label ?? ""]
-              : [plan?.hint ?? "حدّد ساعات مذاكرتك", ""]}
-            onClick={openExam} />
+        {/* 🎯 هدف اليوم — ماذا سأفعل؟ (بطاقةٌ عريضة: عدد المهام · المهمة الحالية · هل أنهيتها) */}
+        <button onClick={() => router.push("/roadmap/session")}
+          className="ds-card ds-card-interactive flex items-center gap-3 text-right rise rise-2"
+          style={{ ["--tint" as string]: "var(--accent)" }}>
+          <span className="w-11 h-11 rounded-2xl grid place-items-center text-[20px] flex-shrink-0"
+            style={{ background: "color-mix(in srgb, var(--accent) 12%, var(--surface2))" }} aria-hidden="true">🎯</span>
+          <span className="flex-1 min-w-0 flex flex-col gap-0.5">
+            <span className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>هدف اليوم</span>
+            <span className="t-title font-black leading-snug" style={{ color: "var(--text)" }}>
+              {plan?.available ? `${n(totalTasks)} مهام` : "يومك مشغول"}
+            </span>
+            <span className="t-caption leading-snug" style={{ color: "var(--text-muted)" }}>
+              {plan?.available
+                ? (allDone ? "أنهيت مهامّ اليوم ✓" : doneToday > 0 ? `أنجزت ${n(doneToday)} من ${n(totalTasks)} — التالية: ${plan.tasks[Math.min(doneToday, totalTasks - 1)]?.label ?? ""}` : plan.tasks[0]?.label ?? "")
+                : (plan?.hint ?? "حدّد ساعات مذاكرتك")}
+            </span>
+          </span>
+          {plan?.available && !allDone && (
+            <span className="t-caption font-black px-3 py-1.5 rounded-full flex-shrink-0"
+              style={{ background: "color-mix(in srgb, var(--accent) 14%, transparent)", color: "var(--accent-light)" }}>ابدأ الآن</span>
+          )}
+        </button>
 
+        {/* الشبكة ٢×٢ — كل بطاقة تجيب سؤالاً واحداً، بلا تكرارٍ مع صفحةٍ أخرى */}
+        <div className="grid grid-cols-2 gap-2.5 rise rise-3">
           <Tile icon="🧠" label="اختبارك" tint={priority?.color ?? "var(--accent)"}
             value={priority?.label ?? "لا اختبار بعد"}
             lines={priority
@@ -210,15 +245,20 @@ export default function RoadmapPage() {
             lines={steps.length > 0 ? [steps[0], steps[1] ?? ""] : ["أضف دروسك وتدريبك", ""]}
             onClick={openExam} />
 
+          <Tile icon="🗓️" label="التقويم" tint="#3B82F6"
+            value={calLines[0] ?? "لا أحداث قريبة"}
+            lines={calLines.length > 1 ? [calLines[1], "عرض التقويم ←"] : ["سجّل أحداث حياتك", "عرض التقويم ←"]}
+            onClick={() => router.push("/roadmap/calendar")} />
+
           <Tile icon="📚" label="المصادر" tint="#10B981"
-            value={`${n(OFFICIAL_LINKS.length)} جهة رسمية`}
-            lines={["قياس · قبول · الجامعات", "افتح المواقع الرسمية ↗"]}
+            value={shownNames[0] ?? "الجهات الرسمية"}
+            lines={[shownNames[1] ?? "", restCount > 0 ? `+${n(restCount)} مصدر آخر` : "افتح المواقع الرسمية ↗"]}
             onClick={() => router.push("/roadmap/resources")} />
         </div>
 
         {/* ▶ البطل — أضخم عنصرٍ في الصفحة */}
         <button onClick={() => router.push("/roadmap/session")}
-          className="w-full transition active:scale-[0.98] rise rise-3"
+          className="w-full transition active:scale-[0.98] rise rise-4"
           style={{
             background: "linear-gradient(135deg, var(--accent), var(--accent-hi, var(--accent-light)))",
             color: "#fff", border: "none", borderRadius: "var(--r-lg)", padding: "21px 20px",
@@ -226,7 +266,7 @@ export default function RoadmapPage() {
           }}>
           <span className="block font-black" style={{ fontSize: "1.45rem", letterSpacing: "0" }}>▶ ابدأ المذاكرة</span>
           <span className="block t-caption font-bold mt-1.5" style={{ color: "rgba(255,255,255,.86)" }}>
-            {plan?.available ? `جلسة اليوم جاهزة — ${n(plan.totalMins)} دقيقة` : "افتح جلستك"}
+            {plan?.available ? (allDone ? "أنهيت مهامّ اليوم — راجع أو أضف جلسة" : "جلسة اليوم جاهزة") : "افتح جلستك"}
           </span>
         </button>
 

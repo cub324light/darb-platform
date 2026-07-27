@@ -11,6 +11,7 @@ import { orderByPriority, isOnVacation } from "./model";
 import { loadRoadmapConfig } from "./store";
 import { daysBetween, addDays } from "./metrics";
 import { loadCalendar } from "./calendarStore";
+import { loadSessions } from "./sessionStore";
 import { eventsOnDay, availableStudyMinutes } from "./calendar";
 import { ROADMAP_TUNING } from "./config";
 
@@ -63,6 +64,13 @@ export function countRemaining(subjects: { name: string }[]): Counted {
     if (pct < weakestPct) { weakestPct = pct; weakest = s.name; }
   }
   return { remainingLessons: remL, remainingDrills: remD, weakestSubject: weakest, totalItems: total, doneItems: hit };
+}
+
+/** عدد مهامّ الجلسة المُنجَزة اليوم (من سجلّ الجلسات) — لبطاقة «هدف اليوم». */
+export function tasksDoneToday(): number {
+  if (typeof window === "undefined") return 0;
+  const today = localDayKey();
+  return loadSessions().filter((s) => new Date(s.startedAt).toISOString().slice(0, 10) === today).length;
 }
 
 /** عدد الأسئلة/التدريبات المُنجَزة فعلاً (مصدرها darb_tadreeb_done) — رقمٌ حقيقيّ لا تقدير. */
