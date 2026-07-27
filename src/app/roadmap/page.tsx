@@ -52,10 +52,12 @@ function Tile({ icon, label, value, lines, tint, onClick }: {
 }) {
   return (
     <button onClick={onClick} className="ds-card ds-card-interactive ds-tile text-right min-w-0"
-      style={{ ["--tint" as string]: tint, minHeight: "148px" }}>
-      <span className="w-9 h-9 rounded-2xl grid place-items-center text-[20px] flex-shrink-0"
-        style={{ background: "color-mix(in srgb, var(--tint) 12%, var(--surface2))" }} aria-hidden="true">{icon}</span>
-      <span className="eyebrow" style={{ color: "var(--text-dim)" }}>{label}</span>
+      style={{ ["--tint" as string]: tint, minHeight: "132px", gap: "var(--sp-1)" }}>
+      <span className="flex items-center gap-2 mb-0.5">
+        <span className="w-8 h-8 rounded-xl grid place-items-center text-[18px] flex-shrink-0"
+          style={{ background: "color-mix(in srgb, var(--tint) 12%, var(--surface2))" }} aria-hidden="true">{icon}</span>
+        <span className="eyebrow min-w-0 truncate" style={{ color: "var(--text)" }}>{label}</span>
+      </span>
       <span className="t-h3 font-black leading-snug line-clamp-2" style={{ color: "var(--text)" }}>{value}</span>
       <span className="flex flex-col gap-0.5 mt-auto">
         {lines.filter(Boolean).slice(0, 2).map((l, i) => (
@@ -168,22 +170,27 @@ export default function RoadmapPage() {
       <PageGuide pageKey="roadmap" steps={[
         { title: "مساري = لوحة قيادتك", desc: "أعلاها ملخّص أسبوعك، ثم بطاقاتك الأربع، وزر «ابدأ المذاكرة» يفتح جلسة اليوم الجاهزة." },
       ]} />
-      <Dome compact>{null}</Dome>
+      {/* اسم الصفحة في القبّة تحت الساعة والفضّة — كما في بقية الصفحات.
+          بلا إيموجي: grad-title يقصّ اللون فيحوّل المِحرَف إلى كتلةٍ ملوّنة. */}
+      <Dome compact>
+        <div className="flex items-center justify-between">
+          <h1 className="title-lg grad-title">مساري</h1>
+        </div>
+      </Dome>
       <div className="h-4" />
 
       <div className="page-content flex flex-col gap-2.5">
-        {/* الرأس: العنوان + أفعاله (التقويم · الإعدادات) — الأفعال ليست محتوى */}
+        {/* الرأس: ترحيبُ دويرب + فعلُ الإعدادات (اسم الصفحة صار في القبّة أعلاه) */}
         <header className="ds-card flex flex-col gap-1.5 rise"
           style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface))", borderColor: "color-mix(in srgb, var(--accent) 24%, var(--border))" }}>
-          <div className="flex items-center gap-2">
-            <h1 className="t-h1 flex-1" style={{ color: "var(--text)" }}>🧭 مساري</h1>
+          <div className="flex items-start gap-2">
+            <p className="t-title font-black flex-1" style={{ color: "var(--text)" }}>{daily.greeting}</p>
             <button onClick={setDevToast} aria-label="إعدادات مساري" title="إعدادات مساري"
               className="w-9 h-9 rounded-full grid place-items-center text-[16px] transition active:scale-90 flex-shrink-0"
               style={{ background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "var(--elev-1)" }}>
               ⚙️
             </button>
           </div>
-          <p className="t-title font-black" style={{ color: "var(--text)" }}>{daily.greeting}</p>
           <p className="t-body leading-relaxed" style={{ color: "var(--text-dim)" }}>{daily.message}</p>
         </header>
 

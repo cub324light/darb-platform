@@ -13,6 +13,7 @@ import { sm2, nextReviewText } from "@/lib/sm2";
 import { subjectsForTracks, colorForSubject, type TrackId } from "@/lib/tracks";
 import { activeTrackIds, loadList, saveList } from "@/lib/storage";
 import type { ReviewCard, SM2Grade } from "@/lib/types";
+import { n } from "@/lib/format";
 
 const CARDS_KEY = "darb_cards";
 const PER_SUBJECT_LIMIT = 100;
@@ -248,7 +249,7 @@ export default function SavedBody({ embedded = false }: { embedded?: boolean }) 
             { val: cards.length,         label: "الإجمالي",    color: "var(--success)" },
           ].map((s) => (
             <div key={s.label} className="rounded-2xl p-5 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-              <p className="font-mono-nums font-black text-4xl" style={{ color: s.color }}>{s.val}</p>
+              <p className="font-mono-nums font-black text-4xl" style={{ color: s.color }}>{n(s.val)}</p>
               <p className="text-sm text-[var(--text-muted)] mt-2 font-semibold">{s.label}</p>
             </div>
           ))}
@@ -272,8 +273,8 @@ export default function SavedBody({ embedded = false }: { embedded?: boolean }) 
       <div className="px-5 mb-6 rise rise-3">
         {!showAdd ? (
           <button onClick={() => setShowAdd(true)}
-            className="w-full py-5 rounded-2xl text-lg font-bold text-[var(--text-dim)] transition min-h-[60px]"
-            style={{ background: "var(--surface)", border: "1.5px dashed var(--border)" }}>
+            className="w-full py-5 rounded-2xl text-lg font-black transition min-h-[60px] active:scale-[0.98]"
+            style={{ background: "var(--accent)", color: "#fff", border: "none", boxShadow: "0 10px 28px color-mix(in srgb, var(--accent) 40%, transparent)" }}>
             + أضف بطاقة جديدة
           </button>
         ) : (

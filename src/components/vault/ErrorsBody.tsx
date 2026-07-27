@@ -199,8 +199,8 @@ export default function ErrorsBody({ embedded = false }: { embedded?: boolean })
             كل خطأ تسجّله اليوم، درجةٌ تكسبها في الاختبار.
           </p>
           <button onClick={() => setShowAdd(true)}
-            className="w-full rounded-2xl transition active:scale-[0.98] glow-gold"
-            style={{ background: "var(--gold)", color: "#1A1206", border: "none", padding: "19px", boxShadow: "0 10px 28px color-mix(in srgb, var(--gold) 40%, transparent)" }}>
+            className="w-full rounded-2xl transition active:scale-[0.98]"
+            style={{ background: "var(--accent)", color: "#fff", border: "none", padding: "19px", boxShadow: "0 10px 28px color-mix(in srgb, var(--accent) 40%, transparent)" }}>
             <span className="block font-black" style={{ fontSize: "1.25rem" }}>＋ أضف خطأً جديداً</span>
           </button>
         </div>

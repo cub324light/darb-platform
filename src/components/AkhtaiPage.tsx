@@ -19,7 +19,9 @@ export default function AkhtaiPage({ initialTab = "errors" }: { initialTab?: Tab
     <div className="min-h-dvh pb-nav relative z-[1] desk-wide">
       <Dome compact>
         <div className="flex items-center justify-between">
-          <h1 className="title-lg grad-title">📚 أخطائي</h1>
+          {/* بلا إيموجي: grad-title يقصّ اللون (color: transparent) فيمسح ألوان المِحرَف
+              ويتركه كتلةً زرقاء غريبة بجانب الكلمة. */}
+          <h1 className="title-lg grad-title">أخطائي</h1>
         </div>
       </Dome>
 
