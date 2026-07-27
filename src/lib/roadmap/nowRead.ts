@@ -65,6 +65,12 @@ export function countRemaining(subjects: { name: string }[]): Counted {
   return { remainingLessons: remL, remainingDrills: remD, weakestSubject: weakest, totalItems: total, doneItems: hit };
 }
 
+/** عدد الأسئلة/التدريبات المُنجَزة فعلاً (مصدرها darb_tadreeb_done) — رقمٌ حقيقيّ لا تقدير. */
+export function solvedQuestions(): number {
+  if (typeof window === "undefined") return 0;
+  return loadList<string>("darb_tadreeb_done").length;
+}
+
 export function vaultCount(): number {
   if (typeof window === "undefined") return 0;
   try { const v = JSON.parse(localStorage.getItem("darb_vault") ?? "[]"); return Array.isArray(v) ? v.length : 0; } catch { return 0; }

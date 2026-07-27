@@ -1,10 +1,12 @@
 "use client";
-/* ═══════════════ مساري — «🧭 الآن» V2 (الأغنى، وما زال هادئاً) ═══════════════
-   مدير حياة الطالب لا Dashboard: ترحيبٌ ورسالة دويرب ← شبكة أفعالٍ ٢×٢ (هدف اليوم ·
-   ماذا ينقصك · التقويم · اختبارك) ← «هذا الأسبوع» شريطٌ خافت ← زرٌّ واحدٌ بطل ←
-   مداخل الأقسام. كل رقمٍ من محرّكٍ نقيّ، وأي بياناتٍ ناقصة = حالةٌ صادقة لا صفر. */
+/* ═══════════════ مساري — «🧭 الآن» V3 (لوحة القيادة الشخصية) ═══════════════
+   أقوى صفحةٍ في درب، وبنفس لغة تصميم التطبيق (ds-card · Dome · elev · rise).
+   الترتيب: رأسٌ فيه العنوان وأفعاله (تقويم/إعدادات) ← ترحيبٌ ورسالة دويرب ←
+   «هذا الأسبوع» (أرقامٌ حقيقية بتصميمٍ فاخر) ← شبكة ٢×٢ غنيّة بالمعلومة ←
+   زرٌّ واحدٌ بطل. كل شيءٍ يخدم سؤالاً واحداً: «ماذا أفعل الآن؟». */
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Dome from "@/components/Dome";
 import PageFooter from "@/components/PageFooter";
 import PageGuide from "@/components/PageGuide";
 import ModuleWorkspace from "@/components/roadmap/ModuleWorkspace";
@@ -16,17 +18,17 @@ import {
 } from "@/lib/modules";
 import { pickDailyMessage } from "@/lib/roadmap/dailyMessage";
 import { buildSessionPlan } from "@/lib/roadmap/session";
-import { remainingSteps, arCount } from "@/lib/roadmap/remainingSteps";
+import { remainingSteps } from "@/lib/roadmap/remainingSteps";
 import { computeStats } from "@/lib/roadmap/stats";
 import { loadSessions } from "@/lib/roadmap/sessionStore";
-import { loadCalendar } from "@/lib/roadmap/calendarStore";
-import { groupUpcoming, kindMeta, warnsPlanChange, type CalendarEvent } from "@/lib/roadmap/calendar";
-import { readPriorityExam, countRemaining, vaultCount, readTodayAvailability, readDailySignals } from "@/lib/roadmap/nowRead";
+import { OFFICIAL_LINKS } from "@/lib/officialLinks";
+import {
+  readPriorityExam, countRemaining, vaultCount, readTodayAvailability, readDailySignals, solvedQuestions,
+} from "@/lib/roadmap/nowRead";
 import { loadRoadmapConfig } from "@/lib/roadmap/store";
 import { daysBetween } from "@/lib/roadmap/metrics";
 import { n, pct, days as daysWord } from "@/lib/format";
 
-/* ترتيب شاشة المذاكرة (تُفتح من بطاقة الاختبار) */
 const STATE_ORDER: Record<ModuleState, number> = { active: 0, "needs-retake": 1, added: 2, paused: 3, completed: 4, "not-added": 5 };
 const byPriority = (a: ModuleInstance, b: ModuleInstance): number =>
   (!!a.priority !== !!b.priority ? (a.priority ? -1 : 1) : (STATE_ORDER[a.state] ?? 9) - (STATE_ORDER[b.state] ?? 9));
@@ -36,15 +38,23 @@ function studyPctOf(subjects: { name: string }[] | undefined): number {
   return c.totalItems === 0 ? 0 : Math.round((c.doneItems / c.totalItems) * 100);
 }
 
-/* بطاقة فعلٍ في الشبكة — أيقونة ← تسمية ← قيمة ← سياق (٣ طبقات، لمسةٌ تفتح) */
-function Tile({ icon, label, value, sub, onClick }: { icon: string; label: string; value: string; sub?: string; onClick?: () => void }) {
+/* بطاقةُ شبكةٍ غنيّة: أيقونة + تسمية · قيمةٌ بارزة · سطرا معلومةٍ حقيقيّة */
+function Tile({ icon, label, value, lines, tint, onClick }: {
+  icon: string; label: string; value: string; lines: string[]; tint: string; onClick: () => void;
+}) {
   return (
-    <button onClick={onClick} className="rounded-2xl p-4 min-h-[108px] flex flex-col text-right transition active:scale-[0.98]"
-      style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-      <span className="text-[20px]" aria-hidden="true">{icon}</span>
-      <span className="t-caption font-bold mt-1.5" style={{ color: "var(--text-muted)" }}>{label}</span>
-      <span className="t-body font-black mt-0.5 leading-snug" style={{ color: "var(--text)" }}>{value}</span>
-      {sub && <span className="t-caption mt-auto pt-1 leading-snug" style={{ color: "var(--text-dim)" }}>{sub}</span>}
+    <button onClick={onClick} className="ds-card ds-card-interactive flex flex-col text-right"
+      style={{ ["--tint" as string]: tint, minHeight: "116px", gap: "var(--sp-1, 4px)" }}>
+      <span className="flex items-center gap-1.5">
+        <span className="text-[17px]" aria-hidden="true">{icon}</span>
+        <span className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>{label}</span>
+      </span>
+      <span className="t-title font-black leading-snug" style={{ color: "var(--text)" }}>{value}</span>
+      <span className="flex flex-col gap-0.5 mt-auto">
+        {lines.filter(Boolean).slice(0, 2).map((l, i) => (
+          <span key={i} className="t-caption leading-snug" style={{ color: i === 0 ? "var(--text-muted)" : "var(--text-dim)" }}>{l}</span>
+        ))}
+      </span>
     </button>
   );
 }
@@ -66,7 +76,7 @@ export default function RoadmapPage() {
   const apply = (fn: (w: Workspace) => Workspace) =>
     setWs((cur) => { if (!cur) return cur; const next = fn(cur); saveWorkspace(next); return next; });
 
-  /* ── شاشة مذاكرة الاختبار (تفاصيل + دروس) — تُفتح من بطاقة الاختبار ── */
+  /* ── تفاصيل الاختبار (مساحة المذاكرة الكاملة) ── */
   if (sel) {
     const view = sel.kind === "module" ? moduleView(sel.id as ModuleId) : memberView(sel.id as ExamMemberId);
     const inst = sel.kind === "module" ? ws.modules.find((m) => m.id === sel.id) : undefined;
@@ -90,12 +100,10 @@ export default function RoadmapPage() {
     );
   }
 
-  /* ── لقطة «الآن» — كل الأرقام من مصادر حقيقية ── */
+  /* ── لقطة اليوم: كل رقمٍ من محرّكٍ نقيّ ── */
   const today = localDayKey();
   const priority = readPriorityExam(ws);
-  const signals = readDailySignals(ws);
-  const daily = pickDailyMessage(signals);
-
+  const daily = pickDailyMessage(readDailySignals(ws));
   const examDate = priority?.examKey ? (loadTrackExamDates()[priority.examKey] ?? null) : null;
   const daysLeft = examDate ? daysBetween(today, examDate) : null;
 
@@ -106,112 +114,129 @@ export default function RoadmapPage() {
     remainingLessons: counts.remainingLessons, remainingDrills: counts.remainingDrills,
     activeErrors: vaultCount(), availableMinutes: avail.minutes, mode: loadRoadmapConfig().studyMode,
   }) : null;
-
   const steps = remainingSteps({ remainingLessons: counts.remainingLessons, remainingDrills: counts.remainingDrills, unreviewedErrors: vaultCount() });
 
-  const upcoming = groupUpcoming(loadCalendar(), today);
-  const nextEv: { ev: CalendarEvent; when: string } | null =
-    upcoming.today[0] ? { ev: upcoming.today[0], when: "اليوم" }
-    : upcoming.tomorrow[0] ? { ev: upcoming.tomorrow[0], when: "غداً" }
-    : upcoming.week[0] ? { ev: upcoming.week[0], when: "هذا الأسبوع" } : null;
-
   const stats = computeStats({ dayMins: loadStats().dayMins ?? {}, sessions: loadSessions(), today, plannedDailyMins: ((loadUser()?.studyHours ?? 0) * 60) || null });
-  const hasWeek = stats.week.hours > 0 || stats.week.sessions > 0;
+  const solved = solvedQuestions();
+  const hasWeek = stats.week.hours > 0 || stats.week.sessions > 0 || solved > 0;
 
-  const goSession = () => router.push("/roadmap/session");
-  const openExam = () => priority && setSel({ kind: priority.kind, id: priority.id });
-  const dev = () => { setDevMsg(true); setTimeout(() => setDevMsg(false), 2400); };
+  const openExam = () => { if (priority) setSel({ kind: priority.kind, id: priority.id }); else setDevToast(); };
+  const setDevToast = () => { setDevMsg(true); setTimeout(() => setDevMsg(false), 2400); };
+
+  /* «هذا الأسبوع» — أربعة مقاييس حقيقية */
+  const weekMetrics = [
+    { icon: "⏱️", v: n(stats.week.hours), l: "ساعة مذاكرة" },
+    { icon: "📚", v: n(stats.week.sessions), l: "جلسات" },
+    { icon: "🔥", v: n(stats.week.streakDays), l: "أيام متتالية" },
+    { icon: "✍️", v: n(solved), l: "سؤالاً محلولاً" },
+  ];
 
   return (
-    <div className="min-h-dvh pb-nav relative z-[1] page-enter">
-      <div className="max-w-xl mx-auto w-full px-5 pt-7 pb-6 flex flex-col gap-4">
-        <PageGuide pageKey="roadmap" steps={[
-          { title: "مساري = دربك خطوة بخطوة", desc: "بطاقات اليوم فوق، وزر «ابدأ المذاكرة» يفتح جلستك الجاهزة مباشرة." },
-        ]} />
+    <div className="page desk-wide">
+      <PageGuide pageKey="roadmap" steps={[
+        { title: "مساري = لوحة قيادتك", desc: "أعلاها ملخّص أسبوعك، ثم بطاقاتك الأربع، وزر «ابدأ المذاكرة» يفتح جلسة اليوم الجاهزة." },
+      ]} />
+      <Dome compact>{null}</Dome>
+      <div className="h-4" />
 
-        {/* الترحيب + رسالة دويرب */}
-        <h1 className="t-h2 font-black leading-tight" style={{ color: "var(--text)" }}>{daily.greeting}</h1>
-        <div className="rounded-2xl px-4 py-3.5 -mt-1" style={{ background: "color-mix(in srgb, var(--accent) 9%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--accent) 26%, var(--border))" }}>
-          <p className="t-caption font-black mb-1" style={{ color: "var(--accent-light)" }}>💬 دويرب</p>
-          <p className="t-body font-bold leading-relaxed" style={{ color: "var(--text)" }}>{daily.message}</p>
-        </div>
+      <div className="page-content flex flex-col gap-2.5">
+        {/* الرأس: العنوان + أفعاله (التقويم · الإعدادات) — الأفعال ليست محتوى */}
+        <header className="ds-card flex flex-col gap-1.5 rise"
+          style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface))", borderColor: "color-mix(in srgb, var(--accent) 24%, var(--border))" }}>
+          <div className="flex items-center gap-2">
+            <span className="eyebrow flex-1" style={{ color: "var(--accent-light)" }}>🧭 مساري</span>
+            {[
+              { icon: "🗓️", label: "التقويم", go: () => router.push("/roadmap/calendar") },
+              { icon: "⚙️", label: "إعدادات مساري", go: setDevToast },
+            ].map((a) => (
+              <button key={a.label} onClick={a.go} aria-label={a.label} title={a.label}
+                className="w-9 h-9 rounded-full grid place-items-center text-[16px] transition active:scale-90 flex-shrink-0"
+                style={{ background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "var(--elev-1)" }}>
+                {a.icon}
+              </button>
+            ))}
+          </div>
+          <h1 className="t-h2" style={{ color: "var(--text)" }}>{daily.greeting}</h1>
+          <p className="t-body leading-relaxed" style={{ color: "var(--text-dim)" }}>{daily.message}</p>
+        </header>
 
-        {/* شبكة الأفعال ٢×٢ */}
-        <div className="grid grid-cols-2 gap-2.5">
-          <Tile icon="🎯" label="هدف اليوم"
-            value={plan?.available ? `جلسة ${n(plan.totalMins)} دقيقة` : "يومك مشغول"}
-            sub={plan?.available ? plan.tasks.map((t) => t.label).join("، ") : plan?.hint}
-            onClick={goSession} />
-          <Tile icon="🧩" label="ماذا ينقصك"
-            value={steps.length > 0 ? arCount(steps.length, "خطوة واحدة", "خطوتان", "خطوات", "خطوة") : "لا شيء عالق"}
-            sub={steps.length > 0 ? steps.join("، ") : "أضف دروسك وتدريبك لتتكوّن خطتك"}
-            onClick={openExam} />
-          <Tile icon="🗓️" label="التقويم"
-            value={nextEv ? `${kindMeta(nextEv.ev.kind).icon} ${nextEv.ev.title}` : "لا أحداث قريبة"}
-            sub={nextEv ? (warnsPlanChange(nextEv.ev) ? "سيتم تعديل خطتك تلقائياً" : nextEv.when) : "سجّل أحداث حياتك ليخطط دويرب حولها"}
-            onClick={() => router.push("/roadmap/calendar")} />
-          {priority ? (
-            <Tile icon={priority.icon ?? "🧠"} label="اختبارك" value={priority.label}
-              sub={daysLeft != null && daysLeft > 0 ? `باقي ${daysWord(daysLeft)} — جاهز تبدأ؟` : daysLeft === 0 ? "موعدك اليوم — بالتوفيق" : "جاهز تبدأ؟"}
-              onClick={openExam} />
-          ) : (
-            <Tile icon="🧠" label="اختبارك" value="لا اختبار بعد" sub="أضف اختبارك الأول" onClick={dev} />
-          )}
-        </div>
-
-        {/* هذا الأسبوع — شريطٌ خافتٌ واحد (أو دعوةٌ صادقة) */}
-        <div>
-          <p className="eyebrow mb-2 px-1">هذا الأسبوع</p>
+        {/* هذا الأسبوع — الأرقام الحقيقية بتصميمٍ فاخر (تفتح الإحصائيات الكاملة) */}
+        <button onClick={() => router.push("/roadmap/stats")}
+          className="ds-card ds-card-interactive flex flex-col gap-3 text-right rise rise-1" style={{ ["--tint" as string]: "var(--accent)" }}>
+          <span className="flex items-center gap-2">
+            <span className="eyebrow flex-1" style={{ color: "var(--text-muted)" }}>📊 هذا الأسبوع</span>
+            {stats.week.commitmentPct != null && (
+              <span className="t-caption font-black px-2.5 py-1 rounded-full font-mono-nums"
+                style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>
+                التزام {pct(stats.week.commitmentPct)}
+              </span>
+            )}
+            <span className="t-caption" style={{ color: "var(--text-dim)" }}>↗</span>
+          </span>
           {hasWeek ? (
-            <div className="rounded-2xl py-3.5 px-2 flex" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-              {[
-                { v: n(stats.week.hours), l: "ساعة" },
-                { v: n(stats.week.sessions), l: "جلسات" },
-                { v: `🔥 ${n(stats.week.streakDays)}`, l: "أيام متتالية" },
-                ...(stats.week.commitmentPct != null ? [{ v: pct(stats.week.commitmentPct), l: "التزام" }] : []),
-              ].map((s, i) => (
-                <div key={s.l} className="flex-1 text-center" style={i > 0 ? { borderInlineStart: "1px solid var(--border)" } : undefined}>
-                  <p className="t-title font-black font-mono-nums" style={{ color: "var(--text)" }}>{s.v}</p>
-                  <p className="t-caption mt-0.5" style={{ color: "var(--text-muted)" }}>{s.l}</p>
-                </div>
+            <span className="grid grid-cols-4">
+              {weekMetrics.map((m, i) => (
+                <span key={m.l} className="flex flex-col items-center gap-0.5 px-1"
+                  style={i > 0 ? { borderInlineStart: "1px solid var(--border)" } : undefined}>
+                  <span className="text-[15px] leading-none" aria-hidden="true">{m.icon}</span>
+                  <span className="t-h3 font-black font-mono-nums leading-tight" style={{ color: "var(--text)" }}>{m.v}</span>
+                  <span className="t-caption text-center leading-tight" style={{ color: "var(--text-muted)", fontSize: "0.68rem" }}>{m.l}</span>
+                </span>
               ))}
-            </div>
+            </span>
           ) : (
-            <p className="t-body px-1" style={{ color: "var(--text-muted)" }}>ابدأ أول جلسة، وسنعرض تقدمك هنا.</p>
+            <span className="t-body" style={{ color: "var(--text-muted)" }}>ابدأ أول جلسة، وسنعرض تقدمك هنا.</span>
           )}
-        </div>
-
-        {/* ▶ البطل الوحيد */}
-        <button onClick={goSession}
-          className="w-full rounded-3xl glow-blue transition active:scale-[0.98] mt-1"
-          style={{ background: "var(--accent)", color: "#fff", padding: "20px", boxShadow: "0 10px 30px color-mix(in srgb, var(--accent) 45%, transparent)" }}>
-          <span className="block font-black" style={{ fontSize: "1.35rem" }}>▶ ابدأ المذاكرة</span>
         </button>
 
-        {/* مداخل الأقسام */}
-        <div className="grid grid-cols-4 gap-2 mt-1">
-          {[
-            { icon: "🗓️", label: "التقويم", go: () => router.push("/roadmap/calendar") },
-            { icon: "📈", label: "الإحصائيات", go: () => router.push("/roadmap/stats") },
-            { icon: "📚", label: "المصادر", go: () => router.push("/roadmap/resources") },
-            { icon: "⚙️", label: "الإعدادات", go: dev },
-          ].map((s) => (
-            <button key={s.label} onClick={s.go}
-              className="rounded-2xl py-3.5 flex flex-col items-center gap-1.5 transition active:scale-[0.97]"
-              style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }}>
-              <span className="text-[20px]" aria-hidden="true">{s.icon}</span>
-              <span className="t-caption font-bold" style={{ color: "var(--text)" }}>{s.label}</span>
-            </button>
-          ))}
+        {/* الشبكة ٢×٢ — معلومةٌ حيّة في كل بطاقة */}
+        <div className="grid grid-cols-2 gap-2.5 rise rise-2">
+          <Tile icon="🎯" label="هدف اليوم" tint="var(--accent)"
+            value={plan?.available ? `${n(plan.totalMins)} دقيقة` : "يومك مشغول"}
+            lines={plan?.available
+              ? [`${n(plan.tasks.length)} مهام`, plan.tasks[0]?.label ?? ""]
+              : [plan?.hint ?? "حدّد ساعات مذاكرتك", ""]}
+            onClick={openExam} />
+
+          <Tile icon="🧠" label="اختبارك" tint={priority?.color ?? "var(--accent)"}
+            value={priority?.label ?? "لا اختبار بعد"}
+            lines={priority
+              ? [daysLeft != null && daysLeft > 0 ? `باقي ${daysWord(daysLeft)}` : daysLeft === 0 ? "موعدك اليوم" : "بلا موعدٍ محدّد", "جاهز تبدأ؟"]
+              : ["أضف اختبارك الأول", ""]}
+            onClick={openExam} />
+
+          <Tile icon="🧩" label="ماذا ينقصك" tint="#8B5CF6"
+            value={steps.length > 0 ? (counts.weakestSubject ?? "خطواتك") : "كل شيءٍ مكتمل"}
+            lines={steps.length > 0 ? [steps[0], steps[1] ?? ""] : ["أضف دروسك وتدريبك", ""]}
+            onClick={openExam} />
+
+          <Tile icon="📚" label="المصادر" tint="#10B981"
+            value={`${n(OFFICIAL_LINKS.length)} جهة رسمية`}
+            lines={["قياس · قبول · الجامعات", "افتح المواقع الرسمية ↗"]}
+            onClick={() => router.push("/roadmap/resources")} />
         </div>
+
+        {/* ▶ البطل — أضخم عنصرٍ في الصفحة */}
+        <button onClick={() => router.push("/roadmap/session")}
+          className="w-full transition active:scale-[0.98] rise rise-3"
+          style={{
+            background: "linear-gradient(135deg, var(--accent), var(--accent-hi, var(--accent-light)))",
+            color: "#fff", border: "none", borderRadius: "var(--r-lg)", padding: "21px 20px",
+            boxShadow: "0 18px 44px color-mix(in srgb, var(--accent) 38%, transparent), 0 2px 6px rgba(0,0,0,.06)",
+          }}>
+          <span className="block font-black" style={{ fontSize: "1.45rem", letterSpacing: "0" }}>▶ ابدأ المذاكرة</span>
+          <span className="block t-caption font-bold mt-1.5" style={{ color: "rgba(255,255,255,.86)" }}>
+            {plan?.available ? `جلسة اليوم جاهزة — ${n(plan.totalMins)} دقيقة` : "افتح جلستك"}
+          </span>
+        </button>
 
         <PageFooter />
       </div>
 
       {devMsg && (
         <div className="fixed left-1/2 -translate-x-1/2 rounded-xl px-4 py-2.5 t-caption font-bold z-50 rise"
-          style={{ bottom: "88px", background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)", boxShadow: "0 8px 24px rgba(0,0,0,.18)" }}>
-          هذه الصفحة ما زالت قيد التطوير.
+          style={{ bottom: "calc(var(--nav-h) + 12px)", background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)", boxShadow: "var(--elev-2)" }}>
+          {priority ? "إعدادات مساري قيد التطوير." : "أضف اختبارك من الإعدادات — قيد التطوير."}
         </div>
       )}
     </div>
