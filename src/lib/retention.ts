@@ -25,7 +25,7 @@ export function weekId(d: Date = new Date()): string {
   return `${dt.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
 }
 
-/* ════════ ١) تسجيل اليوم (Daily Check-in) ════════ */
+/* ════════ 1) تسجيل اليوم (Daily Check-in) ════════ */
 export interface DailyCheckin { day: string; goalHours: number; subject: string; }
 const DAILY_KEY = "darb_daily";
 
@@ -68,7 +68,7 @@ function saveRet(s: RetentionState): void {
   try { localStorage.setItem(RET_KEY, JSON.stringify(s)); } catch {}
 }
 
-/* ════════ ٥) الغياب (Absence) ════════
+/* ════════ 5) الغياب (Absence) ════════
    عدد الأيام منذ آخر فتح. يُقرأ قبل recordOpenToday. */
 export function daysAway(): number {
   const last = loadRet().lastOpen;
@@ -98,7 +98,7 @@ export function comebackSummary(): { daysAway: number; streakBroke: boolean; due
   return { daysAway: away, streakBroke: brk.broke, dueCards, lastStudyDaysAgo };
 }
 
-/* ════════ ٣) استعادة الستريك (Streak Recovery) ════════ */
+/* ════════ 3) استعادة الستريك (Streak Recovery) ════════ */
 const RECOVERY_COOLDOWN_DAYS = 30;
 /* هل انكسر ستريك حقيقي؟ (فات الأمس فقط، وكان هناك سلسلة ≥ يومين) */
 export function streakBreak(stats: DarbStats): { broke: boolean; missedDay: string | null; priorStreak: number } {
@@ -131,7 +131,7 @@ export function applyRecovery(): { ok: boolean; restored: number } {
   return { ok: true, restored: computeStreak(loadStats()) };
 }
 
-/* ════════ ٤) معالم المسار (Milestones) ════════ */
+/* ════════ 4) معالم المسار (Milestones) ════════ */
 export const MILESTONES = [25, 50, 75, 100] as const;
 /* أعلى معلم تجاوزه الطالب ولم يُحتفل به بعد (أو null) */
 export function pendingMilestone(stats: DarbStats): number | null {
@@ -150,7 +150,7 @@ export function markMilestoneSeen(pct: number): void {
   saveRet(s);
 }
 
-/* ════════ ٢) التقرير الأسبوعي (Weekly — كل جمعة) ════════ */
+/* ════════ 2) التقرير الأسبوعي (Weekly — كل جمعة) ════════ */
 export function shouldShowWeekly(hasData: boolean): boolean {
   if (!hasData) return false;
   const dow = new Date().getDay();          // الجمعة = 5، السبت = 6

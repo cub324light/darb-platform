@@ -1,5 +1,5 @@
 /* ─── حالات التحقّق — «لا ربط قبل أن نراجع القرارات على حالات حقيقية» ───
-   ٤٠+ حالة تغطّي رحلة الطالب كاملة (ثانوي/جامعي/خريج × معدّلات/تدريب/اختبارات).
+   40+ حالة تغطّي رحلة الطالب كاملة (ثانوي/جامعي/خريج × معدّلات/تدريب/اختبارات).
    يستهلكها اختبارُ الانحدار وصفحةُ المصفوفة (dev) معاً. بيانات نقية بلا IO.
    expectTop اختياري: نثبّته للحالات القاطعة فقط (نترك الغامضة لمراجعة العين). */
 import type { LifeContext, PriorityKey } from "./lifeEngine";
@@ -31,12 +31,12 @@ export interface Scenario {
 export const SCENARIOS: Scenario[] = [
   /* ═════ ثانوي ═════ */
   { id: "s01", name: "أول ثانوي — بلا ضغط", ctx: sec({ stage: "first" }), expectTop: "early" },
-  { id: "s02", name: "أول ثانوي — قدرات بعد ٦ أسابيع", ctx: sec({ stage: "first", qiyas: q(42) }), expectTop: "qiyas" },
+  { id: "s02", name: "أول ثانوي — قدرات بعد 6 أسابيع", ctx: sec({ stage: "first", qiyas: q(42) }), expectTop: "qiyas" },
   { id: "s03", name: "ثاني ثانوي — بلا ضغط", ctx: sec({ stage: "second" }), expectTop: "early" },
-  { id: "s04", name: "ثاني ثانوي — تحصيلي مبكر بعد ٣ أسابيع", ctx: sec({ stage: "second", qiyas: q(21, "tahsili", "التحصيلي") }), expectTop: "qiyas-soon" },
-  { id: "s05", name: "ثالث ثانوي — درجاته ممتازة (٩٦٪)", ctx: sec({ stage: "third", highschoolPct: 96 }), expectTop: "admission" },
-  { id: "s06", name: "ثالث ثانوي — درجاته منخفضة (٧٢٪)", ctx: sec({ stage: "third", highschoolPct: 72 }), expectTop: "school-grades" },
-  { id: "s07", name: "ثالث ثانوي — اختبارات مدرسية بعد ١٠ أيام", ctx: sec({ stage: "third", daysToSchoolFinals: 10 }), expectTop: "school-finals-soon" },
+  { id: "s04", name: "ثاني ثانوي — تحصيلي مبكر بعد 3 أسابيع", ctx: sec({ stage: "second", qiyas: q(21, "tahsili", "التحصيلي") }), expectTop: "qiyas-soon" },
+  { id: "s05", name: "ثالث ثانوي — درجاته ممتازة (96٪)", ctx: sec({ stage: "third", highschoolPct: 96 }), expectTop: "admission" },
+  { id: "s06", name: "ثالث ثانوي — درجاته منخفضة (72٪)", ctx: sec({ stage: "third", highschoolPct: 72 }), expectTop: "school-grades" },
+  { id: "s07", name: "ثالث ثانوي — اختبارات مدرسية بعد 10 أيام", ctx: sec({ stage: "third", daysToSchoolFinals: 10 }), expectTop: "school-finals-soon" },
   { id: "s08", name: "ثالث ثانوي — اختبارات مدرسية الآن", ctx: sec({ stage: "third", inSchoolFinals: true }), expectTop: "school-finals-now" },
   { id: "s09", name: "ثالث ثانوي — قدرات بعد أسبوعين (عاجل)", ctx: sec({ stage: "third", qiyas: q(14) }), expectTop: "qiyas-soon" },
   { id: "s10", name: "خريج ثانوي — ينتظر القبول", ctx: sec({ stage: "graduate" }), expectTop: "admission" },
@@ -44,42 +44,42 @@ export const SCENARIOS: Scenario[] = [
   { id: "s12", name: "ثالث ثانوي — اختار إعادة القدرات", ctx: sec({ stage: "third", retakeExams: ["القدرات"] }), expectTop: "retake" },
 
   /* ═════ جامعي — بداية ═════ */
-  { id: "u01", name: "سنة أولى — معدّل ٣٫٢", ctx: uni({ uniStage: "start", year: "الأولى", hours: 18, gpa: 3.2 }), expectTop: "foundation" },
-  { id: "u02", name: "سنة أولى — معدّل ٢٫٤ (متعثّر مبكّر)", ctx: uni({ uniStage: "start", year: "الأولى", hours: 20, gpa: 2.4 }), expectTop: "gpa" },
-  { id: "u03", name: "سنة أولى — معدّل ٤٫٧", ctx: uni({ uniStage: "start", year: "الأولى", hours: 22, gpa: 4.7 }), expectTop: "foundation" },
+  { id: "u01", name: "سنة أولى — معدّل 3٫2", ctx: uni({ uniStage: "start", year: "الأولى", hours: 18, gpa: 3.2 }), expectTop: "foundation" },
+  { id: "u02", name: "سنة أولى — معدّل 2٫4 (متعثّر مبكّر)", ctx: uni({ uniStage: "start", year: "الأولى", hours: 20, gpa: 2.4 }), expectTop: "gpa" },
+  { id: "u03", name: "سنة أولى — معدّل 4٫7", ctx: uni({ uniStage: "start", year: "الأولى", hours: 22, gpa: 4.7 }), expectTop: "foundation" },
   { id: "u04", name: "سنة أولى — خارج الفصل (إجازة)", ctx: uni({ uniStage: "start", year: "الأولى", hours: 15, gpa: 3.0, inStudyTerm: false }), expectTop: "foundation" },
 
   /* ═════ جامعي — منتصف ═════ */
-  { id: "u05", name: "سنة ثانية — معدّل ٣٫٦ بلا تدريب", ctx: uni({ uniStage: "mid", gpa: 3.6, coopDone: false }), expectTop: "coop" },
-  { id: "u06", name: "سنة ثانية — معدّل ٣٫٤ أنهى التدريب", ctx: uni({ uniStage: "mid", gpa: 3.4, coopDone: true }), expectTop: "cert" },
-  { id: "u07", name: "سنة ثالثة — معدّل ٤٫٩", ctx: uni({ uniStage: "mid", year: "الثالثة", hours: 90, gpa: 4.9 }), expectTop: "research" },
-  { id: "u08", name: "سنة ثالثة — معدّل ٢٫١ (متعثّر)", ctx: uni({ uniStage: "mid", year: "الثالثة", hours: 88, gpa: 2.1 }), expectTop: "gpa" },
-  { id: "u09", name: "سنة ثالثة — معدّل ٢٫١ + اختبارات بعد ٥ أيام", ctx: uni({ uniStage: "mid", year: "الثالثة", hours: 88, gpa: 2.1, uniFinalsInDays: 5 }), expectTop: "uni-finals" },
-  { id: "u10", name: "منتصف — معدّل ٢٫٧ (على الحدّ تحت)", ctx: uni({ uniStage: "mid", gpa: 2.7 }), expectTop: "gpa" },
-  { id: "u11", name: "منتصف — معدّل ٢٫٧٥ (على الحدّ فوق)", ctx: uni({ uniStage: "mid", gpa: 2.75 }), expectTop: "coop" },
+  { id: "u05", name: "سنة ثانية — معدّل 3٫6 بلا تدريب", ctx: uni({ uniStage: "mid", gpa: 3.6, coopDone: false }), expectTop: "coop" },
+  { id: "u06", name: "سنة ثانية — معدّل 3٫4 أنهى التدريب", ctx: uni({ uniStage: "mid", gpa: 3.4, coopDone: true }), expectTop: "cert" },
+  { id: "u07", name: "سنة ثالثة — معدّل 4٫9", ctx: uni({ uniStage: "mid", year: "الثالثة", hours: 90, gpa: 4.9 }), expectTop: "research" },
+  { id: "u08", name: "سنة ثالثة — معدّل 2٫1 (متعثّر)", ctx: uni({ uniStage: "mid", year: "الثالثة", hours: 88, gpa: 2.1 }), expectTop: "gpa" },
+  { id: "u09", name: "سنة ثالثة — معدّل 2٫1 + اختبارات بعد 5 أيام", ctx: uni({ uniStage: "mid", year: "الثالثة", hours: 88, gpa: 2.1, uniFinalsInDays: 5 }), expectTop: "uni-finals" },
+  { id: "u10", name: "منتصف — معدّل 2٫7 (على الحدّ تحت)", ctx: uni({ uniStage: "mid", gpa: 2.7 }), expectTop: "gpa" },
+  { id: "u11", name: "منتصف — معدّل 2٫75 (على الحدّ فوق)", ctx: uni({ uniStage: "mid", gpa: 2.75 }), expectTop: "coop" },
   { id: "u12", name: "منتصف — معدّل مجهول (لم يُدخِل)", ctx: uni({ uniStage: "mid", gpa: null }), expectTop: "coop" },
 
   /* ═════ جامعي — قرب التخرّج ═════ */
-  { id: "u13", name: "قرب التخرّج — معدّل ٣٫٥ بلا تدريب", ctx: uni({ uniStage: "senior", year: "الرابعة", hours: 115, gpa: 3.5, coopDone: false }), expectTop: "cv" },
-  { id: "u14", name: "قرب التخرّج — معدّل ٣٫٥ أنهى التدريب", ctx: uni({ uniStage: "senior", year: "الرابعة", hours: 118, gpa: 3.5, coopDone: true }), expectTop: "cv" },
-  { id: "u15", name: "قرب التخرّج — معدّل ٤٫٩ (متميّز)", ctx: uni({ uniStage: "senior", year: "الرابعة", hours: 120, gpa: 4.9 }), expectTop: "research" },
-  { id: "u16", name: "قرب التخرّج — معدّل ٢٫٣ (متعثّر)", ctx: uni({ uniStage: "senior", year: "الرابعة", hours: 115, gpa: 2.3 }), expectTop: "gpa" },
-  { id: "u17", name: "قرب التخرّج — اختبارات بعد ٣ أيام", ctx: uni({ uniStage: "senior", year: "الرابعة", hours: 120, gpa: 3.4, uniFinalsInDays: 3 }), expectTop: "uni-finals" },
+  { id: "u13", name: "قرب التخرّج — معدّل 3٫5 بلا تدريب", ctx: uni({ uniStage: "senior", year: "الرابعة", hours: 115, gpa: 3.5, coopDone: false }), expectTop: "cv" },
+  { id: "u14", name: "قرب التخرّج — معدّل 3٫5 أنهى التدريب", ctx: uni({ uniStage: "senior", year: "الرابعة", hours: 118, gpa: 3.5, coopDone: true }), expectTop: "cv" },
+  { id: "u15", name: "قرب التخرّج — معدّل 4٫9 (متميّز)", ctx: uni({ uniStage: "senior", year: "الرابعة", hours: 120, gpa: 4.9 }), expectTop: "research" },
+  { id: "u16", name: "قرب التخرّج — معدّل 2٫3 (متعثّر)", ctx: uni({ uniStage: "senior", year: "الرابعة", hours: 115, gpa: 2.3 }), expectTop: "gpa" },
+  { id: "u17", name: "قرب التخرّج — اختبارات بعد 3 أيام", ctx: uni({ uniStage: "senior", year: "الرابعة", hours: 120, gpa: 3.4, uniFinalsInDays: 3 }), expectTop: "uni-finals" },
   { id: "u18", name: "قرب التخرّج — معدّل مجهول", ctx: uni({ uniStage: "senior", year: "الرابعة", hours: 120, gpa: null }), expectTop: "cv" },
   { id: "u19", name: "خريج جامعة يبحث عن وظيفة (قرب التخرّج)", ctx: uni({ uniStage: "senior", year: "الخامسة+", hours: 130, gpa: 3.2, coopDone: true }), expectTop: "cv" },
   { id: "u20", name: "خريج جامعة متميّز يريد دراسات عليا", ctx: uni({ uniStage: "senior", year: "الخامسة+", hours: 132, gpa: 4.8, gradInterest: true }), expectTop: "research" },
 
   /* ═════ اختبارات/فصل — تنويعات ═════ */
-  { id: "u21", name: "منتصف — اختبارات بعد ٢٠ يوماً (داخل النافذة)", ctx: uni({ uniStage: "mid", gpa: 3.3, uniFinalsInDays: 20 }), expectTop: "uni-finals" },
-  { id: "u22", name: "منتصف — اختبارات بعد ٢٥ يوماً (خارج النافذة)", ctx: uni({ uniStage: "mid", gpa: 3.3, uniFinalsInDays: 25 }), expectTop: "coop" },
+  { id: "u21", name: "منتصف — اختبارات بعد 20 يوماً (داخل النافذة)", ctx: uni({ uniStage: "mid", gpa: 3.3, uniFinalsInDays: 20 }), expectTop: "uni-finals" },
+  { id: "u22", name: "منتصف — اختبارات بعد 25 يوماً (خارج النافذة)", ctx: uni({ uniStage: "mid", gpa: 3.3, uniFinalsInDays: 25 }), expectTop: "coop" },
   { id: "u23", name: "بداية — داخل الفصل بلا اختبارات", ctx: uni({ uniStage: "start", year: "الأولى", hours: 16, gpa: 3.1, inStudyTerm: true }), expectTop: "foundation" },
   { id: "u24", name: "قرب التخرّج — بلا تخصص محدّد", ctx: uni({ uniStage: "senior", year: "الرابعة", hours: 116, gpa: 3.4, majorId: null, majorName: null }), expectTop: "cv" },
 
   /* ═════ حالات دقيقة/متطرّفة ═════ */
-  { id: "e01", name: "منتصف — معدّل ١٫٩ (تعثّر شديد)", ctx: uni({ uniStage: "mid", year: "الثالثة", hours: 85, gpa: 1.9 }), expectTop: "gpa" },
-  { id: "e02", name: "منتصف — معدّل ٤٫٥ بالضبط", ctx: uni({ uniStage: "mid", gpa: 4.5 }), expectTop: "research" },
-  { id: "e03", name: "منتصف — معدّل ٤٫٤٩ (تحت عتبة التميّز)", ctx: uni({ uniStage: "mid", gpa: 4.49 }), expectTop: "coop" },
+  { id: "e01", name: "منتصف — معدّل 1٫9 (تعثّر شديد)", ctx: uni({ uniStage: "mid", year: "الثالثة", hours: 85, gpa: 1.9 }), expectTop: "gpa" },
+  { id: "e02", name: "منتصف — معدّل 4٫5 بالضبط", ctx: uni({ uniStage: "mid", gpa: 4.5 }), expectTop: "research" },
+  { id: "e03", name: "منتصف — معدّل 4٫49 (تحت عتبة التميّز)", ctx: uni({ uniStage: "mid", gpa: 4.49 }), expectTop: "coop" },
   { id: "e04", name: "قرب التخرّج — أنهى التدريب + متعثّر", ctx: uni({ uniStage: "senior", year: "الرابعة", hours: 118, gpa: 2.2, coopDone: true }), expectTop: "gpa" },
   { id: "e05", name: "ثالث ثانوي — اختبارات الآن + قدرات قريبة", ctx: sec({ stage: "third", inSchoolFinals: true, qiyas: q(20) }), expectTop: "school-finals-now" },
-  { id: "e06", name: "أول ثانوي — اختبارات مدرسية بعد ١٥ يوماً", ctx: sec({ stage: "first", daysToSchoolFinals: 15 }), expectTop: "school-finals-soon" },
+  { id: "e06", name: "أول ثانوي — اختبارات مدرسية بعد 15 يوماً", ctx: sec({ stage: "first", daysToSchoolFinals: 15 }), expectTop: "school-finals-soon" },
 ];

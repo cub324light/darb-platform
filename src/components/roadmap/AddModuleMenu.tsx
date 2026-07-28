@@ -9,12 +9,12 @@ export default function AddModuleMenu({ ws, ctx, onAdd, capReached = false, rema
   ws: Workspace;
   ctx: EligibilityContext;
   onAdd: (target: AddTarget) => void;
-  capReached?: boolean;       // بلغ الحدّ الأقصى ٣ اختبارات ⇒ يُمنع أي إضافةٍ جديدة
+  capReached?: boolean;       // بلغ الحدّ الأقصى 3 اختبارات ⇒ يُمنع أي إضافةٍ جديدة
   remaining?: number;         // المتبقّي من الحدّ (لعرضٍ إرشاديّ)
 }) {
   const [open, setOpen] = useState(false);
   const cats = buildAddMenu(ws, ctx);
-  const CAP_MSG = "وصلت للحدّ الأقصى ٣ اختبارات — احذف اختباراً لإضافة آخر.";
+  const CAP_MSG = "وصلت للحدّ الأقصى 3 اختبارات — احذف اختباراً لإضافة آخر.";
 
   return (
     <div className="flex flex-col gap-3">
@@ -34,7 +34,7 @@ export default function AddModuleMenu({ ws, ctx, onAdd, capReached = false, rema
 
       {open && (
         <div className="flex flex-col gap-4 rounded-2xl p-4" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-          {/* شريط الحدّ الأقصى — تركيزٌ على القليل: ٣ اختبارات كحدّ */}
+          {/* شريط الحدّ الأقصى — تركيزٌ على القليل: 3 اختبارات كحدّ */}
           {capReached && (
             <div className="rounded-xl px-3.5 py-2.5 t-caption font-bold" style={{ background: "color-mix(in srgb, #F59E0B 12%, var(--surface2))", color: "#B45309", border: "1.5px solid color-mix(in srgb, #F59E0B 30%, var(--border))" }}>
               🎯 {CAP_MSG}

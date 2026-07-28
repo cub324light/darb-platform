@@ -1,13 +1,13 @@
 "use client";
 /* ═══════════ 🗓️ خطتي — الصفحة تفتح على الخطة ═══════════
-   كانت هذه الصفحة ٥٢٢٠px، جدولُها ٢٥٣px منها (٤٫٨٪) يبدأ بعد أربع شاشاتٍ من النماذج
+   كانت هذه الصفحة 5220px، جدولُها 253px منها (4٫8٪) يبدأ بعد أربع شاشاتٍ من النماذج
    والتقارير. الطالب يفتح «خطتي» ليعرف «ماذا الآن؟» فلا يجد جواباً إلا بعد تمريرٍ طويل.
    فأُعيد ترتيبها حول سؤالٍ واحد، بأربعة أقسامٍ معنونة تنازلياً بالإلحاح:
 
-     ١ · الآن         — جوابٌ واحدٌ كبير: جلستُك الجارية أو القادمة أو حالةٌ فارغةٌ صادقة.
-     ٢ · جدولي        — اليوم/الأسبوع/الشهر، وبناءُ الجدول يدويّاً أو مع دويرب.
-     ٣ · إلى أين؟     — حكمُ واقعية الهدف ظاهر، وتحريرُ الأهداف مطويٌّ تحته.
-     ٤ · ما يحيط بخطتك — التسجيل والتقويم والاستراتيجية: سياقٌ يشكّل الخطة لا يسبقها.
+     أوّلاً · الآن       — جوابٌ واحدٌ كبير: جلستُك الجارية أو القادمة أو حالةٌ فارغةٌ صادقة.
+     ثانياً · جدولي      — اليوم/الأسبوع/الشهر، وبناءُ الجدول يدويّاً أو مع دويرب.
+     ثالثاً · إلى أين؟   — حكمُ واقعية الهدف ظاهر، وتحريرُ الأهداف مطويٌّ تحته.
+     رابعاً · ما يحيط بخطتك — التسجيل والتقويم والاستراتيجية: سياقٌ يشكّل الخطة لا يسبقها.
 
    ولا ميزة حُذفت — كلّها هنا، والترتيب وحده تغيّر. */
 import { useState, useEffect } from "react";
@@ -109,7 +109,7 @@ export default function PlanPage() {
   );
   /* المطويّة تُفتح تلقائياً لمن لم يضع هدفاً بعد — وإلا بقي القُمع مغلقاً للأبد.
      ولا نركّب محتواها قبل فتحها: `GoalsPanel` و`UniversityFuture` يشغّلان محرّكات
-     (الاستراتيجية · الجاهزية · تحليل الفجوة) ويضيفان ~٢٠٠ عنصراً إلى الصفحة، وأكثر
+     (الاستراتيجية · الجاهزية · تحليل الفجوة) ويضيفان ~200 عنصراً إلى الصفحة، وأكثر
      الزائرين لا يفتحونها. حالتهما في التخزين لا في الشجرة، فالتركيب المتأخّر لا يفقد شيئاً. */
   const [goalsOpen] = useState(() =>
     typeof window !== "undefined" ? Object.keys(loadGoals()).length === 0 : false
@@ -218,7 +218,7 @@ export default function PlanPage() {
   const openDuwairb = () =>
     window.dispatchEvent(new CustomEvent("darb:openDuirb", { detail: { tab: "schedule" } }));
 
-  /* ── §١ الآن — الجواب الواحد ── */
+  /* ── §1 الآن — الجواب الواحد ── */
   const renderNow = () => {
     if (todayStudy.length === 0) {
       return (
@@ -315,15 +315,15 @@ export default function PlanPage() {
       </Dome>
       <div className="h-5" />
 
-      {/* ═════ §١ الآن ═════ */}
+      {/* ═════ §1 الآن ═════ */}
       <section className="px-5 mb-6 rise rise-1">
-        <SectionHead eyebrow="١ · الآن" title="ماذا تذاكر هذه اللحظة؟" />
+        <SectionHead eyebrow="أوّلاً · الآن" title="ماذا تذاكر هذه اللحظة؟" />
         {renderNow()}
       </section>
 
-      {/* ═════ §٢ جدولي ═════ */}
+      {/* ═════ §2 جدولي ═════ */}
       <section className="px-5 mb-6 rise rise-2">
-        <SectionHead eyebrow="٢ · جدولي" title="اليوم والأسبوع والشهر" />
+        <SectionHead eyebrow="ثانياً · جدولي" title="اليوم والأسبوع والشهر" />
 
         <div className="flex gap-2 p-1 rounded-2xl mb-3" style={{ background: "var(--surface)" }}>
           {([["day", "اليوم"], ["week", "الأسبوع"], ["month", "الشهر"]] as const).map(([v, label]) => (
@@ -423,10 +423,10 @@ export default function PlanPage() {
         </details>
       </section>
 
-      {/* ═════ §٣ إلى أين؟ — لا تخصّ خريج الجامعة (خارج عالم الاختبارات) ═════ */}
+      {/* ═════ §3 إلى أين؟ — لا تخصّ خريج الجامعة (خارج عالم الاختبارات) ═════ */}
       {!gradUni && (
         <section className="px-5 mb-6 rise rise-3">
-          <SectionHead eyebrow="٣ · إلى أين؟" title="هدفك وواقعيّته" />
+          <SectionHead eyebrow="ثالثاً · إلى أين؟" title="هدفك وواقعيّته" />
           <div className="flex flex-col gap-4">
             <GoalRealityCard />
             <details open={goalsOpen} className="ds-card"
@@ -448,10 +448,10 @@ export default function PlanPage() {
         </section>
       )}
 
-      {/* ═════ §٤ ما يحيط بخطتك ═════ */}
+      {/* ═════ §4 ما يحيط بخطتك ═════ */}
       {!gradUni && (
         <section className="px-5 mb-6 rise rise-4">
-          <SectionHead eyebrow="٤ · ما يحيط بخطتك" title="التسجيل والتقويم والاستراتيجية" />
+          <SectionHead eyebrow="رابعاً · ما يحيط بخطتك" title="التسجيل والتقويم والاستراتيجية" />
           <div className="flex flex-col gap-4">
             <ExamRegistrationAlert />
             <CalendarStatusCard />

@@ -322,7 +322,7 @@ export default function ErrorsBody({ embedded = false }: { embedded?: boolean })
                 </div>
               </div>
 
-              {/* عدّاد أخطاء المادة المختارة — كل مادة لها ٢٥ */}
+              {/* عدّاد أخطاء المادة المختارة — كل مادة لها 25 */}
               <div className="flex items-center justify-between px-1">
                 <span className="text-sm text-[var(--text-muted)]">أخطاء {newSubject}</span>
                 <span className="text-sm font-bold" style={{ color: atLimit ? "var(--danger)" : "var(--text-dim)" }}>

@@ -1,6 +1,7 @@
+import { n as ar } from "@/lib/format";
 /* ─── اكتمال الملف الشخصي + مكافآته التدريجية — منطقٌ نقيّ (لا localStorage) ───
-   ٨ معلومات: ٤ أساسية (من التسجيل) + ٤ شخصية (البروفايل: هوايات/اهتمامات/مواد/طريقة مذاكرة).
-   مكافآت تدريجية: +٥ فضة مع كل معلومةٍ شخصية تُضاف (مرّة لكلٍّ)، ووسام + ٣٠ فضة عند ١٠٠٪.
+   8 معلومات: 4 أساسية (من التسجيل) + 4 شخصية (البروفايل: هوايات/اهتمامات/مواد/طريقة مذاكرة).
+   مكافآت تدريجية: +5 فضة مع كل معلومةٍ شخصية تُضاف (مرّة لكلٍّ)، ووسام + 30 فضة عند 100٪.
    مصدرٌ واحد: كل الحقول من DarbUser (لا تكرار). */
 
 export interface FullProfile {
@@ -16,7 +17,7 @@ export interface CompletionResult { total: number; done: number; pct: number; fi
 
 const has = (a?: unknown[]): boolean => Array.isArray(a) && a.length > 0;
 
-/** الحقول الشخصية التي تُكافأ بـ+٥ عند أول إضافة (طريقة المذاكرة تُملأ غالباً من التسجيل). */
+/** الحقول الشخصية التي تُكافأ بـ+5 عند أول إضافة (طريقة المذاكرة تُملأ غالباً من التسجيل). */
 export const REWARDED_FIELDS = ["hobbies", "interests", "favSubjects"] as const;
 
 /** حالة اكتمال الملف: منجز/الكل، النسبة، وحالة كل معلومة. */
@@ -42,9 +43,8 @@ export interface RewardOutcome {
   newRewardedFields: string[]; setCompleteFlag: boolean;
 }
 
-const ar = (x: number) => x.toLocaleString("ar-u-nu-arab");
 
-/** ما الذي يُصرف الآن؟ +٥ لكل معلومةٍ شخصية جديدة، ووسام + ٣٠ عند ١٠٠٪. null إن لا شيء. */
+/** ما الذي يُصرف الآن؟ +5 لكل معلومةٍ شخصية جديدة، ووسام + 30 عند 100٪. null إن لا شيء. */
 export function pendingProfileRewards(u: FullProfile): RewardOutcome | null {
   const c = profileCompletion(u);
   const doneById = new Map(c.fields.map((f) => [f.id, f.done]));

@@ -170,7 +170,7 @@ export function authErrorMsg(code: string): string {
   switch (code) {
     case "auth/invalid-email": return "الإيميل غير صحيح";
     case "auth/email-already-in-use": return "هذا الإيميل مسجّل من قبل — سجّل دخول بدله";
-    case "auth/weak-password": return "كلمة المرور قصيرة — ٦ أحرف على الأقل";
+    case "auth/weak-password": return "كلمة المرور قصيرة — 6 أحرف على الأقل";
     case "auth/invalid-credential":
     case "auth/wrong-password":
     case "auth/user-not-found": return "الإيميل أو كلمة المرور غير صحيحة";

@@ -1,7 +1,7 @@
 "use client";
 /* ─── لوحة الأدمن: الرسم التفاعلي (World Model) — أداة عمل لا مجرّد رسم ───
    يُبنى حيّاً من سجلّات المستودع (يعكس تعديلات الأدمن فوراً) عبر إعادة استخدام
-   KnowledgeBase. الأداء: لا يرسم كل الرسم — فقط العقدة الحالية وجوارها (عمق ١ أو ٢)
+   KnowledgeBase. الأداء: لا يرسم كل الرسم — فقط العقدة الحالية وجوارها (عمق 1 أو 2)
    بحدٍّ أقصى للعقد، مع التوسيع بالتنقّل. لكل نوعٍ لونٌ ثابت. اضغط عقدةً لترى/تعدّل/
    تحذف/تضيف علاقاتها، وحالتها ومصدرها وآخر تعديل، وتنتقل إليها. */
 import { useEffect, useMemo, useState } from "react";
@@ -131,7 +131,7 @@ export default function AdminGraph() {
         })}
         {filters.size > 0 && <button onClick={() => setFilters(new Set())} className="t-caption" style={{ color: "var(--text-muted)" }}>مسح</button>}
         <span className="w-px h-4" style={{ background: "var(--border)" }} />
-        <button onClick={() => setDepth(depth === 1 ? 2 : 1)} className="t-caption font-bold px-2 py-1 rounded-lg" style={{ background: "var(--surface2)", color: "var(--accent-light)", border: "1px solid var(--border)" }}>عمق: {depth === 1 ? "١" : "٢"}</button>
+        <button onClick={() => setDepth(depth === 1 ? 2 : 1)} className="t-caption font-bold px-2 py-1 rounded-lg" style={{ background: "var(--surface2)", color: "var(--accent-light)", border: "1px solid var(--border)" }}>عمق: {depth === 1 ? "1" : "2"}</button>
       </div>
 
       {/* الرسم */}

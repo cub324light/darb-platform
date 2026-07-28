@@ -16,22 +16,22 @@ export const metadata: Metadata = {
 const SAMPLE = "درب — نظامٌ واحدٌ متناسق";
 
 const SCALE: { cls: string; name: string; spec: string; when: string }[] = [
-  { cls: "t-display", name: "Display", spec: "٢٫٢–٣rem · 700 · lh 1.12", when: "عنوان بطلٍ ضخم فقط (صفحة هبوط/لحظة احتفال)" },
-  { cls: "t-h1", name: "H1", spec: "١٫٦–٢rem · 700 · lh 1.22", when: "عنوان الصفحة أو البطل الأساسي" },
-  { cls: "t-h2", name: "H2", spec: "١٫٣rem · 700 · lh 1.34", when: "عنوان قسمٍ كبير" },
-  { cls: "t-h3", name: "H3", spec: "١٫٠٨rem · 600 · lh 1.45", when: "عنوان بطاقة/قسم" },
-  { cls: "t-title", name: "Title", spec: "٠٫٩٨rem · 600 · lh 1.5", when: "عنوان عنصرٍ داخل بطاقة" },
-  { cls: "t-body-lg", name: "Body-lg", spec: "١rem · 400 · lh 1.8", when: "نصٌّ رئيسي مريح للقراءة" },
-  { cls: "t-body", name: "Body", spec: "٠٫٩rem · 400 · lh 1.75", when: "النص الافتراضي" },
-  { cls: "t-small", name: "Small", spec: "٠٫٨٢rem · 400 · lh 1.65", when: "نصٌّ ثانوي/مساعد" },
-  { cls: "t-caption", name: "Caption", spec: "٠٫٧٦rem · 500 · lh 1.55", when: "تفاصيل صغيرة/شارات/تسميات" },
+  { cls: "t-display", name: "Display", spec: "2٫2–3rem · 700 · lh 1.12", when: "عنوان بطلٍ ضخم فقط (صفحة هبوط/لحظة احتفال)" },
+  { cls: "t-h1", name: "H1", spec: "1٫6–2rem · 700 · lh 1.22", when: "عنوان الصفحة أو البطل الأساسي" },
+  { cls: "t-h2", name: "H2", spec: "1٫3rem · 700 · lh 1.34", when: "عنوان قسمٍ كبير" },
+  { cls: "t-h3", name: "H3", spec: "1٫08rem · 600 · lh 1.45", when: "عنوان بطاقة/قسم" },
+  { cls: "t-title", name: "Title", spec: "0٫98rem · 600 · lh 1.5", when: "عنوان عنصرٍ داخل بطاقة" },
+  { cls: "t-body-lg", name: "Body-lg", spec: "1rem · 400 · lh 1.8", when: "نصٌّ رئيسي مريح للقراءة" },
+  { cls: "t-body", name: "Body", spec: "0٫9rem · 400 · lh 1.75", when: "النص الافتراضي" },
+  { cls: "t-small", name: "Small", spec: "0٫82rem · 400 · lh 1.65", when: "نصٌّ ثانوي/مساعد" },
+  { cls: "t-caption", name: "Caption", spec: "0٫76rem · 500 · lh 1.55", when: "تفاصيل صغيرة/شارات/تسميات" },
 ];
 
 const WEIGHTS = [
-  { w: 400, label: "Regular ٤٠٠", use: "النص الافتراضي" },
-  { w: 500, label: "Medium ٥٠٠", use: "تسميات/Caption" },
-  { w: 600, label: "SemiBold ٦٠٠", use: "عناوين ثانوية/H3/Title" },
-  { w: 700, label: "Bold ٧٠٠", use: "عناوين رئيسية/H1/H2/تأكيد" },
+  { w: 400, label: "Regular 400", use: "النص الافتراضي" },
+  { w: 500, label: "Medium 500", use: "تسميات/Caption" },
+  { w: 600, label: "SemiBold 600", use: "عناوين ثانوية/H3/Title" },
+  { w: 700, label: "Bold 700", use: "عناوين رئيسية/H1/H2/تأكيد" },
 ];
 
 const SPACES = [["sp-1", 4], ["sp-2", 8], ["sp-3", 12], ["sp-4", 16], ["sp-5", 24], ["sp-6", 32], ["sp-7", 48], ["sp-8", 64]] as const;
@@ -97,7 +97,7 @@ export default function DesignSystemPage() {
               </div>
             ))}
           </div>
-          <p className="t-caption" style={{ color: "var(--text-muted)" }}>أي وزنٍ أثقل (٨٠٠/٩٠٠) يُثبَّت تلقائياً على Bold ٧٠٠.</p>
+          <p className="t-caption" style={{ color: "var(--text-muted)" }}>أي وزنٍ أثقل (800/900) يُثبَّت تلقائياً على Bold 700.</p>
         </Section>
 
         {/* تدرّج البطاقة — القاعدة */}
@@ -129,7 +129,7 @@ export default function DesignSystemPage() {
 
         {/* المسافات + الحواف */}
         <Section title="المسافات والحواف">
-          <p className="t-caption" style={{ color: "var(--text-muted)" }}>المسافات — شبكة ٤/٨</p>
+          <p className="t-caption" style={{ color: "var(--text-muted)" }}>المسافات — شبكة 4/8</p>
           <div className="flex flex-col gap-1.5">
             {SPACES.map(([tok, v]) => (
               <div key={tok} className="flex items-center gap-3">

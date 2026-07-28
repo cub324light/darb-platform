@@ -43,9 +43,9 @@ const FEATURES = [
 ];
 
 const STEPS = [
-  { n: "١", title: "ادخل بثانية", desc: "بحساب Google — يحفظ تقدّمك ويزامنه على كل أجهزتك." },
-  { n: "٢", title: "شوف خريطتك", desc: "كل دروس مسارك مرتّبة. ابدأ من التأسيس واقفل كل مرحلة." },
-  { n: "٣", title: "ذاكر يومياً", desc: "أوربت للتركيز، أخطائي للأخطاء، بطاقاتي للحفظ — كل شي بمكان." },
+  { n: "1", title: "ادخل بثانية", desc: "بحساب Google — يحفظ تقدّمك ويزامنه على كل أجهزتك." },
+  { n: "2", title: "شوف خريطتك", desc: "كل دروس مسارك مرتّبة. ابدأ من التأسيس واقفل كل مرحلة." },
+  { n: "3", title: "ذاكر يومياً", desc: "أوربت للتركيز، أخطائي للأخطاء، بطاقاتي للحفظ — كل شي بمكان." },
 ];
 
 const PAIN = [
@@ -409,7 +409,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════ */}
       <section id="features" className="px-5 py-16 landing-section-pad max-w-2xl landing-max mx-auto">
         <SectionHead eyebrow="أدواتك"
-          title={<><AnimatedGradientText>٦ أدوات</AnimatedGradientText>{" "}تحصّلها بمكان واحد</>}
+          title={<><AnimatedGradientText>6 أدوات</AnimatedGradientText>{" "}تحصّلها بمكان واحد</>}
           sub="كل أداة تشتغل مع الثانية — جلساتك وأخطاؤك وبطاقاتك كلها تصب في تقدمك." />
         <div className="grid grid-cols-1 md:grid-cols-2 desk-grid-3 gap-3">
           {FEATURES.map((f, i) => (

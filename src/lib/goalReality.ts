@@ -1,6 +1,6 @@
 import { n, days as arDays } from "@/lib/format";
 
-/* «٣ درجات» / «١٣ درجة» — جمعُ العربية يتبع العدد */
+/* «3 درجات» / «13 درجة» — جمعُ العربية يتبع العدد */
 const degrees = (x: number): string =>
   x === 1 ? "درجة واحدة" : x === 2 ? "درجتان" : `${n(x)} ${x >= 3 && x <= 10 ? "درجات" : "درجة"}`;
 /* ─── محرّك تقييم واقعية الهدف ───
@@ -48,7 +48,7 @@ export function evaluateGoal(inp: GoalRealityInputs): GoalRealityResult {
 
   let score = 50; // نبدأ محايدين
 
-  /* ١) الفجوة بين الدرجة الحالية والهدف */
+  /* 1) الفجوة بين الدرجة الحالية والهدف */
   let gapNote = "";
   if (current != null) {
     const gap = target - current;
@@ -79,7 +79,7 @@ export function evaluateGoal(inp: GoalRealityInputs): GoalRealityResult {
     }
   }
 
-  /* ٢) الوقت المتبقي */
+  /* 2) الوقت المتبقي */
   let timeNote = "";
   if (days != null) {
     if (days <= 7) {
@@ -100,7 +100,7 @@ export function evaluateGoal(inp: GoalRealityInputs): GoalRealityResult {
     }
   }
 
-  /* ٣) الطاقة الأسبوعية */
+  /* 3) الطاقة الأسبوعية */
   let hoursNote = "";
   if (hours != null) {
     if (hours >= 20) { score += 20; hoursNote = `${n(hours)} ساعة/أسبوع — طاقة ممتازة.`; }
@@ -109,11 +109,11 @@ export function evaluateGoal(inp: GoalRealityInputs): GoalRealityResult {
     else { score -= 10; hoursNote = `${n(hours)} ساعة/أسبوع — ساعات قليلة.`; }
   }
 
-  /* ٤) مكافأة التجربة */
+  /* 4) مكافأة التجربة */
   if (attempts >= 2) score += 8;
   else if (attempts === 1) score += 4;
 
-  /* ٥) الجاهزية مستقلة (إن لم تُستخدم في الفجوة) */
+  /* 5) الجاهزية مستقلة (إن لم تُستخدم في الفجوة) */
   if (readiness != null && current == null) {
     if (readiness >= 75) score += 10;
     else if (readiness >= 50) score += 3;

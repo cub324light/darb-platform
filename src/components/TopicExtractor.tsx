@@ -68,7 +68,7 @@ function parseTopics(text: string): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const line of text.split("\n")) {
-    const cleaned = line.replace(/^[\s\-•*–—.()\d٠-٩]+/, "").trim();
+    const cleaned = line.replace(/^[\s\-•*–—.()\d0-9]+/, "").trim();
     if (cleaned.length < 2 || cleaned.length > 80) continue;
     if (seen.has(cleaned)) continue;
     seen.add(cleaned);

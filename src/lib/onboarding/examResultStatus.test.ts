@@ -10,13 +10,13 @@ test("مساعدات التاريخ: إضافة أيام وفارقها", () => 
   assert.equal(addDays("bad", 3), "bad");                 // مدخلٌ خاطئ يُعاد كما هو
 });
 
-test("القدرات المحوسب: متوسط ٣ أيام وأقصى أسبوع + نصّه", () => {
+test("القدرات المحوسب: متوسط 3 أيام وأقصى أسبوع + نصّه", () => {
   const e = estimateResult("qudurat", "computer", "2026-07-18");
   assert.equal(e.avgDays, 3);
   assert.equal(e.maxDays, 7);
   assert.equal(e.expectedDate, "2026-07-21");
   assert.equal(e.maxDate, "2026-07-25");
-  assert.ok(e.text.includes("٣ أيام") && e.text.includes("أسبوع"));
+  assert.ok(e.text.includes("3 أيام") && e.text.includes("أسبوع"));
 });
 
 test("القدرات الورقي: حوالي شهر + نصّه (لا حدّ أقصى)", () => {
@@ -36,10 +36,10 @@ test("التحصيلي ورقيٌّ دائماً (يتجاهل النمط) + ن�
 });
 
 test("العدّ التنازلي: الأيام المتبقّية حتى الموعد المتوقّع (لا يقلّ عن صفر)", () => {
-  /* اختبار محوسب ٢٠٢٦-٠٧-١٨ → متوقّع ٢٠٢٦-٠٧-٢١ */
+  /* اختبار محوسب 2026-07-18 → متوقّع 2026-07-21 */
   assert.equal(remainingToResult("qudurat", "computer", "2026-07-18", "2026-07-18"), 3);
   assert.equal(remainingToResult("qudurat", "computer", "2026-07-18", "2026-07-20"), 1);
   assert.equal(remainingToResult("qudurat", "computer", "2026-07-18", "2026-07-25"), 0); // مضى الموعد → صفر
-  /* تحصيلي: مثال ٢١ يوماً متبقّية */
+  /* تحصيلي: مثال 21 يوماً متبقّية */
   assert.equal(remainingDays("2026-08-08", "2026-07-18"), 21);
 });

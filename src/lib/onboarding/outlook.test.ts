@@ -5,33 +5,33 @@ import { admissionOutlook, orderOutlook, whatIfRaise, readiness } from "./outloo
 
 const find = (items: ReturnType<typeof admissionOutlook>, id: string) => items.find((i) => i.id === id)!;
 
-test("البرامج بوابات صارمة: ITC(٧٢) وCPC(٩٠) — دون الشرط = أحمر لا أصفر", () => {
-  /* قدرات ٧١ لـ ITC = أحمر */
+test("البرامج بوابات صارمة: ITC(72) وCPC(90) — دون الشرط = أحمر لا أصفر", () => {
+  /* قدرات 71 لـ ITC = أحمر */
   assert.equal(find(admissionOutlook({ targets: ["itc"], qudurat: 71 }), "itc").icon, "🔴");
   assert.equal(find(admissionOutlook({ targets: ["itc"], qudurat: 72 }), "itc").icon, "🟢");
-  /* قدرات ٨٩ لـ CPC = أحمر */
+  /* قدرات 89 لـ CPC = أحمر */
   assert.equal(find(admissionOutlook({ targets: ["aramco"], qudurat: 89 }), "cpc").icon, "🔴");
   assert.equal(find(admissionOutlook({ targets: ["aramco"], qudurat: 93 }), "cpc").icon, "🟢");
 });
 
 test("نفس الدرجة تفتح ITC وتغلق CPC (الحكم من شرط كلٍّ لا من التقدير)", () => {
   const items = admissionOutlook({ targets: ["itc", "aramco"], qudurat: 88 });
-  assert.equal(find(items, "itc").icon, "🟢"); // ٨٨ ≥ ٧٢
-  assert.equal(find(items, "cpc").icon, "🔴"); // ٨٨ < ٩٠
+  assert.equal(find(items, "itc").icon, "🟢"); // 88 ≥ 72
+  assert.equal(find(items, "cpc").icon, "🔴"); // 88 < 90
 });
 
 test("الجامعة (soft): مستوفٍ/قريب/بعيد", () => {
   assert.equal(find(admissionOutlook({ targets: ["university"], qudurat: 75 }), "university").icon, "🟢");
-  assert.equal(find(admissionOutlook({ targets: ["university"], qudurat: 68 }), "university").icon, "🟡"); // فارق ٢
-  assert.equal(find(admissionOutlook({ targets: ["university"], qudurat: 60 }), "university").icon, "🔴"); // فارق ١٠
+  assert.equal(find(admissionOutlook({ targets: ["university"], qudurat: 68 }), "university").icon, "🟡"); // فارق 2
+  assert.equal(find(admissionOutlook({ targets: ["university"], qudurat: 60 }), "university").icon, "🔴"); // فارق 10
 });
 
-test("ميل التخصص يضيف فرصة التخصص (هندسة قدرات ٨٥)", () => {
+test("ميل التخصص يضيف فرصة التخصص (هندسة قدرات 85)", () => {
   const items = admissionOutlook({ targets: ["university"], trackType: "هندسي", qudurat: 86 });
   assert.ok(find(items, "university"));
-  assert.equal(find(items, "major-eng").icon, "🟢"); // ٨٦ ≥ ٨٥
+  assert.equal(find(items, "major-eng").icon, "🟢"); // 86 ≥ 85
   const near = admissionOutlook({ targets: ["university"], trackType: "هندسي", qudurat: 83 });
-  assert.equal(find(near, "major-eng").icon, "🟡"); // فارق ٢
+  assert.equal(find(near, "major-eng").icon, "🟡"); // فارق 2
 });
 
 test("الصحة تعتمد التحصيلي؛ الابتعاث يعتمد STEP", () => {
@@ -53,7 +53,7 @@ test("بلا درجات → كل الفرص ⚪ · بلا وجهات → لا ف
 });
 
 test("الترتيب بالأهمية: اللون أولاً (🟢→🟡→🔴) ثم الوزن (لا أبجدياً)", () => {
-  /* قدرات ٨٦: الجامعة🟢 ITC🟢 الهندسة🟢 · CPC🔴 (٩٠). الترتيب: جامعة قبل ITC قبل هندسة، وCPC أخيراً */
+  /* قدرات 86: الجامعة🟢 ITC🟢 الهندسة🟢 · CPC🔴 (90). الترتيب: جامعة قبل ITC قبل هندسة، وCPC أخيراً */
   const items = admissionOutlook({ targets: ["university", "itc", "aramco"], trackType: "هندسي", qudurat: 86 });
   const ids = items.map((i) => i.id);
   assert.deepEqual(ids, ["university", "itc", "major-eng", "cpc"]);
@@ -69,7 +69,7 @@ test("orderOutlook: 🟢 قبل 🟡 قبل 🔴 مهما كان ترتيب ال
   assert.deepEqual(orderOutlook(raw).map((i) => i.icon), ["🟢", "🟡", "🔴"]);
 });
 
-test("ماذا لو رفعت درجتك؟ — قدرات ٨٨ → ٩٠ يفتح CPC (من الشروط لا أرقامٍ مخترعة)", () => {
+test("ماذا لو رفعت درجتك؟ — قدرات 88 → 90 يفتح CPC (من الشروط لا أرقامٍ مخترعة)", () => {
   const w = whatIfRaise({ targets: ["university", "aramco"], qudurat: 88 }, "qudurat");
   assert.ok(w, "يوجد ما يُفتح");
   assert.equal(w!.target, 90);                       // أقرب عتبةٍ نافعة = CPC
@@ -77,7 +77,7 @@ test("ماذا لو رفعت درجتك؟ — قدرات ٨٨ → ٩٠ يفتح 
 });
 
 test("ماذا لو: بلا عتبةٍ أعلى → null · بلا درجة → null", () => {
-  /* قدرات ٩٥ يتجاوز كل العتبات → لا شيء يُرفع إليه */
+  /* قدرات 95 يتجاوز كل العتبات → لا شيء يُرفع إليه */
   assert.equal(whatIfRaise({ targets: ["university", "aramco", "itc"], qudurat: 95 }, "qudurat"), null);
   /* لا درجة قدرات مُدخلة */
   assert.equal(whatIfRaise({ targets: ["aramco"] }, "qudurat"), null);
@@ -94,15 +94,15 @@ test("الجاهزية تعتمد على هدف الطالب لا على تقد�
   assert.equal(med.level, "improve");
   assert.ok(med.reason.includes("التحصيلي"));
 
-  /* هدف CPC دون ٩٠ → غير جاهز حالياً بالسبب الصريح */
+  /* هدف CPC دون 90 → غير جاهز حالياً بالسبب الصريح */
   const cpc = readiness(admissionOutlook({ targets: ["aramco"], qudurat: 85 }))!;
   assert.equal(cpc.level, "focus");
   assert.equal(cpc.title, "غير جاهز حالياً");
-  assert.ok(cpc.reason.includes("القدرات") && cpc.reason.includes("٩٠"));
+  assert.ok(cpc.reason.includes("القدرات") && cpc.reason.includes("90"));
 });
 
 test("«درب يحدد لي» → الجاهزية على أفضل فرصةٍ مناسبة حالياً", () => {
-  /* بلا هدفٍ محدّد: قدرات ٨٨ يفتح عدّة فرص → جاهز على أفضلها */
+  /* بلا هدفٍ محدّد: قدرات 88 يفتح عدّة فرص → جاهز على أفضلها */
   const r = readiness(admissionOutlook({ targets: ["university", "itc", "aramco"], qudurat: 88 }), true)!;
   assert.equal(r.level, "ready");
   assert.ok(r.reason.includes("استوفيت"));

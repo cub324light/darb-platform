@@ -14,8 +14,8 @@ import {
   buildOpportunities, OPPORTUNITIES_DISCLAIMER,
   type OpportunityItem, type OpportunityStatus,
 } from "@/lib/opportunities";
+import { n as ar } from "@/lib/format";
 
-const ar = (n: number) => n.toLocaleString("ar-SA");
 
 /* أقرب درجة من خريطة النتائج — نفس المطابقة المرنة في لوحة القبول
    (المفاتيح كما تُحفظ في «نتائجي»: «القدرات» / «التحصيلي» / «ستيب STEP») */
@@ -188,7 +188,7 @@ export default function OpportunitiesPage() {
                 {g.note}
               </p>
             )}
-            {/* الجامعات: شبكة ٣ أعمدة على سطح المكتب (desk-grid-3 عند ≥1100px) */}
+            {/* الجامعات: شبكة 3 أعمدة على سطح المكتب (desk-grid-3 عند ≥1100px) */}
             <div className={g.id === "universities" ? "grid gap-2.5 desk-grid-3" : "flex flex-col gap-2.5"}>
               {g.items.map((it) => <OpportunityCard key={it.id} item={it} />)}
             </div>

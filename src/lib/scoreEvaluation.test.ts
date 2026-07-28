@@ -6,20 +6,20 @@ import {
 } from "./scoreEvaluation";
 
 test("توزيع قياس للقدرات: حدود المستويات الرسمية", () => {
-  assert.equal(getQuduratEval(59)!.tier, "below");     // أقل من ٦٠
+  assert.equal(getQuduratEval(59)!.tier, "below");     // أقل من 60
   assert.equal(getQuduratEval(59)!.icon, "🔴");
-  assert.equal(getQuduratEval(60)!.tier, "average");   // ٦٠ إلى دون ٧٠
+  assert.equal(getQuduratEval(60)!.tier, "average");   // 60 إلى دون 70
   assert.equal(getQuduratEval(69)!.tier, "average");
   assert.equal(getQuduratEval(60)!.icon, "🟡");
-  assert.equal(getQuduratEval(70)!.tier, "good");      // ٧٠ إلى دون ٧٨
+  assert.equal(getQuduratEval(70)!.tier, "good");      // 70 إلى دون 78
   assert.equal(getQuduratEval(77)!.tier, "good");
-  assert.equal(getQuduratEval(78)!.tier, "high");      // ٧٨ إلى دون ٨١
+  assert.equal(getQuduratEval(78)!.tier, "high");      // 78 إلى دون 81
   assert.equal(getQuduratEval(80)!.tier, "high");
-  assert.equal(getQuduratEval(81)!.tier, "excellent"); // ٨١ فأعلى
+  assert.equal(getQuduratEval(81)!.tier, "excellent"); // 81 فأعلى
   assert.equal(getQuduratEval(95)!.tier, "excellent");
 });
 
-test("النِّسب المئوية الرسمية للقدرات (٧٠/٩٠/٩٥) — جيد فأعلى فقط", () => {
+test("النِّسب المئوية الرسمية للقدرات (70/90/95) — جيد فأعلى فقط", () => {
   assert.equal(getQuduratEval(72)!.percentile, 70);
   assert.equal(getQuduratEval(79)!.percentile, 90);
   assert.equal(getQuduratEval(85)!.percentile, 95);
@@ -43,12 +43,12 @@ test("STEP اختبار لغة: مستوياتٌ بلا نسبةٍ مئوية ر
 
 test("percentileText: نصٌّ عربي حين وُجدت النسبة، وإلا null", () => {
   assert.ok(percentileText(getQuduratEval(85))!.includes("٪"));
-  assert.ok(percentileText(getQuduratEval(85))!.includes("٩٥"));
+  assert.ok(percentileText(getQuduratEval(85))!.includes("95"));
   assert.equal(percentileText(getQuduratEval(65)), null);
   assert.equal(percentileText(null), null);
 });
 
-test("evalBarPct: نسبة الامتلاء مقصوصة ٠–١٠٠", () => {
+test("evalBarPct: نسبة الامتلاء مقصوصة 0–100", () => {
   assert.equal(evalBarPct(88), 88);
   assert.equal(evalBarPct(0), 0);
   assert.equal(evalBarPct(120), 100);

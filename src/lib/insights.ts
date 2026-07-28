@@ -69,8 +69,8 @@ export function longestStreak(stats: DarbStats): number {
   return best;
 }
 
-/* ── التحسّن الشهري: مقارنة دقائق آخر ٣٠ يوماً بالـ٣٠ التي قبلها ──
-   يعتمد على dayMins (محفوظ حتى ٦٠ يوماً). null إن لا أساس للمقارنة. */
+/* ── التحسّن الشهري: مقارنة دقائق آخر 30 يوماً بالـ30 التي قبلها ──
+   يعتمد على dayMins (محفوظ حتى 60 يوماً). null إن لا أساس للمقارنة. */
 export function monthlyDelta(stats: DarbStats): { mins: number; prevMins: number; deltaPct: number | null } {
   const dayMins = stats.dayMins ?? {};
   const sum = (keys: string[]) => keys.reduce((n, k) => n + (dayMins[k] ?? 0), 0);
@@ -89,8 +89,8 @@ export function activeDaysWithin(stats: DarbStats, n: number): number {
   return dayKeysBack(0, n).filter((k) => (dayMins[k] ?? 0) > 0).length;
 }
 
-/* ── الجاهزية المقدّرة — مؤشر إرشادي شفّاف (٠–١٠٠) ──
-   مزيج: تقدّم المسار (٤٥٪) + متوسط إتقان المهارات (٤٥٪) + انتظام آخر شهر (١٠٪).
+/* ── الجاهزية المقدّرة — مؤشر إرشادي شفّاف (0–100) ──
+   مزيج: تقدّم المسار (45٪) + متوسط إتقان المهارات (45٪) + انتظام آخر شهر (10٪).
    avgSkillScore يأتي من skillProgress (محسوب أصلاً في الصفحة). */
 export type ReadinessLabel = "مبكّر" | "في الطريق" | "شبه جاهز" | "جاهز";
 

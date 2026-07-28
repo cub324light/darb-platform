@@ -21,7 +21,7 @@ test("الحالة العامة: ملتزم ⟵ ممتاز 🟢", () => {
   assert.match(d.status.line, /ملتزم/);
 });
 
-test("الحالة العامة: انقطاع > ٤ أيام ⟵ يحتاج تدخلاً 🔴", () => {
+test("الحالة العامة: انقطاع > 4 أيام ⟵ يحتاج تدخلاً 🔴", () => {
   const d = buildParentDigest({ ...BASE, daysSinceLastSession: 6 });
   assert.equal(d.status.level, "act");
   assert.match(d.status.line, /انقطع/);
@@ -70,8 +70,8 @@ test("الاختبار القادم يُمرَّر كما هو", () => {
 test("الإنجازات: تُختار الأعلى عتبةً في كل نوع", () => {
   const d = buildParentDigest({ ...BASE, totalHours: 55, longestStreakDays: 12, trackProgressPct: 100 });
   const texts = d.achievements.map((a) => a.text);
-  assert.ok(texts.includes("أكمل ٥٠ ساعة دراسة"));
-  assert.ok(texts.includes("حافظ على الدراسة ١٠ أيام"));
+  assert.ok(texts.includes("أكمل 50 ساعة دراسة"));
+  assert.ok(texts.includes("حافظ على الدراسة 10 أيام"));
   assert.ok(texts.includes("أنهى وحدة كاملة"));
   /* لا يجمع عتبتين للساعات معاً */
   assert.equal(texts.filter((t) => t.includes("ساعة") || t.includes("ساعات")).length, 1);
@@ -85,22 +85,22 @@ test("اقتراح واحد فقط للوالد، بصيغته لا صيغة ا�
   assert.match(soon.suggestion!, /قريب/);
 });
 
-test("التنبيه: اختبار خلال ١٤ يوماً أعجل من الانقطاع (واحدٌ على الأكثر)", () => {
+test("التنبيه: اختبار خلال 14 يوماً أعجل من الانقطاع (واحدٌ على الأكثر)", () => {
   const d = buildParentDigest({ ...BASE, daysSinceLastSession: 6, nextExam: { name: "القدرات", days: 9 } });
   assert.ok(d.alert);
-  assert.match(d.alert!.title, /اختبار القدرات بعد ٩|اختبار القدرات بعد 9/);
+  assert.match(d.alert!.title, /اختبار القدرات بعد 9|اختبار القدرات بعد 9/);
 });
 
 test("لا تنبيه حين لا اختبار قريب ولا انقطاع", () => {
   assert.equal(buildParentDigest(BASE).alert, null);
 });
 
-test("لحظات تستحق أن تعرفها: عودة بعد انقطاع + أعلى نتيجة + ٣٠ ساعة", () => {
+test("لحظات تستحق أن تعرفها: عودة بعد انقطاع + أعلى نتيجة + 30 ساعة", () => {
   const d = buildParentDigest({ ...BASE, returnedAfterGap: true });
   const texts = d.moments.map((m) => m.text);
   assert.ok(texts.some((t) => t.includes("انقطاع")));
   assert.ok(texts.some((t) => t.includes("أعلى نتيجة")));
-  assert.ok(texts.some((t) => t.includes("٣٠ ساعة")));
+  assert.ok(texts.some((t) => t.includes("30 ساعة")));
 });
 
 test("الاسم الافتراضي حين يغيب", () => {

@@ -5,7 +5,7 @@
      • waiting_result — اختبر وينتظر ظهور النتيجة (له تاريخ + نمط اختبار).
 
    نوافذ ظهور النتيجة (تقريبية رسمية):
-     • القدرات المحوسب: المتوسط ٣ أيام، الحدّ الأقصى أسبوع.
+     • القدرات المحوسب: المتوسط 3 أيام، الحدّ الأقصى أسبوع.
      • القدرات الورقي:  حوالي شهرٍ من تاريخ الاختبار.
      • التحصيلي (ورقيٌّ دائماً، لا محوسب): حوالي شهرٍ من آخر اختبار.
 
@@ -54,7 +54,7 @@ export function estimateResult(exam: EstimableExam, mode: ExamMode, testDate: st
     maxDays: RESULT_WINDOWS.computerMax,
     expectedDate: addDays(testDate, RESULT_WINDOWS.computerAvg),
     maxDate: addDays(testDate, RESULT_WINDOWS.computerMax),
-    text: "غالباً ستصدر نتيجتك خلال ٣ أيام، وبحد أقصى أسبوع.",
+    text: "غالباً ستصدر نتيجتك خلال 3 أيام، وبحد أقصى أسبوع.",
   };
 }
 

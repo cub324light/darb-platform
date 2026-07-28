@@ -8,7 +8,7 @@
    - لا تكرار: «مجموعة الاختبارات» تبقى في Workspace، و«تاريخ الاختبار» في trackExamDates؛
      هنا نخزّن الميتاداتا الجديدة فقط (هدف/درجة مستهدفة/أولوية/تسجيل/بداية-نهاية الخطة).
    - «حالة الاختبار» تُشتقّ من الحقائق (examStatus) ولا تُخزَّن — فلا تتقادم ولا تتعارض.
-   - لا رقمٌ ثابت: الحدود (max ٣ · قفل ٧ أيام) من config.ts (مصدرٌ واحد للأرقام). */
+   - لا رقمٌ ثابت: الحدود (max 3 · قفل 7 أيام) من config.ts (مصدرٌ واحد للأرقام). */
 import { ROADMAP_TUNING } from "./config";
 
 /** نمط المذاكرة (اختيارٌ واحدٌ لمساري الآن؛ per-exam مستقبلاً عبر meta بلا إعادة تصميم). */
@@ -27,7 +27,7 @@ export interface Destination { university?: string; major?: string; }
 export interface ExamPlanMeta {
   goal?: string;              // الهدف/الفرصة التي يخدمها هذا الاختبار
   targetScore?: number;       // الدرجة المستهدفة
-  priority?: number;          // رتبة الأولوية (١..N؛ الأصغر أعلى)
+  priority?: number;          // رتبة الأولوية (1..N؛ الأصغر أعلى)
   registrationDate?: string;  // تاريخ التسجيل YYYY-MM-DD
   planStart?: string;         // بداية خطة هذا الاختبار (يملؤها محرّك الـTimeline لاحقاً)
   planEnd?: string;           // نهاية خطة هذا الاختبار
@@ -37,7 +37,7 @@ export interface ExamPlanMeta {
 /** إعداد مساري — مفتوحٌ للتوسعة (meta). لا يخزّن مجموعة الاختبارات (مصدرها Workspace). */
 export interface RoadmapConfig {
   examMeta?: Record<string, ExamPlanMeta>; // ميتاداتا لكل اختبار (مفتاحها examId)
-  priorityLockedAt?: number;               // ms — قفل الأولوية (٧ أيام)
+  priorityLockedAt?: number;               // ms — قفل الأولوية (7 أيام)
   studyMode?: StudyMode;                    // نمط المذاكرة
   vacation?: VacationState;                 // وضع الإجازة (توقّفٌ مؤقّت معلن)
   destination?: Destination;                // وجهتي (الجامعة/التخصص الهدف)
@@ -60,7 +60,7 @@ export const DELETE_REASONS = [
 ] as const;
 export type DeleteReasonId = (typeof DELETE_REASONS)[number]["id"] | "other";
 
-/* ── حدود الإضافة (max ٣) — نقيّة، تأخذ العدد الحاليّ صراحةً ── */
+/* ── حدود الإضافة (max 3) — نقيّة، تأخذ العدد الحاليّ صراحةً ── */
 export const remainingSlots = (count: number): number => Math.max(0, MAX_EXAMS - count);
 export const atMax = (count: number): boolean => count >= MAX_EXAMS;
 
@@ -91,8 +91,8 @@ export function onExamAdded(c: RoadmapConfig, examId: string): RoadmapConfig {
   return { ...c, examMeta, priorityLockedAt: undefined };
 }
 
-/* ── الأولوية + القفل (٧ أيام) ── */
-/** يضبط رتب الأولوية (١..N بترتيب orderedIds) ويقفلها بختمٍ زمنيّ. */
+/* ── الأولوية + القفل (7 أيام) ── */
+/** يضبط رتب الأولوية (1..N بترتيب orderedIds) ويقفلها بختمٍ زمنيّ. */
 export function setPriorityOrder(c: RoadmapConfig, orderedIds: string[], now: number = Date.now()): RoadmapConfig {
   const examMeta = cloneMeta(c);
   orderedIds.forEach((id, i) => { examMeta[id] = { ...(examMeta[id] ?? {}), priority: i + 1 }; });
@@ -157,7 +157,7 @@ export function isOnVacation(c: RoadmapConfig, today: string): boolean {
 
 /* ── حالة الاختبار المشتقّة (نقيّة) ── */
 export interface ExamStatusFacts {
-  progress: number;         // ٠..١٠٠ (تقدّم المذاكرة)
+  progress: number;         // 0..100 (تقدّم المذاكرة)
   registered: boolean;      // سجّل في الاختبار (له تاريخ تسجيل)
   examPassed: boolean;      // مضى تاريخ الاختبار
   hasResult: boolean;       // سجّل درجةً

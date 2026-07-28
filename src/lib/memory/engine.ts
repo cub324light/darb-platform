@@ -17,7 +17,7 @@ const MAX_EVIDENCE = 12;            // سقف الأدلّة لكل ذاكرة
 const REINFORCE_K = 0.25;           // معامل تعزيز الثقة
 const CONV_COMPRESS_THRESHOLD = 12; // عدد حقائق المحادثة قبل التلخيص
 
-/* مُلخّص حتمي افتراضي — بلا أي نموذج (قابل للاستبدال في المرحلة ٥) */
+/* مُلخّص حتمي افتراضي — بلا أي نموذج (قابل للاستبدال في المرحلة 5) */
 export class DeterministicSummarizer implements Summarizer {
   summarize(memories: AnyMemory[]): { text: string; count: number } {
     const lines: string[] = [];
@@ -229,7 +229,7 @@ export class MemoryEngine {
     const def = MEMORY_REGISTRY[m.type];
     const effConf = this.effectiveConfidence(m, now);
     const ageDays = (now - m.updatedAt) / DAY_MS;
-    const recency = decayFactor(ageDays, 30); // نصف عمر حداثة ٣٠ يوماً
+    const recency = decayFactor(ageDays, 30); // نصف عمر حداثة 30 يوماً
 
     // مطابقة السياق
     let match = 0, signals = 0;

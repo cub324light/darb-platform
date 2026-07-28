@@ -1,5 +1,5 @@
 "use client";
-/* ─── المرحلة ٢: ربط Google Calendar مباشرة (OAuth عبر Google Identity Services) ───
+/* ─── المرحلة 2: ربط Google Calendar مباشرة (OAuth عبر Google Identity Services) ───
    نستخدم نموذج التوكن من GIS (مستقل عن جلسة Firebase فلا يُبدّل المستخدم الحالي).
    نطلب صلاحية calendar.events فقط، ثم نُنشئ كل جلسة كحدث مستقل عبر Calendar API.
 

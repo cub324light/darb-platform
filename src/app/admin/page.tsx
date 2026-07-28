@@ -850,7 +850,7 @@ export default function AdminPage() {
                   </span>
                   <span className="font-bold text-[15px]" style={{ color: "var(--text)" }}>{r.reportedName || "طالب"}</span>
                   <span className="text-[12px] mr-auto" style={{ color: "var(--text-muted)" }}>
-                    {r.createdAt ? new Date(r.createdAt).toLocaleString("ar-SA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
+                    {r.createdAt ? new Date(r.createdAt).toLocaleString("ar-SA-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
                   </span>
                 </div>
                 <p className="text-[16px] leading-relaxed whitespace-pre-wrap rounded-xl px-3 py-2 mb-2"
@@ -913,7 +913,7 @@ export default function AdminPage() {
                     <span className="font-bold text-[15px]" style={{ color: "var(--text)" }}>{f.name || "طالب"}</span>
                     {f.page && <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{f.page}</span>}
                     <span className="text-[12px] mr-auto" style={{ color: "var(--text-muted)" }}>
-                      {f.createdAt ? new Date(f.createdAt).toLocaleString("ar-SA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
+                      {f.createdAt ? new Date(f.createdAt).toLocaleString("ar-SA-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
                     </span>
                   </div>
                   <p className="text-[16px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{f.text}</p>
@@ -1465,9 +1465,9 @@ export default function AdminPage() {
               <div className="grid grid-cols-3 gap-2">
                 {([
                   { label: "ساعة", hours: 1 },
-                  { label: "٢٤ ساعة", hours: 24 },
-                  { label: "٧ أيام", hours: 168 },
-                  { label: "٣٠ يوماً", hours: 720 },
+                  { label: "24 ساعة", hours: 24 },
+                  { label: "7 أيام", hours: 168 },
+                  { label: "30 يوماً", hours: 720 },
                   { label: "دائم", hours: 0 },
                 ] as { label: string; hours: number }[]).map(({ label, hours }) => (
                   <button key={label} onClick={() => !actionBusy && timedBlock(detail.id, hours)}

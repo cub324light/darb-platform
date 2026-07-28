@@ -40,7 +40,7 @@ export default function HomeSignals() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* ═══ ٥أ) قريباً — مواعيد رسمية قادمة فقط ═══ */}
+      {/* ═══ 5أ) قريباً — مواعيد رسمية قادمة فقط ═══ */}
       <section className="ds-card ds-card-tight">
         <p className="t-title font-black mb-2.5" style={{ color: "var(--text)" }}>قريباً</p>
         {d.soon.length > 0 ? (
@@ -60,7 +60,7 @@ export default function HomeSignals() {
         )}
       </section>
 
-      {/* ═══ ٥ب) آخر التحديثات — الجهات الرسمية المعتمدة ═══ */}
+      {/* ═══ 5ب) آخر التحديثات — الجهات الرسمية المعتمدة ═══ */}
       <section className="ds-card ds-card-tight">
         <p className="t-title font-black mb-1" style={{ color: "var(--text)" }}>آخر التحديثات</p>
         <p className="t-caption mb-2.5" style={{ color: "var(--text-muted)" }}>معلومات رسمية فقط — للتفاصيل افتح المصدر الرسمي.</p>
@@ -86,7 +86,7 @@ export default function HomeSignals() {
         )}
       </section>
 
-      {/* ═══ ٦) الاختبارات القادمة — اختبارات الطالب + عدّاد + مراجعة ═══ */}
+      {/* ═══ 6) الاختبارات القادمة — اختبارات الطالب + عدّاد + مراجعة ═══ */}
       {d.exams.length > 0 && (
         <section>
           <p className="t-title font-black mb-2.5 px-0.5" style={{ color: "var(--text)" }}>الاختبارات القادمة</p>

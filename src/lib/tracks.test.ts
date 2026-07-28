@@ -203,7 +203,7 @@ test("secondaryActiveTracks: النواة المتاحة فقط بلا لغات�
 test("secondaryActiveTracks: اختبارات اللغة متعددة بلا أي حدّ عددي", () => {
   const e3 = trackEligibilityFor({ status: "ثانوي", grade: "ثالث ثانوي" });
 
-  /* اختباران لغة → ٥ مسارات، والقدرات أولاً والمدرسة أخيراً — بلا سقف */
+  /* اختباران لغة → 5 مسارات، والقدرات أولاً والمدرسة أخيراً — بلا سقف */
   const two = secondaryActiveTracks("ثالث ثانوي", e3, ["ايلتس", "توفل"]);
   assert.deepEqual(two, ["قدرات", "تحصيلي", "ايلتس", "توفل", "مدرسه"]);
   assert.ok(two.filter((t) => t !== "مدرسه").length > 3, "لا يُطبَّق أي حد على اختبارات اللغة");

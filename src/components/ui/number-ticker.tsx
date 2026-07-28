@@ -27,7 +27,7 @@ export function NumberTicker({
     const el = ref.current;
     if (!el) return;
     const fmt = (n: number) =>
-      new Intl.NumberFormat("ar-SA", {
+      new Intl.NumberFormat("ar-SA-u-nu-latn", {
         minimumFractionDigits: decimalPlaces,
         maximumFractionDigits: decimalPlaces,
       }).format(Number(n.toFixed(decimalPlaces)));

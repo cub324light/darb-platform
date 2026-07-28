@@ -17,10 +17,10 @@ import {
   type JourneyStep, type JourneyState,
 } from "@/lib/uniJourney";
 
-/* هدف تميّز مرجعي على سُلّم الـ٥ (تقدير ممتاز) — يوجّه لمخطّط «وش أحتاج» في /uni-tools */
+/* هدف تميّز مرجعي على سُلّم الـ5 (تقدير ممتاز) — يوجّه لمخطّط «وش أحتاج» في /uni-tools */
 const HONORS_GPA = "4.50";
 
-/* لون المعدّل حسب معناه (من ٥): أخضر عالٍ · ذهبي جيد · أحمر متعثّر */
+/* لون المعدّل حسب معناه (من 5): أخضر عالٍ · ذهبي جيد · أحمر متعثّر */
 function gpaColor(g: number | null): string {
   if (g == null) return "var(--text-muted)";
   if (g >= 4.5) return "var(--success)";
@@ -141,7 +141,7 @@ export default function DashUniWorld({ hint }: { hint: string }) {
   /* بطاقة الفصل/الأسبوع تتكيّف: داخل الفصل رقم الأسبوع، خارجه حالة إجازة */
   const weekValue = sem ? String(sem.weekNumber) : "إجازة";
   const weekSub = sem ? sem.termLabel : "استعد للفصل القادم ←";
-  /* الفاينل: رقم الأيام (أحمر إن قرُب ≤ ١٤ يوماً) أو «—» إن لا فاينل قادم */
+  /* الفاينل: رقم الأيام (أحمر إن قرُب ≤ 14 يوماً) أو «—» إن لا فاينل قادم */
   const finalsClose = sem?.daysToFinals != null && sem.daysToFinals <= 14;
   const finalsValue = sem?.daysToFinals != null ? String(sem.daysToFinals) : "—";
   const finalsSub = sem?.finalsLabel ?? "لا فاينل قريب";
@@ -170,7 +170,7 @@ export default function DashUniWorld({ hint }: { hint: string }) {
             color={gradColor} />
           <StatCard href="/uni-tools" icon="📊" label="معدّلك"
             value={w.gpa != null ? w.gpa.toFixed(2) : "—"}
-            sub={w.gpa != null ? "من ٥" : "أضِفه ←"}
+            sub={w.gpa != null ? "من 5" : "أضِفه ←"}
             color={gpaColor(w.gpa)} />
           <StatCard href="/uni-tools" icon="🎯" label="المستهدف"
             value={HONORS_GPA} sub="تقدير ممتاز · خطّط له ←" color="var(--gold)" />

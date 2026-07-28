@@ -50,7 +50,7 @@ export default function FileAnalyzer({
     setErr("");
     if (!f) return;
     if (!detectKind(f)) { setErr("صيغة غير مدعومة — اختر PDF أو DOCX أو TXT"); return; }
-    if (f.size > 15 * 1024 * 1024) { setErr("الملف كبير جداً (الحد ١٥ ميجابايت)"); return; }
+    if (f.size > 15 * 1024 * 1024) { setErr("الملف كبير جداً (الحد 15 ميجابايت)"); return; }
     setFile(f);
   };
 
@@ -59,7 +59,7 @@ export default function FileAnalyzer({
     setErr("");
     setStage("loading");
     try {
-      /* ١) رفع لـ Firebase Storage — أفضل جهد، لا يُفشل التحليل إن تعذّر */
+      /* 1) رفع لـ Firebase Storage — أفضل جهد، لا يُفشل التحليل إن تعذّر */
       setProgress("جارٍ رفع الملف...");
       const uid = auth.currentUser?.uid;
       if (uid) {
@@ -69,7 +69,7 @@ export default function FileAnalyzer({
         } catch { /* قواعد Storage قد لا تكون منشورة — نكمل بالتحليل */ }
       }
 
-      /* ٢) استخراج النص محلياً */
+      /* 2) استخراج النص محلياً */
       setProgress("جارٍ استخراج النص...");
       const { text, pages } = await extractFileText(file);
       if (text.trim().length < 20) {
@@ -78,7 +78,7 @@ export default function FileAnalyzer({
         return;
       }
 
-      /* ٣) التحليل عبر دويرب — رسائل متغيرة تعطي إحساساً بالتقدم */
+      /* 3) التحليل عبر دويرب — رسائل متغيرة تعطي إحساساً بالتقدم */
       const ANALYSIS_STAGES = [
         "دويرب يقرأ المحتوى...",
         "دويرب يستخرج المعلومات...",

@@ -25,7 +25,7 @@ test("أول ثانوي +عامين → ثالث ثانوي", () => {
   assert.equal(r.grade, "ثالث ثانوي");
 });
 
-test("أول ثانوي +٣ أعوام → خريج ثانوي", () => {
+test("أول ثانوي +3 أعوام → خريج ثانوي", () => {
   const r = advanceGradeByCalendar({ studyLevel: "ثانوي", grade: "أول ثانوي", anchorYearId: "1447", currentYearId: "1450" });
   assert.equal(r.advanced, true);
   assert.equal(r.studyLevel, "خريج");

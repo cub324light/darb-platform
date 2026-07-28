@@ -61,7 +61,7 @@ export default function PrivacyPage() {
       title="سياسة الخصوصية"
       intro="مرحبًا بك في منصة درب. نحن نلتزم بحماية خصوصية مستخدمينا والمحافظة على بياناتهم الشخصية."
       sections={SECTIONS}
-      lastUpdated="٢٨ يونيو ٢٠٢٦"
+      lastUpdated="28 يونيو 2026"
       active="/privacy"
     />
   );

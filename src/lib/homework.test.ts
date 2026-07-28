@@ -18,8 +18,8 @@ const mk = (over: Partial<Homework>): Homework => ({
 });
 
 test("makeHomework: تسليمٌ افتراضيّ اليوم، أولوية عادية، غير منجز", () => {
-  const h = makeHomework({ title: "  رياضيات ص٣٠  " }, TODAY);
-  assert.equal(h.title, "رياضيات ص٣٠");
+  const h = makeHomework({ title: "  رياضيات ص30  " }, TODAY);
+  assert.equal(h.title, "رياضيات ص30");
   assert.equal(h.due, TODAY);
   assert.equal(h.priority, "normal");
   assert.equal(h.done, false);
@@ -92,7 +92,7 @@ test("homeworkPressure: عدّاداتٌ صحيحة للضغط", () => {
     mk({ due: "2026-07-08" }),               // متأخّر
     mk({ due: TODAY, priority: "high" }),      // اليوم + مرتفع
     mk({ due: "2026-07-12" }),                // غداً
-    mk({ due: "2026-07-13" }),                // خلال ٣ أيام
+    mk({ due: "2026-07-13" }),                // خلال 3 أيام
     mk({ due: "2026-07-25" }),                // بعيد
     mk({ due: TODAY, done: true }),            // منجز (لا يُحسب)
   ];
@@ -102,7 +102,7 @@ test("homeworkPressure: عدّاداتٌ صحيحة للضغط", () => {
   assert.equal(p.dueToday, 1);
   assert.equal(p.dueTomorrow, 1);
   assert.equal(p.highPriorityPending, 1);
-  assert.equal(p.dueSoon, 3);            // اليوم + غداً + بعد يومين (٣ ضمن ٣ أيام)
+  assert.equal(p.dueSoon, 3);            // اليوم + غداً + بعد يومين (3 ضمن 3 أيام)
   assert.equal(p.nextDue, "2026-07-08"); // الأقرب (المتأخّر أولاً في الترتيب)
 });
 

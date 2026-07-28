@@ -1,5 +1,5 @@
 /* ═══════════ نموذج العالم — بذرة تحقّق (Proof Seed) ═══════════
-   شريحةٌ واحدة مترابطة تُثبت أن المخطّط يستوعب الأنواع الـ١٨ وعلاقاتها الصريحة —
+   شريحةٌ واحدة مترابطة تُثبت أن المخطّط يستوعب الأنواع الـ18 وعلاقاتها الصريحة —
    لا محتوى كامل بعد (البنية أولاً). البيانات حقيقية (عالم الكهرباء + القياس +
    سلسلة أكاديمية + أهداف). حين تُقرّ البنية نضخّ البقيّة بنفس الشكل. */
 import { entityId as E, type KBEntity } from "./schema";
@@ -10,7 +10,7 @@ export const SEED_ENTITIES: KBEntity[] = [
     kind: "university", id: E("university", "ksu"), name: "جامعة الملك سعود", nameEn: "King Saud University",
     summary: "أعرق جامعة حكومية سعودية في الرياض، واسعة التخصصات.",
     city: "الرياض", type: "government", founded: 1957, aliases: ["الملك سعود", "KSU"],
-    stats: [{ label: "الكليات", value: "أكثر من ٢٠" }], tags: ["حكومية", "الرياض"],
+    stats: [{ label: "الكليات", value: "أكثر من 20" }], tags: ["حكومية", "الرياض"],
     meta: { version: 1, lastUpdated: "2026-07-01", source: "الموقع الرسمي", confidence: 0.95 },
   },
   {
@@ -215,20 +215,20 @@ export const SEED_ENTITIES: KBEntity[] = [
   /* ═══ الاختبارات (قدرات/تحصيلي/STEP/IELTS/CEFR) ═══ */
   {
     kind: "exam", id: E("exam", "qudurat"), name: "القدرات العامة", nameEn: "GAT",
-    summary: "اختبار للقدرة اللفظية والكمية — ركن الموزونة.", scoreScale: "من ١٠٠",
+    summary: "اختبار للقدرة اللفظية والكمية — ركن الموزونة.", scoreScale: "من 100",
     sections: [{ name: "كمي" }, { name: "لفظي" }], aliases: ["قدرات"],
     tips: ["التدرّب على النماذج السابقة يرفع الدرجة"],
     relations: [{ type: "certified_by", to: E("company", "etec") }],
   },
   {
     kind: "exam", id: E("exam", "tahsili"), name: "التحصيلي", nameEn: "SAAT",
-    summary: "اختبار المواد العلمية للفرع العلمي.", scoreScale: "من ١٠٠",
+    summary: "اختبار المواد العلمية للفرع العلمي.", scoreScale: "من 100",
     sections: [{ name: "رياضيات" }, { name: "فيزياء" }, { name: "كيمياء" }, { name: "أحياء" }], aliases: ["تحصيلي"],
     relations: [{ type: "certified_by", to: E("company", "etec") }],
   },
   {
     kind: "exam", id: E("exam", "step"), name: "STEP — اختبار الإنجليزية",
-    summary: "اختبار كفاءة الإنجليزية المحلي.", scoreScale: "من ١٠٠",
+    summary: "اختبار كفاءة الإنجليزية المحلي.", scoreScale: "من 100",
     sections: [{ name: "القواعد" }, { name: "المفردات" }, { name: "القراءة" }, { name: "الاستماع" }], aliases: ["ستيب"],
     relations: [
       { type: "certified_by", to: E("company", "etec") },
@@ -237,7 +237,7 @@ export const SEED_ENTITIES: KBEntity[] = [
   },
   {
     kind: "exam", id: E("exam", "ielts"), name: "IELTS",
-    summary: "اختبار إنجليزية دولي بأربع مهارات.", provider: "British Council / IDP", scoreScale: "٠–٩", validityNote: "سنتان",
+    summary: "اختبار إنجليزية دولي بأربع مهارات.", provider: "British Council / IDP", scoreScale: "0–9", validityNote: "سنتان",
     sections: [{ name: "Listening" }, { name: "Reading" }, { name: "Writing" }, { name: "Speaking" }],
     levels: ["A1", "A2", "B1", "B2", "C1", "C2"], aliases: ["ايلتس"],
     relations: [{ type: "similar_to", to: E("exam", "cefr") }],
@@ -261,7 +261,7 @@ export const SEED_ENTITIES: KBEntity[] = [
   },
   {
     kind: "goal", id: E("goal", "step-85"), name: "هدف: STEP 85", metric: "STEP 85",
-    summary: "تحقيق ٨٥ في اختبار STEP للإنجليزية.",
+    summary: "تحقيق 85 في اختبار STEP للإنجليزية.",
     relations: [{ type: "requires", to: E("exam", "step") }],
   },
   {
@@ -284,7 +284,7 @@ export const SEED_ENTITIES: KBEntity[] = [
       definition: "قانون أوم ينصّ على أن التيار المارّ في موصلٍ يتناسب طردياً مع الجهد بين طرفيه وعكسياً مع مقاومته: V = I × R.",
       whyImportant: "أساس تحليل كل دائرةٍ كهربائية — منه تُشتقّ القدرة والطاقة وتصميم الدارات.",
       commonMistakes: ["عدم توحيد الوحدات قبل التعويض (مللي أمبير مع أمبير)", "الخلط بين المقاومة والمقاومية", "افتراض ثبات المقاومة في العناصر غير الأومية"],
-      examples: ["جهد ١٢ فولت ومقاومة ٤ أوم ⟵ التيار = ٣ أمبير", "تيار ٢ أمبير عبر مقاومة ٥ أوم ⟵ الجهد = ١٠ فولت"],
+      examples: ["جهد 12 فولت ومقاومة 4 أوم ⟵ التيار = 3 أمبير", "تيار 2 أمبير عبر مقاومة 5 أوم ⟵ الجهد = 10 فولت"],
       simpleExplanation: "تخيّل الماء في أنبوب: الجهد هو الضغط، والتيار هو كمية الماء المتدفّقة، والمقاومة هي ضيق الأنبوب. كلّما زاد الضغط زاد التدفّق، وكلّما ضاق الأنبوب قلّ.",
       advancedExplanation: "V = IR صيغةٌ خطّية تصف العناصر الأومية عند ثبات الحرارة. في العناصر غير الأومية (كالثنائيات) تتغيّر R مع الجهد فتنكسر الخطّية، وتُعمَّم العلاقة إلى R = dV/dI.",
     },
@@ -354,8 +354,8 @@ export const SEED_ENTITIES: KBEntity[] = [
   /* ═══ الأسئلة (كيانات مستقلة يُعاد استخدامها) ═══ */
   {
     kind: "question", id: E("question", "ohm-basic"), name: "سؤال: حساب التيار بقانون أوم",
-    summary: "إذا كان الجهد ١٢ فولت والمقاومة ٤ أوم، فما التيار؟",
-    difficulty: "easy", bloom: "apply", answer: "٣ أمبير",
+    summary: "إذا كان الجهد 12 فولت والمقاومة 4 أوم، فما التيار؟",
+    difficulty: "easy", bloom: "apply", answer: "3 أمبير",
     relations: [
       { type: "requires", to: E("concept", "ohms-law") },
       { type: "belongs_to", to: E("lesson", "ohms-law") },
@@ -368,7 +368,7 @@ export const SEED_ENTITIES: KBEntity[] = [
   /* ═══ محاولة اختبار (الطالب لا الاختبار) ═══ */
   {
     kind: "exam_session", id: E("exam_session", "demo-tahsili-1"), name: "محاولة تحصيلي — الطالب",
-    summary: "محاولة تجريبية: الدرجة ٧٢، ضعفٌ في التكامل.",
+    summary: "محاولة تجريبية: الدرجة 72، ضعفٌ في التكامل.",
     score: 72, timeMin: 90, errors: 8, takenAt: "2026-06-20",
     meta: { version: 1, lastUpdated: "2026-06-20", confidence: 1, importance: 40 },
     relations: [

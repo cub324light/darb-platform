@@ -77,10 +77,10 @@ export function topConcepts(kb: KnowledgeBase, n = 20): TopConcept[] {
 export interface ImportanceTier { min: number; label: string; items: { id: string; name: string; importance: number }[]; }
 export function conceptsByImportance(kb: KnowledgeBase, examId: string): ImportanceTier[] {
   const tiers: ImportanceTier[] = [
-    { min: 90, label: "الأعلى (٩٠+)", items: [] },
-    { min: 75, label: "عالية (٧٥–٨٩)", items: [] },
-    { min: 60, label: "متوسطة (٦٠–٧٤)", items: [] },
-    { min: 0, label: "أساسية (<٦٠)", items: [] },
+    { min: 90, label: "الأعلى (90+)", items: [] },
+    { min: 75, label: "عالية (75–89)", items: [] },
+    { min: 60, label: "متوسطة (60–74)", items: [] },
+    { min: 0, label: "أساسية (<60)", items: [] },
   ];
   const concepts = kb.neighbors(examId, { type: "belongs_to", dir: "in", kind: "concept" })
     .map((c) => ({ id: c.id, name: c.name, importance: kb.meta(c.id).importance ?? 50 }))

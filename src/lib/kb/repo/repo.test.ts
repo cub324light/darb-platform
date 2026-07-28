@@ -36,11 +36,11 @@ test("CRUD + دورة الحالة: save→مسوّدة، setStatus→مراجع
 
 test("التعديل يرفع النسخة ويحافظ على الحالة", async () => {
   const repo = new LocalContentRepository(memKV());
-  await repo.save(concept("concept:test-y", "س١"), { status: "published" });
-  const v2 = await repo.save(concept("concept:test-y", "س٢ محدّث"));
+  await repo.save(concept("concept:test-y", "س1"), { status: "published" });
+  const v2 = await repo.save(concept("concept:test-y", "س2 محدّث"));
   assert.equal(v2.version, 2);
   assert.equal(v2.status, "published");      // حافظ على الحالة الحالية
-  assert.equal(v2.entity.name, "س٢ محدّث");
+  assert.equal(v2.entity.name, "س2 محدّث");
 });
 
 test("الفلاتر: بالنوع والحالة والبحث", async () => {

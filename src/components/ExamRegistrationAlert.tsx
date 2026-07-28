@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { activeExamTrackIds } from "@/lib/storage";
 import { buildExamAlerts, nearestActiveWindow, type ExamAlert } from "@/lib/examProvider";
 import type { TrackId } from "@/lib/tracks";
+import { n as ar } from "@/lib/format";
 
 function todayStr(): string {
   const d = new Date();
@@ -15,7 +16,6 @@ function todayStr(): string {
   return `${y}-${m}-${day}`;
 }
 
-const ar = (n: number) => n.toLocaleString("ar-SA");
 
 function AlertCard({ alert, onDismiss }: { alert: ExamAlert; onDismiss: () => void }) {
   const isOpen = alert.status === "open";

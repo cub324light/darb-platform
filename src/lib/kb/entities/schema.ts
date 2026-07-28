@@ -11,7 +11,7 @@
 
    أنواعٌ نقية فقط — لا IO. */
 
-/* ─── الأنواع (Node kinds) — ٩ أساسية + ١٠ جديدة ─── */
+/* ─── الأنواع (Node kinds) — 9 أساسية + 10 جديدة ─── */
 export type EntityKind =
   /* البنية الأكاديمية */
   | "university" | "college" | "major"

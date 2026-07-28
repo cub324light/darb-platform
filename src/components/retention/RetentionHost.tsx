@@ -100,7 +100,7 @@ export default function RetentionHost() {
     case "recovery":
       emoji = "💔"; tint = "var(--gold)";
       title = `انكسر ستريكك (${ar(view.priorStreak)} يوم)`;
-      text = "عندك بطاقة استعادة تُصلح السلسلة — تُستخدم مرة كل ٣٠ يوماً.";
+      text = "عندك بطاقة استعادة تُصلح السلسلة — تُستخدم مرة كل 30 يوماً.";
       action = { label: "🛟 استعد سلسلتك", onClick: recover };
       break;
     case "weekly":

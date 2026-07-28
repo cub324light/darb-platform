@@ -24,7 +24,7 @@ import {
 } from "./phase";
 
 /* ════════════════════════════════════════════════════════════
-   ١) المراحل والصفوف الدراسية
+   1) المراحل والصفوف الدراسية
    ════════════════════════════════════════════════════════════ */
 
 export type { StudentPhase } from "./phase";
@@ -93,11 +93,11 @@ export function getStudentPhase(u?: DarbUser | null): StudentPhase {
 }
 
 /* ════════════════════════════════════════════════════════════
-   ٢) نطاقات الدرجات (Score Bands) — مقياس موحّد
+   2) نطاقات الدرجات (Score Bands) — مقياس موحّد
    ────────────────────────────────────────────────────────────
-   خمس طبقات ثابتة. القدرات/التحصيلي/STEP على مقياس ٠–١٠٠،
-   والمعدل التراكمي على مقياس ٠–٥. العتبات متّسقة مع
-   LEVEL_THRESHOLD في university.ts (مرتفع ٨٥ · متوسط ٧٥ · منخفض ٦٥).
+   خمس طبقات ثابتة. القدرات/التحصيلي/STEP على مقياس 0–100،
+   والمعدل التراكمي على مقياس 0–5. العتبات متّسقة مع
+   LEVEL_THRESHOLD في university.ts (مرتفع 85 · متوسط 75 · منخفض 65).
    ════════════════════════════════════════════════════════════ */
 
 export type BandTier = "excellent" | "high" | "good" | "fair" | "low";
@@ -110,7 +110,7 @@ export interface ScoreBand {
   note: string;      // إرشاد موجز
 }
 
-/* القدرات (GAT) — ٠–١٠٠ */
+/* القدرات (GAT) — 0–100 */
 export const QUDURAT_BANDS: readonly ScoreBand[] = [
   { tier: "excellent", label: "ممتاز",  min: 90, icon: "🟢", note: "تنافسي لأقوى التخصصات (طب/حاسب/هندسة)" },
   { tier: "high",      label: "مرتفع",  min: 85, icon: "🟢", note: "تنافسي لأغلب التخصصات" },
@@ -119,7 +119,7 @@ export const QUDURAT_BANDS: readonly ScoreBand[] = [
   { tier: "low",       label: "منخفض",  min: 0,  icon: "🔴", note: "أولوية الرفع قبل أي شيء" },
 ] as const;
 
-/* التحصيلي (SAAT) — ٠–١٠٠ (نفس مقياس القدرات) */
+/* التحصيلي (SAAT) — 0–100 (نفس مقياس القدرات) */
 export const TAHSILI_BANDS: readonly ScoreBand[] = [
   { tier: "excellent", label: "ممتاز",  min: 90, icon: "🟢", note: "تنافسي للتخصصات الصحية والهندسية العليا" },
   { tier: "high",      label: "مرتفع",  min: 85, icon: "🟢", note: "تنافسي لأغلب التخصصات العلمية" },
@@ -128,7 +128,7 @@ export const TAHSILI_BANDS: readonly ScoreBand[] = [
   { tier: "low",       label: "منخفض",  min: 0,  icon: "🔴", note: "أولوية الرفع — يؤثر بقوة على الموزونة" },
 ] as const;
 
-/* STEP (الإنجليزي) — ٠–١٠٠ */
+/* STEP (الإنجليزي) — 0–100 */
 export const STEP_BANDS: readonly ScoreBand[] = [
   { tier: "excellent", label: "متقدّم",       min: 90, icon: "🟢", note: "يغطّي أعلى متطلبات الجامعات" },
   { tier: "high",      label: "فوق المتوسط",  min: 83, icon: "🟢", note: "يلبّي متطلب أغلب البرامج الإنجليزية" },
@@ -137,7 +137,7 @@ export const STEP_BANDS: readonly ScoreBand[] = [
   { tier: "low",       label: "مبتدئ",        min: 0,  icon: "🔴", note: "أولوية بناء الأساس اللغوي" },
 ] as const;
 
-/* المعدل التراكمي الجامعي — ٠–٥ (تصنيف الجامعات السعودية) */
+/* المعدل التراكمي الجامعي — 0–5 (تصنيف الجامعات السعودية) */
 export const GPA_BANDS: readonly ScoreBand[] = [
   { tier: "excellent", label: "ممتاز",     min: 4.5,  icon: "🟢", note: "مؤهّل للمراتب العلمية والدراسات العليا والابتعاث" },
   { tier: "high",      label: "جيد جداً",  min: 3.75, icon: "🟢", note: "قوي — يفتح أغلب فرص التوظيف والدراسات العليا" },
@@ -153,24 +153,24 @@ function bandFor(bands: readonly ScoreBand[], score?: number | null): ScoreBand 
   return bands[bands.length - 1] ?? null;
 }
 
-/** نطاق درجة القدرات (٠–١٠٠) — null إن لم تتوفّر درجة. */
+/** نطاق درجة القدرات (0–100) — null إن لم تتوفّر درجة. */
 export const getQuduratBand = (score?: number | null): ScoreBand | null =>
   bandFor(QUDURAT_BANDS, score);
 
-/** نطاق درجة التحصيلي (٠–١٠٠). */
+/** نطاق درجة التحصيلي (0–100). */
 export const getTahsiliBand = (score?: number | null): ScoreBand | null =>
   bandFor(TAHSILI_BANDS, score);
 
-/** نطاق درجة STEP (٠–١٠٠). */
+/** نطاق درجة STEP (0–100). */
 export const getStepBand = (score?: number | null): ScoreBand | null =>
   bandFor(STEP_BANDS, score);
 
-/** نطاق المعدل التراكمي الجامعي (٠–٥). */
+/** نطاق المعدل التراكمي الجامعي (0–5). */
 export const getGpaBand = (gpa?: number | null): ScoreBand | null =>
   bandFor(GPA_BANDS, gpa);
 
 /* ════════════════════════════════════════════════════════════
-   ٣) قواعد الاختبارات الرسمية — معرفة بنيوية
+   3) قواعد الاختبارات الرسمية — معرفة بنيوية
    ────────────────────────────────────────────────────────────
    كل اختبار يحمل: المقياس، الصفوف المؤهَّلة، الصلاحية، والوصف.
    مواعيد التسجيل الفعلية تبقى في examProvider.ts (مصدرها قياس)؛
@@ -248,7 +248,7 @@ export const EXAM_RULES: Record<string, ExamRule> = {
 };
 
 /* ════════════════════════════════════════════════════════════
-   ٤) قواعد الأهلية (Eligibility) — قابلة لإعادة الاستخدام
+   4) قواعد الأهلية (Eligibility) — قابلة لإعادة الاستخدام
    ────────────────────────────────────────────────────────────
    تُرجِع منطقاً واحداً يستهلكه التسجيل/التوصيات/الخطة بدل تكراره.
    القاعدة الجوهرية: الطالب الجامعي خرج من عالم القياس/القبول كلياً.
@@ -317,7 +317,7 @@ export function canApplyUniversity(u?: DarbUser | null): boolean {
 }
 
 /* ════════════════════════════════════════════════════════════
-   ٥) ملف معرفي موحّد — لقطة واحدة يستهلكها أي نظام
+   5) ملف معرفي موحّد — لقطة واحدة يستهلكها أي نظام
    ════════════════════════════════════════════════════════════ */
 
 export interface EducationalProfile {

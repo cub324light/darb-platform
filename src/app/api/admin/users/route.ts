@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     /* H-1: حدّ تخمين كلمة سرّ الأدمن — دائم (Firestore) عبر كل instances، لكنه
        يُطبَّق فقط على المحاولات الفاشلة (كلمة سر خاطئة). الأدمن الشرعي (كلمة
        صحيحة أو توكن RBAC) لا يُحبَس مهما تعدّدت طلبات اللوحة — وهذا ما يُعيد
-       عمل اللوحة الكاملة. الحماية تبقى ٥ محاولات فاشلة/دقيقة لكل IP + حدّ عالمي
+       عمل اللوحة الكاملة. الحماية تبقى 5 محاولات فاشلة/دقيقة لكل IP + حدّ عالمي
        احتياطي. المقارنة ثابتة الوقت في checkAdminPassword. */
     const pwAttempted = typeof password === "string" && password.length > 0;
     const pwOk = checkAdminPassword(password);

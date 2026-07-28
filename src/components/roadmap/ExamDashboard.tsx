@@ -64,7 +64,7 @@ export default function ExamDashboard({
 
   return (
     <div className="flex flex-col gap-5">
-      {/* ١ + ٢ — الاسم + الحالة */}
+      {/* 1 + 2 — الاسم + الحالة */}
       <div className="flex items-center gap-3">
         <span className="text-[30px] leading-none flex-shrink-0" aria-hidden="true">{icon ?? "📄"}</span>
         <h2 className="t-h2 font-black leading-tight flex-1 min-w-0" style={{ color: "var(--text)" }}>{label}</h2>
@@ -74,7 +74,7 @@ export default function ExamDashboard({
         </span>
       </div>
 
-      {/* ٣ — المؤشّرات: «لم يبدأ» ⇒ رسالةٌ تحفيزية لا لوحةَ أصفار */}
+      {/* 3 — المؤشّرات: «لم يبدأ» ⇒ رسالةٌ تحفيزية لا لوحةَ أصفار */}
       {notStarted ? (
         <div className="rounded-3xl p-5 flex items-start gap-3" style={{ background: "color-mix(in srgb, var(--gold) 10%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--gold) 32%, var(--border))" }}>
           <span className="text-[28px] flex-shrink-0" aria-hidden="true">🚀</span>
@@ -114,12 +114,12 @@ export default function ExamDashboard({
         </div>
       )}
 
-      {/* ٤ — الزرّ الأساسي الوحيد (أهمّ عنصر) */}
+      {/* 4 — الزرّ الأساسي الوحيد (أهمّ عنصر) */}
       <button onClick={onOpen} className="btn-primary glow-blue w-full text-center">
         ▶ ابدأ المذاكرة
       </button>
 
-      {/* ٥ — مواد هذا الاختبار (كلٌّ بطاقةٌ تدخل للمذاكرة) */}
+      {/* 5 — مواد هذا الاختبار (كلٌّ بطاقةٌ تدخل للمذاكرة) */}
       {subjects.length > 0 && (
         <section className="flex flex-col gap-2.5">
           <p className="eyebrow px-1">📖 مواد هذا الاختبار</p>
@@ -139,7 +139,7 @@ export default function ExamDashboard({
         </section>
       )}
 
-      {/* ٦ — أدواتٌ ثانوية (لا تنافس زرّ المذاكرة) */}
+      {/* 6 — أدواتٌ ثانوية (لا تنافس زرّ المذاكرة) */}
       <section className="flex flex-col gap-2">
         <p className="eyebrow px-1">🧰 أدوات مساعِدة</p>
         <div className="grid grid-cols-2 gap-2">

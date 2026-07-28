@@ -26,17 +26,17 @@ export interface BadgeDef {
 
 export const BADGE_DEFS: BadgeDef[] = [
   { id: "first_session", label: "الشعلة الأولى",  icon: "🔥", desc: "أتمم أول جلسة تركيز",        goal: 1,    unit: "جلسة" },
-  { id: "streak_7",      label: "أسبوع منتظم",   icon: "📅", desc: "ذاكر ٧ أيام متتالية",         goal: 7,    unit: "يوم" },
-  { id: "streak_30",     label: "الأسطورة",       icon: "🏆", desc: "ذاكر ٣٠ يوماً متتالياً",      goal: 30,   unit: "يوم" },
-  { id: "hours_10",      label: "عشر ساعات",      icon: "⏱",  desc: "اجمع ١٠ ساعات تركيز",         goal: 10,   unit: "ساعة" },
-  { id: "hours_50",      label: "خمسون ساعة",     icon: "💎", desc: "اجمع ٥٠ ساعة تركيز",          goal: 50,   unit: "ساعة" },
-  { id: "silver_100",    label: "مئوي",           icon: "🥈", desc: "اجمع ١٠٠ فضة",                goal: 100,  unit: "فضة" },
-  { id: "silver_1000",   label: "ملك الفضة",      icon: "👑", desc: "اجمع ١٠٠٠ فضة",               goal: 1000, unit: "فضة" },
-  { id: "vault_10",      label: "صيّاد الأخطاء",  icon: "🔍", desc: "سجّل ١٠ أخطاء في الخزنة",     goal: 10,   unit: "خطأ" },
-  { id: "sessions_20",   label: "مثابر",          icon: "💪", desc: "أكمل ٢٠ جلسة تركيز",          goal: 20,   unit: "جلسة" },
+  { id: "streak_7",      label: "أسبوع منتظم",   icon: "📅", desc: "ذاكر 7 أيام متتالية",         goal: 7,    unit: "يوم" },
+  { id: "streak_30",     label: "الأسطورة",       icon: "🏆", desc: "ذاكر 30 يوماً متتالياً",      goal: 30,   unit: "يوم" },
+  { id: "hours_10",      label: "عشر ساعات",      icon: "⏱",  desc: "اجمع 10 ساعات تركيز",         goal: 10,   unit: "ساعة" },
+  { id: "hours_50",      label: "خمسون ساعة",     icon: "💎", desc: "اجمع 50 ساعة تركيز",          goal: 50,   unit: "ساعة" },
+  { id: "silver_100",    label: "مئوي",           icon: "🥈", desc: "اجمع 100 فضة",                goal: 100,  unit: "فضة" },
+  { id: "silver_1000",   label: "ملك الفضة",      icon: "👑", desc: "اجمع 1000 فضة",               goal: 1000, unit: "فضة" },
+  { id: "vault_10",      label: "صيّاد الأخطاء",  icon: "🔍", desc: "سجّل 10 أخطاء في الخزنة",     goal: 10,   unit: "خطأ" },
+  { id: "sessions_20",   label: "مثابر",          icon: "💪", desc: "أكمل 20 جلسة تركيز",          goal: 20,   unit: "جلسة" },
   { id: "first_plan",    label: "أول خطة",        icon: "📋", desc: "طبّق خطة دويرب على جدولك",      goal: 1,    unit: "خطة" },
-  { id: "hours_100",     label: "مئة ساعة",       icon: "🏅", desc: "اجمع ١٠٠ ساعة تركيز",          goal: 100,  unit: "ساعة" },
-  { id: "track_complete",label: "أتممت المسار",   icon: "🎓", desc: "أكمل ٨٠٪ من مسارك",            goal: 80,   unit: "٪" },
+  { id: "hours_100",     label: "مئة ساعة",       icon: "🏅", desc: "اجمع 100 ساعة تركيز",          goal: 100,  unit: "ساعة" },
+  { id: "track_complete",label: "أتممت المسار",   icon: "🎓", desc: "أكمل 80٪ من مسارك",            goal: 80,   unit: "٪" },
 ];
 
 /* القيمة الحالية للطالب تجاه كل شارة (للشريط) */

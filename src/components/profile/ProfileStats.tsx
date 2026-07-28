@@ -1,5 +1,5 @@
 "use client";
-/* ─── لوحة الإحصائيات — ١٠ مؤشرات + إتقان المهارات + الأداء الأسبوعي/الشهري ─── */
+/* ─── لوحة الإحصائيات — 10 مؤشرات + إتقان المهارات + الأداء الأسبوعي/الشهري ─── */
 import { memo } from "react";
 import type { WeeklyReportData } from "@/lib/weeklyReport";
 import { fmtMins } from "@/lib/weeklyReport";
@@ -105,7 +105,7 @@ function ProfileStatsBase({ data }: { data: StatsData }) {
               )}
             </div>
             <div className="rounded-xl px-3 py-2.5" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-              <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>أيام نشطة (٧)</p>
+              <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>أيام نشطة (7)</p>
               <p className="text-[18px] font-black font-mono-nums" style={{ color: "var(--text)" }}>{n(data.weekly.activeDays)}</p>
               {data.monthlyDeltaPct !== null && (
                 <p className="text-[14px] font-bold" style={{ color: data.monthlyDeltaPct >= 0 ? "var(--success)" : "var(--danger)" }}>

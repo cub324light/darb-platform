@@ -39,7 +39,7 @@ export default function SubscriptionPage() {
       title="سياسة الاشتراك والاسترجاع"
       intro="تنظّم هذه السياسة الاشتراك في خطط درب وإلغاءها واسترجاع قيمتها."
       sections={SECTIONS}
-      lastUpdated="٢٨ يونيو ٢٠٢٦"
+      lastUpdated="28 يونيو 2026"
       active="/subscription"
     />
   );

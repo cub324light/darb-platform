@@ -9,7 +9,7 @@ export const runtime = "nodejs";
    المالك لا يُحذف أبداً (حماية صريحة). الهوية تُتحقَّق عبر ID Token. */
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  /* M-6: محدّد معدّل دائم — ١٠/دقيقة لكل IP */
+  /* M-6: محدّد معدّل دائم — 10/دقيقة لكل IP */
   if (!(await checkRateLimit("account_" + ip, 10, 60_000))) {
     return NextResponse.json({ error: "محاولات كثيرة — انتظر دقيقة" }, { status: 429 });
   }

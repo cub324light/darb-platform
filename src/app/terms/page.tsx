@@ -43,7 +43,7 @@ export default function TermsPage() {
       title="شروط الاستخدام"
       intro="باستخدام منصة درب فإنك توافق على الشروط التالية:"
       sections={SECTIONS}
-      lastUpdated="٢٨ يونيو ٢٠٢٦"
+      lastUpdated="28 يونيو 2026"
       active="/terms"
     />
   );

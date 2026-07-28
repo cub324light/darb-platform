@@ -5,7 +5,7 @@
    • هنا: تقييمٌ عامّ لقدرة الطالب (أقل من المتوسط/متوسط/جيد/مرتفع/ممتاز) + النسبة المئوية.
    • هناك: هل يستوفي شرط فرصةٍ بعينها (جامعة/تخصص/برنامج) — لكلٍّ حدّه الخاص.
 
-   القدرات والتحصيلي يُقاسان على مقياس قياس المعياري نفسه (٠–١٠٠) فيتشاركان التوزيع.
+   القدرات والتحصيلي يُقاسان على مقياس قياس المعياري نفسه (0–100) فيتشاركان التوزيع.
    STEP اختبار لغةٍ مختلف — بلا نسبةٍ مئوية رسمية معلنة. تغيّرت حدود قياس مستقبلاً؟ عدّل
    هذا الملف وحده. */
 
@@ -23,7 +23,7 @@ export interface EvalBand {
   percentile?: number;  // «أفضل من حوالي ٪X من المختبرين» — رسمي (قياس) فقط
 }
 
-/* توزيع قياس الرسمي المشترك للقدرات والتحصيلي (مقياس ٠–١٠٠ المعياري). */
+/* توزيع قياس الرسمي المشترك للقدرات والتحصيلي (مقياس 0–100 المعياري). */
 export const QIYAS_BANDS: readonly EvalBand[] = [
   { tier: "excellent", label: "ممتاز",          min: 81, icon: "🟢", percentile: 95 },
   { tier: "high",      label: "مرتفع",          min: 78, icon: "🟢", percentile: 90 },
@@ -32,7 +32,7 @@ export const QIYAS_BANDS: readonly EvalBand[] = [
   { tier: "below",     label: "أقل من المتوسط", min: 0,  icon: "🔴" },
 ] as const;
 
-/* STEP — اختبار لغةٍ إنجليزية (٠–١٠٠). مستوياتٌ إرشادية بلا نسبةٍ مئوية رسمية. */
+/* STEP — اختبار لغةٍ إنجليزية (0–100). مستوياتٌ إرشادية بلا نسبةٍ مئوية رسمية. */
 export const STEP_EVAL_BANDS: readonly EvalBand[] = [
   { tier: "excellent", label: "متقدّم",       min: 90, icon: "🟢" },
   { tier: "high",      label: "فوق المتوسط",  min: 83, icon: "🟢" },
@@ -47,7 +47,7 @@ const BANDS: Record<EvalKey, readonly EvalBand[]> = {
   step: STEP_EVAL_BANDS,
 };
 
-/* الحدّ الأعلى لكل اختبار (كلها على مقياس ٠–١٠٠). */
+/* الحدّ الأعلى لكل اختبار (كلها على مقياس 0–100). */
 export const EVAL_MAX = 100;
 
 function bandFor(bands: readonly EvalBand[], score?: number | null): EvalBand | null {
@@ -67,11 +67,11 @@ export const getStepEval = (s?: number | null) => evalBand("step", s);
 export const percentileText = (b: EvalBand | null | undefined): string | null =>
   b && b.percentile != null ? `أفضل من حوالي ${pct(b.percentile)} من المختبرين` : null;
 
-/** نسبة امتلاء شريط التقدّم (٠–١٠٠) — مقصوصة ضمن الحدود. */
+/** نسبة امتلاء شريط التقدّم (0–100) — مقصوصة ضمن الحدود. */
 export const evalBarPct = (score?: number | null): number =>
   score == null || Number.isNaN(score) ? 0 : Math.max(0, Math.min(100, (score / EVAL_MAX) * 100));
 
-/** نصّ الدرجة «X من ١٠٠» بالأرقام العربية-الهندية. */
+/** نصّ الدرجة «X من 100» بالأرقام العربية-الهندية. */
 export const scoreOutOf = (score: number): string => `${n(score)} من ${n(EVAL_MAX)}`;
 
 export const SCORE_EVALUATION_DISCLAIMER =

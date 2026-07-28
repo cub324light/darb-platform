@@ -25,6 +25,7 @@ import type { ExamAlert } from "./examProvider";
 import type { DashSectionId } from "./storage";
 import type { StudentContext, StudyWindow } from "./memory/types";
 import { nsKey } from "./engineNamespace";
+import { n as ar } from "@/lib/format";
 
 /* ════════════════════════════════════════════════════════════
    الأنواع — عقد التوصية (Recommendation Contract)
@@ -97,7 +98,6 @@ const endOfDay = (now: number): number => {
   d.setHours(24, 0, 0, 0);
   return d.getTime();
 };
-const ar = (n: number) => n.toLocaleString("ar-SA");
 
 /* ════════════════════════════════════════════════════════════
    المنتِجون — كل إشارة دالة نقيّة (تركيب لا شروط متناثرة)
@@ -105,7 +105,7 @@ const ar = (n: number) => n.toLocaleString("ar-SA");
 
 type Producer = (ctx: RecContext) => Recommendation[];
 
-/* ١) المسار الذهبي — أولوية الطالب الحالية (تُعرض كبطاقة غنية) */
+/* 1) المسار الذهبي — أولوية الطالب الحالية (تُعرض كبطاقة غنية) */
 const goldenPathProducer: Producer = (ctx) => {
   const gp = ctx.goldenPath;
   if (!gp || !gp.show) return [];
@@ -128,7 +128,7 @@ const goldenPathProducer: Producer = (ctx) => {
   }];
 };
 
-/* ٢) بطاقات المراجعة المستحقّة — حسّاسة للوقت (التكرار المتباعد) */
+/* 2) بطاقات المراجعة المستحقّة — حسّاسة للوقت (التكرار المتباعد) */
 const dueReviewProducer: Producer = (ctx) => {
   const n = ctx.stats.dueCards;
   if (n <= 0) return [];
@@ -147,7 +147,7 @@ const dueReviewProducer: Producer = (ctx) => {
   }];
 };
 
-/* ٣) ستريك بخطر — مساءً بلا جلسة (أعلى إلحاح) */
+/* 3) ستريك بخطر — مساءً بلا جلسة (أعلى إلحاح) */
 const streakRiskProducer: Producer = (ctx) => {
   const { streak, todayMins } = ctx.stats;
   if (!(streak > 0 && todayMins === 0 && ctx.hour >= 17)) return [];
@@ -166,7 +166,7 @@ const streakRiskProducer: Producer = (ctx) => {
   }];
 };
 
-/* ٤) نوافذ تسجيل الاختبارات الرسمية — للثانوي/الخريج فقط (انتهت للجامعي) */
+/* 4) نوافذ تسجيل الاختبارات الرسمية — للثانوي/الخريج فقط (انتهت للجامعي) */
 const examWindowProducer: Producer = (ctx) => {
   if (ctx.phase === "university") return [];
   return ctx.examAlerts
@@ -205,7 +205,7 @@ function hourWindow(h: number): StudyWindow {
   return "ليل";
 }
 
-/* ٥) ابدأ اليوم — لم يذاكر بعد (ولا ينطبق خطر الستريك).
+/* 5) ابدأ اليوم — لم يذاكر بعد (ولا ينطبق خطر الستريك).
    توقيتٌ واعٍ بالذاكرة: إن كان الطالب يذاكر عادةً في نافذة أخرى، نخفض الإلحاح
    في غير وقته المعتاد بدل أن نزعجه. */
 const startSessionProducer: Producer = (ctx) => {
@@ -231,7 +231,7 @@ const startSessionProducer: Producer = (ctx) => {
   }];
 };
 
-/* ٨) تركيز على المادة الأضعف — مدفوع بذاكرة التعلّم (شخصي) */
+/* 8) تركيز على المادة الأضعف — مدفوع بذاكرة التعلّم (شخصي) */
 const weakSubjectFocusProducer: Producer = (ctx) => {
   const weak = ctx.memory?.weakSubjects?.[0];
   if (!weak) return [];
@@ -251,7 +251,7 @@ const weakSubjectFocusProducer: Producer = (ctx) => {
   }];
 };
 
-/* ٦) أخطاء غير مُراجَعة في الخزنة */
+/* 6) أخطاء غير مُراجَعة في الخزنة */
 const vaultReviewProducer: Producer = (ctx) => {
   const n = ctx.stats.unreviewedErrors;
   if (n <= 0) return [];
@@ -270,7 +270,7 @@ const vaultReviewProducer: Producer = (ctx) => {
   }];
 };
 
-/* ٧) ترقية القبول الجامعي — لمن هو على أعتابه (ثالث ثانوي/خريج) */
+/* 7) ترقية القبول الجامعي — لمن هو على أعتابه (ثالث ثانوي/خريج) */
 const universityPromoteProducer: Producer = (ctx) => {
   if (!ctx.canApplyUniversity) return [];
   return [{
@@ -349,7 +349,7 @@ export function promotedCards(recs: Recommendation[]): DashSectionId[] {
 }
 
 /* ════════════════════════════════════════════════════════════
-   التجاهل/القبول — جسر مبكر نحو محرّك الأحداث (المرحلة ٣)
+   التجاهل/القبول — جسر مبكر نحو محرّك الأحداث (المرحلة 3)
    ════════════════════════════════════════════════════════════ */
 const DISMISS_KEY = "darb_rec_dismissed";
 const dismissKey = () => nsKey(DISMISS_KEY);

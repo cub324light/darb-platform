@@ -47,7 +47,7 @@ async function extractPdf(file: File): Promise<ExtractedFile> {
   return { text: parts.join("\n\n"), pages, kind: "pdf" };
 }
 
-/* DOCX → نص خام، وتقدير عدد الصفحات (~٤٠٠ كلمة/صفحة) */
+/* DOCX → نص خام، وتقدير عدد الصفحات (~400 كلمة/صفحة) */
 async function extractDocx(file: File): Promise<ExtractedFile> {
   const mammoth = await import("mammoth/mammoth.browser");
   const arrayBuffer = await file.arrayBuffer();
@@ -58,7 +58,7 @@ async function extractDocx(file: File): Promise<ExtractedFile> {
   return { text, pages, kind: "docx" };
 }
 
-/* TXT → نص مباشر، وتقدير الصفحات (~٣٠٠٠ حرف/صفحة) */
+/* TXT → نص مباشر، وتقدير الصفحات (~3000 حرف/صفحة) */
 async function extractTxt(file: File): Promise<ExtractedFile> {
   const raw = await file.text();
   const text = raw.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();

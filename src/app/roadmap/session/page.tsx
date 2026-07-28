@@ -35,6 +35,14 @@ function reasonOf(t: SessionTask, weakest: string | null, subjects: string[]): s
   return "";
 }
 
+/* «سؤال واحد · سؤالان · 5 أسئلة · 40 سؤالاً» — تمييزُ العربية يتبع العدد،
+   و«5 سؤالاً» خطأٌ نحويّ كان يظهر للطالب في كل جلسة. */
+function questions(c: number): string {
+  if (c === 1) return "سؤال واحد";
+  if (c === 2) return "سؤالان";
+  return `${n(c)} ${c >= 3 && c <= 10 ? "أسئلة" : "سؤالاً"}`;
+}
+
 export default function SessionPage() {
   const router = useRouter();
   const [exam] = useState<PriorityExam | null>(() => {
@@ -120,7 +128,7 @@ export default function SessionPage() {
     );
   }
 
-  /* ── ٣) شاشة النجاح — إنجازٌ هادئ ── */
+  /* ── 3) شاشة النجاح — إنجازٌ هادئ ── */
   if (stage === "done") {
     const fresh = countRemaining(exam.subjects);
     const rest = remainingSteps({ remainingLessons: fresh.remainingLessons, remainingDrills: fresh.remainingDrills, unreviewedErrors: vaultCount() });
@@ -150,7 +158,7 @@ export default function SessionPage() {
     );
   }
 
-  /* ── ١) الخطة — «ماذا ستفعل اليوم؟» ── */
+  /* ── 1) الخطة — «ماذا ستفعل اليوم؟» ── */
   return (
     <div className="min-h-dvh relative z-[1] page-enter">
       <div className="max-w-xl mx-auto w-full px-5 pt-7" style={{ paddingBottom: "calc(var(--nav-h) + 175px)" }}>
@@ -187,7 +195,7 @@ export default function SessionPage() {
                   <div className="flex items-baseline justify-between gap-2">
                     <p className="t-title font-black" style={{ color: "var(--text)" }}>{t.label}</p>
                     <span className="t-caption font-bold whitespace-nowrap font-mono-nums" style={{ color: "var(--text-muted)" }}>
-                      {t.goalMins != null ? `${n(t.goalMins)} دقيقة` : `${n(t.goalCount ?? 0)} سؤالاً`}
+                      {t.goalMins != null ? `${n(t.goalMins)} دقيقة` : questions(t.goalCount ?? 0)}
                     </span>
                   </div>
                   {why && <p className="t-caption mt-1 leading-relaxed" style={{ color: "var(--text-muted)" }}>{why}</p>}

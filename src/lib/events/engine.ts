@@ -55,9 +55,9 @@ export class EventEngine {
       sessionId: input.sessionId ?? this.sessionId,
       version: 1,
     };
-    // ١) الديمومة أولاً — الحدث الآن في مصدر الحقيقة
+    // 1) الديمومة أولاً — الحدث الآن في مصدر الحقيقة
     this.store.append(event as AnyEvent);
-    // ٢) التوزيع المعزول
+    // 2) التوزيع المعزول
     this.dispatch(event as AnyEvent);
     return event;
   }

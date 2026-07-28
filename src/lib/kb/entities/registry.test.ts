@@ -1,6 +1,6 @@
 /* اختبارات بنية نموذج العالم — تشغيل: npx tsx --test src/lib/kb/entities/registry.test.ts
    نتحقق أن البنية سليمة قبل ضخّ المحتوى: معرّفات فريدة، لا حواف معلّقة، اجتياز
-   ثنائي الاتجاه، تغطية الأنواع الـ١٨، نسخنة لكل عقدة، والأهداف تربط ما يقرؤه العقل. */
+   ثنائي الاتجاه، تغطية الأنواع الـ18، نسخنة لكل عقدة، والأهداف تربط ما يقرؤه العقل. */
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { KB } from "./index";
@@ -11,7 +11,7 @@ test("لا أخطاء بنيوية (معرّفات فريدة/مطابقة لل�
   assert.deepEqual(KB.validate(), []);
 });
 
-test("تغطية الأنواع الـ٢١ كلها ممثّلة في البذرة", () => {
+test("تغطية الأنواع الـ21 كلها ممثّلة في البذرة", () => {
   const kinds: EntityKind[] = [
     "university", "college", "major", "subject", "concept", "course", "lesson", "book", "resource", "question",
     "job", "career_path", "company", "skill", "tool", "ai_tool", "project", "certification", "exam", "exam_session", "goal",

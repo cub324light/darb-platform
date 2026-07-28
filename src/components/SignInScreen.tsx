@@ -57,7 +57,7 @@ export default function SignInScreen({
   const submitEmail = async () => {
     setErr("");
     if (!email.trim() || pass.length < 6) {
-      setErr("اكتب الإيميل وكلمة مرور ٦ أحرف على الأقل");
+      setErr("اكتب الإيميل وكلمة مرور 6 أحرف على الأقل");
       return;
     }
     if (mode === "signup" && pass !== confirmPass) {
@@ -132,7 +132,7 @@ export default function SignInScreen({
           </div>
         )}
 
-        {/* ══════ بطاقة ١: Google ══════ */}
+        {/* ══════ بطاقة 1: Google ══════ */}
         <div className="w-full rounded-2xl p-4 mb-3"
           style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
           <div className="flex items-center gap-2.5 mb-3">
@@ -171,7 +171,7 @@ export default function SignInScreen({
           </button>
         </div>
 
-        {/* ══════ بطاقة ٢: الإيميل ══════ */}
+        {/* ══════ بطاقة 2: الإيميل ══════ */}
         <div className="w-full rounded-2xl p-4 mb-3"
           style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
           <button className="w-full flex items-center gap-2.5 mb-0"
@@ -240,7 +240,7 @@ export default function SignInScreen({
                     style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
 
                   {passField(pass, setPass, showPass, setShowPass,
-                    "كلمة المرور (٦ أحرف+)",
+                    "كلمة المرور (6 أحرف+)",
                     mode === "signup" ? "new-password" : "current-password",
                     mode === "signin" ? submitEmail : undefined,
                   )}
@@ -266,7 +266,7 @@ export default function SignInScreen({
           )}
         </div>
 
-        {/* ══════ بطاقة ٣: زائر ══════ */}
+        {/* ══════ بطاقة 3: زائر ══════ */}
         {onGuest && (
           <div className="w-full rounded-2xl p-4"
             style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>

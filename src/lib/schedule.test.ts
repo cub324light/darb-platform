@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { dayOfWeek, occursOn, getEventsForDate, studyMinutesOn, currentEvent, nextEvent } from "./schedule";
 import type { ScheduleEvent } from "./storage";
 
-/* ٢٠٢٦-٠٧-٢٩ أربعاء (٣) · ٢٠٢٦-٠٧-٣٠ خميس (٤) */
+/* 2026-07-29 أربعاء (3) · 2026-07-30 خميس (4) */
 const WED = "2026-07-29";
 const THU = "2026-07-30";
 
@@ -54,8 +54,8 @@ test("getEventsForDate يرتّب بالوقت", () => {
 
 test("studyMinutesOn يجمع المذاكرة وحدها لا المشغول", () => {
   const list = [
-    ev({ id: "s1", fromHour: 16, toHour: 17.5, recurrence: { kind: "daily", fromDate: WED } }), // ٩٠
-    ev({ id: "s2", fromHour: 19, toHour: 20, recurrence: { kind: "daily", fromDate: WED } }),   // ٦٠
+    ev({ id: "s1", fromHour: 16, toHour: 17.5, recurrence: { kind: "daily", fromDate: WED } }), // 90
+    ev({ id: "s2", fromHour: 19, toHour: 20, recurrence: { kind: "daily", fromDate: WED } }),   // 60
     ev({ id: "b1", type: "busy", label: "نادٍ", fromHour: 21, toHour: 22, recurrence: { kind: "daily", fromDate: WED } }),
   ];
   assert.equal(studyMinutesOn(WED, list), 150);

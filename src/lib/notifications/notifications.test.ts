@@ -114,7 +114,7 @@ test("ADAPTIVE TIMING: ignored at 8AM, opened at 9PM → best time moves to 9PM"
   const seedEvents: AnyEvent[] = [];
   const mk = (type: AnyEvent["eventType"], hour: number, meta: Record<string, unknown>, day = 1): AnyEvent =>
     ({ id: `${type}-${hour}-${meta.notificationId ?? hour}-${day}`, eventType: type, timestamp: H(hour, day), actor: { kind: "student" }, educationalStage: "general", source: "system", metadata: meta, correlationId: "c", sessionId: "s", version: 1 } as unknown as AnyEvent);
-  // ٨ صباحاً: ٥ إرسالات بلا فتح ؛ ٢١ مساءً: ٥ إرسالات + فتح + نشاط مذاكرة
+  // 8 صباحاً: 5 إرسالات بلا فتح ؛ 21 مساءً: 5 إرسالات + فتح + نشاط مذاكرة
   for (let i = 0; i < 5; i++) { seedEvents.push(mk("NotificationSent", 8, { notificationId: `m${i}`, notifType: "studyReminder", transport: "t" }, i + 1)); }
   for (let i = 0; i < 5; i++) {
     seedEvents.push(mk("NotificationSent", 21, { notificationId: `e${i}`, notifType: "studyReminder", transport: "t" }, i + 1));

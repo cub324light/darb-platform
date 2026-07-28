@@ -15,7 +15,7 @@ function atHour(date: string, hour: number): Date {
 }
 
 export interface PlanToCalOptions {
-  /** عدد الأيام القادمة لتوسيع التكرارات (افتراضي ١٤) */
+  /** عدد الأيام القادمة لتوسيع التكرارات (افتراضي 14) */
   days?: number;
   /** ابدأ من هذا التاريخ (افتراضي اليوم) */
   fromDate?: Date;

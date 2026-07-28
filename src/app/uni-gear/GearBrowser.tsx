@@ -150,7 +150,7 @@ export default function GearBrowser() {
   const [category, setCategory] = useState<GearCategory | "all">("all");
   const [budget, setBudget] = useState<BudgetTier | "all">("all");
 
-  /* فلترة متزامنة رخيصة على ٣٠ عنصراً ثابتاً — لا حاجة لأي حفظ يدوي */
+  /* فلترة متزامنة رخيصة على 30 عنصراً ثابتاً — لا حاجة لأي حفظ يدوي */
   const shown = filterGear(GEAR_ITEMS, {
     category: category === "all" ? undefined : category,
     major: major === "all" ? undefined : major,

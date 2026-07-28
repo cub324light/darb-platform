@@ -12,6 +12,7 @@ import { appendSession } from "@/lib/roadmap/sessionStore";
 import { readFocusHandoff, remainingTaskMins, EMPTY_HANDOFF, type FocusHandoff } from "@/lib/roadmap/handoff";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { trackEvent } from "@/lib/analytics";
+import { n as arNum } from "@/lib/format";
 
 type Phase = "idle" | "focus" | "break" | "done";
 type DurMode = "25" | "50" | "90" | "custom";
@@ -56,7 +57,6 @@ function durationLabel(mins: number): string {
 }
 
 /* أرقامٌ عربية-هندية (قاعدة الخطوط) */
-const arNum = (x: number): string => new Intl.NumberFormat("ar-EG-u-nu-arab").format(x);
 
 /* صيغة الدقائق حسب العدد: 3-10 → دقائق، غير ذلك → دقيقة (بأرقامٍ عربية-هندية) */
 function arabicMins(n: number): string {
@@ -66,7 +66,7 @@ function arabicMins(n: number): string {
 
 /* ─── متجر الثواني (Timer Store) ───
    الثواني المتبقية تتغيّر كل ثانية. لو حفظناها في حالة الصفحة (useState) فإن
-   الصفحة كاملة (٧٠٠+ سطر: BottomNav, Dome, الأزرار، الإحصاءات...) تُعيد الرسم
+   الصفحة كاملة (700+ سطر: BottomNav, Dome, الأزرار، الإحصاءات...) تُعيد الرسم
    كل ثانية أثناء الجلسة. بدلاً من ذلك نضعها في متجر خارجي خفيف؛ المكوّنات التي
    تعرض العدّاد فقط (الدائرة، عنوان التبويب، عدّاد الراحة) تشترك فيه وتُعيد رسم
    نفسها وحدها — أما صفحة أوربت فلا تُعيد الرسم إطلاقاً مع كل ثانية. */
@@ -516,7 +516,7 @@ export default function OrbitPage() {
         const trackSubjects = selTrack?.subjects ?? [];
         return (
           <div className="px-5 mb-4 rise rise-1">
-            {/* خطوة ١: الاختبار — تظهر فقط لو عنده أكثر من اختبار */}
+            {/* خطوة 1: الاختبار — تظهر فقط لو عنده أكثر من اختبار */}
             {activeTracks.length > 1 && (
               <>
                 <p className="text-sm font-bold text-[var(--text-muted)] mb-2">اختبارك:</p>
@@ -538,7 +538,7 @@ export default function OrbitPage() {
                 </div>
               </>
             )}
-            {/* خطوة ٢: المادة من هذا الاختبار */}
+            {/* خطوة 2: المادة من هذا الاختبار */}
             <p className="text-sm font-bold text-[var(--text-muted)] mb-2">المادة التي تذاكرها:</p>
             <div className="flex gap-2.5 flex-wrap">
               {trackSubjects.map((s) => {
@@ -856,7 +856,7 @@ export default function OrbitPage() {
               <div className="flex flex-col gap-1.5 max-h-[320px] overflow-y-auto">
                 {sessionLog.map((e) => {
                   const d = new Date(e.ts);
-                  const when = d.toLocaleString("ar-SA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: true });
+                  const when = d.toLocaleString("ar-SA-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: true });
                   return (
                     <div key={e.id} className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5"
                       style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>

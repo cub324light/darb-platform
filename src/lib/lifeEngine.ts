@@ -27,7 +27,7 @@ import { recommendedExamsForUser, type RecommendedExam } from "./recommendedExam
 export interface LifeContext {
   stage: Stage;
   uniStage: UniStage | null;
-  gpa: number | null;            // من ٥
+  gpa: number | null;            // من 5
   hours: number | null;          // ساعات منجزة
   year: string | null;
   majorId: string | null;
@@ -86,11 +86,11 @@ export interface Priority {
   href: string;
   urgent: boolean;
   /* التكلفة والعائد — الطالب يرى: كم سأدفع؟ وماذا سأكسب؟ */
-  costHours: number;         // ساعات تقديرية (٠ = مستمر/يومي)
+  costHours: number;         // ساعات تقديرية (0 = مستمر/يومي)
   payoff: string;            // العائد المتوقّع
   /* التفسير */
   score: number;             // مجموع أوزان القواعد التي أطلقتها
-  confidence: number;        // ٠..٩٩ (دالّة رتيبة في score)
+  confidence: number;        // 0..99 (دالّة رتيبة في score)
   firedRules: FiredRule[];   // القواعد التي أطلقتها هذه الأولوية بأوزانها
   reasons: string[];         // «لماذا؟» = تسميات القواعد نفسها
 }
@@ -145,7 +145,7 @@ const PRIORITY_DEFS: Record<PriorityKey, PDef> = {
   gpa: {
     area: "gpa", icon: "📊",
     title: () => "رفع المعدّل",
-    why: (c) => `لأن معدّلك (${c.gpa != null ? fmtGpa(c.gpa) : "—"}) أقل من ٢٫٧٥.`,
+    why: (c) => `لأن معدّلك (${c.gpa != null ? fmtGpa(c.gpa) : "—"}) أقل من 2٫75.`,
     benefit: "يفتح لك التدريب التعاوني والقبول والوظائف لاحقاً.",
     time: () => "هذا الفصل",
     next: "التقديم على التدريب التعاوني.", cta: "احسب معدّلك واستهدف", href: "/uni-tools",
@@ -179,7 +179,7 @@ const PRIORITY_DEFS: Record<PriorityKey, PDef> = {
     title: () => "بدء أول شهادة احترافية",
     why: () => "أنجزت تدريبك — الوقت مناسب لشهادة تخصصك.",
     benefit: "تثبّت مهارتك وتميّز سيرتك عن أقرانك.",
-    time: () => "٤–٨ أسابيع",
+    time: () => "4–8 أسابيع",
     next: "ابنِ مشروعاً يطبّقها.", cta: "ابدأ شهادة تخصصك", href: "/career#sec-certs",
   },
   foundation: {
@@ -288,7 +288,7 @@ const COST: Record<PriorityKey, { hours: number; payoff: string }> = {
 /* ── القواعد: صريحة، كلٌّ بمعرّف وسبب ووزن وشرط ── */
 export interface Rule {
   id: number;
-  label: string;         // السبب المقروء («المعدّل أقل من ٢٫٧٥»)
+  label: string;         // السبب المقروء («المعدّل أقل من 2٫75»)
   priority: PriorityKey; // الأولوية التي تدعمها
   weight: number;
   when: (c: LifeContext) => boolean;
@@ -300,11 +300,11 @@ const isSchoolStage = (s: Stage) => s === "first" || s === "second" || s === "th
 
 export const RULES: Rule[] = [
   /* ── الجامعي ── */
-  { id: 10, label: "اختبارات الفصل خلال ٢١ يوماً", priority: "uni-finals", weight: 100, when: (c) => c.stage === "university" && inRange(c.uniFinalsInDays, 0, 21) },
-  { id: 11, label: "المعدّل أقل من ٢٫٧٥", priority: "gpa", weight: 50, when: (c) => c.stage === "university" && c.gpa != null && c.gpa < 2.75 },
-  { id: 12, label: "تعثّر شديد (المعدّل أقل من ٢٫٠)", priority: "gpa", weight: 20, when: (c) => c.stage === "university" && c.gpa != null && c.gpa < 2.0 },
+  { id: 10, label: "اختبارات الفصل خلال 21 يوماً", priority: "uni-finals", weight: 100, when: (c) => c.stage === "university" && inRange(c.uniFinalsInDays, 0, 21) },
+  { id: 11, label: "المعدّل أقل من 2٫75", priority: "gpa", weight: 50, when: (c) => c.stage === "university" && c.gpa != null && c.gpa < 2.75 },
+  { id: 12, label: "تعثّر شديد (المعدّل أقل من 2٫0)", priority: "gpa", weight: 20, when: (c) => c.stage === "university" && c.gpa != null && c.gpa < 2.0 },
   { id: 13, label: "معدّل منخفض قرب التخرّج", priority: "gpa", weight: 20, when: (c) => c.stage === "university" && c.gpa != null && c.gpa < 2.75 && c.uniStage === "senior" },
-  { id: 14, label: "معدّل ممتاز (≥ ٤٫٥) في مرحلة متقدّمة", priority: "research", weight: 45, when: (c) => c.stage === "university" && c.gpa != null && c.gpa >= 4.5 && (c.uniStage === "mid" || c.uniStage === "senior") },
+  { id: 14, label: "معدّل ممتاز (≥ 4٫5) في مرحلة متقدّمة", priority: "research", weight: 45, when: (c) => c.stage === "university" && c.gpa != null && c.gpa >= 4.5 && (c.uniStage === "mid" || c.uniStage === "senior") },
   { id: 15, label: "قرب التخرّج", priority: "cv", weight: 40, when: (c) => c.uniStage === "senior" },
   { id: 16, label: "لا يوجد تدريب تعاوني", priority: "coop", weight: 35, when: (c) => (c.uniStage === "mid" || c.uniStage === "senior") && !c.coopDone },
   { id: 17, label: "أنجز التدريب (وقت الشهادة)", priority: "cert", weight: 30, when: (c) => c.uniStage === "mid" && c.coopDone },
@@ -313,11 +313,11 @@ export const RULES: Rule[] = [
   /* ── الثانوي/الخريج ── */
   /* اختبارات المدرسة النهائية للثانوي فقط — الخريج (ثانوي أو جامعة) لم يعُد في مدرسة */
   { id: 30, label: "اختبارات مدرسية جارية الآن", priority: "school-finals-now", weight: 100, when: (c) => isSchoolStage(c.stage) && c.inSchoolFinals },
-  { id: 31, label: "اختبارات مدرسية خلال ٢١ يوماً", priority: "school-finals-soon", weight: 90, when: (c) => isSchoolStage(c.stage) && !c.inSchoolFinals && inRange(c.daysToSchoolFinals, 0, 21) },
-  { id: 32, label: "قياس قادم يراه الطالب خلال ٤٥ يوماً", priority: "qiyas", weight: 40, when: (c) => c.stage !== "university" && c.qiyas != null && c.qiyas.days > 21 && c.qiyas.days <= 45 },
-  { id: 35, label: "قياس عاجل يراه الطالب خلال ٢١ يوماً", priority: "qiyas-soon", weight: 88, when: (c) => c.stage !== "university" && c.qiyas != null && inRange(c.qiyas.days, 0, 21) },
+  { id: 31, label: "اختبارات مدرسية خلال 21 يوماً", priority: "school-finals-soon", weight: 90, when: (c) => isSchoolStage(c.stage) && !c.inSchoolFinals && inRange(c.daysToSchoolFinals, 0, 21) },
+  { id: 32, label: "قياس قادم يراه الطالب خلال 45 يوماً", priority: "qiyas", weight: 40, when: (c) => c.stage !== "university" && c.qiyas != null && c.qiyas.days > 21 && c.qiyas.days <= 45 },
+  { id: 35, label: "قياس عاجل يراه الطالب خلال 21 يوماً", priority: "qiyas-soon", weight: 88, when: (c) => c.stage !== "university" && c.qiyas != null && inRange(c.qiyas.days, 0, 21) },
   { id: 33, label: "سنة القبول (ثالث ثانوي/خريج ثانوي)", priority: "admission", weight: 45, when: (c) => c.admissionOpen && (c.stage === "third" || c.stage === "graduate") },
-  { id: 36, label: "ثالث ثانوي بدرجات منخفضة (تحت ٨٥٪)", priority: "school-grades", weight: 50, when: (c) => c.stage === "third" && c.highschoolPct != null && c.highschoolPct < 85 },
+  { id: 36, label: "ثالث ثانوي بدرجات منخفضة (تحت 85٪)", priority: "school-grades", weight: 50, when: (c) => c.stage === "third" && c.highschoolPct != null && c.highschoolPct < 85 },
   { id: 34, label: "مرحلة مبكّرة (أول/ثاني ثانوي)", priority: "early", weight: 30, when: (c) => c.stage === "first" || c.stage === "second" },
   /* ── الواجبات المدرسية (للثانوي فقط — «المدرسة» عالمُ الثانوي، لا الجامعي/الخريج) ── */
   { id: 40, label: "واجبات متأخّرة", priority: "homework", weight: 68, when: (c) => isSchoolStage(c.stage) && c.hwOverdue > 0 },
@@ -423,8 +423,8 @@ export function lifeScore(c: LifeContext): LifeScore[] {
   if (c.stage === "university") {
     return [
       { key: "academic", label: "جاهزيتك الأكاديمية", pct: pctOf(gpaPct * 100), hint: "من معدّلك التراكمي" },
-      { key: "graduation", label: "جاهزية التخرّج", pct: pctOf(hoursPct * 100), hint: "من الساعات المنجزة (÷ ١٣٢)" },
-      { key: "job", label: "جاهزية سوق العمل", pct: pctOf(25 * hoursPct + 25 * gpaPct + 25 * (c.coopDone ? 1 : 0) + 25 * seniorW), hint: "الساعات + المعدّل + التدريب + قرب التخرّج (٢٥٪ لكلٍّ)" },
+      { key: "graduation", label: "جاهزية التخرّج", pct: pctOf(hoursPct * 100), hint: "من الساعات المنجزة (÷ 132)" },
+      { key: "job", label: "جاهزية سوق العمل", pct: pctOf(25 * hoursPct + 25 * gpaPct + 25 * (c.coopDone ? 1 : 0) + 25 * seniorW), hint: "الساعات + المعدّل + التدريب + قرب التخرّج (25٪ لكلٍّ)" },
     ];
   }
   const stageBase: Record<string, number> = { first: 25, second: 45, third: 70, graduate: 80 };

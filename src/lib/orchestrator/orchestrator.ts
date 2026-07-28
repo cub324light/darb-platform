@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════════════════
    Duwairb Orchestrator — التنسيق (لا يستبدل المحرّكات، ينسّقها)
    كل رد يتبع نفس خطّ العمل الحتمي:
-     ١) استقبل الطلب  ٢-٦) استشر المحرّكات وابنِ السياق الموحّد
-     ٧) وحّد السياق   ٨-٩) أرسل الضروري فقط للنموذج وولّد الرد
-     ١٠) أطلق أحداثاً  ١١) حدّث الذاكرة (عبر الأحداث — لا كتابة مباشرة)
+     1) استقبل الطلب  2-6) استشر المحرّكات وابنِ السياق الموحّد
+     7) وحّد السياق   8-9) أرسل الضروري فقط للنموذج وولّد الرد
+     10) أطلق أحداثاً  11) حدّث الذاكرة (عبر الأحداث — لا كتابة مباشرة)
    ═══════════════════════════════════════════════════════════════════════ */
 import type { EventEngine } from "../events/engine";
 import type { LLMProvider } from "./llm";
@@ -39,7 +39,7 @@ export class DuwairbOrchestrator {
   async ask(req: DuwairbRequest): Promise<DuwairbResult> {
     const now = (this.deps.clock ?? (() => Date.now()))();
 
-    // ٢-٧) استشر المحرّكات وابنِ السياق الموحّد
+    // 2-7) استشر المحرّكات وابنِ السياق الموحّد
     const context = this.deps.buildContext();
     const contextBlock = formatDuwairbContext(context);
 
@@ -50,7 +50,7 @@ export class DuwairbOrchestrator {
       actor: { kind: "student" }, source: "ui", timestamp: now,
     });
 
-    // ٨-٩) أرسل الضروري فقط للنموذج (طبقة اللغة) وولّد الرد
+    // 8-9) أرسل الضروري فقط للنموذج (طبقة اللغة) وولّد الرد
     let text: string;
     try {
       text = await this.deps.provider.complete({
@@ -68,7 +68,7 @@ export class DuwairbOrchestrator {
       throw e;
     }
 
-    // ١٠-١١) أطلق حدث الانتهاء → MemoryReactor يحدّث الذاكرة (لا كتابة مباشرة)
+    // 10-11) أطلق حدث الانتهاء → MemoryReactor يحدّث الذاكرة (لا كتابة مباشرة)
     this.deps.events.emit({
       eventType: "DuwairbConversationFinished",
       metadata: { topic: req.topic ?? req.prompt.slice(0, 60), messages: 1 },

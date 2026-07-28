@@ -43,7 +43,7 @@ export default function ParentDashboard() {
 
   return (
     <div className="flex flex-col gap-3">
-      {/* ١) بطاقة الطالب */}
+      {/* 1) بطاقة الطالب */}
       <section className="ds-card flex items-center gap-3.5">
         <span className="flex items-center justify-center rounded-2xl flex-shrink-0" style={{ width: 52, height: 52, fontSize: 22, fontWeight: 800, color: "white", background: "linear-gradient(150deg, var(--accent), color-mix(in srgb, var(--accent) 60%, #7c5cf0))" }}>{student.name.charAt(0)}</span>
         <div className="flex-1 min-w-0">
@@ -53,7 +53,7 @@ export default function ParentDashboard() {
         {student.goal && <span className="t-caption font-black px-3 py-1.5 rounded-full flex-shrink-0" style={{ background: "color-mix(in srgb, var(--accent) 14%, transparent)", color: "var(--accent-light)" }}>🎯 {student.goal}</span>}
       </section>
 
-      {/* ٢) الحالة العامة — واحدة فقط + جملة قصيرة */}
+      {/* 2) الحالة العامة — واحدة فقط + جملة قصيرة */}
       <section className="ds-card flex items-center gap-3" style={{ background: `color-mix(in srgb, ${sc} 8%, var(--surface))`, borderColor: `color-mix(in srgb, ${sc} 30%, var(--border))` }}>
         <span style={{ fontSize: "1.6rem" }}>{status.emoji}</span>
         <div className="flex-1 min-w-0">
@@ -73,7 +73,7 @@ export default function ParentDashboard() {
         </section>
       )}
 
-      {/* ٣) التقدّم */}
+      {/* 3) التقدّم */}
       <section className="ds-card ds-stack-tight">
         <h2 className="t-h3" style={{ color: "var(--text)" }}>التقدّم هذا الأسبوع</h2>
         <div className="grid grid-cols-3 gap-2">
@@ -99,7 +99,7 @@ export default function ParentDashboard() {
         </div>
       </section>
 
-      {/* ٤) يحتاج دعم — مادة واحدة + ٥) الاختبار القادم */}
+      {/* 4) يحتاج دعم — مادة واحدة + 5) الاختبار القادم */}
       <div className="grid grid-cols-1 min-[520px]:grid-cols-2 gap-3">
         {support && (
           <section className="ds-card ds-stack-tight" style={{ borderColor: "color-mix(in srgb, var(--gold) 30%, var(--border))" }}>
@@ -117,7 +117,7 @@ export default function ParentDashboard() {
         )}
       </div>
 
-      {/* ٦) الإنجازات */}
+      {/* 6) الإنجازات */}
       {achievements.length > 0 && (
         <section className="ds-card ds-stack-tight">
           <h2 className="t-h3" style={{ color: "var(--text)" }}>🏆 آخر الإنجازات</h2>
@@ -131,7 +131,7 @@ export default function ParentDashboard() {
         </section>
       )}
 
-      {/* ٧) اقتراح واحد للوالد */}
+      {/* 7) اقتراح واحد للوالد */}
       {suggestion && (
         <section className="ds-card flex items-start gap-3" style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface))", borderColor: "color-mix(in srgb, var(--accent) 24%, var(--border))" }}>
           <span style={{ fontSize: "1.3rem" }}>💡</span>

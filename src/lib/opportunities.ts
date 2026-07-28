@@ -76,7 +76,7 @@ export interface OpportunityGroup {
   items: OpportunityItem[];     // دائماً غير فارغة (لا قسم فارغ صامت)
 }
 
-/* عدد الجامعات المعروضة في القمة (٨–١٠ حسب المواصفة) */
+/* عدد الجامعات المعروضة في القمة (8–10 حسب المواصفة) */
 const TOP_UNIS = 8;
 
 /* ════════ مساعدات نقية ════════ */
@@ -107,7 +107,7 @@ function missingInputs(inp: OpportunityInputs): string {
   return need.length ? need.join("، ") : "درجاتك";
 }
 
-/* ════════ ١) الجامعات المناسبة ════════ */
+/* ════════ 1) الجامعات المناسبة ════════ */
 function universitiesGroup(
   inp: OpportunityInputs,
   user: DarbUser,
@@ -188,7 +188,7 @@ function universitiesGroup(
   return { group: { ...base, note, items: top }, topUniId: top[0].id.slice(4) };
 }
 
-/* ════════ ٢) الكليات ════════ */
+/* ════════ 2) الكليات ════════ */
 function collegesGroup(
   inp: OpportunityInputs,
   phase: StudentPhase,
@@ -285,7 +285,7 @@ function collegesGroup(
   return { ...base, items };
 }
 
-/* ════════ ٣) برامج الابتعاث ════════ */
+/* ════════ 3) برامج الابتعاث ════════ */
 function abroadGroup(inp: OpportunityInputs, user: DarbUser, phase: StudentPhase): OpportunityGroup {
   const applyNow = canApplyUniversity(user);
   const emdad: OpportunityItem = {
@@ -322,7 +322,7 @@ function abroadGroup(inp: OpportunityInputs, user: DarbUser, phase: StudentPhase
   };
 }
 
-/* ════════ ٤) الدبلومات والتدريب التقني ════════ */
+/* ════════ 4) الدبلومات والتدريب التقني ════════ */
 function technicalGroup(user: DarbUser, phase: StudentPhase): OpportunityGroup {
   const status: OpportunityStatus =
     phase === "university" ? "يحتاج شرط" : canApplyUniversity(user) ? "متاح" : "قريب";
@@ -351,7 +351,7 @@ function technicalGroup(user: DarbUser, phase: StudentPhase): OpportunityGroup {
   };
 }
 
-/* ════════ ٥) منح الجامعات الأهلية ════════ */
+/* ════════ 5) منح الجامعات الأهلية ════════ */
 function grantsGroup(inp: OpportunityInputs, phase: StudentPhase): OpportunityGroup {
   const base = { id: "grants" as const, title: "منح الجامعات الأهلية", icon: "🎁" };
 
@@ -387,7 +387,7 @@ function grantsGroup(inp: OpportunityInputs, phase: StudentPhase): OpportunityGr
   };
 }
 
-/* ════════ ٦) البرامج الحكومية ════════ */
+/* ════════ 6) البرامج الحكومية ════════ */
 function govGroup(): OpportunityGroup {
   return {
     id: "gov-programs",

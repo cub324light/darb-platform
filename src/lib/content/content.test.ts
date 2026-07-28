@@ -31,16 +31,16 @@ test("كل معرّفات البذرة فريدة داخل كل مجموعة", (
 
 test("الدمج: overlay يطغى بالـ id والجديد يُضاف", () => {
   const seed: FaqDoc[] = [
-    { id: "a", question: "س١", answer: "ج١", category: "c", order: 1 },
-    { id: "b", question: "س٢", answer: "ج٢", category: "c", order: 2 },
+    { id: "a", question: "س1", answer: "ج1", category: "c", order: 1 },
+    { id: "b", question: "س2", answer: "ج2", category: "c", order: 2 },
   ];
   const overlay: FaqDoc[] = [
-    { id: "b", question: "س٢ محدث", answer: "ج٢ محدث", category: "c", order: 2 },
-    { id: "c", question: "س٣", answer: "ج٣", category: "c", order: 3 },
+    { id: "b", question: "س2 محدث", answer: "ج2 محدث", category: "c", order: 2 },
+    { id: "c", question: "س3", answer: "ج3", category: "c", order: 3 },
   ];
   const merged = mergeContentById(seed, overlay);
   assert.equal(merged.length, 3);
-  assert.equal(merged.find((x) => x.id === "b")?.question, "س٢ محدث"); // overlay فاز
+  assert.equal(merged.find((x) => x.id === "b")?.question, "س2 محدث"); // overlay فاز
   assert.ok(merged.some((x) => x.id === "c")); // الجديد أُضيف
   assert.equal(seed.length, 2); // الأصل لم يتغيّر
 });

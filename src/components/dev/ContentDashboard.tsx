@@ -5,7 +5,7 @@
 import { KB, KIND_META, type EntityKind } from "@/lib/kb/entities";
 import { domainProgress, conceptsByImportance, topConcepts } from "@/lib/kb/entities/content/domains";
 
-/* شريط تقدّم نصّي (١٠ خانات) — كأمثلة المالك */
+/* شريط تقدّم نصّي (10 خانات) — كأمثلة المالك */
 function bar(pct: number): string {
   const filled = Math.round(pct / 10);
   return "█".repeat(filled) + "░".repeat(10 - filled);
@@ -37,7 +37,7 @@ export default function ContentDashboard() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* أعلى ٢٠ مفهوماً عبر المنصة — أين نركّز المحتوى أولاً */}
+      {/* أعلى 20 مفهوماً عبر المنصة — أين نركّز المحتوى أولاً */}
       <section className="ds-card ds-stack-tight">
         <h2 className="t-h3" style={{ color: "var(--text)" }}>Top 20 — أعلى المفاهيم أهميةً (كل المنصة)</h2>
         <div className="flex flex-col gap-1">

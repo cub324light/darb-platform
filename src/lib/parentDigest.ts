@@ -26,7 +26,7 @@ export interface ParentDigestInput {
   hoursLastWeek: number;
   sessionsThisWeek: number;
   sessionsLastWeek: number;
-  commitmentPct: number;              // Duwairb Score (٠–١٠٠)
+  commitmentPct: number;              // Duwairb Score (0–100)
   /* النشاط */
   daysSinceLastSession: number | null; // null = لم يدرس بعد
   currentStreak: number;
@@ -102,12 +102,12 @@ export function buildParentDigest(i: ParentDigestInput): ParentDigest {
 
   /* ── الإنجازات: آخرها فقط (نختار الأعلى عتبةً في كل نوع) ── */
   const achievements: { icon: string; text: string }[] = [];
-  if (i.totalHours >= 50) achievements.push({ icon: "⏱️", text: "أكمل ٥٠ ساعة دراسة" });
-  else if (i.totalHours >= 30) achievements.push({ icon: "⏱️", text: "أكمل ٣٠ ساعة دراسة" });
-  else if (i.totalHours >= 20) achievements.push({ icon: "⏱️", text: "أكمل أول ٢٠ ساعة" });
-  else if (i.totalHours >= 10) achievements.push({ icon: "⏱️", text: "أكمل ١٠ ساعات دراسة" });
-  if (i.longestStreakDays >= 10) achievements.push({ icon: "🔥", text: "حافظ على الدراسة ١٠ أيام" });
-  else if (i.longestStreakDays >= 7) achievements.push({ icon: "🔥", text: "٧ أيام دراسةٍ متتالية" });
+  if (i.totalHours >= 50) achievements.push({ icon: "⏱️", text: "أكمل 50 ساعة دراسة" });
+  else if (i.totalHours >= 30) achievements.push({ icon: "⏱️", text: "أكمل 30 ساعة دراسة" });
+  else if (i.totalHours >= 20) achievements.push({ icon: "⏱️", text: "أكمل أول 20 ساعة" });
+  else if (i.totalHours >= 10) achievements.push({ icon: "⏱️", text: "أكمل 10 ساعات دراسة" });
+  if (i.longestStreakDays >= 10) achievements.push({ icon: "🔥", text: "حافظ على الدراسة 10 أيام" });
+  else if (i.longestStreakDays >= 7) achievements.push({ icon: "🔥", text: "7 أيام دراسةٍ متتالية" });
   if (i.trackProgressPct >= 100) achievements.push({ icon: "📚", text: "أنهى وحدة كاملة" });
   else if (i.doneLessons >= 1) achievements.push({ icon: "📗", text: "أنهى أول درس" });
 
@@ -115,13 +115,13 @@ export function buildParentDigest(i: ParentDigestInput): ParentDigest {
   const moments: { icon: string; text: string }[] = [];
   if (i.returnedAfterGap) moments.push({ icon: "🎉", text: "بدأ يدرس بعد انقطاع" });
   if (i.bestScore) moments.push({ icon: "🏆", text: `حقّق أعلى نتيجة له: ${i.bestScore.score} في ${i.bestScore.exam}` });
-  if (i.totalHours >= 30) moments.push({ icon: "🔥", text: "تجاوز ٣٠ ساعة دراسة" });
+  if (i.totalHours >= 30) moments.push({ icon: "🔥", text: "تجاوز 30 ساعة دراسة" });
   if (i.doneLessons >= 1 && i.trackProgressPct < 100) moments.push({ icon: "📚", text: "أنهى أول درس في مساره" });
 
   /* ── اقتراح واحد للوالد (بصيغته لا صيغة الطالب) ── */
   let suggestion: string | null;
   if (inactive || i.daysSinceLastSession == null) {
-    suggestion = `شجّعه على العودة بجلسةٍ قصيرة اليوم — ولو ٢٠ دقيقة تكسر الانقطاع.`;
+    suggestion = `شجّعه على العودة بجلسةٍ قصيرة اليوم — ولو 20 دقيقة تكسر الانقطاع.`;
   } else if (i.nextExam && i.nextExam.days <= 14) {
     suggestion = `اختبار ${i.nextExam.name} قريب — شجّعه على الالتزام بخطته اليومية هذه الأيام.`;
   } else if (support) {

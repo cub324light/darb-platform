@@ -1,11 +1,11 @@
-/* ─── مناطق السعودية الرسمية (١٣) + أقرب الجامعات ───
+/* ─── مناطق السعودية الرسمية (13) + أقرب الجامعات ───
    مصدرٌ نقيّ لخطوة «المنطقة» في التسجيل و«أقرب جامعة» في الملخّص. يعيد استخدام كتالوج
    UNIVERSITIES (لا كتالوج جامعاتٍ ثانٍ). أسماء المناطق تطابق حقل region في الجامعات،
    مع تطبيعٍ للمواضع التي خزّنّاها بمحافظةٍ (الخرج/الطائف/الأحساء/عرعر) إلى منطقتها الرسمية. */
 
 import { UNIVERSITIES, type UniversityOption } from "./university";
 
-/* المناطق الإدارية الـ١٣ (بالترتيب الرسمي المتعارف عليه). */
+/* المناطق الإدارية الـ13 (بالترتيب الرسمي المتعارف عليه). */
 export const SA_REGIONS = [
   "الرياض",
   "مكة المكرمة",
@@ -34,7 +34,7 @@ const UNI_REGION_TO_OFFICIAL: Record<string, SaRegion> = {
   "عرعر": "الحدود الشمالية",
 };
 
-/** يطبّع اسم منطقةٍ (من جامعةٍ أو إدخال) إلى إحدى المناطق الـ١٣ — أو undefined إن لم تُعرَف. */
+/** يطبّع اسم منطقةٍ (من جامعةٍ أو إدخال) إلى إحدى المناطق الـ13 — أو undefined إن لم تُعرَف. */
 export function toOfficialRegion(region?: string | null): SaRegion | undefined {
   if (!region) return undefined;
   const r = region.trim();
@@ -42,7 +42,7 @@ export function toOfficialRegion(region?: string | null): SaRegion | undefined {
   return UNI_REGION_TO_OFFICIAL[r];
 }
 
-/** هل الاسم منطقةٌ رسمية من الـ١٣؟ */
+/** هل الاسم منطقةٌ رسمية من الـ13؟ */
 export const isSaRegion = (region?: string | null): region is SaRegion =>
   !!region && REGION_SET.has(region.trim());
 

@@ -73,7 +73,7 @@ export default function DashboardPage() {
       {/* نقاط العودة اليومية — تسجيل اليوم/تقرير أسبوعي/استعادة ستريك/معالم/ترحيب */}
       <RetentionHost />
 
-      {/* ═══ ١) الترحيب: السلام + الاسم + شعار اليوم ═══ */}
+      {/* ═══ 1) الترحيب: السلام + الاسم + شعار اليوم ═══ */}
       <Dome compact>
         <div className="text-right">
           <Link href="/profile"

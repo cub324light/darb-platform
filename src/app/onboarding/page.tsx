@@ -124,7 +124,7 @@ type ResultStatus = "not_taken" | "taken" | "waiting_result";
 interface ScoreCell { status: ResultStatus; value: string; mode: ExamMode | ""; testDate: string; }
 const EMPTY_CELL: ScoreCell = { status: "not_taken", value: "", mode: "", testDate: "" };
 
-/* تسمية نسبة الثانوية (٠–١٠٠) — سلّم وزارة التعليم المعتاد. */
+/* تسمية نسبة الثانوية (0–100) — سلّم وزارة التعليم المعتاد. */
 const gpaLabel = (p: number): string =>
   p >= 90 ? "ممتاز" : p >= 80 ? "جيد جداً" : p >= 70 ? "جيد" : p >= 60 ? "مقبول" : "دون المقبول";
 const gpaColor = (p: number): string => (p >= 80 ? "var(--success)" : p >= 60 ? "var(--gold)" : "var(--danger)");
@@ -155,7 +155,7 @@ export default function OnboardingPage() {
     () => Array.from({ length: 5 }, () => ({ subject: "", grade: "" })));
   const [gapYear, setGapYear] = useState<boolean | null>(null);
 
-  /* ── اختيار الاختبارات (منتقٍ حسب المرحلة، حدّ ٣) ── */
+  /* ── اختيار الاختبارات (منتقٍ حسب المرحلة، حدّ 3) ── */
   const [selectedExams, setSelectedExams] = useState<string[]>([]);
   const [examsInit, setExamsInit] = useState(false);
   const [capHint, setCapHint] = useState(false);
@@ -222,7 +222,7 @@ export default function OnboardingPage() {
   const openIds = stageList.filter((e) => e.state === "open").map((e) => e.id);
 
   /* اقتراح درب: «درب يحدد لي» → الأساسية المفتوحة (قدرات ثم تحصيلي)؛ وإلا اختبارات الهدف
-     المفتوحة — كلاهما بحدّ ٣. المرحلة أولاً ثم الهدف (لا نقترح مقفلاً). */
+     المفتوحة — كلاهما بحدّ 3. المرحلة أولاً ثم الهدف (لا نقترح مقفلاً). */
   const suggestedExamIds = (() => {
     if (goal.undecided) return ["qudurat", "tahsili"].filter((id) => openIds.includes(id)).slice(0, MAX_EXAMS);
     const kinds = requirementsOf(goal.targets);
@@ -284,11 +284,11 @@ export default function OnboardingPage() {
   /* ── قائمة الخطوات (متكيّفة) — المسار الدراسي لثاني/ثالث ثانوي فقط ── */
   const needsTrack = status === "ثانوي" && (grade === "ثاني ثانوي" || grade === "ثالث ثانوي");
   const steps = status === "جامعي" ? UNI_STEPS : secondarySteps(needsTrack, status === "خريج");
-  /* نسبة الثانوية للخريج: متوسط الدرجات المُدخَلة (٠–١٠٠). */
+  /* نسبة الثانوية للخريج: متوسط الدرجات المُدخَلة (0–100). */
   const gpaValues = gpaRows.map((r) => parseFloat(r.grade)).filter((v) => Number.isFinite(v) && v >= 0 && v <= 100);
   const gpaPercent = gpaValues.length ? Math.round((gpaValues.reduce((a, b) => a + b, 0) / gpaValues.length) * 10) / 10 : null;
   const idx = Math.max(0, steps.indexOf(current));
-  const total = steps.length - 1; // الترحيب = ٠
+  const total = steps.length - 1; // الترحيب = 0
 
   const filteredUnis = (() => { const q = uniQuery.trim(); return q ? UNIVERSITIES.filter((u) => u.name.includes(q) || (u.region ?? "").includes(q)) : UNIVERSITIES; })();
   /* السلسلة تنهار من أعلاها: جامعةٌ جديدة ⇒ كليةٌ وتخصّصٌ جديدان، فلا يبقى اختيارٌ
@@ -335,13 +335,13 @@ export default function OnboardingPage() {
       if (err) { setScoreErr(`${SCORE_META[k].resultTitle}: ${err}`); setCurrent("scores"); return; }
     }
     setScoreErr("");
-    if (studyHours < 1 || studyHours > 16) { setSubmitErr("ساعات المذاكرة بين ١ و١٦"); return; }
-    if (status === "جامعي" && universityGpa) { const g = parseFloat(universityGpa); if (!Number.isFinite(g) || g < 0 || g > 5) { setSubmitErr("المعدل الجامعي بين ٠ و٥"); return; } }
+    if (studyHours < 1 || studyHours > 16) { setSubmitErr("ساعات المذاكرة بين 1 و16"); return; }
+    if (status === "جامعي" && universityGpa) { const g = parseFloat(universityGpa); if (!Number.isFinite(g) || g < 0 || g > 5) { setSubmitErr("المعدل الجامعي بين 0 و5"); return; } }
     setSubmitErr("");
     setIsSubmitting(true);
     try {
       const trimmedName = name.trim();
-      /* الاختبارات المختارة (≤٣) هي مسارات مساري — لا اشتقاق منفصل. */
+      /* الاختبارات المختارة (≤3) هي مسارات مساري — لا اشتقاق منفصل. */
       const tracks = status === "جامعي" ? [] : (orderedSelected.map((id) => EXAM_TO_TRACK[id]).filter(Boolean) as TrackId[]);
       const primaryTrack: TrackId = tracks[0] ?? "مدرسه";
       const resolvedTrackType = status === "جامعي" && majorId ? findMajor(majorId)?.category : (goal.trackType || undefined);
@@ -398,7 +398,7 @@ export default function OnboardingPage() {
       import("@/lib/cloud").then(({ pushBackup }) => { pushBackup().catch(() => {}); });
       await redeemPendingRef().catch(() => 0);
 
-      /* الثانوي/الخريج: تقرير شخصي ٥ ثوانٍ ثم اللوحة. الجامعي: مباشرة للّوحة. */
+      /* الثانوي/الخريج: تقرير شخصي 5 ثوانٍ ثم اللوحة. الجامعي: مباشرة للّوحة. */
       if (status === "جامعي") { window.location.assign("/dashboard"); return; }
       setShowReport(true);
       setTimeout(() => window.location.assign("/dashboard"), 5200);
@@ -435,7 +435,7 @@ export default function OnboardingPage() {
     </div>
   );
 
-  /* شاشة التقرير الشخصي (٥ ثوانٍ) */
+  /* شاشة التقرير الشخصي (5 ثوانٍ) */
   if (showReport) return <ReportScreen name={name.trim()} scores={scores} outlook={outlookItems}
     undecided={goal.undecided} firstStep={firstExamLabel} region={region} />;
 
@@ -695,7 +695,7 @@ export default function OnboardingPage() {
         );
       }
 
-      /* ── منتقي الاختبارات (حسب المرحلة، حدّ ٣، المقفل يظهر 🔒) ── */
+      /* ── منتقي الاختبارات (حسب المرحلة، حدّ 3، المقفل يظهر 🔒) ── */
       case "exams": return (
         <div>
           <p className="t-h1 font-black text-balance mb-2" style={{ color: "var(--text)" }}>اختباراتك</p>
@@ -793,7 +793,7 @@ export default function OnboardingPage() {
                     {range && <p className="t-caption mt-1 px-1" style={{ color: "var(--text-muted)" }}>{range.hint}</p>}
                     {band && scoreVal != null && s.value.trim() && (
                       <>
-                        {/* بطاقة التقييم العام: درجة/١٠٠ + شريط + مستوى + نسبة مئوية رسمية */}
+                        {/* بطاقة التقييم العام: درجة/100 + شريط + مستوى + نسبة مئوية رسمية */}
                         <div className="rounded-xl px-3.5 py-3 mt-2 rise" style={{ background: "var(--surface2)", border: "1.5px solid color-mix(in srgb, var(--accent) 20%, var(--border))" }}>
                           <div className="flex items-baseline justify-between gap-2">
                             <span className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>التقييم العام</span>
@@ -920,7 +920,7 @@ export default function OnboardingPage() {
         </div>
       );
 
-      /* ── الوقت اليومي (شريط ١–١٦) ── */
+      /* ── الوقت اليومي (شريط 1–16) ── */
       case "time": return (
         <div>
           <p className="t-h1 font-black text-balance mb-2" style={{ color: "var(--text)" }}>كم ساعة تستطيع المذاكرة يومياً؟</p>
@@ -1013,7 +1013,7 @@ export default function OnboardingPage() {
 
           {universityId && universityYear && college && majorName && (
             <div>
-              <p className="label mb-1">معدلك الجامعي؟ <span className="t-caption font-normal" style={{ color: "var(--text-muted)" }}>(من ٥)</span></p>
+              <p className="label mb-1">معدلك الجامعي؟ <span className="t-caption font-normal" style={{ color: "var(--text-muted)" }}>(من 5)</span></p>
               <input type="number" value={universityGpa} onChange={(e) => setUniversityGpa(e.target.value)} placeholder="مثال: 3.75" min={0} max={5} step={0.01} className="w-full rounded-2xl px-5 py-4 t-body-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none" style={inputStyle} />
             </div>
           )}
@@ -1104,7 +1104,7 @@ function SummaryRow({ icon, title, children }: { icon: string; title: string; ch
   );
 }
 
-/* ════════ التقرير الشخصي (٥ ثوانٍ) ════════ */
+/* ════════ التقرير الشخصي (5 ثوانٍ) ════════ */
 function ReportScreen({ name, scores, outlook, undecided, firstStep, region }: {
   name: string;
   scores: Record<ScoreKey, ScoreCell>;

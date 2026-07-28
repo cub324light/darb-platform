@@ -110,7 +110,7 @@ test("كل تخصص دقيق له موادُّ أساسية غير فارغة (�
   }
 });
 
-test("subjectFlow: سلسلة من ٦ عقد مترابطة كلها بعنوان وأيقونة وجملة رابطة", () => {
+test("subjectFlow: سلسلة من 6 عقد مترابطة كلها بعنوان وأيقونة وجملة رابطة", () => {
   const f = subjectFlow("ee", "أنظمة القوى");
   assert.equal(f.subject, "أنظمة القوى");
   assert.equal(f.nodes.length, 6);

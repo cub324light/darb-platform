@@ -3,10 +3,10 @@
      يومي؟» تحتاج توسيعَ التكرار على تاريخٍ بعينه. هذا المنطق كان مكرّراً في موضعين:
      `DayScheduler.tsx:getEventsForDate` (داخل مكوّن `"use client"`) و`calendar/plan.ts:occursOn`.
      نسختان تتفرّقان مع الوقت — فوحّدناهما هنا.
-   ▸ نقيٌّ ١٠٠٪: لا localStorage ولا window ولا Date «الآن». التاريخ يأتي وسيطاً دائماً. */
+   ▸ نقيٌّ 100٪: لا localStorage ولا window ولا Date «الآن». التاريخ يأتي وسيطاً دائماً. */
 import type { ScheduleEvent } from "@/lib/storage";
 
-/** يوم الأسبوع (٠ الأحد – ٦ السبت) لتاريخٍ نصّيّ. ظهراً لا منتصف الليل: يتجنّب انزياح المنطقة الزمنية. */
+/** يوم الأسبوع (0 الأحد – 6 السبت) لتاريخٍ نصّيّ. ظهراً لا منتصف الليل: يتجنّب انزياح المنطقة الزمنية. */
 export function dayOfWeek(date: string): number {
   return new Date(`${date}T12:00:00`).getDay();
 }

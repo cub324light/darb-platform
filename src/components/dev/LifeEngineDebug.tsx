@@ -102,7 +102,7 @@ export default function LifeEngineDebug() {
                 {["", "start", "mid", "senior"].map((s) => <option key={s} value={s}>{s || "—"}</option>)}
               </select>
             </Ctrl>
-            <Ctrl label="المعدّل (من ٥)">
+            <Ctrl label="المعدّل (من 5)">
               <input className={inputCls} style={inputStyle} type="number" step="0.01" min="0" max="5"
                 value={c.gpa ?? ""} onChange={(e) => set("gpa", num(e.target.value))} />
             </Ctrl>
@@ -214,7 +214,7 @@ export default function LifeEngineDebug() {
       <section className="ds-card ds-stack-tight">
         <div className="flex items-center gap-2">
           <h2 className="t-h3 flex-1" style={{ color: "var(--text)" }}>الأولويات ({priorities.length})</h2>
-          <span className="t-caption" style={{ color: "var(--text-muted)" }}>الثقة = ٤٥ + ٦٫٠× الوزن (مقصوصة ٩٩)</span>
+          <span className="t-caption" style={{ color: "var(--text-muted)" }}>الثقة = 45 + 6٫0× الوزن (مقصوصة 99)</span>
         </div>
         {priorities.length === 0 && <p className="t-caption" style={{ color: "var(--text-muted)" }}>لا أولويات لهذا السياق.</p>}
         {priorities.map((p) => (

@@ -1,5 +1,5 @@
 /* ═══════════════ مذكرة الواجبات — نظامٌ كامل (لا مجرّد To-Do) ═══════════════
-   أفضل من المذكرة الورقية: إضافةٌ في أقل من ٥ ثوانٍ، مادة، تاريخ تسليم، أولوية،
+   أفضل من المذكرة الورقية: إضافةٌ في أقل من 5 ثوانٍ، مادة، تاريخ تسليم، أولوية،
    إرفاق صورة/ملف، تكرار يومي، تذكير قبل الموعد، «تم»، وترتيبٌ تلقائي حسب التسليم.
    تُقرأ من Life Engine ودويرب ليعرفا ضغط الطالب الحقيقي — لا الاختبارات وحدها.
 
@@ -63,7 +63,7 @@ export function makeHomework(input: HwInput, todayKey = localDayKey(new Date()))
   };
 }
 
-/* إضافة (تُعيد القائمة الجديدة) — إضافةٌ في أقل من ٥ ثوانٍ من الواجهة */
+/* إضافة (تُعيد القائمة الجديدة) — إضافةٌ في أقل من 5 ثوانٍ من الواجهة */
 export function addHomework(list: Homework[], input: HwInput): Homework[] {
   if (!input.title.trim()) return list;
   return [...list, makeHomework(input)];
@@ -144,7 +144,7 @@ export interface HwPressure {
   overdue: number;
   dueToday: number;
   dueTomorrow: number;
-  dueSoon: number;       // خلال ٣ أيام (غير المتأخّر)
+  dueSoon: number;       // خلال 3 أيام (غير المتأخّر)
   highPriorityPending: number;
   nextDue: string | null; // أقرب تاريخ تسليمٍ غير منجز
 }

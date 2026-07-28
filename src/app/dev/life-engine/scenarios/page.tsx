@@ -1,5 +1,5 @@
 /* ─── مصفوفة التحقّق — صفحة مطوّر مخفية ───
-   ٤٠+ حالة حقيقية وقرار العقل لكلٍّ، للمراجعة قبل ربط العقل بالمنصة.
+   40+ حالة حقيقية وقرار العقل لكلٍّ، للمراجعة قبل ربط العقل بالمنصة.
    غير مفهرَسة ولا مرتبطة من أي تنقّل. */
 import type { Metadata } from "next";
 import Dome from "@/components/Dome";
@@ -25,7 +25,7 @@ export default function ScenariosPage() {
           <span className="eyebrow" style={{ color: "var(--danger)" }}>أداة مطوّر · مراجعة قبل الربط</span>
           <h1 className="t-h1" style={{ color: "var(--text)" }}>مصفوفة التحقّق</h1>
           <p className="t-body" style={{ color: "var(--text-dim)" }}>
-            قرار العقل على حالات حقيقية. إذا رأيت ٩٥٪ منها منطقية، نربطه بالمنصة كلها دفعة واحدة.
+            قرار العقل على حالات حقيقية. إذا رأيت 95٪ منها منطقية، نربطه بالمنصة كلها دفعة واحدة.
           </p>
         </header>
         <ScenarioMatrix />

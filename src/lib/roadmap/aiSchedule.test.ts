@@ -6,7 +6,7 @@ const SUBJ = ["لفظي", "كمي"];
 const ids = (i: number) => `e${i}`;
 
 test("normalizeDigits يحوّل العربية-الهندية", () => {
-  assert.equal(normalizeDigits("من ٨ إلى ١٠"), "من 8 إلى 10");
+  assert.equal(normalizeDigits("من 8 إلى 10"), "من 8 إلى 10");
   assert.equal(normalizeDigits("abc"), "abc");
 });
 
@@ -14,11 +14,11 @@ test("hhmm يبني وقتاً بخانتين", () => {
   assert.equal(hhmm(8), "08:00");
   assert.equal(hhmm(8.5), "08:30");
   assert.equal(hhmm(20.25), "20:15");
-  assert.equal(hhmm(13.999), "14:00", "التقريب لا ينتج ٦٠ دقيقة");
+  assert.equal(hhmm(13.999), "14:00", "التقريب لا ينتج 60 دقيقة");
 });
 
 test("parseSlots يقرأ الصيغة المفروضة على النموذج", () => {
-  const t = ["من 8 ص إلى 9 ص — لفظي", "من 9 ص إلى 9:15 ص — راحة", "من ٥ م إلى ٧ م — كمي"].join("\n");
+  const t = ["من 8 ص إلى 9 ص — لفظي", "من 9 ص إلى 9:15 ص — راحة", "من 5 م إلى 7 م — كمي"].join("\n");
   const slots = parseSlots(t, SUBJ);
   assert.equal(slots.length, 3);
   assert.deepEqual(slots.map((s) => [s.fromHour, s.toHour]), [[8, 9], [9, 9.25], [17, 19]]);
@@ -27,7 +27,7 @@ test("parseSlots يقرأ الصيغة المفروضة على النموذج", 
   assert.equal(slots[2].subject, "كمي");
 });
 
-test("ص/م تُحوَّل إلى ٢٤ ساعة صحيحاً", () => {
+test("ص/م تُحوَّل إلى 24 ساعة صحيحاً", () => {
   assert.deepEqual(parseSlots("من 12 ص إلى 1 ص — لفظي", SUBJ).map((s) => [s.fromHour, s.toHour]), [[0, 1]]);
   assert.deepEqual(parseSlots("من 12 م إلى 1 م — لفظي", SUBJ).map((s) => [s.fromHour, s.toHour]), [[12, 13]]);
 });

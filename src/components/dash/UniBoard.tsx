@@ -82,7 +82,7 @@ export default function UniBoard() {
 
         {/* المعدّل · الساعات · المتبقّي للتخرّج (تقريبي) */}
         <div className="flex items-stretch gap-3 pt-1" style={{ borderTop: "1px solid var(--border)" }}>
-          <Stat label="معدّلك" value={gpa != null ? gpa.toFixed(2) : "—"} sub={gpa != null ? "من ٥" : "أضِفه ←"} color={gpaColor(gpa)} />
+          <Stat label="معدّلك" value={gpa != null ? gpa.toFixed(2) : "—"} sub={gpa != null ? "من 5" : "أضِفه ←"} color={gpaColor(gpa)} />
           <Stat label="ساعاتك" value={hours != null ? String(grad.done) : "—"} sub={hours != null ? "ساعة منجزة" : "أضِفها ←"} color="var(--text)" />
           <Stat label="للتخرّج (تقريبي)" value={hours != null ? `${grad.remaining}` : "—"} sub={hours != null ? `ساعة · ${grad.pct}%` : "أضِف ساعاتك"} color={grad.pct >= 100 ? "var(--success)" : "var(--accent-light)"} />
         </div>

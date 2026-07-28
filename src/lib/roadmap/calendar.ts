@@ -1,7 +1,7 @@
-/* ═══════════ محرّك التقويم (Calendar Engine) — نقيٌّ ١٠٠٪ ═══════════
+/* ═══════════ محرّك التقويم (Calendar Engine) — نقيٌّ 100٪ ═══════════
    ▸ لماذا؟ التقويم قلب مساري: أيّ شيءٍ في حياة الطالب يُسجَّل هنا، ودويرب يبني الخطة حوله.
    ▸ المصدر: أحداثٌ يُدخِلها الطالب (CalendarEvent) — يجمّعها القارئ (calendarStore) خارج المحرّك.
-   ▸ الهدف: (١) عرض «القريب» (اليوم/غداً/الأسبوع) قبل الشهر. (٢) تحويل الأحداث إلى وقتٍ متاحٍ
+   ▸ الهدف: (1) عرض «القريب» (اليوم/غداً/الأسبوع) قبل الشهر. (2) تحويل الأحداث إلى وقتٍ متاحٍ
      للمذاكرة عبر block/reduce/busy — فيتكيّف buildSessionPlan تلقائياً.
    ▸ نقاءٌ تام: لا localStorage ولا واجهة. المدخلات تُمرَّر، والإعداد من config.ts. */
 import { daysBetween } from "./metrics";
@@ -99,7 +99,7 @@ const addDaysLocal = (day: string, n: number): string =>
 export interface UpcomingGroups {
   today: CalendarEvent[];
   tomorrow: CalendarEvent[];
-  week: CalendarEvent[];   // خلال ٧ أيام (بعد الغد)
+  week: CalendarEvent[];   // خلال 7 أيام (بعد الغد)
   later: CalendarEvent[];  // أبعد
 }
 export function groupUpcoming(events: CalendarEvent[], today: string, horizon = 60): UpcomingGroups {

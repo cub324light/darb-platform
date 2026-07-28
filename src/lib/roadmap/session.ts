@@ -1,10 +1,11 @@
-/* ═══════════ محرّك جلسة المذاكرة (Session Engine) — نقيٌّ ١٠٠٪ ═══════════
+/* ═══════════ محرّك جلسة المذاكرة (Session Engine) — نقيٌّ 100٪ ═══════════
    ▸ لماذا؟ «ابدأ المذاكرة» لا يدخل الدروس مباشرة؛ بل يولّد جلسةً لها هدفٌ واضح («ماذا ستفعل
      اليوم؟») كمدرّبٍ شخصيّ. ▸ المصدر: مواد الاختبار + المتبقّي (دروس/تدريب/أخطاء) + الوقت المتاح
-     (من التقويم) + نمط المذاكرة — يجمّعها القارئ. ▸ الهدف: ٣ مهامّ كحدٍّ أقصى، كلٌّ بهدف، مع
+     (من التقويم) + نمط المذاكرة — يجمّعها القارئ. ▸ الهدف: 3 مهامّ كحدٍّ أقصى، كلٌّ بهدف، مع
      رسالةٍ تحفيزية. ▸ الصدق: وقتٌ غير كافٍ (إجازة/مشغول) ⇒ لا جلسة، بل رسالةٌ لطيفة. */
 import { ROADMAP_TUNING } from "./config";
 import type { StudyMode } from "./model";
+import { n } from "@/lib/format";
 
 export type SessionTaskKind = "review" | "drill" | "errors";
 export interface SessionTask {
@@ -75,7 +76,7 @@ export function buildSessionPlan(
     const errMins = clampInt(mins - used, cfg.minTaskMins, mins - used);
     const errCount = Math.min(i.activeErrors, Math.max(2, Math.round(errMins / cfg.minTaskMins)));
     const errWord = errCount === 1 ? "خطأ واحد" : errCount === 2 ? "خطأين"
-      : `${new Intl.NumberFormat("ar-EG-u-nu-arab").format(errCount)} ${errCount <= 10 ? "أخطاء" : "خطأً"}`;
+      : `${n(errCount)} ${errCount <= 10 ? "أخطاء" : "خطأً"}`;
     tasks.push({ kind: "errors", label: `مراجعة ${errWord} من أخطائك السابقة`, goalMins: errMins });
     used += errMins;
   }

@@ -1,7 +1,7 @@
 /* ═══════════ عقد التسليم: مساري → ⏱️ التركيز ═══════════
    ▸ لماذا؟ نظام توقيتٍ واحدٌ للتطبيق كلّه. «ابدأ المذاكرة» في مساري و«ابدأ الآن» في جلسة
      اليوم كلاهما يفتح /orbit بنفس الوسطاء — فعرّفناها هنا مرّةً واحدة بدل نسختين تتباعدان.
-   ▸ نقيٌّ ١٠٠٪: بناء/قراءة نصٍّ فقط، بلا window ولا router ولا localStorage.
+   ▸ نقيٌّ 100٪: بناء/قراءة نصٍّ فقط، بلا window ولا router ولا localStorage.
    ▸ الوسطاء: from=masari · auto=1 · subject · task (دقائق المهمّة) · tlabel (اسمها). */
 
 export interface FocusHandoff {
@@ -19,7 +19,7 @@ export const EMPTY_HANDOFF: FocusHandoff = { from: "", subject: "", auto: false,
 export function focusHandoffQuery(i: { subject?: string; taskMins?: number; taskLabel?: string }): string {
   const q = new URLSearchParams({ from: "masari", auto: "1" });
   if (i.subject) q.set("subject", i.subject);
-  /* دقائقُ المهمّة تُمرَّر فقط إن كانت موجبة: مهمّة «حلّ ٥ أسئلة» لا وزن زمنيَّ لها. */
+  /* دقائقُ المهمّة تُمرَّر فقط إن كانت موجبة: مهمّة «حلّ 5 أسئلة» لا وزن زمنيَّ لها. */
   if (i.taskMins && i.taskMins > 0) q.set("task", String(i.taskMins));
   if (i.taskLabel) q.set("tlabel", i.taskLabel);
   return q.toString();

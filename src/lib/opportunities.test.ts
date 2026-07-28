@@ -43,7 +43,7 @@ test("الترتيب الثابت للمجموعات الست وكل مجموع�
   }
 });
 
-test("الجامعات مفروزة تنازلياً بالموزونة مع حكم 🟢🟡🔴 وعددها ٨–١٠", () => {
+test("الجامعات مفروزة تنازلياً بالموزونة مع حكم 🟢🟡🔴 وعددها 8–10", () => {
   const unis = buildOpportunities(FULL)[0];
   assert.ok(unis.items.length >= 8 && unis.items.length <= 10, `العدد ${unis.items.length}`);
   for (const it of unis.items) {

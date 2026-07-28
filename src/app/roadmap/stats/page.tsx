@@ -75,7 +75,7 @@ export default function StatsPage() {
           </B>
 
           {/* Heatmap */}
-          <B title="🗓️ نشاطك — آخر ١٢ أسبوعاً" wide>
+          <B title="🗓️ نشاطك — آخر 12 أسبوعاً" wide>
             {hasAny ? (
               <div className="grid gap-[3px] mt-2.5" style={{ gridTemplateColumns: "repeat(12, 1fr)" }}>
                 {s.heatmap.map((c) => (
@@ -111,7 +111,7 @@ export default function StatsPage() {
                     }} />
                   ))}
                 </div>
-                <p className="t-caption mt-1.5" style={{ color: "var(--text-dim)" }}>آخر ٧ أيام</p>
+                <p className="t-caption mt-1.5" style={{ color: "var(--text-dim)" }}>آخر 7 أيام</p>
               </>
             ) : (
               <p className="t-caption mt-2" style={{ color: "var(--text-dim)" }}>ابدأ أول جلسة.</p>

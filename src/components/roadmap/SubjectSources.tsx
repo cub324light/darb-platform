@@ -1,8 +1,8 @@
 "use client";
 /* ═══════════ 📚 مصادري — مصادر مادةٍ واحدة داخل فضاء المذاكرة ═══════════
    الطالب لا يذاكر «لفظي» مجرّدةً، بل يذاكر من مصدر: دورةٌ أو كتاب. هنا يضيف مصدره،
-   ويقسّمه أقساماً **غير متساوية** بأسماءٍ من عنده («القواعد ٢٥ صفحة»)، ويسجّل تقدّمه
-   **جزئياً** — لأن قسماً من ٢٥ صفحة لا يُنجَز دفعةً واحدة. وإن عرف معدّله (صفحات/ساعة)
+   ويقسّمه أقساماً **غير متساوية** بأسماءٍ من عنده («القواعد 25 صفحة»)، ويسجّل تقدّمه
+   **جزئياً** — لأن قسماً من 25 صفحة لا يُنجَز دفعةً واحدة. وإن عرف معدّله (صفحات/ساعة)
    حسبنا له كم أنجز في جلسةٍ زمنية وكم بقي من وقت. كل الحساب في `lib/roadmap/sources.ts`. */
 import { useState } from "react";
 import {
@@ -208,13 +208,13 @@ function SectionSheet({ src, sec, color, onClose, onSave }: {
         <div className="grid grid-cols-2 gap-2 mb-1">
           <label className="flex flex-col gap-1.5">
             <span className="t-caption font-bold" style={{ color: "var(--text-dim)" }}>بال{uLabel}</span>
-            <input value={addUnits} onChange={(e) => setAddUnits(e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="٥"
+            <input value={addUnits} onChange={(e) => setAddUnits(e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="5"
               className="rounded-xl px-3 py-2.5 t-body outline-none min-h-[48px] font-mono-nums"
               style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
           </label>
           <label className="flex flex-col gap-1.5">
             <span className="t-caption font-bold" style={{ color: "var(--text-dim)" }}>أو بالدقائق</span>
-            <input value={addMins} onChange={(e) => setAddMins(e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="٦٠"
+            <input value={addMins} onChange={(e) => setAddMins(e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="60"
               className="rounded-xl px-3 py-2.5 t-body outline-none min-h-[48px] font-mono-nums"
               style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
           </label>
@@ -364,14 +364,14 @@ function AddSourceSheet({ subject, examKey, color, onClose, onAdd }: {
                 <span className="t-caption font-bold" style={{ color: "var(--text-dim)" }}>
                   {kind === "video" ? "فيديوهات/ساعة" : "صفحات/ساعة"} (اختياري)
                 </span>
-                <input value={rate} onChange={(e) => setRate(e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="٥"
+                <input value={rate} onChange={(e) => setRate(e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="5"
                   className="rounded-xl px-3 py-2.5 t-body outline-none min-h-[48px] font-mono-nums"
                   style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
               </label>
               {kind === "video" && (
                 <label className="flex flex-col gap-1.5">
                   <span className="t-caption font-bold" style={{ color: "var(--text-dim)" }}>دقائق الفيديو (اختياري)</span>
-                  <input value={mins} onChange={(e) => setMins(e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="٦٠"
+                  <input value={mins} onChange={(e) => setMins(e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="60"
                     className="rounded-xl px-3 py-2.5 t-body outline-none min-h-[48px] font-mono-nums"
                     style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
                 </label>

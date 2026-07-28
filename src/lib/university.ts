@@ -44,7 +44,7 @@ export interface UniversityOption {
   strengths?: string[];           // مجالات تميز معروفة (حيث تُعرف)
   /* ── التصنيف العالمي (QS) ── يُملأ للمؤكَّد فقط، ويُذكر إصداره دائماً لأنه يتغيّر سنوياً.
      جامعةٌ بلا رقمٍ موثّق تبقى بلا حقل، فلا تظهر رقاقةٌ إطلاقاً — لا صفرٌ ولا تقدير.
-     QS ينشر المراكز المتأخّرة كنطاقات (٧٤١–٧٥٠)، فـ`qsRank` هو الحدّ الأدنى
+     QS ينشر المراكز المتأخّرة كنطاقات (741–750)، فـ`qsRank` هو الحدّ الأدنى
      و`qsRankTo` الحدّ الأعلى عند وجوده. عرضُ نطاقٍ كرقمٍ واحد تزييفٌ لدقّةٍ لا نملكها. */
   qsRank?: number;                // الترتيب العالمي في QS (أو بداية النطاق)
   qsRankTo?: number;              // نهاية النطاق — يغيب للمراكز المفردة
@@ -54,13 +54,13 @@ export interface UniversityOption {
   arabTopN?: number;              // أو «ضمن أفضل N عربياً» حين لا يُنشر المركز المفرد
 }
 
-/** نصُّ ترتيب QS جاهزاً للعرض: «٦٣» أو «٧٤١–٧٥٠». فارغٌ حين لا ترتيبَ موثّق. */
+/** نصُّ ترتيب QS جاهزاً للعرض: «63» أو «741–750». فارغٌ حين لا ترتيبَ موثّق. */
 export function qsRankText(u: Pick<UniversityOption, "qsRank" | "qsRankTo">, fmt: (x: number) => string): string {
   if (u.qsRank == null) return "";
   return u.qsRankTo != null ? `${fmt(u.qsRank)}–${fmt(u.qsRankTo)}` : fmt(u.qsRank);
 }
 
-/** نصُّ الترتيب العربي: «الـ٤ عربياً» أو «ضمن أفضل ١٠ عربياً». فارغٌ حين لا بيانات. */
+/** نصُّ الترتيب العربي: «الـ4 عربياً» أو «ضمن أفضل 10 عربياً». فارغٌ حين لا بيانات. */
 export function arabRankText(u: Pick<UniversityOption, "arabRank" | "arabTopN">, fmt: (x: number) => string): string {
   if (u.arabRank != null) return `الـ${fmt(u.arabRank)} عربياً`;
   if (u.arabTopN != null) return `ضمن أفضل ${fmt(u.arabTopN)} عربياً`;
@@ -332,7 +332,7 @@ export const UNIVERSITIES: UniversityOption[] = [
     cons: ["جامعة أهلية — معايير القبول تختلف بين البرامج، راجع الجامعة"],
     strengths: ["الطب", "الهندسة"],
     formulas: [{ id: "med", label: "طب", track: "علمي", highschool: 30, qudurat: 30, tahsili: 40, note: "+ مقابلة شخصية" }],
-    admissionNote: "الطب: ثانوية ٣٠٪ + قدرات ٣٠٪ + تحصيلي ٤٠٪ + مقابلة. باقي التخصصات تختلف.",
+    admissionNote: "الطب: ثانوية 30٪ + قدرات 30٪ + تحصيلي 40٪ + مقابلة. باقي التخصصات تختلف.",
     colleges: ["الطب", "الصيدلة", "الهندسة", "إدارة الأعمال", "العلوم"] },
   { id: "yu", name: "جامعة اليمامة", region: "الرياض", kind: "أهلية",
     description: "جامعة أهلية في الرياض تركّز على تخصصات إدارة الأعمال والهندسة والقانون.",
@@ -578,14 +578,14 @@ export function universityReadiness(inp: UniversityReadinessInputs): UniversityR
   let score = 0;
   let weight = 0;
 
-  /* ١) الجاهزية العامة — العمود الأساسي */
+  /* 1) الجاهزية العامة — العمود الأساسي */
   if (inp.readinessPct != null) {
     score += inp.readinessPct * 0.4;
     weight += 40;
     reasons.push(`جاهزيتك الحالية ${Math.round(inp.readinessPct)}٪`);
   }
 
-  /* ٢) مطابقة الدرجات الفعلية للمتطلبات */
+  /* 2) مطابقة الدرجات الفعلية للمتطلبات */
   const examChecks: { label: string; have: number | null | undefined; level?: ReqLevel }[] = [
     { label: "القدرات", have: inp.quduratScore, level: req.qudurat },
     { label: "التحصيلي", have: inp.tahsiliScore, level: req.tahsili },
@@ -601,7 +601,7 @@ export function universityReadiness(inp: UniversityReadinessInputs): UniversityR
     else reasons.push(`${c.label}: ${c.have} دون المطلوب (${c.level} ≈ ${need})`);
   }
 
-  /* ٣) الطاقة الأسبوعية */
+  /* 3) الطاقة الأسبوعية */
   if (inp.weeklyHours != null) {
     const h = inp.weeklyHours;
     const hScore = h >= 20 ? 100 : h >= 12 ? 75 : h >= 6 ? 55 : 30;
@@ -610,7 +610,7 @@ export function universityReadiness(inp: UniversityReadinessInputs): UniversityR
     if (h < 6) reasons.push(`ساعات أسبوعية قليلة (${h})`);
   }
 
-  /* ٤) تقدّم الخطة */
+  /* 4) تقدّم الخطة */
   if (inp.planProgressPct != null) {
     score += inp.planProgressPct * 0.1;
     weight += 10;
@@ -758,7 +758,7 @@ export interface AdmissionSeason {
 }
 export function admissionSeason(today: Date): AdmissionSeason {
   const m = today.getMonth() + 1; // 1–12
-  // نافذة تقديم تقريبية للفصل الأول: يونيو–أغسطس (٦–٨)
+  // نافذة تقديم تقريبية للفصل الأول: يونيو–أغسطس (6–8)
   if (m >= 6 && m <= 8) {
     return { status: "open", icon: "🔔", label: "موسم التقديم على الجامعات مفتوح غالباً الآن — راجع بوابة القبول" };
   }

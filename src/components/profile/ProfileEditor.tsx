@@ -1,7 +1,7 @@
 "use client";
 /* ─── محرّر معلومات الطالب — يُستعمل في صفحة /profile/edit المستقلّة ───
-   حقولٌ اختيارية تُحفَظ فوراً في DarbUser (مصدرٌ واحد). لعبةٌ تدريجية: +٥ فضة مع كل معلومةٍ
-   جديدة، ووسام + ٣٠ عند ١٠٠٪ (مرّة لكلٍّ). التعديل لاحقاً لا يمنح فضةً من جديد. */
+   حقولٌ اختيارية تُحفَظ فوراً في DarbUser (مصدرٌ واحد). لعبةٌ تدريجية: +5 فضة مع كل معلومةٍ
+   جديدة، ووسام + 30 عند 100٪ (مرّة لكلٍّ). التعديل لاحقاً لا يمنح فضةً من جديد. */
 import { useState } from "react";
 import { loadUser, saveUser, addSilver, type DarbUser } from "@/lib/storage";
 import { profileCompletion, pendingProfileRewards } from "@/lib/profileCompletion";

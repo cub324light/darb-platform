@@ -56,7 +56,7 @@ export default function SettingsButton() {
   const submitAuth = async () => {
     setAuthErr("");
     if (!authEmail.trim() || authPass.length < 6) {
-      setAuthErr("اكتب الإيميل وكلمة مرور ٦ أحرف على الأقل");
+      setAuthErr("اكتب الإيميل وكلمة مرور 6 أحرف على الأقل");
       return;
     }
     setAuthBusy(true);
@@ -232,7 +232,7 @@ export default function SettingsButton() {
                 style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}
               />
               <input
-                type="password" dir="ltr" placeholder="كلمة المرور (٦ أحرف+)"
+                type="password" dir="ltr" placeholder="كلمة المرور (6 أحرف+)"
                 value={authPass} onChange={(e) => setAuthPass(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") submitAuth(); }}
                 className="w-full rounded-xl px-4 py-3 text-base text-[var(--text)] outline-none mb-2 text-left"

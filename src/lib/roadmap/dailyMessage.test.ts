@@ -13,7 +13,7 @@ test("pickDailyMessage: الرسالة تتبع حالة الطالب الحقي
   // انقطع (سلسلة صفر)
   assert.ok(pickDailyMessage({ everStarted: true, streakDays: 0 }).message.includes("من زمان"));
   // اختبارٌ قريبٌ جداً
-  assert.ok(pickDailyMessage({ everStarted: true, streakDays: 3, daysToExam: 10 }).message.includes("١٠"));
+  assert.ok(pickDailyMessage({ everStarted: true, streakDays: 3, daysToExam: 10 }).message.includes("10"));
   // اجتهد أمس
   assert.ok(pickDailyMessage({ everStarted: true, streakDays: 3, daysToExam: 100, yesterdayMins: 90 }).message.includes("اجتهدت"));
   // افتراضي

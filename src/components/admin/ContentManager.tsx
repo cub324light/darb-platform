@@ -108,7 +108,7 @@ export default function ContentManager() {
   /* تنفيذ جماعي على المحدَّد — عبر المستودع (History يسجّل كلاً منها) */
   const bulk = (fn: (id: string) => Promise<unknown>) => mutate(async () => { for (const id of [...selected]) await fn(id); setSelected(new Set()); });
   const bulkImportance = () => {
-    const v = prompt("الأهمية الجديدة (٠–١٠٠):");
+    const v = prompt("الأهمية الجديدة (0–100):");
     const num = v == null ? NaN : Number(v);
     if (!Number.isFinite(num)) return;
     void bulk(async (id) => { const rec = await repo.get(id); if (rec) await repo.save({ ...rec.entity, meta: { ...(rec.entity.meta ?? { version: 1, lastUpdated: "" }), importance: Math.max(0, Math.min(100, num)) } }, { status: rec.status }); });
@@ -206,8 +206,8 @@ export default function ContentManager() {
             <Field label="الاسم بالإنجليزية (للمعرّف)"><input value={draft.nameEn} onChange={(e) => setDraft({ ...draft, nameEn: e.target.value })} className="ipt" placeholder="ohms-law" /></Field>
             <Field label="الملخّص"><textarea value={draft.summary} onChange={(e) => setDraft({ ...draft, summary: e.target.value })} rows={2} className="ipt" /></Field>
             <div className="grid grid-cols-2 gap-2">
-              <Field label="الأهمية (٠–١٠٠)"><input type="number" min={0} max={100} value={draft.importance} onChange={(e) => setDraft({ ...draft, importance: Number(e.target.value) })} className="ipt font-mono-nums" /></Field>
-              {draft.kind === "concept" && <Field label="التكرار (٠–١٠٠)"><input type="number" min={0} max={100} value={draft.examFrequency} onChange={(e) => setDraft({ ...draft, examFrequency: e.target.value })} className="ipt font-mono-nums" /></Field>}
+              <Field label="الأهمية (0–100)"><input type="number" min={0} max={100} value={draft.importance} onChange={(e) => setDraft({ ...draft, importance: Number(e.target.value) })} className="ipt font-mono-nums" /></Field>
+              {draft.kind === "concept" && <Field label="التكرار (0–100)"><input type="number" min={0} max={100} value={draft.examFrequency} onChange={(e) => setDraft({ ...draft, examFrequency: e.target.value })} className="ipt font-mono-nums" /></Field>}
             </div>
             {draft.kind === "concept" && (
               <>

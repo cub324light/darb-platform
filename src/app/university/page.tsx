@@ -21,8 +21,8 @@ import {
   admissionSeason, type WeightedFormula, type UniversityOption,
 } from "@/lib/university";
 import Link from "next/link";
+import { n as ar } from "@/lib/format";
 
-const ar = (n: number) => n.toLocaleString("ar-SA");
 
 /* أقرب درجة من خريطة النتائج */
 function scoreFrom(map: Record<string, { score: number }>, ...keys: string[]): number | null {
@@ -68,7 +68,7 @@ export default function UniversityPage() {
     goals.universityId && goals.universityId !== "other" ? goals.universityId : "",
   );
 
-  /* مقارنة الجامعات — حتى ٣ */
+  /* مقارنة الجامعات — حتى 3 */
   const [compareIds, setCompareIds] = useState<string[]>(() =>
     goals.universityId && goals.universityId !== "other" ? [goals.universityId] : [],
   );
@@ -230,7 +230,7 @@ export default function UniversityPage() {
           <div className="flex items-center gap-2">
             <span className="text-[20px]">⚖️</span>
             <p className="text-[16px] font-black flex-1" style={{ color: "var(--text)" }}>قارن الجامعات</p>
-            <span className="text-[13px] font-bold" style={{ color: "var(--text-muted)" }}>{ar(compareIds.length)}/٣</span>
+            <span className="text-[13px] font-bold" style={{ color: "var(--text-muted)" }}>{ar(compareIds.length)}/3</span>
           </div>
 
           {/* منتقي */}

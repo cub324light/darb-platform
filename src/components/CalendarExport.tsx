@@ -48,7 +48,7 @@ export default function CalendarExport({
     });
   };
 
-  /* المرحلة ٢: ربط Google ودفع الأحداث مباشرة عبر OAuth */
+  /* المرحلة 2: ربط Google ودفع الأحداث مباشرة عبر OAuth */
   const syncGoogle = async () => {
     if (calEvents.length === 0 || syncing) return;
     setSyncMsg(null);
@@ -98,7 +98,7 @@ export default function CalendarExport({
 
       <div className="px-5 py-5 flex flex-col gap-5 pb-28 max-w-lg w-full mx-auto">
         <p className="text-[16px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
-          صدّر جلسات مذاكرتك إلى تقويمك المفضّل — كل جلسة تصبح حدثاً مستقلاً بتنبيه قبلها بـ١٠ دقائق.
+          صدّر جلسات مذاكرتك إلى تقويمك المفضّل — كل جلسة تصبح حدثاً مستقلاً بتنبيه قبلها بـ10 دقائق.
         </p>
 
         {/* المدى الزمني */}
@@ -122,7 +122,7 @@ export default function CalendarExport({
           <span className="text-[16px] font-bold mr-2" style={{ color: "var(--text-muted)" }}>جلسة سيتم تصديرها</span>
         </div>
 
-        {/* المرحلة ٢: ربط Google مباشر */}
+        {/* المرحلة 2: ربط Google مباشر */}
         <button onClick={syncGoogle} disabled={calEvents.length === 0 || syncing}
           className="w-full rounded-2xl py-4 px-4 font-black text-[18px] flex items-center gap-3 transition active:scale-[0.98]"
           style={{ background: color, color: "#fff", opacity: calEvents.length === 0 ? 0.4 : 1 }}>

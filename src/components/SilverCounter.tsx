@@ -13,7 +13,7 @@ const readSilver = (): number => {
 
 export default function SilverCounter() {
   /* يبدأ فارغاً لا بصفر: العرض الأوّل يجري على الخادم بلا localStorage، فلو بدأنا بصفرٍ
-     لعرضنا «٠» ثم قفز الرصيد الحقيقيّ بشارة «+٦٧» كاذبة عند كل فتحةِ صفحة. */
+     لعرضنا «0» ثم قفز الرصيد الحقيقيّ بشارة «+67» كاذبة عند كل فتحةِ صفحة. */
   const [silver, setSilver] = useState<number | null>(null);
   const [pop, setPop] = useState(false);
   const [delta, setDelta] = useState(0);
@@ -52,7 +52,7 @@ export default function SilverCounter() {
       style={{ background: "color-mix(in srgb, var(--text-muted) 10%, transparent)", border: "1px solid var(--border)", color: "var(--text)" }}>
       <span className={`inline-flex items-center gap-1.5 ${pop ? "silver-pop" : ""}`}>
         <span className="text-[16px] leading-none" aria-hidden>🥈</span>
-        {/* عرضٌ أدنى ثابت: تغيّر عدد الخانات (٩٩ ← ١٠٠) كان يزحزح الساعة بجانبه */}
+        {/* عرضٌ أدنى ثابت: تغيّر عدد الخانات (99 ← 100) كان يزحزح الساعة بجانبه */}
         <span className="text-[16px] font-black font-mono-nums tabular-nums inline-block text-center"
           style={{ minWidth: "2.2ch" }}>{silver === null ? "" : n(silver)}</span>
       </span>

@@ -6,17 +6,17 @@ import { profileCompletion, pendingProfileRewards, type FullProfile } from "./pr
 const registered: FullProfile = { name: "محمد", grade: "ثالث ثانوي", region: "الرياض", targets: ["university"], studyStyle: "both" };
 const full: FullProfile = { ...registered, hobbies: ["كرة"], interests: ["برمجة"], favSubjects: ["رياضيات"] };
 
-test("الاكتمال: ٨ معلومات (٤ أساسية + ٤ شخصية)", () => {
+test("الاكتمال: 8 معلومات (4 أساسية + 4 شخصية)", () => {
   assert.equal(profileCompletion({}).total, 8);
   assert.equal(profileCompletion({}).done, 0);
-  /* مسجَّل مع طريقة مذاكرة → ٥/٨ */
+  /* مسجَّل مع طريقة مذاكرة → 5/8 */
   assert.equal(profileCompletion(registered).done, 5);
   assert.equal(profileCompletion(full).done, 8);
   assert.equal(profileCompletion(full).pct, 100);
 });
 
-test("مكافأة تدريجية: +٥ لكل معلومةٍ شخصية جديدة (مرّة لكلٍّ)", () => {
-  /* أضاف الهوايات فقط → +٥ */
+test("مكافأة تدريجية: +5 لكل معلومةٍ شخصية جديدة (مرّة لكلٍّ)", () => {
+  /* أضاف الهوايات فقط → +5 */
   const one = pendingProfileRewards({ ...registered, hobbies: ["كرة"] })!;
   assert.equal(one.silver, 5);
   assert.deepEqual(one.newRewardedFields, ["hobbies"]);
@@ -25,18 +25,18 @@ test("مكافأة تدريجية: +٥ لكل معلومةٍ شخصية جديد
   assert.equal(pendingProfileRewards({ ...registered, hobbies: ["كرة"], rewardedFields: ["hobbies"] }), null);
 });
 
-test("عند ١٠٠٪: وسام + ٣٠ فضة (مع الفضة التدريجية المتبقّية)", () => {
-  /* هوايات+اهتمامات مكافأة سابقاً، تبقى المواد (+٥) ثم ١٠٠٪ (+٣٠ ووسام) */
+test("عند 100٪: وسام + 30 فضة (مع الفضة التدريجية المتبقّية)", () => {
+  /* هوايات+اهتمامات مكافأة سابقاً، تبقى المواد (+5) ثم 100٪ (+30 ووسام) */
   const r = pendingProfileRewards({ ...full, rewardedFields: ["hobbies", "interests"] })!;
   assert.equal(r.badge, true);
   assert.equal(r.setCompleteFlag, true);
-  assert.equal(r.silver, 35); // ٥ (المواد) + ٣٠ (اكتمال)
+  assert.equal(r.silver, 35); // 5 (المواد) + 30 (اكتمال)
   assert.ok(r.message.includes("وسام"));
 });
 
 test("لا وسام إن صُرف سابقاً، ولا مكافأة قبل أي إضافة", () => {
   assert.equal(pendingProfileRewards({ ...full, rewardedFields: ["hobbies", "interests", "favSubjects"], awardedProfileComplete: true }), null);
-  assert.equal(pendingProfileRewards(registered), null); // لا معلومات شخصية جديدة و<١٠٠٪
+  assert.equal(pendingProfileRewards(registered), null); // لا معلومات شخصية جديدة و<100٪
 });
 
 test("طريقة المذاكرة تُحتسب في الاكتمال لكن لا تُكافأ تدريجياً (مملوءة من التسجيل)", () => {

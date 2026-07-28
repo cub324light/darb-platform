@@ -1,14 +1,14 @@
 /* ─── تقييم دويرب (Coach Score) ───
-   مؤشر مركّب ٠–١٠٠ مبني حصرياً على بيانات الطالب المخزّنة.
+   مؤشر مركّب 0–100 مبني حصرياً على بيانات الطالب المخزّنة.
    كل مكوّن موثّق بوزنه وصيغة حسابه — النتيجة قابلة للتحقق.
 
    الأوزان:
      جاهزية        30  (من estimateReadiness)
-     انتظام        20  (ستريك حالي / 7، حد ١٠٠٪)
-     استمرارية     20  (أيام نشطة من ٣٠)
-     حجم المذاكرة  15  (ساعات آخر ٣٠ يوم، حد ٦٠ ساعة)
+     انتظام        20  (ستريك حالي / 7، حد 100٪)
+     استمرارية     20  (أيام نشطة من 30)
+     حجم المذاكرة  15  (ساعات آخر 30 يوم، حد 60 ساعة)
      تقدّم الخريطة 10  (trackProgress)
-     مراجعة        5   (بطاقات + دروس منجزة، حد ٥٠)
+     مراجعة        5   (بطاقات + دروس منجزة، حد 50)
      ──────────────
      المجموع       100
 */
@@ -86,10 +86,10 @@ export function computeDuwairbScore(
   else if (readinessScore < 10) gaps.push("الجاهزية منخفضة — قيّم مهاراتك في صفحة المهارات");
 
   if (streakScore >= 14) strengths.push(`انتظام رائع — ستريك ${streak} يوم`);
-  else if (streakScore < 6) gaps.push("الانتظام ضعيف — حاول مذاكرة يومية ولو ٢٠ دقيقة");
+  else if (streakScore < 6) gaps.push("الانتظام ضعيف — حاول مذاكرة يومية ولو 20 دقيقة");
 
   if (consistencyScore >= 13) strengths.push(`${active30} يوم نشطاً هذا الشهر`);
-  else if (consistencyScore < 7) gaps.push(`نشطت ${active30} يوماً فقط من ٣٠ — زِد أيامك`);
+  else if (consistencyScore < 7) gaps.push(`نشطت ${active30} يوماً فقط من 30 — زِد أيامك`);
 
   if (volumeScore >= 10) strengths.push("ساعات دراسة وافية هذا الشهر");
   else if (volumeScore < 4) gaps.push("ساعات المذاكرة قليلة — استهدف ساعتين يومياً على الأقل");
@@ -105,7 +105,7 @@ export function computeDuwairbScore(
     components: {
       readiness:   { label: "الجاهزية",      score: readinessScore,   max: 30, note: `${readinessPct}٪ جاهزية مقدّرة` },
       streak:      { label: "الانتظام",      score: streakScore,      max: 20, note: `ستريك ${streak} يوم` },
-      consistency: { label: "الاستمرارية",   score: consistencyScore, max: 20, note: `${active30} يوم نشط من ٣٠` },
+      consistency: { label: "الاستمرارية",   score: consistencyScore, max: 20, note: `${active30} يوم نشط من 30` },
       volume:      { label: "حجم الدراسة",   score: volumeScore,      max: 15, note: `${Math.round(volumeHours * 10) / 10} ساعة هذا الشهر` },
       roadmap:     { label: "الخريطة",       score: roadmapScore,     max: 10, note: `${stats.trackProgress ?? 0}٪ مكتمل` },
       review:      { label: "المراجعة",      score: reviewScore,      max: 5,  note: `${totalReview} بطاقة ودرس` },
@@ -129,7 +129,7 @@ export function detectMissedOpportunities(
     targetScore?: number;
     examName?: string;
     daysRemaining?: number;
-    weeklyStudyMins?: number;  // دقائق المذاكرة في آخر ٧ أيام
+    weeklyStudyMins?: number;  // دقائق المذاكرة في آخر 7 أيام
     reviewedCardsCount?: number;
   },
 ): MissedOpportunity[] {
@@ -160,7 +160,7 @@ export function detectMissedOpportunities(
     opps.push({
       severity: "warning",
       message: `هدفك ${targetScore} مرتفع لكن مذاكرتك الأسبوعية الأخيرة ${hrs} ساعة فقط.`,
-      solution: "استهدف ٨ ساعات على الأقل أسبوعياً — فعّل تذكيرات دويرب اليومية لتنظيم وقتك.",
+      solution: "استهدف 8 ساعات على الأقل أسبوعياً — فعّل تذكيرات دويرب اليومية لتنظيم وقتك.",
     });
   }
 

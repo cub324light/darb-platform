@@ -7,7 +7,7 @@ export interface WeeklyReportData {
   deltaPct: number | null;
   sessions: number;      // جلسات هذا الأسبوع
   streak: number;        // الستريك الحالي
-  activeDays: number;    // أيام نشطة من ٧
+  activeDays: number;    // أيام نشطة من 7
   topSubject: { name: string; mins: number } | null;
   lowSubject: { name: string; mins: number } | null;
   hasData: boolean;

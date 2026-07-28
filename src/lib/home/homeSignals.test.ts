@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { upcomingMilestones, officialUpdates, OFFICIAL_UPDATES } from "./homeSignals";
 
 test("قريباً: مواعيد مستقبلية فقط، مرتّبةٌ بالأقرب، ضمن الأفق", () => {
-  /* اليوم قبل موسم قياس 1447 (٢٠٢٥-٠٨-٢٥): يظهر «فتح التسجيل» ٢٠٢٥-٠٩-٠١ أولاً */
+  /* اليوم قبل موسم قياس 1447 (2025-08-25): يظهر «فتح التسجيل» 2025-09-01 أولاً */
   const ms = upcomingMilestones({ today: "2025-08-25", horizonDays: 120 });
   assert.ok(ms.length > 0, "توجد مواعيد قادمة");
   assert.ok(ms.every((m) => m.date > "2025-08-25"), "كلها مستقبلية");
@@ -21,7 +21,7 @@ test("قريباً: الأفق يقصي البعيد؛ والحدّ يقيّد �
 });
 
 test("قريباً: يُضيف «إعلان النتيجة المتوقّع» من نتائج الطالب المنتظَرة", () => {
-  /* اختبار محوسب ٢٠٢٦-٠٧-١٥ → النتيجة المتوقّعة ٢٠٢٦-٠٧-١٨ (٣ أيام) */
+  /* اختبار محوسب 2026-07-15 → النتيجة المتوقّعة 2026-07-18 (3 أيام) */
   const ms = upcomingMilestones({
     today: "2026-07-16", horizonDays: 30,
     pending: [{ exam: "qudurat", mode: "computer", testDate: "2026-07-15" }],

@@ -51,7 +51,7 @@ export function buildICS(events: CalEvent[], calName = "خطة درب"): string 
     );
     if (e.description) lines.push(fold(`DESCRIPTION:${esc(e.description)}`));
     if (e.location) lines.push(fold(`LOCATION:${esc(e.location)}`));
-    /* تنبيه قبل الجلسة بـ١٠ دقائق */
+    /* تنبيه قبل الجلسة بـ10 دقائق */
     lines.push(
       "BEGIN:VALARM",
       "ACTION:DISPLAY",

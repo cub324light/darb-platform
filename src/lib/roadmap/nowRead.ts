@@ -20,7 +20,7 @@ export interface PriorityExam {
   examKey?: string; subjects: { name: string; color: string }[];
 }
 
-/** الاختبار صاحب الأولوية #١ من Workspace + ترتيب الأولوية المخزّن. */
+/** الاختبار صاحب الأولوية #1 من Workspace + ترتيب الأولوية المخزّن. */
 export function readPriorityExam(ws: Workspace): PriorityExam | null {
   const cfg = loadRoadmapConfig();
   const entries: PriorityExam[] = [];

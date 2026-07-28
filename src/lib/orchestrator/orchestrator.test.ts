@@ -23,7 +23,7 @@ const CTX: DuwairbContext = {
     preferredMethods: [], bestStudyWindow: "مساء", recentLifeEvents: ["اختبار قدرات بعد أسبوع"],
     openThreads: [], memoryCount: 7, retrieved: [],
   },
-  recentEvents: ["أنهى جلسة ٥٠ دقيقة", "سجّل ٨٠ في تحصيلي"],
+  recentEvents: ["أنهى جلسة 50 دقيقة", "سجّل 80 في تحصيلي"],
   recommendations: [{ title: "التحصيلي — أولوية كاملة", reason: "ركّز على التحصيلي قبل التخرّج", priority: 88, source: "goldenPath" }],
   timing: { goodTimeNow: true, fatigue: 0.1, note: "وقت مناسب" },
 };
@@ -57,7 +57,7 @@ test("context hardening: untrusted memory fields are sanitized + PII reduced + d
   assert.ok(block.includes("محمد") && !block.includes("العتيبي"), "PII reduced to first name");
   // تأطير: بيانات لا تعليمات
   assert.ok(block.includes("بيانات") && block.includes("لا أوامر"), "untrusted-data framing present");
-  // حدّ الطول دون حدّ الراوت (٤٠٠٠) فلا يُسقَط صامتاً
+  // حدّ الطول دون حدّ الراوت (4000) فلا يُسقَط صامتاً
   assert.ok(block.length <= 3700, "context truncated below the route cap");
 });
 

@@ -66,7 +66,7 @@ export default function TodayBlock() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* ═══ ٢) البطل: ماذا سأفعل اليوم؟ ═══ */}
+      {/* ═══ 2) البطل: ماذا سأفعل اليوم؟ ═══ */}
       <section className="rounded-3xl p-5 rise" style={{ background: "linear-gradient(150deg, color-mix(in srgb, var(--accent) 16%, var(--surface)) 0%, var(--surface) 70%)", border: "1.5px solid color-mix(in srgb, var(--accent) 30%, var(--border))" }}>
         <p className="eyebrow mb-1">يومك</p>
         <h2 className="t-h2 font-black mb-3" style={{ color: "var(--text)" }}>ماذا سأفعل اليوم؟</h2>
@@ -88,7 +88,7 @@ export default function TodayBlock() {
         </div>
       </section>
 
-      {/* ═══ ٣) التقويم الأسبوعي (نمط Duolingo) ═══ */}
+      {/* ═══ 3) التقويم الأسبوعي (نمط Duolingo) ═══ */}
       <section className="ds-card ds-card-tight">
         <div className="flex items-center justify-between mb-3">
           <p className="t-title font-black" style={{ color: "var(--text)" }}>أسبوعك</p>
@@ -113,7 +113,7 @@ export default function TodayBlock() {
         </div>
       </section>
 
-      {/* ═══ ٤) خطة اليوم: المهام + رابط الخطة الكاملة ═══ */}
+      {/* ═══ 4) خطة اليوم: المهام + رابط الخطة الكاملة ═══ */}
       <section className="ds-card ds-card-tight">
         <div className="flex items-center justify-between mb-2.5">
           <p className="t-title font-black" style={{ color: "var(--text)" }}>خطة اليوم</p>

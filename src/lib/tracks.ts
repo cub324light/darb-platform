@@ -218,23 +218,23 @@ export function resolveSubjects(names: string[]): { name: string; color: string 
    null = لا توجد درجة رقمية لهذا الاختبار (يُرفض إدخال درجة).
 
    المصادر (سلالم رسمية):
-   - القدرات (GAT/قياس): من ١ إلى ١٠٠
-   - التحصيلي (SAAT/قياس): من ١ إلى ١٠٠
-   - ستيب STEP (كفايات الإنجليزية/قياس): من ١ إلى ١٠٠
-   - آيلتس IELTS: من ١ إلى ٩ (بخطوات ٠٫٥)
-   - توفل TOEFL iBT: من ٠ إلى ١٢٠
-   - دوليجو Duolingo English Test: من ١٠ إلى ١٦٠ (بخطوات ٥)
+   - القدرات (GAT/قياس): من 1 إلى 100
+   - التحصيلي (SAAT/قياس): من 1 إلى 100
+   - ستيب STEP (كفايات الإنجليزية/قياس): من 1 إلى 100
+   - آيلتس IELTS: من 1 إلى 9 (بخطوات 0٫5)
+   - توفل TOEFL iBT: من 0 إلى 120
+   - دوليجو Duolingo English Test: من 10 إلى 160 (بخطوات 5)
    - أرامكو CPC و ITC: برامج قبول/تدريب بلا درجة رقمية موحّدة → تُرفض */
 export interface ScoreRange { min: number; max: number; step: number; hint: string; }
 
 export const EXAM_SCORE: Record<TrackId, ScoreRange | null> = {
-  "قدرات":        { min: 1, max: 100, step: 1,   hint: "من ١ إلى ١٠٠" },
-  "تحصيلي":       { min: 1, max: 100, step: 1,   hint: "من ١ إلى ١٠٠" },
-  "تحصيلي مبكر":  { min: 1, max: 100, step: 1,   hint: "من ١ إلى ١٠٠" },
-  "ستيب":         { min: 1, max: 100, step: 1,   hint: "من ١ إلى ١٠٠" },
-  "ايلتس":        { min: 1, max: 9,   step: 0.5, hint: "من ١ إلى ٩ (بخطوات ٠٫٥)" },
-  "توفل":         { min: 0, max: 120, step: 1,   hint: "من ٠ إلى ١٢٠" },
-  "دوليقو":       { min: 10, max: 160, step: 5,  hint: "من ١٠ إلى ١٦٠" },
+  "قدرات":        { min: 1, max: 100, step: 1,   hint: "من 1 إلى 100" },
+  "تحصيلي":       { min: 1, max: 100, step: 1,   hint: "من 1 إلى 100" },
+  "تحصيلي مبكر":  { min: 1, max: 100, step: 1,   hint: "من 1 إلى 100" },
+  "ستيب":         { min: 1, max: 100, step: 1,   hint: "من 1 إلى 100" },
+  "ايلتس":        { min: 1, max: 9,   step: 0.5, hint: "من 1 إلى 9 (بخطوات 0٫5)" },
+  "توفل":         { min: 0, max: 120, step: 1,   hint: "من 0 إلى 120" },
+  "دوليقو":       { min: 10, max: 160, step: 5,  hint: "من 10 إلى 160" },
   "CPC":          null,
   "ITC":          null,
   "مدرسه":        null,

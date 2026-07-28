@@ -24,15 +24,15 @@ interface ChallengeCtx {
 export const CHALLENGES: ChallengeDef[] = [
   { id: "first_session", icon: "🚀", title: "ابدأ رحلتك", desc: "أكمل أول جلسة تركيز", goal: 1, unit: "جلسة", reward: 20, period: "once",
     metric: (c) => Math.min(c.stats.sessionsCount, 1) },
-  { id: "streak_7", icon: "🔥", title: "أسبوع منتظم", desc: "ذاكر ٧ أيام متتالية", goal: 7, unit: "يوم", reward: 60, period: "once",
+  { id: "streak_7", icon: "🔥", title: "أسبوع منتظم", desc: "ذاكر 7 أيام متتالية", goal: 7, unit: "يوم", reward: 60, period: "once",
     metric: (c) => c.streak },
-  { id: "sessions_10", icon: "💪", title: "عشر جلسات", desc: "أكمل ١٠ جلسات أوربت", goal: 10, unit: "جلسة", reward: 50, period: "once",
+  { id: "sessions_10", icon: "💪", title: "عشر جلسات", desc: "أكمل 10 جلسات أوربت", goal: 10, unit: "جلسة", reward: 50, period: "once",
     metric: (c) => c.stats.sessionsCount },
-  { id: "week_300", icon: "⏱️", title: "خمس ساعات هذا الأسبوع", desc: "ذاكر ٣٠٠ دقيقة خلال الأسبوع", goal: 300, unit: "دقيقة", reward: 70, period: "weekly",
+  { id: "week_300", icon: "⏱️", title: "خمس ساعات هذا الأسبوع", desc: "ذاكر 300 دقيقة خلال الأسبوع", goal: 300, unit: "دقيقة", reward: 70, period: "weekly",
     metric: (c) => c.weekMins },
-  { id: "week_5sessions", icon: "📅", title: "خمس جلسات أسبوعية", desc: "أكمل ٥ جلسات هذا الأسبوع", goal: 5, unit: "جلسة", reward: 40, period: "weekly",
+  { id: "week_5sessions", icon: "📅", title: "خمس جلسات أسبوعية", desc: "أكمل 5 جلسات هذا الأسبوع", goal: 5, unit: "جلسة", reward: 40, period: "weekly",
     metric: (c) => c.weekSessions },
-  { id: "vault_5", icon: "🔍", title: "صيّاد الأخطاء", desc: "سجّل ٥ أخطاء في خزنتك", goal: 5, unit: "خطأ", reward: 30, period: "once",
+  { id: "vault_5", icon: "🔍", title: "صيّاد الأخطاء", desc: "سجّل 5 أخطاء في خزنتك", goal: 5, unit: "خطأ", reward: 30, period: "once",
     metric: (c) => c.vaultCount },
 ];
 

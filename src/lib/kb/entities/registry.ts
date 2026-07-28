@@ -129,7 +129,7 @@ export class KnowledgeBase {
     const m = this.meta(id);
     const lines: string[] = [`# ${KIND_META[e.kind].icon} ${e.name} (${KIND_META[e.kind].label})`, e.summary];
     if (e.description) lines.push(e.description);
-    if (m.importance != null) lines.push(`الأهمية (٠–١٠٠): ${m.importance}`);
+    if (m.importance != null) lines.push(`الأهمية (0–100): ${m.importance}`);
 
     /* حقول قياسية حسب النوع */
     const f: string[] = [];

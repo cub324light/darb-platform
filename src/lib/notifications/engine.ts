@@ -15,7 +15,7 @@ import {
 import { buildTimingBuckets, computeFatigue, scoreCandidate, decide } from "./scoring";
 
 const DAY_MS = 86_400_000;
-const INAPP_WINDOW_MS = 30_000; // نشاط واجهة خلال ٣٠ ثانية = داخل درب
+const INAPP_WINDOW_MS = 30_000; // نشاط واجهة خلال 30 ثانية = داخل درب
 
 export interface NotificationEngineDeps {
   events: EventEngine;

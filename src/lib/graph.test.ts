@@ -74,7 +74,7 @@ test("عزل: جِوار أداة كهرباء لا يسرّب أدوات أمن
 });
 
 /* ════════ نقاط الدخول ════════ */
-test("entryGroups: كل تخصص يفتح من ٦ أنواع عقد، كلها غير فارغة ومحدودة", () => {
+test("entryGroups: كل تخصص يفتح من 6 أنواع عقد، كلها غير فارغة ومحدودة", () => {
   const g = entryGroups("ee");
   const kinds = g.map((x) => x.kind);
   for (const k of ["subject", "tool", "project", "company", "cert", "role"]) {
@@ -105,7 +105,7 @@ test("احتياطي: تخصص مجهول لا يرمي ويعطي شبكة حي
   assert.ok(allLabels(nb.groups).every((l) => l.trim() !== ""));
 });
 
-test("لا مجموعة تتجاوز الحدّ الأعلى (٦)", () => {
+test("لا مجموعة تتجاوز الحدّ الأعلى (6)", () => {
   const co = getMajorWorld("cs").companies[0];
   for (const nb of [
     neighbors("cs", { kind: "company", label: co }),

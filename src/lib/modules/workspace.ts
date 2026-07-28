@@ -182,7 +182,7 @@ export const optionalInstances = (ws: Workspace): ModuleInstance[] => ws.modules
 
 /* عدد الاختبارات المختارة (لحدّ مساري الأقصى): كل وحدةٍ مفردةٍ اختيارية (قدرات/تحصيلي)
    + كل عضوٍ في مجموعة (لغة/برنامج). الـCore (الجامعة) وحاويات المجموعات لا تُعدّ اختباراً
-   بذاتها — العضو هو الاختبار. مصدرٌ واحد لعدّ الحدّ الأقصى ٣ (atMax/remainingSlots). */
+   بذاتها — العضو هو الاختبار. مصدرٌ واحد لعدّ الحدّ الأقصى 3 (atMax/remainingSlots). */
 export function examCount(ws: Workspace): number {
   return ws.modules.reduce((n, m) => {
     if (m.kind === "core") return n;

@@ -14,7 +14,7 @@ export interface Milestone {
   title: string;       // «فتح تسجيل القدرات» ...
   track: string;       // اسم الاختبار
   date: string;        // YYYY-MM-DD
-  daysUntil: number;   // من اليوم (≥ ٠)
+  daysUntil: number;   // من اليوم (≥ 0)
 }
 
 const KIND_LABEL: Record<MilestoneKind, string> = {

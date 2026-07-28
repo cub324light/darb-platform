@@ -50,7 +50,7 @@ export default function SavedBody({ embedded = false }: { embedded?: boolean }) 
   const colorOf = (subj: string) => colorForSubject(activeIds, subj);
   const subjects = subjectList.map((s) => s.name);
   const countForSubject = (subj: string) => cards.filter((c) => c.subject === subj).length;
-  /* الحد لكل مادة — ١٠٠ بطاقة لكل مادة ثم اشتراك */
+  /* الحد لكل مادة — 100 بطاقة لكل مادة ثم اشتراك */
   const atLimit = countForSubject(newSubject) >= PER_SUBJECT_LIMIT;
 
   /* now ثابت منذ تحميل الصفحة — تحديد البطاقات المستحقة */
@@ -298,7 +298,7 @@ export default function SavedBody({ embedded = false }: { embedded?: boolean }) 
               {subjects.map((s) => <option key={s}>{s}</option>)}
             </select>
 
-            {/* عدّاد بطاقات المادة — ١٠٠ لكل مادة */}
+            {/* عدّاد بطاقات المادة — 100 لكل مادة */}
             <div className="flex items-center justify-between px-1">
               <span className="text-sm text-[var(--text-muted)]">بطاقات {newSubject}</span>
               <span className="text-sm font-bold" style={{ color: atLimit ? "var(--danger)" : "var(--text-dim)" }}>
@@ -308,7 +308,7 @@ export default function SavedBody({ embedded = false }: { embedded?: boolean }) 
 
             {atLimit && (
               <p className="text-sm text-[var(--danger)] text-center">
-                وصلت ١٠٠ بطاقة في {newSubject} —{" "}
+                وصلت 100 بطاقة في {newSubject} —{" "}
                 <Link href="/pricing" className="text-[var(--accent-light)] underline font-semibold">اشترك في شاهين</Link>
                 {" "}للمزيد
               </p>

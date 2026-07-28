@@ -9,7 +9,7 @@ test("buildSessionPlan: وقتٌ غير كافٍ ⇒ لا جلسة + رسالة�
   assert.ok(p.hint.includes("غداً"));
 });
 
-test("buildSessionPlan: ٣ مهامّ بأهداف، المجموع ≈ الوقت المتاح", () => {
+test("buildSessionPlan: 3 مهامّ بأهداف، المجموع ≈ الوقت المتاح", () => {
   const p = buildSessionPlan({
     subjects: ["لفظي", "كمي"], remainingLessons: 5, remainingDrills: 20, activeErrors: 3, availableMinutes: 70,
   });

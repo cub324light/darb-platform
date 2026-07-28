@@ -4,7 +4,7 @@
 export interface Slot {
   id: string;
   title: string;
-  /** ساعةٌ عشرية (١٧٫٥ = الخامسة والنصف مساءً) */
+  /** ساعةٌ عشرية (17٫5 = الخامسة والنصف مساءً) */
   fromHour: number;
   toHour: number;
   color: string;
@@ -18,7 +18,7 @@ export interface LadderRange {
 }
 
 /**
- * النطاق الافتراضي ٧ ص – ١٠ م حتى مع يومٍ فارغ (سلّمٌ بلا ساعاتٍ ليس سلّماً)،
+ * النطاق الافتراضي 7 ص – 10 م حتى مع يومٍ فارغ (سلّمٌ بلا ساعاتٍ ليس سلّماً)،
  * ويتمدّد للفترات الخارجة عنه وللساعة الحالية. `nowHour` سالبةٌ ⇒ لم تُقرأ بعد.
  */
 export function ladderRange(slots: Slot[], nowHour = -1): LadderRange {

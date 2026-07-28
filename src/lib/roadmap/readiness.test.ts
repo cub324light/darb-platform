@@ -10,7 +10,7 @@ test("commitmentFactor: غير متاح بلا خطّة أو بلا بداية",
   assert.equal(commitmentFactor({ plannedMins: 0, doneMins: 0, started: false }).available, false);
   assert.equal(commitmentFactor({ plannedMins: 180, doneMins: 90, started: false }).available, false);
 });
-test("commitmentFactor: المنجَز ÷ المخطّط، مقصوصٌ ٠..١", () => {
+test("commitmentFactor: المنجَز ÷ المخطّط، مقصوصٌ 0..1", () => {
   const f = commitmentFactor({ plannedMins: 180, doneMins: 120, started: true });
   assert.equal(f.available, true);
   assert.ok(Math.abs(f.score - 120 / 180) < 1e-9);
@@ -38,7 +38,7 @@ test("resultsFactor: غير متاح بلا درجة؛ يُطبَّع بالأع
   assert.equal(resultsFactor({ lastScore: 60, max: 120 }).score, 0.5);
 });
 
-test("proximityFactor: غير متاح بلا موعد؛ وقتٌ أكثر ⇐ درجةٌ أعلى؛ منتهٍ ⇐ ٠", () => {
+test("proximityFactor: غير متاح بلا موعد؛ وقتٌ أكثر ⇐ درجةٌ أعلى؛ منتهٍ ⇐ 0", () => {
   assert.equal(proximityFactor({ daysLeft: null }).available, false);
   assert.equal(proximityFactor({ daysLeft: 60 }, 60).score, 1);
   assert.equal(proximityFactor({ daysLeft: 30 }, 60).score, 0.5);
@@ -59,10 +59,10 @@ test("computeReadiness: عاملٌ واحدٌ فقط ⇐ لا توجد بيان�
 
 test("computeReadiness: يركّب المتاح فقط ويُنتج نطاقاً", () => {
   const r = computeReadiness([
-    commitmentFactor({ plannedMins: 100, doneMins: 90, started: true }), // ٠.٩
-    progressFactor({ doneItems: 8, totalItems: 10 }),                    // ٠.٨
-    errorsFactor({ activeErrors: 4, everLogged: true }, 40),             // ٠.٩
-    resultsFactor({ lastScore: 85, max: 100 }),                         // ٠.٨٥
+    commitmentFactor({ plannedMins: 100, doneMins: 90, started: true }), // 0.9
+    progressFactor({ doneItems: 8, totalItems: 10 }),                    // 0.8
+    errorsFactor({ activeErrors: 4, everLogged: true }, 40),             // 0.9
+    resultsFactor({ lastScore: 85, max: 100 }),                         // 0.85
     proximityFactor({ daysLeft: null }),                                // غير متاح
   ]);
   assert.equal(r.available, true);
@@ -73,8 +73,8 @@ test("computeReadiness: يركّب المتاح فقط ويُنتج نطاقاً
 
 test("computeReadiness: عواملٌ ضعيفة ⇐ نطاق خطر", () => {
   const r = computeReadiness([
-    commitmentFactor({ plannedMins: 100, doneMins: 20, started: true }), // ٠.٢
-    progressFactor({ doneItems: 1, totalItems: 10 }),                    // ٠.١
+    commitmentFactor({ plannedMins: 100, doneMins: 20, started: true }), // 0.2
+    progressFactor({ doneItems: 1, totalItems: 10 }),                    // 0.1
   ]);
   assert.equal(r.available, true);
   assert.equal(r.band, "risk");
@@ -115,9 +115,9 @@ test("computePrediction: بلا نتيجةٍ حقيقية ⇐ غير متاح + 
 test("computePrediction: يرتكز على النتيجة ويُعدَّل بالتقدّم/الالتزام/الأخطاء", () => {
   const p = computePrediction({
     results: resultsFactor({ lastScore: 80, max: 100 }),
-    progress: progressFactor({ doneItems: 10, totalItems: 10 }),   // ١.٠ يرفع قليلاً
-    commitment: commitmentFactor({ plannedMins: 100, doneMins: 100, started: true }), // ١.٠ يرفع قليلاً
-    errors: errorsFactor({ activeErrors: 0, everLogged: true }),   // ١.٠ لا يخفض
+    progress: progressFactor({ doneItems: 10, totalItems: 10 }),   // 1.0 يرفع قليلاً
+    commitment: commitmentFactor({ plannedMins: 100, doneMins: 100, started: true }), // 1.0 يرفع قليلاً
+    errors: errorsFactor({ activeErrors: 0, everLogged: true }),   // 1.0 لا يخفض
   });
   assert.equal(p.available, true);
   assert.ok(p.score >= 80 && p.score <= 100, `score=${p.score}`);

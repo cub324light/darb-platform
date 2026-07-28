@@ -29,24 +29,24 @@ export interface DuwairbContext {
 export function buildDuwairbContext(opts: { now?: number } = {}): DuwairbContext {
   const now = opts.now ?? Date.now();
 
-  // ٣) ذاكرة طويلة المدى
+  // 3) ذاكرة طويلة المدى
   const mem = memory().buildStudentContext();
 
-  // ٤) أحداث حديثة
+  // 4) أحداث حديثة
   const recentEvents = events().buildTimeline({ limit: 6 }).map((t) => t.summary);
 
-  // ٥) توصيات نشطة (نفس مصدر اللوحة ⇒ اتساق تام)
+  // 5) توصيات نشطة (نفس مصدر اللوحة ⇒ اتساق تام)
   const recommendations = loadRecommendations(now).slice(0, 4)
     .map((r) => ({ title: r.title, reason: r.reason, priority: r.priority, source: r.source }));
 
-  // ٢) معرفة تعليمية
+  // 2) معرفة تعليمية
   const u = loadUser();
   const knowledge = u ? (() => {
     const ep = buildEducationalProfile(u, { university: mem.currentGoal.university, stepTarget: undefined });
     return { phaseLabel: ep.phaseLabel, stage: ep.stage, eligibility: ep.eligibility };
   })() : null;
 
-  // ٦) سياق التوقيت (إن كان التوقيت يهمّ)
+  // 6) سياق التوقيت (إن كان التوقيت يهمّ)
   const nctx = notifications().gatherContext(now);
   const quiet = inQuietWindow(nctx.hour, nctx.quietWindows);
   const timing = {

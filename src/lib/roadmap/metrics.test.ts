@@ -8,7 +8,7 @@ test("مساعدات التاريخ", () => {
   assert.equal(daysBetween("2026-03-01", "2026-03-11"), 10);
   assert.equal(daysBetween("2026-03-11", "2026-03-01"), -10);
   assert.equal(addDays("2026-03-01", 10), "2026-03-11");
-  assert.equal(addDays("2026-02-27", 2), "2026-03-01"); // ٢٠٢٦ ليست كبيسة
+  assert.equal(addDays("2026-02-27", 2), "2026-03-01"); // 2026 ليست كبيسة
 });
 
 test("finishForecast: فارغٌ بلا تاريخٍ كافٍ", () => {
@@ -16,7 +16,7 @@ test("finishForecast: فارغٌ بلا تاريخٍ كافٍ", () => {
   assert.equal(finishForecast({ remaining: 0, done: 10, elapsedDays: 10, today: "2026-03-01" }).available, false);
 });
 test("finishForecast: تاريخٌ بمعدّل الطالب", () => {
-  // done=10 خلال 5 أيام ⇒ ٢/يوم؛ المتبقّي ٢٠ ⇒ ١٠ أيام ⇒ +10
+  // done=10 خلال 5 أيام ⇒ 2/يوم؛ المتبقّي 20 ⇒ 10 أيام ⇒ +10
   const f = finishForecast({ remaining: 20, done: 10, elapsedDays: 5, today: "2026-03-01" });
   assert.equal(f.available, true);
   assert.equal(f.days, 10);
@@ -36,12 +36,12 @@ test("suggestedExamDate: نافذةٌ تبدأ بعد اكتمال التحضي�
   const s = suggestedExamDate({
     windows: [
       { start: "2026-01-10", end: "2026-01-20" }, // قريبةٌ جداً (تحضيرٌ غير كافٍ) — تُستبعد
-      { start: "2026-03-01", end: "2026-03-20" }, // تبدأ بعد ٦٠ يوماً — واثقة
+      { start: "2026-03-01", end: "2026-03-20" }, // تبدأ بعد 60 يوماً — واثقة
     ],
     today: "2026-01-01",
   }, 45);
   assert.equal(s.available, true);
-  assert.equal(s.date, "2026-03-01"); // بداية النافذة التي تعطي ≥٤٥ يوم تحضير
+  assert.equal(s.date, "2026-03-01"); // بداية النافذة التي تعطي ≥45 يوم تحضير
 });
 
 /* ── الجسر الأساسي ── */
@@ -72,10 +72,10 @@ test("computeExamDashboard: طالبٌ نشطٌ مسجّل ⇒ مؤشّراتٌ 
     elapsedDays: 15, examWindows: [], prepDays: 30,
   };
   const d = computeExamDashboard(inp);
-  assert.equal(d.readiness.available, true);     // ٤ عوامل متاحة (النتائج غير متاحة)
+  assert.equal(d.readiness.available, true);     // 4 عوامل متاحة (النتائج غير متاحة)
   assert.ok(d.readiness.score > 0);
   assert.equal(d.commitment.available, true);
-  assert.equal(d.commitment.pct, Math.round((150 / 180) * 100)); // ٨٣
+  assert.equal(d.commitment.pct, Math.round((150 / 180) * 100)); // 83
   assert.equal(d.planProgress.pct, 75);
   assert.equal(d.activeErrors.available, true);
   assert.equal(d.activeErrors.count, 8);

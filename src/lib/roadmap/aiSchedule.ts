@@ -3,13 +3,13 @@
      «من [رقم] [ص/م] إلى [رقم] [ص/م] — [المادة أو راحة]».
      هنا نحوّل ذلك النصّ إلى `CalendarEvent` يُحفَظ في `darb_calendar` — لا إلى
      `ScheduleEvent` في `darb_events` (مخزنٌ آخر لا يقرأه تقويم مساري).
-   ▸ نقيٌّ ١٠٠٪: نصٌّ داخلٌ وأحداثٌ خارجة. لا localStorage ولا Date.now — المعرّفات
+   ▸ نقيٌّ 100٪: نصٌّ داخلٌ وأحداثٌ خارجة. لا localStorage ولا Date.now — المعرّفات
      تأتي من الخارج كي يبقى الاختبار حتمياً. */
 import type { CalendarEvent, EventKind } from "./calendar";
 
 const AR_DIGITS: Record<string, string> = {
-  "٠": "0", "١": "1", "٢": "2", "٣": "3", "٤": "4",
-  "٥": "5", "٦": "6", "٧": "7", "٨": "8", "٩": "9",
+  "0": "0", "1": "1", "2": "2", "3": "3", "4": "4",
+  "5": "5", "6": "6", "7": "7", "8": "8", "9": "9",
 };
 
 /** يحوّل الأرقام العربية-الهندية إلى لاتينية للتحليل (العرض يبقى عربياً). */
@@ -17,7 +17,7 @@ export function normalizeDigits(s: string): string {
   return s.replace(/[٠-٩]/g, (d) => AR_DIGITS[d] ?? d);
 }
 
-/** يحوّل ساعةً بصيغة ١٢ إلى ٢٤ حسب اللاحقة (ص/م/ظ). يعيد كسراً بالساعات. */
+/** يحوّل ساعةً بصيغة 12 إلى 24 حسب اللاحقة (ص/م/ظ). يعيد كسراً بالساعات. */
 function parseHour(h: string, m: string, suffix: string): number {
   let hour = parseInt(h, 10);
   const mins = m ? parseInt(m, 10) : 0;

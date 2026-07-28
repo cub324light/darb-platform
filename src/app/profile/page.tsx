@@ -26,7 +26,7 @@ import dynamic from "next/dynamic";
 const CalendarSettings = dynamic(() => import("@/components/CalendarSettings"), { ssr: false });
 
 function fmtJoin(d: string): string {
-  try { return "انضم " + new Date(d + "T12:00:00").toLocaleDateString("ar-SA", { year: "numeric", month: "long" }); }
+  try { return "انضم " + new Date(d + "T12:00:00").toLocaleDateString("ar-SA-u-nu-latn", { year: "numeric", month: "long" }); }
   catch { return d; }
 }
 

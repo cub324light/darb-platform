@@ -40,14 +40,14 @@ export interface DarbUser {
   willingToRelocate?: boolean;  // «لا أمانع الغربة» — يوسّع اقتراح الجامعات خارج منطقته
   regionsInterested?: string[]; // مناطق أخرى يهتمّ بالدراسة فيها (اختياري)
   phone?: string;
-  bio?: string;        // سيرة قصيرة اختيارية (≤ ١٦٠ حرف)
+  bio?: string;        // سيرة قصيرة اختيارية (≤ 160 حرف)
   avatar?: string;     // معرّف أفاتار جاهز (وإلا صورة Google أو أول حرف)
   graduationYear?: number; // سنة التخرج المتوقعة (لمواءمة التقويم الدراسي)
   gradeYearId?: string;    // العام الدراسي (الهجري) الذي ضُبط فيه الصف — مرساة الترقية التلقائية
   academicTerm?: string;   // الفصل الحالي (أول/ثاني/صيف) — يؤكّده الطالب بالتسجيل، يحكم إتاحة المبكر
   trackType?: string;  // نوع المسار الجامعي: صحي/هندسي/حاسب/إداري/عام (اختياري)
   academicTrack?: import("./curriculum").AcademicTrack; // المسار الدراسي الثانوي (يقود المنهج) — لثاني/ثالث ثانوي
-  secondaryGpa?: number; // نسبة الثانوية العامة (٠–١٠٠) — للخريج عند اختيار حساب معدله
+  secondaryGpa?: number; // نسبة الثانوية العامة (0–100) — للخريج عند اختيار حساب معدله
   pendingResults?: PendingResultRecord[]; // اختبارات بانتظار النتيجة (لبطاقة العدّ التنازلي لاحقاً)
   /* ── معلومات الطالب الشخصية (البروفايل لا التسجيل) — مصدرٌ واحد يقرؤه البروفايل/دويرب/الخطة ── */
   hobbies?: string[];        // الهوايات
@@ -59,11 +59,11 @@ export interface DarbUser {
   learningStyle?: LearningStyle[];   // متعدّد الاختيار
   device?: StudyDevice;
   format?: StudyFormat;
-  studyDays?: number;                // أيام المذاكرة الأسبوعية (٣–٧)
+  studyDays?: number;                // أيام المذاكرة الأسبوعية (3–7)
   vacationMode?: boolean;            // وضع الإجازة
   subjectFocus?: "auto" | "single" | "parallel" | "rotating"; // توزيع المواد
-  rewardedFields?: string[];        // حقولٌ صُرف عنها +٥ فضة (مرّة لكلٍّ)
-  awardedProfileComplete?: boolean; // صُرف وسام + فضة اكتمال الملف ١٠٠٪ مرّة
+  rewardedFields?: string[];        // حقولٌ صُرف عنها +5 فضة (مرّة لكلٍّ)
+  awardedProfileComplete?: boolean; // صُرف وسام + فضة اكتمال الملف 100٪ مرّة
   /* ── حقول الجامعي (Phase Engine) — لا تظهر للثانوي أبداً ── */
   universityGpa?: number;        // المعدل الجامعي من 5
   creditHoursCompleted?: number; // الساعات المعتمدة المنجزة
@@ -92,7 +92,7 @@ const USER_KEY = "darb_user";
 const STATS_KEY = "darb_stats";
 
 /* مفتاح اليوم بالتوقيت المحلي للجهاز (لا UTC) — حتى لا تُصفَّر إحصائيات
-   «اليوم» عند منتصف ليل غرينتش (٣ فجراً بتوقيت السعودية) فتختفي قبل أوانها.
+   «اليوم» عند منتصف ليل غرينتش (3 فجراً بتوقيت السعودية) فتختفي قبل أوانها.
    يبدأ اليوم وينتهي مع منتصف ليل الطالب الفعلي. */
 export const localDayKey = (d: Date = new Date()): string => {
   const y = d.getFullYear();
@@ -516,7 +516,7 @@ export interface ExamResult {
   date?: string;          // YYYY-MM-DD
   score?: string;         // الدرجة كنص (يسمح 87.5 أو 6.5 ...)
   note?: string;
-  attemptNumber?: number; // رقم المحاولة (١، ٢، ...) — يُحتسب تلقائياً عند الإضافة
+  attemptNumber?: number; // رقم المحاولة (1، 2، ...) — يُحتسب تلقائياً عند الإضافة
 }
 
 const RESULTS_KEY = "darb_results";
@@ -832,8 +832,8 @@ export const DASH_SECTION_META: Record<DashSectionId, { label: string; desc: str
 
 /* التركيز على المهمة — «يعرف الطالب ماذا يذاكر الآن ويبدأ بخطوة واحدة»:
    يظهر افتراضياً أربعة أقسام فقط بهذا الترتيب —
-   ١) يومك (البطل: ماذا الآن + الفعل الواحد)  ٢) جدول اليوم (خطة اليوم)
-   ٣) أسرع وصول (اختصارات)  ٤) مساراتك (تقدّم موجز).
+   1) يومك (البطل: ماذا الآن + الفعل الواحد)  2) جدول اليوم (خطة اليوم)
+   3) أسرع وصول (اختصارات)  4) مساراتك (تقدّم موجز).
    بقية الأقسام تبقى متاحة عبر «تخصيص» لكنها مخفيّة افتراضياً حتى لا تُشتّت المهمة. */
 const DASH_DEFAULT_ORDER: DashSectionId[] = [
   // ظاهر افتراضياً — يخدم مهمة الصفحة الواحدة
@@ -854,7 +854,7 @@ const DASH_CONFIG_KEY = "darb_dash_config";
 const DASH_SCHED2_KEY = "darb_dash_sched_v2"; // علم ترحيل لمرة واحدة
 const DASH_TODAY_FIRST_KEY = "darb_dash_today_first_v1"; // ترحيل: يومك أولاً + دويرب ثانياً
 const DASH_HERO_V2_KEY = "darb_dash_hero_v2"; // ترحيل: ترتيب «الانطباع الأول» الجديد
-const DASH_FOCUS_KEY = "darb_dash_focus_v1"; // ترحيل: إعادة ضبط لتخطيط «ماذا أذاكر الآن» المُنقّى (٤ أقسام)
+const DASH_FOCUS_KEY = "darb_dash_focus_v1"; // ترحيل: إعادة ضبط لتخطيط «ماذا أذاكر الآن» المُنقّى (4 أقسام)
 
 /* ترحيل لمرة واحدة: انقل «جدول اليوم» ليصير ثاني عنصر — يُحترم تخصيص المستخدم بعدها */
 function migrateScheduleSecond(layout: DashItem[]): DashItem[] {

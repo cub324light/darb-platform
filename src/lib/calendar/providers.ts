@@ -1,7 +1,7 @@
 /* ─── سجلّ مزوّدي التقويم (قابل للتوسّع) ───
-   المرحلة ١ (الآن): Google / Apple / Outlook عبر ICS + روابط ويب للحدث المفرد.
-   المرحلة ٢ (لاحقاً): مزوّد "google-oauth" يدفع الأحداث مباشرة عبر Calendar API.
-   المرحلة ٣ (لاحقاً): Microsoft Graph وNotion.
+   المرحلة 1 (الآن): Google / Apple / Outlook عبر ICS + روابط ويب للحدث المفرد.
+   المرحلة 2 (لاحقاً): مزوّد "google-oauth" يدفع الأحداث مباشرة عبر Calendar API.
+   المرحلة 3 (لاحقاً): Microsoft Graph وNotion.
    إضافة مزوّد = إضافة عنصر لهذا المصفوف فقط — لا تغيير في الواجهة. */
 import type { CalEvent, CalendarProvider } from "./types";
 import { downloadICS } from "./ics";

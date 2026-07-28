@@ -22,7 +22,7 @@ test("occursOnDay: none (نطاقٌ متّصل) / daily / weekly / monthly", () 
   assert.equal(occursOnDay(daily, "2026-08-20"), true);
 
   const weekly = ev({ start: "2026-08-01T10:00", recurrence: "weekly" });
-  assert.equal(occursOnDay(weekly, "2026-08-08"), true);   // +٧ نفس اليوم
+  assert.equal(occursOnDay(weekly, "2026-08-08"), true);   // +7 نفس اليوم
   assert.equal(occursOnDay(weekly, "2026-08-02"), false);  // يومٌ مختلف
 
   const monthly = ev({ start: "2026-08-14T10:00", recurrence: "monthly" });
@@ -54,7 +54,7 @@ test("availableStudyMinutes: block/busy/reduce", () => {
   assert.equal(allDayBlock.availableMinutes, 0);
   assert.equal(allDayBlock.blocked, true);
 
-  // busy ساعة ⇒ ينقص ٦٠
+  // busy ساعة ⇒ ينقص 60
   assert.equal(availableStudyMinutes({ baseMinutes: base, dayEvents: [{ impact: "busy", start: "2026-08-14T10:00", end: "2026-08-14T11:00" }] }).availableMinutes, 60);
   // reduce ⇒ النصف (config.reduceFactor=0.5)
   const red = availableStudyMinutes({ baseMinutes: base, dayEvents: [{ impact: "reduce", start: "2026-08-14T18:00", end: "2026-08-14T20:00" }] });
@@ -64,7 +64,7 @@ test("availableStudyMinutes: block/busy/reduce", () => {
 
 test("minutesBetween + warnsPlanChange + kindMeta", () => {
   assert.equal(minutesBetween("2026-08-14T10:00", "2026-08-14T11:30"), 90);
-  assert.equal(minutesBetween("2026-08-14T11:00", "2026-08-14T10:00"), 0); // سالب ⇒ ٠
+  assert.equal(minutesBetween("2026-08-14T11:00", "2026-08-14T10:00"), 0); // سالب ⇒ 0
   assert.equal(warnsPlanChange({ kind: "travel", impact: "block" }), true);
   assert.equal(warnsPlanChange({ kind: "occasion", impact: "reduce" }), true);
   assert.equal(warnsPlanChange({ kind: "prayer", impact: "busy" }), false);

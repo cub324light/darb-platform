@@ -20,7 +20,7 @@ function ymd(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-/* ════════ ١) الفصل الحالي: أين أنا في فصلي الآن؟ ════════ */
+/* ════════ 1) الفصل الحالي: أين أنا في فصلي الآن؟ ════════ */
 export interface SemesterInfo {
   termLabel: string;            // اسم الفصل الحالي
   weekNumber: number;           // رقم الأسبوع داخل الفصل (≥ 1)
@@ -50,7 +50,7 @@ export function semesterInfo(now: Date): SemesterInfo | null {
   };
 }
 
-/* ════════ ٢) التقدّم نحو التخرّج ════════ */
+/* ════════ 2) التقدّم نحو التخرّج ════════ */
 /* إجمالي ساعات تقريبي لخطة البكالوريوس (موسوم «تقريبي» في العرض) */
 export const GRAD_TOTAL_HOURS = 132;
 
@@ -69,7 +69,7 @@ export function gradProgress(completed?: number): GradProgress {
   return { done, total, remaining, pct };
 }
 
-/* ════════ ٣) رحلة «مستقبلك» — ٦ محطات ثابتة مُثراة بعالم التخصص ════════ */
+/* ════════ 3) رحلة «مستقبلك» — 6 محطات ثابتة مُثراة بعالم التخصص ════════ */
 export type JourneyState = "done" | "current" | "upcoming";
 
 export interface JourneyStep {
@@ -125,7 +125,7 @@ export function buildUniJourney(majorId: string | undefined, currentYear?: strin
   ];
 }
 
-/* ════════ ٤) «يساعدك هذا الأسبوع» — مهام سياقية مشتقّة من عالم التخصص ════════ */
+/* ════════ 4) «يساعدك هذا الأسبوع» — مهام سياقية مشتقّة من عالم التخصص ════════ */
 export interface WeekTask {
   task: string; // بماذا يساعدك
   via: string;  // الأداة/الطريقة
@@ -134,7 +134,7 @@ export interface WeekTask {
 /* تنويه نزاهة موجز يرافق مساعدة الأسبوع — الذكاء للفهم لا للغش */
 export const AI_INTEGRITY_NOTE = "استعن بالذكاء للفهم والتنظيم — لا لإنجاز واجبك بدلاً عنك";
 
-/* ٣–٤ عناصر: مهام جامعية عامة + أبرز برنامج تقني للتخصص (لا قائمة أدوات جامدة) */
+/* 3–4 عناصر: مهام جامعية عامة + أبرز برنامج تقني للتخصص (لا قائمة أدوات جامدة) */
 export function aiThisWeek(majorId: string | undefined): WeekTask[] {
   const w = getMajorWorld(majorId);
   const topProgram = w.programs[0]?.name ?? "أدوات تخصصك";
@@ -147,8 +147,8 @@ export function aiThisWeek(majorId: string | undefined): WeekTask[] {
   ];
 }
 
-/* ════════ ٥) المرحلة الجامعية — اللوحة تتحوّل تلقائياً حسبها ════════
-   بداية (سنة أولى/ساعات قليلة) · منتصف (٢-٣) · قرب التخرّج (٤+ أو ساعات عالية).
+/* ════════ 5) المرحلة الجامعية — اللوحة تتحوّل تلقائياً حسبها ════════
+   بداية (سنة أولى/ساعات قليلة) · منتصف (2-3) · قرب التخرّج (4+ أو ساعات عالية).
    لكل مرحلة «خطوتك القادمة» مختلفة، وكل إجراء يقود إلى قسمه في عالم الطالب
    (سيرة→career، STEP→عُدّتك، شركات→عالم تخصصك) — لا معلومة معزولة. */
 export type UniStage = "start" | "mid" | "senior";

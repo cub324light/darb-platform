@@ -165,31 +165,31 @@ export function bestDeliveryTime(ctx: DeliveryContext): number {
 export function decide(score: NotificationScore, c: NotificationCandidate, ctx: DeliveryContext, cfg: NotificationConfig): NotificationDecision {
   const urgent = score.urgency >= cfg.urgencyOverride;
 
-  // ١) داخل درب الآن → لا دفع (يُعرَض داخلياً)
+  // 1) داخل درب الآن → لا دفع (يُعرَض داخلياً)
   if (ctx.inApp) return { action: "cancel", reason: "الطالب نشِط داخل درب — يُعرَض داخلياً بلا مقاطعة" };
 
-  // ٢) دمج المشابه المعلّق
+  // 2) دمج المشابه المعلّق
   if (ctx.pendingTypes.has(c.type)) return { action: "merge", reason: "دمج مع إشعار مشابه معلّق", mergeInto: c.type };
 
-  // ٣) نافذة هدوء (صلاة/نوم) — تُؤجَّل إلا للإلحاح الأقصى
+  // 3) نافذة هدوء (صلاة/نوم) — تُؤجَّل إلا للإلحاح الأقصى
   const quiet = inQuietWindow(ctx.hour, ctx.quietWindows);
   if (quiet && !urgent) return { action: "delay", reason: `وقت هدوء (${quiet.label}) — يُؤجَّل لوقت مناسب`, deliverAt: score.bestDeliveryTime };
 
-  // ٤) مهلة الإشعارات عالية الأولوية
+  // 4) مهلة الإشعارات عالية الأولوية
   if (!urgent && ctx.lastSentAt != null && ctx.now - ctx.lastSentAt < cfg.cooldownMs)
     return { action: "delay", reason: "ضمن مهلة التهدئة — يُؤجَّل", deliverAt: score.bestDeliveryTime };
 
-  // ٥) السقف اليومي
+  // 5) السقف اليومي
   if (!urgent && ctx.sentLast24h >= cfg.dailyCap)
     return { action: "cancel", reason: "تجاوز سقف الإشعارات اليومي — لا نُرهِق الطالب" };
 
-  // ٦) القيمة كافية → أرسل
+  // 6) القيمة كافية → أرسل
   if (score.composite >= cfg.sendThreshold) return { action: "send", reason: "القيمة تفوق كلفة المقاطعة" };
 
-  // ٧) قيمة متوسطة → أجّل لوقت أفضل
+  // 7) قيمة متوسطة → أجّل لوقت أفضل
   if (score.composite >= cfg.cancelThreshold) return { action: "delay", reason: "وقت أفضل لاحقاً", deliverAt: score.bestDeliveryTime };
 
-  // ٨) قيمة منخفضة → إلغاء
+  // 8) قيمة منخفضة → إلغاء
   return { action: "cancel", reason: "القيمة أقل من كلفة المقاطعة" };
 }
 

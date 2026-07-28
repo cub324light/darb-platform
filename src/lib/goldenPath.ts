@@ -71,7 +71,7 @@ const met = (score?: number, target?: number) =>
 export function currentSemester(now: Date = new Date()): SemesterPhase {
   const m = now.getMonth() + 1; // 1–12
   const d = now.getDate();
-  // صيف: ١٩ يونيو → ٢٣ أغسطس تقريباً
+  // صيف: 19 يونيو → 23 أغسطس تقريباً
   if (m === 7 || (m === 6 && d >= 19) || (m === 8 && d < 24)) return "صيف";
   // الفصل الأول: أواخر أغسطس → منتصف نوفمبر
   if ((m === 8 && d >= 24) || m === 9 || m === 10 || (m === 11 && d <= 14)) return "أول";

@@ -15,7 +15,7 @@ import { loadCalendar, addCalendarEvent, removeCalendarEvent } from "@/lib/roadm
 import { slotsToEvents } from "@/lib/roadmap/aiSchedule";
 import { loadUser, ensureWorkspace } from "@/lib/storage";
 import { readPriorityExam } from "@/lib/roadmap/nowRead";
-import { n, time } from "@/lib/format";
+import { n, time, year } from "@/lib/format";
 import Sheet from "@/components/Sheet";
 
 const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
@@ -104,7 +104,7 @@ export default function CalendarPage() {
       <div className="max-w-xl mx-auto w-full px-5 pt-7 pb-8 flex flex-col gap-5">
         <div className="flex items-center justify-between">
           <button onClick={() => router.push("/roadmap")} className="t-body font-bold tap-44" style={{ color: "var(--text-muted)" }}>← الآن</button>
-          <span className="t-caption font-black" style={{ color: "var(--text-muted)" }}>{AR_MONTHS[m - 1]} {n(y)}</span>
+          <span className="t-caption font-black" style={{ color: "var(--text-muted)" }}>{AR_MONTHS[m - 1]} {year(y)}</span>
         </div>
         <h1 className="t-h2 font-black -mt-2" style={{ color: "var(--text)" }}>🗓️ التقويم</h1>
 
@@ -280,7 +280,7 @@ export default function CalendarPage() {
    المخرَج يُحوَّل إلى CalendarEvent (لا ScheduleEvent) فيظهر في هذا التقويم نفسه. ═══ */
 const QUICK = [
   { label: "عطني جدول جاهز", text: "عطني جدول دراسي جاهز لليوم" },
-  { label: "مشغول الصباح (٦-١٢)", text: "من 6 ص الى 12 م مشغول، اعمل لي جدول للأوقات الفارغة" },
+  { label: "مشغول الصباح (6-12)", text: "من 6 ص الى 12 م مشغول، اعمل لي جدول للأوقات الفارغة" },
   { label: "مشغول الليل", text: "من 9 م الى 12 ص مشغول، اعمل لي جدول للأوقات الفارغة" },
   { label: "جدول بدون مدرسة", text: "من 7 ص الى 2 م مشغول بالمدرسة، اعمل لي جدول بعدها" },
 ];

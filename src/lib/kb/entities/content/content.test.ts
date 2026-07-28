@@ -1,6 +1,6 @@
 /* اختبار دفعات المحتوى — تشغيل: npx tsx --test src/lib/kb/entities/content/content.test.ts
    نتحقق أن الدفعة الأولى (مفاهيم القدرات) سليمة ومربوطة، وأن الرسم يبقى صحيحاً
-   بعد دمجها، وأن لوحة القيادة تعكس الأعداد. البناء بالدفعات: ٢٠–٣٠ عقدة. */
+   بعد دمجها، وأن لوحة القيادة تعكس الأعداد. البناء بالدفعات: 20–30 عقدة. */
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { KB } from "../index";
@@ -14,7 +14,7 @@ test("الرسم يبقى سليماً بعد دمج دفعة المحتوى (ل
   assert.deepEqual(KB.validate(), []);
 });
 
-test("دفعة القدرات: حجمها ضمن ٢٠–٣٠، كلها مفاهيم بمعرّفات فريدة", () => {
+test("دفعة القدرات: حجمها ضمن 20–30، كلها مفاهيم بمعرّفات فريدة", () => {
   assert.ok(QUDURAT_CONCEPTS.length >= 20 && QUDURAT_CONCEPTS.length <= 30, `حجم غير مطابق: ${QUDURAT_CONCEPTS.length}`);
   const ids = QUDURAT_CONCEPTS.map((c) => c.id);
   assert.equal(new Set(ids).size, ids.length, "معرّف مكرّر");
@@ -27,7 +27,7 @@ test("كل مفهوم ينتمي لاختبار القدرات وله مصدرٌ
     const m = c.meta!;
     assert.ok(m.source && m.source.trim() !== "", `${c.id}: بلا مصدر`);
     assert.ok(m.importance != null, `${c.id}: بلا أهمية`);
-    assert.ok(m.confidence != null && m.confidence < 1, `${c.id}: ثقة ١٠٠٪ غير مبرّرة`);
+    assert.ok(m.confidence != null && m.confidence < 1, `${c.id}: ثقة 100٪ غير مبرّرة`);
     assert.ok(c.examFrequency != null && c.examFrequency >= 0 && c.examFrequency <= 100, `${c.id}: تكرارٌ مفقود أو خارج المدى`);
   }
 });
@@ -182,16 +182,16 @@ test("قالب الدرس: قانون أوم يحمل تشبيهاً و«متى 
   assert.ok(lesson && lesson.kind === "lesson");
   if (!lesson || lesson.kind !== "lesson") return;
   const types = new Set((lesson.blocks ?? []).map((b) => b.type));
-  assert.ok(types.has("analogy"), "بلا تشبيهٍ للمبتدئ (س١)");
-  assert.ok(types.has("whenToUse"), "بلا «متى تستخدمه» (س٦) — الدرس ناقص");
+  assert.ok(types.has("analogy"), "بلا تشبيهٍ للمبتدئ (س1)");
+  assert.ok(types.has("whenToUse"), "بلا «متى تستخدمه» (س6) — الدرس ناقص");
   assert.ok(lesson.diagnostic?.prompt && lesson.diagnostic.answer, "بلا سؤال «اختبر نفسك» قبل/بعد الشرح");
   assert.ok((lesson.outcomes?.length ?? 0) >= 2, "بلا مخرجات «أنت الآن تستطيع»");
-  assert.ok(lesson.nextTeaser && lesson.nextTeaser.trim() !== "", "بلا جسرٍ سرديّ للدرس التالي (س٧)");
-  assert.ok((lesson.durationMin ?? 99) <= 8, "الدرس أطول من ٨ دقائق (س٨)");
+  assert.ok(lesson.nextTeaser && lesson.nextTeaser.trim() !== "", "بلا جسرٍ سرديّ للدرس التالي (س7)");
+  assert.ok((lesson.durationMin ?? 99) <= 8, "الدرس أطول من 8 دقائق (س8)");
   /* «أصبحت مستعداً لـ» تُشتقّ من الرسم — على الأقل كيرشوف + ثلاثة مسارات */
   const leadsTo = KB.neighbors("concept:ohms-law", { type: "leads_to", dir: "out", kind: "concept" }).map((c) => c.id);
-  assert.ok(leadsTo.includes("concept:kirchhoff") && leadsTo.length >= 3, "بلا «أصبحت مستعداً لـ» كافية (س٩)");
-  /* سؤالٌ مفاهيمي يقيس الفهم لا الحفظ (س٥) */
+  assert.ok(leadsTo.includes("concept:kirchhoff") && leadsTo.length >= 3, "بلا «أصبحت مستعداً لـ» كافية (س9)");
+  /* سؤالٌ مفاهيمي يقيس الفهم لا الحفظ (س5) */
   const qs = KB.neighbors("lesson:ohms-law", { type: "belongs_to", dir: "in", kind: "question" });
-  assert.ok(qs.some((q) => q.kind === "question" && q.bloom === "understand"), "بلا سؤالٍ مفاهيمي يقيس الفهم (س٥)");
+  assert.ok(qs.some((q) => q.kind === "question" && q.bloom === "understand"), "بلا سؤالٍ مفاهيمي يقيس الفهم (س5)");
 });

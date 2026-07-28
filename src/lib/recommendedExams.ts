@@ -12,7 +12,7 @@ import { currentRegistrationStatus } from "./examProvider";
 export type ExamKind = "qudurat" | "tahsili" | "aramco" | "itc" | "language";
 
 /* ما تتطلّبه كل وجهة (requirementsOf). المفاتيح = معرّفات وجهات التسجيل.
-   يشمل الكتالوج القديم (sabic/military/training) للتوافق حتى تُوحَّد الوجهات (خطوة ١). */
+   يشمل الكتالوج القديم (sabic/military/training) للتوافق حتى تُوحَّد الوجهات (خطوة 1). */
 export const DESTINATION_REQUIREMENTS: Record<string, ExamKind[]> = {
   university:  ["qudurat", "tahsili"],
   major:       ["qudurat", "tahsili"],

@@ -1,6 +1,6 @@
 "use client";
 /* ─── مذكرة الواجبات — نظامٌ كامل داخل صفحة المدرسة ───
-   إضافةٌ في أقل من ٥ ثوانٍ (اكتب العنوان + Enter)، وخياراتٌ متقدّمة عند الحاجة
+   إضافةٌ في أقل من 5 ثوانٍ (اكتب العنوان + Enter)، وخياراتٌ متقدّمة عند الحاجة
    (مادة/تسليم/أولوية/مرفق/تكرار/تذكير). ترتيبٌ تلقائي وتجميعٌ حسب التسليم، وزرّ «تم».
    المصدر الوحيد: lib/homework — لتقرأه Life Engine ودويرب. */
 import { useState, useSyncExternalStore } from "react";
@@ -115,7 +115,7 @@ export default function HomeworkPlanner() {
               </label>
               <span className="w-px h-4" style={{ background: "var(--border)" }} />
               <span className="t-caption" style={{ color: "var(--text-muted)" }}>تذكير:</span>
-              {[[0, "بلا"], [1, "يوم"], [2, "يومين"], [3, "٣ أيام"]].map(([v, lbl]) => (
+              {[[0, "بلا"], [1, "يوم"], [2, "يومين"], [3, "3 أيام"]].map(([v, lbl]) => (
                 <button key={String(v)} onClick={() => setReminder(v as number)}
                   className="t-caption font-bold px-2 py-0.5 rounded-md transition"
                   style={reminder === v ? { background: "var(--accent)", color: "#fff" } : { background: "var(--surface)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>{lbl}</button>

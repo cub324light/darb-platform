@@ -17,8 +17,8 @@ const LESSON: KBEntity = {
   durationMin: 6,
   level: "easy",
   diagnostic: {
-    prompt: "لديك بطارية جهدها ١٢ فولت ومقاومة ٦ أوم. كم يكون التيار؟",
-    answer: "٢ أمبير — نقسم الجهد على المقاومة: I = V ÷ R = ١٢ ÷ ٦ = ٢.",
+    prompt: "لديك بطارية جهدها 12 فولت ومقاومة 6 أوم. كم يكون التيار؟",
+    answer: "2 أمبير — نقسم الجهد على المقاومة: I = V ÷ R = 12 ÷ 6 = 2.",
   },
   outcomes: [
     "تحسب التيار من الجهد والمقاومة",
@@ -45,8 +45,8 @@ const LESSON: KBEntity = {
       "وحّد الوحدات إن لزم (حوّل المللي أمبير إلى أمبير).",
       "عوّض واحسب، ثم راجع منطقية الناتج.",
     ] },
-    { type: "example", title: "مثال ١ — المجهول: التيار", problem: "بطاريةٌ جهدها ١٢ فولت موصولةٌ بمقاومة ٤ أوم. ما شدّة التيار؟", solution: "التيار مجهول ← نقسم: I = V ÷ R = ١٢ ÷ ٤ = ٣ أمبير." },
-    { type: "example", title: "مثال ٢ — المجهول: الجهد", problem: "يمرّ تيارٌ شدّته ٢ أمبير عبر مقاومة ٥ أوم. ما فرق الجهد بين طرفيها؟", solution: "الجهد مجهول ← نضرب: V = I × R = ٢ × ٥ = ١٠ فولت." },
+    { type: "example", title: "مثال 1 — المجهول: التيار", problem: "بطاريةٌ جهدها 12 فولت موصولةٌ بمقاومة 4 أوم. ما شدّة التيار؟", solution: "التيار مجهول ← نقسم: I = V ÷ R = 12 ÷ 4 = 3 أمبير." },
+    { type: "example", title: "مثال 2 — المجهول: الجهد", problem: "يمرّ تيارٌ شدّته 2 أمبير عبر مقاومة 5 أوم. ما فرق الجهد بين طرفيها؟", solution: "الجهد مجهول ← نضرب: V = I × R = 2 × 5 = 10 فولت." },
     { type: "warning", text: "أكثر خطأٍ شيوعاً: التعويض بوحداتٍ غير موحّدة (مللي أمبير مع أوم) دون تحويل. راجع الوحدات دائماً قبل الحساب." },
     { type: "whenToUse", exam: "في التحصيلي والفيزياء: أي سؤالٍ يعطيك اثنين من (الجهد/التيار/المقاومة) ويطلب الثالث، أو يمهّد لحساب القدرة P = V×I.", life: "في الحياة: لتعرف كم تيّاراً يسحبه جهازٌ من الكهرباء، أو لتختار مقاومةً مناسبة تحمي دائرةً إلكترونية (كمصباح LED) من التلف." },
     { type: "video", url: "https://www.youtube.com/watch?v=HsLLq6Rm5tU", title: "شرح مرئي: قانون أوم والدارات البسيطة" },
@@ -77,7 +77,7 @@ const QUESTIONS: KBEntity[] = [
   {
     kind: "question", id: E("question", "ohm-relationship"), name: "سؤال: العلاقة بين المقاومة والتيار",
     summary: "بقي الجهد ثابتاً وضاعفنا المقاومة. ماذا يحدث لشدّة التيار؟ ولماذا؟",
-    difficulty: "medium", bloom: "understand", answer: "ينتصف التيار — لأن التيار يتناسب عكسياً مع المقاومة عند ثبات الجهد (I = V ÷ R)، فمضاعفة R تقسم I على ٢.",
+    difficulty: "medium", bloom: "understand", answer: "ينتصف التيار — لأن التيار يتناسب عكسياً مع المقاومة عند ثبات الجهد (I = V ÷ R)، فمضاعفة R تقسم I على 2.",
     meta: { version: 1, lastUpdated: UPDATED, source: SOURCE, confidence: 0.9, importance: 65 },
     relations: [
       { type: "requires", to: E("concept", "ohms-law") },
@@ -87,8 +87,8 @@ const QUESTIONS: KBEntity[] = [
   },
   {
     kind: "question", id: E("question", "ohm-voltage"), name: "سؤال: حساب الجهد بقانون أوم",
-    summary: "يمرّ تيارٌ شدّته ٣ أمبير عبر مقاومة ٦ أوم. ما فرق الجهد؟",
-    difficulty: "easy", bloom: "apply", answer: "١٨ فولت (V = I × R = ٣ × ٦)",
+    summary: "يمرّ تيارٌ شدّته 3 أمبير عبر مقاومة 6 أوم. ما فرق الجهد؟",
+    difficulty: "easy", bloom: "apply", answer: "18 فولت (V = I × R = 3 × 6)",
     meta: { version: 1, lastUpdated: UPDATED, source: SOURCE, confidence: 0.9, importance: 60 },
     relations: [
       { type: "requires", to: E("concept", "ohms-law") },
@@ -98,8 +98,8 @@ const QUESTIONS: KBEntity[] = [
   },
   {
     kind: "question", id: E("question", "ohm-resistance"), name: "سؤال: حساب المقاومة بقانون أوم",
-    summary: "جهدٌ مقداره ٢٠ فولت يولّد تياراً شدّته ٤ أمبير. ما المقاومة؟",
-    difficulty: "medium", bloom: "apply", answer: "٥ أوم (R = V ÷ I = ٢٠ ÷ ٤)",
+    summary: "جهدٌ مقداره 20 فولت يولّد تياراً شدّته 4 أمبير. ما المقاومة؟",
+    difficulty: "medium", bloom: "apply", answer: "5 أوم (R = V ÷ I = 20 ÷ 4)",
     meta: { version: 1, lastUpdated: UPDATED, source: SOURCE, confidence: 0.9, importance: 60 },
     relations: [
       { type: "requires", to: E("concept", "ohms-law") },

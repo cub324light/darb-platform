@@ -11,7 +11,7 @@ import {
 const DAY = 86_400_000;
 const empty: RoadmapConfig = {};
 
-test("حدود الإضافة: max ٣", () => {
+test("حدود الإضافة: max 3", () => {
   assert.equal(MAX_EXAMS, 3);
   assert.equal(remainingSlots(0), 3);
   assert.equal(remainingSlots(3), 0);
@@ -29,7 +29,7 @@ test("get/setExamMeta: تعديلٌ غير مُدمِّر", () => {
   assert.deepEqual(getExamMeta(empty, "x"), {}); // افتراضي
 });
 
-test("قفل الأولوية: ٧ أيام + عدّاد", () => {
+test("قفل الأولوية: 7 أيام + عدّاد", () => {
   const now = 1_000_000_000_000;
   const locked = setPriorityOrder(empty, ["qudurat", "step", "tahsili"], now);
   assert.equal(getExamMeta(locked, "qudurat").priority, 1);
@@ -38,7 +38,7 @@ test("قفل الأولوية: ٧ أيام + عدّاد", () => {
 
   const day1 = priorityLock(locked, now + 1 * DAY);
   assert.equal(day1.locked, true);
-  assert.equal(day1.daysLeft, PRIORITY_LOCK_DAYS - 1); // ٦
+  assert.equal(day1.daysLeft, PRIORITY_LOCK_DAYS - 1); // 6
 
   const after = priorityLock(locked, now + 8 * DAY);
   assert.equal(after.locked, false);

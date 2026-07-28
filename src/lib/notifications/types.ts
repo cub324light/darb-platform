@@ -88,7 +88,7 @@ export interface NotificationConfig {
 export const DEFAULT_CONFIG: NotificationConfig = {
   sendThreshold: 0.55,
   cancelThreshold: 0.30,
-  cooldownMs: 6 * 60 * 60 * 1000, // ٦ ساعات
+  cooldownMs: 6 * 60 * 60 * 1000, // 6 ساعات
   dailyCap: 4,
   urgencyOverride: 0.85,
 };

@@ -1,4 +1,4 @@
-/* ═══════════ محرّك الإحصائيات (Stats Engine) — نقيٌّ ١٠٠٪ · صادق ═══════════
+/* ═══════════ محرّك الإحصائيات (Stats Engine) — نقيٌّ 100٪ · صادق ═══════════
    ▸ لماذا؟ صفحة إحصائياتٍ جميلة (نمط GitHub) تبدأ ببطاقة «هذا الأسبوع» ثم Heatmap فرسوم.
    ▸ المصدر: دقائق اليوم (dayMins) + سجلّ الجلسات (StudySessionLog) — يجمّعها القارئ.
    ▸ الهدف: ملخّصٌ أسبوعيّ + خريطة نشاط + قممٌ (أكثر مادة/ساعة/اختبار · أطول سلسلة · أفضل أسبوع).
@@ -44,7 +44,7 @@ export function computeStats(
   const dm = i.dayMins ?? {};
   const minsOn = (day: string): number => dm[day] ?? 0;
 
-  /* ── هذا الأسبوع (آخر ٧ أيام حتى اليوم) ── */
+  /* ── هذا الأسبوع (آخر 7 أيام حتى اليوم) ── */
   const weekDays = Array.from({ length: 7 }, (_, k) => addDays(i.today, -(6 - k)));
   const weekMins = weekDays.reduce((a, d) => a + minsOn(d), 0);
   const weekSessions = i.sessions.filter((s) => {
@@ -76,7 +76,7 @@ export function computeStats(
   const vsLastMonthPct = prevMonthMins > 0
     ? some(Math.round(((thisMonthMins - prevMonthMins) / prevMonthMins) * 100)) : none<number>();
 
-  /* ── أفضل أسبوع (نافذة ٧ أيام متحرّكة على مدى الـHeatmap) ── */
+  /* ── أفضل أسبوع (نافذة 7 أيام متحرّكة على مدى الـHeatmap) ── */
   let bestSum = 0, bestStart = "";
   for (let k = 0; k + 7 <= heatmap.length; k++) {
     const s = heatmap.slice(k, k + 7).reduce((a, c) => a + c.mins, 0);
@@ -84,7 +84,7 @@ export function computeStats(
   }
   const bestWeek = bestSum > 0 ? some({ start: bestStart, hours: round1(bestSum / 60) }) : none<{ start: string; hours: number }>();
 
-  /* ── أطول سلسلة + أيام الانقطاع (آخر ٣٠ يوماً) ── */
+  /* ── أطول سلسلة + أيام الانقطاع (آخر 30 يوماً) ── */
   const activeDays = Object.keys(dm).filter((d) => dm[d] > 0).sort();
   let longestStreak = 0, run = 0, prev = "";
   for (const d of activeDays) { run = prev && daysBetween(prev, d) === 1 ? run + 1 : 1; longestStreak = Math.max(longestStreak, run); prev = d; }

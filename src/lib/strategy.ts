@@ -107,7 +107,7 @@ const REVIEW_LABEL: Record<ReviewFrequency, string> = {
   daily: "يومياً", everyOtherDay: "يوم بعد يوم", twiceWeek: "مرتين بالأسبوع", weekly: "أسبوعياً",
 };
 const TRANSITION_RULE: Record<SubjectAllocation, string> = {
-  single: "أتقن المادة الحالية (إتقان ≥ ٨٠٪ أو إنهاء وحدتها) قبل الانتقال للتالية — ابدأ بأضعف مادة.",
+  single: "أتقن المادة الحالية (إتقان ≥ 80٪ أو إنهاء وحدتها) قبل الانتقال للتالية — ابدأ بأضعف مادة.",
   parallel: "اشتغل على مادتين بالتوازي وبدّل بينهما بين الجلسات، وانتقل لمادة جديدة عند إنهاء وحدة كاملة.",
   rotating: "دوّر على كل موادك خلال الأسبوع ولا تترك أي مادة أكثر من يومين بلا مراجعة — ابدأ يومك بالأحوج.",
 };
@@ -128,7 +128,7 @@ export function buildStrategy(inp: StrategyInputs): StudyStrategy {
 
   const studyDaysPerWeek = clamp(Math.round(inp.studyDaysPerWeek ?? (vacation ? 6 : 5)), 1, 7);
 
-  /* ١) الكثافة — مزيج إلحاح الموعد + عجز الجاهزية + الطاقة المتاحة */
+  /* 1) الكثافة — مزيج إلحاح الموعد + عجز الجاهزية + الطاقة المتاحة */
   let score = 0;
   if (daysToExam != null) {
     if (daysToExam <= 14) score += 3;
@@ -144,9 +144,9 @@ export function buildStrategy(inp: StrategyInputs): StudyStrategy {
   if (vacation) score += 1;
 
   let intensity: StudyIntensity = score >= 4 ? "intensive" : score >= 2 ? "moderate" : "light";
-  /* (٣) قاعدة التقويم: أقل من ٣٠ يوماً على الاختبار ⇒ مكثّفة تلقائياً */
+  /* (3) قاعدة التقويم: أقل من 30 يوماً على الاختبار ⇒ مكثّفة تلقائياً */
   if (daysToExam != null && daysToExam <= 30) intensity = "intensive";
-  /* (٤) فترة اختبارات مدرسية بلا اختبار قياس وشيك ⇒ خفِّف على قياس */
+  /* (4) فترة اختبارات مدرسية بلا اختبار قياس وشيك ⇒ خفِّف على قياس */
   if (schoolFinals && !qiyasImminent && intensity === "intensive") intensity = "moderate";
 
   /* حالة التقويم: اختبارات مدرسية ← اختبار قياس قريب ← إجازة ← دراسة */
@@ -155,7 +155,7 @@ export function buildStrategy(inp: StrategyInputs): StudyStrategy {
     (daysToExam != null && daysToExam <= 14 ? "اختبارات" :
     (vacation ? "إجازة" : "دراسة"));
 
-  /* ٢) توزيع المواد */
+  /* 2) توزيع المواد */
   let allocation: SubjectAllocation;
   const override = inp.allocationOverride;
   if (override && override !== "auto") {
@@ -170,10 +170,10 @@ export function buildStrategy(inp: StrategyInputs): StudyStrategy {
     allocation = "parallel";
   }
 
-  /* ٣) ساعات أسبوعية إجمالية وتوزيعها على المواد (الأحوج يأخذ أكثر) */
+  /* 3) ساعات أسبوعية إجمالية وتوزيعها على المواد (الأحوج يأخذ أكثر) */
   const basePerDay = studyHours ?? (intensity === "intensive" ? 4 : intensity === "moderate" ? 2.5 : 1.5);
-  /* (٢) في الإجازة: ارفع الساعات المقترحة تلقائياً (+٣٠٪)
-     (٤) في الاختبارات المدرسية بلا قياس وشيك: خفّض ساعات قياس (لصالح المدرسة) */
+  /* (2) في الإجازة: ارفع الساعات المقترحة تلقائياً (+30٪)
+     (4) في الاختبارات المدرسية بلا قياس وشيك: خفّض ساعات قياس (لصالح المدرسة) */
   const vacationBoost = vacation ? 1.3 : 1;
   const schoolFinalsCut = schoolFinals && !qiyasImminent ? 0.55 : 1;
   const perDay = basePerDay * vacationBoost * schoolFinalsCut;
@@ -194,16 +194,16 @@ export function buildStrategy(inp: StrategyInputs): StudyStrategy {
     hoursPerWeek: round1((weeklyHoursTotal * weightFor(name)) / sumW),
   }));
 
-  /* ٤) تكرار المراجعة */
+  /* 4) تكرار المراجعة */
   let reviewFrequency: ReviewFrequency;
   if (intensity === "intensive" || (daysToExam != null && daysToExam <= 21)) reviewFrequency = "daily";
   else if (intensity === "moderate") reviewFrequency = "everyOtherDay";
   else reviewFrequency = "twiceWeek";
 
-  /* ٥) بنية الجلسة */
+  /* 5) بنية الجلسة */
   const session = sessionStructure(inp.sessionLen);
 
-  /* ٦) قاعدة الانتقال */
+  /* 6) قاعدة الانتقال */
   const transitionRule = TRANSITION_RULE[allocation];
 
   /* إرشاد فترة الاختبارات المدرسية */

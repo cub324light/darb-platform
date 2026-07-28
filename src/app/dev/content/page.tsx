@@ -25,7 +25,7 @@ export default function ContentPage() {
           <span className="eyebrow" style={{ color: "var(--success)" }}>أداة مطوّر · نموّ المحتوى</span>
           <h1 className="t-h1" style={{ color: "var(--text)" }}>لوحة قيادة المحتوى</h1>
           <p className="t-body" style={{ color: "var(--text-dim)" }}>
-            نبني بالدفعات (٢٠–٣٠ عقدة)، ثم مراجعة وتنظيف وربط، ثم الدفعة التالية. الترتيب: القدرات ← التحصيلي ← الكتب ← STEP ← الجامعة.
+            نبني بالدفعات (20–30 عقدة)، ثم مراجعة وتنظيف وربط، ثم الدفعة التالية. الترتيب: القدرات ← التحصيلي ← الكتب ← STEP ← الجامعة.
           </p>
         </header>
         <ContentDashboard />

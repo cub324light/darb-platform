@@ -46,7 +46,7 @@ test("خريج الثانوية (admissionOpen=true) يرى «القبول»", (
 });
 
 /* ════════ الأولوية تتحوّل بالحال ════════ */
-test("متعثّر (٢٫٣) → الأولوية الأولى رفع المعدّل، وقواعدها تشمل «المعدّل أقل من ٢٫٧٥»", () => {
+test("متعثّر (2٫3) → الأولوية الأولى رفع المعدّل، وقواعدها تشمل «المعدّل أقل من 2٫75»", () => {
   const ps = lifeEngine(ctx({ gpa: 2.3 }));
   assertRanked(ps);
   assert.equal(ps[0].key, "gpa");
@@ -55,7 +55,7 @@ test("متعثّر (٢٫٣) → الأولوية الأولى رفع المعد�
   assert.equal(ps[0].score, 70); // 50 + 20 (senior)
 });
 
-test("متميّز (٤٫٨) → البحث لا رفع المعدّل", () => {
+test("متميّز (4٫8) → البحث لا رفع المعدّل", () => {
   const ps = lifeEngine(ctx({ gpa: 4.8 }));
   assert.equal(ps[0].key, "research");
   assert.ok(!ps.some((p) => p.key === "gpa"));
@@ -67,7 +67,7 @@ test("قرب التخرّج بمعدّل متوسط → السيرة أولاً 
   assert.ok(ps.some((p) => p.key === "coop"));
 });
 
-test("اختبارات الفصل بعد ٥ أيام → عاجل يتصدّر (أعلى وزن)", () => {
+test("اختبارات الفصل بعد 5 أيام → عاجل يتصدّر (أعلى وزن)", () => {
   const ps = lifeEngine(ctx({ gpa: 2.3, uniFinalsInDays: 5, termLabel: "الفصل الثالث" }));
   assert.equal(ps[0].key, "uni-finals");
   assert.equal(ps[0].urgent, true);
@@ -97,7 +97,7 @@ test("ثالث ثانوي بلا ضغط → القبول", () => {
   assert.ok(ps.some((p) => p.key === "admission" && p.href === "/university"));
 });
 
-test("أول ثانوي + قياس خلال ٤٥ يوماً → القياس والتبكير معاً", () => {
+test("أول ثانوي + قياس خلال 45 يوماً → القياس والتبكير معاً", () => {
   const ps = lifeEngine(ctx({
     stage: "first", uniStage: null,
     qiyas: { kind: "qudurat", label: "القدرات العامة", days: 30, weeks: 5, approximate: true },

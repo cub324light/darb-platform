@@ -76,7 +76,7 @@ export const QUESTION_BANK: Record<TrackId, Question[]> = {
     { q: "كم عدد أركان الإسلام؟", options: ["ثلاثة", "أربعة", "خمسة", "ستة"], correct: 2, subject: "إسلامية" },
     { q: "ما جمع كلمة «كتاب»؟", options: ["كتابات", "كتب", "أكتاب", "مكاتب"], correct: 1, subject: "عربي" },
     { q: "What is the plural of 'child'?", options: ["childs", "childes", "children", "child"], correct: 2, subject: "إنجليزي" },
-    { q: "ما ناتج: ٤٥ × ٢؟", options: ["٨٠", "٩٠", "٨٥", "٩٥"], correct: 1, subject: "رياضيات" },
+    { q: "ما ناتج: 45 × 2؟", options: ["80", "90", "85", "95"], correct: 1, subject: "رياضيات" },
   ],
 };
 

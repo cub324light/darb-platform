@@ -73,7 +73,7 @@ export default function LifeBoard() {
           </span>
           <span className="t-caption font-black px-2 py-0.5 rounded-full font-mono-nums"
             style={{ background: `color-mix(in srgb, ${c} 15%, transparent)`, color: c }}>
-            {priorities.length > 1 ? `١ من ${priorities.length}` : "١"}
+            {priorities.length > 1 ? `1 من ${priorities.length}` : "1"}
           </span>
         </div>
 

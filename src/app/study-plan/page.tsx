@@ -12,10 +12,10 @@ import { loadStudyPlan, saveStudyPlan, clearStudyPlan, loadGoals, activeTrackIds
 import { findMajor } from "@/lib/university";
 import { colorForSubject, type TrackId } from "@/lib/tracks";
 import type { StudyPlanSubject } from "@/lib/storage";
+import { n as ar } from "@/lib/format";
 
 const STEP = 0.5;
 const round1 = (n: number) => Math.round(n * 10) / 10;
-const ar = (n: number) => n.toLocaleString("ar-SA");
 
 /* يحوّل perSubject من الاستراتيجية + تعديلات المستخدم → قائمة العرض */
 function mergedSubjects(

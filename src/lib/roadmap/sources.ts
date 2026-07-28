@@ -1,13 +1,18 @@
 /* ═══════════ 📚 مصادر المذاكرة — محرّكٌ نقيّ ═══════════
    ▸ لماذا؟ الطالب لا يذاكر «مادةً» مجرّدة، بل يذاكر من مصدر: دورةُ معلّمٍ أو كتاب.
      المصدر يُقسَّم أقساماً، ولكل قسمٍ تقدّمه — فيرى الطالب أين هو بالضبط لا نسبةً غامضة.
-   ▸ الأقسام غير متساوية بطبعها: قسمُ «القواعد» ٢٥ صفحة وقسمٌ آخر ١٠. فلكل قسمٍ حجمه
+   ▸ الأقسام غير متساوية بطبعها: قسمُ «القواعد» 25 صفحة وقسمٌ آخر 10. فلكل قسمٍ حجمه
      واسمه، والتقسيمُ المتساوي مجرّد بدايةٍ يعدّلها الطالب.
    ▸ لا يُنجَز القسم دفعةً واحدة: التقدّم جزئيّ (صفحاتٌ/فيديوهاتٌ منجَزة)، ويمكن تسجيله
      بالوحدات مباشرةً أو بجلسةٍ زمنية عبر معدّل الإنجاز (`ratePerHour`).
-   ▸ نقيٌّ ١٠٠٪: لا localStorage ولا window ولا Date. كل الإدخال عبر الوسائط.
+   ▸ نقيٌّ 100٪: لا localStorage ولا window ولا Date. كل الإدخال عبر الوسائط.
      طبقة التخزين منفصلة في `sourceStore.ts`. (`format.ts` نقيٌّ بلا استيرادات فاستيراده آمن.) */
-import { n as arNum } from "@/lib/format";
+/* ترتيبٌ عربيٌّ بالكلمة: «القسم الأول» لا «القسم 1» — قاعدة الأرقام في `format.ts`
+   تقول إنّ العدد داخل جملةٍ سرديّة يُكتب كلمة. وما تجاوز العاشر يعود رقماً
+   («القسم 11») لأن كلماته تثقُل على العين في قائمةٍ طويلة. */
+const ORDINALS = ["الأول", "الثاني", "الثالث", "الرابع", "الخامس",
+                  "السادس", "السابع", "الثامن", "التاسع", "العاشر"] as const;
+const ordinal = (i: number): string => ORDINALS[i - 1] ?? String(i);
 
 export type SourceKind = "video" | "pages";
 
@@ -16,7 +21,7 @@ export interface SourceSection {
   title: string;
   /** عدد الوحدات في هذا القسم (فيديوهات أو صفحات) — يحرّره الطالب. */
   units: number;
-  /** المُنجَز منها — يبقى دائماً بين ٠ و`units`. */
+  /** المُنجَز منها — يبقى دائماً بين 0 و`units`. */
   done: number;
 }
 
@@ -39,7 +44,7 @@ export interface StudySource {
 export interface Progress {
   done: number;
   total: number;
-  /** نسبةٌ صحيحة ٠-١٠٠. صفرٌ حين لا وحدات — لا قسمةَ على صفر. */
+  /** نسبةٌ صحيحة 0-100. صفرٌ حين لا وحدات — لا قسمةَ على صفر. */
   pct: number;
 }
 
@@ -70,10 +75,10 @@ export function splitIntoSections(total: number, count: number, titlePrefix = "�
   const n = Math.min(c, t);
   const base = Math.floor(t / n);
   const extra = t % n;
-  /* العنوان بأرقامٍ عربية-هندية (قاعدة الخطوط المقفلة) — والمعرّف لاتينيٌّ للتخزين. */
+  /* العنوان بترتيبٍ عربيٍّ بالكلمة — والمعرّف لاتينيٌّ للتخزين. */
   return Array.from({ length: n }, (_, i) => ({
     id: `s${i + 1}`,
-    title: `${titlePrefix} ${arNum(i + 1)}`,
+    title: `${titlePrefix} ${ordinal(i + 1)}`,
     units: base + (i < extra ? 1 : 0),
     done: 0,
   }));
@@ -107,14 +112,14 @@ export function setSectionDone(src: StudySource, sectionId: string, done: number
   };
 }
 
-/** يزيد المُنجَز بمقدارٍ (موجبٍ أو سالب) — لتسجيل «ذاكرتُ ٥ صفحات الآن». */
+/** يزيد المُنجَز بمقدارٍ (موجبٍ أو سالب) — لتسجيل «ذاكرتُ 5 صفحات الآن». */
 export function addSectionDone(src: StudySource, sectionId: string, delta: number): StudySource {
   const sec = src.sections.find((s) => s.id === sectionId);
   if (!sec) return src;
   return setSectionDone(src, sectionId, sec.done + Math.round(delta));
 }
 
-/** يعيد تسمية قسم — «القسم ١» ← «القواعد». */
+/** يعيد تسمية قسم — «القسم 1» ← «القواعد». */
 export function renameSection(src: StudySource, sectionId: string, title: string): StudySource {
   const t = title.trim();
   if (!t) return src;
@@ -174,13 +179,13 @@ export function minutesForUnits(src: Pick<StudySource, "ratePerHour" | "minsPerU
   return 0;
 }
 
-/** متوسّط طول الوحدة بالدقائق مشتقّاً من المعدّل (٦٠ ÷ وحدة/ساعة). صفرٌ بلا معدّل. */
+/** متوسّط طول الوحدة بالدقائق مشتقّاً من المعدّل (60 ÷ وحدة/ساعة). صفرٌ بلا معدّل. */
 export function minsPerUnitFromRate(ratePerHour: number | undefined): number {
   if (!ratePerHour || ratePerHour <= 0) return 0;
   return Math.round(60 / ratePerHour);
 }
 
-/** نصُّ مدّةٍ تقريبيّ بهامشٍ ±١٠٪ — «بين ٥٥ و٦٥ دقيقة». فارغٌ بلا تقدير. */
+/** نصُّ مدّةٍ تقريبيّ بهامشٍ ±10٪ — «بين 55 و65 دقيقة». فارغٌ بلا تقدير. */
 export function durationRangeText(mins: number, fmt: (x: number) => string): string {
   if (mins <= 0) return "";
   const lo = Math.max(1, Math.round(mins * 0.9));

@@ -62,7 +62,7 @@ test("gradProgress: تجاوز الإجمالي يُقص إلى 100٪ بلا م�
 });
 
 /* ════════ buildUniJourney: البنية والحالات ════════ */
-test("buildUniJourney: ٦ محطات دائماً بأيقونات وتفاصيل غير فارغة", () => {
+test("buildUniJourney: 6 محطات دائماً بأيقونات وتفاصيل غير فارغة", () => {
   const steps = buildUniJourney("ee", "الأولى");
   assert.equal(steps.length, 6);
   for (const s of steps) {
@@ -111,7 +111,7 @@ test("buildUniJourney: بلا تخصص يستعمل الاحتياطي (كل ا�
 });
 
 /* ════════ aiThisWeek ════════ */
-test("aiThisWeek: ٣–٤ عناصر بمهمة وأداة غير فارغتين", () => {
+test("aiThisWeek: 3–4 عناصر بمهمة وأداة غير فارغتين", () => {
   const items = aiThisWeek("ee");
   assert.ok(items.length >= 3 && items.length <= 4);
   for (const it of items) {

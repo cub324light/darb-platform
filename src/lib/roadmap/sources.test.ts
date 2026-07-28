@@ -20,10 +20,11 @@ test("splitIntoSections: الأقسام الأولى تأخذ الزائد", () 
   assert.deepEqual(splitIntoSections(9, 3).map((s) => s.units), [3, 3, 3]);
 });
 
-test("عناوين الأقسام بأرقامٍ عربية-هندية (قاعدة الخطوط)", () => {
+test("عناوين الأقسام بترتيبٍ عربيٍّ بالكلمة (قاعدة الأرقام)", () => {
   const titles = splitIntoSections(3, 3).map((s) => s.title);
-  assert.deepEqual(titles, ["القسم ١", "القسم ٢", "القسم ٣"]);
-  assert.ok(titles.every((t) => !/[0-9]/.test(t)), "لا أرقامَ غربية في العناوين");
+  assert.deepEqual(titles, ["القسم الأول", "القسم الثاني", "القسم الثالث"]);
+  assert.ok(titles.every((t) => !/[0-9٠-٩]/.test(t)), "لا رقمَ في العناوين — كلماتٌ فقط");
+  assert.equal(splitIntoSections(12, 12)[10].title, "القسم 11", "ما تجاوز العاشر يعود رقماً");
   /* المعرّفات تبقى لاتينيةً للتخزين والمقارنة */
   assert.deepEqual(splitIntoSections(3, 3).map((s) => s.id), ["s1", "s2", "s3"]);
 });
@@ -148,11 +149,11 @@ test("splitSection يشطر القسم ويحفظ المجموع والمُنج�
   assert.equal(splitSection(one, "s1", 1).sections.length, 1);
 });
 
-test("unitsInMinutes: ٥ صفحات/ساعة ⇒ ساعةٌ = ٥ صفحات", async () => {
+test("unitsInMinutes: 5 صفحات/ساعة ⇒ ساعةٌ = 5 صفحات", async () => {
   const { unitsInMinutes } = await import("./sources");
   assert.equal(unitsInMinutes(5, 60), 5);
   assert.equal(unitsInMinutes(5, 120), 10);
-  assert.equal(unitsInMinutes(5, 30), 3);   // ٢٫٥ ← تقريب
+  assert.equal(unitsInMinutes(5, 30), 3);   // 2٫5 ← تقريب
   assert.equal(unitsInMinutes(undefined, 60), 0, "بلا معدّل ⇒ صفر لا تخمين");
   assert.equal(unitsInMinutes(0, 60), 0);
 });

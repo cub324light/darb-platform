@@ -20,21 +20,21 @@ test("بوابة hard: مستوفٍ 🟢 أو غير مستوفٍ 🔴 — لا 
   /* قدرات 89 لـ CPC(90) = أحمر (لا أصفر) */
   const r = evaluate(cpc, { qudurat: 89 });
   assert.equal(r.icon, "🔴");
-  assert.ok(r.reason.includes("٩٠") && r.reason.includes("القدرات"));
+  assert.ok(r.reason.includes("90") && r.reason.includes("القدرات"));
 });
 
-test("بوابة soft: 🟢 مستوفٍ · 🟡 قريب (≤٣) · 🔴 بعيد", () => {
+test("بوابة soft: 🟢 مستوفٍ · 🟡 قريب (≤3) · 🔴 بعيد", () => {
   const eng = requirementById("major-eng")!; // قدرات 85
   assert.equal(evaluate(eng, { qudurat: 86 }).icon, "🟢"); // متجاوز
   assert.equal(evaluate(eng, { qudurat: 85 }).icon, "🟢"); // مساوٍ
-  assert.equal(evaluate(eng, { qudurat: 83 }).icon, "🟡"); // فارق ٢
+  assert.equal(evaluate(eng, { qudurat: 83 }).icon, "🟡"); // فارق 2
   assert.equal(evaluate(eng, { qudurat: 85 - NEAR_MARGIN }).icon, "🟡"); // على حدّ القرب
-  assert.equal(evaluate(eng, { qudurat: 80 }).icon, "🔴"); // فارق ٥ = بعيد
+  assert.equal(evaluate(eng, { qudurat: 80 }).icon, "🔴"); // فارق 5 = بعيد
 });
 
 test("الحكم من شرط الفرصة لا من التقدير العام (S عالٍ لكن CPC أحمر)", () => {
   const cpc = requirementById("cpc")!; // 90
-  /* درجةٌ ممتازة عموماً (٨٨) لكنها دون ٩٠ ⇒ CPC أحمر */
+  /* درجةٌ ممتازة عموماً (88) لكنها دون 90 ⇒ CPC أحمر */
   assert.equal(evaluate(cpc, { qudurat: 88 }).icon, "🔴");
   const itc = requirementById("itc")!; // 72
   assert.equal(evaluate(itc, { qudurat: 88 }).icon, "🟢"); // نفس الدرجة تفتح ITC
@@ -42,18 +42,18 @@ test("الحكم من شرط الفرصة لا من التقدير العام (S
 
 test("الأسباب واضحة لكل حالة", () => {
   const itc = requirementById("itc")!;
-  assert.ok(evaluate(itc, { qudurat: 80 }).reason.includes("استوفيت") && evaluate(itc, { qudurat: 80 }).reason.includes("٧٢+"));
+  assert.ok(evaluate(itc, { qudurat: 80 }).reason.includes("استوفيت") && evaluate(itc, { qudurat: 80 }).reason.includes("72+"));
   const eng = requirementById("major-eng")!;
   assert.ok(evaluate(eng, { qudurat: 83 }).reason.includes("ينقصك") && evaluate(eng, { qudurat: 83 }).reason.includes("درجتان"));
   assert.equal(evaluate(eng, { qudurat: 84 }).reason.includes("درجة واحدة"), true);
   const cpc = requirementById("cpc")!;
-  assert.ok(evaluate(cpc, { qudurat: 70 }).reason.includes("تحتاج رفع") && evaluate(cpc, { qudurat: 70 }).reason.includes("٩٠+"));
+  assert.ok(evaluate(cpc, { qudurat: 70 }).reason.includes("تحتاج رفع") && evaluate(cpc, { qudurat: 70 }).reason.includes("90+"));
 });
 
 test("متعدّد الشروط: الأسوأ يقود اللون؛ نقص درجةٍ = ⚪", () => {
   const kfupm = requirementById("kfupm")!; // qudurat 85, step 50
   assert.equal(evaluate(kfupm, { qudurat: 90, step: 60 }).icon, "🟢");
-  assert.equal(evaluate(kfupm, { qudurat: 90, step: 40 }).icon, "🔴"); // hard: STEP دون ٥٠
+  assert.equal(evaluate(kfupm, { qudurat: 90, step: 40 }).icon, "🔴"); // hard: STEP دون 50
   /* لا درجة لأي اختبارٍ محكوم → ⚪ */
   const u = evaluate(kfupm, {});
   assert.equal(u.icon, "⚪");
@@ -63,6 +63,6 @@ test("متعدّد الشروط: الأسوأ يقود اللون؛ نقص در�
 test("scholarship: يعتمد على STEP (لغة)", () => {
   const sch = requirementById("scholarship")!; // step 80
   assert.equal(evaluate(sch, { step: 82 }).icon, "🟢");
-  assert.equal(evaluate(sch, { step: 78 }).icon, "🟡"); // soft، فارق ٢
+  assert.equal(evaluate(sch, { step: 78 }).icon, "🟡"); // soft، فارق 2
   assert.equal(evaluate(sch, { qudurat: 99 }).icon, "⚪"); // لا درجة STEP
 });

@@ -20,7 +20,7 @@ import {
 } from "@/lib/uniTools";
 
 /* تنسيق الأرقام بالعربية مع حد كسور */
-const ar = (n: number, d = 2) => n.toLocaleString("ar-SA", { maximumFractionDigits: d });
+const ar = (n: number, d = 2) => n.toLocaleString("ar-u-nu-latn", { maximumFractionDigits: d });
 /* قراءة رقم من حقل نصي — غير الصالح ⇒ null */
 const num = (s?: string): number | null => {
   const n = parseFloat(s ?? "");
@@ -34,13 +34,13 @@ const TOOLS: { id: ToolId; label: string; desc: string; icon: string; color: str
   { id: "gpa",     label: "حاسبة المعدل",  desc: "فصلي وتراكمي وكم تحتاج لهدفك", icon: "🧮", color: "var(--accent)" },
   { id: "absence", label: "حاسبة الغياب",  desc: "سقف الحرمان والمتبقي لك",      icon: "📅", color: "var(--gold)" },
   { id: "final",   label: "حاسبة الفاينل", desc: "كم تحتاج في الاختبار النهائي", icon: "📝", color: "var(--success)" },
-  { id: "convert", label: "تحويل المعدل",  desc: "بين سلالم ٤ و٥ و١٠٠",          icon: "🔄", color: "var(--danger)" },
+  { id: "convert", label: "تحويل المعدل",  desc: "بين سلالم 4 و5 و100",          icon: "🔄", color: "var(--danger)" },
 ];
 
 const SCALES: { id: GpaScaleId; label: string }[] = [
-  { id: 5, label: "من ٥" },
-  { id: 4, label: "من ٤" },
-  { id: 100, label: "من ١٠٠" },
+  { id: 5, label: "من 5" },
+  { id: 4, label: "من 4" },
+  { id: 100, label: "من 100" },
 ];
 
 /* صف مادة افتراضي لبداية لطيفة */
@@ -229,7 +229,7 @@ export default function UniTools() {
             <div className="flex gap-1.5">
               {([5, 4] as const).map((sys) => (
                 <Chip key={sys} active={system === sys} onClick={() => update({ system: sys })}>
-                  من {sys === 5 ? "٥" : "٤"}
+                  من {sys === 5 ? "5" : "4"}
                 </Chip>
               ))}
             </div>
@@ -399,9 +399,9 @@ export default function UniTools() {
               onChange={(v) => setFi({ currentScore: v })} placeholder="مثال: 52" />
             <Field label="من (مجموع الأعمال)" value={fiIn.currentOutOf ?? ""}
               onChange={(v) => setFi({ currentOutOf: v })} placeholder="مثال: 60" />
-            <Field label="وزن الفاينل من ١٠٠" value={fiIn.finalWeight ?? ""}
+            <Field label="وزن الفاينل من 100" value={fiIn.finalWeight ?? ""}
               onChange={(v) => setFi({ finalWeight: v })} placeholder="مثال: 40" />
-            <Field label="هدفي النهائي من ١٠٠" value={fiIn.targetTotal ?? ""}
+            <Field label="هدفي النهائي من 100" value={fiIn.targetTotal ?? ""}
               onChange={(v) => setFi({ targetTotal: v })} placeholder="مثال: 85" />
           </div>
 
@@ -413,10 +413,10 @@ export default function UniTools() {
               )}
               {fin.status === "impossible" && (
                 <ResultRow label="المطلوب في الفاينل"
-                  value={`مستحيل ⚠️ (يحتاج ${ar(fin.neededPct, 1)} من ١٠٠)`} color="var(--danger)" />
+                  value={`مستحيل ⚠️ (يحتاج ${ar(fin.neededPct, 1)} من 100)`} color="var(--danger)" />
               )}
               {fin.status === "possible" && (
-                <ResultRow label="المطلوب في الفاينل" value={`${ar(fin.neededPct, 1)} من ١٠٠`}
+                <ResultRow label="المطلوب في الفاينل" value={`${ar(fin.neededPct, 1)} من 100`}
                   color={fin.neededPct > 85 ? "var(--gold)" : "var(--success)"} />
               )}
             </ResultCard>

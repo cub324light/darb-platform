@@ -36,7 +36,7 @@ test("examCount: يعدّ المفردة + كل عضو، ويتجاهل Core و�
   ws = addMember(ws, "step", NOW);                    // عضوٌ في مجموعة اللغة
   assert.equal(examCount(ws), 3);                     // العضو اختبار (لا الحاوية)
   ws = addMember(ws, "ielts", NOW);
-  assert.equal(examCount(ws), 4);                     // عضوٌ آخر ⇒ ٤ (فوق الحدّ ٣)
+  assert.equal(examCount(ws), 4);                     // عضوٌ آخر ⇒ 4 (فوق الحدّ 3)
   ws = removeMember(ws, "step", NOW);
   assert.equal(examCount(ws), 3);
 });
