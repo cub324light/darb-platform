@@ -16,6 +16,7 @@ import { slotsToEvents } from "@/lib/roadmap/aiSchedule";
 import { loadUser, ensureWorkspace } from "@/lib/storage";
 import { readPriorityExam } from "@/lib/roadmap/nowRead";
 import { n, time } from "@/lib/format";
+import Sheet from "@/components/Sheet";
 
 const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
 const DayLadder = dynamic(() => import("@/components/DayLadder"), { ssr: false });
@@ -175,8 +176,7 @@ export default function CalendarPage() {
 
       {/* ورقة إضافة حدث */}
       {adding && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: "rgba(0,0,0,0.45)" }}
-          onClick={() => setAdding(false)} role="dialog" aria-modal="true">
+        <Sheet onClose={() => setAdding(false)} label="إضافة حدث">
           <div className="w-full max-w-md rounded-t-3xl p-5 pb-8 rise max-h-[86dvh] overflow-y-auto"
             style={{ background: "var(--surface)", borderTop: "1.5px solid var(--border)" }} onClick={(e) => e.stopPropagation()}>
             <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ background: "var(--border)" }} />
@@ -270,7 +270,7 @@ export default function CalendarPage() {
             </>
             )}
           </div>
-        </div>
+        </Sheet>
       )}
     </div>
   );

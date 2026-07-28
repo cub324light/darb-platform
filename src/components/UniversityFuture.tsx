@@ -6,7 +6,7 @@
    كل القرارات من محرّكات مركزية في university.ts (لا منطق مكرّر). */
 import { useMemo, useState } from "react";
 import {
-  UNIVERSITIES, MAJORS, findUniversity, findMajor, universityReadiness, gapAnalysis,
+  UNIVERSITIES, majorsAt, hasMajorList, findUniversity, findMajor, universityReadiness, gapAnalysis,
 } from "@/lib/university";
 import { loadGoals, saveGoals, currentScoreMap, activeExamTrackIds, loadTrackExamDates, type DarbGoals } from "@/lib/storage";
 import { getStrategy } from "@/lib/strategy";
@@ -55,10 +55,13 @@ export default function UniversityFuture() {
   const pickUniversity = (id: string) => {
     const u = findUniversity(id);
     if (!u) return;
+    /* تخصّصٌ لا تُدرّسه الجامعة الجديدة يسقط — وإلا بقي هدفاً مستحيلاً بلا أن يراه أحد */
+    const stillOffered = !goals.majorId || majorsAt(id).some((m) => m.id === goals.majorId);
+    const dropMajor = stillOffered ? {} : { majorId: undefined, major: undefined };
     if (id === "other") {
-      update({ universityId: "other", university: otherUni.trim() || "أخرى" });
+      update({ universityId: "other", university: otherUni.trim() || "أخرى", ...dropMajor });
     } else {
-      update({ universityId: id, university: u.name });
+      update({ universityId: id, university: u.name, ...dropMajor });
     }
     setUniQuery("");
   };
@@ -181,8 +184,14 @@ export default function UniversityFuture() {
       {/* اختيار التخصص المستهدف */}
       <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
         <p className="text-[15px] font-black" style={{ color: "var(--text)" }}>📚 التخصص المستهدف</p>
+        {/* تخصصات الجامعة المختارة وحدها — لا نَعِد الطالب بتخصّصٍ ليس فيها */}
+        {hasMajorList(goals.universityId) && (
+          <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+            التخصصات المتاحة في {selectedUni?.name ?? "جامعتك"}
+          </p>
+        )}
         <div className="flex flex-wrap gap-2">
-          {MAJORS.map((m) => {
+          {majorsAt(goals.universityId).map((m) => {
             const on = goals.majorId === m.id;
             return (
               <button key={m.id} onClick={() => pickMajor(m.id)} aria-pressed={on}

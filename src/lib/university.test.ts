@@ -5,6 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   UNIVERSITIES, MAJORS, universityMapUrl, universityCity, universitiesByRegion,
+  UNIVERSITY_MAJORS, majorsAt, hasMajorList,
 } from "./university";
 
 test("فرادة معرّفات الجامعات والتخصصات", () => {
@@ -118,5 +119,58 @@ test("qsRankText/arabRankText: نصٌّ صادقٌ أو فارغ", async () => {
 test("سنةُ إصدار QS لا تُذكر بلا ترتيب", () => {
   for (const u of UNIVERSITIES) {
     if (u.qsYear !== undefined) assert.ok(u.qsRank !== undefined, `سنة بلا ترتيب: ${u.id}`);
+  }
+});
+
+/* ═══ تخصصات كل جامعة — من دليل المالك ═══ */
+
+test("كل مفتاحٍ في جدول التخصصات جامعةٌ حقيقية", () => {
+  const ids = new Set(UNIVERSITIES.map((u) => u.id));
+  for (const key of Object.keys(UNIVERSITY_MAJORS)) {
+    assert.ok(ids.has(key), `جامعةٌ غير موجودة في الجدول: ${key}`);
+  }
+});
+
+test("كل تخصّصٍ مذكورٍ لجامعةٍ معرّفٌ حقيقيّ وغير مكرّر", () => {
+  const majorIds = new Set(MAJORS.map((m) => m.id));
+  for (const [uni, list] of Object.entries(UNIVERSITY_MAJORS)) {
+    assert.ok(list.length > 0, `${uni}: قائمةٌ فارغة — الغياب يُعبَّر عنه بحذف المفتاح`);
+    assert.equal(new Set(list).size, list.length, `${uni}: تخصّصٌ مكرّر`);
+    for (const id of list) assert.ok(majorIds.has(id), `${uni}: تخصّصٌ مجهول «${id}»`);
+    assert.ok(!list.includes("other"), `${uni}: «أخرى» تُضاف تلقائياً فلا تُكتب`);
+  }
+});
+
+test("majorsAt: جامعةٌ معروفة ⇒ تخصصاتها هي فقط + «أخرى»", () => {
+  const iau = majorsAt("iau").map((m) => m.id);
+  assert.ok(iau.includes("medicine") && iau.includes("cybersec"));
+  assert.ok(!iau.includes("me"), "الدليل لا يذكر الهندسة الميكانيكية في الإمام عبدالرحمن");
+  assert.ok(iau.includes("other"), "«أخرى» مخرجٌ دائم");
+  assert.ok(iau.length < MAJORS.length, "القائمة مصفّاة فعلاً");
+});
+
+test("majorsAt: جامعةٌ خارج الدليل أو بلا اختيار ⇒ كل التخصصات (لا حجب)", () => {
+  assert.equal(majorsAt(undefined).length, MAJORS.length);
+  assert.equal(majorsAt("").length, MAJORS.length);
+  assert.equal(majorsAt("alfaisal").length, MAJORS.length, "الفيصل خارج الدليل ⇒ لا نحجب");
+  assert.equal(majorsAt("other").length, MAJORS.length);
+});
+
+test("majorsAt يحفظ ترتيب MAJORS (الصحي ثم الحاسب ثم الهندسي…)", () => {
+  const order = MAJORS.map((m) => m.id);
+  const got = majorsAt("ksu").map((m) => m.id);
+  assert.deepEqual(got, order.filter((id) => got.includes(id)));
+});
+
+test("hasMajorList يفرّق «لا نعلم» عن «نعلم»", () => {
+  assert.equal(hasMajorList("iau"), true);
+  assert.equal(hasMajorList("alfaisal"), false);
+  assert.equal(hasMajorList(undefined), false);
+});
+
+test("KFUPM بلا تخصصاتٍ طبية — يوافق ما تقوله بطاقتها", () => {
+  const ids = majorsAt("kfupm").map((m) => m.id);
+  for (const med of ["medicine", "dentistry", "pharmacy", "nursing"]) {
+    assert.ok(!ids.includes(med), `KFUPM لا تضم ${med}`);
   }
 });

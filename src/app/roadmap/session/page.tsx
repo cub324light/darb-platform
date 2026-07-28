@@ -16,6 +16,7 @@ import { loadRoadmapConfig } from "@/lib/roadmap/store";
 import { ROADMAP_TUNING } from "@/lib/roadmap/config";
 import { trackEvent } from "@/lib/analytics";
 import { n } from "@/lib/format";
+import Sheet from "@/components/Sheet";
 
 type Stage = "plan" | "done";
 const TASK_ICON: Record<SessionTask["kind"], string> = { review: "📖", drill: "📝", errors: "❌" };
@@ -217,8 +218,7 @@ export default function SessionPage() {
 
       {/* ورقة سبب التخطّي — دويرب يتعلّم من اختيارك */}
       {skipIdx != null && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: "rgba(0,0,0,0.45)" }}
-          onClick={() => setSkipIdx(null)} role="dialog" aria-modal="true">
+        <Sheet onClose={() => setSkipIdx(null)} label="سبب التخطّي">
           <div className="w-full max-w-md rounded-t-3xl p-5 pb-8 rise" style={{ background: "var(--surface)", borderTop: "1.5px solid var(--border)" }}
             onClick={(e) => e.stopPropagation()}>
             <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ background: "var(--border)" }} />
@@ -235,7 +235,7 @@ export default function SessionPage() {
             </div>
             <button onClick={() => setSkipIdx(null)} className="w-full mt-3 py-3 t-body font-bold rounded-xl" style={{ color: "var(--text-muted)" }}>تراجع</button>
           </div>
-        </div>
+        </Sheet>
       )}
     </div>
   );

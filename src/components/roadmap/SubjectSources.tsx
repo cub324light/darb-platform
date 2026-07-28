@@ -14,6 +14,7 @@ import {
 import { loadSources, sourcesFor, addSource, updateSource, removeSource, newSourceId } from "@/lib/roadmap/sourceStore";
 import { catalogFor, type CatalogSource } from "@/lib/sourceCatalog";
 import { n, pct } from "@/lib/format";
+import Sheet from "@/components/Sheet";
 
 const DEFAULT_SECTIONS = 4;
 
@@ -183,8 +184,7 @@ function SectionSheet({ src, sec, color, onClose, onSave }: {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: "rgba(0,0,0,0.45)" }}
-      onClick={onClose} role="dialog" aria-modal="true">
+    <Sheet onClose={onClose}>
       <div className="w-full max-w-md rounded-t-3xl p-5 pb-8 rise max-h-[86dvh] overflow-y-auto"
         style={{ background: "var(--surface)", borderTop: "1.5px solid var(--border)" }} onClick={(e) => e.stopPropagation()}>
         <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ background: "var(--border)" }} />
@@ -242,7 +242,7 @@ function SectionSheet({ src, sec, color, onClose, onSave }: {
           style={{ background: color, color: "#fff", border: "none" }}>احفظ</button>
         <button onClick={onClose} className="w-full mt-2 py-3 t-body font-bold" style={{ color: "var(--text-muted)" }}>تراجع</button>
       </div>
-    </div>
+    </Sheet>
   );
 }
 
@@ -287,8 +287,7 @@ function AddSourceSheet({ subject, examKey, color, onClose, onAdd }: {
   const pick = (c: CatalogSource) => { setPicked(c); setCustom(false); setKind(c.kind); if (c.totalUnits) setUnits(String(c.totalUnits)); };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: "rgba(0,0,0,0.45)" }}
-      onClick={onClose} role="dialog" aria-modal="true">
+    <Sheet onClose={onClose}>
       <div className="w-full max-w-md rounded-t-3xl p-5 pb-8 rise max-h-[86dvh] overflow-y-auto"
         style={{ background: "var(--surface)", borderTop: "1.5px solid var(--border)" }} onClick={(e) => e.stopPropagation()}>
         <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ background: "var(--border)" }} />
@@ -395,6 +394,6 @@ function AddSourceSheet({ subject, examKey, color, onClose, onAdd }: {
         </button>
         <button onClick={onClose} className="w-full mt-2 py-3 t-body font-bold" style={{ color: "var(--text-muted)" }}>تراجع</button>
       </div>
-    </div>
+    </Sheet>
   );
 }

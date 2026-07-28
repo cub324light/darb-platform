@@ -304,6 +304,15 @@ export const UNIVERSITIES: UniversityOption[] = [
     cons: ["خيارات التخصصات أقل من الجامعات الكبرى", "بعيدة عن المدن الرئيسية"],
     formulas: STD_GOV,
     colleges: ["الطب", "الصيدلة", "العلوم الطبية التطبيقية", "التمريض", "الهندسة", "الحاسبات وتقنية المعلومات", "إدارة الأعمال", "العلوم", "الآداب", "التربية", "الاقتصاد المنزلي"] },
+  /* الدراسة عن بُعد، فمعادلةُ قبولها ليست معادلة القبول الموحّد — تُترك `formulas`
+     غائبةً عمداً (لا نخترع معادلةً)، ويبقى الطالب على بوابة الجامعة. */
+  { id: "seu", name: "الجامعة السعودية الإلكترونية", region: "الرياض", kind: "حكومية",
+    description: "جامعة حكومية للتعليم المدمج وعن بُعد، مقرّها الرياض ولها فروع في مدن المملكة، تركّز على الحوسبة والإدارة والعلوم الصحية.",
+    city: "الرياض", foundedYear: 2011, website: "https://seu.edu.sa",
+    pros: ["دراسة مدمجة وعن بُعد تناسب الموظفين والمرتبطين", "فروع في أغلب مناطق المملكة"],
+    cons: ["لا تضم تخصصات طبية سريرية", "تتطلب انضباطاً ذاتياً عالياً في الدراسة عن بُعد"],
+    admissionNote: "شروط القبول ومعادلته تختلف عن القبول الموحّد — راجع بوابة الجامعة.",
+    colleges: ["العلوم الإدارية والمالية", "الحوسبة والمعلوماتية", "العلوم الصحية", "العلوم والدراسات النظرية"] },
 
   /* ─── جامعات أهلية (المعايير تختلف — راجع موقع الجامعة) ─── */
   { id: "psu", name: "جامعة الأمير سلطان", qsRank: 488, qsYear: 2027, arabTopN: 22, region: "الرياض", kind: "أهلية",
@@ -431,11 +440,102 @@ export const MAJORS: MajorOption[] = [
   { id: "other",     name: "أخرى", category: "عام", requirements: {} },
 ];
 
+/* ════════ التخصصات المتاحة في كل جامعة ════════
+   المصدر: «الدليل الشامل الكامل للجامعات والتخصصات السعودية» الذي زوّدنا به المالك،
+   ٢٥ جامعةً بكلياتها وبرامجها. الطالب الذي يختار جامعةً بعينها يجب أن يرى تخصصاتها
+   هي فقط — لا قائمةً عامةً تَعِده بما ليس فيها.
+
+   ثلاث قواعد تحكم هذا الجدول:
+   ١. لا اختراع: تخصّصٌ لا يذكره الدليل لا يُضاف، وإن كانت الجامعة تدرّسه واقعاً.
+   ٢. جامعةٌ خارج الدليل تبقى بلا مفتاحٍ هنا ⇒ `majorsAt` يعيد كل التخصصات.
+      الغياب يعني «لا نعلم» لا «لا يوجد» — فلا نحجب عن الطالب ما لم نتحقّق منه.
+   ٣. حين يذكر الدليل «الهندسة» مجملةً بلا تفصيل، نفتحها على النواة الثلاث
+      (مدنية · ميكانيكية · كهربائية) لأنها لا تنفكّ عن كلية هندسةٍ سعودية، ولا نزيد.
+
+   المفاتيح معرّفات `UNIVERSITIES` والقيم معرّفات `MAJORS` — يحرسهما اختبار سلامة. */
+export const UNIVERSITY_MAJORS: Record<string, string[]> = {
+  /* ١ · الإمام عبدالرحمن بن فيصل — الدليل يفصّل برامجها، فلا نضيف عليها */
+  iau: ["medicine", "dentistry", "pharmacy", "nursing", "applied-medical", "ce",
+        "cs", "is", "cybersec", "ai", "business", "accounting", "finance", "marketing"],
+  /* ٢ · الملك فيصل */
+  kfu: ["medicine", "pharmacy", "cs", "is", "ce", "me", "ee", "business", "accounting", "finance", "law"],
+  /* ٣ · الملك فهد للبترول والمعادن — بلا تخصصاتٍ طبية (يوافق `cons` في ملفّها) */
+  kfupm: ["ce", "me", "ee", "cs", "swe", "is", "accounting", "finance", "marketing"],
+  /* ٤ · الملك سعود */
+  ksu: ["medicine", "dentistry", "pharmacy", "nursing", "applied-medical", "ce", "me", "ee",
+        "industrial", "cs", "is", "swe", "business", "accounting", "finance", "marketing", "law"],
+  /* ٥ · الملك عبدالعزيز */
+  kau: ["medicine", "dentistry", "pharmacy", "applied-medical", "ce", "me", "ee", "industrial",
+        "cs", "is", "business", "accounting", "finance", "marketing", "law"],
+  /* ٦ · نجران */
+  nu: ["medicine", "dentistry", "pharmacy", "nursing", "applied-medical", "ce", "me", "ee",
+       "cs", "is", "ai", "business", "accounting", "law"],
+  /* ٧ · أم القرى */
+  uqu: ["medicine", "dentistry", "pharmacy", "applied-medical", "ce", "me", "ee",
+        "cs", "is", "business", "accounting", "marketing"],
+  /* ٨ · الإمام محمد بن سعود الإسلامية */
+  imam: ["medicine", "ce", "me", "ee", "cs", "is", "business", "accounting", "finance"],
+  /* ٩ · الأميرة نورة بنت عبدالرحمن */
+  pnu: ["medicine", "dentistry", "pharmacy", "nursing", "applied-medical",
+        "cs", "is", "ai", "industrial", "ee", "business"],
+  /* ١٠ · القصيم */
+  qu: ["medicine", "dentistry", "pharmacy", "nursing", "applied-medical",
+       "ce", "me", "ee", "cs", "business", "law"],
+  /* ١١ · طيبة */
+  taibah: ["medicine", "dentistry", "pharmacy", "nursing", "applied-medical",
+           "ce", "me", "ee", "cs", "business", "law"],
+  /* ١٢ · الإسلامية بالمدينة المنورة */
+  iu: ["ce", "me", "ee", "cs", "is", "law"],
+  /* ١٣ · الطائف */
+  tu: ["medicine", "dentistry", "pharmacy", "applied-medical",
+       "ce", "me", "ee", "cs", "is", "business", "law"],
+  /* ١٤ · جازان */
+  ju: ["medicine", "dentistry", "pharmacy", "nursing", "applied-medical",
+       "ce", "me", "ee", "industrial", "cs", "business", "law"],
+  /* ١٥ · حائل */
+  uoh: ["medicine", "dentistry", "pharmacy", "nursing", "applied-medical",
+        "ce", "me", "ee", "cs", "business", "law"],
+  /* ١٦ · تبوك */
+  ut: ["medicine", "pharmacy", "applied-medical", "ce", "me", "ee", "cs", "is", "business", "law"],
+  /* ١٧ · الجوف */
+  jouf: ["medicine", "dentistry", "pharmacy", "applied-medical",
+         "ce", "me", "ee", "cs", "is", "business", "law"],
+  /* ١٨ · الباحة */
+  bu: ["medicine", "dentistry", "pharmacy", "applied-medical", "ce", "me", "ee", "cs", "is", "business"],
+  /* ١٩ · الحدود الشمالية */
+  nbu: ["medicine", "pharmacy", "nursing", "applied-medical", "ce", "me", "ee", "cs", "is", "business"],
+  /* ٢٠ · السعودية الإلكترونية — عن بُعد، فلا برامج طبيةً سريرية */
+  seu: ["business", "accounting", "finance", "cs", "is", "applied-medical", "law"],
+  /* ٢١ · جدة */
+  uj: ["medicine", "applied-medical", "ce", "me", "ee", "cs", "business", "law"],
+  /* ٢٢–٢٥ · المجمعة · شقراء · حفر الباطن · بيشة — يذكرها الدليل بقائمةٍ واحدة */
+  mu:  ["medicine", "nursing", "applied-medical", "ce", "me", "ee", "cs", "is", "business"],
+  su:  ["medicine", "nursing", "applied-medical", "ce", "me", "ee", "cs", "is", "business"],
+  uhb: ["medicine", "nursing", "applied-medical", "ce", "me", "ee", "cs", "is", "business"],
+  ub:  ["medicine", "nursing", "applied-medical", "ce", "me", "ee", "cs", "is", "business"],
+};
+
 /* ── helpers ── */
 export const findUniversity = (id?: string): UniversityOption | undefined =>
   id ? UNIVERSITIES.find((u) => u.id === id) : undefined;
 export const findMajor = (id?: string): MajorOption | undefined =>
   id ? MAJORS.find((m) => m.id === id) : undefined;
+
+/**
+ * تخصّصات جامعةٍ بعينها. بلا معرّفٍ أو بجامعةٍ خارج الدليل ⇒ كل التخصصات:
+ * «لا نعلم» ليست «لا يوجد»، فلا نحجب خياراً لم نتحقّق من غيابه.
+ * «أخرى» يبقى دائماً في آخر القائمة — مخرجٌ للطالب مهما ضاقت البيانات.
+ */
+export function majorsAt(uniId?: string): MajorOption[] {
+  const ids = uniId ? UNIVERSITY_MAJORS[uniId] : undefined;
+  if (!ids) return MAJORS;
+  const set = new Set(ids);
+  return MAJORS.filter((m) => set.has(m.id) || m.id === "other");
+}
+
+/** هل نعرف تخصصات هذه الجامعة؟ (لتقول الواجهة «تخصصات جامعتك» لا «كل التخصصات») */
+export const hasMajorList = (uniId?: string): boolean =>
+  !!uniId && UNIVERSITY_MAJORS[uniId] !== undefined;
 
 /* رابط بحث خرائط Google آمن — يُبنى دائماً من اسم الجامعة (لا يحتاج حقلاً مخزّناً) */
 export function universityMapUrl(u: UniversityOption): string {

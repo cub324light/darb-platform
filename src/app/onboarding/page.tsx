@@ -7,7 +7,7 @@
    يعيد استخدام المحرّكات القائمة (recommendedExams/darbKnowledge/outlook/saRegions). */
 import { useState, useEffect, type ReactNode } from "react";
 import { validateScore, scoreRangeForTitle, type TrackId } from "@/lib/tracks";
-import { MAJORS, findUniversity, findMajor, UNIVERSITIES } from "@/lib/university";
+import { majorsAt, hasMajorList, findUniversity, findMajor, UNIVERSITIES } from "@/lib/university";
 import { saveUser, saveResults, loadGoals, saveGoals, ensureWorkspace,
   loadTrackExamDates, saveTrackExamDates, currentScoreMap,
   type DarbUser, type PendingResultRecord } from "@/lib/storage";
@@ -284,7 +284,9 @@ export default function OnboardingPage() {
   const total = steps.length - 1; // الترحيب = ٠
 
   const filteredUnis = (() => { const q = uniQuery.trim(); return q ? UNIVERSITIES.filter((u) => u.name.includes(q) || (u.region ?? "").includes(q)) : UNIVERSITIES; })();
-  const pickUni = (id: string) => { const u = findUniversity(id); if (!u) return; setUniversityId(id); setUniversityName(id === "other" ? (otherUni.trim() || "أخرى") : u.name); setUniQuery(""); };
+  const pickUni = (id: string) => { const u = findUniversity(id); if (!u) return; setUniversityId(id); setUniversityName(id === "other" ? (otherUni.trim() || "أخرى") : u.name); setUniQuery("");
+    /* تخصّصٌ لا تُدرّسه الجامعة الجديدة يسقط بدل أن يبقى مختاراً وهو مخفيّ */
+    if (majorId && !majorsAt(id).some((m) => m.id === majorId)) setMajorId(""); };
 
   /* ── التحقّق لكل خطوة ── */
   const canProceed = (): boolean => {
@@ -952,8 +954,11 @@ export default function OnboardingPage() {
           </div>
           <div>
             <p className="t-h2 font-black mb-3" style={{ color: "var(--text)" }}>📚 تخصصك</p>
+            {hasMajorList(universityId) && (
+              <p className="t-caption mb-2" style={{ color: "var(--text-muted)" }}>التخصصات المتاحة في {universityName}</p>
+            )}
             <div className="flex flex-wrap gap-2">
-              {MAJORS.map((m) => { const on = majorId === m.id; return (<button key={m.id} onClick={() => setMajorId(on ? "" : m.id)} className="px-3 py-2 rounded-full font-bold t-small transition active:scale-95" style={{ background: on ? "var(--accent)" : "var(--surface2)", color: on ? "#fff" : "var(--text)", border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}` }}>{m.name}</button>); })}
+              {majorsAt(universityId).map((m) => { const on = majorId === m.id; return (<button key={m.id} onClick={() => setMajorId(on ? "" : m.id)} className="px-3 py-2 rounded-full font-bold t-small transition active:scale-95" style={{ background: on ? "var(--accent)" : "var(--surface2)", color: on ? "#fff" : "var(--text)", border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}` }}>{m.name}</button>); })}
             </div>
           </div>
           <div>
