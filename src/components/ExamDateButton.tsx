@@ -1,5 +1,6 @@
 "use client";
 import { useRef } from "react";
+import { dateTiny } from "@/lib/format";
 
 /* زر تحديد موعد الاختبار — يفتح منتقي التاريخ الأصلي بثبات على الجوال
    (showPicker أولاً ثم بدائل) بدون أي إيموجي. */
@@ -29,7 +30,7 @@ export default function ExamDateButton({
   };
 
   const label = value
-    ? new Date(value + "T00:00:00").toLocaleDateString("ar-SA", { month: "short", day: "numeric" })
+    ? dateTiny(value)
     : "تحديد الموعد";
 
   return (

@@ -2,10 +2,11 @@
 import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import { CHANGELOG, CHANGE_META } from "@/lib/changelog";
+import { dateLong } from "@/lib/format";
 
 function fmtDate(d: string): string {
   try {
-    return new Date(d + "T00:00:00").toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" });
+    return dateLong(d);
   } catch { return d; }
 }
 

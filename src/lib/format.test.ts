@@ -2,7 +2,8 @@
    تشغيل: npx tsx --test src/lib/format.test.ts */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { n, pct, frac, sar, days, time, timeRange, dur } from "./format";
+import { n, pct, frac, sar, days, time, timeRange, dur,
+  dateShort, dateLong, dateTiny, dateFull, dateHijri } from "./format";
 
 /* الاصطلاح: أرقام 0-9 وحدها — لا يجوز أن يتسرّب شكلٌ عربيٌّ-هنديّ إلى أي مخرَج. */
 const isLatinDigits = (s: string) => /[0-9]/.test(s) && !/[٠-٩]/.test(s);
@@ -72,4 +73,45 @@ test("dur: مدّةٌ بجملةٍ عربية طبيعية", () => {
   assert.equal(dur(90), "ساعة و30 دقيقة");
   assert.equal(dur(120), "ساعتين");
   assert.equal(dur(195), "3 ساعات و15 دقيقة");
+});
+
+/* ═══ التواريخ — العطل الذي كان: «ar-SA» في المتصفّح = أُمّ القرى بأرقامٍ هندية ═══
+   الطالب كان يرى موعد اختباره «٢٦ محرم» في التقويم و«11 يوليو» في خطته — تاريخٌ
+   واحد بتقويمين وشكلَي أرقام. */
+
+test("dateShort/dateLong/dateTiny: ميلاديّ بأرقام 0-9", () => {
+  assert.equal(dateShort("2026-07-11"), "11 يوليو");
+  assert.equal(dateLong("2026-07-11"), "11 يوليو 2026");
+  assert.ok(isLatinDigits(dateTiny("2026-07-11")), dateTiny("2026-07-11"));
+});
+
+test("dateFull: اليوم واسمه، والسنة اختيارية", () => {
+  assert.match(dateFull("2026-07-11"), /السبت/);
+  assert.match(dateFull("2026-07-11"), /2026/);
+  assert.doesNotMatch(dateFull("2026-07-11", false), /2026/);
+});
+
+test("dateHijri: هجريٌّ صريح لكن بأرقام 0-9 لا هندية", () => {
+  const s = dateHijri("2026-07-11");
+  assert.ok(!/[٠-٩]/.test(s), `تسرّبت أرقامٌ هندية: ${s}`);
+});
+
+/* ═══ حارسُ المصدر — يمنع عودة العطل نفسه ═══
+   `"ar-SA"` (ومعها `"ar-SA-u-nu-latn"`) تعني في المتصفّح تقويم أُمّ القرى، فتُظهر
+   «26 محرم» حيث يقصد المنتج «11 يوليو». الاصطلاح: `ar-u-nu-latn` وحدها، ومَن أراد
+   الهجريّ فليطلبه صراحةً بـ`dateHijri`. */
+test("المصدر: لا «ar-SA» في أي صفحةٍ أو مكوّن", async () => {
+  const { readdirSync, readFileSync, statSync } = await import("node:fs");
+  const { join } = await import("node:path");
+  const offenders: string[] = [];
+  const walk = (dir: string) => {
+    for (const e of readdirSync(dir)) {
+      const f = join(dir, e);
+      if (statSync(f).isDirectory()) { walk(f); continue; }
+      if (!/\.tsx?$/.test(f) || /\.test\.tsx?$/.test(f) || f.endsWith("lib/format.ts")) continue;
+      if (readFileSync(f, "utf8").includes('"ar-SA')) offenders.push(f);
+    }
+  };
+  walk("src");
+  assert.deepEqual(offenders, [], `استعمِل ar-u-nu-latn أو dateHijri بدل ar-SA في:\n${offenders.join("\n")}`);
 });

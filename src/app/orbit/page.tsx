@@ -856,7 +856,7 @@ export default function OrbitPage() {
               <div className="flex flex-col gap-1.5 max-h-[320px] overflow-y-auto">
                 {sessionLog.map((e) => {
                   const d = new Date(e.ts);
-                  const when = d.toLocaleString("ar-SA-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: true });
+                  const when = d.toLocaleString("ar-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: true });
                   return (
                     <div key={e.id} className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5"
                       style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>

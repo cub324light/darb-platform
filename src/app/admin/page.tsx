@@ -9,6 +9,7 @@ import { ROLE_LABEL, ROLE_COLOR, ASSIGNABLE_ROLES, ROLE_RANK, canDo, type Role }
 import { annualReviewLists } from "@/lib/content";
 
 import AdminShell, { type AdminSection } from "@/components/admin/AdminShell";
+import { dateShort } from "@/lib/format";
 
 /* القوائم المرجعية التي تتغير كل موسم قبول — من بذرة المحتوى المحلية مباشرة
    (بلا استعلامات Firestore ولا راوت جديد) */
@@ -133,7 +134,7 @@ interface ImpView {
 
 function fmt(ts?: { seconds: number } | null): string {
   if (!ts) return "—";
-  return new Date(ts.seconds * 1000).toLocaleDateString("ar-SA", {
+  return new Date(ts.seconds * 1000).toLocaleDateString("ar-u-nu-latn", {
     day: "numeric", month: "short", year: "numeric",
   });
 }
@@ -850,7 +851,7 @@ export default function AdminPage() {
                   </span>
                   <span className="font-bold text-[15px]" style={{ color: "var(--text)" }}>{r.reportedName || "طالب"}</span>
                   <span className="text-[12px] mr-auto" style={{ color: "var(--text-muted)" }}>
-                    {r.createdAt ? new Date(r.createdAt).toLocaleString("ar-SA-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
+                    {r.createdAt ? new Date(r.createdAt).toLocaleString("ar-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
                   </span>
                 </div>
                 <p className="text-[16px] leading-relaxed whitespace-pre-wrap rounded-xl px-3 py-2 mb-2"
@@ -913,7 +914,7 @@ export default function AdminPage() {
                     <span className="font-bold text-[15px]" style={{ color: "var(--text)" }}>{f.name || "طالب"}</span>
                     {f.page && <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{f.page}</span>}
                     <span className="text-[12px] mr-auto" style={{ color: "var(--text-muted)" }}>
-                      {f.createdAt ? new Date(f.createdAt).toLocaleString("ar-SA-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
+                      {f.createdAt ? new Date(f.createdAt).toLocaleString("ar-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
                     </span>
                   </div>
                   <p className="text-[16px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{f.text}</p>
@@ -1459,7 +1460,7 @@ export default function AdminPage() {
               <p className="text-[14px] font-black mt-1" style={{ color: "var(--text-muted)" }}>الإيقاف</p>
               {detail.blocked && (
                 <div className="rounded-xl px-3 py-2 text-[15px] font-bold" style={{ background: "color-mix(in srgb, var(--danger) 10%, transparent)", border: "1px solid var(--danger)", color: "var(--danger)" }}>
-                  {detail.blockUntil ? `موقوف حتى ${new Date(detail.blockUntil).toLocaleDateString("ar-SA")}` : "موقوف بشكل دائم"}
+                  {detail.blockUntil ? `موقوف حتى ${dateShort(new Date(detail.blockUntil).toISOString())}` : "موقوف بشكل دائم"}
                 </div>
               )}
               <div className="grid grid-cols-3 gap-2">

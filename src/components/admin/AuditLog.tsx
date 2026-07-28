@@ -17,7 +17,7 @@ const ACTION_AR: Record<string, string> = {
 const actionLabel = (a: string) => ACTION_AR[a] ?? a;
 
 function fmtTime(ms: number): string {
-  try { return new Date(ms).toLocaleString("ar-SA-u-nu-latn", { dateStyle: "short", timeStyle: "short" }); }
+  try { return new Date(ms).toLocaleString("ar-u-nu-latn", { dateStyle: "short", timeStyle: "short" }); }
   catch { return String(ms); }
 }
 

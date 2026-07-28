@@ -39,6 +39,29 @@ export const dateShort = (iso: string): string =>
 export const dateLong = (iso: string): string =>
   toDate(iso).toLocaleDateString(AR, { day: "numeric", month: "long", year: "numeric" });
 
+/* تاريخٌ ضيّق للرقاقات والأعمدة (11 يول) */
+export const dateTiny = (iso: string): string =>
+  toDate(iso).toLocaleDateString(AR, { day: "numeric", month: "short" });
+
+/* تاريخٌ باليوم واسمه (السبت، 11 يوليو 2026) — لترويسات اليوم ورسائل الجدولة.
+   `withYear=false` تُسقط السنة حين يكون العام مفهوماً من السياق. */
+export const dateFull = (iso: string, withYear = true): string =>
+  toDate(iso).toLocaleDateString(AR, {
+    weekday: "long", day: "numeric", month: "long",
+    ...(withYear ? { year: "numeric" as const } : {}),
+  });
+
+/* ═══ التقويم الهجري ═══
+   ⚠ `toLocaleDateString("ar-SA")` في المتصفّح يعني **أُمّ القرى بأرقامٍ هندية**
+   («٢٦ محرم») لا «11 يوليو» — لا مجرّد اختلافِ شكلِ رقم. فمَن أراد الهجريّ
+   يطلبه صراحةً من هنا، ولا يُكتب `ar-SA` في الصفحات أبداً (يحرسه format.test.ts). */
+export const dateHijri = (iso: string, withYear = true): string =>
+  toDate(iso).toLocaleDateString(AR, {
+    calendar: "islamic-umalqura", numberingSystem: "latn",
+    weekday: "long", day: "numeric", month: "long",
+    ...(withYear ? { year: "numeric" as const } : {}),
+  });
+
 /* «يوم/يومين/أيام/يوماً» بصيغةٍ عربية سليمة مع العدد */
 export const days = (x: number): string =>
   x === 1 ? "يوم واحد" : x === 2 ? "يومان" : `${n(x)} ${x >= 3 && x <= 10 ? "أيام" : "يوماً"}`;

@@ -3,7 +3,7 @@ import { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import type { ScheduleEvent } from "@/lib/storage";
 import { normalizeDigits } from "@/lib/utils";
-import { time } from "@/lib/format";
+import { time, dateFull } from "@/lib/format";
 import { getEventsForDate } from "@/lib/schedule";
 import { buildDuwairbProfile } from "@/lib/duwairb";
 import { askDuwairb } from "@/lib/orchestrator";
@@ -116,7 +116,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
   const dateObj    = new Date(date + "T12:00:00");
   const dow        = dateObj.getDay();
   const dayName    = WEEK_DAY_NAMES[dow];
-  const arabicDate = dateObj.toLocaleDateString("ar-SA", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  const arabicDate = dateFull(dateObj.toISOString());
 
   const deleteEvent = (id: string) => onEventsChange(events.filter((e) => e.id !== id));
 
@@ -172,7 +172,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
     }
     const subjectsList = subjects.map((s) => s.name).join("، ");
     const examCtx = examDate
-      ? `\nيوم الاختبار: ${new Date(examDate + "T12:00:00").toLocaleDateString("ar-SA", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}`
+      ? `\nيوم الاختبار: ${dateFull(examDate)}`
       : "";
     /* زر التوزيع اليدوي يصير تجاوزاً يُغذّي المحرّك — لا قرار مستقل في هذا المكوّن.
        كل سياق الجدول (الجلسة/الوقت/المراجعة/التوزيع) يأتي من استراتيجية واحدة. */
@@ -461,7 +461,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
                   style={{ background: "color-mix(in srgb, var(--gold) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--gold) 30%, transparent)" }}>
                   <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: "var(--gold)" }} />
                   <span className="text-[19px] font-semibold" style={{ color: "var(--gold)" }}>
-                    يوم الاختبار: {new Date(examDate + "T12:00:00").toLocaleDateString("ar-SA", { weekday: "long", month: "long", day: "numeric" })}
+                    يوم الاختبار: {dateFull(examDate, false)}
                   </span>
                 </div>
               )}

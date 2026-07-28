@@ -15,7 +15,7 @@ function ClockWidget() {
   useEffect(() => {
     const tick = () => {
       const d = new Date();
-      setTime(d.toLocaleTimeString("ar-SA-u-nu-latn", { hour: "2-digit", minute: "2-digit", hour12: fmt === "12" }));
+      setTime(d.toLocaleTimeString("ar-u-nu-latn", { hour: "2-digit", minute: "2-digit", hour12: fmt === "12" }));
     };
     tick();
     const t = setInterval(tick, 10000);

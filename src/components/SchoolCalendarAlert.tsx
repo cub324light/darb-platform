@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { loadUser } from "@/lib/storage";
 import { activeSchoolEvent, upcomingSchoolEvents } from "@/lib/school-calendar";
+import { dateShort } from "@/lib/format";
 
 function todayStr() {
   const d = new Date();
@@ -37,7 +38,7 @@ export default function SchoolCalendarAlert() {
     const active = activeSchoolEvent(today);
     if (active && active.type === "break") {
       const ends = new Date(active.to);
-      const endsStr = ends.toLocaleDateString("ar-SA", { day: "numeric", month: "long" });
+      const endsStr = dateShort(ends.toISOString());
       result.push({
         id: active.id,
         text: `🎉 ${active.label} — استغل الوقت للمذاكرة`,

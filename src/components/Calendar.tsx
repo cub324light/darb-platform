@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { time, year } from "@/lib/format";
+import { time, year, dateFull, dateHijri } from "@/lib/format";
 
 type Mode = "gregorian" | "hijri";
 
@@ -208,9 +208,8 @@ export default function Calendar({
     (() => {
       const items = getDayInfo?.(peek.key) ?? [];
       const isExam = peek.key === examDate;
-      const dateLabel = new Date(peek.key + "T12:00:00").toLocaleDateString("ar-SA", {
-        weekday: "long", day: "numeric", month: "long",
-      });
+      /* يتبع مبدّل «ميلادي/هجري» الذي اختاره الطالب بنفسه — كان يطبع الهجريّ دائماً */
+      const dateLabel = mode === "hijri" ? dateHijri(peek.key, false) : dateFull(peek.key, false);
       const top = peek.place === "top" ? peek.top - 12 : peek.bottom + 12;
       return (
         <div
@@ -375,9 +374,7 @@ export default function Calendar({
           <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: "var(--gold)" }} />
           <span className="text-[19px] flex-1" style={{ color: "var(--text-dim)" }}>
             {"يوم الاختبار: "}
-            {new Date(examDate + "T12:00:00").toLocaleDateString("ar-SA", {
-              weekday: "long", month: "long", day: "numeric", year: "numeric",
-            })}
+            {mode === "hijri" ? dateHijri(examDate) : dateFull(examDate)}
           </span>
           <button onClick={() => onExamDateChange(null)} className="text-[var(--text-muted)] text-sm px-1 min-h-[28px]">✕</button>
         </div>
