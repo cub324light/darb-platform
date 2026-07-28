@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { loadUser } from "@/lib/storage";
+import { readGuestMode } from "@/components/AuthGate";
 
 const TOUR_KEY = "darb_tour_done";
 
@@ -44,6 +45,17 @@ export default function DuirbTour() {
     let unsub: (() => void) | undefined;
     let timer: ReturnType<typeof setTimeout> | undefined;
     try { if (localStorage.getItem(TOUR_KEY)) return; } catch { return; }
+
+    /* الزائر لا نجلب له Firebase لنسأل عن حسابٍ لا يملكه: شرطُ الظهور أدناه
+       `(!u && !guest)`، فمتى كان زائراً لم تُغيّر قيمةُ `u` النتيجة أصلاً.
+       وهذا الطريق هو الوحيد الذي يبقى حيّاً لزائرٍ لم يرَ الجولة بعد. */
+    if (readGuestMode()) {
+      let onboarded = false;
+      try { onboarded = !!loadUser()?.onboarded; } catch { /* تجاهل */ }
+      if (!onboarded) return;
+      timer = setTimeout(() => { if (!cancelled) setVisible(true); }, 900);
+      return () => { cancelled = true; if (timer) clearTimeout(timer); };
+    }
 
     import("@/lib/cloud").then(({ onAuth }) => {
       if (cancelled) return;

@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { postSocial } from "@/lib/authFetch";
 import { getReferral, claimRefReward, referralLink, REFERRAL_REWARD, type ReferralInfo } from "@/lib/referral";
 import { n } from "@/lib/format";
+import { readGuestMode } from "@/components/AuthGate";
 
 const FriendsPanel = dynamic(() => import("@/components/FriendsPanel"), { ssr: false });
 
@@ -18,7 +19,10 @@ function ProfileSocialBase() {
   const [claiming, setClaiming] = useState(false);
   const [claimMsg, setClaimMsg] = useState<string | null>(null);
 
+  /* الزائر بلا `uid` ⇒ المكوّن كلّه يرجع `null` أدناه؛ فلا معنى لجلب Firebase لنصل
+     إلى النتيجة نفسها. الأصدقاء والترتيب يحتاجان حساباً بطبيعتهما. */
   useEffect(() => {
+    if (readGuestMode()) return;
     let unsub: (() => void) | undefined;
     import("@/lib/cloud").then(({ onAuth }) => { unsub = onAuth((u) => setUid(u?.uid ?? null)); });
     return () => { unsub?.(); };

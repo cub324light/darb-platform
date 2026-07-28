@@ -6,6 +6,7 @@ import { exportData } from "@/lib/dataExport";
 import { EmailVerifyNotice } from "@/components/EmailVerify";
 import type { User } from "firebase/auth";
 import type { FirebaseError } from "firebase/app";
+import { readGuestMode, exitGuestMode } from "@/components/AuthGate";
 
 /* لا نستورد من cloud.ts أو firestore.ts هنا — تُحمَّل ديناميكياً عند الحاجة فقط
    حتى لا يدخل Firebase في حزمة كل صفحة عبر سلسلة: SettingsPanel ← Dome ← كل صفحة */
@@ -25,14 +26,17 @@ export default function SettingsButton() {
   const [authErr, setAuthErr] = useState("");
   const [syncMsg, setSyncMsg] = useState("");
 
-  /* راقب حالة المصادقة — ديناميكي لأن SettingsPanel مستورد في Dome الموجود بكل صفحة */
+  /* راقب حالة المصادقة — ديناميكي لأن SettingsPanel مستورد في Dome الموجود بكل صفحة.
+     والزائر لا مصادقةَ له تُراقَب: كانت هذه السطور تجلب Firebase في كل صفحةٍ يفتحها.
+     نراقب فقط حين تُفتح الإعدادات، فمن أراد تسجيل الدخول وجد الحالة جاهزةً حينها. */
   useEffect(() => {
+    if (readGuestMode() && !open) return;
     let unsub: (() => void) | undefined;
     import("@/lib/cloud").then(({ onAuth }) => {
       unsub = onAuth(setAuthUser);
     });
     return () => { unsub?.(); };
-  }, []);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -64,11 +68,16 @@ export default function SettingsButton() {
       const { signIn, signUp, pushBackup, pullBackup } = await import("@/lib/cloud");
       if (authMode === "signup") {
         await signUp(authEmail, authPass);
+        /* صار له حسابٌ حقيقيّ ⇒ لم يعد زائراً. قبل النسخ لا بعده: مراقبةُ
+           المصادقة في `AuthGate` معطّلةٌ للزائر فلن تُزيل المفتاح نيابةً عنّا،
+           وبقاؤه يُبقي `CloudSync` صامتاً فلا تُحفَظ بياناته بعد اليوم. */
+        exitGuestMode();
         await pushBackup();
         setSyncMsg("تم إنشاء الحساب وحفظ بياناتك ☁️");
         setAuthOpen(false);
       } else {
         await signIn(authEmail, authPass);
+        exitGuestMode();   // قبل `pullBackup`: فرعُ الاسترجاع يُعيد تحميل الصفحة
         const { restored } = await pullBackup();
         if (restored) { window.location.reload(); return; }
         await pushBackup();
@@ -123,7 +132,7 @@ export default function SettingsButton() {
         await signOutUser().catch(() => {});
       }
       resetAll();
-      try { localStorage.removeItem("darb_guest_mode"); } catch {}
+      exitGuestMode();
       window.location.href = "/";
     } catch {
       alert("تعذّر الاتصال — حاول لاحقاً");

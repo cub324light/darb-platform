@@ -6,12 +6,17 @@
    الخطوط: توكنات السلّم فقط (t-title/t-caption/t-small) — لا أحجام مباشرة. */
 import { useEffect, useState } from "react";
 import type { User } from "firebase/auth";
+import { readGuestMode } from "@/components/AuthGate";
 
 export default function ProfileAccount() {
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [busy, setBusy] = useState(false);
 
+  /* الزائر لا حسابَ له تُراقَب حالتُه: تخطّي الاشتراك يُبقي `authUser` فارغاً،
+     وهو بالضبط ما يعرض له رسالة «تستخدم درب بدون حساب» أدناه — نفس الواجهة
+     تماماً، بلا جلب Firebase في صفحة البروفايل. */
   useEffect(() => {
+    if (readGuestMode()) return;
     let unsub: (() => void) | undefined;
     import("@/lib/cloud").then(({ onAuth }) => { unsub = onAuth(setAuthUser); });
     return () => { unsub?.(); };

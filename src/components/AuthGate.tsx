@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { User } from "firebase/auth";
 import dynamic from "next/dynamic";
@@ -64,6 +64,25 @@ function BlockedScreen() {
   );
 }
 
+/* ═══ متجرُ وضع الزائر ═══
+   مصدرٌ واحد يقرأ منه `AuthGate` وغيرُه، ويبثّ تغيّره فلا تتفرّق النسخ. */
+export const GUEST_KEY = "darb_guest_mode";
+export const GUEST_CHANGED = "darb:guestChanged";
+export const readGuestMode = (): boolean => {
+  try { return localStorage.getItem(GUEST_KEY) === "1"; } catch { return false; }
+};
+const subscribeGuest = (cb: () => void) => {
+  window.addEventListener(GUEST_CHANGED, cb);
+  return () => window.removeEventListener(GUEST_CHANGED, cb);
+};
+/* الخروج من وضع الزائر — يُستدعى فور نجاح تسجيل دخولٍ حقيقيّ من أي مكان.
+   واجبٌ لا تحسين: ما دام المفتاح موجوداً تبقى المزامنة السحابية معطّلةً عن
+   صاحب الحساب (`CloudSync` يخرج مبكراً)، فتضيع بياناته وهو يحسبها محفوظة. */
+export const exitGuestMode = (): void => {
+  try { localStorage.removeItem(GUEST_KEY); } catch { /* تجاهل */ }
+  try { window.dispatchEvent(new CustomEvent(GUEST_CHANGED)); } catch { /* تجاهل */ }
+};
+
 /* بوابة المصادقة: الدخول إجباري لكل المسارات عدا العامة.
    تكمل دخول redirect، تراقب الحالة، وتنفّذ المزامنة الأولية مرة واحدة.
    Firebase تُحمَّل ديناميكياً بعد أول render — المستخدم العائد يرى المحتوى فوراً
@@ -85,25 +104,45 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   const [syncConfirmed, setSyncConfirmed] = useState(false);
   const [syncTries, setSyncTries] = useState(0);
   const [redirectErr, setRedirectErr] = useState<string | null>(null);
-  /* وضع الزائر — يتجاوز تسجيل الدخول ويحفظ البيانات محلياً فقط */
-  const [guestMode, setGuestMode] = useState(() =>
-    typeof window !== "undefined" && localStorage.getItem("darb_guest_mode") === "1"
-  );
+  /* وضع الزائر — يتجاوز تسجيل الدخول ويحفظ البيانات محلياً فقط.
+     قيمةٌ خارجية (localStorage) تختلف بين الخادم والعميل، فتُقرأ بـ`useSyncExternalStore`
+     بلقطةٍ خادميّة ثابتة (`false`): الخادم والعميل يرسمان الشيء نفسه لحظة الترطيب ثم
+     يُعاد الرسم بالقيمة الحقيقية. قراءتها في مُهيّئ `useState` كانت تكسر الترطيب
+     (React #418) لأن الخادم يرسم شاشة البداية والعميل يرسم التطبيق. */
+  const guestMode = useSyncExternalStore(subscribeGuest, readGuestMode, () => false);
 
   const enterGuestMode = () => {
-    try { localStorage.setItem("darb_guest_mode", "1"); } catch {}
-    setGuestMode(true);
+    try { localStorage.setItem(GUEST_KEY, "1"); } catch {}
+    try { window.dispatchEvent(new CustomEvent(GUEST_CHANGED)); } catch {}
   };
+
+  /* ═══ الزائر لا يُحمَّل له Firebase إطلاقاً ═══
+     كانت المصادقة تُجلَب في كل صفحة لكل زائر: ~363 ك.ب من JS يدفع ثمنها طالبٌ
+     اختار صراحةً أن يستخدم التطبيق بلا حساب وبياناته محليّةٌ كلّها.
+     ومَخرَجُ الزائر إلى حسابٍ قائمٌ فعلاً: الإعدادات ← «حسابك السحابي» ← «سجّل
+     دخولك واحفظ بياناتك»، و`SettingsPanel` يجلب Firebase عند فتح اللوحة لا قبلها.
+     ولأن مراقبةَ المصادقة هنا معطّلةٌ للزائر، فمَن يسجّل الدخول هناك يستدعي
+     `exitGuestMode()` بنفسه؛ وبثُّ `GUEST_CHANGED` يُشغّل هذه المراقبة فوراً —
+     ولهذا `guestMode` في مصفوفة الاعتماديات.
+
+     ⚠ الحارسان أدناه يقرآن `readGuestMode()` لا المتغيّر `guestMode`، وهذا فرقٌ
+     جوهريّ لا تجميل: `useSyncExternalStore` يُعيد **اللقطة الخادميّة** (`false`)
+     في رسمة الترطيب الأولى، وتأثيراتُ تلك الرسمة تُنفَّذ قبل إعادة الرسم بالقيمة
+     الحقيقية — فلو حكّمنا `guestMode` لانطلق التحميل للزائر ثم نظّفنا بعد فوات
+     الأوان، وقد صار Firebase محمّلاً. القراءة المباشرة تُصيب لأن التأثير لا يعمل
+     إلا على العميل حيث `localStorage` متاح. */
 
   /* أكمل تسجيل الدخول القادم عبر redirect (Google) */
   useEffect(() => {
+    if (readGuestMode()) return;   // ⚠ اقرأ المتجر لا قيمةَ الرسم — انظر الملاحظة أدناه
     import("@/lib/cloud").then(({ consumeRedirectResult }) => {
       consumeRedirectResult().then((e) => { if (e) setRedirectErr(e); });
     });
-  }, []);
+  }, [guestMode]);
 
   /* راقب حالة المصادقة — عند الدخول بحساب حقيقي نلغي وضع الزائر */
   useEffect(() => {
+    if (readGuestMode()) return;   // ⚠ اقرأ المتجر لا قيمةَ الرسم — انظر الملاحظة أدناه
     let unsub: (() => void) | undefined;
     import("@/lib/cloud").then(({ onAuth }) => {
       unsub = onAuth((u) => {
@@ -120,14 +159,11 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         }
         setUser(u);
         setAuthResolved(true);
-        if (u) {
-          try { localStorage.removeItem("darb_guest_mode"); } catch {}
-          setGuestMode(false);
-        }
+        if (u) exitGuestMode();
       });
     });
     return () => { unsub?.(); };
-  }, []);
+  }, [guestMode]);
 
   /* المزامنة الأولية بعد ثبوت تسجيل الدخول */
   useEffect(() => {
@@ -177,16 +213,27 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
   /* بيانات محلية جاهزة من جلسة سابقة (نفس الجهاز) — نعرض التطبيق فوراً
      والمزامنة تكمل في الخلفية (stale-while-revalidate)، فلا شاشة تحميل
-     لكل العائدين. ننتظر السحابة فقط لو ما فيه نسخة محلية (جهاز جديد). */
-  const hasLocal = typeof window !== "undefined" && !!loadUser()?.onboarded;
+     لكل العائدين. ننتظر السحابة فقط لو ما فيه نسخة محلية (جهاز جديد).
+
+     تُقرأ بلقطةٍ خادميّة ثابتة (`false`): الخادم لا يرى `localStorage` فيرسم شاشة
+     البداية، وكان العميل يرسم التطبيق في اللحظة نفسها فينكسر الترطيب (React #418)
+     لكل عائدٍ مسجَّل. الآن يتّفق العرضان ثم يُعاد الرسم فوراً بالقيمة الحقيقية. */
+  const hasLocal = useSyncExternalStore(
+    subscribeGuest,                       // يكفي أي اشتراك: القيمة تُقرأ في كل رسم
+    () => !!loadUser()?.onboarded,
+    () => false,
+  );
 
   /* الشريط السفلي يظهر فقط داخل التطبيق (ليس في الصفحات العامة ولا onboarding) */
   const showNav = !isPublic && pathname !== "/onboarding";
 
   if (isPublic) return <>{children}</>;
+  /* الزائر حالتُه محسومةٌ بذاتها: لا حساب يُنتظر ولا مراقبةَ مصادقةٍ تعمل له أصلاً،
+     فلو انتظرنا `authResolved` بقي على شاشة البداية إلى الأبد. */
+  const resolved = authResolved || guestMode;
   /* عائد بجلسة سابقة على نفس الجهاز: اعرض التطبيق فوراً من بياناته المحلية بينما
      يُحمَّل Firebase وتُحَلّ المصادقة في الخلفية. */
-  if (!authResolved) {
+  if (!resolved) {
     if (hasLocal && !guestMode) return <>{children}{showNav && <><BottomNav /><DesktopSidebar /></>}</>;
     return <Splash />;
   }

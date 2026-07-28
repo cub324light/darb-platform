@@ -22,6 +22,7 @@ import ProfilePreferences from "@/components/profile/ProfilePreferences";
 import ProfileAchievements from "@/components/profile/ProfileAchievements";
 import ProfileExtra from "@/components/profile/ProfileExtra";
 import ProfileAccount from "@/components/profile/ProfileAccount";
+import { readGuestMode } from "@/components/AuthGate";
 import dynamic from "next/dynamic";
 const CalendarSettings = dynamic(() => import("@/components/CalendarSettings"), { ssr: false });
 
@@ -65,8 +66,9 @@ export default function ProfilePage() {
     typeof window !== "undefined" ? ((loadUser() as (DarbUser & { isPrivate?: boolean }))?.isPrivate ?? false) : false);
   const [photoURL, setPhotoURL] = useState<string | null>(null);
 
-  /* صورة Google (إن وُجدت) */
+  /* صورة Google (إن وُجدت) — والزائر بلا حسابٍ فبلا صورة: لا نجلب Firebase لنعرف ذلك */
   useEffect(() => {
+    if (readGuestMode()) return;
     let unsub: (() => void) | undefined;
     import("@/lib/cloud").then(({ onAuth }) => { unsub = onAuth((u) => setPhotoURL(u?.photoURL ?? null)); });
     return () => { unsub?.(); };
