@@ -12,6 +12,7 @@ import type { DuwairbProfile } from "./duwairb";
 import { loadUser, loadGoals, currentScoreMap } from "./storage";
 import { buildDuwairbProfile } from "./duwairb";
 import { destinationNeedsEnglish } from "./darbKnowledge";
+import { n as ar } from "./format";
 
 /* ════════ الأنواع ════════ */
 export type SemesterPhase = "أول" | "ثاني" | "صيف";
@@ -61,7 +62,6 @@ export interface GoldenPathInput {
   gradSchoolInterest?: boolean;  // اهتمام بالدراسات العليا
 }
 
-const ar = (n: number) => n.toLocaleString("ar");
 const met = (score?: number, target?: number) =>
   score != null && target != null && score >= target;
 

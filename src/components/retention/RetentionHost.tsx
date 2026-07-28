@@ -15,6 +15,7 @@ import {
   daysAway, recordOpenToday, pendingMilestone, markMilestoneSeen,
   streakBreak, canUseRecovery, applyRecovery, shouldShowWeekly, markWeeklySeen,
 } from "@/lib/retention";
+import { n as ar } from "@/lib/format";
 
 type View =
   | { type: "milestone"; pct: number }
@@ -22,7 +23,6 @@ type View =
   | { type: "recovery"; priorStreak: number }
   | { type: "weekly" };
 
-const ar = (n: number) => n.toLocaleString("ar");
 
 const MILESTONE_TITLE: Record<number, string> = {
   25: "أكملت ربع مسارك", 50: "وصلت نصف الطريق", 75: "ثلاثة أرباع المسار", 100: "أكملت مسارك بالكامل",

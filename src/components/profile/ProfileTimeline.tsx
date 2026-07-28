@@ -1,6 +1,7 @@
 "use client";
 /* ─── رحلة التعلّم — معالم + آخر نشاط (مرتّبة زمنياً) ─── */
 import { memo } from "react";
+import { n } from "@/lib/format";
 
 export interface JourneyItem { ts: number; icon: string; text: string; milestone?: boolean; }
 
@@ -10,7 +11,7 @@ function relDay(ts: number): string {
   const diff = Math.round((today.getTime() - d.getTime()) / 86400000);
   if (diff <= 0) return "اليوم";
   if (diff === 1) return "أمس";
-  if (diff < 7) return `قبل ${diff.toLocaleString("ar")} أيام`;
+  if (diff < 7) return `قبل ${n(diff)} أيام`;
   try { return new Date(ts).toLocaleDateString("ar-SA", { month: "short", day: "numeric" }); } catch { return ""; }
 }
 

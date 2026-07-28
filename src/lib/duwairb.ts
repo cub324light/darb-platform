@@ -16,6 +16,7 @@ import { getTrack, type TrackId } from "./tracks";
 import { findMajor, requirementsText } from "./university";
 import { duwairbState } from "./lifeEngine";
 import { trackLabel, trackSubjectEmphasis, subjectsFor } from "./curriculum";
+import { n as ar } from "./format";
 
 /* ── القدرات الخمس الأساسية + المواضيع ── */
 export type DuwairbTab = "schedule" | "progress" | "quiz" | "explain" | "file" | "topics";
@@ -92,7 +93,6 @@ const FOCUS_LABEL: Record<string, string> = {
 };
 
 /* رقم عربي للعرض في الواجهة */
-const ar = (n: number) => n.toLocaleString("ar");
 
 /* ── يبني ملف دويرب من التخزين (عميل فقط) ── */
 export function buildDuwairbProfile(): { profile: DuwairbProfile; goalLine: string | null; personalized: boolean } {

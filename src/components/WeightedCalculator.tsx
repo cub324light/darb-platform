@@ -8,8 +8,8 @@ import {
   findUniversity, computeWeighted, weightedVerdict, type WeightedFormula,
 } from "@/lib/university";
 import { loadGoals, saveGoals, currentScoreMap } from "@/lib/storage";
+import { n as ar } from "@/lib/format";
 
-const ar = (n: number) => n.toLocaleString("ar");
 
 /* أحدث درجة من خريطة النتائج حسب كلمات مفتاحية */
 function scoreFromMap(map: Record<string, { score: number }>, ...keys: string[]): number | null {

@@ -4,6 +4,7 @@
 import { memo, useState } from "react";
 import { BADGE_DEFS, getBadgeCurrent } from "@/lib/xp";
 import type { DarbStats } from "@/lib/storage";
+import { n } from "@/lib/format";
 
 interface Props {
   unlockedIds: Set<string>;
@@ -37,7 +38,7 @@ function ProfileAchievementsBase({ unlockedIds, stats, vaultCount }: Props) {
       <div className="rounded-2xl p-5 flex items-center gap-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
         <Ring pct={pct} />
         <div className="flex-1 min-w-0">
-          <p className="font-black text-[19px]" style={{ color: "var(--text)" }}>{earned.toLocaleString("ar")} من {total.toLocaleString("ar")} شارة</p>
+          <p className="font-black text-[19px]" style={{ color: "var(--text)" }}>{n(earned)} من {n(total)} شارة</p>
           <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>
             {earned === 0 ? "ابدأ رحلتك — أول شارة على بُعد جلسة واحدة." : earned === total ? "أكملت كل الشارات! أسطورة 🏆" : "استمر — كل إنجاز يقرّبك للاكتمال."}
           </p>
@@ -90,8 +91,8 @@ function ProfileAchievementsBase({ unlockedIds, stats, vaultCount }: Props) {
                 <div className="h-full rounded-full transition-all duration-700" style={{ width: `${p}%`, background: activeUnlocked ? "var(--gold)" : "var(--accent)" }} />
               </div>
               <p className="font-mono-nums text-[15px] font-bold" style={{ color: "var(--text-muted)" }}>
-                {Math.min(current, active.goal).toLocaleString("ar")} / {active.goal.toLocaleString("ar")} {active.unit}
-                {!activeUnlocked && current < active.goal && (<span> — بقي {(active.goal - current).toLocaleString("ar")} {active.unit}</span>)}
+                {n(Math.min(current, active.goal))} / {n(active.goal)} {active.unit}
+                {!activeUnlocked && current < active.goal && (<span> — بقي {n(active.goal - current)} {active.unit}</span>)}
               </p>
             </div>
           );

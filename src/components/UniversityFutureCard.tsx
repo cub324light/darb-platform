@@ -8,8 +8,8 @@ import { loadGoals, currentScoreMap, activeExamTrackIds, loadTrackExamDates } fr
 import { getStrategy } from "@/lib/strategy";
 import { daysUntil } from "@/lib/insights";
 import { getTrack, type TrackId } from "@/lib/tracks";
+import { n as ar } from "@/lib/format";
 
-const ar = (n: number) => n.toLocaleString("ar");
 
 export default function UniversityFutureCard({ onOpenTab }: { onOpenTab?: () => void }) {
   const data = useMemo(() => {

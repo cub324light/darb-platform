@@ -3,6 +3,7 @@
 import { memo } from "react";
 import type { WeeklyReportData } from "@/lib/weeklyReport";
 import { fmtMins } from "@/lib/weeklyReport";
+import { n } from "@/lib/format";
 
 export interface StatsData {
   focusMins: number;
@@ -22,9 +23,9 @@ export interface StatsData {
 
 /* مُصدَّر ليعيد استخدامه ProfileQuickStats — تنسيق واحد للرقم في كل مكان */
 export function hoursLabel(mins: number): { val: string; unit: string } {
-  if (mins < 60) return { val: mins.toLocaleString("ar"), unit: "دقيقة" };
+  if (mins < 60) return { val: n(mins), unit: "دقيقة" };
   const h = Math.round((mins / 60) * 10) / 10; // خانة عشرية واحدة
-  return { val: h.toLocaleString("ar"), unit: "ساعة" };
+  return { val: n(h), unit: "ساعة" };
 }
 
 function ProfileStatsBase({ data }: { data: StatsData }) {
@@ -49,15 +50,15 @@ function ProfileStatsBase({ data }: { data: StatsData }) {
   const hrs = hoursLabel(data.focusMins);
   const tiles = [
     { icon: "⏱", val: hrs.val, label: hrs.unit === "ساعة" ? "ساعة تركيز" : "دقيقة تركيز" },
-    { icon: "✅", val: data.sessions.toLocaleString("ar"), label: "جلسة" },
-    { icon: "🔥", val: data.currentStreak.toLocaleString("ar"), label: "ستريك حالي" },
-    { icon: "🏔️", val: data.longestStreak.toLocaleString("ar"), label: "أطول ستريك" },
-    { icon: "🔍", val: data.mistakes.toLocaleString("ar"), label: "خطأ محفوظ" },
-    { icon: "🃏", val: data.flashcards.toLocaleString("ar"), label: "بطاقة" },
-    { icon: "🧩", val: data.plans.toLocaleString("ar"), label: "خطة" },
-    { icon: "💬", val: data.aiChats.toLocaleString("ar"), label: "محادثة ذكاء" },
-    { icon: "📂", val: data.filesAnalyzed.toLocaleString("ar"), label: "ملف محلَّل" },
-    { icon: "📝", val: data.quizzes.toLocaleString("ar"), label: "اختبار مولّد" },
+    { icon: "✅", val: n(data.sessions), label: "جلسة" },
+    { icon: "🔥", val: n(data.currentStreak), label: "ستريك حالي" },
+    { icon: "🏔️", val: n(data.longestStreak), label: "أطول ستريك" },
+    { icon: "🔍", val: n(data.mistakes), label: "خطأ محفوظ" },
+    { icon: "🃏", val: n(data.flashcards), label: "بطاقة" },
+    { icon: "🧩", val: n(data.plans), label: "خطة" },
+    { icon: "💬", val: n(data.aiChats), label: "محادثة ذكاء" },
+    { icon: "📂", val: n(data.filesAnalyzed), label: "ملف محلَّل" },
+    { icon: "📝", val: n(data.quizzes), label: "اختبار مولّد" },
   ];
 
   return (
@@ -105,7 +106,7 @@ function ProfileStatsBase({ data }: { data: StatsData }) {
             </div>
             <div className="rounded-xl px-3 py-2.5" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
               <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>أيام نشطة (٧)</p>
-              <p className="text-[18px] font-black font-mono-nums" style={{ color: "var(--text)" }}>{data.weekly.activeDays.toLocaleString("ar")}</p>
+              <p className="text-[18px] font-black font-mono-nums" style={{ color: "var(--text)" }}>{n(data.weekly.activeDays)}</p>
               {data.monthlyDeltaPct !== null && (
                 <p className="text-[14px] font-bold" style={{ color: data.monthlyDeltaPct >= 0 ? "var(--success)" : "var(--danger)" }}>
                   شهرياً {data.monthlyDeltaPct >= 0 ? "▲" : "▼"} {Math.abs(data.monthlyDeltaPct)}%

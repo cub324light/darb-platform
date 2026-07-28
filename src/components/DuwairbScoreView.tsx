@@ -6,8 +6,8 @@ import { buildDuwairbProfile } from "@/lib/duwairb";
 import { computeDuwairbScore, detectMissedOpportunities, type MissedOpportunity } from "@/lib/coachScore";
 import { trackEvent } from "@/lib/analytics";
 import { useEffect, useState } from "react";
+import { n as ar } from "@/lib/format";
 
-const ar = (n: number) => n.toLocaleString("ar");
 
 interface Props {
   /** إن true تُعرض مكوّنات التفصيل؛ false = مضغوط (الرقم فقط مع نقاط القوة/الفجوات) */

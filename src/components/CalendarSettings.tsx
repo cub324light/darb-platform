@@ -5,6 +5,7 @@
 import { useMemo, useState } from "react";
 import { loadUser, loadCalendarConfig, saveCalendarConfig } from "@/lib/storage";
 import { CALENDAR_UPDATED_FOR, type CalendarConfig, type StudentType } from "@/lib/academicCalendar";
+import { n } from "@/lib/format";
 
 const REGIONS = [
   "الرياض", "مكة المكرمة", "المدينة المنورة", "القصيم", "المنطقة الشرقية",
@@ -74,7 +75,7 @@ export default function CalendarSettings() {
         <div className="flex flex-wrap gap-2">
           {gradYears.map((y) => (
             <Chip key={y} on={gradYear === y} onClick={() => update({ graduationYear: gradYear === y ? undefined : y })}>
-              {y.toLocaleString("ar")}
+              {n(y)}
             </Chip>
           ))}
         </div>

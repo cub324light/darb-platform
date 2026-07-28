@@ -3,6 +3,7 @@
 import { memo } from "react";
 import type { Level } from "@/lib/xp";
 import type { WeeklyReportData } from "@/lib/weeklyReport";
+import { n } from "@/lib/format";
 
 export interface NextBadgeInfo { label: string; icon: string; current: number; goal: number; pct: number; unit: string; }
 
@@ -41,12 +42,12 @@ function ProfileMotivationBase({ quote, weekly, level, nextBadge }: Props) {
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-[15px] font-bold" style={{ color: "var(--text)" }}>🎯 هدف الأسبوع</span>
           <span className="font-mono-nums text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>
-            {activeDays.toLocaleString("ar")} / {WEEKLY_GOAL_DAYS.toLocaleString("ar")} أيام
+            {n(activeDays)} / {n(WEEKLY_GOAL_DAYS)} أيام
           </span>
         </div>
         <MiniBar pct={weekPct} color="var(--success)" label="هدف الأسبوع" />
         <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
-          {activeDays >= WEEKLY_GOAL_DAYS ? "أنجزت هدف الأسبوع! 🎉" : `بقي ${(WEEKLY_GOAL_DAYS - activeDays).toLocaleString("ar")} يوم نشط لإكمال هدفك`}
+          {activeDays >= WEEKLY_GOAL_DAYS ? "أنجزت هدف الأسبوع! 🎉" : `بقي ${n(WEEKLY_GOAL_DAYS - activeDays)} يوم نشط لإكمال هدفك`}
         </p>
       </div>
 
@@ -61,7 +62,7 @@ function ProfileMotivationBase({ quote, weekly, level, nextBadge }: Props) {
           </div>
           <MiniBar pct={nextBadge.pct} color="var(--gold)" label={`تقدّم شارة ${nextBadge.label}`} />
           <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
-            بقي {(nextBadge.goal - nextBadge.current).toLocaleString("ar")} {nextBadge.unit}
+            بقي {n(nextBadge.goal - nextBadge.current)} {nextBadge.unit}
           </p>
         </div>
       )}

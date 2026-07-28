@@ -4,6 +4,7 @@
    يعيد استخدام hoursLabel من ProfileStats (لا منطق تنسيق مكرّر). */
 import { memo } from "react";
 import { hoursLabel, type StatsData } from "./ProfileStats";
+import { n } from "@/lib/format";
 
 /* يكفيه جزء من StatsData — نفس المصدر بلا اشتقاق إضافي */
 export type QuickStatsData = Pick<StatsData, "currentStreak" | "focusMins" | "sessions" | "skillAvg">;
@@ -11,9 +12,9 @@ export type QuickStatsData = Pick<StatsData, "currentStreak" | "focusMins" | "se
 function ProfileQuickStatsBase({ data, onOpenStats }: { data: QuickStatsData; onOpenStats: () => void }) {
   const hrs = hoursLabel(data.focusMins);
   const tiles = [
-    { icon: "🔥", val: data.currentStreak.toLocaleString("ar"), label: "ستريك اليوم" },
+    { icon: "🔥", val: n(data.currentStreak), label: "ستريك اليوم" },
     { icon: "⏱", val: hrs.val, label: hrs.unit === "ساعة" ? "ساعة تركيز" : "دقيقة تركيز" },
-    { icon: "✅", val: data.sessions.toLocaleString("ar"), label: "جلسة" },
+    { icon: "✅", val: n(data.sessions), label: "جلسة" },
     ...(data.skillAvg !== null ? [{ icon: "🧠", val: `${data.skillAvg}%`, label: "متوسط الإتقان" }] : []),
   ];
 

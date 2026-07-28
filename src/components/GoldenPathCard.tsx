@@ -8,6 +8,7 @@ import Link from "next/link";
 import { loadGoldenPath, type GoldenPathState } from "@/lib/goldenPath";
 import { activateTrack } from "@/lib/storage";
 import { getTrack, type TrackId } from "@/lib/tracks";
+import { n } from "@/lib/format";
 
 export default function GoldenPathCard() {
   const [state, setState] = useState<GoldenPathState | null>(null);
@@ -29,7 +30,7 @@ export default function GoldenPathCard() {
   const milestoneText = useMemo(() => {
     if (!state?.nextMilestone) return null;
     const m = state.nextMilestone;
-    if (m.daysAway != null && m.daysAway >= 0) return `${m.label} — خلال ${m.daysAway.toLocaleString("ar")} يوم`;
+    if (m.daysAway != null && m.daysAway >= 0) return `${m.label} — خلال ${n(m.daysAway)} يوم`;
     return m.label;
   }, [state]);
 

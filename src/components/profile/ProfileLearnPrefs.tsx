@@ -3,6 +3,7 @@
    تبقى في مصدرها الوحيد DarbPrefs الذي تقرؤه الخطة/دويرب/الخريطة (لا تغيير للمنطق، نقل واجهةٍ فقط). */
 import { memo } from "react";
 import type { DarbPrefs, StudyTime, SessionLen, LearningStyle, StudyDevice, StudyFormat } from "@/lib/storage";
+import { n } from "@/lib/format";
 
 const STUDY_TIMES: StudyTime[]   = ["فجر", "صباح", "ظهر", "مساء", "ليل"];
 const SESSION_LENS: SessionLen[] = [25, 45, 60, 90];
@@ -52,7 +53,7 @@ function ProfileLearnPrefsBase({ prefs, onPrefsChange }: Props) {
       <Group title="⏳ مدة الجلسة المفضّلة">
         {SESSION_LENS.map((l) => (
           <Chip key={l} on={prefs.sessionLen === l} label={`${l} دقيقة`}
-            onClick={() => onPrefsChange({ sessionLen: prefs.sessionLen === l ? undefined : l })}>{l.toLocaleString("ar")} د</Chip>
+            onClick={() => onPrefsChange({ sessionLen: prefs.sessionLen === l ? undefined : l })}>{n(l)} د</Chip>
         ))}
       </Group>
 
@@ -85,7 +86,7 @@ function ProfileLearnPrefsBase({ prefs, onPrefsChange }: Props) {
       <Group title="🗓️ أيام المذاكرة الأسبوعية">
         {[3, 4, 5, 6, 7].map((d) => (
           <Chip key={d} on={prefs.studyDays === d} label={`${d} أيام`}
-            onClick={() => onPrefsChange({ studyDays: prefs.studyDays === d ? undefined : d })}>{d.toLocaleString("ar")}</Chip>
+            onClick={() => onPrefsChange({ studyDays: prefs.studyDays === d ? undefined : d })}>{n(d)}</Chip>
         ))}
       </Group>
 

@@ -12,8 +12,8 @@ import { findMajor, findUniversity, universityReadiness } from "@/lib/university
 import StrategyBanner from "@/components/StrategyBanner";
 import { trackEvent } from "@/lib/analytics";
 import { useEffect } from "react";
+import { n as ar } from "@/lib/format";
 
-const ar = (n: number) => n.toLocaleString("ar");
 
 export default function CoachReportView() {
   const data = useMemo(() => {

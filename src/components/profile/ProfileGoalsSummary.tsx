@@ -3,6 +3,7 @@
    لا تكرّر منطق ProfileGoals: عرض فقط من props (العدّ التنازلي من insights.daysLeft
    والوجهة من goals)، والتعديل كله يتم من تبويب الأهداف. */
 import { memo } from "react";
+import { n } from "@/lib/format";
 
 interface Props {
   daysLeft: number | null;   // من insights.daysLeft — null إن لم يُحدَّد موعد
@@ -32,7 +33,7 @@ function ProfileGoalsSummaryBase({ daysLeft, examTitle, university, major, onOpe
         ) : (
           <div className="flex items-baseline gap-2">
             <span className="font-mono-nums font-black text-[29px] leading-none" style={{ color: "var(--gold)" }}>
-              {daysLeft.toLocaleString("ar")}
+              {n(daysLeft)}
             </span>
             <span className="text-[15px] font-bold" style={{ color: "var(--text)" }}>يوم على اختبار {examTitle}</span>
           </div>

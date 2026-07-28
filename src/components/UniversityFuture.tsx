@@ -14,8 +14,8 @@ import { getStrategy } from "@/lib/strategy";
 import { daysUntil } from "@/lib/insights";
 import { getTrack, type TrackId } from "@/lib/tracks";
 import Link from "next/link";
+import { n as ar } from "@/lib/format";
 
-const ar = (n: number) => n.toLocaleString("ar");
 
 /* أحدث درجة من خريطة النتائج حسب كلمات مفتاحية */
 function scoreOf(map: Record<string, { score: number }>, ...keys: string[]): number | null {

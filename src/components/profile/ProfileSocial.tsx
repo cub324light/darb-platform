@@ -4,6 +4,7 @@ import { memo, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { postSocial } from "@/lib/authFetch";
 import { getReferral, claimRefReward, referralLink, REFERRAL_REWARD, type ReferralInfo } from "@/lib/referral";
+import { n } from "@/lib/format";
 
 const FriendsPanel = dynamic(() => import("@/components/FriendsPanel"), { ssr: false });
 
@@ -82,7 +83,7 @@ function ProfileSocialBase() {
         <div className="rounded-2xl p-5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <div className="flex items-center justify-between mb-1">
             <p className="label">ادعُ أصدقاءك</p>
-            <span className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>{ref.count.toLocaleString("ar")} انضمّوا عبرك</span>
+            <span className="text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>{n(ref.count)} انضمّوا عبرك</span>
           </div>
           <p className="text-[15px] mb-3" style={{ color: "var(--text-muted)" }}>
             شارك رابطك — تربح أنت وصديقك {REFERRAL_REWARD} فضة لكل من ينضم ويكمل التسجيل.

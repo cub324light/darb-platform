@@ -10,6 +10,7 @@ import { recordAIChat } from "@/lib/storage";
 import { recordCoachInteraction } from "@/lib/coachMemory";
 import DuwairbScoreView from "@/components/DuwairbScoreView";
 import { trackEvent } from "@/lib/analytics";
+import { n } from "@/lib/format";
 
 interface Props {
   subjects: string[];
@@ -65,7 +66,7 @@ export default function ProgressTool({ subjects }: Props) {
         {goalLine && <span className="text-[15px] font-bold" style={{ color: "var(--accent-light)" }}>🎯 {goalLine}</span>}
         {readiness != null && (
           <span className="text-[15px] font-bold" style={{ color: "var(--text)" }}>
-            🚀 جاهزيتك {readiness.toLocaleString("ar")}٪
+            🚀 جاهزيتك {n(readiness)}٪
           </span>
         )}
         {profile.weakest && (

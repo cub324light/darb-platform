@@ -7,6 +7,7 @@ import type { Track } from "@/lib/tracks";
 import type { Level } from "@/lib/xp";
 import { PLAN_NAMES, PLAN_COLORS } from "@/lib/plan";
 import type { PlanId } from "@/lib/types";
+import { n } from "@/lib/format";
 
 /* أفاتارات جاهزة — بلا رفع، بلا تكلفة تخزين */
 export const PRESET_AVATARS = ["🦅", "🦉", "🐎", "🦁", "🐺", "🦊", "📚", "🚀", "⭐", "🌙", "🔥", "💎"];
@@ -152,7 +153,7 @@ function ProfileHeaderBase({ user, track, level, xp, joinLabel, planId, photoURL
           <span className="font-black text-[16px] flex items-center gap-1.5" style={{ color: level.color }}>
             <span className="text-lg" aria-hidden="true">{level.icon}</span> {level.name}
           </span>
-          <span className="font-mono-nums text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>{xp.toLocaleString("ar")} XP</span>
+          <span className="font-mono-nums text-[14px] font-bold" style={{ color: "var(--text-muted)" }}>{n(xp)} XP</span>
         </div>
         <div className="w-full rounded-full h-2 overflow-hidden" style={{ background: "var(--border)" }}
           role="progressbar" aria-label="تقدّم المستوى" aria-valuenow={level.progress} aria-valuemin={0} aria-valuemax={100}>
@@ -160,7 +161,7 @@ function ProfileHeaderBase({ user, track, level, xp, joinLabel, planId, photoURL
         </div>
         {level.next && (
           <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
-            {level.next.name} — يحتاج {level.next.minXp.toLocaleString("ar")} XP
+            {level.next.name} — يحتاج {n(level.next.minXp)} XP
           </p>
         )}
       </div>

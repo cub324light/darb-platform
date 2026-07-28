@@ -2,6 +2,7 @@
 /* ─── رؤى الأداء — قراءة مفسَّرة لبيانات الطالب (لا أرقام خام) ─── */
 import { memo } from "react";
 import type { DayPeriod, ReadinessLabel } from "@/lib/insights";
+import { n } from "@/lib/format";
 
 export interface InsightsData {
   mostActiveTime: { period: DayPeriod; mins: number } | null;
@@ -76,7 +77,7 @@ function ProfileInsightsBase({ data }: { data: InsightsData }) {
         <div className="flex items-baseline gap-2 mb-2">
           <span className="num-hero text-[32px] leading-none font-mono-nums" style={{ color: READINESS_COLOR[data.readiness.label] }}>{data.readiness.pct}%</span>
           {data.daysLeft !== null && data.daysLeft >= 0 && (
-            <span className="text-[14px]" style={{ color: "var(--text-muted)" }}>· باقٍ {data.daysLeft.toLocaleString("ar")} يوم للاختبار</span>
+            <span className="text-[14px]" style={{ color: "var(--text-muted)" }}>· باقٍ {n(data.daysLeft)} يوم للاختبار</span>
           )}
         </div>
         <div className="w-full rounded-full h-2 overflow-hidden" style={{ background: "var(--border)" }}
