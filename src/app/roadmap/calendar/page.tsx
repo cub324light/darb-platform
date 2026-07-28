@@ -3,27 +3,114 @@
    «القريب» أولاً (اليوم/غداً/هذا الأسبوع) ثم شبكة الشهر الحقيقية ثم Timeline اليوم.
    الحدث يحمل تأثيره على الخطة (block يمنع · reduce يخفّف · busy ينقل)، ودويرب يبني
    الجلسات حول الحياة — مع تحذيرٍ صريح عند الأحداث المؤثّرة. IO عبر calendarStore فقط. */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { localDayKey } from "@/lib/storage";
+import dynamic from "next/dynamic";
+import { localDayKey, loadExamDate, saveExamDate } from "@/lib/storage";
 import {
-  EVENT_KIND_META, kindMeta, groupUpcoming, eventsOnDay, occursOnDay, warnsPlanChange,
+  EVENT_KIND_META, kindMeta, groupUpcoming, eventsOnDay, warnsPlanChange,
   type CalendarEvent, type EventKind, type EventImpact, type Recurrence,
 } from "@/lib/roadmap/calendar";
 import { loadCalendar, addCalendarEvent, removeCalendarEvent } from "@/lib/roadmap/calendarStore";
 import { n } from "@/lib/format";
 
+const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
+
 const IMPACT_LABEL: Record<EventImpact, string> = { busy: "ينقل", reduce: "يخفّف", block: "يمنع" };
 const IMPACT_COLOR: Record<EventImpact, string> = { busy: "#3B82F6", reduce: "#D9A23C", block: "#EF4444" };
 const REC_LABEL: Record<Recurrence, string> = { none: "لا يتكرر", daily: "يومياً", weekly: "أسبوعياً", monthly: "شهرياً" };
 const AR_MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
-const DOW = ["س","ح","ن","ث","ر","خ","ج"]; // السبت أول الأسبوع
 
 const timeOf = (iso: string) => {
   const d = new Date(iso); const h = d.getHours(), m = d.getMinutes();
   const two = (x: number) => new Intl.NumberFormat("ar-EG-u-nu-arab", { minimumIntegerDigits: 2 }).format(x);
   return `${new Intl.NumberFormat("ar-EG-u-nu-arab").format(((h + 11) % 12) + 1)}:${two(m)}${h >= 12 ? "م" : "ص"}`;
 };
+
+/* الساعة الكسريّة من ISO محلّيّ. `start`/`end` تُخزَّن بلا منطقةٍ زمنية، فالقراءة محلّية
+   دائماً — لا تخلطها مع weekdayOf/domOf في المحرّك (تلك بـUTC عن قصد). */
+const hourOf = (iso: string, fallback?: number): number => {
+  if (fallback != null) return fallback;
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? 0 : d.getHours() + d.getMinutes() / 60;
+};
+
+/* سلّم ساعات اليوم بخطٍّ أحمر عند اللحظة الحالية — كتقويمات الجوال المعتادة.
+   النطاق يتمدّد ليشمل أبكر حدثٍ وأحدثه والساعة الآن، فلا يُقصّ شيء. */
+function DayTimeline({ events }: { events: CalendarEvent[] }) {
+  const [now, setNow] = useState<Date | null>(() => (typeof window === "undefined" ? null : new Date()));
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(t);
+  }, []);
+
+  const timed = events.filter((e) => !e.allDay);
+  const allDay = events.filter((e) => e.allDay);
+  const nowH = now ? now.getHours() + now.getMinutes() / 60 : -1;
+
+  const marks = [
+    ...timed.map((e) => hourOf(e.start)),
+    ...timed.map((e) => hourOf(e.end)),
+    ...(nowH >= 0 ? [nowH] : []),
+  ];
+  const from = Math.max(0, Math.floor(Math.min(...marks, 7)));
+  const to = Math.min(24, Math.ceil(Math.max(...marks, 22)));
+  const hours = Array.from({ length: to - from + 1 }, (_, i) => from + i);
+  const ROW = 44;
+  const y = (h: number) => (h - from) * ROW;
+
+  return (
+    <div>
+      <p className="eyebrow mb-2 px-1">جدول اليوم</p>
+      {allDay.map((ev) => (
+        <div key={ev.id} className="rounded-xl px-3 py-2 mb-2 flex items-center gap-2"
+          style={{ background: `color-mix(in srgb, ${kindMeta(ev.kind).color} 12%, var(--surface))`, border: "1.5px solid var(--border)" }}>
+          <span aria-hidden="true">{kindMeta(ev.kind).icon}</span>
+          <span className="t-body font-bold" style={{ color: "var(--text)" }}>{ev.title}</span>
+          <span className="t-caption" style={{ color: "var(--text-muted)" }}>يومٌ كامل</span>
+        </div>
+      ))}
+      <div className="rounded-3xl p-3 relative overflow-hidden" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+        <div className="relative" style={{ height: `${(to - from) * ROW + 8}px` }}>
+          {hours.map((h) => (
+            <div key={h} className="absolute flex items-center gap-2" style={{ top: `${y(h)}px`, insetInlineStart: 0, insetInlineEnd: 0 }}>
+              <span className="t-caption font-mono-nums w-12 flex-shrink-0 text-left" style={{ color: "var(--text-dim)" }}>
+                {n(((h + 11) % 12) + 1)}{h >= 12 ? "م" : "ص"}
+              </span>
+              <span className="flex-1 block" style={{ height: "1px", background: "var(--border)" }} />
+            </div>
+          ))}
+
+          {timed.map((ev) => {
+            const top = y(hourOf(ev.start));
+            const h = Math.max(26, (hourOf(ev.end) - hourOf(ev.start)) * ROW - 4);
+            const c = kindMeta(ev.kind).color;
+            return (
+              <div key={ev.id} className="absolute rounded-xl px-2.5 py-1.5 overflow-hidden"
+                style={{ top: `${top}px`, height: `${h}px`, insetInlineStart: "58px", insetInlineEnd: "6px",
+                         background: `color-mix(in srgb, ${c} 16%, var(--surface))`, borderInlineStart: `3px solid ${c}` }}>
+                <p className="t-caption font-black truncate" style={{ color: "var(--text)" }}>{kindMeta(ev.kind).icon} {ev.title}</p>
+                <p className="t-caption truncate" style={{ color: "var(--text-muted)" }}>{timeOf(ev.start)}–{timeOf(ev.end)}</p>
+              </div>
+            );
+          })}
+
+          {/* خطّ الساعة الآن — يبدأ بعد عمود الساعات كالأحداث تماماً، والرقاقة في أقصى
+              الطرف المقابل. (RTL: أوّل ابنٍ في الصفّ يقع يميناً، فالنقطة أوّلاً ثم الرقاقة.) */}
+          {nowH >= from && nowH <= to && (
+            <div className="absolute flex items-center gap-1 pointer-events-none"
+              style={{ top: `${y(nowH)}px`, insetInlineStart: "58px", insetInlineEnd: "6px", transform: "translateY(-50%)" }}>
+              <i className="block w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: "var(--danger)" }} />
+              <span className="flex-1 block" style={{ height: "2px", background: "var(--danger)" }} />
+              <span className="font-black px-1.5 rounded flex-shrink-0"
+                style={{ background: "var(--danger)", color: "#fff", fontSize: "0.7rem", lineHeight: 1.6 }}>الآن</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function EventRow({ ev, when, onDelete }: { ev: CalendarEvent; when?: string; onDelete?: () => void }) {
   const meta = kindMeta(ev.kind);
@@ -60,11 +147,10 @@ export default function CalendarPage() {
   const [rec, setRec] = useState<Recurrence>("none");
   const [impact, setImpact] = useState<EventImpact | null>(null);
 
+  const [examDate, setExamDate] = useState<string | null>(() => (typeof window !== "undefined" ? loadExamDate() : null));
+
   const today = localDayKey();
   const [y, m] = [Number(today.slice(0, 4)), Number(today.slice(5, 7))];
-  const monthDays = new Date(y, m, 0).getDate();
-  const firstDow = new Date(y, m - 1, 1).getDay(); // 0=أحد
-  const leading = (firstDow + 1) % 7;               // السبت أول الأسبوع
   const up = groupUpcoming(events, today);
   const todayEvents = eventsOnDay(events, today).sort((a, b) => a.start.localeCompare(b.start));
   const warnEv = [...up.today, ...up.tomorrow, ...up.week].find(warnsPlanChange);
@@ -115,53 +201,35 @@ export default function CalendarPage() {
           </div>
         )}
 
-        {/* شبكة الشهر الحقيقية — السبت أول الأعمدة، اليوم مميّز، نقاط الأحداث بلون النوع */}
-        <div className="rounded-3xl p-4" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-          <div className="grid grid-cols-7 mb-2">
-            {DOW.map((d) => <span key={d} className="t-caption font-black text-center" style={{ color: "var(--text-dim)" }}>{d}</span>)}
-          </div>
-          <div className="grid grid-cols-7 gap-y-1.5">
-            {Array.from({ length: leading }).map((_, i) => <span key={`x${i}`} />)}
-            {Array.from({ length: monthDays }).map((_, i) => {
-              const dayNum = i + 1;
-              const dayIso = `${today.slice(0, 8)}${String(dayNum).padStart(2, "0")}`;
-              const isToday = dayNum === Number(today.slice(8, 10));
-              const evs = events.filter((e) => occursOnDay(e, dayIso));
-              const blocked = evs.some((e) => e.impact === "block");
-              return (
-                <div key={dayNum} className="flex flex-col items-center justify-center rounded-xl py-1.5"
-                  style={{ background: isToday ? "var(--accent)" : blocked ? "color-mix(in srgb, var(--accent) 10%, transparent)" : "transparent" }}>
-                  <span className="t-caption font-bold font-mono-nums" style={{ color: isToday ? "#fff" : "var(--text)" }}>{n(dayNum)}</span>
-                  <span className="flex gap-0.5 mt-0.5" style={{ minHeight: "5px" }}>
-                    {evs.slice(0, 3).map((e) => (
-                      <i key={e.id} className="block w-[4.5px] h-[4.5px] rounded-full" style={{ background: isToday ? "#fff" : kindMeta(e.kind).color }} />
-                    ))}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+        {/* تقويم الشهر — نفس المكوّن المستخدَم في «خطتي» (ميلادي/هجري · تنقّل الأشهر ·
+            معاينة اليوم بالضغط المطوّل). نمرّر أحداثنا عبر getDayInfo فلا نفرّع نسخةً ثانية. */}
+        <Calendar
+          examDate={examDate}
+          onExamDateChange={(d) => { setExamDate(d); saveExamDate(d); }}
+          getDayInfo={(date) =>
+            eventsOnDay(events, date).map((ev) => ({
+              id: ev.id,
+              label: ev.title,
+              color: kindMeta(ev.kind).color,
+              from: hourOf(ev.start, ev.allDay ? 0 : undefined),
+              to: hourOf(ev.end, ev.allDay ? 24 : undefined),
+            }))
+          }
+        />
+
+        {/* جدول اليوم — سلّم ساعاتٍ حقيقيّ بخطٍّ عند الساعة الآن */}
+        <DayTimeline events={todayEvents} />
+
+        <div className="flex flex-col gap-2.5">
+          <button onClick={() => setAdding(true)} className="btn-primary glow-blue w-full">＋ أضف حدثاً</button>
+          <button onClick={() => router.push("/plan")}
+            className="w-full rounded-2xl py-4 px-4 font-black t-body flex items-center gap-3 transition active:scale-[0.98]"
+            style={{ background: "linear-gradient(135deg, var(--accent), var(--accent-hi, var(--accent-light)))", color: "#fff", border: "none" }}>
+            <span className="text-[22px]" aria-hidden="true">🤖</span>
+            <span className="flex-1 text-right">ابنِ جدولي مع دويرب</span>
+            <span>←</span>
+          </button>
         </div>
-
-        {/* خطّ اليوم الزمنيّ */}
-        {todayEvents.length > 0 && (
-          <div>
-            <p className="eyebrow mb-2 px-1">اليوم</p>
-            <div className="flex flex-col">
-              {todayEvents.map((ev) => (
-                <div key={ev.id} className="flex gap-3">
-                  <span className="t-caption font-bold w-12 flex-shrink-0 text-left pt-0.5" style={{ color: "var(--text-dim)" }}>{ev.allDay ? "اليوم" : timeOf(ev.start)}</span>
-                  <div className="flex-1 pb-4 relative" style={{ borderInlineStart: "2px solid var(--border)", paddingInlineStart: "14px" }}>
-                    <i className="absolute block w-2 h-2 rounded-full" style={{ background: kindMeta(ev.kind).color, insetInlineStart: "-5px", top: "6px" }} />
-                    <p className="t-body font-bold" style={{ color: "var(--text)" }}>{kindMeta(ev.kind).icon} {ev.title}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <button onClick={() => setAdding(true)} className="btn-primary glow-blue w-full">＋ أضف حدثاً</button>
       </div>
 
       {/* ورقة إضافة حدث */}
