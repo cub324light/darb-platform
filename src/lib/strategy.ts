@@ -15,6 +15,7 @@ import { subjectsForTracks, type TrackId } from "./tracks";
 import { resolveCalendar, calendarSignals, type CalendarSignals, type CalendarConfig } from "./academicCalendar";
 import { findMajor, type MajorCategory } from "./university";
 import { loadGoldenPath, priorityFocusSubjects } from "./goldenPath";
+import { n as arN } from "@/lib/format";
 
 /* ── أنواع القرار ── */
 export type StudyIntensity = "light" | "moderate" | "intensive";
@@ -214,9 +215,9 @@ export function buildStrategy(inp: StrategyInputs): StudyStrategy {
 
   /* مبرّر شفّاف يربط القرار بالمدخلات والتقويم */
   const bits: string[] = [];
-  if (daysToExam != null) bits.push(`${weeksToExam} أسبوع للاختبار`);
-  if (readinessPct != null) bits.push(`جاهزية ${readinessPct}٪`);
-  if (studyHours != null) bits.push(`${studyHours} ساعات يومياً`);
+  if (daysToExam != null && weeksToExam != null) bits.push(`${arN(weeksToExam)} أسبوع للاختبار`);
+  if (readinessPct != null) bits.push(`جاهزية ${arN(readinessPct)}٪`);
+  if (studyHours != null) bits.push(`${arN(studyHours)} ساعات يومياً`);
   if (vacation) bits.push("إجازة (ساعات أعلى)");
   if (schoolFinals) bits.push("اختبارات مدرسية");
   const rationale = bits.length
@@ -381,7 +382,7 @@ export function strategyPlainText(s: StudyStrategy): string {
   return [
     `الكثافة: ${s.labels.intensity}`,
     `التوزيع: ${s.labels.allocation}`,
-    `${s.weeklyHoursTotal} ساعة أسبوعياً على ${s.studyDaysPerWeek} أيام`,
+    `${arN(s.weeklyHoursTotal)} ساعة أسبوعياً على ${arN(s.studyDaysPerWeek)} أيام`,
     `الجلسة: ${s.session.label}`,
     `المراجعة: ${s.labels.review}`,
   ].join(" · ");

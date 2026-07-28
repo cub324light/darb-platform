@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { fmtHour } from "@/lib/utils";
+import { time } from "@/lib/format";
 
 type Mode = "gregorian" | "hijri";
 
@@ -249,7 +249,7 @@ export default function Calendar({
                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: it.color, boxShadow: `0 0 6px ${it.color}` }} />
                     <span className="text-[14px] font-bold flex-1 truncate" style={{ color: "var(--text)" }}>{it.label}</span>
                     <span className="text-[12px] font-mono-nums" style={{ color: "var(--text-muted)" }}>
-                      {fmtHour(it.from)}
+                      {time(it.from)}
                     </span>
                   </div>
                 ))}

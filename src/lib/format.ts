@@ -34,3 +34,34 @@ export const dateLong = (iso: string): string =>
 /* «يوم/يومين/أيام/يوماً» بصيغةٍ عربية سليمة مع العدد */
 export const days = (x: number): string =>
   x === 1 ? "يوم واحد" : x === 2 ? "يومان" : `${n(x)} ${x >= 3 && x <= 10 ? "أيام" : "يوماً"}`;
+
+/* ═══ الوقت ═══
+   الساعةُ في «درب» عددٌ عشريّ (١٧٫٥ = الخامسة والنصف مساءً)، فهذه الدوالّ تحوّله نصّاً.
+   ▸ مصدرٌ واحدٌ للوقت في المنتج كلّه — حتى داخل برومبتات دويرب (المحلّل يردّ الأرقام
+     إلى اللاتينية عبر `normalizeDigits`)، فلا تعود صيغتان تتفرّقان. */
+
+/* وقتٌ من ساعةٍ عشرية (١٧٫٥ → «٥:٣٠ م»، ٨ → «٨ ص») */
+export const time = (h: number): string => {
+  const t = ((Math.round(h * 60) % 1440) + 1440) % 1440; // دقائق ضمن اليوم
+  const hh = Math.floor(t / 60), mm = t % 60;
+  const label = `${n(((hh + 11) % 12) + 1)}${mm ? `:${n(mm).padStart(2, "٠")}` : ""}`;
+  return `${label} ${hh < 12 ? "ص" : "م"}`;
+};
+
+/* فترةٌ زمنية (١٦ → ١٧٫٥ = «٤ – ٥:٣٠ م») — يُحذف المؤشّر المكرّر داخل الفترة الواحدة */
+export const timeRange = (from: number, to: number): string => {
+  const a = time(from), b = time(to);
+  const [aNum, aPeriod] = a.split(" ");
+  return aPeriod === b.split(" ")[1] ? `${aNum} – ${b}` : `${a} – ${b}`;
+};
+
+/* مدّةٌ بالدقائق نصّاً عربياً طبيعياً (٩٠ → «ساعة و٣٠ دقيقة») — للجُمل لا للجداول.
+   نظيرتها المختصرة `fmtMins` في `weeklyReport.ts` («١ س ٣٠ د») تبقى للإحصاءات المضغوطة. */
+export const dur = (m: number): string => {
+  const t = Math.max(0, Math.round(m));
+  if (t === 0) return "٠ دقيقة";
+  const h = Math.floor(t / 60), r = t % 60;
+  const hp = h === 0 ? "" : h === 1 ? "ساعة" : h === 2 ? "ساعتين" : `${n(h)} ${h <= 10 ? "ساعات" : "ساعة"}`;
+  const mp = r === 0 ? "" : r === 1 ? "دقيقة" : r === 2 ? "دقيقتين" : `${n(r)} ${r <= 10 ? "دقائق" : "دقيقة"}`;
+  return hp && mp ? `${hp} و${mp}` : hp || mp;
+};

@@ -9,6 +9,7 @@ import { getStrategy } from "@/lib/strategy";
 import { daysUntil } from "@/lib/insights";
 import { loadTrackExamDates } from "@/lib/storage";
 import { getTrack, type TrackId } from "@/lib/tracks";
+import { pct } from "@/lib/format";
 
 /* حقل الدرجة المستهدفة لكل اختبار */
 const TRACK_GOAL_KEY: Record<string, keyof ReturnType<typeof loadGoals>> = {
@@ -92,7 +93,7 @@ export default function GoalRealityCard() {
                   : "color-mix(in srgb, var(--danger) 15%, transparent)",
                 color: result.icon === "🟢" ? "var(--success)" : result.icon === "🟡" ? "var(--gold)" : "var(--danger)",
               }}>
-              {result.feasibilityScore}٪
+              {pct(result.feasibilityScore)}
             </span>
           </div>
           <p className="text-[14px] font-semibold" style={{ color: "var(--text-muted)" }}>{result.reason}</p>

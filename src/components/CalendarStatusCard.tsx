@@ -4,8 +4,8 @@
    كم أسبوع للاختبار؟ — مشتقّة من محرّك التقويم السعودي (currentCalendarSnapshot). */
 import { useMemo } from "react";
 import { currentCalendarSnapshot } from "@/lib/strategy";
+import { n as ar } from "@/lib/format";
 
-const ar = (n: number) => n.toLocaleString("ar");
 
 const PHASE_STYLE: Record<string, { bg: string; fg: string; icon: string }> = {
   study:         { bg: "var(--accent)",  fg: "var(--accent-light)", icon: "📖" },

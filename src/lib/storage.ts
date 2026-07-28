@@ -772,8 +772,14 @@ export function loadEvents(): ScheduleEvent[] {
   } catch { return []; }
 }
 
+/** حدثُ «تغيّرت أحداث الجدول» — تستمع له الشاشات المفتوحة فتُحدّث نفسها فوراً.
+    (بلا هذا كان الطالب يبني خطته مع دويرب ثم تبقى «خطتي» تقول «لا يوجد جدول لليوم».) */
+export const EVENTS_CHANGED = "darb:eventsChanged";
+
 export function saveEvents(events: ScheduleEvent[]) {
+  if (typeof window === "undefined") return;
   try { localStorage.setItem(EVENTS_KEY, JSON.stringify(events)); } catch {}
+  try { window.dispatchEvent(new CustomEvent(EVENTS_CHANGED)); } catch {}
 }
 
 /* ── الجدول الأسبوعي ── */

@@ -4,8 +4,8 @@
    لا يقرّر شيئاً: يعرض قرار المحرّك فقط (getStrategy) فيرى الطالب نفس التوجيه. */
 import { useMemo, useState } from "react";
 import { getStrategy } from "@/lib/strategy";
+import { n as ar } from "@/lib/format";
 
-const ar = (n: number) => n.toLocaleString("ar");
 
 const INTENSITY_ICON: Record<string, string> = { light: "🌿", moderate: "⚖️", intensive: "🔥" };
 const ALLOCATION_ICON: Record<string, string> = { single: "🎯", parallel: "⚌", rotating: "🔄" };

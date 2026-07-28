@@ -2,27 +2,15 @@
 import { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import type { ScheduleEvent } from "@/lib/storage";
-import { fmtHour, normalizeDigits } from "@/lib/utils";
+import { normalizeDigits } from "@/lib/utils";
+import { time } from "@/lib/format";
+import { getEventsForDate } from "@/lib/schedule";
 import { buildDuwairbProfile } from "@/lib/duwairb";
 import { askDuwairb } from "@/lib/orchestrator";
 import { strategyFromProfile, loadPlanningPrefs, currentCalendarSignals } from "@/lib/strategy";
 
 export type { ScheduleEvent };
 
-export function getEventsForDate(date: string, events: ScheduleEvent[]): ScheduleEvent[] {
-  const d = new Date(date + "T12:00:00");
-  const dow = d.getDay();
-  return events
-    .filter((ev) => {
-      const r = ev.recurrence;
-      if (r.kind === "once") return r.date === date;
-      if (r.kind === "weekly") return r.dayOfWeek === dow;
-      if (r.kind === "daily") return r.fromDate <= date;
-      if (r.kind === "multiweekly") return r.days.includes(dow);
-      return false;
-    })
-    .sort((a, b) => a.fromHour - b.fromHour);
-}
 
 /* ─── تحويل رقم + مؤشر الفترة ─── */
 function parseHourArabic(num: string, mins: string, period: string): number {
@@ -98,9 +86,12 @@ interface Props {
   onClose: () => void;
   prefillText?: string;
   initialTab?: "manual" | "ai";
+  /** يُخفي تبويب «خطة مع دويرب». تستعمله «خطتي»: مخطِّط الذكاء هناك هو دويرب نفسه
+      عبر `darb:openDuirb`، فلا يجتمع محلّلا جدولٍ مختلفان في صفحةٍ واحدة. */
+  manualOnly?: boolean;
 }
 
-export default function DayScheduler({ date, events, subjects, examDate, onExamDateChange, onEventsChange, onClose, prefillText, initialTab }: Props) {
+export default function DayScheduler({ date, events, subjects, examDate, onExamDateChange, onEventsChange, onClose, prefillText, initialTab, manualOnly }: Props) {
   const [tab, setTab] = useState<"manual" | "ai">(initialTab ?? "manual");
 
   // Manual
@@ -249,7 +240,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
             <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center text-base"
               style={{ background: "var(--surface2)", color: "var(--text-muted)" }}>✕</button>
           </div>
-          <div className="flex gap-1 mt-3 p-1 rounded-2xl" style={{ background: "var(--surface2)" }}>
+          {!manualOnly && <div className="flex gap-1 mt-3 p-1 rounded-2xl" style={{ background: "var(--surface2)" }}>
             {(["manual", "ai"] as const).map((t) => (
               <button key={t} onClick={() => setTab(t)}
                 className="flex-1 py-2 rounded-xl text-[19px] font-bold transition"
@@ -257,7 +248,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
                 {t === "manual" ? "خطة يدوية" : "خطة مع دويرب"}
               </button>
             ))}
-          </div>
+          </div>}
         </div>
 
         <div className="px-5 py-4 pb-10">
@@ -285,7 +276,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
                         {ev.type === "study" ? (ev.subject ?? "") : (ev.label ?? "")}
                       </span>
                       <span className="text-[19px] font-semibold" style={{ color: "var(--text-muted)" }}>
-                        {fmtHour(ev.fromHour)} → {fmtHour(ev.toHour)}
+                        {time(ev.fromHour)} → {time(ev.toHour)}
                       </span>
                       <button onClick={() => deleteEvent(ev.id)}
                         className="text-[var(--text-muted)] text-base px-1 min-h-[44px]" aria-label="حذف">✕</button>
@@ -341,7 +332,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
                       <select value={addFrom} onChange={(e) => { const v = Number(e.target.value); setAddFrom(v); if (addTo <= v) setAddTo(v + 1); }}
                         className="w-full rounded-xl px-3 py-3 text-[19px] outline-none min-h-[44px]"
                         style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
-                        {HOURS.map((h) => <option key={h} value={h}>{fmtHour(h)}</option>)}
+                        {HOURS.map((h) => <option key={h} value={h}>{time(h)}</option>)}
                       </select>
                     </div>
                     <div className="flex-1">
@@ -349,7 +340,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
                       <select value={addTo} onChange={(e) => setAddTo(Number(e.target.value))}
                         className="w-full rounded-xl px-3 py-3 text-[19px] outline-none min-h-[44px]"
                         style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
-                        {END_HOURS.filter((h) => h > addFrom).map((h) => <option key={h} value={h}>{fmtHour(h)}</option>)}
+                        {END_HOURS.filter((h) => h > addFrom).map((h) => <option key={h} value={h}>{time(h)}</option>)}
                       </select>
                     </div>
                   </div>
@@ -407,7 +398,7 @@ export default function DayScheduler({ date, events, subjects, examDate, onExamD
           )}
 
           {/* ══ AI TAB ══ */}
-          {tab === "ai" && (
+          {tab === "ai" && !manualOnly && (
             <div>
               <p className="title-md mb-3" style={{ color: "var(--text)" }}>أدخل مشاغيلك</p>
 

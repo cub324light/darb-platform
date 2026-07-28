@@ -1,8 +1,9 @@
 "use client";
 import { useState } from "react";
 import { loadEvents, saveEvents, activeExamTrackIds, loadExamCoord, examCoordPrompt, recordPlanCreated, recordAIChat, type ScheduleEvent } from "@/lib/storage";
-import { getEventsForDate } from "@/components/DayScheduler";
-import { normalizeDigits, fmtHour } from "@/lib/utils";
+import { getEventsForDate } from "@/lib/schedule";
+import { time } from "@/lib/format";
+import { normalizeDigits } from "@/lib/utils";
 import { buildDuwairbProfile } from "@/lib/duwairb";
 import { askDuwairb } from "@/lib/orchestrator";
 import { loadPlanningPrefs, currentCalendarSignals } from "@/lib/strategy";
@@ -79,7 +80,7 @@ export default function DashAI({ subjects, onOpenScheduler }: Props) {
       /* مرّر الأوقات المحجوزة مسبقاً (من خطط سابقة) ليتفادى الذكاء التعارض */
       const busy = getEventsForDate(today, loadEvents());
       const busyNote = busy.length > 0
-        ? ` الأوقات المحجوزة اليوم (تجنّبها تماماً ولا تضع فيها شيئاً): ${busy.map((e) => `${fmtHour(e.fromHour)}–${fmtHour(e.toHour)}`).join("، ")}.`
+        ? ` الأوقات المحجوزة اليوم (تجنّبها تماماً ولا تضع فيها شيئاً): ${busy.map((e) => `${time(e.fromHour)}–${time(e.toHour)}`).join("، ")}.`
         : "";
       /* تنسيق الاختبارات المتعددة — المصدر الواحد: Workspace (لا activeTracks) */
       const coordNote = examCoordPrompt(loadExamCoord(), activeExamTrackIds());

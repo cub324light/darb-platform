@@ -1,3 +1,8 @@
+import { n, days as arDays } from "@/lib/format";
+
+/* «٣ درجات» / «١٣ درجة» — جمعُ العربية يتبع العدد */
+const degrees = (x: number): string =>
+  x === 1 ? "درجة واحدة" : x === 2 ? "درجتان" : `${n(x)} ${x >= 3 && x <= 10 ? "درجات" : "درجة"}`;
 /* ─── محرّك تقييم واقعية الهدف ───
    نقي وحتمي: نفس المدخلات ⇒ نفس المخرجات.
    يُستهلَك في: Profile / Plan / Goals / Duwairb — مصدر واحد. */
@@ -49,19 +54,19 @@ export function evaluateGoal(inp: GoalRealityInputs): GoalRealityResult {
     const gap = target - current;
     if (gap <= 0) {
       score += 30;
-      gapNote = `درجتك الحالية ${current} تجاوزت هدفك بالفعل.`;
+      gapNote = `درجتك الحالية ${n(current)} تجاوزت هدفك بالفعل.`;
     } else if (gap <= 5) {
       score += 20;
-      gapNote = `فجوة صغيرة (${gap} درجات) لإغلاقها.`;
+      gapNote = `فجوة صغيرة (${degrees(gap)}) لإغلاقها.`;
     } else if (gap <= 15) {
       score += 5;
-      gapNote = `فجوة معقولة (${gap} درجات).`;
+      gapNote = `فجوة معقولة ({GAP}).`;
     } else if (gap <= 25) {
       score -= 10;
-      gapNote = `فجوة كبيرة (${gap} درجات) تحتاج جهداً.`;
+      gapNote = `فجوة كبيرة (${degrees(gap)}) تحتاج جهداً.`;
     } else {
       score -= 20;
-      gapNote = `فجوة كبيرة جداً (${gap} درجة).`;
+      gapNote = `فجوة كبيرة جداً (${degrees(gap)}).`;
     }
   } else {
     // بدون درجة حالية نعتمد على الجاهزية
@@ -82,13 +87,13 @@ export function evaluateGoal(inp: GoalRealityInputs): GoalRealityResult {
       timeNote = "أقل من أسبوع — الوقت حرج جداً.";
     } else if (days <= 21) {
       score -= 15;
-      timeNote = `${days} يوماً متبقية — وقت ضيّق.`;
+      timeNote = `${arDays(days)} متبقية — وقت ضيّق.`;
     } else if (days <= 60) {
       score += 5;
-      timeNote = `${days} يوماً — وقت كافٍ بانضباط.`;
+      timeNote = `${arDays(days)} — وقت كافٍ بانضباط.`;
     } else if (days <= 120) {
       score += 15;
-      timeNote = `${Math.round(days / 7)} أسبوعاً — وقت مريح.`;
+      timeNote = `${n(Math.round(days / 7))} أسبوعاً — وقت مريح.`;
     } else {
       score += 20;
       timeNote = "وقت وافر أمامك.";
@@ -98,10 +103,10 @@ export function evaluateGoal(inp: GoalRealityInputs): GoalRealityResult {
   /* ٣) الطاقة الأسبوعية */
   let hoursNote = "";
   if (hours != null) {
-    if (hours >= 20) { score += 20; hoursNote = `${hours} ساعة/أسبوع — طاقة ممتازة.`; }
-    else if (hours >= 12) { score += 10; hoursNote = `${hours} ساعة/أسبوع — طاقة جيدة.`; }
-    else if (hours >= 6)  { score += 0;  hoursNote = `${hours} ساعة/أسبوع — مقبول.`; }
-    else { score -= 10; hoursNote = `${hours} ساعة/أسبوع — ساعات قليلة.`; }
+    if (hours >= 20) { score += 20; hoursNote = `${n(hours)} ساعة/أسبوع — طاقة ممتازة.`; }
+    else if (hours >= 12) { score += 10; hoursNote = `${n(hours)} ساعة/أسبوع — طاقة جيدة.`; }
+    else if (hours >= 6)  { score += 0;  hoursNote = `${n(hours)} ساعة/أسبوع — مقبول.`; }
+    else { score -= 10; hoursNote = `${n(hours)} ساعة/أسبوع — ساعات قليلة.`; }
   }
 
   /* ٤) مكافأة التجربة */
@@ -128,7 +133,7 @@ export function evaluateGoal(inp: GoalRealityInputs): GoalRealityResult {
   const reasonParts = [gapNote, timeNote, hoursNote].filter(Boolean);
   const reason = reasonParts.length
     ? reasonParts.join(" ")
-    : `هدفك ${target} في ${exam}.`;
+    : `هدفك ${n(target)} في ${exam}.`;
 
   let suggestion: string;
   if (verdict === "واقعي") {
@@ -147,7 +152,7 @@ export function evaluateGoal(inp: GoalRealityInputs): GoalRealityResult {
     if (days != null && days <= 14) {
       suggestion = "أعِد تقييم هدفك للاختبار القادم — ورمّز على ما تستطيع تحقيقه الآن.";
     } else if (current != null && target - current > 25) {
-      suggestion = `تحريك الهدف للأسفل مؤقتاً (مثلاً ${Math.round(current + 15)}) أو إعادة الجدولة لاختبار لاحق سيمنحك وقتاً أكثر.`;
+      suggestion = `تحريك الهدف للأسفل مؤقتاً (مثلاً ${n(Math.round(current + 15))}) أو إعادة الجدولة لاختبار لاحق سيمنحك وقتاً أكثر.`;
     } else {
       suggestion = "هذا الهدف يحتاج وقتاً أطول أو ساعات أكثر — عدّل الهدف أو الموعد.";
     }

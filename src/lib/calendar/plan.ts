@@ -3,17 +3,8 @@
    (يطابق متطلب «كل جلسة مذاكرة تنشأ كحدث مستقل»). */
 import type { ScheduleEvent } from "@/lib/storage";
 import { localDayKey } from "@/lib/storage";
+import { occursOn } from "@/lib/schedule";
 import type { CalEvent } from "./types";
-
-/* هل ينطبق الحدث على تاريخ معيّن؟ (نفس منطق getEventsForDate لكن بلا اعتماد على مكوّن) */
-function occursOn(ev: ScheduleEvent, date: string, dow: number): boolean {
-  const r = ev.recurrence;
-  if (r.kind === "once") return r.date === date;
-  if (r.kind === "weekly") return r.dayOfWeek === dow;
-  if (r.kind === "daily") return r.fromDate <= date;
-  if (r.kind === "multiweekly") return r.days.includes(dow);
-  return false;
-}
 
 /* ساعة (قد تكون 24) + تاريخ → Date محلي */
 function atHour(date: string, hour: number): Date {
