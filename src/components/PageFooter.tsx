@@ -10,11 +10,11 @@ export default function PageFooter() {
           يتجاوز الشاشة بقليل. nowrap + مقاسٌ من السلّم + فجوةٌ أضيق يُبقيهما جنباً لجنب. */}
       <div className="flex items-center justify-center gap-2 flex-nowrap">
         <FeedbackButton
-          className="t-small font-bold transition active:scale-95 whitespace-nowrap"
+          className="t-small font-bold transition active:scale-95 whitespace-nowrap tap-44"
           style={{ color: "var(--text-muted)", background: "transparent", border: "none", padding: 0 }}
         />
         <span className="flex-shrink-0" style={{ color: "var(--border)" }}>·</span>
-        <a href="/changelog" className="t-small font-bold transition active:scale-95 whitespace-nowrap" style={{ color: "var(--text-muted)" }}>
+        <a href="/changelog" className="t-small font-bold transition active:scale-95 whitespace-nowrap tap-44" style={{ color: "var(--text-muted)" }}>
           ✨ آخر التحديثات
         </a>
       </div>

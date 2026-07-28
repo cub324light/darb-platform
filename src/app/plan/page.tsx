@@ -107,10 +107,14 @@ export default function PlanPage() {
   const [gradUni] = useState(() =>
     typeof window !== "undefined" ? isUniversityGraduate(loadUser()) : false
   );
-  /* المطويّة تُفتح تلقائياً لمن لم يضع هدفاً بعد — وإلا بقي القُمع مغلقاً للأبد */
+  /* المطويّة تُفتح تلقائياً لمن لم يضع هدفاً بعد — وإلا بقي القُمع مغلقاً للأبد.
+     ولا نركّب محتواها قبل فتحها: `GoalsPanel` و`UniversityFuture` يشغّلان محرّكات
+     (الاستراتيجية · الجاهزية · تحليل الفجوة) ويضيفان ~٢٠٠ عنصراً إلى الصفحة، وأكثر
+     الزائرين لا يفتحونها. حالتهما في التخزين لا في الشجرة، فالتركيب المتأخّر لا يفقد شيئاً. */
   const [goalsOpen] = useState(() =>
     typeof window !== "undefined" ? Object.keys(loadGoals()).length === 0 : false
   );
+  const [goalsMounted, setGoalsMounted] = useState(goalsOpen);
 
   /* مواد اختبار الأولوية — يبني دويرب والمحرّر اليدويّ حولها لا حول موادَّ مخترعة */
   const [subjects] = useState<{ name: string; color: string }[]>(() => {
@@ -425,14 +429,19 @@ export default function PlanPage() {
           <SectionHead eyebrow="٣ · إلى أين؟" title="هدفك وواقعيّته" />
           <div className="flex flex-col gap-4">
             <GoalRealityCard />
-            <details open={goalsOpen} className="ds-card">
+            <details open={goalsOpen} className="ds-card"
+              onToggle={(e) => { if ((e.currentTarget as HTMLDetailsElement).open) setGoalsMounted(true); }}>
               <summary className="t-body font-black cursor-pointer" style={{ color: "var(--text)" }}>
                 🎯 أهدافي ودرجاتي
               </summary>
               <div className="pt-4 flex flex-col gap-4">
-                <GoalsPanel />
-                {/* هدفي الجامعي — لمن هم على أعتاب القبول (ثالث ثانوي/خريج ثانوي) */}
-                {showUni && <UniversityFuture />}
+                {goalsMounted && (
+                  <>
+                    <GoalsPanel />
+                    {/* هدفي الجامعي — لمن هم على أعتاب القبول (ثالث ثانوي/خريج ثانوي) */}
+                    {showUni && <UniversityFuture />}
+                  </>
+                )}
               </div>
             </details>
           </div>

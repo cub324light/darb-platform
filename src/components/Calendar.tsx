@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { time } from "@/lib/format";
+import { time, year } from "@/lib/format";
 
 type Mode = "gregorian" | "hijri";
 
@@ -186,7 +186,7 @@ export default function Calendar({
 
   const header = () => {
     if (mode === "gregorian") {
-      return `${GREG_MONTHS[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
+      return `${GREG_MONTHS[viewDate.getMonth()]} ${year(viewDate.getFullYear())}`;
     }
     const h = hijriOf(viewDate);
     return `${HIJRI_MONTHS[(h.month - 1) % 12]} ${h.year} هـ`;

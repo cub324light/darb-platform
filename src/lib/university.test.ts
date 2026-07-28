@@ -5,8 +5,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   UNIVERSITIES, MAJORS, universityMapUrl, universityCity, universitiesByRegion,
-  UNIVERSITY_MAJORS, majorsAt, hasMajorList,
+  majorsAt, hasMajorList,
 } from "./university";
+import {
+  UNIVERSITY_COLLEGES, collegesAt, majorsIn, allMajorsAt, collegeOfMajor, categoryOfMajor, UNIVERSITY_YEARS,
+} from "./universityColleges";
 
 test("فرادة معرّفات الجامعات والتخصصات", () => {
   const uniIds = UNIVERSITIES.map((u) => u.id);
@@ -122,41 +125,68 @@ test("سنةُ إصدار QS لا تُذكر بلا ترتيب", () => {
   }
 });
 
-/* ═══ تخصصات كل جامعة — من دليل المالك ═══ */
+/* ═══ الكليات والتخصصات الدقيقة — من دليل المالك ═══ */
 
-test("كل مفتاحٍ في جدول التخصصات جامعةٌ حقيقية", () => {
+test("كل مفتاحٍ في جدول الكليات جامعةٌ حقيقية", () => {
   const ids = new Set(UNIVERSITIES.map((u) => u.id));
-  for (const key of Object.keys(UNIVERSITY_MAJORS)) {
+  for (const key of Object.keys(UNIVERSITY_COLLEGES)) {
     assert.ok(ids.has(key), `جامعةٌ غير موجودة في الجدول: ${key}`);
   }
 });
 
-test("كل تخصّصٍ مذكورٍ لجامعةٍ معرّفٌ حقيقيّ وغير مكرّر", () => {
-  const majorIds = new Set(MAJORS.map((m) => m.id));
-  for (const [uni, list] of Object.entries(UNIVERSITY_MAJORS)) {
-    assert.ok(list.length > 0, `${uni}: قائمةٌ فارغة — الغياب يُعبَّر عنه بحذف المفتاح`);
-    assert.equal(new Set(list).size, list.length, `${uni}: تخصّصٌ مكرّر`);
-    for (const id of list) assert.ok(majorIds.has(id), `${uni}: تخصّصٌ مجهول «${id}»`);
-    assert.ok(!list.includes("other"), `${uni}: «أخرى» تُضاف تلقائياً فلا تُكتب`);
+test("كل كليةٍ لها اسمٌ فريد وتخصصاتٌ غير مكرّرة", () => {
+  for (const [uni, colleges] of Object.entries(UNIVERSITY_COLLEGES)) {
+    assert.ok(colleges.length > 0, `${uni}: بلا كليات — الغياب يُعبَّر عنه بحذف المفتاح`);
+    const names = colleges.map((k) => k.name);
+    assert.equal(new Set(names).size, names.length, `${uni}: اسم كليةٍ مكرّر`);
+    for (const k of colleges) {
+      assert.ok(k.majors.length > 0, `${uni}/${k.name}: كليةٌ بلا تخصصات`);
+      const majors = k.majors.map((m) => m.name);
+      assert.equal(new Set(majors).size, majors.length, `${uni}/${k.name}: تخصّصٌ مكرّر`);
+      for (const m of k.majors) assert.ok(m.name.trim().length > 1, `${uni}/${k.name}: اسمٌ فارغ`);
+    }
   }
 });
 
-test("majorsAt: جامعةٌ معروفة ⇒ تخصصاتها هي فقط + «أخرى»", () => {
+test("كل categoryId جسرٌ إلى تصنيفٍ حقيقيّ في MAJORS", () => {
+  const ids = new Set(MAJORS.map((m) => m.id));
+  for (const [uni, colleges] of Object.entries(UNIVERSITY_COLLEGES)) {
+    for (const k of colleges) for (const m of k.majors) {
+      if (m.categoryId === undefined) continue;
+      assert.ok(ids.has(m.categoryId), `${uni}/${m.name}: تصنيفٌ مجهول «${m.categoryId}»`);
+      assert.notEqual(m.categoryId, "other", `${uni}/${m.name}: «أخرى» ليست تصنيفاً`);
+    }
+  }
+});
+
+test("كلية العمارة والتخطيط موجودةٌ في الإمام عبدالرحمن (العطل الذي أبلغ عنه المالك)", () => {
+  const names = collegesAt("iau").map((k) => k.name);
+  assert.ok(names.includes("كلية العمارة والتخطيط"), names.join(" · "));
+  const majors = majorsIn("iau", "كلية العمارة والتخطيط").map((m) => m.name);
+  assert.deepEqual(majors, ["العمارة", "عمارة البيئة", "التخطيط العمراني الإقليمي", "التصميم الداخلي", "تقنية البناء"]);
+});
+
+test("collegeOfMajor يستعيد الكلية من اسم التخصص", () => {
+  assert.equal(collegeOfMajor("iau", "العمارة"), "كلية العمارة والتخطيط");
+  assert.equal(collegeOfMajor("iau", "الأمن السيبراني"), "كلية علوم الحاسب وتقنية المعلومات");
+  assert.equal(collegeOfMajor("iau", "تخصّصٌ لا وجود له"), undefined);
+});
+
+test("categoryOfMajor يجسر إلى MAJORS حين يوجد تصنيف", () => {
+  assert.equal(categoryOfMajor("iau", "الطب والجراحة"), "medicine");
+  assert.equal(categoryOfMajor("iau", "العمارة"), undefined, "لا تصنيفَ خشناً للعمارة — ولا نخترع");
+});
+
+test("majorsAt: مشتقٌّ من الكليات، وجامعةٌ خارج الدليل ⇒ كل التخصصات", () => {
   const iau = majorsAt("iau").map((m) => m.id);
   assert.ok(iau.includes("medicine") && iau.includes("cybersec"));
   assert.ok(!iau.includes("me"), "الدليل لا يذكر الهندسة الميكانيكية في الإمام عبدالرحمن");
   assert.ok(iau.includes("other"), "«أخرى» مخرجٌ دائم");
-  assert.ok(iau.length < MAJORS.length, "القائمة مصفّاة فعلاً");
-});
-
-test("majorsAt: جامعةٌ خارج الدليل أو بلا اختيار ⇒ كل التخصصات (لا حجب)", () => {
   assert.equal(majorsAt(undefined).length, MAJORS.length);
-  assert.equal(majorsAt("").length, MAJORS.length);
-  assert.equal(majorsAt("alfaisal").length, MAJORS.length, "الفيصل خارج الدليل ⇒ لا نحجب");
-  assert.equal(majorsAt("other").length, MAJORS.length);
+  assert.equal(majorsAt("alfaisal").length, MAJORS.length, "الفيصل خارج الدليل ⇒ لا حجب");
 });
 
-test("majorsAt يحفظ ترتيب MAJORS (الصحي ثم الحاسب ثم الهندسي…)", () => {
+test("majorsAt يحفظ ترتيب MAJORS", () => {
   const order = MAJORS.map((m) => m.id);
   const got = majorsAt("ksu").map((m) => m.id);
   assert.deepEqual(got, order.filter((id) => got.includes(id)));
@@ -169,8 +199,16 @@ test("hasMajorList يفرّق «لا نعلم» عن «نعلم»", () => {
 });
 
 test("KFUPM بلا تخصصاتٍ طبية — يوافق ما تقوله بطاقتها", () => {
-  const ids = majorsAt("kfupm").map((m) => m.id);
-  for (const med of ["medicine", "dentistry", "pharmacy", "nursing"]) {
-    assert.ok(!ids.includes(med), `KFUPM لا تضم ${med}`);
+  const names = allMajorsAt("kfupm").map((m) => m.name);
+  for (const med of ["الطب", "طب الأسنان", "الصيدلة", "التمريض"]) {
+    assert.ok(!names.includes(med), `KFUPM لا تضم ${med}`);
   }
+});
+
+test("السنوات الجامعية خمسٌ، ومفاتيحها هي المخزَّنة اليوم", () => {
+  assert.equal(UNIVERSITY_YEARS.length, 5);
+  assert.deepEqual(UNIVERSITY_YEARS.map((y) => y.key),
+    ["الأولى", "الثانية", "الثالثة", "الرابعة", "الخامسة+"],
+    "تغييرُ المفاتيح يفقد سنةَ كل مسجَّلٍ سابق");
+  assert.equal(UNIVERSITY_YEARS[0].label, "السنة الأولى");
 });

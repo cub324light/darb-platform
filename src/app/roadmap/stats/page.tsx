@@ -49,7 +49,7 @@ export default function StatsPage() {
   return (
     <div className="min-h-dvh pb-nav relative z-[1] page-enter">
       <div className="max-w-xl mx-auto w-full px-5 pt-7 pb-8 flex flex-col gap-4">
-        <button onClick={() => router.push("/roadmap")} className="t-body font-bold self-start" style={{ color: "var(--text-muted)" }}>← الآن</button>
+        <button onClick={() => router.push("/roadmap")} className="t-body font-bold self-start tap-44" style={{ color: "var(--text-muted)" }}>← الآن</button>
         <h1 className="t-h2 font-black -mt-2" style={{ color: "var(--text)" }}>📈 إحصائياتك</h1>
 
         <div className="grid grid-cols-2 gap-2.5">

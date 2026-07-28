@@ -6,8 +6,9 @@
    كل القرارات من محرّكات مركزية في university.ts (لا منطق مكرّر). */
 import { useMemo, useState } from "react";
 import {
-  UNIVERSITIES, majorsAt, hasMajorList, findUniversity, findMajor, universityReadiness, gapAnalysis,
+  UNIVERSITIES, MAJORS, findUniversity, findMajor, universityReadiness, gapAnalysis,
 } from "@/lib/university";
+import { collegesAt, majorsIn, categoryOfMajor, collegeOfMajor, hasColleges } from "@/lib/universityColleges";
 import { loadGoals, saveGoals, currentScoreMap, activeExamTrackIds, loadTrackExamDates, type DarbGoals } from "@/lib/storage";
 import { getStrategy } from "@/lib/strategy";
 import { daysUntil } from "@/lib/insights";
@@ -51,25 +52,28 @@ export default function UniversityFuture() {
   const selectedUni = findUniversity(goals.universityId);
   const selectedMajor = findMajor(goals.majorId);
 
-  /* اختيار الجامعة → يحفظ المعرّف + الاسم المحلول (SSoT لدويرب) */
+  /* اختيار الجامعة → يحفظ المعرّف + الاسم المحلول (SSoT لدويرب).
+     السلسلة تنهار من أعلاها: جامعةٌ جديدة ⇒ كليةٌ وتخصّصٌ جديدان، فلا يبقى هدفٌ
+     مستحيلٌ محفوظاً بلا أن يراه أحد. */
   const pickUniversity = (id: string) => {
     const u = findUniversity(id);
     if (!u) return;
-    /* تخصّصٌ لا تُدرّسه الجامعة الجديدة يسقط — وإلا بقي هدفاً مستحيلاً بلا أن يراه أحد */
-    const stillOffered = !goals.majorId || majorsAt(id).some((m) => m.id === goals.majorId);
-    const dropMajor = stillOffered ? {} : { majorId: undefined, major: undefined };
+    const cleared = { college: undefined, major: undefined, majorId: undefined };
     if (id === "other") {
-      update({ universityId: "other", university: otherUni.trim() || "أخرى", ...dropMajor });
+      update({ universityId: "other", university: otherUni.trim() || "أخرى", ...cleared });
     } else {
-      update({ universityId: id, university: u.name, ...dropMajor });
+      update({ universityId: id, university: u.name, ...cleared });
     }
     setUniQuery("");
   };
-  const pickMajor = (id: string) => {
-    const m = findMajor(id);
-    if (!m) return;
-    update({ majorId: id, major: m.name });
-  };
+  const pickCollege = (name: string) =>
+    update({ college: name || undefined, major: undefined, majorId: undefined });
+  /* التخصص الدقيق هو تخصّص الطالب، والتصنيف الخشن جسرٌ للمتطلّبات وقد يغيب */
+  const pickMajor = (name: string) =>
+    update({ major: name || undefined, majorId: categoryOfMajor(goals.universityId, name) });
+
+  /* الكلية المحفوظة، أو المشتقّة من تخصّصٍ حُفظ قبل وجود خطوة الكلية */
+  const college = goals.college ?? (goals.major ? collegeOfMajor(goals.universityId, goals.major) : undefined) ?? "";
 
   const filteredUnis = useMemo(() => {
     const q = uniQuery.trim();
@@ -108,9 +112,10 @@ export default function UniversityFuture() {
       stepScore: have.step,
       weeklyHours: strategy.weeklyHoursTotal,
       planProgressPct: null,
-      majorName: selectedMajor?.name,
+      /* الاسم الدقيق هو الذي يراه الطالب («العمارة» لا «هندسة مدنية») */
+      majorName: goals.major ?? selectedMajor?.name,
     });
-  }, [selectedMajor, have]);
+  }, [selectedMajor, have, goals.major]);
 
   /* تحليل الفجوة — «ماذا ينقصني للوصول؟» */
   const gap = useMemo(
@@ -181,31 +186,62 @@ export default function UniversityFuture() {
         )}
       </div>
 
+      {/* الكلية ثم التخصص الدقيق — كما في التسجيل: جامعة ← كلية ← تخصّص */}
+      {hasColleges(goals.universityId) && (
+        <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <p className="t-title font-black" style={{ color: "var(--text)" }}>🏫 الكلية</p>
+          <div className="flex flex-wrap gap-2">
+            {collegesAt(goals.universityId).map((k) => {
+              const on = college === k.name;
+              return (
+                <button key={k.name} onClick={() => pickCollege(on ? "" : k.name)} aria-pressed={on}
+                  className="px-3 py-2 rounded-full t-small font-bold transition active:scale-95"
+                  style={{ background: on ? "var(--accent)" : "var(--surface2)", color: on ? "#fff" : "var(--text)",
+                           border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}` }}>
+                  {k.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* اختيار التخصص المستهدف */}
       <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-        <p className="text-[15px] font-black" style={{ color: "var(--text)" }}>📚 التخصص المستهدف</p>
-        {/* تخصصات الجامعة المختارة وحدها — لا نَعِد الطالب بتخصّصٍ ليس فيها */}
-        {hasMajorList(goals.universityId) && (
-          <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
-            التخصصات المتاحة في {selectedUni?.name ?? "جامعتك"}
-          </p>
+        <p className="t-title font-black" style={{ color: "var(--text)" }}>📚 التخصص المستهدف</p>
+        {hasColleges(goals.universityId) ? (
+          college ? (
+            <div className="flex flex-wrap gap-2">
+              {majorsIn(goals.universityId, college).map((m) => {
+                const on = goals.major === m.name;
+                return (
+                  <button key={m.name} onClick={() => pickMajor(on ? "" : m.name)} aria-pressed={on}
+                    className="px-3 py-2 rounded-full t-small font-bold transition active:scale-95"
+                    style={{ background: on ? "var(--accent)" : "var(--surface2)", color: on ? "#fff" : "var(--text)",
+                             border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}` }}>
+                    {m.name}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="t-small" style={{ color: "var(--text-muted)" }}>اختر كليتك أوّلاً لتظهر تخصصاتها.</p>
+          )
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {MAJORS.map((m) => {
+              const on = goals.majorId === m.id;
+              return (
+                <button key={m.id} onClick={() => update({ majorId: on ? undefined : m.id, major: on ? undefined : m.name })} aria-pressed={on}
+                  className="px-3 py-2 rounded-full t-small font-bold transition active:scale-95"
+                  style={{ background: on ? "var(--accent)" : "var(--surface2)", color: on ? "#fff" : "var(--text)",
+                           border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}` }}>
+                  {m.name}
+                </button>
+              );
+            })}
+          </div>
         )}
-        <div className="flex flex-wrap gap-2">
-          {majorsAt(goals.universityId).map((m) => {
-            const on = goals.majorId === m.id;
-            return (
-              <button key={m.id} onClick={() => pickMajor(m.id)} aria-pressed={on}
-                className="px-3 py-2 rounded-full text-[14px] font-bold transition active:scale-95"
-                style={{
-                  background: on ? "var(--accent)" : "var(--surface2)",
-                  color: on ? "#fff" : "var(--text)",
-                  border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}`,
-                }}>
-                {m.name}
-              </button>
-            );
-          })}
-        </div>
       </div>
 
       {/* «هل أنا قريب؟» — مؤشر الوصول الجامعي */}

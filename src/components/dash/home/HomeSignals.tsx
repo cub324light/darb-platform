@@ -74,7 +74,7 @@ export default function HomeSignals() {
                 </div>
                 <p className="t-body font-bold mt-0.5 mb-2 leading-snug" style={{ color: "var(--text)" }}>{u.title}</p>
                 <a href={u.url} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 t-caption font-bold no-underline px-2.5 py-1 rounded-full"
+                  className="inline-flex items-center gap-1 t-caption font-bold no-underline px-2.5 py-1 rounded-full tap-44"
                   style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>
                   المصدر الرسمي ↗
                 </a>

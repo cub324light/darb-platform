@@ -50,7 +50,7 @@ function EventRow({ ev, when, onDelete }: { ev: CalendarEvent; when?: string; on
         style={{ background: `color-mix(in srgb, ${IMPACT_COLOR[ev.impact]} 14%, transparent)`, color: IMPACT_COLOR[ev.impact] }}>
         {IMPACT_LABEL[ev.impact]}
       </span>
-      {onDelete && <button onClick={onDelete} className="t-caption px-1 flex-shrink-0" style={{ color: "var(--text-dim)" }} aria-label="حذف">✕</button>}
+      {onDelete && <button onClick={onDelete} className="t-caption px-1 flex-shrink-0 tap-44" style={{ color: "var(--text-dim)" }} aria-label="حذف">✕</button>}
     </div>
   );
 }
@@ -103,7 +103,7 @@ export default function CalendarPage() {
     <div className="min-h-dvh pb-nav relative z-[1] page-enter">
       <div className="max-w-xl mx-auto w-full px-5 pt-7 pb-8 flex flex-col gap-5">
         <div className="flex items-center justify-between">
-          <button onClick={() => router.push("/roadmap")} className="t-body font-bold" style={{ color: "var(--text-muted)" }}>← الآن</button>
+          <button onClick={() => router.push("/roadmap")} className="t-body font-bold tap-44" style={{ color: "var(--text-muted)" }}>← الآن</button>
           <span className="t-caption font-black" style={{ color: "var(--text-muted)" }}>{AR_MONTHS[m - 1]} {n(y)}</span>
         </div>
         <h1 className="t-h2 font-black -mt-2" style={{ color: "var(--text)" }}>🗓️ التقويم</h1>

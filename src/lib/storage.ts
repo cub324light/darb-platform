@@ -388,6 +388,9 @@ export function saveList<T>(key: string, list: T[]) {
 /* ── الثيم ── */
 export type Theme = "dark" | "light";
 
+/** حدثُ «تغيّر الثيم» — يشترك فيه كل من يعرض الثيم فيتّسق العرض بلا حالةٍ مكرّرة. */
+export const THEME_CHANGED = "darb:themeChanged";
+
 export function loadTheme(): Theme {
   if (typeof window === "undefined") return "dark";
   return (localStorage.getItem("darb_theme") as Theme) || "dark";
@@ -405,6 +408,7 @@ export function applyTheme(theme: Theme) {
   try {
     localStorage.setItem("darb_theme", theme);
   } catch {}
+  try { window.dispatchEvent(new CustomEvent(THEME_CHANGED)); } catch { /* تجاهل */ }
   /* نعيد تفعيل الانتقالات بعد إطار رسم واحد */
   requestAnimationFrame(() => {
     requestAnimationFrame(() => root.classList.remove("theme-switching"));
@@ -650,7 +654,8 @@ export interface DarbGoals {
   university?: string;      // الاسم المحلول (SSoT لدويرب) — قد يكون نصاً حراً عند «أخرى»
   major?: string;           // اسم التخصص المحلول
   universityId?: string;    // معرّف منظَّم من قائمة الجامعات (أو «other»)
-  majorId?: string;         // معرّف منظَّم من قائمة التخصصات (أو «other»)
+  majorId?: string;         // التصنيف الخشن من MAJORS — مشتقٌّ من التخصص الدقيق، قد يغيب
+  college?: string;         // الكلية (للجامعي): «كلية العمارة والتخطيط»
   highschoolPct?: number;   // نسبة الثانوية العامة (لحساب الموزونة)
 }
 

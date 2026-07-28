@@ -7,7 +7,8 @@
    يعيد استخدام المحرّكات القائمة (recommendedExams/darbKnowledge/outlook/saRegions). */
 import { useState, useEffect, type ReactNode } from "react";
 import { validateScore, scoreRangeForTitle, type TrackId } from "@/lib/tracks";
-import { majorsAt, hasMajorList, findUniversity, findMajor, UNIVERSITIES } from "@/lib/university";
+import { findUniversity, findMajor, UNIVERSITIES } from "@/lib/university";
+import { UNIVERSITY_YEARS, collegesAt, majorsIn, categoryOfMajor, hasColleges } from "@/lib/universityColleges";
 import { saveUser, saveResults, loadGoals, saveGoals, ensureWorkspace,
   loadTrackExamDates, saveTrackExamDates, currentScoreMap,
   type DarbUser, type PendingResultRecord } from "@/lib/storage";
@@ -192,11 +193,15 @@ export default function OnboardingPage() {
   /* ── الجامعي ── */
   const [universityId, setUniversityId] = useState("");
   const [universityName, setUniversityName] = useState("");
-  const [majorId, setMajorId] = useState("");
+  /* التسلسل: جامعة ← سنة ← كلية ← تخصّصٌ دقيق. `majorId` تصنيفٌ خشن مشتقٌّ من
+     التخصص الدقيق (لا يُختار مباشرةً) ويغذّي متطلّبات القبول والإرشاد. */
+  const [college, setCollege] = useState("");
+  const [majorName, setMajorName] = useState("");
   const [uniQuery, setUniQuery] = useState("");
   const [otherUni, setOtherUni] = useState("");
   const [universityYear, setUniversityYear] = useState("");
   const [universityGpa, setUniversityGpa] = useState("");
+  const majorId = majorName ? (categoryOfMajor(universityId, majorName) ?? "") : "";
 
   /* ── الأسلوب والوقت ── */
   const [studyStyle, setStudyStyle] = useState<"book" | "video" | "both" | "">("");
@@ -210,7 +215,9 @@ export default function OnboardingPage() {
   /* ── المشتقّات (المصدر الوحيد: الوجهة → recommendedExams) ── */
   const goal = resolveGoals({ primary: primaryGoals, aramcoSub, majorLean: (majorLean || undefined) as MajorLean | undefined });
   const subObj = primaryStage ? SUB_STAGES[primaryStage]?.find((s) => s.key === subStage) : undefined;
-  const onbStage: OnbStage = subObj?.onb ?? "graduate";
+  /* الجامعيّ: كل سنواته تحمل نفس المرحلة، فالمرحلة تُعرف من اختيار «طالب جامعي» وحده
+     ولا تنتظر السنة (التي تُسأل لاحقاً بعد الجامعة). */
+  const onbStage: OnbStage = primaryStage === "uni" ? "university" : (subObj?.onb ?? "graduate");
   const stageList = stageExams(onbStage);                 // التسعة بحالاتها (مفتوح/مقفل)
   const openIds = stageList.filter((e) => e.state === "open").map((e) => e.id);
 
@@ -284,21 +291,22 @@ export default function OnboardingPage() {
   const total = steps.length - 1; // الترحيب = ٠
 
   const filteredUnis = (() => { const q = uniQuery.trim(); return q ? UNIVERSITIES.filter((u) => u.name.includes(q) || (u.region ?? "").includes(q)) : UNIVERSITIES; })();
-  const pickUni = (id: string) => { const u = findUniversity(id); if (!u) return; setUniversityId(id); setUniversityName(id === "other" ? (otherUni.trim() || "أخرى") : u.name); setUniQuery("");
-    /* تخصّصٌ لا تُدرّسه الجامعة الجديدة يسقط بدل أن يبقى مختاراً وهو مخفيّ */
-    if (majorId && !majorsAt(id).some((m) => m.id === majorId)) setMajorId(""); };
+  /* السلسلة تنهار من أعلاها: جامعةٌ جديدة ⇒ كليةٌ وتخصّصٌ جديدان، فلا يبقى اختيارٌ
+     لا وجود له في الجامعة الجديدة مختاراً وهو مخفيّ عن العين. */
+  const pickUni = (id: string) => { const u = findUniversity(id); if (!u) return; setUniversityId(id); setUniversityName(id === "other" ? (otherUni.trim() || "أخرى") : u.name); setUniQuery(""); setCollege(""); setMajorName(""); };
+  const pickCollege = (name: string) => { setCollege(name); setMajorName(""); };
 
   /* ── التحقّق لكل خطوة ── */
   const canProceed = (): boolean => {
     switch (current) {
       case "welcome": return name.trim().length > 0;
-      case "stage":   return !!primaryStage && !!subStage;
+      case "stage":   return !!primaryStage && (primaryStage === "uni" || !!subStage);
       case "track":   return !!academicTrack;
       case "gpa":     return wantGpa !== null && gapYear !== null; // السؤالان إلزاميان؛ إدخال الدرجات نفسه اختياري
       case "region":  return !!region && willingToRelocate !== null; // المدينة/الحي اختياريان فقط
       case "goal":    return primaryGoals.length > 0 && (!primaryGoals.includes("university") || !!majorLean);
       case "style":   return !!studyStyle;
-      case "uni":     return !!universityId && !!majorId && !!universityGpa.trim();
+      case "uni":     return !!universityId && !!universityYear && !!college.trim() && !!majorName.trim() && !!universityGpa.trim();
       default:        return true; // exams/scores — غير حاجزة (اختياراتها إجابةٌ بذاتها)
     }
   };
@@ -373,10 +381,10 @@ export default function OnboardingPage() {
       };
       saveUser(ensureWorkspace(userData));
 
-      if (status === "جامعي" && (universityId || majorId)) {
+      if (status === "جامعي" && (universityId || majorName)) {
         const g = loadGoals(); const next = { ...g };
         if (universityId) { next.universityId = universityId; next.university = universityId === "other" ? (otherUni.trim() || "أخرى") : (universityName || findUniversity(universityId)?.name); }
-        if (majorId) { next.majorId = majorId; next.major = findMajor(majorId)?.name; }
+        if (majorName) { next.major = majorName; next.college = college.trim() || undefined; if (majorId) next.majorId = majorId; }
         saveGoals(next);
       }
 
@@ -472,7 +480,9 @@ export default function OnboardingPage() {
               );
             })}
           </div>
-          {primaryStage && (
+          {/* الجامعيّ لا يُسأل عن سنته هنا: ترتيبُ سؤاله جامعة ← سنة ← كلية ← تخصّص،
+              وكلّه في خطوته. وبقيّةُ المراحل تُسأل عن فصلها/تخرّجها كما كانت. */}
+          {primaryStage && primaryStage !== "uni" && (
             <div className="mt-5">
               <p className="t-h3 font-bold text-balance mb-3" style={{ color: "var(--text)" }}>{SUB_STAGE_PROMPT[primaryStage]}</p>
               <div className={`grid gap-2 ${SUB_STAGES[primaryStage].length >= 5 ? "grid-cols-3" : SUB_STAGES[primaryStage].length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
@@ -952,19 +962,61 @@ export default function OnboardingPage() {
               <input value={otherUni} onChange={(e) => { setOtherUni(e.target.value); setUniversityName(e.target.value.trim() || "أخرى"); }} placeholder="اكتب اسم جامعتك" maxLength={60} className="w-full mt-2.5 rounded-2xl px-4 py-3 t-body text-[var(--text)] placeholder-[var(--text-muted)] outline-none" style={inputStyle} />
             )}
           </div>
-          <div>
-            <p className="t-h2 font-black mb-3" style={{ color: "var(--text)" }}>📚 تخصصك</p>
-            {hasMajorList(universityId) && (
-              <p className="t-caption mb-2" style={{ color: "var(--text-muted)" }}>التخصصات المتاحة في {universityName}</p>
-            )}
-            <div className="flex flex-wrap gap-2">
-              {majorsAt(universityId).map((m) => { const on = majorId === m.id; return (<button key={m.id} onClick={() => setMajorId(on ? "" : m.id)} className="px-3 py-2 rounded-full font-bold t-small transition active:scale-95" style={{ background: on ? "var(--accent)" : "var(--surface2)", color: on ? "#fff" : "var(--text)", border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}` }}>{m.name}</button>); })}
+          {/* السنة — تظهر بعد الجامعة. الحقل كان في التخزين بلا واجهةٍ تملؤه أصلاً. */}
+          {universityId && (
+            <div>
+              <p className="t-h2 font-black mb-3" style={{ color: "var(--text)" }}>📅 سنتك الدراسية</p>
+              <div className="flex flex-wrap gap-2">
+                {UNIVERSITY_YEARS.map((y) => { const on = universityYear === y.key; return (
+                  <button key={y.key} onClick={() => { setUniversityYear(on ? "" : y.key); setSubStage(on ? "" : y.key); }} aria-pressed={on}
+                    className="px-3 py-2 rounded-full font-bold t-small transition active:scale-95"
+                    style={{ background: on ? "var(--accent)" : "var(--surface2)", color: on ? "#fff" : "var(--text)", border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}` }}>{y.label}</button>); })}
+              </div>
             </div>
-          </div>
-          <div>
-            <p className="label mb-1">معدلك الجامعي؟ <span className="t-caption font-normal" style={{ color: "var(--text-muted)" }}>(من ٥)</span></p>
-            <input type="number" value={universityGpa} onChange={(e) => setUniversityGpa(e.target.value)} placeholder="مثال: 3.75" min={0} max={5} step={0.01} className="w-full rounded-2xl px-5 py-4 t-body-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none" style={inputStyle} />
-          </div>
+          )}
+
+          {/* الكلية — من دليل الجامعات. جامعةٌ خارج الدليل: حقلٌ حرّ لا قائمةٌ مخترعة. */}
+          {universityId && universityYear && (
+            <div>
+              <p className="t-h2 font-black mb-3" style={{ color: "var(--text)" }}>🏫 كليتك</p>
+              {hasColleges(universityId) ? (
+                <div className="flex flex-wrap gap-2">
+                  {collegesAt(universityId).map((k) => { const on = college === k.name; return (
+                    <button key={k.name} onClick={() => pickCollege(on ? "" : k.name)} aria-pressed={on}
+                      className="px-3 py-2 rounded-full font-bold t-small transition active:scale-95"
+                      style={{ background: on ? "var(--accent)" : "var(--surface2)", color: on ? "#fff" : "var(--text)", border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}` }}>{k.name}</button>); })}
+                </div>
+              ) : (
+                <input value={college} onChange={(e) => setCollege(e.target.value)} placeholder="اكتب اسم كليتك" maxLength={60}
+                  className="w-full rounded-2xl px-4 py-3 t-body text-[var(--text)] placeholder-[var(--text-muted)] outline-none" style={inputStyle} />
+              )}
+            </div>
+          )}
+
+          {/* التخصص الدقيق — تخصصات الكلية المختارة وحدها */}
+          {universityId && universityYear && college && (
+            <div>
+              <p className="t-h2 font-black mb-3" style={{ color: "var(--text)" }}>📚 تخصصك الدقيق</p>
+              {hasColleges(universityId) ? (
+                <div className="flex flex-wrap gap-2">
+                  {majorsIn(universityId, college).map((m) => { const on = majorName === m.name; return (
+                    <button key={m.name} onClick={() => setMajorName(on ? "" : m.name)} aria-pressed={on}
+                      className="px-3 py-2 rounded-full font-bold t-small transition active:scale-95"
+                      style={{ background: on ? "var(--accent)" : "var(--surface2)", color: on ? "#fff" : "var(--text)", border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}` }}>{m.name}</button>); })}
+                </div>
+              ) : (
+                <input value={majorName} onChange={(e) => setMajorName(e.target.value)} placeholder="اكتب اسم تخصصك" maxLength={60}
+                  className="w-full rounded-2xl px-4 py-3 t-body text-[var(--text)] placeholder-[var(--text-muted)] outline-none" style={inputStyle} />
+              )}
+            </div>
+          )}
+
+          {universityId && universityYear && college && majorName && (
+            <div>
+              <p className="label mb-1">معدلك الجامعي؟ <span className="t-caption font-normal" style={{ color: "var(--text-muted)" }}>(من ٥)</span></p>
+              <input type="number" value={universityGpa} onChange={(e) => setUniversityGpa(e.target.value)} placeholder="مثال: 3.75" min={0} max={5} step={0.01} className="w-full rounded-2xl px-5 py-4 t-body-lg text-[var(--text)] placeholder-[var(--text-muted)] outline-none" style={inputStyle} />
+            </div>
+          )}
         </div>
       );
 
@@ -975,7 +1027,7 @@ export default function OnboardingPage() {
           const mark = key ? (scores[key].status === "taken" ? "✅" : scores[key].status === "waiting_result" ? "⏳" : "❌") : "•";
           return { label: examLabelOf(id), mark };
         })}
-        region={region} uni={{ name: universityName || (universityId === "other" ? otherUni.trim() : ""), major: findMajor(majorId)?.name, year: universityYear }} />;
+        region={region} uni={{ name: universityName || (universityId === "other" ? otherUni.trim() : ""), major: majorName, year: universityYear }} />;
 
       default: return null;
     }

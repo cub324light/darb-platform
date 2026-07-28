@@ -117,7 +117,7 @@ export default function TodayBlock() {
       <section className="ds-card ds-card-tight">
         <div className="flex items-center justify-between mb-2.5">
           <p className="t-title font-black" style={{ color: "var(--text)" }}>خطة اليوم</p>
-          <Link href="/plan" className="t-caption font-bold no-underline" style={{ color: "var(--accent-light)" }}>الخطة الكاملة ←</Link>
+          <Link href="/plan" className="t-caption font-bold no-underline tap-44" style={{ color: "var(--accent-light)" }}>الخطة الكاملة ←</Link>
         </div>
         {d.tasksToday.length > 0 ? (
           <div className="flex flex-col gap-2">

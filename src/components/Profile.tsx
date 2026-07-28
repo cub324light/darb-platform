@@ -1,20 +1,23 @@
 "use client";
-import { useState } from "react";
-import { loadTheme, applyTheme, type Theme } from "@/lib/storage";
+import { useSyncExternalStore } from "react";
+import { loadTheme, applyTheme, THEME_CHANGED, type Theme } from "@/lib/storage";
 
 /* ─── مبدّل الوضع الليلي/النهاري — يُستخدم في القبة (Dome) ───
    البروفايل الكامل صار صفحة مستقلة في /profile. */
 
-export function ThemeToggle({ className = "" }: { className?: string }) {
-  const [theme, setTheme] = useState<Theme>(() =>
-    typeof window !== "undefined" ? loadTheme() : "dark"
-  );
+/* الثيم قيمةٌ خارجية (localStorage) تختلف بين الخادم والعميل، وكانت تُقرأ في مُهيّئ
+   `useState`: الخادم يرسم «نهار» والعميل يرسم «ليل» فينكسر الترطيب (React #418) في كل
+   صفحةٍ عامّة مُسبقة التوليد. `useSyncExternalStore` هي أداةُ React لهذا بالضبط —
+   لقطةٌ خادميّة ثابتة ثم إعادةُ رسمٍ صامتة بقيمة العميل، بلا خطأ وبلا وميض. */
+const subscribeTheme = (cb: () => void) => {
+  window.addEventListener(THEME_CHANGED, cb);
+  return () => window.removeEventListener(THEME_CHANGED, cb);
+};
 
-  const toggle = () => {
-    const next: Theme = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    applyTheme(next);
-  };
+export function ThemeToggle({ className = "" }: { className?: string }) {
+  const theme = useSyncExternalStore<Theme>(subscribeTheme, loadTheme, () => "dark");
+
+  const toggle = () => applyTheme(theme === "dark" ? "light" : "dark");
 
   return (
     <button onClick={toggle} className={`btn-icon ${className}`} aria-label="تبديل الوضع">
