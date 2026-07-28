@@ -9,6 +9,9 @@ const AR = "ar-u-nu-arab"; // فرض الأرقام العربية-الهندي�
 /* عددٌ عربي مفصولٌ بالآلاف (١٢٣٤ → ١٬٢٣٤) */
 export const n = (x: number): string => x.toLocaleString(AR);
 
+/* سَنَةٌ عربية بلا فاصل آلاف (٢٠٢٧ لا ٢٬٠٢٧) — الفاصل في السنوات خطأٌ إملائيّ لا تنسيق */
+export const year = (x: number): string => x.toLocaleString(AR, { useGrouping: false });
+
 /* نسبة مئوية بالرمز العربي (٩٢ → ٩٢٪) */
 export const pct = (x: number): string => `${n(Math.round(x))}٪`;
 

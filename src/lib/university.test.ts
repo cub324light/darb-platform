@@ -75,3 +75,24 @@ test("universitiesByRegion يتجاوز ما لا منطقة له", () => {
     assert.ok(list.every((u) => u.region === region), `تجميع خاطئ للمنطقة ${region}`);
   }
 });
+
+test("ترتيب QS: عددٌ موجبٌ صحيح وسنةُ إصدارٍ مصاحبةٌ له دائماً", () => {
+  const ranked = UNIVERSITIES.filter((u) => u.qsRank !== undefined);
+  assert.ok(ranked.length > 0, "لا جامعةَ مصنّفة — الحقل بلا فائدة");
+  for (const u of ranked) {
+    assert.ok(Number.isInteger(u.qsRank) && u.qsRank! > 0, `ترتيب غير صالح: ${u.id}`);
+    assert.ok(u.qsRank! <= 2000, `ترتيب خارج المدى المعقول: ${u.id}`);
+    /* الترتيب بلا سنةِ إصدارٍ كذبةٌ صامتة: QS يتغيّر كل سنة */
+    assert.ok(Number.isInteger(u.qsYear), `ترتيب بلا سنة إصدار: ${u.id}`);
+    assert.ok(u.qsYear! >= 2020 && u.qsYear! <= 2100, `سنة إصدار غير معقولة: ${u.id}`);
+  }
+  /* لا ترتيبَين متطابقَين في نفس الإصدار */
+  const sameYear = ranked.filter((u) => u.qsYear === 2027).map((u) => u.qsRank);
+  assert.equal(new Set(sameYear).size, sameYear.length, "ترتيبان متطابقان في إصدارٍ واحد");
+});
+
+test("سنةُ إصدار QS لا تُذكر بلا ترتيب", () => {
+  for (const u of UNIVERSITIES) {
+    if (u.qsYear !== undefined) assert.ok(u.qsRank !== undefined, `سنة بلا ترتيب: ${u.id}`);
+  }
+});

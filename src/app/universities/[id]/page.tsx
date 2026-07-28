@@ -18,6 +18,7 @@ import {
   housingInfo,
   type UniversityOption,
 } from "@/lib/university";
+import { n, year } from "@/lib/format";
 
 const BASE = "https://usedarb.com";
 
@@ -162,14 +163,16 @@ export default async function UniversityProfilePage({ params }: { params: Promis
                 )}
                 {city && <span className="t-caption" style={{ color: "var(--text-muted)" }}>📍 {city}</span>}
                 {u.foundedYear && <span className="t-caption font-mono-nums" style={{ color: "var(--text-dim)" }}>· تأسست {u.foundedYear}</span>}
+                {/* الترتيب العالميّ — موثّقٌ أو غائب، وإصدارُه مذكورٌ دائماً لأنه يتغيّر سنوياً */}
+                {u.qsRank != null && (
+                  <span className="t-caption font-black px-2 py-0.5 rounded-full font-mono-nums"
+                    style={{ background: "color-mix(in srgb, var(--gold) 16%, transparent)", color: "var(--gold)", border: "1px solid color-mix(in srgb, var(--gold) 35%, transparent)" }}>
+                    🌍 QS {n(u.qsRank)}{u.qsYear ? ` · ${year(u.qsYear)}` : ""}
+                  </span>
+                )}
               </div>
             </div>
           </div>
-
-          {/* النبذة مدموجة في الرأس (سياق ثانوي، لا بطاقة مستقلة تنافس المحتوى) */}
-          {u.description && (
-            <p className="t-body mt-4" style={{ color: "var(--text-dim)" }}>{u.description}</p>
-          )}
 
           {/* روابط ثانوية — أيقونات مدمجة صغيرة لا شريطان كبيران */}
           <div className="flex items-center gap-2 mt-4">
@@ -187,6 +190,14 @@ export default async function UniversityProfilePage({ params }: { params: Promis
             </a>
           </div>
         </section>
+
+        {/* ═══ نبذة — بطاقةٌ مستقلّة (أُعيدت: الطالب يفتح الصفحة ليعرف الجامعة أوّلاً) ═══ */}
+        {u.description && (
+          <section className="ds-card">
+            <p className="eyebrow mb-2">نبذة</p>
+            <p className="t-body leading-relaxed" style={{ color: "var(--text-dim)" }}>{u.description}</p>
+          </section>
+        )}
 
         {/* ═══ العنصر الرئيسي: هل أقدر أدخلها؟ — القبول + احسب موزونتك (مُبرز بلون الهوية) ═══ */}
         {(u.formulas?.length || u.admissionNote) && (
@@ -290,7 +301,27 @@ export default async function UniversityProfilePage({ params }: { params: Promis
           </section>
         )}
 
-        {/* ═══ ذيل خفيف: استكشف بقية الجامعات + آخر الأخبار الرسمية ═══ */}
+        {/* ═══ الدعوة الختامية — أُعيدت: الصفحة كانت تنتهي بلا فعلٍ واضح ═══ */}
+        <section className="rounded-3xl p-5 text-center ds-section"
+          style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))",
+                   border: "1.5px solid color-mix(in srgb, var(--accent) 30%, var(--border))" }}>
+          <h2 className="t-h2 font-black" style={{ color: "var(--text)" }}>هل تكفي درجاتك؟</h2>
+          <p className="t-body leading-relaxed" style={{ color: "var(--text-dim)" }}>
+            احسب نسبتك بمعادلة {u.name}، وقارنها بجامعاتٍ أخرى، واعرف كم تحتاج أن ترفع درجاتك.
+          </p>
+          <div className="flex flex-wrap justify-center gap-2.5">
+            <Link href="/university" className="t-body font-black px-5 py-3 rounded-2xl no-underline"
+              style={{ background: "var(--accent)", color: "#fff" }}>
+              احسب موزونتك ←
+            </Link>
+            <Link href="/universities" className="t-body font-black px-5 py-3 rounded-2xl no-underline"
+              style={{ color: "var(--accent-light)", border: "1.5px solid color-mix(in srgb, var(--accent) 35%, var(--border))" }}>
+              استكشف بقية الجامعات
+            </Link>
+          </div>
+        </section>
+
+        {/* ═══ ذيل خفيف: آخر الأخبار الرسمية ═══ */}
         <section className="flex flex-wrap items-center justify-between gap-3 pt-1">
           <Link href="/universities"
             className="inline-flex items-center gap-2 t-body font-bold no-underline"

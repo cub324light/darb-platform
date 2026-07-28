@@ -15,6 +15,7 @@ import {
   universityCity,
   type UniversityOption,
 } from "@/lib/university";
+import { n } from "@/lib/format";
 
 const BASE = "https://usedarb.com";
 
@@ -82,6 +83,13 @@ function UniCard({ u }: { u: UniversityOption }) {
             )}
             {u.foundedYear && (
               <span className="t-caption font-mono-nums" style={{ color: "var(--text-dim)" }}>· {u.foundedYear}</span>
+            )}
+            {/* الترتيب العالميّ ظاهرٌ في البطاقة قبل الدخول — وغائبٌ تماماً إن لم يكن موثّقاً */}
+            {u.qsRank != null && (
+              <span className="t-caption font-black px-1.5 py-0.5 rounded-md font-mono-nums"
+                style={{ background: "color-mix(in srgb, var(--gold) 16%, transparent)", color: "var(--gold)" }}>
+                QS {n(u.qsRank)}
+              </span>
             )}
           </div>
         </div>
