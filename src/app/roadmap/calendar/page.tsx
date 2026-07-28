@@ -222,11 +222,13 @@ export default function CalendarPage() {
 
         <div className="flex flex-col gap-2.5">
           <button onClick={() => setAdding(true)} className="btn-primary glow-blue w-full">＋ أضف حدثاً</button>
-          <button onClick={() => router.push("/plan")}
+          {/* يفتح لوحة دويرب (يدويّ أو مع دويرب) في مكانها — لا ينقل الطالب إلى صفحةٍ أخرى.
+              نفس الحدث الذي تستعمله «خطتي»، فلا منطقَ مكرّر ولا لوحةٌ ثانية. */}
+          <button onClick={() => window.dispatchEvent(new CustomEvent("darb:openDuirb", { detail: { tab: "schedule" } }))}
             className="w-full rounded-2xl py-4 px-4 font-black t-body flex items-center gap-3 transition active:scale-[0.98]"
             style={{ background: "linear-gradient(135deg, var(--accent), var(--accent-hi, var(--accent-light)))", color: "#fff", border: "none" }}>
             <span className="text-[22px]" aria-hidden="true">🤖</span>
-            <span className="flex-1 text-right">ابنِ جدولي مع دويرب</span>
+            <span className="flex-1 text-right">ابنِ جدولي — يدويّاً أو مع دويرب</span>
             <span>←</span>
           </button>
         </div>

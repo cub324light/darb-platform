@@ -16,6 +16,8 @@ import {
   universityCity,
   universityMapUrl,
   housingInfo,
+  qsRankText,
+  arabRankText,
   type UniversityOption,
 } from "@/lib/university";
 import { n, year } from "@/lib/format";
@@ -167,7 +169,13 @@ export default async function UniversityProfilePage({ params }: { params: Promis
                 {u.qsRank != null && (
                   <span className="t-caption font-black px-2 py-0.5 rounded-full font-mono-nums"
                     style={{ background: "color-mix(in srgb, var(--gold) 16%, transparent)", color: "var(--gold)", border: "1px solid color-mix(in srgb, var(--gold) 35%, transparent)" }}>
-                    🌍 QS {n(u.qsRank)}{u.qsYear ? ` · ${year(u.qsYear)}` : ""}
+                    🌍 QS {qsRankText(u, n)}{u.qsYear ? ` · ${year(u.qsYear)}` : ""}
+                  </span>
+                )}
+                {arabRankText(u, n) && (
+                  <span className="t-caption font-black px-2 py-0.5 rounded-full"
+                    style={{ background: `color-mix(in srgb, ${c} 14%, transparent)`, color: c, border: `1px solid color-mix(in srgb, ${c} 35%, transparent)` }}>
+                    🏅 {arabRankText(u, n)}
                   </span>
                 )}
               </div>

@@ -144,14 +144,16 @@ export default function DashAI({ subjects, onOpenScheduler }: Props) {
         ))}
       </div>
 
-      <div className="flex gap-2">
+      {/* min-w-0 إلزاميّ: عنصرُ flex عرضه الأدنى = عرض محتواه الطبيعيّ، فكان الحقل
+          يرفض الانكماش ويخرج من حدود البطاقة على الجوال. */}
+      <div className="flex gap-2 w-full">
         <input value={input} onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && !loading) send(input); }}
-          placeholder="اوصف يومك..."
-          className="flex-1 rounded-2xl px-4 py-3 text-[17px] outline-none"
+          placeholder="اوصف يومك..." size={1}
+          className="flex-1 min-w-0 rounded-2xl px-4 py-3 t-body-lg outline-none"
           style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
         <button onClick={() => send(input)} disabled={loading || !input.trim()}
-          className="rounded-2xl px-4 font-bold text-[19px] min-w-[48px] transition"
+          className="rounded-2xl px-4 font-bold text-[19px] min-w-[48px] flex-shrink-0 transition"
           style={{
             background: loading || !input.trim() ? "var(--surface2)" : "var(--accent)",
             color: loading || !input.trim() ? "var(--text-muted)" : "white",

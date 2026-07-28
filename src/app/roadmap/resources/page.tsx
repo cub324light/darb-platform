@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { OFFICIAL_LINKS, LINK_CATEGORY_LABEL, LINK_CATEGORY_ORDER, searchLinks, type LinkCategory } from "@/lib/officialLinks";
 import { recordResourceUse } from "@/lib/roadmap/resourceUse";
-import { findUniversity } from "@/lib/university";
+import { findUniversity, qsRankText } from "@/lib/university";
 import { n, year } from "@/lib/format";
 
 export default function ResourcesPage() {
@@ -43,7 +43,7 @@ export default function ResourcesPage() {
                       {uni?.qsRank != null && (
                         <span className="inline-block t-caption font-black px-2.5 py-1 rounded-full mt-2 font-mono-nums"
                           style={{ background: "color-mix(in srgb, var(--gold) 16%, transparent)", color: "var(--gold-light)" }}>
-                          🌍 التصنيف العالمي QS: {n(uni.qsRank)}{uni.qsYear ? ` (${year(uni.qsYear)})` : ""}
+                          🌍 التصنيف العالمي QS: {qsRankText(uni, n)}{uni.qsYear ? ` (${year(uni.qsYear)})` : ""}
                         </span>
                       )}
                       <p className="t-body mt-1.5 leading-relaxed" style={{ color: "var(--text-dim)" }}>{l.desc}</p>

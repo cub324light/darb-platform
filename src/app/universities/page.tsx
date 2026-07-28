@@ -13,6 +13,7 @@ import {
   UNIVERSITIES,
   universitiesByRegion,
   universityCity,
+  qsRankText,
   type UniversityOption,
 } from "@/lib/university";
 import { n } from "@/lib/format";
@@ -88,7 +89,7 @@ function UniCard({ u }: { u: UniversityOption }) {
             {u.qsRank != null && (
               <span className="t-caption font-black px-1.5 py-0.5 rounded-md font-mono-nums"
                 style={{ background: "color-mix(in srgb, var(--gold) 16%, transparent)", color: "var(--gold)" }}>
-                QS {n(u.qsRank)}
+                QS {qsRankText(u, n)}
               </span>
             )}
           </div>

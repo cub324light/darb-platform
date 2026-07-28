@@ -86,9 +86,33 @@ test("ترتيب QS: عددٌ موجبٌ صحيح وسنةُ إصدارٍ مصا
     assert.ok(Number.isInteger(u.qsYear), `ترتيب بلا سنة إصدار: ${u.id}`);
     assert.ok(u.qsYear! >= 2020 && u.qsYear! <= 2100, `سنة إصدار غير معقولة: ${u.id}`);
   }
-  /* لا ترتيبَين متطابقَين في نفس الإصدار */
-  const sameYear = ranked.filter((u) => u.qsYear === 2027).map((u) => u.qsRank);
-  assert.equal(new Set(sameYear).size, sameYear.length, "ترتيبان متطابقان في إصدارٍ واحد");
+  /* النطاق: النهاية بعد البداية دائماً */
+  for (const u of ranked) {
+    if (u.qsRankTo != null) {
+      assert.ok(Number.isInteger(u.qsRankTo) && u.qsRankTo > u.qsRank!, `نطاق مقلوب: ${u.id}`);
+    }
+  }
+});
+
+test("الترتيب العربي: مركزٌ مفرد أو «ضمن أفضل N» لا الاثنان معاً", () => {
+  for (const u of UNIVERSITIES) {
+    if (u.arabRank != null) {
+      assert.ok(Number.isInteger(u.arabRank) && u.arabRank > 0, `مركز عربي غير صالح: ${u.id}`);
+      assert.equal(u.arabTopN, undefined, `مركزٌ ونطاقٌ معاً: ${u.id}`);
+    }
+    if (u.arabTopN != null) assert.ok(Number.isInteger(u.arabTopN) && u.arabTopN > 0, `أفضل N غير صالح: ${u.id}`);
+  }
+});
+
+test("qsRankText/arabRankText: نصٌّ صادقٌ أو فارغ", async () => {
+  const { qsRankText, arabRankText } = await import("./university");
+  const id = (x: number) => String(x);
+  assert.equal(qsRankText({ qsRank: 63 }, id), "63");
+  assert.equal(qsRankText({ qsRank: 741, qsRankTo: 750 }, id), "741–750");
+  assert.equal(qsRankText({}, id), "", "بلا ترتيب ⇒ نصٌّ فارغ لا صفر");
+  assert.equal(arabRankText({ arabRank: 4 }, id), "الـ4 عربياً");
+  assert.equal(arabRankText({ arabTopN: 10 }, id), "ضمن أفضل 10 عربياً");
+  assert.equal(arabRankText({}, id), "");
 });
 
 test("سنةُ إصدار QS لا تُذكر بلا ترتيب", () => {
