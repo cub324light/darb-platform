@@ -1,10 +1,11 @@
 "use client";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { TRACKS } from "@/lib/tracks";
 import Logo from "@/components/Logo";
-import { loadTheme, applyTheme, type Theme } from "@/lib/storage";
+import { applyTheme } from "@/lib/storage";
+import { useTheme } from "@/lib/useTheme";
 import { capturePendingRef } from "@/lib/referral";
 import { Sparkles } from "@/components/ui/sparkles";
 import { Meteors } from "@/components/ui/meteors";
@@ -166,21 +167,28 @@ function ServiceCard({ s, open, onToggle, delay }: {
   );
 }
 
+/* «هل أكمل التسجيل؟» تتغيّر بين التبويبات فقط (التسجيل يوجّه بعيداً عن هذه الصفحة)،
+   فحدثُ `storage` كافٍ اشتراكاً — والمهمّ أن اللقطة الخادميّة ثابتة. */
+const subscribeOnboarded = (cb: () => void) => {
+  window.addEventListener("storage", cb);
+  return () => window.removeEventListener("storage", cb);
+};
+
 export default function LandingPage() {
   const router = useRouter();
-  const [onboarded] = useState(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      const raw = localStorage.getItem("darb_user");
-      return !!(raw ? JSON.parse(raw)?.onboarded : false);
-    } catch { return false; }
-  });
+  /* قيمتان خارجيّتان يراهما العميل ولا يراهما الخادم. قراءتُهما في مُهيّئ `useState`
+     كانت تكسر ترطيب صفحة الهبوط (React #418) — وهي أكثرُ صفحةٍ يفتحها زائرٌ جديد:
+     الخادم يرسم «ليل/غير مسجَّل» والعميل يرسم خلافه في اللحظة نفسها. اللقطةُ
+     الخادميّة توحّد العرضين ثم يُعاد الرسم فوراً بالقيمة الحقيقية. */
+  const onboarded = useSyncExternalStore(
+    subscribeOnboarded,
+    () => { try { return !!JSON.parse(localStorage.getItem("darb_user") ?? "null")?.onboarded; } catch { return false; } },
+    () => false,
+  );
   const [menuOpen, setMenuOpen] = useState(false);
   /* البطاقة المفتوحة في قسم الخدمات — واحدة فقط في أي لحظة */
   const [openService, setOpenService] = useState<string | null>(null);
-  const [theme, setTheme] = useState<Theme>(() =>
-    typeof window !== "undefined" ? loadTheme() : "dark"
-  );
+  const theme = useTheme();
   const rootRef = useReveal(true);
 
   /* التقط كود الإحالة من ?ref= عند الوصول لصفحة الهبوط (قبل التسجيل) */
@@ -203,11 +211,8 @@ export default function LandingPage() {
     return () => { unsub?.(); };
   }, [router]);
 
-  const toggleTheme = () => {
-    const next: Theme = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    applyTheme(next);
-  };
+  /* `applyTheme` تبثّ `THEME_CHANGED` فيتحدّث `useTheme` وحدَه — بلا حالةٍ موازية */
+  const toggleTheme = () => applyTheme(theme === "dark" ? "light" : "dark");
 
   const ctaHref = "/onboarding";
   const [isDesktop, setIsDesktop] = useState(false);

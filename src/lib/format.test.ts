@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { n, pct, frac, sar, days, time, timeRange, dur,
-  dateShort, dateLong, dateTiny, dateFull, dateHijri } from "./format";
+  dateShort, dateLong, dateTiny, dateFull, dateHijri, weeks } from "./format";
 
 /* الاصطلاح: أرقام 0-9 وحدها — لا يجوز أن يتسرّب شكلٌ عربيٌّ-هنديّ إلى أي مخرَج. */
 const isLatinDigits = (s: string) => /[0-9]/.test(s) && !/[٠-٩]/.test(s);
@@ -25,6 +25,13 @@ test("frac: صيغة أ/مجموع بأرقامٍ عربية", () => {
 
 test("sar: بالرمز العربي للريال ﷼", () => {
   assert.ok(sar(1500).includes("﷼"));
+});
+
+test("weeks: صيغةٌ عربية سليمة — «7 أسابيع» لا «7 أسبوع»", () => {
+  assert.equal(weeks(1), "أسبوع واحد");
+  assert.equal(weeks(2), "أسبوعان");
+  assert.equal(weeks(7), "7 أسابيع");
+  assert.match(weeks(12), /أسبوعاً/);
 });
 
 test("days: صيغةٌ عربية سليمة للعدد", () => {

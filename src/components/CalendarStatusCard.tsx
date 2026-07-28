@@ -4,7 +4,7 @@
    كم أسبوع للاختبار؟ — مشتقّة من محرّك التقويم السعودي (currentCalendarSnapshot). */
 import { useMemo } from "react";
 import { currentCalendarSnapshot } from "@/lib/strategy";
-import { n as ar } from "@/lib/format";
+import { weeks, days } from "@/lib/format";
 
 
 const PHASE_STYLE: Record<string, { bg: string; fg: string; icon: string }> = {
@@ -56,7 +56,7 @@ export default function CalendarStatusCard() {
             <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>أقرب اختبار</p>
             <p className="text-[15px] font-black truncate" style={{ color: "var(--text)" }}>{snap.nextExam.label}</p>
             <p className="text-[14px] font-bold" style={{ color: "var(--accent-light)" }}>
-              بعد {ar(snap.nextExam.weeksUntil)} أسبوع{snap.nextExam.approximate ? " (تقديري)" : ""}
+              بعد {weeks(snap.nextExam.weeksUntil)}{snap.nextExam.approximate ? " (تقديري)" : ""}
             </p>
           </div>
         )}
@@ -65,7 +65,7 @@ export default function CalendarStatusCard() {
             <p className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>اختبارات مدرسية</p>
             <p className="text-[15px] font-black truncate" style={{ color: "var(--text)" }}>{snap.nextSchoolFinals.label}</p>
             <p className="text-[14px] font-bold" style={{ color: "var(--gold)" }}>
-              بعد {ar(snap.nextSchoolFinals.daysUntil)} يوماً
+              بعد {days(snap.nextSchoolFinals.daysUntil)}
             </p>
           </div>
         )}

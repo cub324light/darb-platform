@@ -7,6 +7,7 @@
    الجديدة (الفصول، الإجازات، الاختبارات النهائية) وحدّث UPDATED_FOR.
    كل المنطق مشتقّ من هذه البيانات، فلا حاجة لتعديل الدوال.
    التواريخ ميلادية (YYYY-MM-DD) شاملة الطرفين. */
+import { weeks, days } from "./format";
 
 export type StudentType = "ثانوي" | "جامعي";
 
@@ -308,10 +309,10 @@ export function calendarFactsForDuwairb(snap: CalendarSnapshot): string {
   ];
   if (snap.nextExam) {
     const approx = snap.nextExam.approximate ? " (تقديري)" : "";
-    lines.push(`- أقرب اختبار: ${snap.nextExam.label} بعد ${snap.nextExam.weeksUntil} أسبوع تقريباً${approx}`);
+    lines.push(`- أقرب اختبار: ${snap.nextExam.label} بعد ${weeks(snap.nextExam.weeksUntil)} تقريباً${approx}`);
   }
   if (snap.nextSchoolFinals && snap.nextSchoolFinals.daysUntil <= 30) {
-    lines.push(`- اختبارات مدرسية قادمة خلال ${snap.nextSchoolFinals.daysUntil} يوماً`);
+    lines.push(`- اختبارات مدرسية قادمة خلال ${days(snap.nextSchoolFinals.daysUntil)}`);
   }
   return `حالة التقويم الدراسي السعودي (استعملها لمواءمة خطتك مع واقع الطالب):\n${lines.join("\n")}`;
 }
