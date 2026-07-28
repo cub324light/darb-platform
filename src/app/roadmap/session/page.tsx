@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { loadUser, ensureWorkspace } from "@/lib/storage";
 import { buildSessionPlan, type SessionPlan, type SessionTask } from "@/lib/roadmap/session";
 import { remainingSteps } from "@/lib/roadmap/remainingSteps";
+import { focusHandoffQuery } from "@/lib/roadmap/handoff";
 import { readPriorityExam, countRemaining, vaultCount, readTodayAvailability, type PriorityExam } from "@/lib/roadmap/nowRead";
 import { loadRoadmapConfig } from "@/lib/roadmap/store";
 import { ROADMAP_TUNING } from "@/lib/roadmap/config";
@@ -77,12 +78,14 @@ export default function SessionPage() {
 
   const tasks = plan.tasks;
 
-  /* «ابدأ الآن» — تسليمٌ إلى ⏱️ التركيز (نظام التوقيت الوحيد)، ويعود بـ?done=N */
+  /* «ابدأ الآن» — تسليمٌ إلى ⏱️ التركيز (نظام التوقيت الوحيد)، ويعود بـ?done=N.
+     نمرّر وزن المهمّة الأولى (task) واسمها (tlabel) ليعرف الطالب — وهو داخل التركيز —
+     كم يتبقّى من مهمّته بعد هذه الجلسة، فلا ينقطع الخيط بين الخطة والمؤقّت. */
   const startSession = () => {
     if (tasks.length === 0) return;
     trackEvent("session_started", { source: "masari", tasks: tasks.length });
-    const subj = tasks[0]?.subject ?? "";
-    router.push(`/orbit?from=masari&auto=1${subj ? `&subject=${encodeURIComponent(subj)}` : ""}`);
+    const t = tasks[0];
+    router.push(`/orbit?${focusHandoffQuery({ subject: t?.subject, taskMins: t?.goalMins, taskLabel: t?.label })}`);
   };
 
   /* تخطٍّ بسبب: استبدالٌ إن طلب (مادةٌ أخرى للمراجعة/التدريب)، وإلا حذفٌ — ودويرب يتعلّم */

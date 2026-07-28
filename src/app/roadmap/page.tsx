@@ -18,9 +18,9 @@ import {
 } from "@/lib/modules";
 import { pickDailyMessage } from "@/lib/roadmap/dailyMessage";
 import { buildSessionPlan } from "@/lib/roadmap/session";
-import { remainingSteps } from "@/lib/roadmap/remainingSteps";
 import { computeStats } from "@/lib/roadmap/stats";
 import { loadSessions } from "@/lib/roadmap/sessionStore";
+import { focusHandoffQuery } from "@/lib/roadmap/handoff";
 import { OFFICIAL_LINKS } from "@/lib/officialLinks";
 import { recentResourceIds } from "@/lib/roadmap/resourceUse";
 import { loadCalendar } from "@/lib/roadmap/calendarStore";
@@ -123,7 +123,6 @@ export default function RoadmapPage() {
     remainingLessons: counts.remainingLessons, remainingDrills: counts.remainingDrills,
     activeErrors: vaultCount(), availableMinutes: avail.minutes, mode: loadRoadmapConfig().studyMode,
   }) : null;
-  const steps = remainingSteps({ remainingLessons: counts.remainingLessons, remainingDrills: counts.remainingDrills, unreviewedErrors: vaultCount() });
 
   const stats = computeStats({ dayMins: loadStats().dayMins ?? {}, sessions: loadSessions(), today, plannedDailyMins: ((loadUser()?.studyHours ?? 0) * 60) || null });
   const solved = solvedQuestions();
@@ -255,10 +254,13 @@ export default function RoadmapPage() {
               : ["أضف اختبارك الأول", ""]}
             onClick={openExam} />
 
-          <Tile icon="🧩" label="ماذا ينقصك" tint="#8B5CF6"
-            value={steps.length > 0 ? (counts.weakestSubject ?? "خطواتك") : "كل شيءٍ مكتمل"}
-            lines={steps.length > 0 ? [steps[0], steps[1] ?? ""] : ["أضف دروسك وتدريبك", ""]}
-            onClick={openExam} />
+          <Tile icon="🗓️" label="خطتي" tint="#8B5CF6"
+            value={priority?.label ?? "لا خطة بعد"}
+            lines={[
+              daysLeft != null && daysLeft > 0 ? `باقي ${daysWord(daysLeft)}` : daysLeft === 0 ? "موعدك اليوم" : "حدّد موعد اختبارك",
+              "افتح خطتي ←",
+            ]}
+            onClick={() => router.push("/plan")} />
 
           <Tile icon="🗓️" label="التقويم" tint="#3B82F6"
             value={nextEvent ? nextEvent.title : "لا أحداث قريبة"}
@@ -273,8 +275,11 @@ export default function RoadmapPage() {
 
         {/* ▶ البطل — أضخم عنصرٍ في الصفحة */}
         <button onClick={() => {
-            const subj = plan?.tasks[0]?.subject ?? counts.weakestSubject ?? "";
-            router.push(`/orbit?from=masari&auto=1${subj ? `&subject=${encodeURIComponent(subj)}` : ""}`);
+            const t = plan?.tasks[0];
+            router.push(`/orbit?${focusHandoffQuery({
+              subject: t?.subject ?? counts.weakestSubject ?? undefined,
+              taskMins: t?.goalMins, taskLabel: t?.label,
+            })}`);
           }}
           className="w-full transition active:scale-[0.98] rise rise-4"
           style={{

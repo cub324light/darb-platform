@@ -104,7 +104,11 @@ export default function SchoolPage() {
   if (isUniversityPhase(user) || isGraduatePhase(user)) {
     return (
       <div className="page desk-wide">
-        <Dome compact>{null}</Dome>
+        <Dome compact>
+          <div className="flex items-center justify-between">
+            <h1 className="title-lg grad-title">المدرسة</h1>
+          </div>
+        </Dome>
         <div className="px-5 mt-8">
           <div className="rounded-3xl p-6 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
             <p className="text-[45px] mb-2">🎓</p>
@@ -126,13 +130,18 @@ export default function SchoolPage() {
 
   return (
     <div className="page desk-wide">
-      <Dome compact>{null}</Dome>
+      {/* اسم الصفحة في القبّة تحت الساعة والفضّة — كما في بقية الصفحات.
+          بلا إيموجي: grad-title يضع color: transparent فيحوّل المِحرَف إلى كتلةٍ ملوّنة. */}
+      <Dome compact>
+        <div className="flex items-center justify-between">
+          <h1 className="title-lg grad-title">المدرسة</h1>
+        </div>
+      </Dome>
       <div className="h-4" />
       <div className="page-content flex flex-col gap-3">
         <header className="ds-card ds-card-lg flex flex-col gap-1"
           style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface))", borderColor: "color-mix(in srgb, var(--accent) 24%, var(--border))" }}>
-          <span className="eyebrow" style={{ color: "var(--accent-light)" }}>🏫 المدرسة</span>
-          <h1 className="t-h1" style={{ color: "var(--text)" }}>يومك الدراسي</h1>
+          <p className="t-title font-black" style={{ color: "var(--text)" }}>يومك الدراسي</p>
           <p className="t-body" style={{ color: "var(--text-dim)" }}>واجباتك ودروسك واختباراتك ومتطلباتك في مكانٍ واحد — تُنظّم ضغطك الحقيقي، لا الاختبارات وحدها.</p>
         </header>
 

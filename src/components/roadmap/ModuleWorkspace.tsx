@@ -2,11 +2,12 @@
 /* ─── قالب فضاء الوحدة الواحد (Module Workspace Template) ───
    قالبٌ واحد يعرض أي وحدة/عضو من واصفها. أُعيد تصميم تجربته (UX فقط، بلا تغيير منطق):
    هيرو واضح (عنوان كبير · لماذا · ماذا ستذاكر · كم أنجزت · زرٌّ أساسيٌّ واحد) ثم أدوات
-   ثانوية (الدليل/التجميعات/النتائج/الخطة). حالة «لم يبدأ» تحفيزية، وحالة «اكتمل» احتفالية.
-   يقرأ من: الواصف + Life Engine + نتائج الطالب + الإحصائيات. لا Track/goal. */
+   ثانوية (الدليل/التجميعات/النتائج/الخطة). حالة «اكتمل» احتفالية.
+   يقرأ من: الواصف + نتائج الطالب + الإحصائيات. لا Track/goal.
+   ▸ حُذفت بطاقتا «ماذا أفعل الآن» و«ابدأ أوّل خطوة اليوم»: الأولى كانت تعيد الطالب إلى
+     /roadmap وهو داخلها أصلاً (حلقة)، والثانية تكرّر ما يقوله قسم المذاكرة تحتها مباشرةً. */
 import { useState } from "react";
 import Link from "next/link";
-import { readLifeContext, lifeEngine } from "@/lib/lifeEngine";
 import { loadTrackExamDates, saveTrackExamDates, loadResults, saveResults, currentScoreMap, loadStats } from "@/lib/storage";
 import { computeXP, getLevel } from "@/lib/xp";
 import { trackEvent } from "@/lib/analytics";
@@ -56,7 +57,6 @@ export default function ModuleWorkspace({
   const examKey = content.examKey;
   const isStudy = content.kind === "study";
   const done = state === "completed" || progressPct >= 100;
-  const notStarted = isStudy && progressPct <= 0 && state !== "completed";
   const subjects = content.subjects ?? [];
 
   const [dates, setDates] = useState<Record<string, string>>(() => (typeof window !== "undefined" ? loadTrackExamDates() : {}));
@@ -138,22 +138,6 @@ export default function ModuleWorkspace({
 
       {isStudy ? (
         <>
-          {/* ماذا أفعل الآن (من Life Engine) */}
-          <NowFromLifeEngine />
-
-          {/* لم تبدأ بعد — رسالة تحفيزية بدل فراغ */}
-          {notStarted && (
-            <div className="rounded-2xl p-4 flex items-start gap-3" style={{ background: "color-mix(in srgb, var(--gold) 10%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--gold) 32%, var(--border))" }}>
-              <span className="text-[24px] flex-shrink-0" aria-hidden="true">🚀</span>
-              <div className="min-w-0">
-                <p className="t-title font-black mb-1" style={{ color: "var(--text)" }}>ابدأ أوّل خطوة اليوم</p>
-                <p className="t-body leading-relaxed" style={{ color: "var(--text-muted)" }}>
-                  أضِف دروسك ونظّم مذاكرتك من الأسفل — كل درسٍ تنهيه يرفع نسبتك ويقرّبك من درجتك المستهدفة. البداية أصعب خطوة، وأنت الآن عندها.
-                </p>
-              </div>
-            </div>
-          )}
-
           {/* ── المذاكرة (الفعل الأساسي) ── */}
           <section id="ws-study" className="flex flex-col gap-3">
             <p className="eyebrow px-1">📖 المذاكرة</p>
@@ -220,7 +204,6 @@ export default function ModuleWorkspace({
       ) : (
         /* ── hub: روابط العالم القائم (المدرسة/الجامعة) ── */
         <>
-          <NowFromLifeEngine />
           <section className="flex flex-col gap-3">
             <p className="eyebrow px-1">الروابط</p>
             {(content.hub ?? []).map((l) => (
@@ -275,24 +258,6 @@ function CompletionCard({ label, color, next, completedCount, totalCount, onBack
         <button onClick={onBack} className="btn-primary glow-blue w-full">رجوع إلى مساري ←</button>
       )}
     </div>
-  );
-}
-
-/* «ماذا أفعل الآن» — أعلى أولوية من العقل المركزي (يقرأ Life Engine مباشرةً). */
-function NowFromLifeEngine() {
-  const [top] = useState(() => (typeof window === "undefined" ? null : lifeEngine(readLifeContext())[0] ?? null));
-  if (!top) return null;
-  return (
-    <Link href={top.href} className="rounded-2xl p-3.5 flex items-center gap-3 no-underline transition active:scale-[0.99]"
-      style={{ background: "color-mix(in srgb, var(--accent) 7%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--accent) 22%, var(--border))" }}>
-      <span className="text-[22px] flex-shrink-0" aria-hidden="true">{top.icon}</span>
-      <div className="flex-1 min-w-0">
-        <p className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>ماذا أفعل الآن</p>
-        <p className="t-body font-black leading-snug" style={{ color: "var(--text)" }}>{top.title}</p>
-      </div>
-      <span className="t-caption font-black px-3 rounded-lg flex-shrink-0 flex items-center whitespace-nowrap"
-        style={{ height: "var(--btn-h-sm)", background: "var(--accent)", color: "#fff" }}>{top.cta} ←</span>
-    </Link>
   );
 }
 
