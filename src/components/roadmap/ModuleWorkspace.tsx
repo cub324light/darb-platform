@@ -141,7 +141,7 @@ export default function ModuleWorkspace({
           {/* ── المذاكرة (الفعل الأساسي) ── */}
           <section id="ws-study" className="flex flex-col gap-3">
             <p className="eyebrow px-1">📖 المذاكرة</p>
-            {content.subjects && <StudyBody subjects={content.subjects} />}
+            {content.subjects && <StudyBody subjects={content.subjects} examKey={examKey} />}
           </section>
 
           {/* ── أدوات مساعِدة (ثانوية) ── */}

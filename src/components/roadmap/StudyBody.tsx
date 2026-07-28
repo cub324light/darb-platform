@@ -10,6 +10,7 @@ import {
   type TrainingItem,
 } from "@/lib/storage";
 import type { SubjectDef } from "@/lib/modules";
+import SubjectSources from "@/components/roadmap/SubjectSources";
 import dynamic from "next/dynamic";
 const TopicExtractor = dynamic(() => import("@/components/TopicExtractor"), { ssr: false });
 
@@ -30,7 +31,7 @@ function lessonsOf(subj: string, custom: CustomLesson[]): { key: string; title: 
   return custom.filter((c) => c.subject === subj).map((c) => ({ key: `custom-${c.id}`, title: c.title }));
 }
 
-export default function StudyBody({ subjects }: { subjects: SubjectDef[] }) {
+export default function StudyBody({ subjects, examKey }: { subjects: SubjectDef[]; examKey?: string }) {
   const [done, setDone] = useState<string[]>(() => (typeof window !== "undefined" ? loadList<string>(DONE_KEY) : []));
   const [custom, setCustom] = useState<CustomLesson[]>(() => (typeof window !== "undefined" ? loadList<CustomLesson>(CUSTOM_KEY) : []));
   const [tItems, setTItems] = useState<TrainingItem[]>(() => (typeof window !== "undefined" ? loadTadreebItems() : []));
@@ -218,6 +219,10 @@ export default function StudyBody({ subjects }: { subjects: SubjectDef[] }) {
           <div className="flex items-center justify-between mb-3">
             <p className="t-title" style={{ color: "var(--text)" }}>{phase === "tasees" ? "دروس" : "تمارين"} {selected}</p>
             <button onClick={() => setSelected(null)} className="t-caption font-bold px-2 min-h-[40px]" style={{ color: "var(--text-muted)" }}>إغلاق ✕</button>
+          </div>
+          {/* المصادر أوّلاً: «من أين أذاكر؟» يسبق «ماذا أذاكر؟» */}
+          <div className="mb-4 pb-4" style={{ borderBottom: "1px solid var(--border)" }}>
+            <SubjectSources subject={selected} examKey={examKey} color={subjColor(selected)} />
           </div>
           {renderDetail()}
         </div>
