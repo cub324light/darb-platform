@@ -12,6 +12,9 @@ import {
   type CalendarEvent, type EventKind, type EventImpact, type Recurrence,
 } from "@/lib/roadmap/calendar";
 import { loadCalendar, addCalendarEvent, removeCalendarEvent } from "@/lib/roadmap/calendarStore";
+import { slotsToEvents } from "@/lib/roadmap/aiSchedule";
+import { loadUser, ensureWorkspace } from "@/lib/storage";
+import { readPriorityExam } from "@/lib/roadmap/nowRead";
 import { n } from "@/lib/format";
 
 const Calendar = dynamic(() => import("@/components/Calendar"), { ssr: false });
@@ -137,6 +140,14 @@ export default function CalendarPage() {
   const router = useRouter();
   const [events, setEvents] = useState<CalendarEvent[]>(() => (typeof window !== "undefined" ? loadCalendar() : []));
   const [adding, setAdding] = useState(false);
+  const [tab, setTab] = useState<"manual" | "ai">("manual");
+  /* مواد اختبار الأولوية — يبني دويرب حولها لا حول موادَّ مخترعة */
+  const [aiSubjects] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    const u = loadUser(); if (!u) return [];
+    const ws = ensureWorkspace(u).workspace; if (!ws) return [];
+    return readPriorityExam(ws)?.subjects.map((s) => s.name) ?? [];
+  });
   /* نموذج الإضافة */
   const [title, setTitle] = useState("");
   const [kind, setKind] = useState<EventKind>("occasion");
@@ -220,16 +231,17 @@ export default function CalendarPage() {
         {/* جدول اليوم — سلّم ساعاتٍ حقيقيّ بخطٍّ عند الساعة الآن */}
         <DayTimeline events={todayEvents} />
 
-        <div className="flex flex-col gap-2.5">
-          <button onClick={() => setAdding(true)} className="btn-primary glow-blue w-full">＋ أضف حدثاً</button>
-          {/* يفتح لوحة دويرب (يدويّ أو مع دويرب) في مكانها — لا ينقل الطالب إلى صفحةٍ أخرى.
-              نفس الحدث الذي تستعمله «خطتي»، فلا منطقَ مكرّر ولا لوحةٌ ثانية. */}
-          <button onClick={() => window.dispatchEvent(new CustomEvent("darb:openDuirb", { detail: { tab: "schedule" } }))}
-            className="w-full rounded-2xl py-4 px-4 font-black t-body flex items-center gap-3 transition active:scale-[0.98]"
-            style={{ background: "linear-gradient(135deg, var(--accent), var(--accent-hi, var(--accent-light)))", color: "#fff", border: "none" }}>
-            <span className="text-[22px]" aria-hidden="true">🤖</span>
-            <span className="flex-1 text-right">ابنِ جدولي — يدويّاً أو مع دويرب</span>
-            <span>←</span>
+        {/* زرّان كما كانا: يدويّ ومع دويرب — كلاهما يفتح نفس الورقة على تبويبه. */}
+        <div className="grid grid-cols-2 gap-2.5">
+          <button onClick={() => { setTab("manual"); setAdding(true); }}
+            className="rounded-2xl py-4 t-body font-black transition active:scale-[0.98]"
+            style={{ background: "transparent", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }}>
+            ＋ يدويّاً
+          </button>
+          <button onClick={() => { setTab("ai"); setAdding(true); }}
+            className="rounded-2xl py-4 t-body font-black transition active:scale-[0.98]"
+            style={{ background: "var(--accent)", color: "#fff", border: "none" }}>
+            🤖 مع دويرب
           </button>
         </div>
       </div>
@@ -241,8 +253,23 @@ export default function CalendarPage() {
           <div className="w-full max-w-md rounded-t-3xl p-5 pb-8 rise max-h-[86dvh] overflow-y-auto"
             style={{ background: "var(--surface)", borderTop: "1.5px solid var(--border)" }} onClick={(e) => e.stopPropagation()}>
             <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ background: "var(--border)" }} />
-            <p className="t-title font-black text-center mb-4" style={{ color: "var(--text)" }}>حدثٌ جديد</p>
 
+            {/* تبويبان كما كانا: «خطة يدوية» (وهي إضافة الحدث نفسها) و«خطة مع دويرب» */}
+            <div className="grid grid-cols-2 gap-1 rounded-2xl p-1 mb-4" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+              {([["manual", "خطة يدوية"], ["ai", "خطة مع دويرب"]] as const).map(([k, label]) => (
+                <button key={k} onClick={() => setTab(k)} aria-pressed={tab === k}
+                  className="py-2.5 rounded-xl t-body font-bold transition active:scale-[0.98]"
+                  style={tab === k ? { background: "var(--accent)", color: "#fff" } : { background: "transparent", color: "var(--text-muted)" }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {tab === "ai" ? (
+              <DuwairbPlan date={date} subjects={aiSubjects}
+                onDone={(evs) => { setEvents(evs); setAdding(false); }} />
+            ) : (
+            <>
             <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="العنوان — مثل: زيارة أعمامي"
               className="w-full rounded-xl px-4 py-3 t-body font-bold outline-none"
               style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
@@ -313,8 +340,105 @@ export default function CalendarPage() {
             <button onClick={saveEvent} disabled={!title.trim()} className="btn-primary glow-blue w-full mt-4" style={{ opacity: title.trim() ? 1 : 0.5 }}>
               حفظ الحدث
             </button>
+            </>
+            )}
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+/* ═══ «خطة مع دويرب» — النسخة القديمة: اقتراحاتٌ سريعة ثم وصفُ مشاغيلك ثم «اعمل لي خطة».
+   المخرَج يُحوَّل إلى CalendarEvent (لا ScheduleEvent) فيظهر في هذا التقويم نفسه. ═══ */
+const QUICK = [
+  { label: "عطني جدول جاهز", text: "عطني جدول دراسي جاهز لليوم" },
+  { label: "مشغول الصباح (٦-١٢)", text: "من 6 ص الى 12 م مشغول، اعمل لي جدول للأوقات الفارغة" },
+  { label: "مشغول الليل", text: "من 9 م الى 12 ص مشغول، اعمل لي جدول للأوقات الفارغة" },
+  { label: "جدول بدون مدرسة", text: "من 7 ص الى 2 م مشغول بالمدرسة، اعمل لي جدول بعدها" },
+];
+
+function DuwairbPlan({ date, subjects, onDone }: {
+  date: string; subjects: string[]; onDone: (evs: CalendarEvent[]) => void;
+}) {
+  const [busy, setBusy] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
+  const [preview, setPreview] = useState<CalendarEvent[]>([]);
+
+  const build = async (prompt: string) => {
+    setLoading(true); setErr(""); setPreview([]);
+    try {
+      const { askDuwairb } = await import("@/lib/orchestrator");
+      const res = await askDuwairb({ prompt, mode: "schedule", subjects, topic: "جدول اليوم" });
+      const evs = slotsToEvents(res.text ?? "", {
+        date, subjects,
+        idOf: (i) => `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
+      });
+      /* بلا فتراتٍ مفهومة لا نحفظ شيئاً ولا ندّعي نجاحاً */
+      if (evs.length === 0) setErr("ما قدرتُ أقرأ جدولاً من ردّ دويرب — جرّب وصفاً أوضح لمشاغيلك.");
+      setPreview(evs);
+    } catch {
+      setErr("تعذّر الوصول إلى دويرب الآن. حاول بعد قليل.");
+    } finally { setLoading(false); }
+  };
+
+  const apply = () => {
+    let list = loadCalendar();
+    for (const e of preview) list = addCalendarEvent(e);
+    onDone(list);
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="t-caption font-bold" style={{ color: "var(--text-dim)" }}>أدخل مشاغيلك</p>
+      <div className="grid grid-cols-2 gap-2">
+        {QUICK.map((q) => (
+          <button key={q.label} onClick={() => { setBusy(q.text); build(q.text); }} disabled={loading}
+            className="px-3 py-2.5 rounded-xl t-caption font-bold text-right leading-snug transition active:scale-[0.97]"
+            style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)",
+                     border: "1px solid color-mix(in srgb, var(--accent) 28%, transparent)", color: "var(--accent-light)" }}>
+            {q.label}
+          </button>
+        ))}
+      </div>
+
+      <textarea value={busy} onChange={(e) => setBusy(e.target.value)} rows={3}
+        placeholder="مثال: من 8ص-2م مدرسة، من 6م-8م رياضة..."
+        className="w-full rounded-2xl px-4 py-3 t-body outline-none resize-none"
+        style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
+
+      {subjects.length > 0 && (
+        <p className="t-caption" style={{ color: "var(--text-muted)" }}>المواد: {subjects.join(" · ")}</p>
+      )}
+
+      <button onClick={() => build(busy.trim() || QUICK[0].text)} disabled={loading}
+        className="w-full rounded-2xl py-4 t-body font-black transition active:scale-[0.98]"
+        style={{ background: loading ? "var(--surface2)" : "var(--accent)", color: loading ? "var(--text-muted)" : "#fff", border: "none" }}>
+        {loading ? "دويرب يبني الخطة..." : "اعمل لي خطة"}
+      </button>
+
+      {err && <p className="t-caption font-bold" style={{ color: "var(--danger)" }}>{err}</p>}
+
+      {preview.length > 0 && (
+        <>
+          <p className="t-caption font-black" style={{ color: "var(--text)" }}>معاينة — {n(preview.length)} فترة</p>
+          <div className="flex flex-col gap-1.5">
+            {preview.map((e) => (
+              <div key={e.id} className="rounded-xl px-3 py-2 flex items-center gap-2"
+                style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                <span className="t-caption font-mono-nums flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+                  {timeOf(e.start)}–{timeOf(e.end)}
+                </span>
+                <span className="t-body font-bold truncate" style={{ color: "var(--text)" }}>{e.title}</span>
+              </div>
+            ))}
+          </div>
+          <button onClick={apply} className="w-full rounded-2xl py-3.5 t-body font-black"
+            style={{ background: "var(--success)", color: "#fff", border: "none" }}>
+            أضِفها إلى تقويمي
+          </button>
+        </>
       )}
     </div>
   );

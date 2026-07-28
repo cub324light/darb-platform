@@ -284,12 +284,11 @@ export default function RoadmapPage() {
           className="w-full transition active:scale-[0.98] rise rise-4"
           style={{
             background: "linear-gradient(135deg, var(--accent), var(--accent-hi, var(--accent-light)))",
-            color: "#fff", border: "none", borderRadius: "var(--r-lg)", padding: "30px 20px",
-            boxShadow: "0 18px 44px color-mix(in srgb, var(--accent) 38%, transparent), 0 2px 6px rgba(0,0,0,.06)",
+            color: "#fff", border: "none", borderRadius: "var(--r-lg)", padding: "16px 20px",
+            boxShadow: "0 12px 32px color-mix(in srgb, var(--accent) 32%, transparent), 0 2px 6px rgba(0,0,0,.06)",
           }}>
-          {/* البطل: أضخم عنصرٍ في الصفحة بلا منازع */}
-          <span className="block t-h1 font-black" style={{ letterSpacing: "0" }}>▶ ابدأ المذاكرة</span>
-          <span className="block t-body font-bold mt-2" style={{ color: "rgba(255,255,255,.88)" }}>
+          <span className="block t-title font-black" style={{ letterSpacing: "0" }}>▶ ابدأ المذاكرة</span>
+          <span className="block t-caption font-bold mt-1" style={{ color: "rgba(255,255,255,.86)" }}>
             {plan?.available ? (allDone ? "أنهيت مهامّ اليوم — جلسةٌ إضافية؟" : "تبدأ جلسة تركيزٍ الآن") : "افتح جلستك"}
           </span>
         </button>

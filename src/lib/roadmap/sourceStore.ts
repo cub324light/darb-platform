@@ -35,3 +35,8 @@ export function updateSource(id: string, next: StudySource): StudySource[] {
 export function removeSource(id: string): StudySource[] {
   return saveSources(loadSources().filter((s) => s.id !== id));
 }
+
+/** معرّفٌ فريدٌ لمصدرٍ جديد. الوقت والعشوائيّة يعيشان هنا لا في المحرّك النقيّ. */
+export function newSourceId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+}
