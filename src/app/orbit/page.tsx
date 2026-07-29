@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback, useMemo, useSyncExternalStore } from "react";
 import PageFooter from "@/components/PageFooter";
+import NextThread from "@/components/NextThread";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import Confetti from "@/components/Confetti";
@@ -873,6 +874,7 @@ export default function OrbitPage() {
       </div>
       )}
 
+      <NextThread page="/orbit" />
       <PageFooter />
     </div>
   );

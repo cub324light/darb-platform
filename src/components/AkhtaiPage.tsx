@@ -4,6 +4,7 @@
 import { useState } from "react";
 import Dome from "@/components/Dome";
 import PageFooter from "@/components/PageFooter";
+import NextThread from "@/components/NextThread";
 import ErrorsBody from "@/components/vault/ErrorsBody";
 import SavedBody from "@/components/review/SavedBody";
 
@@ -43,6 +44,7 @@ export default function AkhtaiPage({ initialTab = "errors" }: { initialTab?: Tab
 
       {tab === "errors" ? <ErrorsBody embedded /> : <SavedBody embedded />}
 
+      <NextThread page="/vault" />
       <PageFooter />
     </div>
   );

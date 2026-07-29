@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import PageFooter from "@/components/PageFooter";
+import NextThread from "@/components/NextThread";
 import {
   loadUser, saveUser, loadStats, ensureJoinDate,
   type DarbUser, type DarbStats,
@@ -152,6 +153,7 @@ export default function ProfilePage() {
         )}
       </div>
 
+      <NextThread page="/profile" />
       <PageFooter />
     </div>
   );

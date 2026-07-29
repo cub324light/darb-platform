@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import PageFooter from "@/components/PageFooter";
+import NextThread from "@/components/NextThread";
 import PriorityHint from "@/components/PriorityHint";
 import DefCard from "@/components/DefCard";
 import WeightedCalculator from "@/components/WeightedCalculator";
@@ -118,6 +119,7 @@ export default function UniversityPage() {
           </div>
         </div>
         <div className="h-6" />
+        <NextThread page="/university" />
         <PageFooter />
       </div>
     );
@@ -355,6 +357,7 @@ export default function UniversityPage() {
       </div>
 
       <div className="h-6" />
+      <NextThread page="/university" />
       <PageFooter />
     </div>
   );

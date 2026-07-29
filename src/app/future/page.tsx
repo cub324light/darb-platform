@@ -8,6 +8,7 @@ import type { Metadata } from "next";
 import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import PageFooter from "@/components/PageFooter";
+import NextThread from "@/components/NextThread";
 import PriorityHint from "@/components/PriorityHint";
 import CareerCenter from "../career/CareerCenter";
 
@@ -36,6 +37,7 @@ export default function FuturePage() {
       </div>
 
       <div className="h-6" />
+      <NextThread page="/future" />
       <PageFooter />
     </div>
   );

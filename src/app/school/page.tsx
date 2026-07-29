@@ -8,6 +8,7 @@ import { useMemo, useSyncExternalStore } from "react";
 import Link from "next/link";
 import Dome from "@/components/Dome";
 import PageFooter from "@/components/PageFooter";
+import NextThread from "@/components/NextThread";
 import HomeworkPlanner from "@/components/school/HomeworkPlanner";
 import SchoolChecklist from "@/components/school/SchoolChecklist";
 import { loadHomework, dueOn, type Homework } from "@/lib/homework";
@@ -123,6 +124,7 @@ export default function SchoolPage() {
           </div>
         </div>
         <div className="h-6" />
+        <NextThread page="/school" />
         <PageFooter />
       </div>
     );

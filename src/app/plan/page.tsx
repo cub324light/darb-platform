@@ -14,6 +14,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import PageFooter from "@/components/PageFooter";
+import NextThread from "@/components/NextThread";
 import Dome from "@/components/Dome";
 import PageGuide from "@/components/PageGuide";
 import CalendarExport from "@/components/CalendarExport";
@@ -479,6 +480,7 @@ export default function PlanPage() {
       </div>
 
       <div className="h-6" />
+      <NextThread page="/plan" />
       <PageFooter />
 
       {/* محرّر الجدول اليدويّ — إضافةُ جلسةٍ/مشغولٍ وحذفُها وتكرارها.

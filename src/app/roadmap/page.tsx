@@ -8,6 +8,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Dome from "@/components/Dome";
 import PageFooter from "@/components/PageFooter";
+import NextThread from "@/components/NextThread";
 import PageGuide from "@/components/PageGuide";
 import ModuleWorkspace from "@/components/roadmap/ModuleWorkspace";
 import { loadUser, saveUser, ensureWorkspace, saveWorkspace, loadStats, loadTrackExamDates, localDayKey } from "@/lib/storage";
@@ -293,6 +294,7 @@ export default function RoadmapPage() {
           </span>
         </button>
 
+        <NextThread page="/roadmap" />
         <PageFooter />
       </div>
 
