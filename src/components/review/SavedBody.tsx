@@ -148,7 +148,7 @@ export default function SavedBody({ embedded = false }: { embedded?: boolean }) 
       <div className="min-h-[60dvh] flex flex-col pb-nav relative z-[1]">
         <div className="page-header">
           <button onClick={() => setMode("list")} className="text-base text-[var(--text-muted)] font-semibold min-h-[44px]">
-            ← خروج
+            → خروج
           </button>
           <span className="text-base font-bold text-[var(--text)]">
             {currentIdx + 1} / {sessionCards.length}

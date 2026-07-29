@@ -216,7 +216,7 @@ export default function SignInScreen({
                   )}
                   <button onClick={() => { setMode("signin"); setErr(""); setResetSent(false); }}
                     className="text-[15px] text-center py-1 font-semibold" style={{ color: "var(--text-muted)" }}>
-                    ← رجوع
+                    → رجوع
                   </button>
                 </>
               ) : (

@@ -424,7 +424,7 @@ export default function CouncilPage() {
             <button onClick={closeGroup}
               className="flex items-center gap-1 font-bold text-sm min-h-[44px] px-1"
               style={{ color: "var(--accent-light)" }}>
-              ← رجوع
+              → رجوع
             </button>
             <span className="text-xl">{activeGroup.icon}</span>
             <p className="font-bold flex-1 text-[18px]" style={{ color: "var(--text)" }}>

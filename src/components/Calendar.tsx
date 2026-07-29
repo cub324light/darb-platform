@@ -302,11 +302,11 @@ export default function Calendar({
       {/* تنقل الأشهر — RTL: أول عنصر = يمين = السابق */}
       <div className="flex items-center justify-between mb-4">
         <button onClick={prev}
-          className="w-9 h-9 rounded-2xl flex items-center justify-center text-[22px]"
+          className="tap-44 w-9 h-9 rounded-2xl flex items-center justify-center text-[22px]"
           style={{ background: "var(--surface2)", color: "var(--text-dim)" }}>›</button>
         <p className="font-black text-[19px]" style={{ color: "var(--text)" }}>{header()}</p>
         <button onClick={next}
-          className="w-9 h-9 rounded-2xl flex items-center justify-center text-[22px]"
+          className="tap-44 w-9 h-9 rounded-2xl flex items-center justify-center text-[22px]"
           style={{ background: "var(--surface2)", color: "var(--text-dim)" }}>‹</button>
       </div>
 
@@ -376,7 +376,7 @@ export default function Calendar({
             {"يوم الاختبار: "}
             {mode === "hijri" ? dateHijri(examDate) : dateFull(examDate)}
           </span>
-          <button onClick={() => onExamDateChange(null)} className="text-[var(--text-muted)] text-sm px-1 min-h-[28px]">✕</button>
+          <button onClick={() => onExamDateChange(null)} className="text-[var(--text-muted)] text-sm px-1 min-h-[28px] tap-44" aria-label="إزالة يوم الاختبار">✕</button>
         </div>
       )}
       <p className="text-[17px] mt-2 text-center leading-relaxed" style={{ color: "var(--text-muted)" }}>

@@ -1049,7 +1049,7 @@ export default function OnboardingPage() {
           ) : (
             <button className="btn-primary glow-blue" onClick={goNext} disabled={!canProceed()} style={{ opacity: canProceed() ? 1 : 0.4 }}>التالي ←</button>
           )}
-          {current !== "welcome" && <button onClick={goBack} className="t-body font-semibold w-full text-center py-1" style={{ color: "var(--text-muted)" }}>← رجوع</button>}
+          {current !== "welcome" && <button onClick={goBack} className="t-body font-semibold w-full text-center py-1" style={{ color: "var(--text-muted)" }}>→ رجوع</button>}
         </div>
       </div>
     </div>

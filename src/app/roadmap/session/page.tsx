@@ -79,7 +79,7 @@ export default function SessionPage() {
       <div className="min-h-dvh pb-nav relative z-[1] page-enter">
         <div className="max-w-xl mx-auto w-full px-5 pt-10 text-center">
           <p className="t-body" style={{ color: "var(--text-muted)" }}>أضف اختباراً أولاً لتبدأ جلساتك.</p>
-          <button onClick={() => router.push("/roadmap")} className="btn-primary glow-blue mt-6 w-full">← العودة إلى الآن</button>
+          <button onClick={() => router.push("/roadmap")} className="btn-primary glow-blue mt-6 w-full">→ العودة إلى الآن</button>
         </div>
       </div>
     );

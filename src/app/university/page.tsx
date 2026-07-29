@@ -272,7 +272,7 @@ export default function UniversityPage() {
                       <td key={u.id} className="py-2 px-2 align-bottom" style={{ minWidth: "130px" }}>
                         <div className="flex flex-col gap-1">
                           <span className="font-black leading-tight" style={{ color: "var(--text)" }}>{u.name}</span>
-                          <button onClick={() => toggleCompare(u.id)} className="text-[12px] font-bold text-right" style={{ color: "var(--danger)" }}>إزالة ✕</button>
+                          <button onClick={() => toggleCompare(u.id)} className="text-[12px] font-bold text-right tap-44" style={{ color: "var(--danger)" }}>إزالة ✕</button>
                         </div>
                       </td>
                     ))}
@@ -347,7 +347,7 @@ export default function UniversityPage() {
                     <span className="text-[13px] font-black px-2.5 py-1 rounded-full flex-shrink-0"
                       style={{ background: `color-mix(in srgb, ${m.color} 14%, transparent)`, color: m.color }}>{m.label}</span>
                     <button onClick={() => persistApps(apps.filter((x) => x.id !== a.id))}
-                      aria-label="حذف" className="text-[var(--text-muted)] text-sm font-bold px-1 flex-shrink-0">✕</button>
+                      aria-label="حذف" className="text-[var(--text-muted)] text-sm font-bold px-1 flex-shrink-0 tap-44">✕</button>
                   </div>
                 );
               })}

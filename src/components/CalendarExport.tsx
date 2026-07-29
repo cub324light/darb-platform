@@ -92,7 +92,7 @@ export default function CalendarExport({
       <div className="sticky top-0 z-10 px-5 pt-safe pt-4 pb-3 flex items-center gap-3"
         style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
         <button onClick={() => { setOpen(false); setDone(""); }}
-          className="dome-chip text-[19px] font-bold flex-shrink-0" style={{ color: "var(--text)" }}>← رجوع</button>
+          className="dome-chip text-[19px] font-bold flex-shrink-0" style={{ color: "var(--text)" }}>→ رجوع</button>
         <p className="title-lg flex-1 text-right" style={{ color: "var(--text)" }}>أضف خطتك للتقويم</p>
       </div>
 

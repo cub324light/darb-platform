@@ -41,7 +41,7 @@ function AlertCard({ alert, onDismiss }: { alert: ExamAlert; onDismiss: () => vo
         </p>
       </div>
       <button onClick={onDismiss} aria-label="إغلاق التنبيه"
-        className="text-[var(--text-muted)] text-sm font-bold px-1 flex-shrink-0">✕</button>
+        className="text-[var(--text-muted)] text-sm font-bold px-1 flex-shrink-0 tap-44">✕</button>
     </div>
   );
 }

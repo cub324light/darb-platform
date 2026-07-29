@@ -70,7 +70,7 @@ export default function DuirbFloat() {
         style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
         <button onClick={() => setOpen(false)}
           className="dome-chip text-[19px] font-bold flex-shrink-0" style={{ color: "var(--text)" }}>
-          ← رجوع
+          → رجوع
         </button>
         <p className="title-lg flex-1 text-right" style={{ color: "var(--text)" }}>دويرب</p>
       </div>

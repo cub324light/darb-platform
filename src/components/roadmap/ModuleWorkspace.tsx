@@ -255,7 +255,7 @@ function CompletionCard({ label, color, next, completedCount, totalCount, onBack
           <button onClick={next.onOpen} className="btn-primary glow-blue w-full">ابدأ الوحدة التالية ←</button>
         </>
       ) : (
-        <button onClick={onBack} className="btn-primary glow-blue w-full">رجوع إلى مساري ←</button>
+        <button onClick={onBack} className="btn-primary glow-blue w-full">→ رجوع إلى مساري</button>
       )}
     </div>
   );

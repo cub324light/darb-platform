@@ -158,7 +158,7 @@ export default function SettingsButton() {
             className="text-[19px] font-bold px-3 py-1.5 rounded-xl"
             style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-dim)" }}
           >
-            رجوع ←
+            → رجوع
           </button>
         </div>
 

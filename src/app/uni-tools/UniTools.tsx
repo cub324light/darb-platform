@@ -216,7 +216,7 @@ export default function UniTools() {
         <button onClick={() => setTab(null)}
           className="flex items-center gap-2 self-start px-3.5 py-2 rounded-xl text-[15px] font-black transition active:scale-95"
           style={{ background: "var(--surface)", color: "var(--accent-light)", border: "1px solid var(--border)" }}>
-          <span aria-hidden="true">←</span> رجوع للأدوات
+          <span aria-hidden="true">→</span> رجوع للأدوات
         </button>
       )}
 

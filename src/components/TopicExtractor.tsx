@@ -167,7 +167,7 @@ export default function TopicExtractor({
     <div className="fixed inset-0 z-[9990] flex flex-col overflow-y-auto" style={{ background: "var(--bg)" }}>
       <div className="sticky top-0 z-10 px-5 pt-safe pt-4 pb-3 flex items-center gap-3"
         style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
-        <button onClick={close} className="dome-chip text-[19px] font-bold flex-shrink-0" style={{ color: "var(--text)" }}>← رجوع</button>
+        <button onClick={close} className="dome-chip text-[19px] font-bold flex-shrink-0" style={{ color: "var(--text)" }}>→ رجوع</button>
         <p className="title-lg flex-1 text-right" style={{ color: "var(--text)" }}>استخراج مواضيع {subject}</p>
       </div>
 

@@ -81,7 +81,7 @@ function ProfileHeaderBase({ user, track, level, xp, joinLabel, planId, photoURL
             <div className="flex items-center gap-2">
               <p className="font-black text-xl text-[var(--text)] truncate">{user.name || "—"}</p>
               <button onClick={() => { setNameVal(user.name ?? ""); setEditingName(true); }} aria-label="تعديل الاسم"
-                className="text-[15px] text-[var(--accent-light)] font-semibold flex-shrink-0">✎</button>
+                className="text-[15px] text-[var(--accent-light)] font-semibold flex-shrink-0 tap-44">✎</button>
             </div>
           )}
 
