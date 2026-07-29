@@ -110,23 +110,30 @@ export default function RetentionHost() {
       break;
   }
 
+  /* ⚠ كان صفاً أفقياً واحداً يحمل أربعة عناصر: إيموجي + نصّ + زرّ فعلٍ
+     `whitespace-nowrap` + إغلاق. على شاشة جوّالٍ ضيّقة يبتلع الزرّان العرض فينضغط
+     النصّ إلى عمودٍ نحيل من كلمةٍ في السطر — «خرّب الشاشة» كما وصفه المالك.
+     الآن صفّان: النصّ يأخذ عرضه كاملاً، والفعلُ تحته بمساحة لمسٍ مريحة. */
+  const actionClass = "block w-full text-center text-[15px] font-black px-3 py-2.5 rounded-xl no-underline transition active:scale-[0.99]";
+  const actionStyle = { background: `color-mix(in srgb, ${tint} 16%, transparent)`, color: tint };
+
   return (
-    <div className="mb-3 flex items-center gap-3 rounded-2xl px-4 py-3"
+    <div className="mb-4 flex flex-col gap-2.5 rounded-2xl px-4 py-3.5"
       style={{ background: `color-mix(in srgb, ${tint} 9%, var(--surface))`, border: `1px solid color-mix(in srgb, ${tint} 30%, var(--border))` }}>
-      <span className="text-[25px] leading-none flex-shrink-0" aria-hidden="true">{emoji}</span>
-      <div className="flex-1 min-w-0">
-        <p className="text-[16px] font-black" style={{ color: "var(--text)" }}>{title}</p>
-        <p className="text-[14px] leading-snug" style={{ color: "var(--text-dim)" }}>{text}</p>
+      <div className="flex items-start gap-3">
+        <span className="text-[25px] leading-none flex-shrink-0" aria-hidden="true">{emoji}</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-[16px] font-black" style={{ color: "var(--text)" }}>{title}</p>
+          <p className="text-[14px] leading-snug" style={{ color: "var(--text-dim)" }}>{text}</p>
+        </div>
+        <button onClick={() => setDismissed(true)} aria-label="إغلاق"
+          className="tap-44 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-[15px] transition active:scale-90"
+          style={{ color: "var(--text-muted)", background: "var(--surface2)" }}>✕</button>
       </div>
       {action && (action.href
-        ? <a href={action.href} className="text-[14px] font-black px-3 py-1.5 rounded-lg no-underline flex-shrink-0 whitespace-nowrap"
-            style={{ background: `color-mix(in srgb, ${tint} 16%, transparent)`, color: tint }}>{action.label}</a>
-        : <button onClick={action.onClick} className="text-[14px] font-black px-3 py-1.5 rounded-lg flex-shrink-0 whitespace-nowrap"
-            style={{ background: `color-mix(in srgb, ${tint} 16%, transparent)`, color: tint }}>{action.label}</button>
+        ? <a href={action.href} className={actionClass} style={actionStyle}>{action.label}</a>
+        : <button onClick={action.onClick} className={actionClass} style={actionStyle}>{action.label}</button>
       )}
-      <button onClick={() => setDismissed(true)} aria-label="إغلاق"
-        className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[15px] transition active:scale-90"
-        style={{ color: "var(--text-muted)", background: "var(--surface2)" }}>✕</button>
     </div>
   );
 }

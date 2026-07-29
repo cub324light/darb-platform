@@ -70,9 +70,6 @@ export default function DashboardPage() {
         { title: "رسميٌّ وواضح", desc: "«قريباً» و«آخر التحديثات» تعرض مواعيد ومعلومات الجهات الرسمية فقط." },
       ]} />
 
-      {/* نقاط العودة اليومية — تسجيل اليوم/تقرير أسبوعي/استعادة ستريك/معالم/ترحيب */}
-      <RetentionHost />
-
       {/* ═══ 1) الترحيب: السلام + الاسم + شعار اليوم ═══ */}
       <Dome compact>
         <div className="text-right">
@@ -95,6 +92,10 @@ export default function DashboardPage() {
 
       {/* ═══ الجسم ═══ */}
       <div className="page-content mt-4 flex flex-col gap-4">
+        {/* نقاط العودة اليومية — تحت القبّة لا فوقها: كانت تُزيح ترويسة التطبيق
+            كلّها لأسفل فتبدو شريطَ تنبيهٍ من المتصفّح لا جزءاً من درب. */}
+        <RetentionHost />
+
         {init?.showPhaseBoard ? (
           /* الجامعي/خريج الجامعة: لوحاتهم التشغيلية/المهنية كما هي */
           <PhaseHome />

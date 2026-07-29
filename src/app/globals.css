@@ -1473,7 +1473,12 @@ body[data-nav-hidden="1"] .float-nav { display: none; }
 
 /* شبكة بطاقات متساوية الارتفاع — فجوة موحّدة وأعمدة متجاوبة.
    البطاقات تتمدد لكامل ارتفاع الصف (مبدأ التساوي البصري). */
-.ds-grid    { display: grid; gap: var(--sp-3); grid-template-columns: 1fr; align-items: stretch; }
+/* ⚠ `minmax(0, 1fr)` لا `1fr` وحدها: أدنى مقاسٍ لمسار الشبكة افتراضُه `auto`، فمحتوىً
+   لا ينكسر (اسم جامعةٍ طويل مع رقاقاته) يوسّع المسار فوق عرض الشاشة. عندها تصير
+   الصفحة قابلةً للسحب أفقياً، فتزحف تحت الإصبع وتُقصّ حوافّها على الجوّالات الضيّقة —
+   وهو ما ظهر في «دليل الجامعات» على شاشة 360 بكسل (تجاوزٌ 40 بكسل). */
+.ds-grid    { display: grid; gap: var(--sp-3); grid-template-columns: minmax(0, 1fr); align-items: stretch; }
+.ds-grid > * { min-width: 0; }
 .ds-grid > * { height: 100%; }
 @media (min-width: 480px) {
   .ds-grid-2, .ds-grid-3, .ds-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
