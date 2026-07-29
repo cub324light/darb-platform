@@ -6,7 +6,7 @@
    ▓ العرض: بانرٌ صغير داخل الصفحة لا نافذةٌ تغطّي الشاشة — لا Popup على لوحة
    الطالب (سرعة الانتقال أولاً). المنطق والبيانات لم تتغيّر: القرار وتسجيل اليوم
    وتعليم «شوهد» واستعادة الستريك كما هي؛ تغيّر الغلاف فقط. */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { loadStats, loadSessionLog } from "@/lib/storage";
 import { computeWeeklyReport } from "@/lib/weeklyReport";
 import { buildDuwairbProfile } from "@/lib/duwairb";
@@ -16,6 +16,7 @@ import {
   streakBreak, canUseRecovery, applyRecovery, shouldShowWeekly, markWeeklySeen,
 } from "@/lib/retention";
 import { n as ar } from "@/lib/format";
+import { isTourPending, subscribeTour } from "@/lib/firstRun";
 
 type View =
   | { type: "milestone"; pct: number }
@@ -43,6 +44,8 @@ export default function RetentionHost() {
     return { stats, weekly, goalLine };
   }, []);
 
+  const tourPending = useSyncExternalStore(subscribeTour, isTourPending, () => false);
+
   /* القرار + تسجيل فتح اليوم — مرة واحدة (حارسٌ ضد StrictMode) */
   const initRef = useRef(false);
   useEffect(() => {
@@ -69,7 +72,9 @@ export default function RetentionHost() {
     if (view.type === "welcome")   { trackEvent("comeback_shown", { daysAway: daysAway() }); }
   }, [ready, view]);
 
-  if (!ready || !view || dismissed || !data) return null;
+  /* الجولة أوّلاً: لا نطلب من الطالب فعلاً وهو تحت حجابها. حين تنتهي يُبثّ
+     `TOUR_DONE_EVENT` فيظهر الشريط في الحال بلا إعادة تحميل. */
+  if (!ready || !view || dismissed || !data || tourPending) return null;
 
   const recover = () => {
     const r = applyRecovery();

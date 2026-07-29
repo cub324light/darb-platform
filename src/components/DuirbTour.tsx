@@ -6,9 +6,10 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { loadUser } from "@/lib/storage";
+import { TOUR_KEY, markTourDone } from "@/lib/firstRun";
 import { readGuestMode } from "@/components/AuthGate";
 
-const TOUR_KEY = "darb_tour_done";
+
 
 const STEPS = [
   {
@@ -78,7 +79,7 @@ export default function DuirbTour() {
   }, [pathname]);
 
   const finish = () => {
-    try { localStorage.setItem(TOUR_KEY, "1"); } catch { /* */ }
+    markTourDone();          // يكتب المفتاح ويُخبر شريط العودة بأن دوره حان
     setVisible(false);
   };
 

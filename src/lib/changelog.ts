@@ -23,6 +23,13 @@ export const CHANGE_META: Record<ChangeType, { label: string; color: string; ico
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-07-29",
+    title: "أوّل زيارة صارت مرتّبة",
+    changes: [
+      { type: "improve", text: "جولة التعريف والتنبيهات ما عادت تظهر فوق بعضها: الجولة أولاً، وبعد ما تخلّصها يظهر تنبيهك." },
+    ],
+  },
+  {
+    date: "2026-07-29",
     title: "الشاشة ما عادت تزحف",
     changes: [
       { type: "fix", text: "«دليل الجامعات» كان يُسحب يميناً ويساراً على الجوّالات الضيّقة فتُقصّ حوافّه — استقرّ الآن." },
