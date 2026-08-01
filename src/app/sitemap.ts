@@ -16,6 +16,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     }));
   return [
     { url: BASE,                   lastModified: now, changeFrequency: "weekly",  priority: 1.0 },
+    { url: `${BASE}/about`,        lastModified: now, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${BASE}/features`,     lastModified: now, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${BASE}/docs`,         lastModified: now, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${BASE}/docs/api`,     lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE}/pricing`,      lastModified: now, changeFrequency: "monthly", priority: 0.8 },
     { url: `${BASE}/universities`,       lastModified: now, changeFrequency: "monthly", priority: 0.8 },
     { url: `${BASE}/faq`,                lastModified: now, changeFrequency: "monthly", priority: 0.7 },

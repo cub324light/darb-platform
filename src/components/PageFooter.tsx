@@ -4,7 +4,7 @@ import FeedbackButton from "@/components/FeedbackButton";
 
 export default function PageFooter() {
   return (
-    <div className="px-5 pt-3 pb-2 max-w-lg mx-auto w-full">
+    <footer className="px-5 pt-3 pb-2 max-w-lg mx-auto w-full">
       <div className="w-full h-px mb-3" style={{ background: "var(--border)" }} />
       {/* سطرٌ واحد لا سطران: flex-wrap كان يكسرهما على الجوال لأن مجموع عرضهما
           يتجاوز الشاشة بقليل. nowrap + مقاسٌ من السلّم + فجوةٌ أضيق يُبقيهما جنباً لجنب. */}
@@ -18,6 +18,6 @@ export default function PageFooter() {
           ✨ آخر التحديثات
         </a>
       </div>
-    </div>
+    </footer>
   );
 }

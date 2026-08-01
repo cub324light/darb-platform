@@ -27,6 +27,21 @@ const nextConfig: NextConfig = {
   /* ملاحظة: لا تضع "firebase" في optimizePackageImports — يكسر تسجيل خدمات
      Firebase المعيارية ويسبب «Service firestore is not available» وقت
      prerender لـ /_not-found. */
+  /* مسارات الاكتشاف القياسية: المجلّدات التي تبدأ بنقطة لا يولّدها موجّه Next،
+     فنُعيد كتابتها إلى معالِجاتٍ حقيقية. و/mcp اسمٌ قصير يتوقّعه عملاء MCP. */
+  async rewrites() {
+    return [
+      { source: "/.well-known/ai-plugin.json", destination: "/api/well-known/ai-plugin" },
+      { source: "/.well-known/agent-card.json", destination: "/api/well-known/agent-card" },
+      { source: "/.well-known/agent.json", destination: "/api/well-known/agent-card" },
+      { source: "/.well-known/mcp.json", destination: "/api/well-known/mcp-info" },
+      { source: "/.well-known/openapi.json", destination: "/openapi.json" },
+      { source: "/.well-known/oauth-protected-resource", destination: "/api/well-known/oauth-protected-resource" },
+      { source: "/.well-known/oauth-authorization-server", destination: "/api/well-known/oauth-authorization-server" },
+      { source: "/mcp", destination: "/api/mcp" },
+    ];
+  },
+
   async headers() {
     return [
       {

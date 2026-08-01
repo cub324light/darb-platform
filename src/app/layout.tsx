@@ -11,6 +11,7 @@ import DuirbFloat from "@/components/DuirbFloat";
 import DuirbTour from "@/components/DuirbTour";
 import BroadcastHost from "@/components/BroadcastHost";
 import ThemeGuard from "@/components/ThemeGuard";
+import StructuredData from "@/components/StructuredData";
 
 /* خطٌّ واحدٌ للهوية كلها: IBM Plex Sans Arabic — يُستضاف ذاتياً عبر next/font (صفر
    طلبات خارجية، بلا انزياح). أربعة أوزانٍ فقط (Regular/Medium/SemiBold/Bold) —
@@ -29,6 +30,12 @@ export const metadata: Metadata = {
   description: "منصة تعليمية سعودية لتأسيس القدرات والتحصيلي وأرامكو CPC — تمارين وخرائط دراسية وذكاء اصطناعي يساعدك تتفوق",
   keywords: ["درب", "منصة تعليمية", "القدرات", "التحصيلي", "أرامكو", "CPC", "تأسيس", "مذاكرة", "Saudi education", "Qudurat", "Tahsili"],
   manifest: "/manifest.json",
+  alternates: {
+    canonical: "/",
+    languages: { "ar-SA": "/", "x-default": "/" },
+    types: { "application/rss+xml": "/feed.xml" },
+  },
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-snippet": -1, "max-image-preview": "large" } },
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "درب" },
   openGraph: {
     title: "درب | طريقك للتفوق",
@@ -79,6 +86,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://www.googleapis.com" crossOrigin="" />
         <link rel="preconnect" href="https://securetoken.googleapis.com" crossOrigin="" />
         <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
+        {/* اكتشافٌ آليّ: يقود الوكيلَ إلى وصف الموقع المخصّص له */}
+        <link rel="alternate" type="text/plain" href="/llms.txt" title="llms.txt" />
+        <link rel="alternate" type="text/markdown" href="/agents.md" title="agents.md" />
+        <link rel="alternate" type="application/json" href="/openapi.json" title="OpenAPI" />
+        <link rel="alternate" type="application/rss+xml" href="/feed.xml" title="آخر تحديثات درب" />
+        <StructuredData />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>

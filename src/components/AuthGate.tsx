@@ -17,6 +17,10 @@ import DesktopSidebar from "./DesktopSidebar";
 const PUBLIC_PATHS = [
   "/", "/privacy", "/terms", "/subscription", "/admin",
   "/faq", "/tahsili/flashcards", "/success-stories",
+  /* صفحاتٌ تعريفية يقرؤها الزاحفُ ووكيلُ الذكاء الاصطناعي قبل أي تسجيل. لو بقيت
+     خلف البوّابة لَرأى الزائرُ غير المسجَّل — والزاحفُ الذي لا يشغّل JS — قشرةً
+     فارغة بلا `<main>` ولا عنوان. تحقّقتُ منها فعلاً قبل إضافتها. */
+  "/about", "/features", "/docs", "/docs/api",
 ];
 
 /* أقصى إعادات لمحاولة استرجاع ملف المستخدم قبل اعتباره «بلا حساب» (يمنع رمي العائد

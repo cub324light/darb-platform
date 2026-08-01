@@ -116,7 +116,11 @@ test("المصدر: لا «ar-SA» في أي صفحةٍ أو مكوّن", async 
       const f = join(dir, e);
       if (statSync(f).isDirectory()) { walk(f); continue; }
       if (!/\.tsx?$/.test(f) || /\.test\.tsx?$/.test(f) || f.endsWith("lib/format.ts")) continue;
-      if (readFileSync(f, "utf8").includes('"ar-SA')) offenders.push(f);
+      /* المقصود: «ar-SA» بوصفها لغةَ **تنسيق** (تجرّ معها تقويم أُمّ القرى).
+         أمّا كونها وسمَ لغةٍ في hreflang أو وصفاً في بياناتٍ مهيكلة فلا ضرر فيه
+         ولا علاقة له بالتواريخ — فلا نوقع الحارس على بريء. */
+      const src = readFileSync(f, "utf8");
+      if (/(?:toLocale(?:Date|Time)?String|Intl\.[A-Za-z]+)\(\s*"ar-SA/.test(src)) offenders.push(f);
     }
   };
   walk("src");

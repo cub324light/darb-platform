@@ -7,6 +7,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Dome from "@/components/Dome";
+import { Breadcrumbs } from "@/components/StructuredData";
 import BackButton from "@/components/BackButton";
 import { ThemeToggle } from "@/components/Profile";
 import { CardGrid } from "@/components/ds";
@@ -141,6 +142,12 @@ export default async function UniversityProfilePage({ params }: { params: Promis
       </Dome>
 
       {/* الإيقاع الرأسي موحّد، لكن الوزن غير متساوٍ: بطل → القبول (الأهم) → الكليات → تفاصيل */}
+      {/* فتاتُ المسار — يفهم به الزاحفُ موقعَ الصفحة من الشجرة */}
+      <Breadcrumbs items={[
+        { name: "درب", path: "/" },
+        { name: "دليل الجامعات", path: "/universities" },
+        { name: u.name, path: `/universities/${u.id}` },
+      ]} />
       <main className="px-5 py-6 max-w-2xl min-[1100px]:max-w-3xl mx-auto ds-stack pb-20">
         {/* ═══ الهوية (Hero): من أنا؟ — النبذة مدموجة، والروابط الثانوية أيقونات صغيرة ═══ */}
         <section className="relative rounded-3xl p-6 overflow-hidden"
