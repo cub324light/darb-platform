@@ -6,6 +6,7 @@ import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import PageFooter from "@/components/PageFooter";
 import LessonBrowser from "@/components/lesson/LessonBrowser";
+import DismissibleNote from "@/components/DismissibleNote";
 
 export const metadata: Metadata = {
   title: "الدروس | درب",
@@ -20,11 +21,9 @@ export default function LessonIndexPage() {
       </Dome>
       <div className="h-4" />
       <div className="page-content flex flex-col gap-3">
-        <header className="ds-card ds-card-lg flex flex-col gap-1">
-          <span className="eyebrow" style={{ color: "var(--accent-light)" }}>الدروس</span>
-          <h1 className="t-h1" style={{ color: "var(--text)" }}>تعلّم بالمفاهيم</h1>
-          <p className="t-body" style={{ color: "var(--text-dim)" }}>ابحث عن مفهومٍ لتصل لدرسه مباشرة. نبدأ بأول درسٍ كامل ونتوسّع.</p>
-        </header>
+        <DismissibleNote id="lesson-intro" title="تعلّم بالمفاهيم" tone="plain">
+          ابحث عن مفهومٍ لتصل لدرسه مباشرة. نبدأ بأول درسٍ كامل ونتوسّع.
+        </DismissibleNote>
         <LessonBrowser />
       </div>
       <div className="h-6" />

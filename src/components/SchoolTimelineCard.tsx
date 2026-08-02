@@ -7,7 +7,8 @@
    القرار في `schoolTimeline` (نقيٌّ ومُختبَر)، وهنا الـIO والعرض فقط (قاعدة P1). */
 import { useState } from "react";
 import { schoolTimeline, type TimelineEntry, type CalendarPeriod } from "@/lib/academicCalendar";
-import { dateShort, days as daysWord } from "@/lib/format";
+import { dateShort, dateHijriShort, days as daysWord } from "@/lib/format";
+import { useCalSystem, applyCalSystem, type CalSystem } from "@/lib/useCalSystem";
 
 const localDayKey = (d = new Date()): string => {
   const p = (x: number) => String(x).padStart(2, "0");
@@ -25,8 +26,9 @@ const TONE: Record<CalendarPeriod["kind"], { color: string; icon: string }> = {
   step:          { color: "var(--accent-light)", icon: "🔤" },
 };
 
-function Row({ e, past = false }: { e: TimelineEntry; past?: boolean }) {
+function Row({ e, past = false, cal }: { e: TimelineEntry; past?: boolean; cal: CalSystem }) {
   const t = TONE[e.period.kind];
+  const fmt = cal === "hijri" ? dateHijriShort : dateShort;
   return (
     <li className="flex items-center gap-2.5 py-2" style={{ opacity: past ? 0.6 : 1 }}>
       <span aria-hidden="true" className="text-[15px] flex-shrink-0">{t.icon}</span>
@@ -35,7 +37,7 @@ function Row({ e, past = false }: { e: TimelineEntry; past?: boolean }) {
           {e.period.label}
         </span>
         <span className="block t-caption" style={{ color: "var(--text-muted)" }}>
-          {dateShort(e.period.start)} – {dateShort(e.period.end)} · {daysWord(e.days)}
+          {fmt(e.period.start)} – {fmt(e.period.end)} · {daysWord(e.days)}
           {e.period.approximate ? " · تقديريّ" : ""}
         </span>
       </span>
@@ -50,6 +52,7 @@ function Row({ e, past = false }: { e: TimelineEntry; past?: boolean }) {
 
 export default function SchoolTimelineCard() {
   const [open, setOpen] = useState(false);
+  const calNow = useCalSystem();
   const t = schoolTimeline(localDayKey());
   if (!t) return null;
 
@@ -92,11 +95,24 @@ export default function SchoolTimelineCard() {
 
       {open && (
         <div className="mt-3">
+          {/* الخيارُ للطالب: كثيرٌ منهم يعدّ بالهجريّ، والتقويم الرسميّ يُعلَن به */}
+          <div className="flex items-center gap-1.5 mb-3" role="group" aria-label="نظام التقويم">
+            {([["greg", "ميلادي"], ["hijri", "هجري"]] as const).map(([v, label]) => (
+              <button key={v} type="button" onClick={() => applyCalSystem(v as CalSystem)}
+                aria-pressed={calNow === v}
+                className="flex-1 rounded-xl py-1.5 t-caption font-black transition active:scale-[0.98]"
+                style={calNow === v
+                  ? { background: "var(--accent)", color: "#fff" }
+                  : { background: "var(--surface2)", color: "var(--text-dim)" }}>
+                {label}
+              </button>
+            ))}
+          </div>
           {t.upcoming.length > 0 && (
             <>
               <p className="eyebrow mb-1">المواعيد القادمة</p>
               <ul className="list-none p-0 m-0 divide-y" style={{ borderColor: "var(--border)" }}>
-                {t.upcoming.map((e) => <Row key={`${e.period.kind}-${e.period.start}`} e={e} />)}
+                {t.upcoming.map((e) => <Row key={`${e.period.kind}-${e.period.start}`} e={e} cal={calNow} />)}
               </ul>
             </>
           )}
@@ -104,7 +120,7 @@ export default function SchoolTimelineCard() {
             <>
               <p className="eyebrow mt-4 mb-1">مواعيد مضت</p>
               <ul className="list-none p-0 m-0 divide-y" style={{ borderColor: "var(--border)" }}>
-                {t.past.map((e) => <Row key={`${e.period.kind}-${e.period.start}`} e={e} past />)}
+                {t.past.map((e) => <Row key={`${e.period.kind}-${e.period.start}`} e={e} past cal={calNow} />)}
               </ul>
             </>
           )}

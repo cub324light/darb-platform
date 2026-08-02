@@ -18,6 +18,7 @@ import { getTrack, type TrackId } from "@/lib/tracks";
 import { daysUntil } from "@/lib/insights";
 import { subjectsFor, trackLabel } from "@/lib/curriculum";
 import SchoolTimelineCard from "@/components/SchoolTimelineCard";
+import DismissibleNote from "@/components/DismissibleNote";
 
 const noop = () => () => {};
 const useMounted = () => useSyncExternalStore(noop, () => true, () => false);
@@ -142,11 +143,9 @@ export default function SchoolPage() {
       </Dome>
       <div className="h-4" />
       <div className="page-content flex flex-col gap-3">
-        <header className="ds-card ds-card-lg flex flex-col gap-1"
-          style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface))", borderColor: "color-mix(in srgb, var(--accent) 24%, var(--border))" }}>
-          <p className="t-title font-black" style={{ color: "var(--text)" }}>يومك الدراسي</p>
-          <p className="t-body" style={{ color: "var(--text-dim)" }}>واجباتك ودروسك واختباراتك ومتطلباتك في مكانٍ واحد — تُنظّم ضغطك الحقيقي، لا الاختبارات وحدها.</p>
-        </header>
+        <DismissibleNote id="school-intro" title="يومك الدراسي">
+          واجباتك ودروسك واختباراتك ومتطلباتك في مكانٍ واحد — تُنظّم ضغطك الحقيقي، لا الاختبارات وحدها.
+        </DismissibleNote>
 
         {/* التقويم: «كم باقي؟» أولاً — سؤالُ الطالب الأول عند فتح المدرسة */}
         <SchoolTimelineCard />

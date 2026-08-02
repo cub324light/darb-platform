@@ -7,11 +7,13 @@ import Link from "next/link";
 import { loadUser, localDayKey } from "@/lib/storage";
 import { upcomingMilestones, officialUpdates, milestoneIcon, type Milestone, type OfficialUpdate } from "@/lib/home/homeSignals";
 import { n, dateShort } from "@/lib/format";
+import { currentRegistrationStatus } from "@/lib/examProvider";
+import type { TrackId } from "@/lib/tracks";
 
 interface SignalsData {
   soon: Milestone[];
   updates: OfficialUpdate[];
-  exams: { track: string; daysUntil: number | null; date: string | null }[];
+  exams: { track: string; daysUntil: number | null; date: string | null; regOpen: boolean }[];
 }
 
 function build(): SignalsData | null {
@@ -28,7 +30,13 @@ function build(): SignalsData | null {
   const tracks = (u?.activeTracks ?? []).filter((t) => t === "قدرات" || t === "تحصيلي" || t === "ستيب" || t === "تحصيلي مبكر");
   const exams = tracks.map((t) => {
     const m = byTrack.get(t);
-    return { track: t, daysUntil: m?.daysUntil ?? null, date: m?.date ?? null };
+    /* «لم يُعلن الموعد» و«ما حدّدت موعدك» ليسا شيئاً واحداً. القدرات وستيب
+       تسجيلُهما مفتوحٌ طوال السنة (المحوسب)، فقولُ «لم يُعلن» عنهما كذبٌ
+       يُقعِد الطالب عن التسجيل وهو يستطيعه اليوم. */
+    return {
+      track: t, daysUntil: m?.daysUntil ?? null, date: m?.date ?? null,
+      regOpen: currentRegistrationStatus(t as TrackId, today) === "open",
+    };
   });
 
   return { soon, updates: officialUpdates(), exams };
@@ -94,8 +102,12 @@ export default function HomeSignals() {
             {d.exams.map((e) => (
               <div key={e.track} className="ds-card ds-card-tight flex flex-col gap-2">
                 <p className="t-body font-black" style={{ color: "var(--text)" }}>{e.track}</p>
-                <p className="t-caption font-mono-nums" style={{ color: e.daysUntil != null ? "var(--accent-light)" : "var(--text-muted)" }}>
-                  {e.daysUntil != null ? `بعد ${n(e.daysUntil)} يوم` : "لم يُعلن الموعد بعد"}
+                <p className="t-caption font-mono-nums"
+                  style={{ color: e.daysUntil != null ? "var(--accent-light)"
+                    : e.regOpen ? "var(--success)" : "var(--text-muted)" }}>
+                  {e.daysUntil != null ? `بعد ${n(e.daysUntil)} يوم`
+                    : e.regOpen ? "التسجيل مفتوح · حدّد موعدك"
+                    : "لم يُعلن الموعد بعد"}
                 </p>
                 <Link href="/review" className="mt-auto text-center t-caption font-bold no-underline rounded-xl py-2"
                   style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)", border: "1px solid color-mix(in srgb, var(--accent) 25%, transparent)" }}>

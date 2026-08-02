@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { n, pct, frac, sar, days, time, timeRange, dur,
-  dateShort, dateLong, dateTiny, dateFull, dateHijri, weeks } from "./format";
+  dateShort, dateLong, dateTiny, dateFull, dateHijri, dateHijriShort, weeks } from "./format";
 
 /* الاصطلاح: أرقام 0-9 وحدها — لا يجوز أن يتسرّب شكلٌ عربيٌّ-هنديّ إلى أي مخرَج. */
 const isLatinDigits = (s: string) => /[0-9]/.test(s) && !/[٠-٩]/.test(s);
@@ -125,4 +125,12 @@ test("المصدر: لا «ar-SA» في أي صفحةٍ أو مكوّن", async 
   };
   walk("src");
   assert.deepEqual(offenders, [], `استعمِل ar-u-nu-latn أو dateHijri بدل ar-SA في:\n${offenders.join("\n")}`);
+});
+
+test("dateHijriShort: هجريٌّ مختصر بأرقام 0-9 وبلا اسم اليوم", () => {
+  const s = dateHijriShort("2026-08-23");   // أول يوم دراسي 1448
+  assert.ok(!/[٠-٩]/.test(s), `تسرّبت أرقامٌ هندية: ${s}`);
+  assert.doesNotMatch(s, /الأحد|الاثنين|الثلاثاء|الأربعاء|الخميس|الجمعة|السبت/, `اسمُ اليوم زائد: ${s}`);
+  assert.match(s, /\d/, `بلا رقم: ${s}`);
+  assert.ok(dateHijriShort("2026-08-23", true).length > s.length, "الصيغةُ بالسنة أطول");
 });

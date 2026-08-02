@@ -62,6 +62,15 @@ export const dateHijri = (iso: string, withYear = true): string =>
     ...(withYear ? { year: "numeric" as const } : {}),
   });
 
+/* هجريٌّ مختصر — بلا اسم اليوم، كنظيره الميلادي `dateShort`.
+   للطالب الذي يعدّ بالهجري: «10 ربيع الأول» لا «الأحد 10 ربيع الأول 1448 هـ». */
+export const dateHijriShort = (iso: string, withYear = false): string =>
+  toDate(iso).toLocaleDateString(AR, {
+    calendar: "islamic-umalqura", numberingSystem: "latn",
+    day: "numeric", month: "long",
+    ...(withYear ? { year: "numeric" as const } : {}),
+  });
+
 /* «يوم/يومين/أيام/يوماً» بصيغةٍ عربية سليمة مع العدد */
 export const days = (x: number): string =>
   x === 1 ? "يوم واحد" : x === 2 ? "يومان" : `${n(x)} ${x >= 3 && x <= 10 ? "أيام" : "يوماً"}`;
