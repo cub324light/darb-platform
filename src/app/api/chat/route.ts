@@ -9,6 +9,7 @@ import { strategyFromProfile, formatStrategyBlock, type PlanningPrefs, type Allo
 import { goldenPathFromProfile, formatGoldenPathBlock, priorityFocusSubjects } from "@/lib/goldenPath";
 import { kbGroundingFor } from "@/lib/kb/server";
 import type { CalendarSignals } from "@/lib/academicCalendar";
+import { isWrongRefusal, RETRY_DIRECTIVE, fallbackAsk } from "@/lib/duwairb/guard";
 
 /* firebase-admin (المصادقة + تسجيل الاستهلاك) يحتاج Node APIs */
 export const runtime = "nodejs";
@@ -486,7 +487,29 @@ export async function POST(req: NextRequest) {
     const result = await chatComplete({ system, userContent, useVision, maxTokens, temperature });
     /* تسجيل استهلاك التوكنز للوحة تكلفة الذكاء (لا يُفشل الرد إن فشل) */
     await recordAiUsage(result.model, result.promptTokens, result.completionTokens);
-    return NextResponse.json({ text: result.text });
+
+    /* ▓ حارسُ الرفض الخاطئ — الضمانُ الذي لا يعتمد على مزاج النموذج.
+       الطالب يكتب «عطني جدول دراسي جاهز لليوم» فيردّ النموذج بجملة الرفض،
+       وهي خطأٌ يقيناً: الطلبُ حرفياً وظيفةُ دويرب. شدّدنا التعليمات فخفّ ولم
+       ينتهِ — فنفحص الردّ هنا: محاولةٌ ثانية بتوجيهٍ أشدّ، وإن أصرّ أعطينا
+       الطالبَ سؤالاً نافعاً بدل جدارٍ مسدود. */
+    let text = result.text;
+    const askedText = typeof prompt === "string" ? prompt : "";
+    if (isWrongRefusal(askedText, text)) {
+      try {
+        const retry = await chatComplete({
+          system: `${system}\n\n${RETRY_DIRECTIVE}`,
+          userContent, useVision, maxTokens,
+          /* حرارةٌ أدنى: نريد امتثالاً لا إبداعاً */
+          temperature: Math.min(temperature, 0.3),
+        });
+        await recordAiUsage(retry.model, retry.promptTokens, retry.completionTokens);
+        text = isWrongRefusal(askedText, retry.text) ? fallbackAsk(askedText) : retry.text;
+      } catch {
+        text = fallbackAsk(askedText);
+      }
+    }
+    return NextResponse.json({ text });
   } catch (e) {
     if (e instanceof LLMError) return NextResponse.json({ error: e.message }, { status: e.status });
     return NextResponse.json({ error: "خطأ في الاتصال" }, { status: 500 });
