@@ -186,8 +186,9 @@ test("auth.md: ترويسةُ YAML تحمل agent_auth بمفتاحٍ عارٍ �
 
   assert.ok(fm.startsWith("---\n"), "لا ترويسةَ في أوّل الملفّ");
   assert.match(fm, /^agent_auth:$/m, "«agent_auth:» ليست مفتاحاً عارياً في أوّل سطر");
-  assert.match(fm, /^\s+register_uri: "https:\/\/console\.cloud\.google\.com\//m, "register_uri غائب عن الترويسة");
-  assert.match(fm, /^\s+identity_types:$/m, "identity_types غائب");
+  assert.match(fm, /^\s+register_uri: "https:\/\//m, "register_uri غائب عن الترويسة");
+  assert.match(fm, /^\s+skill: "https:\/\//m, "skill غائب عن الترويسة");
+  assert.match(fm, /^\s+identity_types_supported:$/m, "identity_types_supported غائب");
   assert.ok(fm.trimEnd().endsWith("---"), "الترويسةُ غير مغلقة");
 
   /* الترويسة يجب أن تُقرأ YAML صالحاً وتعود كما خرجت */
@@ -208,15 +209,52 @@ test("agent_auth: مصدرٌ واحد يغذّي auth.md وبيانَ خادم �
   assert.ok(oauth.includes("agent_auth: AGENT_AUTH"), "بيانُ خادم التفويض لا يقرأ من المصدر الواحد");
   assert.ok(prot.includes("agent_auth: AGENT_AUTH"), "بيانُ المورد المحميّ لا يحمل الكتلة");
 
-  /* التسجيلُ يدويٌّ عند Google: العنوان حقيقيّ، والتسجيلُ الآليّ معلَنٌ مُطفأً
-     فلا يُقرأ وعداً بـRFC 7591. */
   assert.equal(AGENT_AUTH.dynamic_client_registration, false,
     "لا نَعِد بتسجيلٍ ديناميكيّ لا نخدمه");
-  assert.match(AGENT_AUTH.register_uri, /^https:\/\/console\.cloud\.google\.com\//,
-    "register_uri يجب أن يشير إلى وحدة اعتماد Google — لا إلى عنوانٍ عندنا لا نخدمه");
   /* وكيلٌ نيابةً عن طالب: مغلقٌ عن قصد ولا يُفتح بغفلة */
   assert.equal(AGENT_AUTH.delegated_agent_access, false);
-  assert.deepEqual([...AGENT_AUTH.identity_types], ["human"]);
+});
+
+/* ═══ ما تشترطه مواصفةُ Auth.md حرفاً ═══
+   كانت الكتلةُ كاملةً في نظري وناقصةً في نظرها: بلا `skill`، وبلا طريقةِ
+   تسجيلٍ كاملة، وباسمٍ خاطئ (`identity_types` بدل `identity_types_supported`). */
+test("agent_auth: الحقولُ التي تشترطها المواصفة موجودة", async () => {
+  const { AGENT_AUTH, CLAIM_URI } = await import("./authMeta");
+
+  assert.ok(AGENT_AUTH.skill?.startsWith("https://"), "`skill` مفقود");
+  assert.ok(AGENT_AUTH.register_uri?.startsWith("https://"), "`register_uri` مفقود");
+  assert.deepEqual([...AGENT_AUTH.identity_types_supported], ["anonymous"],
+    "الاسمُ الصحيح `identity_types_supported` وطريقتُنا الصادقة anonymous");
+
+  /* طريقةُ التسجيل كاملةً: نوعُ الاعتماد + عنوانُ المطالبة */
+  assert.deepEqual([...AGENT_AUTH.anonymous.credential_types_supported], ["none"]);
+  assert.equal(AGENT_AUTH.anonymous.claim_uri, CLAIM_URI);
+  assert.equal(AGENT_AUTH.claim_uri, CLAIM_URI);
+});
+
+test("`skill` يشير إلى وثيقةٍ منشورةٍ فعلاً لا إلى عنوانٍ ميّت", async () => {
+  const { AGENT_AUTH } = await import("./authMeta");
+  const { AGENT_SKILLS, skillUrl } = await import("./skills");
+  assert.ok(AGENT_SKILLS.some((s) => skillUrl(s) === AGENT_AUTH.skill),
+    `لا مهارةَ منشورة على ${AGENT_AUTH.skill}`);
+});
+
+test("نقطةُ المطالبة موجودة ولا تَعِد برمزٍ لا تُصدره", () => {
+  const src = readFileSync("src/app/api/agent/claim/route.ts", "utf8");
+  assert.match(src, /identity_type: "anonymous"/);
+  assert.match(src, /credential: null/, "لا نُصدر اعتماداً — يجب أن يبقى null");
+  assert.match(src, /student_data_access: false/, "حدُّ بيانات الطالب يُعلَن صراحةً");
+  assert.ok(!/export (async )?function POST/.test(src),
+    "المواصفة تنبّه ألّا تُطرق نقطةُ التسجيل بـPOST — فلا نعرّف POST أصلاً");
+});
+
+/* المواصفة تشترط في بيان المورد المحميّ أربعةَ حقول */
+test("بيانُ المورد المحميّ يحمل حقوله الأربعة", () => {
+  const src = readFileSync("src/app/api/well-known/oauth-protected-resource/route.ts", "utf8");
+  for (const f of ["resource:", "authorization_servers:", "scopes_supported:", "bearer_methods_supported:"]) {
+    assert.ok(src.includes(f), `حقلٌ ناقص في PRM: ${f}`);
+  }
+  assert.match(src, /bearer_methods_supported: \["header"\]/, "«header» شرطٌ صريح");
 });
 
 test("المخطّطات: لكلٍّ نوعٌ وعنوان", () => {

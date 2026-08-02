@@ -52,18 +52,25 @@ ${SITE.url}
 - النطاقات: \`openid\` · \`email\` · \`profile\`
 
 ## تسجيلُ الوكلاء (Agent Registration)
-درب **لا تُصدر** رموزاً ولا تملك سجلَّ عملاء خاصاً بها؛ الهويّةُ من Google.
-فالتسجيلُ **يدويٌّ عند Google** لا عندنا، والتسجيلُ الديناميكي (RFC 7591) غير
-مدعوم:
+**نوعُ الهويّة \`anonymous\` ونوعُ الاعتماد \`none\`.** لا تسجيلَ ولا مفتاح: استدعِ
+الواجهةَ العامّة مباشرةً. وللتأكّد آلياً بدل التخمين:
 
-1. أنشئ عميلاً في [وحدة اعتماد Google](https://console.cloud.google.com/apis/credentials)
-   — وهذا هو \`register_uri\` في البيان أدناه.
-2. استعمل خادم تفويض Google الموصوف في \`/.well-known/oauth-authorization-server\`.
-3. أرسِل رمزَ الهويّة في \`Authorization: Bearer <Google ID token>\`.
+\`\`\`
+GET ${SITE.url}/api/agent/claim
+→ {"identity_type":"anonymous","credential_type":"none","granted":true,"credential":null}
+\`\`\`
 
-وانتبه: هذا يمنحك هويّةَ **مستخدمٍ بشريّ** يدخل بحسابه. ولا يوجد — ولن يوجد —
-تفويضٌ يُدخل وكيلاً إلى بيانات طالبٍ نيابةً عنه؛ ولذلك \`delegated_agent_access\`
-مُطفأ.
+يُعيد معها قائمةَ العناوين المتاحة وحدَّ الطلبات. لا يُنشئ حساباً ولا يُصدر رمزاً
+ولا يرسل بريداً — إنما يخبرك أن البابَ مفتوحٌ أصلاً.
+
+المهارةُ الكاملة: [\`agent-auth\`](${SITE.url}/.well-known/agent-skills/agent-auth/SKILL.md)
+
+### أمّا دخولُ Google
+فهو **للطالب البشريّ في تطبيقه**، لا لوكيلٍ ينوب عنه. من أراد بناء عميلٍ يدخل
+به مستخدمٌ بنفسه: يُنشئ عميلاً يدوياً في
+[وحدة اعتماد Google](https://console.cloud.google.com/apis/credentials) — والتسجيلُ
+الديناميكي (RFC 7591) غير مدعوم. ولا يوجد — ولن يوجد — تفويضٌ يُدخل وكيلاً إلى
+بيانات طالبٍ نيابةً عنه؛ ولذلك \`delegated_agent_access\` مُطفأ.
 
 \`\`\`json
 ${JSON.stringify({ agent_auth: AGENT_AUTH }, null, 2)}
