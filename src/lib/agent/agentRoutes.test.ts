@@ -169,6 +169,15 @@ test("تفاوضُ Markdown: كل صفحةٍ تُنتج نصّاً حقيقيا�
   }
 });
 
+/* الفاحصُ وجد /auth.md لكنه رفضه: عنوانُه الأول كان عربياً و«Auth.md» اسمُ
+   الاصطلاح يُقرأ بنصّه. القاعدةُ سهلةُ الكسر عند أي إعادة صياغة، فنقفلها. */
+test("auth.md: عنوانُه الأول «# Auth.md» حرفاً بحرف", () => {
+  const src = readFileSync("src/app/auth.md/route.ts", "utf8");
+  assert.match(src, /const body = `# Auth\.md\n/, "العنوان الأول ليس «# Auth.md»");
+  assert.ok(src.includes("Agent Registration"), "قسمُ تسجيل الوكلاء بلا اسمه الإنجليزي");
+  assert.ok(src.includes("agent_auth"), "كتلةُ agent_auth مفقودة");
+});
+
 test("المخطّطات: لكلٍّ نوعٌ وعنوان", () => {
   for (const [name, s] of Object.entries(SCHEMAS)) {
     assert.equal(s.type, "object", `${name}: ليس كائناً`);

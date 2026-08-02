@@ -7,7 +7,12 @@ import { SITE } from "@/lib/agent/catalog";
 export const dynamic = "force-static";
 
 export function GET() {
-  const body = `# المصادقة — ${SITE.name} (${SITE.nameEn})
+  /* ▓ العنوان الأول «Auth.md» حرفاً بحرف: هو اسمُ الاصطلاح لا ترجمتُه، والقارئُ
+     الآليّ يبحث عنه بنصّه. كان العنوانُ عربياً فقُرئ الملفُّ ناقصاً وإن كان
+     محتواه كاملاً. الاسمُ إنجليزيّ والشرحُ عربيّ — كلٌّ في موضعه. */
+  const body = `# Auth.md
+
+## المصادقة — ${SITE.name} (${SITE.nameEn})
 
 ${SITE.url}
 
@@ -39,7 +44,7 @@ ${SITE.url}
 - الرمز يُرسَل: \`Authorization: Bearer <Google ID token>\`
 - النطاقات: \`openid\` · \`email\` · \`profile\`
 
-## تسجيلُ الوكلاء
+## تسجيلُ الوكلاء (Agent Registration)
 درب **لا تُصدر** رموزاً ولا تملك سجلَّ عملاء خاصاً بها؛ الهويّةُ من Google.
 فليس عندنا \`register_uri\`: التسجيلُ الديناميكي (RFC 7591) غير مدعوم، ويُنشئ
 المطوّرُ عميلَه في Google Cloud Console ثم يستعمل خادم تفويض Google أعلاه.
