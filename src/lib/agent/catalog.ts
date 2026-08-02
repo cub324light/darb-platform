@@ -69,6 +69,27 @@ export const ENDPOINTS: AgentEndpoint[] = [
     summary: "الأسئلة الشائعة عن القبول الجامعي ومنصّة قبول، مع بحثٍ نصّي عبر `q`." },
 ];
 
+/* ── وثائقُ الوكلاء: قائمةٌ واحدة يقرأ منها sitemap.xml وصفحةُ التوثيق معاً ──
+   كانت هذه المسارات موجودةً على الخادم لكنها غيرَ مذكورةٍ في خريطة الموقع ولا
+   موصولةً من صفحةٍ يراها الزاحف — فمَن لا يخمّن أسماءها لا يجدها. */
+export interface AgentDoc { path: string; label: string; }
+
+export const AI_DOCUMENTS: AgentDoc[] = [
+  { path: "/llms.txt",                      label: "llms.txt" },
+  { path: "/llms-full.txt",                 label: "llms-full.txt" },
+  { path: "/agents.md",                     label: "agents.md" },
+  { path: "/agents.json",                   label: "agents.json" },
+  { path: "/openapi.json",                  label: "OpenAPI 3.1 (JSON)" },
+  { path: "/openapi.yaml",                  label: "OpenAPI 3.1 (YAML)" },
+  { path: "/schemas.json",                  label: "JSON Schema" },
+  { path: "/ai.txt",                        label: "ai.txt" },
+  { path: "/mcp",                           label: "خادم MCP" },
+  { path: "/.well-known/agent-card.json",   label: "بطاقة الوكيل" },
+  { path: "/.well-known/ai-plugin.json",    label: "بيان الإضافة" },
+  { path: "/.well-known/mcp.json",          label: "وصف MCP" },
+  { path: "/api/agent/skills",              label: "المهارات" },
+];
+
 /* ═══ بناة البيانات — من المصادر الحيّة نفسها التي يراها الطالب ═══ */
 
 export function universitiesPayload() {

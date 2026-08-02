@@ -4,7 +4,7 @@ import Link from "next/link";
 import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import PageFooter from "@/components/PageFooter";
-import { SITE, ENDPOINTS } from "@/lib/agent/catalog";
+import { SITE, ENDPOINTS, AI_DOCUMENTS } from "@/lib/agent/catalog";
 
 const DESC = "واجهة درب العامّة: بيانات الجامعات والاختبارات والتقويم والأسئلة الشائعة — JSON بلا مصادقة، مع OpenAPI وخادم MCP.";
 
@@ -77,11 +77,15 @@ export default function ApiDocsPage() {
           </ul>
         </section>
 
-        <nav aria-label="روابط" className="ds-card">
+        {/* كلُّ وثيقةٍ آليّة موصولةٌ من هنا بوسمٍ حقيقي — الزاحفُ يتبع الروابط،
+            ولا يخمّن أسماء الملفّات. المصدر `AI_DOCUMENTS` نفسه الذي يغذّي
+            sitemap.xml، فلا تُضاف وثيقةٌ في أحدهما وتُنسى في الآخر. */}
+        <nav aria-label="وثائق الوكلاء" className="ds-card">
+          <h2 className="t-h3 font-black mb-2">وثائقُ القراءة الآلية</h2>
           <ul className="flex flex-wrap gap-3 list-none p-0 m-0 t-body font-bold">
-            <li><a href="/openapi.json">OpenAPI 3.1</a></li>
-            <li><a href="/llms.txt">llms.txt</a></li>
-            <li><a href="/agents.md">agents.md</a></li>
+            {AI_DOCUMENTS.map((d) => (
+              <li key={d.path}><a href={d.path}>{d.label}</a></li>
+            ))}
             <li><Link href="/docs">التوثيق</Link></li>
           </ul>
         </nav>

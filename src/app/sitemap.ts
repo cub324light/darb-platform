@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { UNIVERSITIES } from "@/lib/university";
+import { AI_DOCUMENTS } from "@/lib/agent/catalog";
 
 const BASE = "https://usedarb.com";
 
@@ -14,6 +15,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.6,
     }));
+  /* وثائقُ الوكلاء — تُدرَج كي يجدها مَن يقرأ خريطة الموقع بدل أن يخمّن أسماءها.
+     أولويةٌ منخفضة: هي للقراءة الآلية لا للفهرسة في نتائج البحث. */
+  const agentDocs: MetadataRoute.Sitemap = AI_DOCUMENTS.map((d) => ({
+    url: `${BASE}${d.path}`,
+    lastModified: now,
+    changeFrequency: "weekly",
+    priority: 0.4,
+  }));
   return [
     { url: BASE,                   lastModified: now, changeFrequency: "weekly",  priority: 1.0 },
     { url: `${BASE}/about`,        lastModified: now, changeFrequency: "monthly", priority: 0.8 },
@@ -29,6 +38,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/privacy`,      lastModified: now, changeFrequency: "yearly",  priority: 0.3 },
     { url: `${BASE}/terms`,        lastModified: now, changeFrequency: "yearly",  priority: 0.3 },
     { url: `${BASE}/subscription`, lastModified: now, changeFrequency: "yearly",  priority: 0.3 },
+    ...agentDocs,
     ...universityPages,
   ];
 }

@@ -8,10 +8,10 @@
    وصفُ OpenAPI يَعِد بهذه المعاملات، فالوكيلُ يطلبها ويُصدّق ما يُعاد إليه. */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, statSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { universityDetail, universitiesPayload, faqPayload } from "./catalog";
-import { ENDPOINTS } from "./catalog";
+import { ENDPOINTS, AI_DOCUMENTS } from "./catalog";
 import { SCHEMAS, TOOL_INPUTS } from "./schemas";
 import { openApiSpec } from "./openapi";
 
@@ -92,6 +92,37 @@ test("لكل واجهةٍ في الكتالوج معالِجٌ ومخطّطٌ ل
   const mcp = readFileSync("src/app/api/mcp/route.ts", "utf8");
   for (const name of Object.keys(TOOL_INPUTS)) {
     assert.ok(mcp.includes(`name: "${name}"`), `مخطّطُ مدخلاتٍ بلا أداة: ${name}`);
+  }
+});
+
+/* ═══ وثائقُ الوكلاء: موجودةٌ فعلاً، ومذكورةٌ حيث يجدها الزاحف ═══
+   القصّة: كانت الوثائق تُقدَّم بحالة 200 لكنها غائبةٌ عن sitemap.xml وغيرَ
+   موصولةٍ من أي صفحة — فمَن لا يعرف اسمها لا يصل إليها. */
+test("AI_DOCUMENTS: لكل وثيقةٍ معالِجٌ أو إعادةُ كتابة", () => {
+  const cfg = readFileSync("next.config.ts", "utf8");
+  const missing: string[] = [];
+  for (const d of AI_DOCUMENTS) {
+    const hasRoute = existsSync(join("src/app", d.path, "route.ts"));
+    const hasRewrite = cfg.includes(`source: "${d.path}"`);
+    if (!hasRoute && !hasRewrite) missing.push(d.path);
+  }
+  assert.deepEqual(missing, [], `وثيقةٌ معلنةٌ بلا معالِجٍ ولا rewrite:\n${missing.join("\n")}`);
+});
+
+test("خريطةُ الموقع تذكر كل وثيقةِ وكلاء", () => {
+  const src = readFileSync("src/app/sitemap.ts", "utf8");
+  assert.ok(src.includes("AI_DOCUMENTS"), "sitemap.ts لا يقرأ AI_DOCUMENTS");
+});
+
+test("صفحةُ التوثيق تصل كل وثيقةٍ برابطٍ حقيقي", () => {
+  const src = readFileSync("src/app/docs/api/page.tsx", "utf8");
+  assert.ok(src.includes("AI_DOCUMENTS"), "صفحة /docs/api لا تصل الوثائق");
+});
+
+test("robots.txt يسمح لروبوتات الذكاء الاصطناعي المطلوبة", () => {
+  const src = readFileSync("src/app/robots.ts", "utf8");
+  for (const bot of ["GPTBot", "ClaudeBot", "Google-Extended", "PerplexityBot", "CCBot", "Amazonbot"]) {
+    assert.ok(src.includes(`"${bot}"`), `روبوتٌ غير مذكور في robots.txt: ${bot}`);
   }
 });
 
