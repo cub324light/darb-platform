@@ -61,6 +61,15 @@ export default function ModuleWorkspace({
 
   const [dates, setDates] = useState<Record<string, string>>(() => (typeof window !== "undefined" ? loadTrackExamDates() : {}));
   const [scoreInput, setScoreInput] = useState("");
+  /* المادةُ المفتوحة في قسم المذاكرة — مرفوعةٌ هنا ليصل إليها وسمُ الرأس */
+  const [studySubject, setStudySubject] = useState<string | null>(null);
+  const [studyPhase, setStudyPhase] = useState<"tasees" | "tadreeb">("tasees");
+  /* يفتح المادة ثم ينزل إليها — النزولُ بعد الرسم فلا يقفز قبل ظهورها */
+  const openSubject = (name: string) => {
+    setStudySubject((cur) => (cur === name ? null : name));
+    setStudyPhase("tasees");
+    requestAnimationFrame(scrollToStudy);
+  };
   const [scores, setScores] = useState<Record<string, { score: number; attempts: number }>>(() =>
     typeof window !== "undefined" ? currentScoreMap() : {});
 
@@ -120,10 +129,20 @@ export default function ModuleWorkspace({
             {subjects.length > 0 && (
               <div className="mt-4">
                 <p className="t-caption font-bold mb-2" style={{ color: "var(--text-dim)" }}>ماذا ستذاكر</p>
+                {/* ▓ كانت وسوماً جامدة: يضغط الطالبُ «الكمي» فلا يحدث شيء،
+                    ودروسُها مكدّسةٌ في آخر الصفحة. صارت أزراراً تفتح مادّتها
+                    وتنزل إليها. */}
                 <div className="flex flex-wrap gap-1.5">
                   {subjects.map((s) => (
-                    <span key={s.name} className="t-caption font-bold px-2.5 py-1 rounded-lg"
-                      style={{ background: "var(--surface2)", color: "var(--text)", border: `1px solid ${(s.color ?? color)}44` }}>{s.name}</span>
+                    <button key={s.name} type="button"
+                      onClick={() => openSubject(s.name)}
+                      aria-label={`افتح دروس ${s.name}`}
+                      className="t-caption font-bold px-2.5 py-1 rounded-lg transition active:scale-[0.96]"
+                      style={{ background: studySubject === s.name ? `${s.color ?? color}22` : "var(--surface2)",
+                               color: "var(--text)",
+                               border: `1px solid ${(s.color ?? color)}${studySubject === s.name ? "88" : "44"}` }}>
+                      {s.name} ←
+                    </button>
                   ))}
                 </div>
               </div>
@@ -141,7 +160,11 @@ export default function ModuleWorkspace({
           {/* ── المذاكرة (الفعل الأساسي) ── */}
           <section id="ws-study" className="flex flex-col gap-3">
             <p className="eyebrow px-1">📖 المذاكرة</p>
-            {content.subjects && <StudyBody subjects={content.subjects} examKey={examKey} />}
+            {content.subjects && (
+              <StudyBody subjects={content.subjects} examKey={examKey}
+                selected={studySubject} phase={studyPhase}
+                onSelect={(name, ph) => { setStudySubject(name); setStudyPhase(ph); }} />
+            )}
           </section>
 
           {/* ── أدوات مساعِدة (ثانوية) ── */}

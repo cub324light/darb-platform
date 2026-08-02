@@ -31,13 +31,30 @@ function lessonsOf(subj: string, custom: CustomLesson[]): { key: string; title: 
   return custom.filter((c) => c.subject === subj).map((c) => ({ key: `custom-${c.id}`, title: c.title }));
 }
 
-export default function StudyBody({ subjects, examKey }: { subjects: SubjectDef[]; examKey?: string }) {
+/* `selected`/`phase` مرفوعان إلى الأعلى: وسومُ «ماذا ستذاكر» في رأس الصفحة
+   يجب أن تفتح مادّتها هنا مباشرةً بدل أن تكون قائمةُ الدروس مكدّسةً في الأسفل.
+   يبقيان اختياريين، فمن يستعمل المكوّن بلا تحكّمٍ يعمل كما كان. */
+export default function StudyBody({ subjects, examKey, selected: selectedProp, phase: phaseProp, onSelect }: {
+  subjects: SubjectDef[];
+  examKey?: string;
+  selected?: string | null;
+  phase?: "tasees" | "tadreeb";
+  onSelect?: (name: string | null, phase: "tasees" | "tadreeb") => void;
+}) {
   const [done, setDone] = useState<string[]>(() => (typeof window !== "undefined" ? loadList<string>(DONE_KEY) : []));
   const [custom, setCustom] = useState<CustomLesson[]>(() => (typeof window !== "undefined" ? loadList<CustomLesson>(CUSTOM_KEY) : []));
   const [tItems, setTItems] = useState<TrainingItem[]>(() => (typeof window !== "undefined" ? loadTadreebItems() : []));
   const [tDone, setTDone] = useState<string[]>(() => (typeof window !== "undefined" ? loadTadreebDone() : []));
-  const [selected, setSelected] = useState<string | null>(null);
-  const [phase, setPhase] = useState<"tasees" | "tadreeb">("tasees");
+  const [selfSelected, setSelfSelected] = useState<string | null>(null);
+  const [selfPhase, setSelfPhase] = useState<"tasees" | "tadreeb">("tasees");
+  /* محكومٌ من الأعلى إن مُرِّر، وإلا فحالتُه الخاصّة */
+  const controlled = onSelect !== undefined;
+  const selected = controlled ? (selectedProp ?? null) : selfSelected;
+  const phase = controlled ? (phaseProp ?? "tasees") : selfPhase;
+  const pick = (name: string | null, ph: "tasees" | "tadreeb") => {
+    if (controlled) onSelect(name, ph);
+    else { setSelfSelected(name); setSelfPhase(ph); }
+  };
   const [newLesson, setNewLesson] = useState("");
   const [newTraining, setNewTraining] = useState("");
 
@@ -173,7 +190,7 @@ export default function StudyBody({ subjects, examKey }: { subjects: SubjectDef[
         const p = list.length === 0 ? 0 : Math.round((doneN / list.length) * 100);
         const on = selected === s.name && phase === which;
         return (
-          <button key={s.name} onClick={() => { setSelected(on ? null : s.name); setPhase(which); }}
+          <button key={s.name} onClick={() => pick(on ? null : s.name, which)}
             className="rounded-2xl p-3.5 flex flex-col gap-2.5 text-right transition active:scale-[0.97]"
             style={{ background: "var(--surface2)", border: `2px solid ${on ? s.color : s.color + "44"}` }}>
             <div className="flex items-center gap-2">
@@ -218,7 +235,7 @@ export default function StudyBody({ subjects, examKey }: { subjects: SubjectDef[
         <div className="rounded-2xl p-4" style={{ background: "var(--surface)", border: `1.5px solid ${subjColor(selected)}55` }}>
           <div className="flex items-center justify-between mb-3">
             <p className="t-title" style={{ color: "var(--text)" }}>{phase === "tasees" ? "دروس" : "تمارين"} {selected}</p>
-            <button onClick={() => setSelected(null)} className="t-caption font-bold px-2 min-h-[40px]" style={{ color: "var(--text-muted)" }}>إغلاق ✕</button>
+            <button onClick={() => pick(null, phase)} className="t-caption font-bold px-2 min-h-[40px]" style={{ color: "var(--text-muted)" }}>إغلاق ✕</button>
           </div>
           {/* المصادر أوّلاً: «من أين أذاكر؟» يسبق «ماذا أذاكر؟» */}
           <div className="mb-4 pb-4" style={{ borderBottom: "1px solid var(--border)" }}>
