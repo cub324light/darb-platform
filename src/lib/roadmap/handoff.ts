@@ -15,9 +15,15 @@ export interface FocusHandoff {
 
 export const EMPTY_HANDOFF: FocusHandoff = { from: "", subject: "", auto: false, taskMins: 0, taskLabel: "" };
 
-/** يبني وسطاء العنوان للانتقال إلى /orbit. المهمّة اختيارية (زرّ البطل في مساري قد لا يملكها). */
-export function focusHandoffQuery(i: { subject?: string; taskMins?: number; taskLabel?: string }): string {
-  const q = new URLSearchParams({ from: "masari", auto: "1" });
+/** مصدرُ التسليم — يحدّد نسبةَ الجلسة ونصَّ خيط المهمّة في التركيز. */
+export type HandoffFrom = "masari" | "plan";
+
+/** يبني وسطاء العنوان للانتقال إلى /orbit. المهمّة اختيارية (زرّ البطل في مساري قد لا يملكها).
+    و`from` يبقى «مساري» افتراضاً حفاظاً على المستدعين القدامى حرفاً بحرف. */
+export function focusHandoffQuery(
+  i: { subject?: string; taskMins?: number; taskLabel?: string; from?: HandoffFrom },
+): string {
+  const q = new URLSearchParams({ from: i.from ?? "masari", auto: "1" });
   if (i.subject) q.set("subject", i.subject);
   /* دقائقُ المهمّة تُمرَّر فقط إن كانت موجبة: مهمّة «حلّ 5 أسئلة» لا وزن زمنيَّ لها. */
   if (i.taskMins && i.taskMins > 0) q.set("task", String(i.taskMins));
@@ -40,6 +46,14 @@ export function readFocusHandoff(search: string): FocusHandoff {
     taskLabel: q.get("tlabel") ?? "",
   };
 }
+
+/** هل جاء الطالبُ من صفحةٍ تحمل عملاً (مساري أو خطتي)؟ يُعرض عندها خيطُ المهمّة. */
+export const isTaskHandoff = (h: FocusHandoff): boolean =>
+  (h.from === "masari" || h.from === "plan") && h.taskMins > 0;
+
+/** بمَ نُسمّي مصدرَ المهمّة أمام الطالب — «من مهمّتك» أم «من جدولك». */
+export const handoffSourceLabel = (h: FocusHandoff): string =>
+  h.from === "plan" ? "من جدولك" : "من مهمّتك";
 
 /** ما يتبقّى من المهمّة بعد جلسةٍ طولها focusMins. صفرٌ = الجلسة تُنهي المهمّة (أو لا وزن زمنيّ). */
 export function remainingTaskMins(taskMins: number, focusMins: number): number {

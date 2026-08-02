@@ -10,6 +10,7 @@
      لا طلبَ شبكيّاً إلا حين يستدعي الوكيلُ أداةً فعلاً. */
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { focusHandoffQuery } from "@/lib/roadmap/handoff";
 
 /* واجهةُ WebMCP لم تدخل أنواعَ TypeScript بعد — نصفها بالقدر الذي نستعمله. */
 interface McpToolResult { content: { type: "text"; text: string }[] }
@@ -48,12 +49,13 @@ export default function WebMcp() {
             subject: { type: "string", description: "المادة أو المهمّة التي سيذاكرها" },
           },
         },
+        /* ▓ عقدُ التسليم نفسُه الذي تستعمله «خطتي» و«مساري» — كنتُ أمرّر
+           `?minutes=` وأوربت لا يقرأها أصلاً، فيضيع ما طلبه الطالب. */
         execute: async (a) => {
-          const q = new URLSearchParams();
-          if (typeof a.minutes === "number") q.set("minutes", String(a.minutes));
-          if (typeof a.subject === "string" && a.subject) q.set("subject", a.subject);
-          router.push(`/orbit${q.size ? `?${q}` : ""}`);
-          return text("فُتحت جلسة التركيز في درب. اضغط «ابدأ» لتشغيل المؤقّت.");
+          const subject = typeof a.subject === "string" ? a.subject : undefined;
+          const taskMins = typeof a.minutes === "number" ? Math.round(a.minutes) : undefined;
+          router.push(`/orbit?${focusHandoffQuery({ from: "plan", subject, taskMins, taskLabel: subject })}`);
+          return text("فُتحت جلسة التركيز في درب وبدأ المؤقّت.");
         },
       },
       {

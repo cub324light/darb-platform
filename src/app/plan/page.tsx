@@ -38,6 +38,7 @@ import {
 import { loadCalendar } from "@/lib/roadmap/calendarStore";
 import { eventsOnDay, kindMeta } from "@/lib/roadmap/calendar";
 import { readPriorityExam } from "@/lib/roadmap/nowRead";
+import { focusHandoffQuery } from "@/lib/roadmap/handoff";
 import { isUniversityGraduate } from "@/lib/phase";
 import { getTrack, colorForSubject, type TrackId } from "@/lib/tracks";
 import { days as arDays, dur, time } from "@/lib/format";
@@ -257,7 +258,12 @@ export default function PlanPage() {
           <div className="h-1.5 rounded-full overflow-hidden my-3" style={{ background: "var(--surface2)" }}>
             <div className="h-full rounded-full" style={{ width: `${Math.min(100, (elapsed / total) * 100)}%`, background: c }} />
           </div>
-          <Link href="/orbit" className="block w-full rounded-2xl py-3 t-body font-black text-center"
+          {/* ▓ يحمل الجلسةَ معه: المادة وما تبقّى من وقتها. كان الرابط عارياً
+              (`/orbit` بلا وسطاء) فيفتح المؤقّت على مادةٍ افتراضية، والطالبُ
+              يعيد اختيار ما جدوَلَه بنفسه — فبدت «خطتي» غيرَ موصولةٍ بشيء. */}
+          <Link href={`/orbit?${focusHandoffQuery({ from: "plan", subject: currentEv.subject,
+            taskMins: remaining, taskLabel: currentEv.subject ?? "مذاكرة" })}`}
+            className="block w-full rounded-2xl py-3 t-body font-black text-center"
             style={{ background: c, color: "#fff", textDecoration: "none" }}>
             ادخل التركيز ←
           </Link>
@@ -275,7 +281,10 @@ export default function PlanPage() {
           <p className="t-small mt-1 mb-3" style={{ color: "var(--text-muted)" }}>
             {untilMins > 0 ? `بعد ${dur(untilMins)}` : "حان وقتها"} · {dur(Math.round((nextEv.toHour - nextEv.fromHour) * 60))}
           </p>
-          <Link href="/orbit" className="block w-full rounded-2xl py-3 t-body font-black text-center"
+          <Link href={`/orbit?${focusHandoffQuery({ from: "plan", subject: nextEv.subject,
+            taskMins: Math.round((nextEv.toHour - nextEv.fromHour) * 60),
+            taskLabel: nextEv.subject ?? "مذاكرة" })}`}
+            className="block w-full rounded-2xl py-3 t-body font-black text-center"
             style={{ background: c, color: "#fff", textDecoration: "none" }}>
             ابدأ الآن ←
           </Link>
@@ -480,7 +489,18 @@ export default function PlanPage() {
       </div>
 
       <div className="h-6" />
-      <NextThread page="/plan" />
+      {/* الخيطُ يقول «ابدأ أول جلسة» — فليحملها معه بدل أن يفتح مؤقّتاً فارغاً */}
+      <NextThread page="/plan" orbitHandoff={
+        (() => {
+          const ev = currentEv ?? nextEv;
+          if (!ev) return undefined;
+          const mins = currentEv
+            ? Math.round((currentEv.toHour - nowHour) * 60)
+            : Math.round((ev.toHour - ev.fromHour) * 60);
+          return focusHandoffQuery({ from: "plan", subject: ev.subject, taskMins: mins,
+            taskLabel: ev.subject ?? "مذاكرة" });
+        })()
+      } />
       <PageFooter />
 
       {/* محرّر الجدول اليدويّ — إضافةُ جلسةٍ/مشغولٍ وحذفُها وتكرارها.

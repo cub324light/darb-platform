@@ -10,7 +10,8 @@ import type { TrackId, Track } from "@/lib/tracks";
 import { useRouter } from "next/navigation";
 import { activeTrackIds, loadStats, recordSession, loadSessionLog, type SessionLogEntry } from "@/lib/storage";
 import { appendSession } from "@/lib/roadmap/sessionStore";
-import { readFocusHandoff, remainingTaskMins, EMPTY_HANDOFF, type FocusHandoff } from "@/lib/roadmap/handoff";
+import { readFocusHandoff, remainingTaskMins, isTaskHandoff, handoffSourceLabel,
+  EMPTY_HANDOFF, type FocusHandoff } from "@/lib/roadmap/handoff";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { trackEvent } from "@/lib/analytics";
 import { n as arNum } from "@/lib/format";
@@ -563,13 +564,14 @@ export default function OrbitPage() {
       <div className="flex-1 flex flex-col items-center justify-center px-3 rise rise-3">
 
         {/* خيطُ المهمّة: الطالب داخل التركيز يجب أن يعرف أين هو من مهمّة اليوم.
-            يظهر فقط عند تسليمٍ من مساري بمهمّةٍ لها وزنٌ زمنيّ — وإلا لا نخترع رقماً. */}
-        {fromMasari && handoff.taskMins > 0 && (
+            يظهر عند تسليمٍ من مساري **أو من خطتي** بمهمّةٍ لها وزنٌ زمنيّ — وإلا
+            لا نخترع رقماً. (كانت «خطتي» تفتح التركيز فارغاً فيضيع ما جدوَلَه.) */}
+        {isTaskHandoff(handoff) && (
           <div className="mb-3 max-w-full px-4 py-2 rounded-2xl text-center"
             style={{ background: "color-mix(in srgb, var(--accent) 10%, var(--surface))",
                      border: "1.5px solid color-mix(in srgb, var(--accent) 26%, var(--border))" }}>
             {handoff.taskLabel && (
-              <p className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>من مهمّتك: {handoff.taskLabel}</p>
+              <p className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>{handoffSourceLabel(handoff)}: {handoff.taskLabel}</p>
             )}
             <p className="t-body font-black leading-snug" style={{ color: "var(--text)" }}>
               {remainingTaskMins(handoff.taskMins, focusMins) > 0

@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { focusHandoffQuery, readFocusHandoff, remainingTaskMins, EMPTY_HANDOFF } from "./handoff";
+import { focusHandoffQuery, readFocusHandoff, remainingTaskMins, isTaskHandoff,
+  handoffSourceLabel, EMPTY_HANDOFF } from "./handoff";
 
 test("focusHandoffQuery يبني الوسطاء الأساسية دائماً", () => {
   const q = new URLSearchParams(focusHandoffQuery({}));
@@ -46,4 +47,48 @@ test("remainingTaskMins: الباقي لا يصير سالباً", () => {
   assert.equal(remainingTaskMins(25, 25), 0);
   assert.equal(remainingTaskMins(20, 50), 0);
   assert.equal(remainingTaskMins(0, 50), 0);
+});
+
+/* ═══ تسليمُ «خطتي» — العطل الذي كان ═══
+   كان زرّا «ادخل التركيز» و«ابدأ الآن» في خطتي يفتحان `/orbit` عارياً بلا
+   وسطاء: الطالب يجدول «رياضيات ٥–٦:٣٠»، فيضغط ابدأ، فيفتح المؤقّت على مادةٍ
+   افتراضية ومدّةٍ افتراضية — ويعيد اختيار ما جدوله بنفسه. فبدت الصفحة غيرَ
+   موصولةٍ بشيء. والعقدُ كان موجوداً أصلاً ومكتوبٌ في رأسه أنه لـ«ابدأ الآن»
+   في جلسة اليوم، لكنّ خطتي لم تكن موصولةً به. */
+test("focusHandoffQuery: المصدر «خطتي» يُمرَّر ولا يُنسب لمساري", () => {
+  const q = new URLSearchParams(focusHandoffQuery({ from: "plan", subject: "كمي", taskMins: 90 }));
+  assert.equal(q.get("from"), "plan", "لا تُنسب جلسةُ الخطة إلى مساري");
+  assert.equal(q.get("auto"), "1");
+  assert.equal(q.get("task"), "90");
+});
+
+test("readFocusHandoff يقرأ تسليمَ الخطة كاملاً", () => {
+  const h = readFocusHandoff(focusHandoffQuery({
+    from: "plan", subject: "رياضيات", taskMins: 90, taskLabel: "رياضيات",
+  }));
+  assert.equal(h.from, "plan");
+  assert.equal(h.subject, "رياضيات");
+  assert.equal(h.taskMins, 90);
+  assert.ok(h.auto, "جلسةُ الخطة تبدأ تلقائياً");
+});
+
+test("isTaskHandoff: يشمل مساري وخطتي، ويستبعد ما لا وزنَ زمنيَّ له", () => {
+  const plan = readFocusHandoff(focusHandoffQuery({ from: "plan", taskMins: 45 }));
+  const masari = readFocusHandoff(focusHandoffQuery({ taskMins: 25 }));
+  const noWeight = readFocusHandoff(focusHandoffQuery({ from: "plan", subject: "لفظي" }));
+  assert.ok(isTaskHandoff(plan), "خيطُ المهمّة يظهر لجلسة الخطة");
+  assert.ok(isTaskHandoff(masari), "ولا ينكسر لمساري");
+  assert.ok(!isTaskHandoff(noWeight), "مهمّةٌ بلا دقائق لا تخترع رقماً");
+  assert.ok(!isTaskHandoff(EMPTY_HANDOFF));
+});
+
+test("handoffSourceLabel: لكل مصدرٍ اسمُه أمام الطالب", () => {
+  const plan = readFocusHandoff(focusHandoffQuery({ from: "plan", taskMins: 30 }));
+  const masari = readFocusHandoff(focusHandoffQuery({ taskMins: 30 }));
+  assert.equal(handoffSourceLabel(plan), "من جدولك");
+  assert.equal(handoffSourceLabel(masari), "من مهمّتك");
+});
+
+test("المستدعون القدامى لم يتغيّروا: الافتراضُ يبقى مساري", () => {
+  assert.equal(new URLSearchParams(focusHandoffQuery({ subject: "لفظي" })).get("from"), "masari");
 });

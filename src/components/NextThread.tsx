@@ -74,14 +74,23 @@ const snapshot = (page: ThreadPage): PageThread | null => {
   return cache.value;
 };
 
-export default function NextThread({ page }: { page: ThreadPage }) {
+/** وسطاءُ تسليمٍ إلى `/orbit` تعرفها الصفحةُ ولا يعرفها المحرّك النقيّ (جلسةُ
+    اليوم مثلاً). تُلحَق بالخيط فقط إن كانت وجهتُه التركيز — فلا يفتح المؤقّت
+    فارغاً وقد كان في الصفحة جلسةٌ مجدولة. */
+export default function NextThread(
+  { page, orbitHandoff }: { page: ThreadPage; orbitHandoff?: string },
+) {
   const thread = useSyncExternalStore(subscribe, () => snapshot(page), () => null);
   if (!thread) return null;
+
+  const href = orbitHandoff && thread.href === "/orbit"
+    ? `/orbit?${orbitHandoff}`
+    : thread.href;
 
   return (
     <section className="px-5 pb-2 max-w-lg mx-auto w-full">
       <Link
-        href={thread.href}
+        href={href}
         className="ds-card ds-card-tight flex items-center gap-3 no-underline transition active:scale-[0.99]"
         style={{ borderColor: "color-mix(in srgb, var(--accent) 30%, var(--border))" }}
       >
