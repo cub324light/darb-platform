@@ -1,45 +1,37 @@
 # نشرُ سجلّات DNS-AID لدرب — تعليماتُ Cloudflare
 
-> **لماذا هذا ملفُّ تعليماتٍ لا كود؟**
-> DNS-AID اكتشافٌ على طبقة الـDNS لا على طبقة التطبيق. لا يستطيع مستودعُ درب
-> ولا Vercel نشرَ هذه السجلّات: تُنشَر في منطقة `usedarb.com` عند مزوّد الـDNS.
-> فلا نزعم أنها منشورة، ولا نضع في الكود ما يوهم بذلك.
+> **لماذا ملفُّ تعليماتٍ لا كود؟**
+> DNS-AID اكتشافٌ على طبقة الـDNS. لا يستطيع مستودعُ درب ولا Vercel نشرَ هذه
+> السجلّات: تُنشَر في منطقة `usedarb.com` عند مزوّد الـDNS. فلا نزعم أنها
+> منشورة، ولا نضع في الكود ما يوهم بذلك.
 
 - المرجع: [draft-mozleywilliams-dnsop-dnsaid](https://datatracker.ietf.org/doc/draft-mozleywilliams-dnsop-dnsaid/)
 - صيغةُ السجلّ: [RFC 9460](https://www.rfc-editor.org/rfc/rfc9460) (SVCB/HTTPS)
 
 ---
 
-## ١) السجلّات المطلوبة
+## ١) السجلّ المطلوب
 
-سجلّان بوضع الخدمة (**ServiceMode**، أي أولويّةٌ ≥ 1؛ الصفرُ وضعُ الاسم البديل
-AliasMode ولا يحمل معاملات):
+سجلٌّ واحدٌ في فضاء `_agents` يكفي. نستعمل **`_index`** — وهو المدخلُ العام
+للاكتشاف، ويصف ما نخدمه فعلاً: خدمةُ HTTPS على المنفذ ٤٤٣.
 
 ```dns
-; فهرسُ الاكتشاف العام — يقود الوكيل إلى فهرس الواجهات
-_index._agents.usedarb.com. 3600 IN SVCB 1 usedarb.com. (
-                                     alpn="h2,h3"
-                                     endpoint="/.well-known/api-catalog" )
-
-; اكتشافُ التخاطب بين الوكلاء (A2A) — يقود إلى بطاقة الوكيل
-_a2a._agents.usedarb.com.   3600 IN SVCB 1 usedarb.com. (
-                                     alpn="h2,h3"
-                                     endpoint="/.well-known/agent-card.json" )
+_index._agents.usedarb.com. 3600 IN SVCB 1 usedarb.com. alpn="h2" port=443 mandatory=alpn,port
 ```
 
-كلا الهدفين مخدومٌ فعلاً اليوم على `https://usedarb.com` — تحقّق قبل النشر:
+**بنيةُ السجلّ:** أولويّة `1` (وضعُ الخدمة ServiceMode؛ الصفرُ وضعُ الاسم
+البديل ولا يحمل معاملات) · الهدف `usedarb.com.` · ثلاثةُ معاملاتٍ قياسية.
 
-```bash
-curl -sI https://usedarb.com/.well-known/api-catalog       # 200 · application/linkset+json
-curl -sI https://usedarb.com/.well-known/agent-card.json   # 200 · application/json
-```
+### عن `_a2a` — لا تنشره الآن
+المثالُ في المواصفة يستعمل `alpn="a2a"`، وهو تصريحٌ بأن المضيف **يتكلّم
+بروتوكول A2A**. ونحن ننشر بطاقةَ وكيلٍ بصيغة A2A، لكنّ نقطتنا `/mcp` تتكلّم
+MCP لا A2A. فنشرُ `_a2a` يجذب عميلاً يتوقّع تدفّقاً لا نخدمه، فينكسر عندنا.
+سجلُّ `_index` وحده يكفي للاكتشاف، ولا يَعِد بما ليس عندنا.
 
-### ⚠ تحقّق من هذا قبل النشر
-معامل `endpoint` **لم يُسجَّل بعد** في سجلّ IANA لمعاملات SVCB؛ هو من المسوّدة.
-فإن رفضت Cloudflare الاسمَ النصّي، أدخِله بالصيغة العامّة `keyNNNNN="…"` برقم
-المفتاح الذي تحدّده المسوّدة في نسختها السارية. **لا تخترع رقماً** — راجع
-المسوّدة وقتَ النشر، فإن لم يكن الرقمُ مخصَّصاً بعدُ فأجّل السجلّين: سجلٌّ بمعاملٍ
-مجهولٍ يتجاهله الوكيلُ في أحسن الأحوال.
+### معاملاتٌ مخصّصة
+إن احتجنا مستقبلاً معاملاً من المسوّدة لم يُسجَّل في IANA، يُكتب بصيغته
+الرقمية `keyNNNNN="…"` لا باسمٍ نصّي. اليوم لا نحتاج شيئاً منها: المعاملات
+الثلاثة أعلاه قياسيّةٌ كلُّها.
 
 ---
 
@@ -47,15 +39,15 @@ curl -sI https://usedarb.com/.well-known/agent-card.json   # 200 · application/
 
 **DNS → Records → Add record**
 
-| الحقل | `_index._agents` | `_a2a._agents` |
-|---|---|---|
-| Type | `SVCB` | `SVCB` |
-| Name | `_index._agents` | `_a2a._agents` |
-| Priority | `1` | `1` |
-| Target | `usedarb.com` | `usedarb.com` |
-| Params | `alpn="h2,h3" endpoint="/.well-known/api-catalog"` | `alpn="h2,h3" endpoint="/.well-known/agent-card.json"` |
-| TTL | `3600` | `3600` |
-| Proxy | **DNS only** (رماديّ) — سجلّات SVCB لا تُوجَّه عبر الوكيل | نفسه |
+| الحقل | القيمة |
+|---|---|
+| Type | `SVCB` |
+| Name | `_index._agents` |
+| Priority | `1` |
+| Target | `usedarb.com` |
+| Value / Params | `alpn="h2" port=443 mandatory=alpn,port` |
+| TTL | `3600` (أو Auto) |
+| Proxy | **DNS only** (رماديّ) — سجلّات SVCB لا تُوجَّه عبر الوكيل |
 
 بالـAPI بدل الواجهة:
 
@@ -70,7 +62,7 @@ curl -X POST "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records" \
         "data": {
           "priority": 1,
           "target": "usedarb.com",
-          "value": "alpn=\"h2,h3\" endpoint=\"/.well-known/api-catalog\""
+          "value": "alpn=\"h2\" port=443 mandatory=alpn,port"
         }
       }'
 ```
@@ -81,37 +73,51 @@ curl -X POST "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records" \
 
 ## ٣) DNSSEC — شرطٌ لا اختيار
 
-المسوّدة توجب توقيعَ منطقة الاكتشاف حتى تُعيد المحلِّلاتُ المتحقِّقة بياناتٍ
-موثَّقة؛ وبغيره يُهمل الوكيلُ الحَذِرُ السجلَّين.
+المواصفة توجب توقيعَ منطقة الاكتشاف حتى تُعيد المحلِّلاتُ المتحقِّقة بياناتٍ
+موثَّقة.
 
 1. Cloudflare → **DNS → Settings → DNSSEC → Enable DNSSEC**.
-2. انسخ سجلَّ الـ**DS** الذي تعرضه Cloudflare (Key Tag · Algorithm · Digest Type · Digest).
+2. انسخ سجلَّ الـ**DS** المعروض (Key Tag · Algorithm · Digest Type · Digest).
 3. أدخِله عند **مُسجِّل النطاق** (حيث اشتُري `usedarb.com`) في قسم DNSSEC.
-4. انتظر انتشارَ التفويض ثم تحقّق:
-
-```bash
-dig +dnssec _index._agents.usedarb.com SVCB    # يجب أن تظهر راية «ad»
-dig DS usedarb.com @1.1.1.1                    # سجلّ DS عند الأب
-delv _index._agents.usedarb.com SVCB           # «fully validated»
-```
-
-إن غابت رايةُ `ad` فالتفويضُ ناقص — راجِع خطوة المُسجِّل قبل أي شيء آخر.
+4. انتظر انتشارَ التفويض.
 
 ---
 
-## ٤) التحقّق بعد النشر
+## ٤) التحقّق
+
+الفاحصُ يستعلم عبر **DNS-over-HTTPS**: افتراضياً `cloudflare-dns.com/dns-query`
+ثم `dns.google/resolve` عند فشل المحلِّل. فتحقّق بالطريقة نفسها:
 
 ```bash
+# عبر DoH — كما يفعل الفاحصُ تماماً
+curl -s 'https://cloudflare-dns.com/dns-query?name=_index._agents.usedarb.com&type=SVCB' \
+     -H 'accept: application/dns-json' | jq
+
+curl -s 'https://dns.google/resolve?name=_index._agents.usedarb.com&type=SVCB' | jq
+
+# وبالطريقة التقليدية
 dig _index._agents.usedarb.com SVCB +short
-dig _a2a._agents.usedarb.com   SVCB +short
+dig +dnssec _index._agents.usedarb.com SVCB   # يجب أن تظهر راية «ad»
+delv _index._agents.usedarb.com SVCB          # «fully validated»
 ```
 
-يُتوقَّع سطرٌ يبدأ بـ`1 usedarb.com.` ويليه المعاملان.
+يُتوقَّع سطرٌ يبدأ بـ`1 usedarb.com.` ويليه المعاملات الثلاثة. وغيابُ راية
+`ad` يعني أن تفويض DNSSEC ناقصٌ عند المُسجِّل — راجِع الخطوة ٣ قبل أي شيء آخر.
+
+وللفحص الكامل:
+
+```bash
+curl -sX POST https://isitagentready.com/api/scan \
+     -H 'Content-Type: application/json' \
+     -d '{"url":"https://usedarb.com"}' | jq '.checks.discoverability.dnsAid'
+```
+
+الحالةُ المطلوبة: `"pass"`.
 
 ---
 
 ## ٥) ما لا يفعله هذا الملفّ
 
-لا يُنشئ سجلّاً ولا يوقّع منطقة. إلى أن تُنفَّذ الخطواتُ أعلاه في لوحة
-Cloudflare، تبقى درب **غيرَ مكتشَفةٍ عبر DNS-AID** — وهذا هو الوضع الحالي،
-نقوله صراحةً ولا نُظهر خلافه في أي ملفٍّ أو بيان.
+لا يُنشئ سجلّاً ولا يوقّع منطقة. إلى أن تُنفَّذ الخطوات أعلاه في لوحة
+Cloudflare، تبقى درب **غيرَ مكتشَفةٍ عبر DNS-AID** — نقولها صراحةً ولا نُظهر
+خلافها في أي ملفٍّ أو بيان.
