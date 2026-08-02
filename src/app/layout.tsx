@@ -12,6 +12,7 @@ import DuirbTour from "@/components/DuirbTour";
 import BroadcastHost from "@/components/BroadcastHost";
 import ThemeGuard from "@/components/ThemeGuard";
 import StructuredData from "@/components/StructuredData";
+import WebMcp from "@/components/WebMcp";
 
 /* خطٌّ واحدٌ للهوية كلها: IBM Plex Sans Arabic — يُستضاف ذاتياً عبر next/font (صفر
    طلبات خارجية، بلا انزياح). أربعة أوزانٍ فقط (Regular/Medium/SemiBold/Bold) —
@@ -124,6 +125,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <DuirbFloat />
         <DuirbTour />
         <BroadcastHost />
+        <WebMcp />
         <AnalyticsGate />
       </body>
     </html>

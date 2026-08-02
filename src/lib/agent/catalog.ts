@@ -83,11 +83,16 @@ export const AI_DOCUMENTS: AgentDoc[] = [
   { path: "/openapi.yaml",                  label: "OpenAPI 3.1 (YAML)" },
   { path: "/schemas.json",                  label: "JSON Schema" },
   { path: "/ai.txt",                        label: "ai.txt" },
+  { path: "/auth.md",                       label: "auth.md — المصادقة" },
   { path: "/mcp",                           label: "خادم MCP" },
+  { path: "/.well-known/api-catalog",       label: "فهرس الواجهات (RFC 9727)" },
   { path: "/.well-known/agent-card.json",   label: "بطاقة الوكيل" },
   { path: "/.well-known/ai-plugin.json",    label: "بيان الإضافة" },
   { path: "/.well-known/mcp.json",          label: "وصف MCP" },
+  { path: "/.well-known/mcp/server-card.json", label: "بطاقة خادم MCP" },
+  { path: "/.well-known/agent-skills/index.json", label: "فهرس المهارات" },
   { path: "/api/agent/skills",              label: "المهارات" },
+  { path: "/api/agent/health",              label: "حالة الواجهة" },
 ];
 
 /* ═══ بناة البيانات — من المصادر الحيّة نفسها التي يراها الطالب ═══ */

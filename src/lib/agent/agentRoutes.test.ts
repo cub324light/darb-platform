@@ -12,6 +12,8 @@ import { readdirSync, readFileSync, statSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { universityDetail, universitiesPayload, faqPayload } from "./catalog";
 import { ENDPOINTS, AI_DOCUMENTS } from "./catalog";
+import { AGENT_SKILLS, skillDigest } from "./skills";
+import { MARKDOWN_PAGES } from "./pageMarkdown";
 import { SCHEMAS, TOOL_INPUTS } from "./schemas";
 import { openApiSpec } from "./openapi";
 
@@ -120,9 +122,50 @@ test("صفحةُ التوثيق تصل كل وثيقةٍ برابطٍ حقيقي
 });
 
 test("robots.txt يسمح لروبوتات الذكاء الاصطناعي المطلوبة", () => {
-  const src = readFileSync("src/app/robots.ts", "utf8");
+  const src = readFileSync("src/app/robots.txt/route.ts", "utf8");
   for (const bot of ["GPTBot", "ClaudeBot", "Google-Extended", "PerplexityBot", "CCBot", "Amazonbot"]) {
     assert.ok(src.includes(`"${bot}"`), `روبوتٌ غير مذكور في robots.txt: ${bot}`);
+  }
+});
+
+test("robots.txt يحمل إشاراتِ المحتوى الثلاث", () => {
+  const src = readFileSync("src/app/robots.txt/route.ts", "utf8");
+  assert.match(src, /Content-Signal: \$\{CONTENT_SIGNAL\}/, "التوجيه غير مكتوبٍ في المجموعة");
+  for (const sig of ["search=", "ai-input=", "ai-train="]) {
+    assert.ok(src.includes(sig), `إشارةٌ ناقصة: ${sig}`);
+  }
+});
+
+/* ═══ معايير الاكتشاف الحديثة ═══ */
+
+test("مهارات الوكلاء: البصمةُ تطابق النصّ المنشور", async () => {
+  const { createHash } = await import("node:crypto");
+  for (const s of AGENT_SKILLS) {
+    const expected = createHash("sha256").update(s.body, "utf8").digest("hex");
+    assert.equal(skillDigest(s), expected, `${s.id}: بصمةٌ لا تطابق محتواها`);
+    assert.match(s.body, /^---\nname: /, `${s.id}: ملفّ المهارة بلا ترويسة YAML`);
+    assert.ok(s.body.length > 200, `${s.id}: ملفٌّ أقصر من أن يفيد`);
+  }
+  const ids = AGENT_SKILLS.map((s) => s.id);
+  assert.equal(new Set(ids).size, ids.length, "معرّفُ مهارةٍ مكرَّر");
+});
+
+/* الصفحاتُ المتفاوَض عليها مذكورةٌ في موضعين: مولِّد النصّ، وقائمةُ إعادات
+   الكتابة في next.config. لو افترقا صمتاً لعاد HTML لمن طلب Markdown. */
+test("تفاوضُ Markdown: القائمتان متطابقتان", () => {
+  const cfg = readFileSync("next.config.ts", "utf8");
+  const line = /const markdownPages = \[([^\]]+)\]/.exec(cfg);
+  assert.ok(line, "لم أجد markdownPages في next.config.ts");
+  const inConfig = [...line[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]).sort();
+  const inCode = Object.keys(MARKDOWN_PAGES).sort();
+  assert.deepEqual(inConfig, inCode, "صفحةٌ في أحد الموضعين دون الآخر");
+});
+
+test("تفاوضُ Markdown: كل صفحةٍ تُنتج نصّاً حقيقياً", () => {
+  for (const [path, build] of Object.entries(MARKDOWN_PAGES)) {
+    const md = build();
+    assert.ok(md.startsWith("# "), `${path}: لا يبدأ بعنوان`);
+    assert.ok(md.length > 200, `${path}: نصٌّ أقصر من أن يفيد (${md.length})`);
   }
 });
 

@@ -24,5 +24,21 @@ export function GET() {
     service_documentation: "https://usedarb.com/docs/api",
     op_policy_uri: "https://usedarb.com/privacy",
     op_tos_uri: "https://usedarb.com/terms",
+    /* بيانُ مصادقة الوكلاء (auth.md) — نفسُ ما في /auth.md لا قيمٌ ثانية.
+       `register_uri` معدومٌ لأن درب لا تُصدر رموزاً: الهويّةُ من Google،
+       والتسجيلُ الديناميكي (RFC 7591) غير مدعوم. لا نُعلن ما لا نخدمه. */
+    agent_auth: {
+      public_api: { auth_required: false },
+      authorization_servers: ["https://accounts.google.com"],
+      protected_resource_metadata: "https://usedarb.com/.well-known/oauth-protected-resource",
+      documentation: "https://usedarb.com/auth.md",
+      identity_types: ["human"],
+      credential_types: ["oauth2_access_token", "oidc_id_token"],
+      dynamic_client_registration: false,
+      register_uri: null,
+      claims_uri: "https://openidconnect.googleapis.com/v1/userinfo",
+      revocation_uri: "https://oauth2.googleapis.com/revoke",
+      delegated_agent_access: false,
+    },
   }, { headers: { "cache-control": "public, max-age=3600", "access-control-allow-origin": "*" } });
 }

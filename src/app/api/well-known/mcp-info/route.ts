@@ -6,10 +6,14 @@ export const dynamic = "force-static";
 
 export function GET() {
   return Response.json({
+    /* `serverInfo` هو ما يقرأه فاحصُ بطاقة MCP أولاً — كان الاسمُ مسطّحاً
+       فحسب فقُرئ ناقصاً. المصدرُ واحد والقيمُ لا تتكرّر باختلاف. */
+    serverInfo: { name: "darb", title: SITE.name, version: "1.0.0" },
     name: "darb",
     displayName: SITE.name,
     description: SITE.descriptionAr,
     version: "1.0.0",
+    serverCard: `${SITE.url}/.well-known/mcp/server-card.json`,
     /* شكلُ التسجيل الذي تقرأه أدلّة MCP وعملاؤها */
     mcpServers: {
       darb: { type: "http", url: `${SITE.url}/mcp` },

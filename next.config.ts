@@ -30,7 +30,20 @@ const nextConfig: NextConfig = {
   /* مسارات الاكتشاف القياسية: المجلّدات التي تبدأ بنقطة لا يولّدها موجّه Next،
      فنُعيد كتابتها إلى معالِجاتٍ حقيقية. و/mcp اسمٌ قصير يتوقّعه عملاء MCP. */
   async rewrites() {
-    return [
+    /* تفاوضُ المحتوى (Markdown for Agents): الطلبُ الذي يحمل
+       `Accept: text/markdown` يُحوَّل إلى معالِج النصّ. لا بدّ أن يكون في
+       `beforeFiles` — الصفحاتُ ملفّاتٌ موجودة، و`afterFiles` لا يُفحص بعدها
+       فلا يفير التحويل أبداً. المتصفّح لا يرسل هذه القيمة فيبقى HTML الأصل. */
+    const acceptsMarkdown = [{ type: "header" as const, key: "accept", value: ".*text/markdown.*" }];
+    const markdownPages = ["/", "/about", "/features", "/universities", "/faq", "/docs/api", "/changelog"];
+
+    return {
+      beforeFiles: markdownPages.map((p) => ({
+        source: p,
+        has: acceptsMarkdown,
+        destination: `/api/markdown?p=${encodeURIComponent(p)}`,
+      })),
+      afterFiles: [
       /* ‹١› بيانات ومَنافِست تحت /.well-known (المسار القياسيّ الأول) */
       { source: "/.well-known/ai-plugin.json", destination: "/api/well-known/ai-plugin" },
       { source: "/.well-known/agent-card.json", destination: "/api/well-known/agent-card" },
@@ -55,11 +68,35 @@ const nextConfig: NextConfig = {
       { source: "/oauth-protected-resource", destination: "/api/well-known/oauth-protected-resource" },
       { source: "/oauth-authorization-server", destination: "/api/well-known/oauth-authorization-server" },
       { source: "/mcp", destination: "/api/mcp" },
-    ];
+      /* ‹٣› معاييرُ الاكتشاف الحديثة */
+      { source: "/.well-known/api-catalog", destination: "/api/well-known/api-catalog" },
+      { source: "/.well-known/mcp/server-card.json", destination: "/api/well-known/mcp-server-card" },
+      { source: "/.well-known/agent-skills/index.json", destination: "/api/well-known/agent-skills-index" },
+      { source: "/.well-known/agent-skills/:skill/SKILL.md", destination: "/api/well-known/agent-skills/:skill" },
+      { source: "/.well-known/auth.md", destination: "/auth.md" },
+      ],
+    };
   },
 
   async headers() {
     return [
+      {
+        /* ترويسةُ Link (RFC 8288) على الجذر — تقود الوكيلَ إلى فهرس الواجهات
+           ووصفِها وتوثيقِها قبل أن يقرأ حرفاً من الصفحة. أنواعُ العلاقات
+           مسجَّلةٌ في IANA: `api-catalog` (RFC 9727) و`service-desc`/`service-doc`
+           (RFC 8631). */
+        source: "/",
+        headers: [
+          {
+            key: "Link",
+            value: [
+              '</.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json"',
+              '</openapi.json>; rel="service-desc"; type="application/json"',
+              '</docs/api>; rel="service-doc"; type="text/html"',
+            ].join(", "),
+          },
+        ],
+      },
       {
         source: "/(.*)",
         headers: [
