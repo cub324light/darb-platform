@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
+import Sheet from "@/components/Sheet";
 import { n } from "@/lib/format";
 import PageGuide from "@/components/PageGuide";
 import { ERROR_CATEGORIES } from "@/lib/constants";
@@ -192,19 +193,19 @@ export default function ErrorsBody({ embedded = false }: { embedded?: boolean })
       )}
       <div className="h-5" />
 
-      {/* ── بطل الصفحة: إضافة خطأ — وظيفة الصفحة الأساسية، فأكبر عنصرٍ فيها ── */}
-      {!showAdd && (
-        <div className="px-5 mb-4 rise">
-          <p className="t-body mb-3 leading-relaxed" style={{ color: "var(--text-muted)" }}>
-            كل خطأ تسجّله اليوم، درجةٌ تكسبها في الاختبار.
-          </p>
-          <button onClick={() => setShowAdd(true)}
-            className="w-full rounded-2xl transition active:scale-[0.98]"
-            style={{ background: "var(--accent)", color: "#fff", border: "none", padding: "19px", boxShadow: "0 10px 28px color-mix(in srgb, var(--accent) 40%, transparent)" }}>
-            <span className="block font-black" style={{ fontSize: "1.25rem" }}>＋ أضف خطأً جديداً</span>
-          </button>
-        </div>
-      )}
+      {/* ── بطل الصفحة: إضافة خطأ — وظيفة الصفحة الأساسية، فأكبر عنصرٍ فيها ──
+          النموذجُ يفتح ورقةً منبثقة (لا توسيعاً داخل الصفحة)، فيبقى الزرّ في مكانه
+          ولا يهبط الطالبُ باحثاً عن الحقول تحت الفلاتر. */}
+      <div className="px-5 mb-4 rise">
+        <p className="t-body mb-3 leading-relaxed" style={{ color: "var(--text-muted)" }}>
+          كل خطأ تسجّله اليوم، درجةٌ تكسبها في الاختبار.
+        </p>
+        <button onClick={() => setShowAdd(true)}
+          className="w-full rounded-2xl transition active:scale-[0.98]"
+          style={{ background: "var(--accent)", color: "#fff", border: "none", padding: "19px", boxShadow: "0 10px 28px color-mix(in srgb, var(--accent) 40%, transparent)" }}>
+          <span className="block font-black t-h3">＋ أضف خطأً جديداً</span>
+        </button>
+      </div>
 
       {/* ── شريط البحث ── */}
       <div className="px-5 mb-5 rise rise-1">
@@ -272,88 +273,86 @@ export default function ErrorsBody({ embedded = false }: { embedded?: boolean })
         </div>
       </div>
 
-      {/* ── زر الإضافة — متاح دائماً (الحد لكل مادة على حدة) ── */}
-      <div className="px-5 mb-6 rise rise-4">
-          {showAdd && (
-            <div className="rounded-2xl p-5 flex flex-col gap-4"
-              style={{ background: "var(--surface)", border: "1.5px solid rgba(245,158,11,0.35)" }}>
-              <p className="font-bold text-base text-[var(--gold)]">خطأ جديد في أخطائي</p>
+      {/* ── ورقةُ الخطأ الجديد (الحد لكل مادة على حدة) ── */}
+      {showAdd && (
+        <Sheet onClose={() => setShowAdd(false)} title="خطأ جديد في أخطائي" titleColor="var(--gold)">
+          <div className="flex flex-col gap-4">
 
-              <textarea value={newQ} onChange={(e) => setNewQ(e.target.value)} rows={3}
-                placeholder="السؤال أو المفهوم الذي أخطأت فيه..."
-                className="w-full rounded-2xl px-4 py-3 text-base text-[var(--text)] placeholder-[var(--text-muted)] resize-none outline-none transition-colors"
-                style={{ background: "var(--surface2)", border: "1px solid var(--border)" }} />
+            <textarea value={newQ} onChange={(e) => setNewQ(e.target.value)} rows={3}
+              placeholder="السؤال أو المفهوم الذي أخطأت فيه..."
+              className="w-full rounded-2xl px-4 py-3 text-base text-[var(--text)] placeholder-[var(--text-muted)] resize-none outline-none transition-colors"
+              style={{ background: "var(--surface2)", border: "1px solid var(--border)" }} />
 
-              <div className="grid grid-cols-2 gap-3">
-                <select value={newSubject} onChange={(e) => setNewSubject(e.target.value)}
-                  className="rounded-2xl px-4 py-3.5 text-base text-[var(--text)] outline-none min-h-[52px]"
-                  style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-                  {subjects.map((s) => <option key={s}>{s}</option>)}
-                </select>
-                <select value={newCat} onChange={(e) => setNewCat(e.target.value)}
-                  className="rounded-2xl px-4 py-3.5 text-base text-[var(--text)] outline-none min-h-[52px]"
-                  style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-                  {ERROR_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
-                </select>
-              </div>
+            <div className="grid grid-cols-2 gap-3">
+              <select value={newSubject} onChange={(e) => setNewSubject(e.target.value)}
+                className="rounded-2xl px-4 py-3.5 text-base text-[var(--text)] outline-none min-h-[52px]"
+                style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                {subjects.map((s) => <option key={s}>{s}</option>)}
+              </select>
+              <select value={newCat} onChange={(e) => setNewCat(e.target.value)}
+                className="rounded-2xl px-4 py-3.5 text-base text-[var(--text)] outline-none min-h-[52px]"
+                style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                {ERROR_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+              </select>
+            </div>
 
-              <input value={newNote} onChange={(e) => setNewNote(e.target.value)}
-                placeholder="ملاحظة: ليش غلطت؟ (اختياري)"
-                className="rounded-2xl px-4 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none min-h-[52px]"
-                style={{ background: "var(--surface2)", border: "1px solid var(--border)" }} />
+            <input value={newNote} onChange={(e) => setNewNote(e.target.value)}
+              placeholder="ملاحظة: ليش غلطت؟ (اختياري)"
+              className="rounded-2xl px-4 py-3.5 text-base text-[var(--text)] placeholder-[var(--text-muted)] outline-none min-h-[52px]"
+              style={{ background: "var(--surface2)", border: "1px solid var(--border)" }} />
 
-              {/* صعوبة الخطأ — تُرتّب «الأهم» حسبها */}
-              <div className="flex flex-col gap-1.5">
-                <span className="text-sm text-[var(--text-muted)] px-1">صعوبة الخطأ</span>
-                <div className="grid grid-cols-3 gap-2">
-                  {(["سهل", "متوسط", "صعب"] as VaultDifficulty[]).map((d) => {
-                    const active = newDiff === d;
-                    const clr = d === "سهل" ? "#10B981" : d === "متوسط" ? "#F59E0B" : "#EF4444";
-                    return (
-                      <button key={d} onClick={() => setNewDiff(d)} type="button"
-                        className="py-2.5 rounded-xl font-bold text-[16px] transition active:scale-95"
-                        style={active
-                          ? { background: `color-mix(in srgb, ${clr} 16%, transparent)`, border: `1.5px solid ${clr}`, color: clr }
-                          : { background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
-                        {d}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* عدّاد أخطاء المادة المختارة — كل مادة لها 25 */}
-              <div className="flex items-center justify-between px-1">
-                <span className="text-sm text-[var(--text-muted)]">أخطاء {newSubject}</span>
-                <span className="text-sm font-bold" style={{ color: atLimit ? "var(--danger)" : "var(--text-dim)" }}>
-                  {countForSubject(newSubject)} / {PER_SUBJECT_LIMIT}
-                </span>
-              </div>
-
-              {atLimit && (
-                <p className="text-sm text-[var(--danger)] text-center">
-                  مادة {newSubject} ممتلئة — اختر مادة ثانية أو{" "}
-                  <Link href="/pricing" className="text-[var(--accent-light)] underline font-semibold">رقّي لشاهين</Link>
-                </p>
-              )}
-
-              <div className="grid grid-cols-2 gap-3">
-                <button onClick={addError} disabled={atLimit}
-                  className="py-4 rounded-2xl font-bold text-base transition min-h-[54px] glow-gold"
-                  style={atLimit
-                    ? { background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }
-                    : { background: "rgba(245,158,11,0.08)", border: "1.5px solid #F59E0B", color: "#F59E0B" }}>
-                  {atLimit ? "المادة ممتلئة" : "أضف الخطأ"}
-                </button>
-                <button onClick={() => setShowAdd(false)}
-                  className="py-4 rounded-2xl text-base font-medium text-[var(--text-muted)] transition min-h-[54px]"
-                  style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-                  إلغاء
-                </button>
+            {/* صعوبة الخطأ — تُرتّب «الأهم» حسبها */}
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm text-[var(--text-muted)] px-1">صعوبة الخطأ</span>
+              <div className="grid grid-cols-3 gap-2">
+                {(["سهل", "متوسط", "صعب"] as VaultDifficulty[]).map((d) => {
+                  const active = newDiff === d;
+                  const clr = d === "سهل" ? "#10B981" : d === "متوسط" ? "#F59E0B" : "#EF4444";
+                  return (
+                    <button key={d} onClick={() => setNewDiff(d)} type="button"
+                      className="py-2.5 rounded-xl font-bold text-[16px] transition active:scale-95"
+                      style={active
+                        ? { background: `color-mix(in srgb, ${clr} 16%, transparent)`, border: `1.5px solid ${clr}`, color: clr }
+                        : { background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                      {d}
+                    </button>
+                  );
+                })}
               </div>
             </div>
-          )}
-        </div>
+
+            {/* عدّاد أخطاء المادة المختارة — كل مادة لها 25 */}
+            <div className="flex items-center justify-between px-1">
+              <span className="text-sm text-[var(--text-muted)]">أخطاء {newSubject}</span>
+              <span className="text-sm font-bold" style={{ color: atLimit ? "var(--danger)" : "var(--text-dim)" }}>
+                {countForSubject(newSubject)} / {PER_SUBJECT_LIMIT}
+              </span>
+            </div>
+
+            {atLimit && (
+              <p className="text-sm text-[var(--danger)] text-center">
+                مادة {newSubject} ممتلئة — اختر مادة ثانية أو{" "}
+                <Link href="/pricing" className="text-[var(--accent-light)] underline font-semibold">رقّي لشاهين</Link>
+              </p>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <button onClick={addError} disabled={atLimit}
+                className="py-4 rounded-2xl font-bold text-base transition min-h-[54px] glow-gold"
+                style={atLimit
+                  ? { background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }
+                  : { background: "rgba(245,158,11,0.08)", border: "1.5px solid #F59E0B", color: "#F59E0B" }}>
+                {atLimit ? "المادة ممتلئة" : "أضف الخطأ"}
+              </button>
+              <button onClick={() => setShowAdd(false)}
+                className="py-4 rounded-2xl text-base font-medium text-[var(--text-muted)] transition min-h-[54px]"
+                style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </Sheet>
+      )}
 
       {/* ── القائمة ── */}
       <div className="px-5 grid gap-5 desk-grid-2 items-start rise rise-5">

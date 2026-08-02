@@ -34,12 +34,15 @@ function lessonsOf(subj: string, custom: CustomLesson[]): { key: string; title: 
 /* `selected`/`phase` مرفوعان إلى الأعلى: وسومُ «ماذا ستذاكر» في رأس الصفحة
    يجب أن تفتح مادّتها هنا مباشرةً بدل أن تكون قائمةُ الدروس مكدّسةً في الأسفل.
    يبقيان اختياريين، فمن يستعمل المكوّن بلا تحكّمٍ يعمل كما كان. */
-export default function StudyBody({ subjects, examKey, selected: selectedProp, phase: phaseProp, onSelect }: {
+export default function StudyBody({ subjects, examKey, selected: selectedProp, phase: phaseProp, onSelect, detailOnly = false }: {
   subjects: SubjectDef[];
   examKey?: string;
   selected?: string | null;
   phase?: "tasees" | "tadreeb";
   onSelect?: (name: string | null, phase: "tasees" | "tadreeb") => void;
+  /** داخل ورقةٍ منبثقة: تفاصيلُ المادة وحدها بلا شبكة المواد ولا زرّ إغلاقٍ
+      داخليّ (الورقةُ نفسُها تُغلق). */
+  detailOnly?: boolean;
 }) {
   const [done, setDone] = useState<string[]>(() => (typeof window !== "undefined" ? loadList<string>(DONE_KEY) : []));
   const [custom, setCustom] = useState<CustomLesson[]>(() => (typeof window !== "undefined" ? loadList<CustomLesson>(CUSTOM_KEY) : []));
@@ -211,6 +214,31 @@ export default function StudyBody({ subjects, examKey, selected: selectedProp, p
       })}
     </div>
   );
+
+  /* داخل الورقة: التفاصيل وحدها — الشبكةُ والعناوين تكرارٌ لا يفيد هناك */
+  if (detailOnly) {
+    if (!selected) return null;
+    return (
+      <div className="flex flex-col">
+        <div className="mb-4 pb-4" style={{ borderBottom: "1px solid var(--border)" }}>
+          <SubjectSources subject={selected} examKey={examKey} color={subjColor(selected)} />
+        </div>
+        {/* تبديلُ التأسيس/التدريب داخل الورقة */}
+        <div className="flex items-center gap-1.5 mb-3" role="group" aria-label="مرحلة المذاكرة">
+          {([["tasees", "التأسيس"], ["tadreeb", "التدريب"]] as const).map(([v, label]) => (
+            <button key={v} type="button" onClick={() => pick(selected, v)} aria-pressed={phase === v}
+              className="flex-1 rounded-xl py-2 t-caption font-black transition active:scale-[0.98]"
+              style={phase === v
+                ? { background: subjColor(selected), color: "#fff" }
+                : { background: "var(--surface2)", color: "var(--text-dim)" }}>
+              {label}
+            </button>
+          ))}
+        </div>
+        {renderDetail()}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-5">

@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
+import Sheet from "@/components/Sheet";
 import PageGuide from "@/components/PageGuide";
 import Confetti from "@/components/Confetti";
 import { BorderBeam } from "@/components/ui/border-beam";
@@ -269,18 +270,17 @@ export default function SavedBody({ embedded = false }: { embedded?: boolean }) 
         </div>
       )}
 
-      {/* إضافة بطاقة */}
+      {/* إضافة بطاقة — النموذجُ ورقةٌ منبثقة، فالزرُّ يبقى في مكانه */}
       <div className="px-5 mb-6 rise rise-3">
-        {!showAdd ? (
-          <button onClick={() => setShowAdd(true)}
-            className="w-full py-5 rounded-2xl text-lg font-black transition min-h-[60px] active:scale-[0.98]"
-            style={{ background: "var(--accent)", color: "#fff", border: "none", boxShadow: "0 10px 28px color-mix(in srgb, var(--accent) 40%, transparent)" }}>
-            + أضف بطاقة جديدة
-          </button>
-        ) : (
-          <div className="rounded-2xl p-5 flex flex-col gap-4"
-            style={{ background: "var(--surface)", border: "1.5px solid color-mix(in srgb, var(--accent) 35%, transparent)" }}>
-            <p className="font-bold text-base text-[var(--accent-light)]">بطاقة مراجعة جديدة</p>
+        <button onClick={() => setShowAdd(true)}
+          className="w-full py-5 rounded-2xl t-h3 font-black transition min-h-[60px] active:scale-[0.98]"
+          style={{ background: "var(--accent)", color: "#fff", border: "none", boxShadow: "0 10px 28px color-mix(in srgb, var(--accent) 40%, transparent)" }}>
+          + أضف بطاقة جديدة
+        </button>
+      </div>
+      {showAdd && (
+        <Sheet onClose={() => setShowAdd(false)} title="بطاقة مراجعة جديدة" titleColor="var(--accent-light)">
+          <div className="flex flex-col gap-4">
 
             <textarea value={newQ} onChange={(e) => setNewQ(e.target.value)} rows={2}
               placeholder="السؤال..."
@@ -329,8 +329,8 @@ export default function SavedBody({ embedded = false }: { embedded?: boolean }) 
               </button>
             </div>
           </div>
-        )}
-      </div>
+        </Sheet>
+      )}
 
       {/* توليد أسئلة تدريب — عبر دويرب الموحّد */}
       {quizOn && subjectList.length > 0 && (

@@ -15,6 +15,7 @@ import { MODULE_STATE_LABEL, type ModuleState } from "@/lib/modules";
 import type { ModuleContent, GuideSection } from "@/lib/modules";
 import { n } from "@/lib/format";
 import ExamDateButton from "@/components/ExamDateButton";
+import Sheet from "@/components/Sheet";
 import dynamic from "next/dynamic";
 const LeaksPlanner = dynamic(() => import("@/components/LeaksPlanner"), { ssr: false });
 const StudyBody = dynamic(() => import("./StudyBody"), { ssr: false });
@@ -61,14 +62,17 @@ export default function ModuleWorkspace({
 
   const [dates, setDates] = useState<Record<string, string>>(() => (typeof window !== "undefined" ? loadTrackExamDates() : {}));
   const [scoreInput, setScoreInput] = useState("");
-  /* المادةُ المفتوحة في قسم المذاكرة — مرفوعةٌ هنا ليصل إليها وسمُ الرأس */
-  const [studySubject, setStudySubject] = useState<string | null>(null);
+  /* ▓ المادةُ تُفتح في **ورقةٍ منبثقة** — نفسُ نمط ورقة «＋ يدويّاً» في خطتي.
+     جرّبنا التوسيعَ داخل الصفحة مع تمريرٍ إليه فلم يكن ما يريده الطالب: هو
+     يريد شاشةَ المادة أمامه، لا قفزةً إلى أسفل صفحةٍ طويلة.
+     ولا نُبقي StudyBody مركّباً مرّتين في آنٍ واحد: النسختان تقرآن نفس مفاتيح
+     التخزين وتكتبانها، فالتي بقيت في الصفحة تحمل قِيَماً قديمة فتمحو ما أنجزه
+     الطالبُ في الورقة. فواحدةٌ تعمل، والأخرى تُفكّ فتقرأ من جديدٍ عند العودة. */
   const [studyPhase, setStudyPhase] = useState<"tasees" | "tadreeb">("tasees");
-  /* يفتح المادة ثم ينزل إليها — النزولُ بعد الرسم فلا يقفز قبل ظهورها */
-  const openSubject = (name: string) => {
-    setStudySubject((cur) => (cur === name ? null : name));
-    setStudyPhase("tasees");
-    requestAnimationFrame(scrollToStudy);
+  const [sheetSubject, setSheetSubject] = useState<string | null>(null);
+  const openSubject = (name: string, ph: "tasees" | "tadreeb" = "tasees") => {
+    setStudyPhase(ph);
+    setSheetSubject(name);
   };
   const [scores, setScores] = useState<Record<string, { score: number; attempts: number }>>(() =>
     typeof window !== "undefined" ? currentScoreMap() : {});
@@ -130,17 +134,16 @@ export default function ModuleWorkspace({
               <div className="mt-4">
                 <p className="t-caption font-bold mb-2" style={{ color: "var(--text-dim)" }}>ماذا ستذاكر</p>
                 {/* ▓ كانت وسوماً جامدة: يضغط الطالبُ «الكمي» فلا يحدث شيء،
-                    ودروسُها مكدّسةٌ في آخر الصفحة. صارت أزراراً تفتح مادّتها
-                    وتنزل إليها. */}
+                    ودروسُها مكدّسةٌ في آخر الصفحة. صارت أزراراً تفتح ورقةَ
+                    المادة فوق الصفحة — لا قفزةً إلى أسفلها. */}
                 <div className="flex flex-wrap gap-1.5">
                   {subjects.map((s) => (
                     <button key={s.name} type="button"
                       onClick={() => openSubject(s.name)}
                       aria-label={`افتح دروس ${s.name}`}
                       className="t-caption font-bold px-2.5 py-1 rounded-lg transition active:scale-[0.96]"
-                      style={{ background: studySubject === s.name ? `${s.color ?? color}22` : "var(--surface2)",
-                               color: "var(--text)",
-                               border: `1px solid ${(s.color ?? color)}${studySubject === s.name ? "88" : "44"}` }}>
+                      style={{ background: "var(--surface2)", color: "var(--text)",
+                               border: `1px solid ${(s.color ?? color)}44` }}>
                       {s.name} ←
                     </button>
                   ))}
@@ -160,10 +163,11 @@ export default function ModuleWorkspace({
           {/* ── المذاكرة (الفعل الأساسي) ── */}
           <section id="ws-study" className="flex flex-col gap-3">
             <p className="eyebrow px-1">📖 المذاكرة</p>
-            {content.subjects && (
+            {/* الضغطُ من الشبكة يفتح الورقةَ أيضاً — سلوكٌ واحد لا اثنان */}
+            {content.subjects && !sheetSubject && (
               <StudyBody subjects={content.subjects} examKey={examKey}
-                selected={studySubject} phase={studyPhase}
-                onSelect={(name, ph) => { setStudySubject(name); setStudyPhase(ph); }} />
+                selected={null} phase={studyPhase}
+                onSelect={(name, ph) => { if (name) openSubject(name, ph); }} />
             )}
           </section>
 
@@ -242,6 +246,18 @@ export default function ModuleWorkspace({
             ))}
           </section>
         </>
+      )}
+
+      {/* ── ورقةُ المادة: تفتح فوق الصفحة عند الضغط على «الكمي» أو أختِها ── */}
+      {sheetSubject && content.subjects && (
+        <Sheet onClose={() => setSheetSubject(null)}
+          title={`${studyPhase === "tasees" ? "دروس" : "تمارين"} ${sheetSubject}`}
+          titleColor={content.subjects.find((s) => s.name === sheetSubject)?.color ?? color}>
+          <StudyBody subjects={content.subjects} examKey={examKey}
+            selected={sheetSubject} phase={studyPhase}
+            onSelect={(name, ph) => { if (name) openSubject(name, ph); }}
+            detailOnly />
+        </Sheet>
       )}
     </div>
   );
