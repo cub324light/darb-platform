@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { n, pct, frac, sar, days, time, timeRange, dur,
-  dateShort, dateLong, dateTiny, dateFull, dateHijri, dateHijriShort, weeks } from "./format";
+  dateShort, dateLong, dateTiny, dateFull, dateHijri, dateHijriShort, weeks, sheets } from "./format";
 
 /* الاصطلاح: أرقام 0-9 وحدها — لا يجوز أن يتسرّب شكلٌ عربيٌّ-هنديّ إلى أي مخرَج. */
 const isLatinDigits = (s: string) => /[0-9]/.test(s) && !/[٠-٩]/.test(s);
@@ -133,4 +133,13 @@ test("dateHijriShort: هجريٌّ مختصر بأرقام 0-9 وبلا اسم �
   assert.doesNotMatch(s, /الأحد|الاثنين|الثلاثاء|الأربعاء|الخميس|الجمعة|السبت/, `اسمُ اليوم زائد: ${s}`);
   assert.match(s, /\d/, `بلا رقم: ${s}`);
   assert.ok(dateHijriShort("2026-08-23", true).length > s.length, "الصيغةُ بالسنة أطول");
+});
+
+test("sheets: ورقة/ورقتان/أوراق — نظيرةُ days", () => {
+  assert.equal(sheets(1), "ورقة واحدة");
+  assert.equal(sheets(2), "ورقتان");
+  assert.equal(sheets(3), "3 أوراق");
+  assert.equal(sheets(10), "10 أوراق");
+  assert.equal(sheets(11), "11 ورقة");
+  for (const x of [1, 2, 3, 11, 25]) assert.doesNotMatch(sheets(x), /[٠-٩]/, "رقمٌ هنديّ تسرّب");
 });

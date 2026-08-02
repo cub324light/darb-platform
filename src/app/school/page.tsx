@@ -19,6 +19,9 @@ import { daysUntil } from "@/lib/insights";
 import { subjectsFor, trackLabel } from "@/lib/curriculum";
 import SchoolTimelineCard from "@/components/SchoolTimelineCard";
 import DismissibleNote from "@/components/DismissibleNote";
+import dynamic from "next/dynamic";
+const DayJournal = dynamic(() => import("@/components/journal/DayJournal"), { ssr: false });
+const MemoriesAlbum = dynamic(() => import("@/components/journal/MemoriesAlbum"), { ssr: false });
 
 const noop = () => () => {};
 const useMounted = () => useSyncExternalStore(noop, () => true, () => false);
@@ -155,6 +158,10 @@ export default function SchoolPage() {
 
         {/* الأهم: مذكرة الواجبات */}
         <HomeworkPlanner />
+
+        {/* دفترُ اليوم: يرسم أو يجدول أو يكتب — والصورُ في ألبوم جوّاله */}
+        <DayJournal />
+        <MemoriesAlbum />
 
         {/* المطلوب غداً + الاختبارات القادمة */}
         <div className="grid grid-cols-1 min-[560px]:grid-cols-2 gap-3">

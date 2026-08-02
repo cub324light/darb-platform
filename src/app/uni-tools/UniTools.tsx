@@ -7,6 +7,9 @@
    قراءة التخزين بتهيئة كسولة والحفظ في معالجات الأحداث — لا setState في effect. */
 import { useState } from "react";
 import ToolTile from "@/components/ToolTile";
+import dynamic from "next/dynamic";
+const DayJournal = dynamic(() => import("@/components/journal/DayJournal"), { ssr: false });
+const MemoriesAlbum = dynamic(() => import("@/components/journal/MemoriesAlbum"), { ssr: false });
 import { CardGrid } from "@/components/ds";
 import {
   loadUser, loadUniTools, saveUniTools,
@@ -209,6 +212,15 @@ export default function UniTools() {
               ariaLabel={`افتح ${t.label}`} onClick={() => setTab(t.id)} />
           ))}
         </CardGrid>
+      )}
+
+      {/* دفترُ اليوم: محاضرةٌ تُرسم أو تُجدول أو تُكتب — نفسُ دفتر الثانوي،
+          فالحاجةُ واحدة والنظامُ واحد. والصورُ في ألبوم الجوّال لا عندنا. */}
+      {tab === null && (
+        <>
+          <DayJournal />
+          <MemoriesAlbum />
+        </>
       )}
 
       {/* ── زر الرجوع للوحة البطاقات عند فتح أداة ── */}
