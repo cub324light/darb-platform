@@ -16,6 +16,7 @@ import type { ModuleContent, GuideSection } from "@/lib/modules";
 import { n } from "@/lib/format";
 import ExamDateButton from "@/components/ExamDateButton";
 import Sheet from "@/components/Sheet";
+import BackButton from "@/components/BackButton";
 import dynamic from "next/dynamic";
 const LeaksPlanner = dynamic(() => import("@/components/LeaksPlanner"), { ssr: false });
 const StudyBody = dynamic(() => import("./StudyBody"), { ssr: false });
@@ -97,8 +98,8 @@ export default function ModuleWorkspace({
 
   return (
     <div className="flex flex-col gap-5 pb-8">
-      {/* رجوع خفيف أعلى الصفحة */}
-      <button onClick={onBack} className="dome-chip t-body font-bold self-start" style={{ color: "var(--text)" }}>← مساري</button>
+      {/* رجوع خفيف أعلى الصفحة — الزرّ الموحّد نفسه في كل الصفحات */}
+      <div className="self-start"><BackButton href="/roadmap" label="مساري" onBack={onBack} /></div>
 
       {/* ── شاشة الاكتمال (احتفالية) ── */}
       {done && <CompletionCard label={label} color={color} next={next} completedCount={completedCount} totalCount={totalCount} onBack={onBack} />}

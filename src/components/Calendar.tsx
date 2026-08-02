@@ -5,6 +5,7 @@ import { time, year, dateFull, dateHijri } from "@/lib/format";
 import { primaryPeriodOn } from "@/lib/academicCalendar";
 import { PERIOD_TONE } from "@/lib/calendarTone";
 import { usePref, setPref } from "@/lib/prefs";
+import Sheet from "@/components/Sheet";
 
 type Mode = "gregorian" | "hijri";
 
@@ -52,29 +53,53 @@ function hijriMonthStart(ref: Date): Date {
 
 interface PeekState { key: string; cx: number; top: number; bottom: number; place: "top" | "bottom"; }
 
-/* شريطُ التقويم الدراسي أسفل كل يوم: خطٌّ ملوّن يمتدّ على أيام الفترة، مستديرُ
-   الطرفين عند بدايتها ونهايتها فتُقرأ مدّتُها بلمحة. الفصلُ خطٌّ هادئ، والإجازةُ
-   والاختباراتُ ألوانُها الخاصّة. يُطفأ بزرٍّ ويبقى مطفأً. */
+/** اختبارُ الطالب كما يعرفه التقويم — مفتاحٌ واسمٌ ولون. */
+export interface CalendarExam { key: string; label: string; color?: string }
+
+/* ظِلُّ التقويم الدراسي تحت كل يوم: **هايلايت** ممتدٌّ على أيام الفترة، مستديرٌ
+   عند بدايتها ونهايتها فتُقرأ مدّتُها بلمحة. كان خطّاً رفيعاً لا يكاد يُرى.
+   الفصلُ ظلٌّ هادئ، والإجازةُ والاختباراتُ ألوانُها الخاصّة. يُطفأ بمفتاحٍ ويبقى مطفأً. */
 export default function Calendar({
   examDate,
   onExamDateChange,
   onDayClick,
   getDayInfo,
   flushBottom,
+  exams,
+  examDays,
+  onSetExamDay,
+  onClearExamDay,
+  onAddEvent,
 }: {
   examDate: string | null;
   onExamDateChange: (d: string | null) => void;
   onDayClick?: (date: string) => void;
   getDayInfo?: (date: string) => DayPeekItem[];
   flushBottom?: boolean;
+  /** اختباراتُ الطالب — إن كانت أكثر من واحد سُئل: «قدرات أم ستيب؟» */
+  exams?: CalendarExam[];
+  /** أيامُ الاختبارات المحدَّدة: تاريخ ← مفتاحُ الاختبار. */
+  examDays?: Record<string, string>;
+  onSetExamDay?: (date: string, examKey: string) => void;
+  onClearExamDay?: (date: string) => void;
+  /** إضافةُ حدثٍ في يومٍ بعينه — تفتحه الصفحةُ المستضيفة بنموذجها. */
+  onAddEvent?: (date: string) => void;
 }) {
   const [mode, setMode] = useState<Mode>("gregorian");
-  /* شريطُ التقويم الدراسي — مفتوحٌ افتراضاً، ويُطفئه من لا يريده فيبقى مطفأً */
+  /* ظِلُّ التقويم الدراسي — ظاهرٌ افتراضاً، ويُطفئه من لا يريده فيبقى مطفأً */
   const showBands = usePref("calBands", true);
   const [viewDate, setViewDate] = useState(new Date());
   const [peek, setPeek] = useState<PeekState | null>(null);
+  /* اليومُ المفتوح في ورقته — الضغطُ يفتح يومَه لا يحدّد اختباراً بالخطأ */
+  const [openDay, setOpenDay] = useState<string | null>(null);
+  const [pickExamFor, setPickExamFor] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const todayKey = dk(new Date());
+  const examOf = (date: string): CalendarExam | null => {
+    const k = examDays?.[date];
+    return k ? (exams?.find((e) => e.key === k) ?? { key: k, label: "اختبار" }) : null;
+  };
+  const isExamDay = (date: string) => date === examDate || !!examDays?.[date];
 
   /* تموضع المعاينة من زر اليوم — يشتغل للماوس واللمس */
   const peekFromEl = useCallback((btn: HTMLElement) => {
@@ -328,18 +353,23 @@ export default function Calendar({
           لا نعرض إلا الفتراتِ الظاهرةَ في الشهر المعروض، فلا يقرأ الطالبُ
           مفتاحاً لألوانٍ لا يراها. */}
       <div className="mb-3">
+        {/* مفتاحٌ ظاهرُ الحالة — كان سطراً يقول «ظاهر/مخفيّ» فلا يُقرأ زرّاً */}
         <button
           type="button"
           onClick={() => setPref("calBands", !showBands)}
           aria-pressed={showBands}
-          className="w-full flex items-center justify-between gap-2 rounded-2xl px-3 py-2 transition active:scale-[0.99]"
-          style={{ background: "var(--surface2)" }}
+          className="w-full flex items-center justify-between gap-3 rounded-2xl px-4 py-3 transition active:scale-[0.99]"
+          style={{
+            background: showBands ? "color-mix(in srgb, var(--accent) 8%, var(--surface2))" : "var(--surface2)",
+            border: `1.5px solid ${showBands ? "color-mix(in srgb, var(--accent) 40%, transparent)" : "var(--border)"}`,
+          }}
         >
-          <span className="t-caption font-black" style={{ color: "var(--text)" }}>
+          <span className="t-small font-black text-right" style={{ color: "var(--text)" }}>
             🗓️ التقويم الدراسي على الأيام
           </span>
-          <span className="t-caption font-black" style={{ color: showBands ? "var(--accent-light)" : "var(--text-muted)" }}>
-            {showBands ? "ظاهر" : "مخفيّ"}
+          <span aria-hidden="true" className="w-12 h-7 rounded-full flex items-center transition flex-shrink-0 px-0.5"
+            style={{ background: showBands ? "var(--accent)" : "var(--border)", justifyContent: showBands ? "flex-start" : "flex-end" }}>
+            <span className="w-6 h-6 rounded-full" style={{ background: "#fff" }} />
           </span>
         </button>
 
@@ -347,8 +377,8 @@ export default function Calendar({
           <div className="flex flex-wrap gap-x-3 gap-y-1.5 mt-2 px-1">
             {monthTones.map((t) => (
               <span key={t.label} className="flex items-center gap-1.5">
-                <span aria-hidden="true" className="rounded-full"
-                  style={{ width: 14, height: 3, background: t.color, opacity: t.dim ? 0.45 : 0.95 }} />
+                <span aria-hidden="true" className="rounded-md"
+                  style={{ width: 16, height: 10, background: t.color, opacity: t.dim ? 0.28 : 0.55 }} />
                 <span className="t-caption" style={{ color: "var(--text-muted)" }}>{t.label}</span>
               </span>
             ))}
@@ -380,7 +410,7 @@ export default function Calendar({
           {row.map((cell, ci) => {
             const cellKey = dk(cell.greg);
             const isToday = cellKey === todayKey;
-            const isExam = cellKey === examDate;
+            const isExam = isExamDay(cellKey);
             const isPeeked = peek?.key === cellKey;
             const hasEv = cell.inMonth && (getDayInfo?.(cellKey)?.length ?? 0) > 0;
             const dotColor = isExam ? "#1a1200" : isToday ? "rgba(255,255,255,0.85)" : "var(--accent-light)";
@@ -390,11 +420,10 @@ export default function Calendar({
                 {...(cell.inMonth ? { "data-cellkey": cellKey } : {})}
                 onClick={() => {
                   if (!cell.inMonth) return;
-                  if (onDayClick) {
-                    onDayClick(cellKey);
-                  } else {
-                    onExamDateChange(isExam ? null : cellKey);
-                  }
+                  /* الضغطُ يفتح **يومَه**: ماذا فيه، وماذا تضيف. كان يحدّد يومَ
+                     الاختبار مباشرةً — فيضغط الطالبُ ليرى فيُغيّر. */
+                  if (onDayClick) onDayClick(cellKey);
+                  else setOpenDay(cellKey);
                 }}
                 onPointerEnter={(e) => { if (cell.inMonth && e.pointerType === "mouse") peekFromEl(e.currentTarget); }}
                 onPointerLeave={(e) => { if (e.pointerType === "mouse") setPeek(null); }}
@@ -402,8 +431,30 @@ export default function Calendar({
                 style={{ height: "40px" }}
                 aria-label={cell.label.toString()}
               >
+                {/* ظِلُّ الفترة: هايلايتٌ يملأ الخليّة فتتّصل الأيامُ شريطاً
+                    واحداً، ويستدير طرفُه عند أول الفترة وآخرها. خلف الرقم. */}
+                {showBands && cell.inMonth && (() => {
+                  const p = primaryPeriodOn(cellKey);
+                  if (!p) return null;
+                  const tone = PERIOD_TONE[p.kind];
+                  const isFirst = cellKey === p.start;
+                  const isLast = cellKey === p.end;
+                  const r = 10;
+                  return (
+                    <span aria-hidden="true" className="absolute"
+                      style={{
+                        top: 3, bottom: 3, insetInlineStart: 0, insetInlineEnd: 0,
+                        background: tone.color,
+                        opacity: p.kind === "term" ? 0.16 : 0.3,
+                        borderStartStartRadius: isFirst ? r : 0,
+                        borderEndStartRadius: isFirst ? r : 0,
+                        borderStartEndRadius: isLast ? r : 0,
+                        borderEndEndRadius: isLast ? r : 0,
+                      }} />
+                  );
+                })()}
                 <span
-                  className="w-8 h-8 flex items-center justify-center rounded-full text-[19px] font-bold transition-transform"
+                  className="relative w-8 h-8 flex items-center justify-center rounded-full text-[19px] font-bold transition-transform"
                   style={
                     isExam
                       ? { background: "var(--gold)", color: "#1a1200", outline: isToday ? "2.5px solid var(--accent)" : (isPeeked ? "2.5px solid var(--accent-light)" : "none"), outlineOffset: "2px", transform: isPeeked ? "scale(1.12)" : "none" }
@@ -417,29 +468,8 @@ export default function Calendar({
                   {cell.label}
                 </span>
                 {hasEv && (
-                  <span className="absolute rounded-full" style={{ bottom: 5, width: 4, height: 4, background: dotColor }} />
+                  <span className="absolute rounded-full" style={{ bottom: 3, width: 4, height: 4, background: dotColor }} />
                 )}
-                {/* شريطُ الفترة: يمتدّ عرضَ الخليّة كاملاً فتتّصل الأيامُ خطّاً
-                    واحداً، ويستدير طرفُه عند أول الفترة وآخرها. */}
-                {showBands && cell.inMonth && (() => {
-                  const p = primaryPeriodOn(cellKey);
-                  if (!p) return null;
-                  const tone = PERIOD_TONE[p.kind];
-                  const isFirst = cellKey === p.start;
-                  const isLast = cellKey === p.end;
-                  return (
-                    <span aria-hidden="true" className="absolute"
-                      style={{
-                        bottom: 0, insetInlineStart: 0, insetInlineEnd: 0, height: 3,
-                        background: tone.color,
-                        opacity: p.kind === "term" ? 0.45 : 0.95,
-                        borderStartStartRadius: isFirst ? 3 : 0,
-                        borderEndStartRadius: isFirst ? 3 : 0,
-                        borderStartEndRadius: isLast ? 3 : 0,
-                        borderEndEndRadius: isLast ? 3 : 0,
-                      }} />
-                  );
-                })()}
               </button>
             );
           })}
@@ -458,12 +488,120 @@ export default function Calendar({
         </div>
       )}
       <p className="text-[17px] mt-2 text-center leading-relaxed" style={{ color: "var(--text-muted)" }}>
-        {onDayClick
-          ? "مرّر فوق أي يوم (أو اضغط مطوّلاً ولُف بالجوال) لمعاينة جدوله · اضغط للتعديل"
-          : "اضغط أي يوم لتحديد يوم الاختبار"}
+        اضغط أي يوم لترى ما فيه وتضيف إليه
       </p>
 
       {peekCard}
+
+      {/* ── ورقةُ اليوم: ماذا فيه، وماذا تضيف ── */}
+      {openDay && (
+        <Sheet onClose={() => { setOpenDay(null); setPickExamFor(null); }}
+          title={mode === "hijri" ? dateHijri(openDay, false) : dateFull(openDay, false)}>
+          {(() => {
+            const items = getDayInfo?.(openDay) ?? [];
+            const period = primaryPeriodOn(openDay);
+            const dayExam = examOf(openDay);
+            const legacyExam = openDay === examDate;
+            const choosing = pickExamFor === openDay;
+            const canPick = (exams?.length ?? 0) > 0 && !!onSetExamDay;
+
+            const markExam = (examKey: string) => {
+              onSetExamDay?.(openDay, examKey);
+              setPickExamFor(null);
+              setOpenDay(null);
+            };
+
+            return (
+              <div className="flex flex-col gap-3">
+                {/* سياقُ اليوم من التقويم الدراسي — حقيقةٌ لا تُدخَل يدوياً */}
+                {period && (
+                  <div className="rounded-2xl px-4 py-3 flex items-center gap-2.5"
+                    style={{ background: `color-mix(in srgb, ${PERIOD_TONE[period.kind].color} 12%, var(--surface2))`,
+                             border: `1px solid color-mix(in srgb, ${PERIOD_TONE[period.kind].color} 30%, transparent)` }}>
+                    <span aria-hidden="true">{PERIOD_TONE[period.kind].icon}</span>
+                    <span className="t-small font-bold" style={{ color: "var(--text)" }}>{period.label}</span>
+                    {period.approximate && (
+                      <span className="t-caption" style={{ color: "var(--text-muted)" }}>موعدٌ تقديريّ حتى تُعلنه الجهة</span>
+                    )}
+                  </div>
+                )}
+
+                {/* يومُ اختبار؟ */}
+                {(dayExam || legacyExam) && (
+                  <div className="rounded-2xl px-4 py-3 flex items-center gap-2.5"
+                    style={{ background: "color-mix(in srgb, var(--gold) 14%, var(--surface2))", border: "1px solid color-mix(in srgb, var(--gold) 34%, transparent)" }}>
+                    <span aria-hidden="true">📌</span>
+                    <span className="t-small font-black flex-1" style={{ color: "var(--text)" }}>
+                      يوم اختبار{dayExam ? ` — ${dayExam.label}` : ""}
+                    </span>
+                    <button
+                      onClick={() => {
+                        if (dayExam && onClearExamDay) onClearExamDay(openDay);
+                        else onExamDateChange(null);
+                        setOpenDay(null);
+                      }}
+                      className="t-caption font-bold px-2.5 py-1.5 rounded-lg tap-44"
+                      style={{ color: "var(--text-muted)" }}>إزالة</button>
+                  </div>
+                )}
+
+                {/* أحداثُ اليوم */}
+                {items.length > 0 ? (
+                  <div className="flex flex-col gap-2">
+                    {items.map((it) => (
+                      <div key={it.id} className="rounded-xl px-3 py-2.5 flex items-center gap-2.5"
+                        style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: it.color }} />
+                        <span className="t-small font-bold flex-1 truncate" style={{ color: "var(--text)" }}>{it.label}</span>
+                        <span className="t-caption font-mono-nums flex-shrink-0" style={{ color: "var(--text-muted)" }}>{time(it.from)}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="t-body text-center py-3" style={{ color: "var(--text-muted)" }}>لا أحداث في هذا اليوم.</p>
+                )}
+
+                {/* اختيارُ الاختبار — يظهر فقط حين للطالب أكثر من اختبار */}
+                {choosing ? (
+                  <div className="flex flex-col gap-2">
+                    <p className="t-caption font-bold px-1" style={{ color: "var(--text-muted)" }}>أيّ اختبار؟</p>
+                    {(exams ?? []).map((ex) => (
+                      <button key={ex.key} onClick={() => markExam(ex.key)}
+                        className="rounded-xl px-4 py-3 text-right t-body font-black transition active:scale-[0.98]"
+                        style={{ background: "var(--surface2)", border: `1.5px solid ${ex.color ?? "var(--border)"}` }}>
+                        {ex.label}
+                      </button>
+                    ))}
+                    <button onClick={() => setPickExamFor(null)} className="t-caption py-2" style={{ color: "var(--text-muted)" }}>إلغاء</button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2 mt-1">
+                    {onAddEvent && (
+                      <button onClick={() => { onAddEvent(openDay); setOpenDay(null); }}
+                        className="rounded-2xl py-3 t-body font-black transition active:scale-[0.98]"
+                        style={{ background: "var(--accent)", color: "#fff" }}>
+                        ＋ أضف حدثاً في هذا اليوم
+                      </button>
+                    )}
+                    {!dayExam && !legacyExam && (
+                      <button
+                        onClick={() => {
+                          if (!canPick) { onExamDateChange(openDay); setOpenDay(null); return; }
+                          if (exams!.length === 1) { markExam(exams![0].key); return; }
+                          setPickExamFor(openDay);
+                        }}
+                        className="rounded-2xl py-3 t-body font-black transition active:scale-[0.98]"
+                        style={{ background: "transparent", border: "1.5px solid var(--gold)", color: "var(--gold)" }}>
+                        📌 حدّده يوم اختبار
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+        </Sheet>
+      )}
     </div>
   );
 }

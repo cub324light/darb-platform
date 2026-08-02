@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback } from "react";
 import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
+import BackButton from "@/components/BackButton";
 import ExamRegistrationAlert from "@/components/ExamRegistrationAlert";
 import Link from "next/link";
 import { getStrategy, majorSubjectBoost, subjectPriorityOrder } from "@/lib/strategy";
@@ -169,8 +170,9 @@ export default function StudyPlanPage() {
   return (
     <div className={`page${isWide ? " desk-wide" : ""}`}>
       <Dome compact>
-        <div className="flex items-center justify-between">
-          <h1 className="title-lg grad-title">مخطط الدراسة</h1>
+        <div className="flex items-center justify-between gap-3">
+          <BackButton href="/plan" />
+          <h1 className="title-lg grad-title flex-1">مخطط الدراسة</h1>
           {saved && (
             <span className="text-[14px] font-bold px-2 py-1 rounded-full"
               style={{ background: "color-mix(in srgb, var(--success) 14%, var(--surface))", color: "var(--success)" }}>

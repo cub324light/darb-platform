@@ -4,7 +4,7 @@
    Bento متنوّعة الأحجام. كل رقمٍ من computeStats النقيّ، وأي إحصاءٍ بلا بياناتٍ حقيقية
    يظهر كدعوةٍ صادقة («ابدأ أول جلسة، وسنعرض تقدمك هنا») — لا صفرٌ ولا اختراع. */
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import BackButton from "@/components/BackButton";
 import { loadStats, loadUser, localDayKey } from "@/lib/storage";
 import { computeStats } from "@/lib/roadmap/stats";
 import { loadSessions } from "@/lib/roadmap/sessionStore";
@@ -32,7 +32,6 @@ function B({ title, value, sub, wide, children }: {
 }
 
 export default function StatsPage() {
-  const router = useRouter();
   const [s] = useState(() => computeStats({
     dayMins: typeof window !== "undefined" ? (loadStats().dayMins ?? {}) : {},
     sessions: typeof window !== "undefined" ? loadSessions() : [],
@@ -49,7 +48,7 @@ export default function StatsPage() {
   return (
     <div className="min-h-dvh pb-nav relative z-[1] page-enter">
       <div className="max-w-xl mx-auto w-full px-5 pt-7 pb-8 flex flex-col gap-4">
-        <button onClick={() => router.push("/roadmap")} className="t-body font-bold self-start tap-44" style={{ color: "var(--text-muted)" }}>← الآن</button>
+        <div className="self-start"><BackButton href="/roadmap" label="مساري" /></div>
         <h1 className="t-h2 font-black -mt-2" style={{ color: "var(--text)" }}>📈 إحصائياتك</h1>
 
         <div className="grid grid-cols-2 gap-2.5">

@@ -20,9 +20,9 @@ export interface PriorityExam {
   examKey?: string; subjects: { name: string; color: string }[];
 }
 
-/** الاختبار صاحب الأولوية #1 من Workspace + ترتيب الأولوية المخزّن. */
-export function readPriorityExam(ws: Workspace): PriorityExam | null {
-  const cfg = loadRoadmapConfig();
+/** كلُّ اختبارات الطالب الظاهرة في Workspace — مصدرٌ واحد لمن يحتاج القائمة
+    (التقويم يسأل: «أيَّ اختبارٍ هذا اليوم؟»)، ولمن يحتاج الأولَ منها. */
+export function readAllExams(ws: Workspace): PriorityExam[] {
   const entries: PriorityExam[] = [];
   for (const m of visibleModules(ws)) {
     if (m.kind === "core") continue;
@@ -36,6 +36,13 @@ export function readPriorityExam(ws: Workspace): PriorityExam | null {
       entries.push({ kind: "module", id: m.id, label: v.label, icon: v.icon, color: v.color, examKey: c.examKey, subjects: c.subjects ?? [] });
     }
   }
+  return entries;
+}
+
+/** الاختبار صاحب الأولوية #1 من Workspace + ترتيب الأولوية المخزّن. */
+export function readPriorityExam(ws: Workspace): PriorityExam | null {
+  const cfg = loadRoadmapConfig();
+  const entries = readAllExams(ws);
   if (entries.length === 0) return null;
   const ordered = orderByPriority(cfg, entries.map((e) => e.id));
   return entries.find((e) => e.id === ordered[0]) ?? entries[0];

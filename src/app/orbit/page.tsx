@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback, useMemo, useSyncExternalStore
 import PageFooter from "@/components/PageFooter";
 import NextThread from "@/components/NextThread";
 import Dome from "@/components/Dome";
+import Sheet from "@/components/Sheet";
 import PageGuide from "@/components/PageGuide";
 import Confetti from "@/components/Confetti";
 import { subjectsForTracks, getTrack } from "@/lib/tracks";
@@ -508,7 +509,20 @@ export default function OrbitPage() {
           : `radial-gradient(ellipse 65% 45% at 50% 45%, ${strokeColor === "var(--accent)" ? "rgba(37,99,235,0.14)" : "rgba(245,158,11,0.12)"} 0%, transparent 70%)` }} />
 
       <Dome compact>
-        <h1 className="title-lg grad-title">تركيز</h1>
+        <div className="flex items-center justify-between gap-2">
+          <h1 className="title-lg grad-title">تركيز</h1>
+          {/* السجلّ والإعدادات في الرأس جنب اسم الصفحة — كانا شريطاً في أسفلها
+              يمرّ عليه الطالبُ بعد كل شيء. يظهران قبل الجلسة فقط: أثناء التركيز
+              لا شيء يزاحم العدّاد. */}
+          {phase === "idle" && (
+            <div className="flex items-center gap-2">
+              <button onClick={() => setShowLog(true)} aria-label="سجل الجلسات"
+                className="dome-chip tap-44 t-small font-black" style={{ color: "var(--text)" }}>📋 السجل</button>
+              <button onClick={() => setShowSettings(true)} aria-label="إعدادات تركيز"
+                className="dome-chip tap-44 t-small font-black" style={{ color: "var(--text)" }}>⚙️ إعدادات</button>
+            </div>
+          )}
+        </div>
       </Dome>
       <div className="h-4" />
 
@@ -811,69 +825,46 @@ export default function OrbitPage() {
       </div>
       )}
 
-      {/* السجل والإعدادات — قبل الجلسة فقط (إعدادٌ وسجلّ)؛ لا يزاحم التركيز أثناء الجلسة */}
-      {phase === "idle" && (
-      <div className="px-5 pb-4">
-        <div className="flex gap-2">
-          <button onClick={() => { setShowLog((v) => !v); setShowSettings(false); }}
-            className="flex-1 py-3 rounded-2xl font-bold text-[17px] flex items-center justify-center gap-2 transition active:scale-[0.98]"
-            style={showLog
-              ? { background: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }
-              : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}>
-            📋 سجل الجلسات
+      {/* إعدادات تركيز — ورقةٌ من رأس الصفحة */}
+      {showSettings && (
+        <Sheet onClose={() => setShowSettings(false)} title="إعدادات تركيز">
+          <button onClick={toggleKeepRunning}
+            className="w-full flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-right transition active:scale-[0.99]"
+            style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold t-body" style={{ color: "var(--text)" }}>إبقاء الجلسة شغّالة عند الخروج</p>
+              <p className="t-caption mt-0.5" style={{ color: "var(--text-muted)" }}>لو طلعت للخريطة أو صفحة ثانية تكمل الجلسة من حيث وقفت</p>
+            </div>
+            <span className="w-12 h-7 rounded-full flex items-center transition flex-shrink-0 px-0.5"
+              style={{ background: keepRunning ? "var(--accent)" : "var(--border)", justifyContent: keepRunning ? "flex-start" : "flex-end" }}>
+              <span className="w-6 h-6 rounded-full bg-white" />
+            </span>
           </button>
-          <button onClick={() => { setShowSettings((v) => !v); setShowLog(false); }}
-            className="flex-1 py-3 rounded-2xl font-bold text-[17px] flex items-center justify-center gap-2 transition active:scale-[0.98]"
-            style={showSettings
-              ? { background: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }
-              : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}>
-            ⚙️ إعدادات أوربت
-          </button>
-        </div>
+        </Sheet>
+      )}
 
-        {/* إعدادات أوربت */}
-        {showSettings && (
-          <div className="mt-3 rounded-2xl p-4 flex flex-col gap-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-            <button onClick={toggleKeepRunning}
-              className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-right transition active:scale-[0.99]"
-              style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-[16px] text-[var(--text)]">إبقاء الجلسة شغّالة عند الخروج</p>
-                <p className="text-[14px] text-[var(--text-muted)] mt-0.5">لو طلعت للخريطة أو صفحة ثانية تكمل الجلسة من حيث وقفت</p>
-              </div>
-              <span className="w-12 h-7 rounded-full flex items-center transition flex-shrink-0 px-0.5"
-                style={{ background: keepRunning ? "var(--accent)" : "var(--border)", justifyContent: keepRunning ? "flex-start" : "flex-end" }}>
-                <span className="w-6 h-6 rounded-full bg-white" />
-              </span>
-            </button>
-          </div>
-        )}
-
-        {/* سجل الجلسات */}
-        {showLog && (
-          <div className="mt-3 rounded-2xl p-4 flex flex-col gap-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-            <p className="font-black text-base text-[var(--text)] mb-1">سجل الجلسات ({sessionLog.length})</p>
-            {sessionLog.length === 0 ? (
-              <p className="text-[15px] text-[var(--text-muted)] py-4 text-center">ما فيه جلسات بعد — أنجز جلستك الأولى</p>
-            ) : (
-              <div className="flex flex-col gap-1.5 max-h-[320px] overflow-y-auto">
-                {sessionLog.map((e) => {
-                  const d = new Date(e.ts);
-                  const when = d.toLocaleString("ar-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: true });
-                  return (
-                    <div key={e.id} className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5"
-                      style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-                      <span className="font-bold text-[15px] text-[var(--text)] truncate">{e.subject}</span>
-                      <span className="text-[14px] text-[var(--text-muted)] flex-shrink-0">{when}</span>
-                      <span className="font-mono-nums font-bold text-[15px] flex-shrink-0" style={{ color: "var(--accent-light)" }}>{e.focusMins}د</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      {/* سجل الجلسات — ورقةٌ من رأس الصفحة */}
+      {showLog && (
+        <Sheet onClose={() => setShowLog(false)} title={`سجل الجلسات (${arNum(sessionLog.length)})`}>
+          {sessionLog.length === 0 ? (
+            <p className="t-body py-6 text-center" style={{ color: "var(--text-muted)" }}>ما فيه جلسات بعد — أنجز جلستك الأولى</p>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              {sessionLog.map((e) => {
+                const d = new Date(e.ts);
+                const when = d.toLocaleString("ar-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: true });
+                return (
+                  <div key={e.id} className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5"
+                    style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                    <span className="font-bold t-small truncate" style={{ color: "var(--text)" }}>{e.subject}</span>
+                    <span className="t-caption flex-shrink-0" style={{ color: "var(--text-muted)" }}>{when}</span>
+                    <span className="font-mono-nums font-bold t-small flex-shrink-0" style={{ color: "var(--accent-light)" }}>{e.focusMins}د</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Sheet>
       )}
 
       <NextThread page="/orbit" />

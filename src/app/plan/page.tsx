@@ -16,6 +16,7 @@ import dynamic from "next/dynamic";
 import PageFooter from "@/components/PageFooter";
 import NextThread from "@/components/NextThread";
 import Dome from "@/components/Dome";
+import BackButton from "@/components/BackButton";
 import PageGuide from "@/components/PageGuide";
 import CalendarExport from "@/components/CalendarExport";
 /* استيراد مباشر لتفادي انزياح التخطيط — يظهر فوراً بحالته المحسوبة تزامنياً */
@@ -31,13 +32,13 @@ const CalendarStatusCard = dynamic(() => import("@/components/CalendarStatusCard
 const GoalRealityCard = dynamic(() => import("@/components/GoalRealityCard"), { ssr: false });
 import { getEventsForDate, studyMinutesOn, currentEvent, nextEvent } from "@/lib/schedule";
 import {
-  loadUser, activeTrackIds, loadEvents, saveEvents, loadExamDate, saveExamDate, loadTrackExamDates,
+  loadUser, activeTrackIds, loadEvents, saveEvents, loadExamDate, saveExamDate, loadTrackExamDates, saveTrackExamDates,
   loadGoals, loadStats, showsUniversityUI, ensureWorkspace, localDayKey, EVENTS_CHANGED,
   type ScheduleEvent,
 } from "@/lib/storage";
 import { loadCalendar } from "@/lib/roadmap/calendarStore";
 import { eventsOnDay, kindMeta } from "@/lib/roadmap/calendar";
-import { readPriorityExam } from "@/lib/roadmap/nowRead";
+import { readAllExams, readPriorityExam } from "@/lib/roadmap/nowRead";
 import { focusHandoffQuery } from "@/lib/roadmap/handoff";
 import { isUniversityGraduate } from "@/lib/phase";
 import { getTrack, colorForSubject, type TrackId } from "@/lib/tracks";
@@ -89,6 +90,9 @@ export default function PlanPage() {
 
   const [view, setView] = useState<PlanView>("day");
   const [sheet, setSheet] = useState<null | "manual">(null);
+  /* اليومُ الذي تُفتح عليه الورقةُ اليدوية — كان «اليوم» دائماً، فلا سبيل
+     لإضافة جلسةٍ في يومٍ آخر إلا بالانتظار حتى يأتي. */
+  const [sheetDate, setSheetDate] = useState<string | null>(null);
   const [examDate, setExamDate] = useState<string | null>(() =>
     typeof window !== "undefined" ? loadExamDate() : null
   );
@@ -117,6 +121,27 @@ export default function PlanPage() {
     typeof window !== "undefined" ? Object.keys(loadGoals()).length === 0 : false
   );
   const [goalsMounted, setGoalsMounted] = useState(goalsOpen);
+
+  /* اختباراتُ الطالب ومواعيدُها — من Workspace ومن `darb_track_exam_dates`،
+     نفسِ ما تكتبه صفحةُ الوحدة. لا قائمةَ ثانية تُصان. */
+  const [exams] = useState(() => {
+    if (typeof window === "undefined") return [] as { key: string; label: string; color?: string }[];
+    const u = loadUser(); if (!u) return [];
+    const ws = ensureWorkspace(u).workspace; if (!ws) return [];
+    return readAllExams(ws).filter((e) => !!e.examKey)
+      .map((e) => ({ key: e.examKey as string, label: e.label, color: e.color }));
+  });
+  const [trackDates, setTrackDates] = useState<Record<string, string>>(
+    () => (typeof window !== "undefined" ? loadTrackExamDates() : {}));
+  const examDays = Object.fromEntries(Object.entries(trackDates).map(([k, d]) => [d, k]));
+  const setExamDay = (d: string, examKey: string) => {
+    const up = { ...trackDates, [examKey]: d }; setTrackDates(up); saveTrackExamDates(up);
+  };
+  const clearExamDay = (d: string) => {
+    const up = { ...trackDates };
+    for (const [k, v] of Object.entries(up)) if (v === d) delete up[k];
+    setTrackDates(up); saveTrackExamDates(up);
+  };
 
   /* مواد اختبار الأولوية — يبني دويرب والمحرّر اليدويّ حولها لا حول موادَّ مخترعة */
   const [subjects] = useState<{ name: string; color: string }[]>(() => {
@@ -311,8 +336,9 @@ export default function PlanPage() {
       ]} />
 
       <Dome compact>
-        <div className="flex items-center justify-between">
-          <h1 className="title-lg grad-title">خطتي</h1>
+        <div className="flex items-center justify-between gap-3">
+          <BackButton href="/dashboard" />
+          <h1 className="title-lg grad-title flex-1">خطتي</h1>
           {nearestExam !== null && (
             <div className="dome-chip flex items-center gap-1.5">
               <span className="t-small font-black font-mono-nums" style={{ color: urgentColor }}>{arDays(nearestExam.days)}</span>
@@ -392,6 +418,11 @@ export default function PlanPage() {
           <Calendar
             examDate={examDate}
             onExamDateChange={(d) => { setExamDate(d); saveExamDate(d); }}
+            exams={exams}
+            examDays={examDays}
+            onSetExamDay={setExamDay}
+            onClearExamDay={clearExamDay}
+            onAddEvent={(d) => { setSheetDate(d); setSheet("manual"); }}
             getDayInfo={(date) =>
               getEventsForDate(date, allEvents).map((ev) => ({
                 id: ev.id,
@@ -507,13 +538,13 @@ export default function PlanPage() {
           «مع دويرب» يبقى على مساره القائم (DuirbFloat) فلا يجتمع محلّلا ذكاءٍ في صفحة. */}
       {sheet === "manual" && (
         <DayScheduler
-          date={today}
+          date={sheetDate ?? today}
           events={allEvents}
           subjects={subjects}
           examDate={examDate}
           onExamDateChange={(d) => { setExamDate(d); saveExamDate(d); }}
           onEventsChange={(next) => { saveEvents(next); setAllEvents(next); }}
-          onClose={() => setSheet(null)}
+          onClose={() => { setSheet(null); setSheetDate(null); }}
           initialTab="manual"
           manualOnly
         />

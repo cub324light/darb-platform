@@ -4,9 +4,9 @@
    الحدث يحمل تأثيره على الخطة (block يمنع · reduce يخفّف · busy ينقل)، ودويرب يبني
    الجلسات حول الحياة — مع تحذيرٍ صريح عند الأحداث المؤثّرة. IO عبر calendarStore فقط. */
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import BackButton from "@/components/BackButton";
 import dynamic from "next/dynamic";
-import { localDayKey, loadExamDate, saveExamDate } from "@/lib/storage";
+import { localDayKey, loadExamDate, saveExamDate, loadTrackExamDates, saveTrackExamDates } from "@/lib/storage";
 import {
   EVENT_KIND_META, kindMeta, groupUpcoming, eventsOnDay, warnsPlanChange,
   type CalendarEvent, type EventKind, type EventImpact, type Recurrence,
@@ -14,7 +14,7 @@ import {
 import { loadCalendar, addCalendarEvent, removeCalendarEvent } from "@/lib/roadmap/calendarStore";
 import { slotsToEvents } from "@/lib/roadmap/aiSchedule";
 import { loadUser, ensureWorkspace } from "@/lib/storage";
-import { readPriorityExam } from "@/lib/roadmap/nowRead";
+import { readAllExams, readPriorityExam } from "@/lib/roadmap/nowRead";
 import { n, time, year } from "@/lib/format";
 import Sheet from "@/components/Sheet";
 
@@ -56,7 +56,6 @@ function EventRow({ ev, when, onDelete }: { ev: CalendarEvent; when?: string; on
 }
 
 export default function CalendarPage() {
-  const router = useRouter();
   const [events, setEvents] = useState<CalendarEvent[]>(() => (typeof window !== "undefined" ? loadCalendar() : []));
   const [adding, setAdding] = useState(false);
   const [tab, setTab] = useState<"manual" | "ai">("manual");
@@ -78,6 +77,31 @@ export default function CalendarPage() {
   const [impact, setImpact] = useState<EventImpact | null>(null);
 
   const [examDate, setExamDate] = useState<string | null>(() => (typeof window !== "undefined" ? loadExamDate() : null));
+
+  /* اختباراتُ الطالب: مصدرُها Workspace نفسُه (لا قائمةٌ ثانية تُصان). ومواعيدُها
+     في `darb_track_exam_dates` — المفتاح نفسُه الذي تكتبه صفحةُ الوحدة، فما
+     يحدّده هنا يظهر هناك وبالعكس. */
+  const [exams] = useState(() => {
+    if (typeof window === "undefined") return [] as { key: string; label: string; color?: string }[];
+    const u = loadUser(); if (!u) return [];
+    const ws = ensureWorkspace(u).workspace; if (!ws) return [];
+    return readAllExams(ws)
+      .filter((e) => !!e.examKey)
+      .map((e) => ({ key: e.examKey as string, label: e.label, color: e.color }));
+  });
+  const [trackDates, setTrackDates] = useState<Record<string, string>>(
+    () => (typeof window !== "undefined" ? loadTrackExamDates() : {}));
+  /* التقويم يسأل بالتاريخ، والتخزين مفتاحُه الاختبار — فنقلبها هنا */
+  const examDays = Object.fromEntries(Object.entries(trackDates).map(([k, d]) => [d, k]));
+  const setExamDay = (d: string, examKey: string) => {
+    const up = { ...trackDates, [examKey]: d };
+    setTrackDates(up); saveTrackExamDates(up);
+  };
+  const clearExamDay = (d: string) => {
+    const up = { ...trackDates };
+    for (const [k, v] of Object.entries(up)) if (v === d) delete up[k];
+    setTrackDates(up); saveTrackExamDates(up);
+  };
 
   const today = localDayKey();
   const [y, m] = [Number(today.slice(0, 4)), Number(today.slice(5, 7))];
@@ -103,7 +127,7 @@ export default function CalendarPage() {
     <div className="min-h-dvh pb-nav relative z-[1] page-enter">
       <div className="max-w-xl mx-auto w-full px-5 pt-7 pb-8 flex flex-col gap-5">
         <div className="flex items-center justify-between">
-          <button onClick={() => router.push("/roadmap")} className="t-body font-bold tap-44" style={{ color: "var(--text-muted)" }}>← الآن</button>
+          <BackButton href="/roadmap" label="مساري" />
           <span className="t-caption font-black" style={{ color: "var(--text-muted)" }}>{AR_MONTHS[m - 1]} {year(y)}</span>
         </div>
         <h1 className="t-h2 font-black -mt-2" style={{ color: "var(--text)" }}>🗓️ التقويم</h1>
@@ -136,6 +160,11 @@ export default function CalendarPage() {
         <Calendar
           examDate={examDate}
           onExamDateChange={(d) => { setExamDate(d); saveExamDate(d); }}
+          exams={exams}
+          examDays={examDays}
+          onSetExamDay={setExamDay}
+          onClearExamDay={clearExamDay}
+          onAddEvent={(d) => { setDate(d); setTab("manual"); setAdding(true); }}
           getDayInfo={(date) =>
             eventsOnDay(events, date).map((ev) => ({
               id: ev.id,

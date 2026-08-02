@@ -18,10 +18,17 @@ import { useRouter } from "next/navigation";
 export default function BackButton({
   href = "/dashboard",
   label = "رجوع",
-}: { href?: string; label?: string }) {
+  onBack,
+}: {
+  href?: string;
+  label?: string;
+  /** رجوعٌ داخل الصفحة (إغلاق مساحةٍ لا انتقالُ مسار) — لا تاريخَ متصفّحٍ فيه. */
+  onBack?: () => void;
+}) {
   const router = useRouter();
 
   const goBack = () => {
+    if (onBack) { onBack(); return; }
     /* `history.length > 1` تعني أن ثمّة ما نرجع إليه في هذا التبويب. */
     if (typeof window !== "undefined" && window.history.length > 1) router.back();
     else router.push(href);

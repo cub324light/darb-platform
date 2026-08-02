@@ -4,6 +4,7 @@
    زر «فتح الموقع الرسمي». البيانات من officialLinks.ts (نطاقاتٌ موثّقة فقط). */
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import BackButton from "@/components/BackButton";
 import { OFFICIAL_LINKS, LINK_CATEGORY_LABEL, LINK_CATEGORY_ORDER, searchLinks, type LinkCategory } from "@/lib/officialLinks";
 import { recordResourceUse } from "@/lib/roadmap/resourceUse";
 import { findUniversity, qsRankText } from "@/lib/university";
@@ -17,7 +18,7 @@ export default function ResourcesPage() {
   return (
     <div className="min-h-dvh pb-nav relative z-[1] page-enter">
       <div className="max-w-xl mx-auto w-full px-5 pt-7 pb-8 flex flex-col gap-4">
-        <button onClick={() => router.push("/roadmap")} className="t-body font-bold self-start tap-44" style={{ color: "var(--text-muted)" }}>← الآن</button>
+        <div className="self-start"><BackButton href="/roadmap" label="مساري" /></div>
         <h1 className="t-h2 font-black -mt-2" style={{ color: "var(--text)" }}>📚 المصادر</h1>
         <p className="t-body -mt-2" style={{ color: "var(--text-dim)" }}>الجهات الرسمية فقط — بلا وسطاء.</p>
 

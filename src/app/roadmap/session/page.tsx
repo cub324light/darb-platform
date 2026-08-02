@@ -7,6 +7,7 @@
    كل الحساب في المحرّكات النقيّة (buildSessionPlan · remainingSteps). */
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import BackButton from "@/components/BackButton";
 import { loadUser, ensureWorkspace } from "@/lib/storage";
 import { buildSessionPlan, type SessionPlan, type SessionTask } from "@/lib/roadmap/session";
 import { remainingSteps } from "@/lib/roadmap/remainingSteps";
@@ -117,7 +118,7 @@ export default function SessionPage() {
     return (
       <div className="min-h-dvh pb-nav relative z-[1] page-enter">
         <div className="max-w-xl mx-auto w-full px-5 pt-8 flex flex-col" style={{ minHeight: "70dvh" }}>
-          <button onClick={() => router.push("/roadmap")} className="t-body font-bold self-start tap-44" style={{ color: "var(--text-muted)" }}>← الآن</button>
+          <div className="self-start"><BackButton href="/roadmap" label="مساري" /></div>
           <div className="flex-1 flex flex-col items-center justify-center text-center gap-3">
             <span className="text-[44px]" aria-hidden="true">🌤️</span>
             <p className="t-title font-black" style={{ color: "var(--text)" }}>{avail.onVacation ? "أنت في إجازة" : "يومك ممتلئ اليوم"}</p>
@@ -162,7 +163,7 @@ export default function SessionPage() {
   return (
     <div className="min-h-dvh relative z-[1] page-enter">
       <div className="max-w-xl mx-auto w-full px-5 pt-7" style={{ paddingBottom: "calc(var(--nav-h) + 175px)" }}>
-        <button onClick={() => router.push("/roadmap")} className="t-body font-bold tap-44" style={{ color: "var(--text-muted)" }}>← الآن</button>
+        <BackButton href="/roadmap" label="مساري" />
 
         <h1 className="t-h2 font-black mt-5" style={{ color: "var(--text)" }}>🎯 ماذا ستفعل اليوم؟</h1>
         <p className="t-body mt-1.5" style={{ color: "var(--text-muted)" }}>جهّزت لك جلسة على قدّ يومك.</p>
