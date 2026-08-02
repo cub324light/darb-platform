@@ -43,11 +43,16 @@ test("toYaml: وصفُ OpenAPI كاملاً يمرّ بلا فقد", async () =>
   assert.deepEqual(parse(toYaml(spec)), JSON.parse(JSON.stringify(spec)));
 });
 
-test("toYaml: المفاتيح مقتبسة فلا يلتبس «200» ولا «no»", () => {
+/* القاعدة: المفتاحُ الملتبِس يُقتبس، والبسيطُ يُكتب عارياً. ليس تجميلاً — قارئٌ
+   يبحث عن `agent_auth:` في أوّل السطر لا يجدها إن كانت `"agent_auth":`. */
+test("toYaml: يُقتبس المفتاحُ الملتبِس وحده", () => {
   const out = toYaml(sample);
   assert.ok(out.includes(`"200":`), "المفتاح الرقمي يجب أن يبقى نصّاً مقتبساً");
   assert.ok(out.includes(`"no": false`), "«no» مفتاحٌ خطِر في YAML 1.1 — يُقتبس");
-  assert.ok(out.includes(`"emptyObj": {}`) && out.includes(`"emptyArr": []`));
+  assert.ok(out.includes(`"/api/agent/faq":`), "المفتاحُ ذو الشرطات المائلة يُقتبس");
+  assert.match(out, /^emptyObj: \{\}$/m, "المفتاحُ البسيط يُكتب عارياً");
+  assert.match(out, /^emptyArr: \[\]$/m);
+  assert.match(out, /^openapi: "3\.1\.0"$/m, "القيمةُ النصّية تبقى مقتبسة دائماً");
   assert.ok(out.endsWith("\n"));
 });
 

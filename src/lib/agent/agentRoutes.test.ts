@@ -173,9 +173,41 @@ test("تفاوضُ Markdown: كل صفحةٍ تُنتج نصّاً حقيقيا�
    الاصطلاح يُقرأ بنصّه. القاعدةُ سهلةُ الكسر عند أي إعادة صياغة، فنقفلها. */
 test("auth.md: عنوانُه الأول «# Auth.md» حرفاً بحرف", () => {
   const src = readFileSync("src/app/auth.md/route.ts", "utf8");
-  assert.match(src, /const body = `# Auth\.md\n/, "العنوان الأول ليس «# Auth.md»");
+  assert.match(src, /const body = `\$\{frontMatter\}# Auth\.md\n/, "العنوان الأول ليس «# Auth.md» بعد الترويسة");
   assert.ok(src.includes("Agent Registration"), "قسمُ تسجيل الوكلاء بلا اسمه الإنجليزي");
-  assert.ok(src.includes("agent_auth"), "كتلةُ agent_auth مفقودة");
+});
+
+/* الفاحصُ وجد الملفّ والعنوان ثم قال «agent_auth غير موجود»: الكتلةُ كانت داخل
+   سياجِ ```json، والقارئُ الآليّ يقرأ ترويسة YAML لا نصَّ الشيفرة. */
+test("auth.md: ترويسةُ YAML تحمل agent_auth بمفتاحٍ عارٍ في أوّل السطر", async () => {
+  const { AGENT_AUTH } = await import("./authMeta");
+  const { toYaml } = await import("./yaml");
+  const fm = `---\n${toYaml({ agent_auth: AGENT_AUTH })}---\n\n`;
+
+  assert.ok(fm.startsWith("---\n"), "لا ترويسةَ في أوّل الملفّ");
+  assert.match(fm, /^agent_auth:$/m, "«agent_auth:» ليست مفتاحاً عارياً في أوّل سطر");
+  assert.match(fm, /^\s+register_uri: null$/m, "register_uri غائب عن الترويسة");
+  assert.match(fm, /^\s+identity_types:$/m, "identity_types غائب");
+  assert.ok(fm.trimEnd().endsWith("---"), "الترويسةُ غير مغلقة");
+
+  /* الترويسة يجب أن تُقرأ YAML صالحاً وتعود كما خرجت */
+  try {
+    const id = "js-yaml";
+    const m = (await import(id)) as { load: (s: string) => unknown };
+    const parsed = m.load(fm.replace(/^---\n/, "").replace(/---\n\n$/, "")) as { agent_auth: unknown };
+    assert.deepEqual(parsed.agent_auth, JSON.parse(JSON.stringify(AGENT_AUTH)));
+  } catch { /* الحزمة غير معلنة عندنا — تكفي الفحوصُ البنيوية */ }
+});
+
+test("agent_auth: مصدرٌ واحد يغذّي auth.md وبيانَ خادم التفويض", async () => {
+  const { AGENT_AUTH } = await import("./authMeta");
+  const md = readFileSync("src/app/auth.md/route.ts", "utf8");
+  const oauth = readFileSync("src/app/api/well-known/oauth-authorization-server/route.ts", "utf8");
+  assert.ok(md.includes("AGENT_AUTH"), "auth.md لا يقرأ من المصدر الواحد");
+  assert.ok(oauth.includes("agent_auth: AGENT_AUTH"), "بيانُ خادم التفويض لا يقرأ من المصدر الواحد");
+  /* لا نُعلن تسجيلاً لا نخدمه */
+  assert.equal(AGENT_AUTH.register_uri, null);
+  assert.equal(AGENT_AUTH.dynamic_client_registration, false);
 });
 
 test("المخطّطات: لكلٍّ نوعٌ وعنوان", () => {

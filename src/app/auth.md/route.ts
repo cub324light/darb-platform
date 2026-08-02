@@ -3,14 +3,21 @@
    هويّة Google. ولا نُعلن تسجيلاً ديناميكياً لا نخدمه — عنوانٌ مخترَعٌ يكسر
    أوّل وكيلٍ يجرّبه، والصمتُ عنه أصدق. */
 import { SITE } from "@/lib/agent/catalog";
+import { AGENT_AUTH } from "@/lib/agent/authMeta";
+import { toYaml } from "@/lib/agent/yaml";
 
 export const dynamic = "force-static";
 
 export function GET() {
+  /* ▓ ترويسةُ YAML: الفاحصُ قرأ الملفّ ووجد العنوان، ثم قال «agent_auth غير
+     موجود» — لأن الكتلة كانت داخل سياجِ ```json، والقارئُ الآليّ يقرأ الترويسة
+     لا نصَّ الشيفرة. نطبعها هنا من `authMeta.ts` نفسه الذي يغذّي بيانَ خادم
+     التفويض والكتلةَ أدناه: ثلاثةُ مواضع بقيمةٍ واحدة. */
+  const frontMatter = `---\n${toYaml({ agent_auth: AGENT_AUTH })}---\n\n`;
   /* ▓ العنوان الأول «Auth.md» حرفاً بحرف: هو اسمُ الاصطلاح لا ترجمتُه، والقارئُ
      الآليّ يبحث عنه بنصّه. كان العنوانُ عربياً فقُرئ الملفُّ ناقصاً وإن كان
      محتواه كاملاً. الاسمُ إنجليزيّ والشرحُ عربيّ — كلٌّ في موضعه. */
-  const body = `# Auth.md
+  const body = `${frontMatter}# Auth.md
 
 ## المصادقة — ${SITE.name} (${SITE.nameEn})
 
@@ -50,22 +57,7 @@ ${SITE.url}
 المطوّرُ عميلَه في Google Cloud Console ثم يستعمل خادم تفويض Google أعلاه.
 
 \`\`\`json
-{
-  "agent_auth": {
-    "public_api": { "auth_required": false },
-    "authorization_servers": ["https://accounts.google.com"],
-    "protected_resource_metadata": "${SITE.url}/.well-known/oauth-protected-resource",
-    "authorization_server_metadata": "${SITE.url}/.well-known/oauth-authorization-server",
-    "identity_types": ["human"],
-    "credential_types": ["oauth2_access_token", "oidc_id_token"],
-    "token_endpoint_auth_methods": ["client_secret_post", "client_secret_basic"],
-    "dynamic_client_registration": false,
-    "register_uri": null,
-    "claims_uri": "https://openidconnect.googleapis.com/v1/userinfo",
-    "revocation_uri": "https://oauth2.googleapis.com/revoke",
-    "delegated_agent_access": false
-  }
-}
+${JSON.stringify({ agent_auth: AGENT_AUTH }, null, 2)}
 \`\`\`
 
 \`identity_types\` بشريٌّ وحده و\`delegated_agent_access\` مُطفأ عن قصد: لا يدخل

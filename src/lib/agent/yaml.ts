@@ -10,6 +10,18 @@ type Json = null | boolean | number | string | Json[] | { [k: string]: Json };
 
 const q = (s: string) => JSON.stringify(s);
 
+/* كلماتٌ يقرؤها YAML 1.1 قيماً منطقية لا نصّاً، فتبقى مقتبسة مفاتيحَ كانت أو قيماً */
+const RESERVED = new Set([
+  "true", "false", "null", "yes", "no", "on", "off", "y", "n", "~",
+]);
+
+/** مفتاحٌ بسيط (حرفٌ ثم حروف/أرقام/شرطة) لا لبسَ فيه — يُكتب عارياً.
+    وغيرُه يُقتبس: «200» و«no» ومَن فيه نقطتان أو مسافة. الفائدةُ ليست جمالاً
+    فقط: قارئٌ يبحث عن `agent_auth:` في أوّل السطر لا يجدها مقتبسة. */
+const plainKey = (k: string) => /^[A-Za-z_][A-Za-z0-9_-]*$/.test(k) && !RESERVED.has(k.toLowerCase());
+
+const key = (k: string) => (plainKey(k) ? k : q(k));
+
 const isScalar = (v: Json): v is null | boolean | number | string =>
   v === null || typeof v === "boolean" || typeof v === "number" || typeof v === "string";
 
@@ -40,9 +52,9 @@ function block(v: Json, indent: number): string[] {
   }
 
   for (const [k, val] of Object.entries(v as Record<string, Json>)) {
-    if (isScalar(val)) { out.push(`${pad}${q(k)}: ${scalar(val)}`); continue; }
-    if (isEmpty(val)) { out.push(`${pad}${q(k)}: ${emptyLiteral(val)}`); continue; }
-    out.push(`${pad}${q(k)}:`);
+    if (isScalar(val)) { out.push(`${pad}${key(k)}: ${scalar(val)}`); continue; }
+    if (isEmpty(val)) { out.push(`${pad}${key(k)}: ${emptyLiteral(val)}`); continue; }
+    out.push(`${pad}${key(k)}:`);
     out.push(...block(val, indent + 1));
   }
   return out;

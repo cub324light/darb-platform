@@ -3,6 +3,8 @@
      بتحويل 308، لكن الفاحصَ (ومكتباتِ الوكلاء) تتوقّع **JSON بحالة 200** على هذا
      المسار، فالتحويل يُقرأ فشلاً. نُقدّم البيان مباشرةً ونصرّح أن المُصدِر Google —
      فلا ندّعي ما لا نملك ولا نكسر التوقّع القياسيّ. */
+import { AGENT_AUTH } from "@/lib/agent/authMeta";
+
 export const dynamic = "force-static";
 
 export function GET() {
@@ -24,21 +26,8 @@ export function GET() {
     service_documentation: "https://usedarb.com/docs/api",
     op_policy_uri: "https://usedarb.com/privacy",
     op_tos_uri: "https://usedarb.com/terms",
-    /* بيانُ مصادقة الوكلاء (auth.md) — نفسُ ما في /auth.md لا قيمٌ ثانية.
-       `register_uri` معدومٌ لأن درب لا تُصدر رموزاً: الهويّةُ من Google،
-       والتسجيلُ الديناميكي (RFC 7591) غير مدعوم. لا نُعلن ما لا نخدمه. */
-    agent_auth: {
-      public_api: { auth_required: false },
-      authorization_servers: ["https://accounts.google.com"],
-      protected_resource_metadata: "https://usedarb.com/.well-known/oauth-protected-resource",
-      documentation: "https://usedarb.com/auth.md",
-      identity_types: ["human"],
-      credential_types: ["oauth2_access_token", "oidc_id_token"],
-      dynamic_client_registration: false,
-      register_uri: null,
-      claims_uri: "https://openidconnect.googleapis.com/v1/userinfo",
-      revocation_uri: "https://oauth2.googleapis.com/revoke",
-      delegated_agent_access: false,
-    },
+    /* بيانُ مصادقة الوكلاء — من `authMeta.ts`، هو نفسُه الذي يُطبع في ترويسة
+       `/auth.md` وكتلتها. مصدرٌ واحد فلا يكذب أحدُهما على الآخر. */
+    agent_auth: AGENT_AUTH,
   }, { headers: { "cache-control": "public, max-age=3600", "access-control-allow-origin": "*" } });
 }
