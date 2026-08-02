@@ -433,3 +433,22 @@ export function schoolTimeline(todayStr: string): SchoolTimeline | null {
     source: year.source,
   };
 }
+
+/** كلُّ الفترات التي يقع فيها يومٌ ما — عبر الأعوام كلّها (اليومُ قد يكون في
+    فصلٍ واختباراتِه معاً). تُستعمل لرسم شريط التقويم على أيام الشهر. */
+export function periodsOn(dateStr: string): CalendarPeriod[] {
+  const t = asUtc(dateStr);
+  const out: CalendarPeriod[] = [];
+  for (const y of SAUDI_ACADEMIC_YEARS) {
+    for (const p of y.periods) {
+      if (t >= asUtc(p.start) && t <= asUtc(p.end)) out.push(p);
+    }
+  }
+  return out;
+}
+
+/** أهمُّ فترةٍ في هذا اليوم للعرض: الإجازةُ والاختباراتُ أخصُّ من الفصل. */
+export function primaryPeriodOn(dateStr: string): CalendarPeriod | null {
+  const all = periodsOn(dateStr);
+  return all.find((p) => p.kind !== "term") ?? all[0] ?? null;
+}

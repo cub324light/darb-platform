@@ -9,7 +9,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   SAUDI_ACADEMIC_YEARS, CALENDAR_UPDATED_FOR, resolveCalendar,
-  schoolTimeline, daysBetween,
+  schoolTimeline, daysBetween, periodsOn, primaryPeriodOn,
 } from "./academicCalendar";
 
 const ts = (d: string) => new Date(d + "T12:00:00").getTime();
@@ -171,4 +171,33 @@ test("schoolTimeline: في الصيف يَعُدّ إلى بداية العام 
   assert.ok(t.next, "لا عدّادَ في الصيف — وهو أحوجُ وقتٍ إليه");
   assert.equal(t.next.period.start, "2026-08-23", "القادم بدايةُ العام التالي");
   assert.equal(t.next.daysAway, 21);
+});
+
+/* ═══ شريطُ التقويم على أيام الشهر ═══ */
+test("periodsOn: اليوم الدراسيّ داخل فصلٍ", () => {
+  const ps = periodsOn("2026-09-01");
+  assert.ok(ps.some((p) => p.kind === "term"), "توقّعنا فصلاً");
+});
+
+test("periodsOn: يومٌ في فصلٍ واختباراتِه معاً يُعيدهما", () => {
+  const ps = periodsOn("2026-06-10");   // اختبارات الفصل الثالث داخل الفصل
+  assert.ok(ps.some((p) => p.kind === "term"));
+  assert.ok(ps.some((p) => p.kind === "school_finals"));
+});
+
+test("primaryPeriodOn: الأخصُّ يفوز — الإجازةُ والاختبارُ قبل الفصل", () => {
+  assert.equal(primaryPeriodOn("2026-06-10")!.kind, "school_finals");
+  assert.equal(primaryPeriodOn("2026-09-24")!.kind, "break");
+  assert.equal(primaryPeriodOn("2026-09-01")!.kind, "term");
+});
+
+test("primaryPeriodOn: إجازة اليوم الوطني بلبلها الخاصّ وحدودها الصحيحة", () => {
+  assert.equal(primaryPeriodOn("2026-09-22")!.kind, "term", "قبلها دراسة");
+  assert.equal(primaryPeriodOn("2026-09-23")!.label, "إجازة اليوم الوطني");
+  assert.equal(primaryPeriodOn("2026-09-26")!.label, "إجازة اليوم الوطني", "شاملةُ الطرفين");
+  assert.equal(primaryPeriodOn("2026-09-27")!.kind, "term", "بعدها دراسة");
+});
+
+test("primaryPeriodOn: يومٌ خارج أي عامٍ يُعيد null بلا اختراع", () => {
+  assert.equal(primaryPeriodOn("2020-01-01"), null);
 });

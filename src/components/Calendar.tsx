@@ -2,6 +2,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { time, year, dateFull, dateHijri } from "@/lib/format";
+import { primaryPeriodOn } from "@/lib/academicCalendar";
+import { PERIOD_TONE } from "@/lib/calendarTone";
+import { usePref, setPref } from "@/lib/prefs";
 
 type Mode = "gregorian" | "hijri";
 
@@ -49,6 +52,9 @@ function hijriMonthStart(ref: Date): Date {
 
 interface PeekState { key: string; cx: number; top: number; bottom: number; place: "top" | "bottom"; }
 
+/* شريطُ التقويم الدراسي أسفل كل يوم: خطٌّ ملوّن يمتدّ على أيام الفترة، مستديرُ
+   الطرفين عند بدايتها ونهايتها فتُقرأ مدّتُها بلمحة. الفصلُ خطٌّ هادئ، والإجازةُ
+   والاختباراتُ ألوانُها الخاصّة. يُطفأ بزرٍّ ويبقى مطفأً. */
 export default function Calendar({
   examDate,
   onExamDateChange,
@@ -63,6 +69,8 @@ export default function Calendar({
   flushBottom?: boolean;
 }) {
   const [mode, setMode] = useState<Mode>("gregorian");
+  /* شريطُ التقويم الدراسي — مفتوحٌ افتراضاً، ويُطفئه من لا يريده فيبقى مطفأً */
+  const showBands = usePref("calBands", true);
   const [viewDate, setViewDate] = useState(new Date());
   const [peek, setPeek] = useState<PeekState | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -184,6 +192,23 @@ export default function Calendar({
   const rows: CalCell[][] = [];
   for (let i = 0; i < cells.length; i += 7) rows.push(cells.slice(i, i + 7));
 
+  /* مفتاحُ الألوان: الفتراتُ الظاهرةُ في هذا الشهر وحدها — لا نعرض لوناً لا يراه */
+  const monthTones = (() => {
+    if (!showBands) return [] as { label: string; color: string; dim: boolean }[];
+    const seen = new Map<string, { label: string; color: string; dim: boolean }>();
+    for (const c of cells) {
+      if (!c.inMonth) continue;
+      const p = primaryPeriodOn(dk(c.greg));
+      if (!p) continue;
+      const tone = PERIOD_TONE[p.kind];
+      /* الاسمُ الحقيقيّ للفترة أنفعُ من اسم نوعها: «إجازة اليوم الوطني» لا «إجازة» */
+      if (!seen.has(p.label)) {
+        seen.set(p.label, { label: p.label, color: tone.color, dim: p.kind === "term" });
+      }
+    }
+    return [...seen.values()];
+  })();
+
   const header = () => {
     if (mode === "gregorian") {
       return `${GREG_MONTHS[viewDate.getMonth()]} ${year(viewDate.getFullYear())}`;
@@ -299,6 +324,38 @@ export default function Calendar({
         ))}
       </div>
 
+      {/* التقويم الدراسي على الأيام — إظهارٌ وإطفاء، ومفتاحُ الألوان تحته.
+          لا نعرض إلا الفتراتِ الظاهرةَ في الشهر المعروض، فلا يقرأ الطالبُ
+          مفتاحاً لألوانٍ لا يراها. */}
+      <div className="mb-3">
+        <button
+          type="button"
+          onClick={() => setPref("calBands", !showBands)}
+          aria-pressed={showBands}
+          className="w-full flex items-center justify-between gap-2 rounded-2xl px-3 py-2 transition active:scale-[0.99]"
+          style={{ background: "var(--surface2)" }}
+        >
+          <span className="t-caption font-black" style={{ color: "var(--text)" }}>
+            🗓️ التقويم الدراسي على الأيام
+          </span>
+          <span className="t-caption font-black" style={{ color: showBands ? "var(--accent-light)" : "var(--text-muted)" }}>
+            {showBands ? "ظاهر" : "مخفيّ"}
+          </span>
+        </button>
+
+        {showBands && monthTones.length > 0 && (
+          <div className="flex flex-wrap gap-x-3 gap-y-1.5 mt-2 px-1">
+            {monthTones.map((t) => (
+              <span key={t.label} className="flex items-center gap-1.5">
+                <span aria-hidden="true" className="rounded-full"
+                  style={{ width: 14, height: 3, background: t.color, opacity: t.dim ? 0.45 : 0.95 }} />
+                <span className="t-caption" style={{ color: "var(--text-muted)" }}>{t.label}</span>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* تنقل الأشهر — RTL: أول عنصر = يمين = السابق */}
       <div className="flex items-center justify-between mb-4">
         <button onClick={prev}
@@ -360,8 +417,29 @@ export default function Calendar({
                   {cell.label}
                 </span>
                 {hasEv && (
-                  <span className="absolute rounded-full" style={{ bottom: 3, width: 4, height: 4, background: dotColor }} />
+                  <span className="absolute rounded-full" style={{ bottom: 5, width: 4, height: 4, background: dotColor }} />
                 )}
+                {/* شريطُ الفترة: يمتدّ عرضَ الخليّة كاملاً فتتّصل الأيامُ خطّاً
+                    واحداً، ويستدير طرفُه عند أول الفترة وآخرها. */}
+                {showBands && cell.inMonth && (() => {
+                  const p = primaryPeriodOn(cellKey);
+                  if (!p) return null;
+                  const tone = PERIOD_TONE[p.kind];
+                  const isFirst = cellKey === p.start;
+                  const isLast = cellKey === p.end;
+                  return (
+                    <span aria-hidden="true" className="absolute"
+                      style={{
+                        bottom: 0, insetInlineStart: 0, insetInlineEnd: 0, height: 3,
+                        background: tone.color,
+                        opacity: p.kind === "term" ? 0.45 : 0.95,
+                        borderStartStartRadius: isFirst ? 3 : 0,
+                        borderEndStartRadius: isFirst ? 3 : 0,
+                        borderStartEndRadius: isLast ? 3 : 0,
+                        borderEndEndRadius: isLast ? 3 : 0,
+                      }} />
+                  );
+                })()}
               </button>
             );
           })}
