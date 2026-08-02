@@ -17,6 +17,7 @@ import { isUniversityPhase, isGraduatePhase } from "@/lib/phase";
 import { getTrack, type TrackId } from "@/lib/tracks";
 import { daysUntil } from "@/lib/insights";
 import { subjectsFor, trackLabel } from "@/lib/curriculum";
+import SchoolTimelineCard from "@/components/SchoolTimelineCard";
 
 const noop = () => () => {};
 const useMounted = () => useSyncExternalStore(noop, () => true, () => false);
@@ -146,6 +147,9 @@ export default function SchoolPage() {
           <p className="t-title font-black" style={{ color: "var(--text)" }}>يومك الدراسي</p>
           <p className="t-body" style={{ color: "var(--text-dim)" }}>واجباتك ودروسك واختباراتك ومتطلباتك في مكانٍ واحد — تُنظّم ضغطك الحقيقي، لا الاختبارات وحدها.</p>
         </header>
+
+        {/* التقويم: «كم باقي؟» أولاً — سؤالُ الطالب الأول عند فتح المدرسة */}
+        <SchoolTimelineCard />
 
         {/* المواد الدراسية — من نظام المنهج (المسار+الصف+الفصل) */}
         <CurriculumSubjects />

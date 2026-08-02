@@ -351,3 +351,85 @@ export function calendarFactsForDuwairb(snap: CalendarSnapshot): string {
   }
   return `حالة التقويم الدراسي السعودي (استعملها لمواءمة خطتك مع واقع الطالب):\n${lines.join("\n")}`;
 }
+
+/* ═══════════ خطُّ الزمن المدرسيّ — للعرض في «المدرسة» ═══════════
+   الطالب يفتح «المدرسة» فيسأل سؤالين: «كم باقي؟» و«وشو الجاي؟». وكان الجواب
+   مبعثراً بين التقويم والخطة. هذه الدالّة تجمعه من `periods` نفسها لا من مصدرٍ
+   ثانٍ — فما يُصحَّح في بيانات العام يظهر هنا تلقائياً.
+
+   نقيّةٌ تماماً: تأخذ اليومَ نصّاً ولا تقرأ ساعةَ النظام (قاعدة P1). */
+
+export interface TimelineEntry {
+  period: CalendarPeriod;
+  /** أيامٌ حتى بدايتها (موجب = لم تبدأ) أو حتى نهايتها (للجارية) */
+  daysAway: number;
+  days: number;   // طولها بالأيام (شامل الطرفين)
+}
+
+export interface SchoolTimeline {
+  yearId: string;
+  yearLabel: string;
+  /** ما نحن فيه اليوم — قد تتداخل فترتان (فصلٌ واختباراتُه) فنُعيدها كلَّها */
+  today: CalendarPeriod[];
+  /** أقربُ فترةٍ قادمة وكم يوماً حتى تبدأ — جوابُ «كم باقي؟» */
+  next: TimelineEntry | null;
+  upcoming: TimelineEntry[];
+  past: TimelineEntry[];
+  source: string;
+}
+
+const DAY_MS = 86_400_000;
+const asUtc = (d: string): number => Date.parse(`${d}T00:00:00Z`);
+/** فرقُ الأيام بين تاريخين (b − a) — بالتقويم لا بالساعات، فلا يفسده التوقيت الصيفي. */
+export const daysBetween = (a: string, b: string): number =>
+  Math.round((asUtc(b) - asUtc(a)) / DAY_MS);
+
+const spanDays = (p: CalendarPeriod): number => daysBetween(p.start, p.end) + 1;
+
+/** خطُّ زمن العام الذي يقع فيه `todayStr` — أو أقربُ عامٍ يليه إن كنّا قبل بدايته. */
+export function schoolTimeline(todayStr: string): SchoolTimeline | null {
+  const years = SAUDI_ACADEMIC_YEARS;
+  if (years.length === 0) return null;
+
+  /* العام الحالي: الذي يقع اليوم بين بدايته ونهاية آخر فتراته (الصيف داخلٌ فيها) */
+  const endOf = (y: AcademicYearData) =>
+    y.periods.reduce((m, p) => (asUtc(p.end) > asUtc(m) ? p.end : m), y.schoolEnd);
+
+  const year =
+    years.find((y) => asUtc(todayStr) >= asUtc(y.schoolStart) && asUtc(todayStr) <= asUtc(endOf(y)))
+    ?? years.find((y) => asUtc(y.schoolStart) > asUtc(todayStr))
+    ?? years[years.length - 1];
+
+  const entry = (p: CalendarPeriod): TimelineEntry => ({
+    period: p,
+    daysAway: daysBetween(todayStr, p.start),
+    days: spanDays(p),
+  });
+
+  const today = year.periods.filter(
+    (p) => asUtc(todayStr) >= asUtc(p.start) && asUtc(todayStr) <= asUtc(p.end),
+  );
+
+  /* ▓ «القادم» يعبر حدّ العام: الطالبُ في الإجازة الصيفية يسأل «كم باقي على
+     الدراسة؟»، وجوابُه في العام **التالي** لا في عامه. فلو اقتصرنا على فترات
+     عامه لاختفى العدّاد في الشهرين اللذين يحتاجه فيهما أكثر من غيرهما. */
+  const nextYear = years[years.indexOf(year) + 1];
+  const upcoming = [...year.periods, ...(nextYear?.periods ?? [])]
+    .filter((p) => asUtc(p.start) > asUtc(todayStr))
+    .sort((a, b) => asUtc(a.start) - asUtc(b.start))
+    .map(entry);
+  const past = year.periods
+    .filter((p) => asUtc(p.end) < asUtc(todayStr))
+    .sort((a, b) => asUtc(b.end) - asUtc(a.end))
+    .map(entry);
+
+  return {
+    yearId: year.id,
+    yearLabel: year.gregorianLabel,
+    today,
+    next: upcoming[0] ?? null,
+    upcoming,
+    past,
+    source: year.source,
+  };
+}

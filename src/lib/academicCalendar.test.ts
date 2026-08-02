@@ -9,6 +9,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   SAUDI_ACADEMIC_YEARS, CALENDAR_UPDATED_FOR, resolveCalendar,
+  schoolTimeline, daysBetween,
 } from "./academicCalendar";
 
 const ts = (d: string) => new Date(d + "T12:00:00").getTime();
@@ -110,4 +111,64 @@ test("صيف 1447 (قبل بداية 1448) يبقى صيفاً لا يُنسب �
   const s = resolveCalendar(new Date("2026-07-28T12:00:00"));
   assert.equal(s.yearId, "1447");
   assert.equal(s.phase, "summer");
+});
+
+/* ═══ خطُّ الزمن المدرسيّ — «كم باقي؟» و«وشو الجاي؟» ═══ */
+test("schoolTimeline: يختار العام الذي نحن فيه", () => {
+  const t = schoolTimeline("2026-09-01");
+  assert.ok(t, "لا خطَّ زمنٍ ليومٍ داخل العام");
+  assert.equal(t.yearId, "1448");
+});
+
+test("schoolTimeline: «اليوم» يعرف أننا في الفصل الأول", () => {
+  const t = schoolTimeline("2026-09-01")!;
+  assert.ok(t.today.some((p) => p.kind === "term"), `توقّعنا فصلاً: ${t.today.map((p) => p.label)}`);
+});
+
+test("schoolTimeline: يوم إجازةٍ يُعرف إجازةً", () => {
+  const t = schoolTimeline("2026-09-24")!;   // ضمن إجازة اليوم الوطني
+  assert.ok(t.today.some((p) => p.kind === "break"), `توقّعنا إجازة: ${t.today.map((p) => p.label)}`);
+});
+
+test("schoolTimeline: «القادم» أقربُ فترةٍ لم تبدأ، وعدُّ أيامها صحيح", () => {
+  const t = schoolTimeline("2026-09-13")!;   // قبل اليوم الوطني بعشرة أيام
+  assert.ok(t.next, "لا فترةَ قادمة");
+  assert.equal(t.next.period.start, "2026-09-23");
+  assert.equal(t.next.daysAway, 10, "متبقّي عشرة أيام");
+});
+
+test("schoolTimeline: القادم مرتَّبٌ تصاعدياً والسابق تنازلياً", () => {
+  const t = schoolTimeline("2027-01-20")!;
+  for (let i = 1; i < t.upcoming.length; i++) {
+    assert.ok(t.upcoming[i].daysAway >= t.upcoming[i - 1].daysAway, "القادم غير مرتَّب");
+  }
+  assert.ok(t.past.length > 0, "لا فتراتٍ منقضية في منتصف العام؟");
+  /* الأحدثُ انقضاءً أولاً — بتاريخ النهاية لا البداية: فصلٌ طويل قد يبدأ قبل
+     إجازةٍ قصيرة وينتهي بعدها، فالترتيب بالبداية يقلبهما. */
+  for (let i = 1; i < t.past.length; i++) {
+    assert.ok(t.past[i].period.end <= t.past[i - 1].period.end, "السابق غير مرتَّب بالنهاية");
+  }
+});
+
+test("schoolTimeline: طولُ الفترة شاملُ الطرفين", () => {
+  const t = schoolTimeline("2026-09-13")!;
+  /* إجازة اليوم الوطني 23→26 سبتمبر = أربعة أيام */
+  assert.equal(t.next!.days, 4);
+});
+
+test("daysBetween: لا يفسده اختلافُ التوقيت", () => {
+  assert.equal(daysBetween("2026-09-13", "2026-09-23"), 10);
+  assert.equal(daysBetween("2026-09-23", "2026-09-13"), -10);
+  assert.equal(daysBetween("2026-03-01", "2026-03-01"), 0);
+});
+
+/* العطل الذي كشفه العرض: في الإجازة الصيفية لا فترةَ قادمة داخل العام نفسه،
+   فاختفى عدّاد «متبقّي … على الدراسة» في الشهرين اللذين يحتاجه الطالب فيهما
+   أكثر من غيرهما. «القادم» يجب أن يعبر حدّ العام. */
+test("schoolTimeline: في الصيف يَعُدّ إلى بداية العام التالي", () => {
+  const t = schoolTimeline("2026-08-02")!;   // داخل صيف 1447
+  assert.ok(t.today.some((p) => p.kind === "summer"), "توقّعنا إجازةً صيفية");
+  assert.ok(t.next, "لا عدّادَ في الصيف — وهو أحوجُ وقتٍ إليه");
+  assert.equal(t.next.period.start, "2026-08-23", "القادم بدايةُ العام التالي");
+  assert.equal(t.next.daysAway, 21);
 });
