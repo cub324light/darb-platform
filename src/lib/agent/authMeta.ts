@@ -3,9 +3,11 @@
    و`/.well-known/oauth-authorization-server`. كانت مكتوبةً مرّتين — نصّاً في
    الماركداون وكائناً في المعالِج — فكان يكفي أن يُعدَّل أحدُهما ليكذب الآخر.
 
-   نقولُ الحقيقة كما هي: درب لا تُصدر رموزاً (الهويّة من Google)، فلا
-   `register_uri` عندنا ولا تسجيلٌ ديناميكيّ. عنوانٌ مخترَعٌ يكسر أوّل وكيلٍ
-   يجرّبه، والصمتُ عنه أصدق.
+   نقولُ الحقيقة كما هي: درب لا تُصدر رموزاً — الهويّةُ من Google. ولذلك
+   `register_uri` يشير إلى وحدة اعتماد Google نفسِها: هي المكانُ الذي يسجّل فيه
+   المطوّرُ عميلَه لخادم التفويض الذي يحرس درب، لا عنوانٌ مخترَع عندنا. ويبقى
+   `dynamic_client_registration: false` بجانبه صريحاً، فلا يظنّ وكيلٌ أن
+   التسجيل الآليّ (RFC 7591) متاح فينكسر عند أوّل محاولة.
 
    نقيّ: لا `window` ولا `Date`. */
 
@@ -19,7 +21,9 @@ export const AGENT_AUTH = {
   credential_types: ["oauth2_access_token", "oidc_id_token"],
   token_endpoint_auth_methods: ["client_secret_post", "client_secret_basic"],
   dynamic_client_registration: false,
-  register_uri: null,
+  /* تسجيلٌ يدويّ عند Google — لا نُصدر نحن، ولا نَعِد بتسجيلٍ آليّ */
+  registration_type: "manual",
+  register_uri: "https://console.cloud.google.com/apis/credentials",
   claims_uri: "https://openidconnect.googleapis.com/v1/userinfo",
   revocation_uri: "https://oauth2.googleapis.com/revoke",
   delegated_agent_access: false,

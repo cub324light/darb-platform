@@ -186,7 +186,7 @@ test("auth.md: ترويسةُ YAML تحمل agent_auth بمفتاحٍ عارٍ �
 
   assert.ok(fm.startsWith("---\n"), "لا ترويسةَ في أوّل الملفّ");
   assert.match(fm, /^agent_auth:$/m, "«agent_auth:» ليست مفتاحاً عارياً في أوّل سطر");
-  assert.match(fm, /^\s+register_uri: null$/m, "register_uri غائب عن الترويسة");
+  assert.match(fm, /^\s+register_uri: "https:\/\/console\.cloud\.google\.com\//m, "register_uri غائب عن الترويسة");
   assert.match(fm, /^\s+identity_types:$/m, "identity_types غائب");
   assert.ok(fm.trimEnd().endsWith("---"), "الترويسةُ غير مغلقة");
 
@@ -203,11 +203,20 @@ test("agent_auth: مصدرٌ واحد يغذّي auth.md وبيانَ خادم �
   const { AGENT_AUTH } = await import("./authMeta");
   const md = readFileSync("src/app/auth.md/route.ts", "utf8");
   const oauth = readFileSync("src/app/api/well-known/oauth-authorization-server/route.ts", "utf8");
+  const prot = readFileSync("src/app/api/well-known/oauth-protected-resource/route.ts", "utf8");
   assert.ok(md.includes("AGENT_AUTH"), "auth.md لا يقرأ من المصدر الواحد");
   assert.ok(oauth.includes("agent_auth: AGENT_AUTH"), "بيانُ خادم التفويض لا يقرأ من المصدر الواحد");
-  /* لا نُعلن تسجيلاً لا نخدمه */
-  assert.equal(AGENT_AUTH.register_uri, null);
-  assert.equal(AGENT_AUTH.dynamic_client_registration, false);
+  assert.ok(prot.includes("agent_auth: AGENT_AUTH"), "بيانُ المورد المحميّ لا يحمل الكتلة");
+
+  /* التسجيلُ يدويٌّ عند Google: العنوان حقيقيّ، والتسجيلُ الآليّ معلَنٌ مُطفأً
+     فلا يُقرأ وعداً بـRFC 7591. */
+  assert.equal(AGENT_AUTH.dynamic_client_registration, false,
+    "لا نَعِد بتسجيلٍ ديناميكيّ لا نخدمه");
+  assert.match(AGENT_AUTH.register_uri, /^https:\/\/console\.cloud\.google\.com\//,
+    "register_uri يجب أن يشير إلى وحدة اعتماد Google — لا إلى عنوانٍ عندنا لا نخدمه");
+  /* وكيلٌ نيابةً عن طالب: مغلقٌ عن قصد ولا يُفتح بغفلة */
+  assert.equal(AGENT_AUTH.delegated_agent_access, false);
+  assert.deepEqual([...AGENT_AUTH.identity_types], ["human"]);
 });
 
 test("المخطّطات: لكلٍّ نوعٌ وعنوان", () => {

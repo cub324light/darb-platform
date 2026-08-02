@@ -53,8 +53,17 @@ ${SITE.url}
 
 ## تسجيلُ الوكلاء (Agent Registration)
 درب **لا تُصدر** رموزاً ولا تملك سجلَّ عملاء خاصاً بها؛ الهويّةُ من Google.
-فليس عندنا \`register_uri\`: التسجيلُ الديناميكي (RFC 7591) غير مدعوم، ويُنشئ
-المطوّرُ عميلَه في Google Cloud Console ثم يستعمل خادم تفويض Google أعلاه.
+فالتسجيلُ **يدويٌّ عند Google** لا عندنا، والتسجيلُ الديناميكي (RFC 7591) غير
+مدعوم:
+
+1. أنشئ عميلاً في [وحدة اعتماد Google](https://console.cloud.google.com/apis/credentials)
+   — وهذا هو \`register_uri\` في البيان أدناه.
+2. استعمل خادم تفويض Google الموصوف في \`/.well-known/oauth-authorization-server\`.
+3. أرسِل رمزَ الهويّة في \`Authorization: Bearer <Google ID token>\`.
+
+وانتبه: هذا يمنحك هويّةَ **مستخدمٍ بشريّ** يدخل بحسابه. ولا يوجد — ولن يوجد —
+تفويضٌ يُدخل وكيلاً إلى بيانات طالبٍ نيابةً عنه؛ ولذلك \`delegated_agent_access\`
+مُطفأ.
 
 \`\`\`json
 ${JSON.stringify({ agent_auth: AGENT_AUTH }, null, 2)}
