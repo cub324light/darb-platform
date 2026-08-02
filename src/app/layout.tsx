@@ -86,11 +86,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://www.googleapis.com" crossOrigin="" />
         <link rel="preconnect" href="https://securetoken.googleapis.com" crossOrigin="" />
         <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
-        {/* اكتشافٌ آليّ: يقود الوكيلَ إلى وصف الموقع المخصّص له */}
+        {/* اكتشافٌ آليّ: يقود الوكيلَ من أي صفحةٍ إلى وصف الموقع المخصّص له.
+            `rel="alternate"` للنُسخ البديلة، و`rel="service-desc"` (RFC 8631)
+            لوصف الواجهة، و`rel="describedby"` للمخطّطات. */}
         <link rel="alternate" type="text/plain" href="/llms.txt" title="llms.txt" />
+        <link rel="alternate" type="text/plain" href="/llms-full.txt" title="llms-full.txt" />
         <link rel="alternate" type="text/markdown" href="/agents.md" title="agents.md" />
-        <link rel="alternate" type="application/json" href="/openapi.json" title="OpenAPI" />
+        <link rel="service-desc" type="application/json" href="/openapi.json" title="OpenAPI 3.1" />
+        <link rel="service-doc" type="text/html" href="/docs/api" title="توثيق الواجهة" />
+        <link rel="describedby" type="application/schema+json" href="/schemas.json" title="JSON Schema" />
+        <link rel="alternate" type="application/json" href="/agents.json" title="agents.json" />
+        <link rel="alternate" type="application/json" href="/.well-known/agent-card.json" title="Agent Card" />
         <link rel="alternate" type="application/rss+xml" href="/feed.xml" title="آخر تحديثات درب" />
+        {/* وسومٌ نصّية يقرأها الفاحصون والوكلاء الذين لا يتبعون الروابط */}
+        <meta name="ai-content-declaration" content="human-authored" />
+        <meta name="ai-crawler-policy" content="allow" />
+        <meta name="ai-training" content="allowed-with-attribution" />
+        <meta name="ai-policy" content="https://usedarb.com/ai.txt" />
+        <meta name="llms-txt" content="https://usedarb.com/llms.txt" />
+        <meta name="mcp-server" content="https://usedarb.com/mcp" />
+        <meta name="openapi" content="https://usedarb.com/openapi.json" />
+        <meta name="agent-manifest" content="https://usedarb.com/.well-known/agent-card.json" />
+        <meta name="citation-policy" content="required" />
         <StructuredData />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

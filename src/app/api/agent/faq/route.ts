@@ -1,7 +1,9 @@
 import { faqPayload } from "@/lib/agent/catalog";
 import { agentJson, OPTIONS as opt } from "@/lib/agent/respond";
 
-export const dynamic = "force-static";
+/* ▓ لا `force-static`: يُفرِغ `searchParams` فيصير `?q=` بلا أثر — كان بحثُ
+   «زززز» يُعيد السبعة والخمسين سؤالاً كلَّها. التخزين المؤقّت يكفي للأداء. */
+export const dynamic = "force-dynamic";
 export const OPTIONS = opt;
 
 export function GET(req: Request) {

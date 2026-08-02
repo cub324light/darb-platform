@@ -24,11 +24,25 @@ ${e.summary}${e.params?.length ? `\nالمعاملات: ${e.params.map((p) => `\
 ## الاكتشاف الآليّ
 | ماذا | أين |
 |---|---|
-| وصف OpenAPI 3.1 | \`${SITE.url}/openapi.json\` |
+| وصف OpenAPI 3.1 | \`${SITE.url}/openapi.json\` · \`${SITE.url}/openapi.yaml\` |
+| عقدُ التنفيذ (agents.json) | \`${SITE.url}/agents.json\` |
 | بطاقة الوكيل (A2A) | \`${SITE.url}/.well-known/agent-card.json\` |
 | بيان الإضافة | \`${SITE.url}/.well-known/ai-plugin.json\` |
-| خادم MCP | \`${SITE.url}/mcp\` |
+| خادم MCP | \`${SITE.url}/mcp\` · وصفُه \`${SITE.url}/.well-known/mcp.json\` |
+| مخطّطات JSON Schema | \`${SITE.url}/schemas.json\` |
 | المهارات | \`${SITE.url}/api/agent/skills\` |
+| سياسة الذكاء الاصطناعي | \`${SITE.url}/ai.txt\` |
+| اكتشافُ التفويض | \`${SITE.url}/.well-known/oauth-protected-resource\` |
+
+## خادم MCP
+\`POST ${SITE.url}/mcp\` بـJSON-RPC 2.0 (البروتوكول \`2025-06-18\`):
+
+- \`initialize\` · \`ping\`
+- \`tools/list\` · \`tools/call\` — خمسُ أدوات: \`list_universities\` · \`get_university\` ·
+  \`list_exams\` · \`get_academic_calendar\` · \`search_faq\`
+- \`prompts/list\` · \`prompts/get\` — أربعُ مطالبات جاهزة: \`choose_university\` ·
+  \`exam_timeline\` · \`admission_question\` · \`study_plan\`
+- \`resources/list\` · \`resources/read\`
 
 ## المصادقة
 واجهاتُ القراءة أعلاه **عامّة بلا مصادقة**. أمّا ما يخصّ حساب طالبٍ بعينه فمحميٌّ

@@ -1,7 +1,11 @@
 import { universitiesPayload, universityDetail } from "@/lib/agent/catalog";
 import { agentJson, OPTIONS as opt } from "@/lib/agent/respond";
 
-export const dynamic = "force-static";
+/* ▓ لا تُعِد `force-static` هنا: Next يُفرِغ `searchParams` في المعالِج الثابت،
+   فكان `?id=kfupm` يُعيد الجامعات الستّ والثلاثين كلَّها بدل ملفّ الجامعة،
+   و`?region=` لا يصفّي شيئاً — ووصفُ OpenAPI يَعِد بهما. الأداءُ محفوظٌ بترويسة
+   التخزين (`s-maxage=3600`) لا بالتجميد. يحرسه `agentRoutes.test.ts`. */
+export const dynamic = "force-dynamic";
 export const OPTIONS = opt;
 
 export function GET(req: Request) {

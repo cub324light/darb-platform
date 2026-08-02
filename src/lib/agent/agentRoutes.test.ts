@@ -1,0 +1,104 @@
+/* حارسُ طبقة الوكلاء — يمنع عودة عطلٍ صامت وقعَ فعلاً.
+   تشغيل: npx tsx --test src/lib/agent/agentRoutes.test.ts
+
+   القصّة: كانت واجهاتُ `/api/agent/*` معلَّمةً `force-static`. وNext يُفرِغ
+   `searchParams` في المعالِج الثابت، فصار `?id=kfupm` يُعيد الجامعات الستّ
+   والثلاثين كلَّها بدل ملفّ الجامعة، و`?q=زززز` يُعيد الأسئلة السبعة والخمسين
+   كلَّها. البناءُ ينجح، والأنواعُ سليمة، والاختبارات خضراء — ولا شيء يشتكي.
+   وصفُ OpenAPI يَعِد بهذه المعاملات، فالوكيلُ يطلبها ويُصدّق ما يُعاد إليه. */
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
+import { universityDetail, universitiesPayload, faqPayload } from "./catalog";
+import { ENDPOINTS } from "./catalog";
+import { SCHEMAS, TOOL_INPUTS } from "./schemas";
+import { openApiSpec } from "./openapi";
+
+const routeFiles = (dir: string): string[] => {
+  const out: string[] = [];
+  for (const e of readdirSync(dir)) {
+    const f = join(dir, e);
+    if (statSync(f).isDirectory()) out.push(...routeFiles(f));
+    else if (e === "route.ts") out.push(f);
+  }
+  return out;
+};
+
+test("المعالِجُ الذي يقرأ searchParams ليس force-static", () => {
+  const offenders: string[] = [];
+  for (const f of [...routeFiles("src/app/api/agent"), ...routeFiles("src/app/api/well-known")]) {
+    const src = readFileSync(f, "utf8");
+    const readsParams = /searchParams|new URL\(\s*req(?:uest)?\.url/.test(src);
+    const isStatic = /dynamic\s*=\s*"force-static"/.test(src);
+    if (readsParams && isStatic) offenders.push(f);
+  }
+  assert.deepEqual(offenders, [],
+    "‏force-static يُفرِغ searchParams — استعمِل force-dynamic مع ترويسة تخزينٍ مؤقّت في:\n" +
+    offenders.join("\n"));
+});
+
+/* ═══ التصفيةُ نفسُها تعمل — لا نكتفي بشكل المعالِج ═══ */
+
+test("universityDetail: معرّفٌ صحيح يُعيد جامعةً بكلياتها", () => {
+  const u = universityDetail("kfupm");
+  assert.ok(u, "لم تُعَد جامعةُ البترول");
+  assert.equal(u.id, "kfupm");
+  assert.ok(u.colleges.length > 0, "جامعةٌ بلا كليات");
+  assert.ok(u.majorsCount > 0);
+});
+
+test("universityDetail: معرّفٌ مجهول يُعيد null لا قائمةً كاملة", () => {
+  assert.equal(universityDetail("لا-توجد"), null);
+  assert.equal(universityDetail(""), null);
+});
+
+test("faqPayload: البحثُ يصفّي فعلاً", () => {
+  const all = faqPayload();
+  assert.ok(all.length > 10, "بيانات الأسئلة فارغة؟");
+  assert.equal(faqPayload("زززز").length, 0, "بحثٌ لا يطابق شيئاً يجب أن يُعيد صفراً");
+  const some = faqPayload("ستيب");
+  assert.ok(some.length > 0 && some.length < all.length, `التصفية لم تُضيّق: ${some.length}/${all.length}`);
+});
+
+test("universitiesPayload: «أخرى» ليست جامعة", () => {
+  assert.ok(!universitiesPayload().some((u) => u.id === "other"));
+});
+
+/* ═══ الوصفُ لا يَعِد بما لا يوجد ═══ */
+
+test("OpenAPI: كل مسارٍ موصوفٍ له معالِجٌ على القرص", () => {
+  for (const p of Object.keys(openApiSpec().paths)) {
+    const dir = p === "/mcp" ? "src/app/api/mcp" : `src/app${p}`;
+    assert.ok(statSync(join(dir, "route.ts")).isFile(), `${p}: موصوفٌ في OpenAPI بلا معالِج`);
+  }
+});
+
+test("OpenAPI: لا إشارةَ `$ref` معلّقة", () => {
+  const spec = openApiSpec();
+  const names = new Set(Object.keys(spec.components.schemas));
+  const refs = [...JSON.stringify(spec).matchAll(/"\$ref":"#\/components\/schemas\/([^"]+)"/g)].map((m) => m[1]);
+  assert.ok(refs.length > 0, "لا إشاراتٍ أصلاً — هل انفصل الوصفُ عن المخطّطات؟");
+  for (const r of refs) assert.ok(names.has(r), `إشارةٌ إلى مخطّطٍ غير معرّف: ${r}`);
+  /* ولا تبقى صيغةُ JSON Schema الأصلية (`#/$defs/`) داخل مستند OpenAPI */
+  assert.ok(!JSON.stringify(spec).includes("#/$defs/"), "بقيت إشارةُ $defs بلا إعادة ربط");
+});
+
+test("لكل واجهةٍ في الكتالوج معالِجٌ ومخطّطٌ لأداة MCP", () => {
+  for (const e of ENDPOINTS) {
+    assert.ok(statSync(join("src/app", e.path, "route.ts")).isFile(), `${e.path}: بلا معالِج`);
+  }
+  /* أسماءُ الأدوات في MCP يجب أن تُغطّي مخطّطاتِ المدخلات كلَّها */
+  const mcp = readFileSync("src/app/api/mcp/route.ts", "utf8");
+  for (const name of Object.keys(TOOL_INPUTS)) {
+    assert.ok(mcp.includes(`name: "${name}"`), `مخطّطُ مدخلاتٍ بلا أداة: ${name}`);
+  }
+});
+
+test("المخطّطات: لكلٍّ نوعٌ وعنوان", () => {
+  for (const [name, s] of Object.entries(SCHEMAS)) {
+    assert.equal(s.type, "object", `${name}: ليس كائناً`);
+    assert.ok(s.title, `${name}: بلا عنوان`);
+    assert.ok(s.description, `${name}: بلا وصف`);
+  }
+});

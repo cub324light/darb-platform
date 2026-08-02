@@ -31,13 +31,29 @@ const nextConfig: NextConfig = {
      فنُعيد كتابتها إلى معالِجاتٍ حقيقية. و/mcp اسمٌ قصير يتوقّعه عملاء MCP. */
   async rewrites() {
     return [
+      /* ‹١› بيانات ومَنافِست تحت /.well-known (المسار القياسيّ الأول) */
       { source: "/.well-known/ai-plugin.json", destination: "/api/well-known/ai-plugin" },
       { source: "/.well-known/agent-card.json", destination: "/api/well-known/agent-card" },
       { source: "/.well-known/agent.json", destination: "/api/well-known/agent-card" },
+      { source: "/.well-known/agents.json", destination: "/agents.json" },
       { source: "/.well-known/mcp.json", destination: "/api/well-known/mcp-info" },
       { source: "/.well-known/openapi.json", destination: "/openapi.json" },
+      { source: "/.well-known/openapi.yaml", destination: "/openapi.yaml" },
+      { source: "/.well-known/schemas.json", destination: "/schemas.json" },
+      { source: "/.well-known/llms.txt", destination: "/llms.txt" },
+      { source: "/.well-known/llms-full.txt", destination: "/llms-full.txt" },
+      { source: "/.well-known/agents.md", destination: "/agents.md" },
+      { source: "/.well-known/ai.txt", destination: "/ai.txt" },
       { source: "/.well-known/oauth-protected-resource", destination: "/api/well-known/oauth-protected-resource" },
       { source: "/.well-known/oauth-authorization-server", destination: "/api/well-known/oauth-authorization-server" },
+      /* ‹٢› الأسماءُ الجذرية القصيرة — عملاءُ كثيرون يجرّبونها قبل /.well-known،
+         والمحتوى واحدٌ في الحالتين (نفس المعالِج، لا نسخة ثانية). */
+      { source: "/ai-plugin.json", destination: "/api/well-known/ai-plugin" },
+      { source: "/agent.json", destination: "/api/well-known/agent-card" },
+      { source: "/agent-card.json", destination: "/api/well-known/agent-card" },
+      { source: "/mcp.json", destination: "/api/well-known/mcp-info" },
+      { source: "/oauth-protected-resource", destination: "/api/well-known/oauth-protected-resource" },
+      { source: "/oauth-authorization-server", destination: "/api/well-known/oauth-authorization-server" },
       { source: "/mcp", destination: "/api/mcp" },
     ];
   },

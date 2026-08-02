@@ -21,11 +21,14 @@ ${CAPABILITIES.map((c) => `- [${c.name}](${SITE.url}${c.path}): ${c.summary}`).j
 ${ENDPOINTS.map((e) => `- [${e.id}](${SITE.url}${e.path}): ${e.summary}`).join("\n")}
 
 ## للوكلاء
-- وصف OpenAPI: ${SITE.url}/openapi.json
+- وصف OpenAPI: ${SITE.url}/openapi.json (وبصيغة YAML: ${SITE.url}/openapi.yaml)
+- عقدُ التنفيذ (agents.json): ${SITE.url}/agents.json
 - بطاقة الوكيل: ${SITE.url}/.well-known/agent-card.json
 - بيان الإضافة: ${SITE.url}/.well-known/ai-plugin.json
-- خادم MCP: ${SITE.url}/mcp
+- خادم MCP: ${SITE.url}/mcp (أدوات · مطالبات · موارد)
+- مخطّطات JSON Schema: ${SITE.url}/schemas.json
 - اكتشاف المهارات: ${SITE.url}/api/agent/skills
+- سياسة الذكاء الاصطناعي: ${SITE.url}/ai.txt
 - التفاصيل الكاملة: ${SITE.url}/llms-full.txt
 - دليل الوكلاء: ${SITE.url}/agents.md
 

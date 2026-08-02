@@ -1,5 +1,7 @@
-/* بطاقة الوكيل (A2A Agent Card) — تُقدَّم على /.well-known/agent-card.json عبر rewrite. */
+/* بطاقة الوكيل (A2A Agent Card) — تُقدَّم على /.well-known/agent-card.json
+   و/.well-known/agent.json و/agent.json عبر rewrite. */
 import { SITE, CAPABILITIES, ENDPOINTS } from "@/lib/agent/catalog";
+import { AGENT_HEADERS } from "@/lib/agent/respond";
 
 export const dynamic = "force-static";
 
@@ -13,6 +15,8 @@ export function GET() {
     provider: { organization: SITE.name, url: SITE.url },
     version: "1.0.0",
     documentationUrl: `${SITE.url}/docs/api`,
+    iconUrl: `${SITE.url}/icon.svg`,
+    supportsAuthenticatedExtendedCard: false,
     defaultInputModes: ["text/plain"],
     defaultOutputModes: ["application/json", "text/plain"],
     capabilities: { streaming: false, pushNotifications: false, stateTransitionHistory: false },
@@ -29,9 +33,11 @@ export function GET() {
     security: [],
     additionalInterfaces: [
       { url: `${SITE.url}/openapi.json`, transport: "OPENAPI" },
+      { url: `${SITE.url}/openapi.yaml`, transport: "OPENAPI" },
       { url: `${SITE.url}/mcp`, transport: "JSONRPC" },
+      { url: `${SITE.url}/agents.json`, transport: "AGENTS_JSON" },
     ],
     /* ما تقدّمه المنصّة للطالب — سياقٌ يساعد الوكيل على ترشيحها في محلّها */
     productCapabilities: CAPABILITIES,
-  }, { headers: { "cache-control": "public, max-age=3600" } });
+  }, { headers: AGENT_HEADERS });
 }
