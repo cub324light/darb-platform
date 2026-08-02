@@ -4,6 +4,7 @@ import PageFooter from "@/components/PageFooter";
 import NextThread from "@/components/NextThread";
 import Dome from "@/components/Dome";
 import Sheet from "@/components/Sheet";
+import { usePref, setPref } from "@/lib/prefs";
 import PageGuide from "@/components/PageGuide";
 import Confetti from "@/components/Confetti";
 import { subjectsForTracks, getTrack } from "@/lib/tracks";
@@ -256,10 +257,10 @@ export default function OrbitPage() {
   };
   const [paused, setPaused] = useState(false);
   const [lastEarned, setLastEarned] = useState(0);
-  /* إبقاء الجلسة شغّالة عند الخروج من الصفحة (إعداد افتراضي مفعّل) */
-  const [keepRunning, setKeepRunning] = useState(() =>
-    typeof window === "undefined" ? true : localStorage.getItem("darb_orbit_keep") !== "0"
-  );
+  /* إبقاء الجلسة شغّالة عند الخروج (مفعّلٌ افتراضاً). التفضيلُ في `prefs`
+     المشترَك، فيقرؤه ويكتبه هنا وفي ورقة الإعدادات العامة سواءً — لا نسختان
+     تتفرّقان. وقراءتُه بمخزنٍ خارجيّ لا في مُهيّئ `useState` (ترطيب). */
+  const keepRunning = usePref("orbitKeep", true);
   const [showSettings, setShowSettings] = useState(false);
   const [showLog, setShowLog] = useState(false);
   const [sessionLog, setSessionLog] = useState<SessionLogEntry[]>(() =>
@@ -270,12 +271,9 @@ export default function OrbitPage() {
   const endAtRef = useRef(0);
 
   const toggleKeepRunning = () => {
-    setKeepRunning((v) => {
-      const next = !v;
-      try { localStorage.setItem("darb_orbit_keep", next ? "1" : "0"); } catch {}
-      if (!next) { try { localStorage.removeItem("darb_orbit_session"); } catch {} }
-      return next;
-    });
+    const next = !keepRunning;
+    setPref("orbitKeep", next);
+    if (!next) { try { localStorage.removeItem("darb_orbit_session"); } catch {} }
   };
 
   const focusMins = durMode === "25" ? 25 : durMode === "50" ? 50 : durMode === "90" ? 90 : customMins;

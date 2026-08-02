@@ -7,6 +7,36 @@ import { EmailVerifyNotice } from "@/components/EmailVerify";
 import type { User } from "firebase/auth";
 import type { FirebaseError } from "firebase/app";
 import { readGuestMode, exitGuestMode } from "@/components/AuthGate";
+import { usePref, setPref } from "@/lib/prefs";
+import { useCalSystem, applyCalSystem } from "@/lib/useCalSystem";
+import { restoreAllDismissed } from "@/lib/dismissed";
+import { TOUR_KEY } from "@/lib/firstRun";
+
+/* صفٌّ في «تفضيلاتك»: عنوانٌ ووصفٌ ومفتاح. شكلٌ واحد لكل الصفوف. */
+function PrefRow({ title, desc, control, last }: {
+  title: string; desc: string; control: React.ReactNode; last?: boolean;
+}) {
+  return (
+    <div className="px-4 py-3.5 flex items-center justify-between gap-3"
+      style={last ? undefined : { borderBottom: "1px solid var(--border)" }}>
+      <div className="flex-1 min-w-0">
+        <p className="font-bold t-body" style={{ color: "var(--text)" }}>{title}</p>
+        <p className="t-caption mt-0.5 leading-snug" style={{ color: "var(--text-muted)" }}>{desc}</p>
+      </div>
+      <div className="flex-shrink-0">{control}</div>
+    </div>
+  );
+}
+
+function Switch({ on, onToggle, label }: { on: boolean; onToggle: () => void; label: string }) {
+  return (
+    <button onClick={onToggle} role="switch" aria-checked={on} aria-label={label}
+      className="w-12 h-7 rounded-full flex items-center transition px-0.5"
+      style={{ background: on ? "var(--accent)" : "var(--border)", justifyContent: on ? "flex-start" : "flex-end" }}>
+      <span className="w-6 h-6 rounded-full" style={{ background: "#fff" }} />
+    </button>
+  );
+}
 
 /* لا نستورد من cloud.ts أو firestore.ts هنا — تُحمَّل ديناميكياً عند الحاجة فقط
    حتى لا يدخل Firebase في حزمة كل صفحة عبر سلسلة: SettingsPanel ← Dome ← كل صفحة */
@@ -15,6 +45,23 @@ export default function SettingsButton() {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState(typeof window !== "undefined" ? loadUser() : null);
   const [isPrivate, setIsPrivate] = useState(false);
+
+  /* تفضيلاتُ المنتج — مخازنُ خارجية تُقرأ بـ`useSyncExternalStore`، فلا تكسر
+     الترطيب ولا تنشئ نسخةً ثانيةً من الحقيقة. */
+  const calSystem = useCalSystem();
+  const calBands = usePref("calBands", true);
+  const orbitKeep = usePref("orbitKeep", true);
+  const [restored, setRestored] = useState(false);
+  const restoreIntros = () => {
+    restoreAllDismissed();
+    try {
+      localStorage.removeItem(TOUR_KEY);
+      for (const k of Object.keys(localStorage)) {
+        if (k.startsWith("darb_guide_")) localStorage.removeItem(k);
+      }
+    } catch { /* تجاهل */ }
+    setRestored(true);
+  };
 
   // Cloud auth state
   const [authUser, setAuthUser] = useState<User | null>(null);
@@ -163,6 +210,60 @@ export default function SettingsButton() {
         </div>
 
         <p className="title-md mb-5" style={{ color: "var(--text)" }}>الإعدادات</p>
+
+        {/* ── تفضيلاتك ──
+            هذه التفضيلاتُ موجودةٌ في المنتج منذ زمن، لكن كلَّ واحدٍ منها كان
+            مخبوءاً في زاويته: التقويمُ في بطاقة المدرسة، وشريطُ الفترات داخل
+            التقويم، وإبقاءُ الجلسة في أسفل «تركيز». فمن لم يعثر عليه لم يعرف
+            أنّه موجود. جُمعت هنا في مكانٍ واحد — ولا نظامَ جديد: كلُّ مفتاحٍ
+            يكتب في المخزن نفسِه الذي يقرأ منه أصحابُه. */}
+        <p className="label mb-3">تفضيلاتك</p>
+        <div className="rounded-2xl mb-6 overflow-hidden" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+          <PrefRow
+            title="التقويم"
+            desc="بأيّهما تُعرض التواريخ في التقويم الدراسي"
+            control={
+              <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--surface)" }}>
+                {([["greg", "ميلادي"], ["hijri", "هجري"]] as const).map(([v, l]) => (
+                  <button key={v} onClick={() => applyCalSystem(v)} aria-pressed={calSystem === v}
+                    className="px-3 py-1.5 rounded-lg t-caption font-black transition"
+                    style={calSystem === v ? { background: "var(--accent)", color: "#fff" } : { color: "var(--text-muted)" }}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+            }
+          />
+          <PrefRow
+            title="التقويم الدراسي على الأيام"
+            desc="ظلٌّ ملوّن يبيّن أيام الدراسة والإجازات والاختبارات"
+            control={<Switch on={calBands} onToggle={() => setPref("calBands", !calBands)} label="التقويم الدراسي على الأيام" />}
+          />
+          <PrefRow
+            title="إبقاء جلسة تركيز شغّالة"
+            desc="لو طلعت لصفحة ثانية تكمل الجلسة من حيث وقفت"
+            control={
+              <Switch on={orbitKeep} label="إبقاء جلسة تركيز شغّالة"
+                onToggle={() => {
+                  const next = !orbitKeep;
+                  setPref("orbitKeep", next);
+                  if (!next) { try { localStorage.removeItem("darb_orbit_session"); } catch {} }
+                }} />
+            }
+          />
+          <PrefRow
+            title="الشروحات والبطاقات التعريفية"
+            desc={restored ? "رجعت — ستراها في زياراتك القادمة" : "أعِد إظهار ما أغلقته من شروحات الصفحات وبطاقاتها"}
+            control={
+              <button onClick={restoreIntros} disabled={restored}
+                className="px-3.5 py-2 rounded-xl t-caption font-black transition active:scale-95 disabled:opacity-60"
+                style={{ background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
+                {restored ? "رجعت ✓" : "أعِدها"}
+              </button>
+            }
+            last
+          />
+        </div>
 
         {/* الخصوصية */}
         <p className="label mb-3">الخصوصية</p>
