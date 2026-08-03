@@ -1,46 +1,94 @@
 "use client";
-/* ─── 7) الإنجازات — تحفيزٌ يومي من الإحصاءات الحقيقية (قراءةٌ فقط) ───
-   الأيام المتتالية · الجلسات · المهام المنجزة · ساعات التركيز. */
-import { useState } from "react";
-import { loadStats, computeStreak } from "@/lib/storage";
-import { loadHomework } from "@/lib/homework";
-import { n } from "@/lib/format";
+/* ─── «إيقاعك» — أسبوعُك وسلسلتُك في مكانٍ واحد ───
+   كان الرقمُ نفسُه يُطبع مرّتين في صفحةٍ واحدة: 🔥 في «أسبوعك»، ثم «يوم متتالٍ»
+   في «إنجازاتك» أسفلَ الصفحة. ومعه ثلاثةُ مجاميعَ عمرية (جلسات · ساعات · مهام)
+   لا تتغيّر بجلسةٍ ولا تُملي فعلاً — ولها **صفحةٌ كاملة** في «إنجازاتك».
 
-function build() {
+   فصارت بطاقةً واحدةً تجيب سؤالاً واحداً: **هل أنا مستمرّ؟** شريطُ الأسبوع
+   يُريه أيّامه، والسلسلةُ رقمٌ واحد، وساعاتُ الأسبوع سطرٌ تحتهما. وما وراء ذلك
+   رابطٌ إلى صفحته. */
+import { useState } from "react";
+import Link from "next/link";
+import { loadStats, computeStreak, localDayKey } from "@/lib/storage";
+import { n, dur, days } from "@/lib/format";
+
+const DAY_INITIAL = ["ح", "ن", "ث", "ر", "خ", "ج", "س"]; // الأحد → السبت
+
+interface RhythmData {
+  week: { key: string; label: string; done: boolean; isToday: boolean; isFuture: boolean }[];
+  streak: number;
+  weekMins: number;
+  activeDays: number;
+}
+
+function build(): RhythmData | null {
   if (typeof window === "undefined") return null;
   const s = loadStats();
-  const doneTasks = loadHomework().filter((h) => h.done).length;
-  return {
-    streak: computeStreak(s),
-    sessions: s.sessionsCount ?? 0,
-    doneTasks,
-    hours: Math.round((s.totalFocusMins ?? 0) / 60),
-  };
+  const todayKey = localDayKey(new Date());
+  const done = new Set(s.sessionDays ?? []);
+  const dayMins = s.dayMins ?? {};
+
+  const now = new Date();
+  const sunday = new Date(now);
+  sunday.setDate(now.getDate() - now.getDay());
+
+  let weekMins = 0;
+  const week = Array.from({ length: 7 }, (_, i) => {
+    const dt = new Date(sunday); dt.setDate(sunday.getDate() + i);
+    const key = localDayKey(dt);
+    weekMins += dayMins[key] ?? 0;
+    return { key, label: DAY_INITIAL[i], done: done.has(key), isToday: key === todayKey, isFuture: key > todayKey };
+  });
+
+  return { week, streak: computeStreak(s), weekMins, activeDays: week.filter((d) => d.done).length };
 }
 
 export default function Achievements() {
   const [d] = useState(build);
   if (!d) return null;
-  const cards = [
-    { icon: "🔥", val: n(d.streak), label: "يوم متتالٍ", tone: "var(--gold)" },
-    { icon: "🎯", val: n(d.sessions), label: "جلسة تركيز", tone: "var(--accent-light)" },
-    { icon: "✅", val: n(d.doneTasks), label: "مهمة منجزة", tone: "var(--success)" },
-    { icon: "⏱️", val: n(d.hours), label: "ساعة دراسة", tone: "var(--accent-2)" },
-  ];
+
   return (
-    <section>
-      <p className="t-title font-black mb-2.5 px-0.5" style={{ color: "var(--text)" }}>إنجازاتك</p>
-      <div className="grid grid-cols-2 gap-2.5">
-        {cards.map((c) => (
-          <div key={c.label} className="ds-card ds-card-tight flex items-center gap-3">
-            <span className="w-11 h-11 rounded-2xl flex items-center justify-center text-[22px] flex-shrink-0"
-              style={{ background: `color-mix(in srgb, ${c.tone} 15%, transparent)` }}>{c.icon}</span>
-            <div className="min-w-0">
-              <div className="t-h3 font-black font-mono-nums leading-none" style={{ color: "var(--text)" }}>{c.val}</div>
-              <div className="t-caption mt-1" style={{ color: "var(--text-muted)" }}>{c.label}</div>
-            </div>
+    <section className="ds-card ds-card-tight">
+      <div className="flex items-center justify-between mb-3">
+        <p className="t-title font-black" style={{ color: "var(--text)" }}>إيقاعك</p>
+        {d.streak > 0 && (
+          <span className="t-caption font-black px-2.5 py-1 rounded-full flex items-center gap-1"
+            style={{ background: "color-mix(in srgb, var(--gold) 15%, transparent)", color: "var(--gold)" }}>
+            <span className="streak-fire">🔥</span> {n(d.streak)} يوم
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-stretch justify-between gap-1">
+        {d.week.map((day) => (
+          <div key={day.key} className="flex flex-col items-center gap-1.5 flex-1">
+            <span className="t-caption font-bold" style={{ color: day.isToday ? "var(--accent-light)" : "var(--text-muted)" }}>{day.label}</span>
+            <span className="w-8 h-8 rounded-full flex items-center justify-center text-[15px] font-black transition"
+              style={day.done
+                ? { background: "var(--success)", color: "#04240f", border: "none" }
+                : day.isToday
+                  ? { background: "transparent", color: "var(--accent-light)", border: "2px solid var(--accent)" }
+                  : { background: "var(--surface2)", color: "var(--text-dim)", border: "1px solid var(--border)", opacity: day.isFuture ? 0.5 : 1 }}>
+              {day.done ? "✓" : day.isToday ? "•" : ""}
+            </span>
           </div>
         ))}
+      </div>
+
+      {/* سطرٌ واحدٌ عن الأسبوع — لا أربعُ بطاقاتٍ بمجاميعَ عمرية. */}
+      <div className="flex items-center justify-between gap-2 mt-3.5 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
+        <span className="t-caption" style={{ color: "var(--text-muted)" }}>
+          {/* العددُ داخل جملةٍ سرديّة يُكتب كلمةً («يومان» لا «2») — والقياسُ وحده
+             يبقى رقماً (قاعدةُ الخطوط في AGENTS.md). وصِيَغُ `days` مرفوعة
+             («يومان»)، فلا يُجرّ بحرفٍ قبلها («في يومان» لحنٌ) — تُعرض مفردةً
+             في صفٍّ لا داخلَ جملةٍ تحكمها. */}
+          {d.activeDays === 0
+            ? "لم تبدأ هذا الأسبوع بعد"
+            : <>هذا الأسبوع · {days(d.activeDays)} · <span className="font-black font-mono-nums" style={{ color: "var(--text)" }}>{dur(d.weekMins)}</span></>}
+        </span>
+        <Link href="/profile/achievements" className="t-caption font-bold no-underline flex-shrink-0 tap-44" style={{ color: "var(--accent-light)" }}>
+          إنجازاتك ←
+        </Link>
       </div>
     </section>
   );

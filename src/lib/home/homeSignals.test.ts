@@ -35,9 +35,11 @@ test("قريباً: يُضيف «إعلان النتيجة المتوقّع» م
   assert.equal(noStep.find((m) => m.kind === "result"), undefined);
 });
 
-test("آخر التحديثات: مرتّبةٌ بالأحدث، وكلها جهاتٌ رسمية بروابط", () => {
+test("دليلُ الجهات: روابطُ رسميةٌ كلُّها، ولا حقلَ تاريخٍ يُدّعى", () => {
   const list = officialUpdates();
   assert.equal(list.length, OFFICIAL_UPDATES.length);
-  for (let i = 1; i < list.length; i++) assert.ok(list[i - 1].updatedAt >= list[i].updatedAt, "الأحدث أولاً");
   assert.ok(list.every((u) => u.url.startsWith("https://") && u.entity && u.title));
+  /* ▓ حارسٌ دائم: «آخر تحديث» كان تاريخاً مكتوباً بأيدينا ويُعرض للطالب كأنّه
+     من الجهة. لا يعود إلا بمصدرٍ يُقرأ آلياً — لا بحقلٍ يُحدَّث يدوياً ثم يُنسى. */
+  assert.ok(list.every((u) => !("updatedAt" in u)), "لا تُعِد حقلَ تاريخٍ لا نتحقّق منه");
 });

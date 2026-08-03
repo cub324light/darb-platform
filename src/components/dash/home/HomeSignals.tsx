@@ -1,19 +1,27 @@
 "use client";
-/* ─── إشارات الرئيسية: «قريباً» + «آخر التحديثات» + «الاختبارات القادمة» ───
-   بياناتٌ حقيقية فقط: تقويم الاختبارات الرسمي + نتائج الطالب المنتظَرة + روابط الجهات
-   الرسمية. لا محتوى منسوخ ولا عناوين مختلقة — ملخّصٌ سطرٌ واحد وزرّ «المصدر الرسمي». */
+/* ─── «الرسميّ» — ما لا يملك الطالبُ تغييرَه، في بطاقةٍ واحدة ───
+   كانت ثلاثَ بطاقاتٍ تجيب سؤالاً واحداً («وش الجاي رسمياً؟»): «قريباً» و«آخر
+   التحديثات» و«الاختبارات القادمة» — تأخذ نحوَ نصفِ الصفحة وفيها تكرار.
+
+   ▓ و«آخر التحديثات» لم تكن تحديثاتٍ أصلاً: خمسةُ روابطَ ثابتةٍ في الكود، لكلٍّ
+   تاريخُ «آخر تحديث» **واحدٌ مكتوبٌ بيدنا** (2026-07-01) لخمستها. فكانت الصفحةُ
+   تخبر الطالبَ أنّ قياس ووزارة التعليم وأرامكو حدّثت شيئاً في أوّل يوليو — ونحن
+   لم نتحقّق من ذلك قطّ. وهذا تاريخٌ لم تُعلنه جهةٌ رسمية، فحُذف عرضُه: صارت
+   **دليلَ جهاتٍ** بلا ادّعاءِ حداثة، وهو ما كانت عليه حقيقةً.
+
+   الترتيب: اختباراتُك (تخصُّك) ← مواعيدُ معلنة (إن وُجدت) ← روابطُ الجهات. */
 import { useState } from "react";
 import Link from "next/link";
 import { loadUser, localDayKey } from "@/lib/storage";
 import { upcomingMilestones, officialUpdates, milestoneIcon, type Milestone, type OfficialUpdate } from "@/lib/home/homeSignals";
-import { n, dateShort } from "@/lib/format";
+import { n } from "@/lib/format";
 import { currentRegistrationStatus } from "@/lib/examProvider";
 import type { TrackId } from "@/lib/tracks";
 
 interface SignalsData {
   soon: Milestone[];
-  updates: OfficialUpdate[];
-  exams: { track: string; daysUntil: number | null; date: string | null; regOpen: boolean }[];
+  entities: OfficialUpdate[];
+  exams: { track: string; daysUntil: number | null; regOpen: boolean }[];
 }
 
 function build(): SignalsData | null {
@@ -21,25 +29,23 @@ function build(): SignalsData | null {
   const u = loadUser();
   const today = localDayKey(new Date());
   const pending = u?.pendingResults ?? [];
-  const soon = upcomingMilestones({ today, horizonDays: 120, pending, limit: 5 });
+  const soon = upcomingMilestones({ today, horizonDays: 120, pending, limit: 4 });
 
-  /* اختبارات الطالب المختارة → أقرب موعد اختبارٍ معلن (إن وُجد) */
   const examMs = upcomingMilestones({ today, horizonDays: 365, pending, limit: 30 }).filter((m) => m.kind === "exam");
   const byTrack = new Map<string, Milestone>();
   for (const m of examMs) if (!byTrack.has(m.track)) byTrack.set(m.track, m);
   const tracks = (u?.activeTracks ?? []).filter((t) => t === "قدرات" || t === "تحصيلي" || t === "ستيب" || t === "تحصيلي مبكر");
-  const exams = tracks.map((t) => {
-    const m = byTrack.get(t);
-    /* «لم يُعلن الموعد» و«ما حدّدت موعدك» ليسا شيئاً واحداً. القدرات وستيب
-       تسجيلُهما مفتوحٌ طوال السنة (المحوسب)، فقولُ «لم يُعلن» عنهما كذبٌ
-       يُقعِد الطالب عن التسجيل وهو يستطيعه اليوم. */
-    return {
-      track: t, daysUntil: m?.daysUntil ?? null, date: m?.date ?? null,
-      regOpen: currentRegistrationStatus(t as TrackId, today) === "open",
-    };
-  });
 
-  return { soon, updates: officialUpdates(), exams };
+  /* «لم يُعلن الموعد» و«ما حدّدت موعدك» ليسا شيئاً واحداً. القدرات وستيب
+     تسجيلُهما مفتوحٌ طوال السنة (المحوسب)، فقولُ «لم يُعلن» عنهما كذبٌ يُقعِد
+     الطالبَ عن التسجيل وهو يستطيعه اليوم. */
+  const exams = tracks.map((t) => ({
+    track: t,
+    daysUntil: byTrack.get(t)?.daysUntil ?? null,
+    regOpen: currentRegistrationStatus(t as TrackId, today) === "open",
+  }));
+
+  return { soon, entities: officialUpdates(), exams };
 }
 
 export default function HomeSignals() {
@@ -47,77 +53,68 @@ export default function HomeSignals() {
   if (!d) return null;
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* ═══ 5أ) قريباً — مواعيد رسمية قادمة فقط ═══ */}
-      <section className="ds-card ds-card-tight">
-        <p className="t-title font-black mb-2.5" style={{ color: "var(--text)" }}>قريباً</p>
-        {d.soon.length > 0 ? (
-          <div className="flex flex-col gap-2">
-            {d.soon.map((m) => (
-              <div key={m.id} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-                <span className="text-[16px] flex-shrink-0">{milestoneIcon(m.kind)}</span>
-                <span className="t-body font-bold flex-1 min-w-0" style={{ color: "var(--text)" }}>{m.title}</span>
-                <span className="t-caption font-black font-mono-nums flex-shrink-0 px-2 py-0.5 rounded-full" style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>
-                  {m.daysUntil === 0 ? "اليوم" : `بعد ${n(m.daysUntil)} يوم`}
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="t-body" style={{ color: "var(--text-muted)" }}>لا مواعيد رسمية قادمة معلنة حالياً — تابع المصدر الرسمي.</p>
-        )}
-      </section>
+    <section className="ds-card ds-card-tight flex flex-col gap-3.5">
+      <div>
+        <p className="t-title font-black" style={{ color: "var(--text)" }}>الرسميّ</p>
+        <p className="t-caption" style={{ color: "var(--text-muted)" }}>مواعيدُ الجهات الرسمية — لا نعرض تاريخاً لم تُعلنه.</p>
+      </div>
 
-      {/* ═══ 5ب) آخر التحديثات — الجهات الرسمية المعتمدة ═══ */}
-      <section className="ds-card ds-card-tight">
-        <p className="t-title font-black mb-1" style={{ color: "var(--text)" }}>آخر التحديثات</p>
-        <p className="t-caption mb-2.5" style={{ color: "var(--text-muted)" }}>معلومات رسمية فقط — للتفاصيل افتح المصدر الرسمي.</p>
-        {d.updates.length > 0 ? (
-          <div className="flex flex-col gap-2">
-            {d.updates.map((u) => (
-              <div key={u.id} className="rounded-xl px-3 py-2.5" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="t-caption font-black" style={{ color: "var(--accent-light)" }}>{u.entity}</span>
-                  <span className="t-caption font-mono-nums flex-shrink-0" style={{ color: "var(--text-dim)" }}>{dateShort(u.updatedAt)}</span>
-                </div>
-                <p className="t-body font-bold mt-0.5 mb-2 leading-snug" style={{ color: "var(--text)" }}>{u.title}</p>
-                <a href={u.url} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 t-caption font-bold no-underline px-2.5 py-1 rounded-full tap-44"
-                  style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>
-                  المصدر الرسمي ↗
-                </a>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="t-body" style={{ color: "var(--text-muted)" }}>لا توجد تحديثات جديدة حالياً.</p>
-        )}
-      </section>
-
-      {/* ═══ 6) الاختبارات القادمة — اختبارات الطالب + عدّاد + مراجعة ═══ */}
+      {/* ── اختباراتُك: أقربُ ما يخصُّه ── */}
       {d.exams.length > 0 && (
-        <section>
-          <p className="t-title font-black mb-2.5 px-0.5" style={{ color: "var(--text)" }}>الاختبارات القادمة</p>
-          <div className="grid grid-cols-2 gap-2.5">
-            {d.exams.map((e) => (
-              <div key={e.track} className="ds-card ds-card-tight flex flex-col gap-2">
-                <p className="t-body font-black" style={{ color: "var(--text)" }}>{e.track}</p>
-                <p className="t-caption font-mono-nums"
-                  style={{ color: e.daysUntil != null ? "var(--accent-light)"
-                    : e.regOpen ? "var(--success)" : "var(--text-muted)" }}>
-                  {e.daysUntil != null ? `بعد ${n(e.daysUntil)} يوم`
-                    : e.regOpen ? "التسجيل مفتوح · حدّد موعدك"
-                    : "لم يُعلن الموعد بعد"}
-                </p>
-                <Link href="/review" className="mt-auto text-center t-caption font-bold no-underline rounded-xl py-2"
-                  style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)", border: "1px solid color-mix(in srgb, var(--accent) 25%, transparent)" }}>
-                  مراجعة
-                </Link>
-              </div>
-            ))}
-          </div>
-        </section>
+        <div className="flex flex-col gap-2">
+          {d.exams.map((e) => (
+            <div key={e.track} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5"
+              style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+              <span className="t-body font-black flex-1 min-w-0 truncate" style={{ color: "var(--text)" }}>{e.track}</span>
+              <span className="t-caption font-mono-nums flex-shrink-0"
+                style={{ color: e.daysUntil != null ? "var(--accent-light)" : e.regOpen ? "var(--success)" : "var(--text-muted)" }}>
+                {e.daysUntil != null ? `بعد ${n(e.daysUntil)} يوم`
+                  : e.regOpen ? "التسجيل مفتوح" : "لم يُعلن الموعد"}
+              </span>
+              <Link href="/review" className="t-caption font-bold no-underline flex-shrink-0 px-2.5 py-1 rounded-full tap-44"
+                style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>مراجعة</Link>
+            </div>
+          ))}
+        </div>
       )}
-    </div>
+
+      {/* ── مواعيدُ معلنة قادمة: تُعرض إن وُجدت فقط، ولا بطاقةَ فارغةً لها ── */}
+      {d.soon.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <p className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>قريباً</p>
+          {d.soon.map((m) => (
+            <div key={m.id} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5"
+              style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+              <span className="text-[16px] flex-shrink-0">{milestoneIcon(m.kind)}</span>
+              <span className="t-body font-bold flex-1 min-w-0" style={{ color: "var(--text)" }}>{m.title}</span>
+              <span className="t-caption font-black font-mono-nums flex-shrink-0 px-2 py-0.5 rounded-full"
+                style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>
+                {m.daysUntil === 0 ? "اليوم" : `بعد ${n(m.daysUntil)} يوم`}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {d.exams.length === 0 && d.soon.length === 0 && (
+        <p className="t-body" style={{ color: "var(--text-muted)" }}>
+          لا مواعيدَ معلنةً تخصُّك الآن. اختر اختباراتك في مساري لنتابعها لك.
+        </p>
+      )}
+
+      {/* ── دليلُ الجهات: روابطُ للمصادر، بلا تواريخَ ندّعيها ── */}
+      <div>
+        <p className="t-caption font-bold mb-2" style={{ color: "var(--text-muted)" }}>المصادر الرسمية</p>
+        <div className="flex flex-wrap gap-1.5">
+          {d.entities.map((u) => (
+            <a key={u.id} href={u.url} target="_blank" rel="noopener noreferrer" title={u.title}
+              className="t-caption font-bold no-underline px-2.5 py-1.5 rounded-full tap-44"
+              style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", color: "var(--accent-light)", border: "1px solid color-mix(in srgb, var(--accent) 22%, transparent)" }}>
+              {u.entity} ↗
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }

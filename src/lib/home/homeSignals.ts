@@ -62,26 +62,30 @@ export function upcomingMilestones(input: {
   return out.slice(0, limit);
 }
 
-/* ════════ «آخر التحديثات» — روابط الجهات الرسمية المعتمدة فقط ════════
-   ليست أخباراً منسوخة: اسم الجهة + ملخّص سطرٍ واحد + تاريخ آخر مراجعة + رابط المصدر الرسمي.
-   نقطة التحديث الوحيدة — حدّثها فور تغيّر مصدرٍ رسمي. مرتّبةٌ بالأحدث. */
+/* ════════ دليلُ الجهات الرسمية — روابطُ مصادر، لا أخبار ════════
+   ▓ كان اسمُها «آخر التحديثات» ولكلِّ جهةٍ حقلُ `updatedAt` يُعرض في الواجهة —
+   وقيمتُه **واحدةٌ مكتوبةٌ بأيدينا لخمستها** (2026-07-01). فكانت الصفحةُ تخبر
+   الطالبَ أنّ قياس ووزارة التعليم وأرامكو حدّثت شيئاً في ذلك اليوم، ونحن لم
+   نتحقّق قطّ. وقاعدةُ درب: **لا نعرض تاريخاً لم تُعلنه جهةٌ رسمية**.
+
+   فحُذف الحقل. ولا يُعاد إلا بمصدرٍ يُقرأ آلياً — لا برقمٍ يُحدَّث يدوياً ثم
+   يُنسى فيصير كذباً بالتقادم. وهذه القائمةُ ما كانت قطُّ إلا دليلَ روابط. */
 export interface OfficialUpdate {
   id: string;
   entity: string;      // اسم الجهة
   title: string;       // ملخّص من سطرٍ واحد فقط (لا محتوى منسوخ)
   url: string;         // رابط المصدر الرسمي
-  updatedAt: string;   // YYYY-MM-DD — تاريخ آخر مراجعة
 }
 
 export const OFFICIAL_UPDATES: OfficialUpdate[] = [
-  { id: "qiyas",    entity: "هيئة تقويم التعليم والتدريب (قياس)", title: "مواعيد التسجيل والاختبارات والنتائج", url: "https://www.etec.gov.sa", updatedAt: "2026-07-01" },
-  { id: "moe",      entity: "وزارة التعليم",                     title: "بوابة القبول الموحّد وأخبار التعليم",   url: "https://moe.gov.sa",        updatedAt: "2026-07-01" },
-  { id: "aramco",   entity: "أرامكو السعودية",                   title: "برامج CPC وITC والتوظيف",              url: "https://www.aramco.com",    updatedAt: "2026-07-01" },
-  { id: "scholar",  entity: "الابتعاث (وزارة التعليم)",          title: "برامج الابتعاث الخارجي وشروطها",        url: "https://moe.gov.sa",        updatedAt: "2026-07-01" },
-  { id: "military", entity: "الجهات العسكرية",                   title: "بوابات القبول العسكري الموحّد",         url: "https://www.moi.gov.sa",    updatedAt: "2026-07-01" },
+  { id: "qiyas",    entity: "قياس",           title: "مواعيد التسجيل والاختبارات والنتائج", url: "https://www.etec.gov.sa" },
+  { id: "moe",      entity: "وزارة التعليم",  title: "بوابة القبول الموحّد وأخبار التعليم",   url: "https://moe.gov.sa" },
+  { id: "aramco",   entity: "أرامكو",         title: "برامج CPC وITC والتوظيف",              url: "https://www.aramco.com" },
+  { id: "scholar",  entity: "الابتعاث",       title: "برامج الابتعاث الخارجي وشروطها",        url: "https://moe.gov.sa" },
+  { id: "military", entity: "القبول العسكري", title: "بوابات القبول العسكري الموحّد",         url: "https://www.moi.gov.sa" },
 ];
 
-/** الجهات الرسمية مرتّبةً بالأحدث تحديثاً (فارغةٌ ⇐ «لا توجد تحديثات جديدة حالياً»). */
+/** دليلُ الجهات الرسمية — بترتيبه المكتوب، فلا ترتيبَ زمنيَّ يُدّعى. */
 export function officialUpdates(): OfficialUpdate[] {
-  return [...OFFICIAL_UPDATES].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0));
+  return OFFICIAL_UPDATES;
 }

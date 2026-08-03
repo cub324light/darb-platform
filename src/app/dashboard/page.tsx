@@ -53,8 +53,8 @@ export default function DashboardPage() {
     <div className="page">
       <PageGuide pageKey="dashboard" steps={[
         { title: "أهلاً بك في درب", desc: "هذي صفحتك الرئيسية — تجيب سؤالاً واحداً كل يوم: وش أسوي اليوم؟" },
-        { title: "ابدأ من الأعلى", desc: "بطاقة «ماذا سأفعل اليوم؟» تجمع مهامك وساعاتك وأقرب اختبار — ثم أسبوعك وخطة يومك." },
-        { title: "رسميٌّ وواضح", desc: "«قريباً» و«آخر التحديثات» تعرض مواعيد ومعلومات الجهات الرسمية فقط." },
+        { title: "ابدأ من الأعلى", desc: "بطاقة «يومك» تقول لك بأي مادّة تبدأ ولماذا، وتفتح لك الجلسة عليها مباشرة." },
+        { title: "ثم إيقاعك والرسميّ", desc: "«إيقاعك» يريك أسبوعك وسلسلتك، و«الرسميّ» مواعيد الجهات — ولا نعرض تاريخاً لم يُعلن." },
       ]} />
 
       {/* ═══ 1) الترحيب: السلام + الاسم + شعار اليوم ═══ */}
@@ -91,10 +91,11 @@ export default function DashboardPage() {
           /* الجامعي/خريج الجامعة: لوحاتهم التشغيلية/المهنية كما هي */
           <PhaseHome />
         ) : (
+          /* ثلاثةُ أسئلةٍ بترتيبها: ماذا الآن؟ ← هل أنا مستمرّ؟ ← ما الذي لا أملكه؟ */
           <Customizable page="dashboard" className="flex flex-col gap-4" sections={[
-            { id: "today", label: "ماذا سأفعل اليوم؟", desc: "مهامك وساعاتك وأقرب اختبار", node: <TodayBlock /> },
-            { id: "signals", label: "قريباً وآخر التحديثات", desc: "مواعيد الجهات الرسمية وأخبار درب", node: <HomeSignals /> },
-            { id: "achievements", label: "إنجازاتك", desc: "أيامك المتتالية وجلساتك وساعاتك", node: <Achievements /> },
+            { id: "today", label: "يومك", desc: "بماذا تبدأ الآن، ومهامُّ يومك", node: <TodayBlock /> },
+            { id: "achievements", label: "إيقاعك", desc: "أسبوعُك وسلسلتُك", node: <Achievements /> },
+            { id: "signals", label: "الرسميّ", desc: "اختباراتك ومواعيد الجهات الرسمية", node: <HomeSignals /> },
           ]} />
         )}
       </div>
