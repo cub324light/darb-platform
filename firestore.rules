@@ -183,6 +183,42 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // ───── سند: ربط وليّ الأمر ─────
+    // المبدأ: الرمز بيد الطالب. هو من يُنشئه وهو من يفصل — فلا يُربط أحدٌ بحساب
+    // طالبٍ من خلف ظهره. لذلك الربط كلّه يمرّ بالخادم (Admin SDK) لا بالعميل.
+
+    // أرقام الاقتران: لا يقرؤها العميل إطلاقاً — لو قُرئت لأمكن سردُ الأرقام
+    // الحيّة والارتباط بأي طالب. تُنشأ وتُستهلك على الخادم وحده.
+    match /sanadCodes/{code} {
+      allow read, write: if false;
+    }
+
+    // أولياءُ أمر الطالب. الإنشاء من الخادم فقط بعد التحقّق من رمزٍ حيّ.
+    // والفصل حقٌّ للطرفين: الطالب يفصل وليَّه، والوليّ ينسحب.
+    match /sanadLinks/{studentUid}/guardians/{guardianUid} {
+      allow read:   if signedIn() && (request.auth.uid == studentUid || request.auth.uid == guardianUid);
+      allow delete: if signedIn() && (request.auth.uid == studentUid || request.auth.uid == guardianUid);
+      allow create, update: if false;
+    }
+
+    // فهرسُ أبناء الوليّ — ليجد ابنه من أي جهاز يدخل منه.
+    match /sanadGuardians/{guardianUid}/children/{studentUid} {
+      allow read, delete: if signedIn() && request.auth.uid == guardianUid;
+      allow create, update: if false;
+    }
+
+    // ملخّصُ الطالب. يكتبه جهازُه وحده، ويقرؤه هو أو وليٌّ **مرتبطٌ فعلاً** —
+    // الارتباط يُتحقَّق بوجود وثيقة الوليّ تحت الطالب، وتلك لا يكتبها إلا الخادم.
+    // المحتوى نفسُه مُسقَطٌ في `sanad/digestDoc.ts` (قائمة سماح): لا محادثات
+    // ولا دفتر ولا أخطاء مفصّلة — فحتى لو تسرّبت القراءة لم يتسرّب سرّ.
+    match /sanadDigests/{studentUid} {
+      allow read: if signedIn() && (
+        request.auth.uid == studentUid
+        || exists(/databases/$(database)/documents/sanadLinks/$(studentUid)/guardians/$(request.auth.uid))
+      );
+      allow write: if signedIn() && request.auth.uid == studentUid;
+    }
+
     // ───── المحتوى التعليمي العام ─────
     // أسئلة القبول الشائعة، قوائم مرجعية، نصائح، بطاقات حقائق التحصيلي،
     // استراتيجيات المذاكرة، وقصص النجاح — تُعرض في صفحات عامة بدون تسجيل دخول

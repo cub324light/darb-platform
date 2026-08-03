@@ -250,6 +250,12 @@ export async function pushBackup(): Promise<boolean> {
     /* رفع حالة المحرّكات (ذاكرة/أحداث) بدمج ذرّي — منفصل عن الكتلة */
     const { pushEngineState } = await import("./engineSync");
     await pushEngineState();
+    /* ملخّصُ سند — لمن ربط وليَّ أمره وحده. هذه هي اللحظةُ التي «يتحدّث» فيها
+       ما يراه الوالد؛ ولذلك نقول له في لوحته متى كان آخرُ تحديث. */
+    try {
+      const { isSanadActive, pushDigest } = await import("./sanad/cloud");
+      if (isSanadActive()) await pushDigest();
+    } catch { /* المزامنةُ لا تُفشل النسخَ الاحتياطيّ */ }
     return true;
   } catch {
     return false;

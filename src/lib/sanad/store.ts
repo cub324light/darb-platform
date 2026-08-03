@@ -32,7 +32,12 @@ export function loadCode(): PairCode | null {
 
 /** رمزٌ جديد — يُبطل ما قبله. الطالبُ وحده من يُنشئه. */
 export function issueCode(): PairCode {
-  const c = makeCode(Math.random, Date.now());
+  return saveCode(makeCode(Math.random, Date.now()));
+}
+
+/** يحفظ رمزاً **أصدره الخادم** — هو مصدرُ الرمز منذ صار الربطُ سحابياً؛
+    والمحلّيُّ لا يُعتدّ به إلا كذاكرةٍ للعرض حتى ينتهي عدّاده. */
+export function saveCode(c: PairCode): PairCode {
   try { sessionStorage.setItem(CODE_KEY, JSON.stringify(c)); } catch { /* تجاهل */ }
   announce();
   return c;
@@ -71,14 +76,17 @@ export function unlinkGuardian(id: string): Guardian[] {
 
 /* ── جانبُ الوالد ── */
 
-export interface LinkedChild { code: string; linkedAt: number; label?: string }
+/** `studentUid` هو مفتاحُ القراءة السحابية — بلاده لا يعرف الوالدُ أيَّ ملخّصٍ يقرأ. */
+export interface LinkedChild { code: string; linkedAt: number; label?: string; studentUid?: string }
 
 export function loadChild(): LinkedChild | null {
   try {
     const raw = localStorage.getItem(PARENT_KEY);
     if (!raw) return null;
     const p = JSON.parse(raw) as Partial<LinkedChild>;
-    return typeof p.code === "string" ? { code: p.code, linkedAt: p.linkedAt ?? 0, label: p.label } : null;
+    return typeof p.code === "string"
+      ? { code: p.code, linkedAt: p.linkedAt ?? 0, label: p.label, studentUid: p.studentUid }
+      : null;
   } catch { return null; }
 }
 

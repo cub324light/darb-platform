@@ -7,9 +7,12 @@
    ويرى الطالبُ صراحةً **ماذا سيرى والدُه وماذا لن يرى** قبل أن يضغط. */
 import { useEffect, useState } from "react";
 import Sheet from "@/components/Sheet";
-import { CODE_TTL_MS, secondsLeft, MAX_GUARDIANS, type PairCode, type Guardian } from "@/lib/sanad/link";
-import { loadCode, issueCode, clearCode, loadGuardians, unlinkGuardian, linkGuardian } from "@/lib/sanad/store";
+import { CODE_TTL_MS, secondsLeft, MAX_GUARDIANS, type PairCode } from "@/lib/sanad/link";
+import { loadCode, saveCode, clearCode } from "@/lib/sanad/store";
+import { issueCloudCode, fetchGuardians, revokeGuardian, pushDigest, markSanadActive } from "@/lib/sanad/cloud";
 import { n, dateShort } from "@/lib/format";
+
+interface LinkedGuardian { id: string; name: string | null; relation: string | null; linkedAt: number }
 
 const SEES = [
   "كم ساعةً ذاكرت هذا الأسبوع وكم جلسةً أتممت",
@@ -32,15 +35,41 @@ export default function GuardianLink() {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [code, setCode] = useState<PairCode | null>(null);
-  const [guardians, setGuardians] = useState<Guardian[]>([]);
+  const [guardians, setGuardians] = useState<LinkedGuardian[]>([]);
   const [left, setLeft] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
   /* قراءةٌ بعد الترطيب لا في المُهيّئ (التخزينُ لا يوجد على الخادم)، ومؤجَّلةٌ
-     خطوةً: ضبطُ الحالة داخل الأثر مباشرةً يُسلسل رسماتٍ متتالية. */
+     خطوةً: ضبطُ الحالة داخل الأثر مباشرةً يُسلسل رسماتٍ متتالية.
+     والأولياءُ من **السحابة** لا من الجهاز: هي المصدرُ الحقيقيّ بعد أن صار
+     الربطُ يقع على الخادم، وهي وحدها ما يراه الطالبُ من أيّ جهازٍ دخل منه. */
   useEffect(() => {
-    const t = setTimeout(() => { setCode(loadCode()); setGuardians(loadGuardians()); }, 0);
+    const t = setTimeout(() => {
+      setCode(loadCode());
+      fetchGuardians().then(setGuardians).catch(() => {});
+    }, 0);
     return () => clearTimeout(t);
   }, []);
+
+  /* يُصدر الرمزَ على الخادم — فيستطيع والدٌ على جهازٍ آخرَ التحقّقَ منه.
+     ومعه نرفع الملخّصَ فوراً: لا نُريد والداً يربط فيجد شاشةً فارغة. */
+  const issue = async () => {
+    setBusy(true); setErr(null);
+    try {
+      const c = await issueCloudCode();
+      const pair: PairCode = { code: c.code, issuedAt: c.issuedAt };
+      saveCode(pair);
+      setCode(pair);
+      /* ارفع الملخّصَ فوراً: لا نُريد والداً يربط فيجد شاشةً فارغة. */
+      markSanadActive(true);
+      pushDigest();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "تعذّر إصدار رمز");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   /* عدّادُ عمر الرمز */
   useEffect(() => {
@@ -79,12 +108,22 @@ export default function GuardianLink() {
               <span className="w-9 h-9 rounded-xl grid place-items-center t-body flex-shrink-0"
                 style={{ background: "color-mix(in srgb, var(--success) 14%, transparent)" }} aria-hidden="true">👤</span>
               <span className="flex-1 min-w-0">
-                <span className="block t-small font-black truncate" style={{ color: "var(--text)" }}>{g.label}</span>
+                <span className="block t-small font-black truncate" style={{ color: "var(--text)" }}>
+                  {g.name ?? "وليّ أمرك"}{g.relation ? ` · ${g.relation}` : ""}
+                </span>
                 <span className="block t-caption truncate" style={{ color: "var(--text-muted)" }}>
-                  {g.email ? `${g.email} · ` : ""}منذ {dateShort(new Date(g.linkedAt).toISOString().slice(0, 10))}
+                  منذ {dateShort(new Date(g.linkedAt).toISOString().slice(0, 10))}
                 </span>
               </span>
-              <button onClick={() => setGuardians(unlinkGuardian(g.id))}
+              <button onClick={() => {
+                  revokeGuardian(g.id);
+                  setGuardians((l) => {
+                    const next = l.filter((x) => x.id !== g.id);
+                    /* آخرُ وليٍّ فُصل ⇒ لا يُرفع ملخّصٌ بعد اليوم. */
+                    if (next.length === 0) markSanadActive(false);
+                    return next;
+                  });
+                }}
                 className="t-caption font-bold px-2.5 py-1.5 rounded-lg flex-shrink-0"
                 style={{ color: "var(--danger)" }}>افصله</button>
             </div>
@@ -150,32 +189,37 @@ export default function GuardianLink() {
                 </div>
               </div>
             ) : (
-              <button onClick={() => setCode(issueCode())}
-                className="w-full rounded-2xl py-3.5 t-body font-black"
+              <button onClick={issue} disabled={busy}
+                className="w-full rounded-2xl py-3.5 t-body font-black disabled:opacity-60"
                 style={{ background: "var(--success)", color: "#04231a" }}>
-                أنشئ رمزاً ({n(CODE_TTL_MS / 60000)} دقائق)
+                {busy ? "جارٍ الإصدار…" : `أنشئ رمزاً (${n(CODE_TTL_MS / 60000)} دقائق)`}
               </button>
             )}
 
+            {/* ▓ ما عاد الطالبُ يشهد أنّ والده كتب الرمز: الربطُ يقع فعلاً على
+               الخادم لحظةَ يُدخله الوالد. فمن ضغط «تحقّق» رأى الحقيقةَ لا ظنَّه. */}
             {code && (
               <div className="flex gap-2">
-                <button onClick={() => setCode(issueCode())}
-                  className="flex-1 rounded-2xl py-3 t-caption font-black"
+                <button onClick={issue} disabled={busy}
+                  className="flex-1 rounded-2xl py-3 t-caption font-black disabled:opacity-60"
                   style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>رمزٌ جديد</button>
                 <button
-                  onClick={() => {
-                    /* التأكيدُ من الطالب نفسِه: هو من يشهد أنّ والده كتبه */
-                    setGuardians(linkGuardian({
-                      id: `g${Date.now().toString(36)}`,
-                      label: "وليّ أمري",
-                      linkedAt: Date.now(),
-                    }));
-                    setCode(null);
-                    setOpen(false);
+                  onClick={async () => {
+                    setBusy(true);
+                    const list = await fetchGuardians();
+                    setGuardians(list);
+                    setBusy(false);
+                    if (list.length > 0) { clearCode(); setCode(null); setOpen(false); }
+                    else setErr("لم يُسجّل والدُك بعد — امنحه دقيقةً ثم تحقّق مرّةً أخرى.");
                   }}
-                  className="flex-1 rounded-2xl py-3 t-caption font-black"
-                  style={{ background: "var(--accent)", color: "#fff" }}>كتبه ✓</button>
+                  disabled={busy}
+                  className="flex-1 rounded-2xl py-3 t-caption font-black disabled:opacity-60"
+                  style={{ background: "var(--accent)", color: "#fff" }}>تحقّق من الربط</button>
               </div>
+            )}
+
+            {err && (
+              <p className="t-caption leading-relaxed px-1" style={{ color: "var(--danger)" }}>{err}</p>
             )}
 
             <p className="t-caption leading-relaxed px-1" style={{ color: "var(--text-muted)" }}>

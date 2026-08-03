@@ -13,8 +13,9 @@
      منه ابتداءً. */
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { verifyLink, LINK_FAIL_TEXT, normalizeCode, CODE_LEN } from "@/lib/sanad/link";
-import { loadCode, saveChild, loadChild, forgetChild } from "@/lib/sanad/store";
+import { LINK_FAIL_TEXT, normalizeCode, isWellFormed, CODE_LEN } from "@/lib/sanad/link";
+import { saveChild, loadChild, forgetChild } from "@/lib/sanad/store";
+import { claimCode } from "@/lib/sanad/cloud";
 import { SANAD_PRICE } from "@/lib/plan";
 import { price } from "@/lib/format";
 
@@ -77,20 +78,23 @@ export default function JoinBody() {
     } finally { setBusy(false); }
   };
 
-  const submitCode = () => {
+  /* ▓ الربطُ صار حقيقياً: الرمزُ يُتحقَّق منه على **الخادم** لا على جهاز الطالب،
+     فيستطيع الوالدُ الربطَ من جوّاله هو. وكلُّ ما يُرفض — انتهاءُ الصلاحية،
+     وحدُّ الأولياء، والاستعمالُ مرّتين — يُرفض هناك لا هنا. */
+  const submitCode = async () => {
     setErr("");
-    /* الرمزُ المُصدَر يوجد على **جهاز الطالب**. فإن كان الوالدُ على الجهاز نفسه
-       تحقّقنا منه حقيقةً؛ وإن كان على جهازه هو قبِلنا الشكلَ وقلنا له بصراحة
-       أين يكتمل الربط. */
-    const issued = loadCode();
-    const r = verifyLink({ entered, issued, now: Date.now(), guardians: [], email: email.trim() || undefined });
-    if (!r.ok && (issued || r.reason === "bad-format")) { setErr(LINK_FAIL_TEXT[r.reason]); return; }
-    saveChild({ code: normalizeCode(entered), linkedAt: Date.now(), label: name.trim() || undefined });
-    setStep("done");
+    if (!isWellFormed(normalizeCode(entered))) { setErr(LINK_FAIL_TEXT["bad-format"]); return; }
+    setBusy(true);
+    try {
+      const studentUid = await claimCode(entered, { name: name.trim(), relation });
+      saveChild({ code: normalizeCode(entered), linkedAt: Date.now(), label: name.trim() || undefined, studentUid });
+      setStep("done");
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "تعذّر الربط — أعد المحاولة.");
+    } finally { setBusy(false); }
   };
 
   if (step === "done") {
-    const child = typeof window !== "undefined" ? loadChild() : null;
     return (
       <div className="flex flex-col gap-4">
         <section className="ds-card ds-stack-tight text-center"
@@ -98,7 +102,7 @@ export default function JoinBody() {
           <p className="text-[38px]" aria-hidden="true">🤝</p>
           <h2 className="t-h2 font-black" style={{ color: "var(--text)" }}>اكتمل التسجيل</h2>
           <p className="t-body leading-relaxed" style={{ color: "var(--text-muted)" }}>
-            رمزُ ابنك <span className="font-mono-nums font-black" style={{ color: "var(--text)" }}>{child?.code}</span> محفوظٌ على جهازك.
+            ارتبط حسابُك بابنك. تقدر تفتح بوّابة سند من هذا الجوّال أو أي جهازٍ تدخل منه.
           </p>
         </section>
 
@@ -108,11 +112,11 @@ export default function JoinBody() {
         </Link>
 
         <section className="ds-card ds-stack-tight">
-          <h3 className="t-title font-black" style={{ color: "var(--text)" }}>ما الذي يعمل الآن</h3>
+          <h3 className="t-title font-black" style={{ color: "var(--text)" }}>كيف يتحدّث الملخّص</h3>
           <p className="t-caption leading-relaxed" style={{ color: "var(--text-muted)" }}>
-            بوّابةُ سند تعرض ملخّصَ ابنك حين تُفتح على جهازه. أمّا متابعتُه من جوّالك
-            أنت فتحتاج مزامنةً سحابيةً لم تُفتح بعد — ولن نأخذ منك ريالاً قبل أن تعمل.
-            نقولها لك الآن ولا نتركك تكتشفها.
+            يرفع جهازُ ابنك ملخّصَه كلّما فتح درب — فما تراه هو آخرُ مرّةٍ فتحه فيها،
+            لا اللحظةَ الحاضرة. وإن تأخّر أخبرناك بتاريخ آخر تحديث بدل أن نتركك
+            تظنّ الرقمَ اليوم. ولا يُرفع من محادثاته مع دويرب ولا دفتره شيء.
           </p>
           <button onClick={() => { forgetChild(); setStep("who"); setEntered(""); }}
             className="rounded-2xl py-3 t-caption font-black mt-1"

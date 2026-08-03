@@ -4,8 +4,11 @@
    تقرأ بياناتٍ حقيقيةً من درب عبر readParentDigest (لا بيانات تجريبية، لا نظام جديد).
    ترتيبٌ ثابت: بطاقة الطالب ← الحالة ← التقدّم ← الدعم ← الاختبار ← الإنجازات ←
    الاقتراح ← لحظات ← الخصوصية. الوالد يفهمها في أقل من دقيقة. */
-import { useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { readParentDigest, type ParentStatus } from "@/lib/parentDigest";
+import { fetchChildren, fetchChildDigest } from "@/lib/sanad/cloud";
+import { isStale, type DigestDoc } from "@/lib/sanad/digestDoc";
+import { dur } from "@/lib/format";
 
 const noop = () => () => {};
 const useMounted = () => useSyncExternalStore(noop, () => true, () => false);
@@ -22,27 +25,66 @@ function Delta({ pct }: { pct: number | null }) {
 
 export default function ParentDashboard() {
   const mounted = useMounted();
-  const digest = useMemo(() => (mounted ? readParentDigest() : null), [mounted]);
+  /* الملخّصُ المحلّيّ: للطالب حين يفتح الصفحةَ على جهازه ليرى ما سيراه والدُه. */
+  const local = useMemo(() => (mounted ? readParentDigest() : null), [mounted]);
+  /* ▓ الملخّصُ السحابيّ: هذا هو الجديد. الوالدُ على جوّاله لا `localStorage`
+     فيه بياناتُ ابنه — يقرأ الوثيقةَ التي يرفعها جهازُ الطالب. */
+  const [cloud, setCloud] = useState<DigestDoc | null>(null);
+  const [state, setState] = useState<"idle" | "loading" | "none">("idle");
+  /* عمرُ الملخّص يُقاس **لحظةَ القراءة** لا في أثناء الرسم: `Date.now()` في جسم
+     المكوّن دالّةٌ غيرُ نقيّة تُعطي قيمةً مختلفةً كلَّ رسمة. */
+  const [readAt, setReadAt] = useState(0);
+
+  useEffect(() => {
+    if (!mounted) return;
+    const t = setTimeout(async () => {
+      setState("loading");
+      const kids = await fetchChildren();
+      if (kids.length === 0) { setState("none"); return; }
+      setCloud(await fetchChildDigest(kids[0]));
+      setReadAt(Date.now());
+      setState("none");
+    }, 0);
+    return () => clearTimeout(t);
+  }, [mounted]);
 
   if (!mounted) return <div className="h-40" aria-hidden />;
+
+  const digest = cloud ?? local;
+  const stale = cloud && readAt > 0 ? isStale(cloud, readAt) : false;
 
   if (!digest) {
     return (
       <div className="ds-card ds-card-lg flex flex-col items-center text-center gap-3 py-10">
-        <span style={{ fontSize: "2.2rem" }}>🌱</span>
-        <h2 className="t-h3" style={{ color: "var(--text)" }}>لا توجد بيانات كافية بعد</h2>
+        <span style={{ fontSize: "2.2rem" }}>{state === "loading" ? "⏳" : "🌱"}</span>
+        <h2 className="t-h3" style={{ color: "var(--text)" }}>
+          {state === "loading" ? "جارٍ القراءة…" : "لا توجد بيانات كافية بعد"}
+        </h2>
         <p className="t-body" style={{ color: "var(--text-dim)", maxWidth: "22rem" }}>
-          ستظهر لوحة سند بمجرّد أن يبدأ الطالب رحلته — جلسة مذاكرة أو درسٌ واحد يكفي لتبدأ المتابعة.
+          {state === "loading"
+            ? "نقرأ آخر ملخّصٍ رفعه جهازُ الطالب."
+            : "ستظهر لوحة سند بمجرّد أن يبدأ الطالب رحلته — جلسة مذاكرة أو درسٌ واحد يكفي لتبدأ المتابعة."}
         </p>
       </div>
     );
   }
 
-  const { student, status, progress, support, nextExam, achievements, suggestion, moments, alert } = digest;
+  const { student, status, progress, support, nextExam, achievements, suggestion, alert } = digest;
+  /* «لحظات» لا تُرفع إلى السحابة (نصوصٌ حرّةٌ من يوم الطالب) — فلا تظهر للوالد. */
+  const moments = cloud ? [] : (local?.moments ?? []);
   const sc = STATUS_COLOR[status.level];
 
   return (
     <div className="flex flex-col gap-3">
+      {/* ▓ صدقُ الطزاجة: الملخّصُ يُرفع حين يفتح الطالبُ درب، لا لحظةَ يقرأ
+         الوالد. فلو لم يفتحه ثلاثةَ أيامٍ صار ما تراه قديماً — ونقول ذلك بدل
+         أن نترك والداً يطمئنّ إلى رقمٍ من الأسبوع الماضي. */}
+      {cloud && stale && (
+        <p className="ds-card t-caption leading-relaxed" style={{ color: "var(--gold)" }}>
+          ⏳ آخر تحديث منذ {dur(Math.round((readAt - cloud.updatedAt) / 60000))} — يتحدّث الملخّص حين يفتح ابنك درب.
+        </p>
+      )}
+
       {/* 1) بطاقة الطالب */}
       <section className="ds-card flex items-center gap-3.5">
         <span className="flex items-center justify-center rounded-2xl flex-shrink-0" style={{ width: 52, height: 52, fontSize: 22, fontWeight: 800, color: "white", background: "linear-gradient(150deg, var(--accent), color-mix(in srgb, var(--accent) 60%, #7c5cf0))" }}>{student.name.charAt(0)}</span>
