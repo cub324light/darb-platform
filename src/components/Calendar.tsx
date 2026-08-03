@@ -70,6 +70,7 @@ export default function Calendar({
   onSetExamDay,
   onClearExamDay,
   onAddEvent,
+  planPhases,
 }: {
   examDate: string | null;
   onExamDateChange: (d: string | null) => void;
@@ -84,6 +85,9 @@ export default function Calendar({
   onClearExamDay?: (date: string) => void;
   /** إضافةُ حدثٍ في يومٍ بعينه — تفتحه الصفحةُ المستضيفة بنموذجها. */
   onAddEvent?: (date: string) => void;
+  /** فتراتُ خطّتك أنت (منفردة/مشتركة) — خطٌّ رفيعٌ تحت ظِلّ التقويم الدراسي،
+      فلا يختلط تقويمُ الوزارة بخطّتك الخاصّة. */
+  planPhases?: { start: string; end: string; label: string; overlap: boolean }[];
 }) {
   const [mode, setMode] = useState<Mode>("gregorian");
   /* ظِلُّ التقويم الدراسي — ظاهرٌ افتراضاً، ويُطفئه من لا يريده فيبقى مطفأً */
@@ -469,8 +473,22 @@ export default function Calendar({
                 >
                   {cell.label}
                 </span>
+                {/* خطُّ خطّتك: رفيعٌ أسفل الخليّة — المشتركةُ ذهبيّةٌ ممتلئة،
+                    والمنفردةُ زرقاءُ هادئة. لا يُزاحم ظِلَّ التقويم الدراسي. */}
+                {cell.inMonth && planPhases && (() => {
+                  const ph = planPhases.find((x) => cellKey >= x.start && cellKey <= x.end);
+                  if (!ph) return null;
+                  return (
+                    <span aria-hidden="true" className="absolute"
+                      style={{
+                        bottom: 1, insetInlineStart: 1, insetInlineEnd: 1, height: 3, borderRadius: 3,
+                        background: ph.overlap ? "var(--gold)" : "var(--accent-light)",
+                        opacity: ph.overlap ? 0.95 : 0.6,
+                      }} />
+                  );
+                })()}
                 {hasEv && (
-                  <span className="absolute rounded-full" style={{ bottom: 3, width: 4, height: 4, background: dotColor }} />
+                  <span className="absolute rounded-full" style={{ bottom: 6, width: 4, height: 4, background: dotColor }} />
                 )}
               </button>
             );
@@ -502,6 +520,7 @@ export default function Calendar({
           {(() => {
             const items = getDayInfo?.(openDay) ?? [];
             const period = primaryPeriodOn(openDay);
+            const myPhase = planPhases?.find((x) => openDay >= x.start && openDay <= x.end) ?? null;
             const dayExam = examOf(openDay);
             const legacyExam = openDay === examDate;
             const choosing = pickExamFor === openDay;
@@ -525,6 +544,18 @@ export default function Calendar({
                     {period.approximate && (
                       <span className="t-caption" style={{ color: "var(--text-muted)" }}>موعدٌ تقديريّ حتى تُعلنه الجهة</span>
                     )}
+                  </div>
+                )}
+
+                {/* فترةُ خطّتك في هذا اليوم */}
+                {myPhase && (
+                  <div className="rounded-2xl px-4 py-3 flex items-center gap-2.5"
+                    style={{ background: myPhase.overlap ? "color-mix(in srgb, var(--gold) 12%, var(--surface2))" : "color-mix(in srgb, var(--accent) 10%, var(--surface2))",
+                             border: `1px solid ${myPhase.overlap ? "color-mix(in srgb, var(--gold) 30%, transparent)" : "color-mix(in srgb, var(--accent) 26%, transparent)"}` }}>
+                    <span aria-hidden="true">{myPhase.overlap ? "🔀" : "🎯"}</span>
+                    <span className="t-small font-bold" style={{ color: "var(--text)" }}>
+                      {myPhase.overlap ? "فترةٌ مشتركة · " : "خطّتك · "}{myPhase.label}
+                    </span>
                   </div>
                 )}
 

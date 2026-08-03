@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import BackButton from "@/components/BackButton";
 import { useRouter } from "next/navigation";
 import { getPlan, setPlan, PLAN_NAMES } from "@/lib/plan";
 import type { PlanId } from "@/lib/types";
@@ -50,9 +51,7 @@ export default function PricingPage() {
       )}
       {/* Nav */}
       <div className="px-5 py-4 flex items-center justify-between glass border-b border-[var(--border)]">
-        <Link href="/" className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition">
-          ← الرئيسية
-        </Link>
+        <BackButton href="/" label="الرئيسية" />
         <span className="font-black text-[var(--gold)]">درب</span>
         <Link href="/dashboard" className="text-sm text-[var(--accent-light)] font-bold">
           ابدأ مجاناً

@@ -16,6 +16,7 @@ import { loadCalendar } from "./calendarStore";
 import { loadSessions } from "./sessionStore";
 import { eventsOnDay, availableStudyMinutes } from "./calendar";
 import { ROADMAP_TUNING } from "./config";
+import { buildStagedPlan, phaseOn, PLAN_MIN_DAYS, type PlanExamInput, type PlanPace, type StagedPlan } from "./examPlan";
 
 export interface PriorityExam {
   kind: "module" | "member"; id: string; label: string; icon?: string; color: string;
@@ -57,16 +58,60 @@ export function readAllExams(ws: Workspace): PriorityExam[] {
   return entries;
 }
 
+/** وتيرةُ الطالب الحقيقية — متوسّطُ دقائق التركيز في اليوم خلال آخر أسبوع،
+    وعددُ الأيام التي فيها بيانات. لا تقديرَ قبل أن يكتمل الأسبوع. */
+export function readPace(today: string = localDayKey()): PlanPace {
+  const dm = loadStats().dayMins ?? {};
+  let total = 0, days = 0;
+  for (let k = 0; k < PLAN_MIN_DAYS; k++) {
+    const key = addDays(today, -k);
+    const v = dm[key];
+    if (v != null) { total += v; days++; }
+  }
+  return { minsPerDay: days > 0 ? Math.round(total / days) : 0, daysMeasured: days };
+}
+
+/** خطّةُ الأشهر المتداخلة — تُبنى من اختباراتك ومواعيدها ووتيرتك المقيسة. */
+export function readStagedPlan(ws: Workspace, today: string = localDayKey()): StagedPlan {
+  const cfg = loadRoadmapConfig();
+  const dates = loadTrackExamDates();
+  const ordered = orderByPriority(cfg, readAllExams(ws).map((e) => e.id));
+  const byId = new Map(readAllExams(ws).map((e) => [e.id, e]));
+  const exams: PlanExamInput[] = ordered.map((id) => {
+    const e = byId.get(id)!;
+    const c = countRemaining(e.subjects);
+    return {
+      id: e.id, label: e.label,
+      examDate: e.examKey ? (dates[e.examKey] ?? null) : null,
+      remainingItems: c.remainingLessons + c.remainingDrills,
+    };
+  });
+  return buildStagedPlan({
+    exams, pace: readPace(today),
+    split: cfg.overlapSplit ?? "priority",
+    today,
+  });
+}
+
 /** اختباراتُ الجدول اليوم — يقودها نمطُ التوزيع الذي اختاره الطالب:
     «بالتتابع» ⇒ صاحبُ الأولوية وحده، و«معاً» ⇒ كلُّها مرتّبةً بالأولوية.
     مصدرٌ واحد لكل من يبني جلسةً، فلا تتفرّق قراءةُ النمط بين صفحتين. */
-export function readPlanExams(ws: Workspace): PriorityExam[] {
+export function readPlanExams(ws: Workspace, today: string = localDayKey()): PriorityExam[] {
   const cfg = loadRoadmapConfig();
   const entries = readAllExams(ws);
   if (entries.length === 0) return [];
   const ordered = orderByPriority(cfg, entries.map((e) => e.id));
   const sorted = ordered.map((id) => entries.find((e) => e.id === id)!).filter(Boolean);
-  return (cfg.examPlanMode ?? "sequential") === "together" ? sorted : sorted.slice(0, 1);
+  const mode = cfg.examPlanMode ?? "sequential";
+  if (mode === "together") return sorted;
+  if (mode === "staged") {
+    /* المتداخل: اليومُ يتبع فترتَه — وحده في المنفردة، واثنان في المشتركة.
+       وقبل اكتمال أسبوع القياس لا خطّةَ بعد، فنتصرّف كالتتابع. */
+    const ph = phaseOn(readStagedPlan(ws, today), today);
+    if (!ph) return sorted.slice(0, 1);
+    return sorted.filter((e) => ph.examIds.includes(e.id));
+  }
+  return sorted.slice(0, 1);
 }
 
 /** موادُّ الجدول بلا تكرار — اتّحادُ مواد اختبارات النمط الحاليّ. */

@@ -14,10 +14,10 @@ import { ROADMAP_TUNING } from "./config";
 /** نمط المذاكرة (اختيارٌ واحدٌ لمساري الآن؛ per-exam مستقبلاً عبر meta بلا إعادة تصميم). */
 export type StudyMode = "focus" | "distribute" | "smart";
 
-/* نمطُ توزيع الاختبارات على الأيام — سؤالُ من عنده أكثر من اختبار:
-   «معاً في اليوم الواحد، أم واحداً حتى أُنهيه ثم الذي يليه؟»
-   كان جواباً يقوله دويرب في المحادثة فيضيع، فصار إعداداً يقود الجدولَ فعلاً. */
-export type ExamPlanMode = "sequential" | "together";
+/* نمطُ توزيع الاختبارات — معرَّفٌ في `examPlan.ts` مع محرّكه، ويُعاد تصديرُه هنا
+   لأن الإعدادَ يُخزَّن في `RoadmapConfig`. تعريفٌ واحدٌ لا اثنان يتفرّقان. */
+export type { ExamPlanMode, OverlapSplit } from "./examPlan";
+import type { ExamPlanMode, OverlapSplit } from "./examPlan";
 
 /** وضع الإجازة — توقّفٌ مؤقّتٌ معلنٌ للمذاكرة. حين يكون نشطاً لا يُحاسَب الطالب على قلّة
     الالتزام ولا تُطلق إنذارات الخطر (الطبقات الأعلى تقرأ isOnVacation فتُهدّئ نبرتها).
@@ -44,7 +44,8 @@ export interface RoadmapConfig {
   examMeta?: Record<string, ExamPlanMeta>; // ميتاداتا لكل اختبار (مفتاحها examId)
   priorityLockedAt?: number;               // ms — قفل الأولوية (7 أيام)
   studyMode?: StudyMode;                    // نمط المذاكرة
-  examPlanMode?: ExamPlanMode;              // معاً أم بالتتابع (لمن عنده أكثر من اختبار)
+  examPlanMode?: ExamPlanMode;              // بالتتابع · معاً · متداخل (لمن عنده أكثر من اختبار)
+  overlapSplit?: OverlapSplit;              // توزيعُ وقت الفترة المشتركة في النمط المتداخل
   examPlanLockedAt?: number;                // ms — يُقفل النمط أسبوعاً بعد اختياره
   vacation?: VacationState;                 // وضع الإجازة (توقّفٌ مؤقّت معلن)
   destination?: Destination;                // وجهتي (الجامعة/التخصص الهدف)
@@ -133,10 +134,15 @@ export function setStudyMode(c: RoadmapConfig, mode: StudyMode): RoadmapConfig {
   return { ...c, studyMode: mode };
 }
 
-/** يختار نمطَ توزيع الاختبارات ويقفله أسبوعاً — التنقّلُ بين النمطين كل يومٍ
+/** يختار نمطَ توزيع الاختبارات ويقفله أسبوعاً — التنقّلُ بين الأنماط كل يومٍ
     يجعل الجدولَ يتقلّب فلا يستقرّ الطالبُ على شيء. */
 export function setExamPlanMode(c: RoadmapConfig, mode: ExamPlanMode, now: number = Date.now()): RoadmapConfig {
   return { ...c, examPlanMode: mode, examPlanLockedAt: now };
+}
+
+/** توزيعُ الفترة المشتركة — لا يُقفل: تعديلُ النسبة لا يقلب الخطّة رأساً على عقب. */
+export function setOverlapSplit(c: RoadmapConfig, split: OverlapSplit): RoadmapConfig {
+  return { ...c, overlapSplit: split };
 }
 
 export function examPlanLock(c: RoadmapConfig, now: number = Date.now()): PriorityLockState {

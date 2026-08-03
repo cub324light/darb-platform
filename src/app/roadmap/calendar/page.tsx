@@ -14,7 +14,7 @@ import {
 import { loadCalendar, addCalendarEvent, removeCalendarEvent } from "@/lib/roadmap/calendarStore";
 import { slotsToEvents } from "@/lib/roadmap/aiSchedule";
 import { loadUser, ensureWorkspace } from "@/lib/storage";
-import { readAllExams, readPriorityExam } from "@/lib/roadmap/nowRead";
+import { readAllExams, readPriorityExam, readStagedPlan } from "@/lib/roadmap/nowRead";
 import { n, time, year } from "@/lib/format";
 import Sheet from "@/components/Sheet";
 
@@ -77,6 +77,21 @@ export default function CalendarPage() {
   const [impact, setImpact] = useState<EventImpact | null>(null);
 
   const [examDate, setExamDate] = useState<string | null>(() => (typeof window !== "undefined" ? loadExamDate() : null));
+
+  /* فتراتُ خطّتك للتقويم — تظهر لمن اختار النمط المتداخل، وبعد أسبوع القياس */
+  const [planPhases] = useState(() => {
+    if (typeof window === "undefined") return [] as { start: string; end: string; label: string; overlap: boolean }[];
+    const u = loadUser(); if (!u) return [];
+    const w = ensureWorkspace(u).workspace; if (!w) return [];
+    const names = new Map(readAllExams(w).map((e) => [e.id, e.label]));
+    const sp = readStagedPlan(w);
+    if (!sp.ok) return [];
+    return sp.phases.map((ph) => ({
+      start: ph.start, end: ph.end,
+      label: ph.examIds.map((id) => names.get(id) ?? id).join(" + "),
+      overlap: ph.kind === "overlap",
+    }));
+  });
 
   /* اختباراتُ الطالب: مصدرُها Workspace نفسُه (لا قائمةٌ ثانية تُصان). ومواعيدُها
      في `darb_track_exam_dates` — المفتاح نفسُه الذي تكتبه صفحةُ الوحدة، فما
@@ -164,6 +179,7 @@ export default function CalendarPage() {
           examDays={examDays}
           onSetExamDay={setExamDay}
           onClearExamDay={clearExamDay}
+          planPhases={planPhases}
           onAddEvent={(d) => { setDate(d); setTab("manual"); setAdding(true); }}
           getDayInfo={(date) =>
             eventsOnDay(events, date).map((ev) => ({

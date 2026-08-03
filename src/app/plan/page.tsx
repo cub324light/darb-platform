@@ -38,7 +38,7 @@ import {
 } from "@/lib/storage";
 import { loadCalendar } from "@/lib/roadmap/calendarStore";
 import { eventsOnDay, kindMeta } from "@/lib/roadmap/calendar";
-import { readAllExams, readPriorityExam } from "@/lib/roadmap/nowRead";
+import { readAllExams, readPriorityExam, readStagedPlan } from "@/lib/roadmap/nowRead";
 import { focusHandoffQuery } from "@/lib/roadmap/handoff";
 import { isUniversityGraduate } from "@/lib/phase";
 import { getTrack, colorForSubject, type TrackId } from "@/lib/tracks";
@@ -121,6 +121,21 @@ export default function PlanPage() {
     typeof window !== "undefined" ? Object.keys(loadGoals()).length === 0 : false
   );
   const [goalsMounted, setGoalsMounted] = useState(goalsOpen);
+
+  /* فتراتُ خطّتك للتقويم — تظهر لمن اختار النمط المتداخل، وبعد أسبوع القياس */
+  const [planPhases] = useState(() => {
+    if (typeof window === "undefined") return [] as { start: string; end: string; label: string; overlap: boolean }[];
+    const u = loadUser(); if (!u) return [];
+    const w = ensureWorkspace(u).workspace; if (!w) return [];
+    const names = new Map(readAllExams(w).map((e) => [e.id, e.label]));
+    const sp = readStagedPlan(w);
+    if (!sp.ok) return [];
+    return sp.phases.map((ph) => ({
+      start: ph.start, end: ph.end,
+      label: ph.examIds.map((id) => names.get(id) ?? id).join(" + "),
+      overlap: ph.kind === "overlap",
+    }));
+  });
 
   /* اختباراتُ الطالب ومواعيدُها — من Workspace ومن `darb_track_exam_dates`،
      نفسِ ما تكتبه صفحةُ الوحدة. لا قائمةَ ثانية تُصان. */
@@ -422,6 +437,7 @@ export default function PlanPage() {
             examDays={examDays}
             onSetExamDay={setExamDay}
             onClearExamDay={clearExamDay}
+            planPhases={planPhases}
             onAddEvent={(d) => { setSheetDate(d); setSheet("manual"); }}
             getDayInfo={(date) =>
               getEventsForDate(date, allEvents).map((ev) => ({

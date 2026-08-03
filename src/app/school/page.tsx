@@ -12,10 +12,8 @@ import NextThread from "@/components/NextThread";
 import HomeworkPlanner from "@/components/school/HomeworkPlanner";
 import SchoolChecklist from "@/components/school/SchoolChecklist";
 import { loadHomework, dueOn, type Homework } from "@/lib/homework";
-import { loadTrackExamDates, localDayKey, loadUser } from "@/lib/storage";
+import { localDayKey, loadUser } from "@/lib/storage";
 import { isUniversityPhase, isGraduatePhase } from "@/lib/phase";
-import { getTrack, type TrackId } from "@/lib/tracks";
-import { daysUntil } from "@/lib/insights";
 import { subjectsFor, trackLabel } from "@/lib/curriculum";
 import SchoolTimelineCard from "@/components/SchoolTimelineCard";
 import DismissibleNote from "@/components/DismissibleNote";
@@ -23,6 +21,7 @@ import dynamic from "next/dynamic";
 const DayJournal = dynamic(() => import("@/components/journal/DayJournal"), { ssr: false });
 const MemoriesAlbum = dynamic(() => import("@/components/journal/MemoriesAlbum"), { ssr: false });
 const TeachersCard = dynamic(() => import("@/components/school/TeachersCard"), { ssr: false });
+const SchoolExams = dynamic(() => import("@/components/school/SchoolExams"), { ssr: false });
 
 const noop = () => () => {};
 const useMounted = () => useSyncExternalStore(noop, () => true, () => false);
@@ -44,33 +43,6 @@ function DueTomorrow() {
               <span style={{ color: "var(--accent-light)" }}>•</span>
               <span className="t-body font-black flex-1 min-w-0" style={{ color: "var(--text)" }}>{h.title}</span>
               {h.subject && <span className="t-caption" style={{ color: "var(--text-muted)" }}>{h.subject}</span>}
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
-function UpcomingExams() {
-  const mounted = useMounted();
-  const exams = mounted
-    ? Object.entries(loadTrackExamDates())
-        .map(([id, date]) => ({ id, name: (() => { try { return getTrack(id as TrackId).title; } catch { return id; } })(), date, days: daysUntil(date) }))
-        .filter((e) => e.days != null && e.days >= 0)
-        .sort((a, b) => (a.days ?? 0) - (b.days ?? 0))
-    : [];
-  return (
-    <section className="ds-card ds-stack-tight">
-      <h2 className="t-h3" style={{ color: "var(--text)" }}>🧪 الاختبارات القادمة</h2>
-      {exams.length === 0 ? (
-        <p className="t-caption" style={{ color: "var(--text-muted)" }}>لم تُحدَّد مواعيد اختبارات بعد — حدّدها من صفحتك الرئيسية.</p>
-      ) : (
-        <div className="flex flex-col gap-1.5">
-          {exams.map((e) => (
-            <div key={e.id} className="flex items-center gap-2.5 rounded-lg px-3 py-2.5" style={{ background: "var(--surface2)" }}>
-              <span className="t-body font-black flex-1 min-w-0" style={{ color: "var(--text)" }}>{e.name}</span>
-              <span className="t-caption font-black" style={{ color: (e.days ?? 99) <= 14 ? "var(--gold)" : "var(--accent-light)" }}>بعد {e.days} يوماً</span>
             </div>
           ))}
         </div>
@@ -165,10 +137,10 @@ export default function SchoolPage() {
         <MemoriesAlbum />
 
         {/* المطلوب غداً + الاختبارات القادمة */}
-        <div className="grid grid-cols-1 min-[560px]:grid-cols-2 gap-3">
-          <DueTomorrow />
-          <UpcomingExams />
-        </div>
+        {/* اختباراتُ المدرسة بتفاصيلها الحقيقية — حلّت محلّ بطاقةٍ كانت تعرض
+            مواعيدَ قياس تحت اسم «الاختبارات القادمة». */}
+        <SchoolExams />
+        <DueTomorrow />
 
         {/* الجدول الدراسي — يربط الواجبات باليوم */}
         <Link href="/plan" className="ds-card ds-card-interactive flex items-center gap-3 no-underline">

@@ -17,7 +17,8 @@ import {
 } from "@/lib/modules";
 import { readPriorityExam } from "@/lib/roadmap/nowRead";
 import { updateRoadmapConfig, loadRoadmapConfig } from "@/lib/roadmap/store";
-import { setPriorityOrder, onExamRemoved, priorityLock, setExamPlanMode, examPlanLock, type ExamPlanMode } from "@/lib/roadmap/model";
+import { setPriorityOrder, onExamRemoved, priorityLock, setExamPlanMode, examPlanLock, setOverlapSplit } from "@/lib/roadmap/model";
+import { OVERLAP_SPLIT_LABEL, type ExamPlanMode, type OverlapSplit } from "@/lib/roadmap/examPlan";
 import { n, days } from "@/lib/format";
 
 /** الحدُّ الأقصى — مصدرُه `AddModuleMenu` نفسُه (٣ اختبارات: تركيزٌ على القليل). */
@@ -51,6 +52,7 @@ export default function RoadmapSettings({ ws, ctx, onChange, onClose }: {
   const lock = priorityLock(cfg);
   const planMode: ExamPlanMode = cfg.examPlanMode ?? "sequential";
   const planLock = examPlanLock(cfg);
+  const split: OverlapSplit = cfg.overlapSplit ?? "priority";
 
   const add = (t: AddTarget) => {
     onChange(t.kind === "module" ? addModule(ws, t.id as ModuleId) : addMember(ws, t.id as ExamMemberId));
@@ -118,7 +120,8 @@ export default function RoadmapSettings({ ws, ctx, onChange, onClose }: {
             <div className="flex flex-col gap-2">
               {([
                 ["sequential", "واحداً بعد واحد", "تُنهي اختبارَ أولويتك ثم تبدأ الذي يليه — تركيزٌ أعمق."],
-                ["together", "كلَّها معاً", "يومُك يُقسَم بين اختباراتك — تقدّمٌ في كلٍّ منها."],
+                ["staged", "متداخل", "الأوّلُ وحده مدّة، ثم يدخل الثاني معه فترةً مشتركة، فإذا اختبرتَ الأوّل تفرّغتَ للثاني."],
+                ["together", "كلَّها معاً", "يومُك يُقسَم بين اختباراتك من اليوم الأوّل."],
               ] as const).map(([v, label, desc]) => {
                 const on = planMode === v;
                 const blocked = planLock.locked && !on;
@@ -142,6 +145,26 @@ export default function RoadmapSettings({ ws, ctx, onChange, onClose }: {
                 );
               })}
             </div>
+            {/* توزيعُ الفترة المشتركة — يظهر لمن اختار المتداخل وحده، ولا يُقفل:
+                تعديلُ النسبة لا يقلب الخطّة رأساً على عقب. */}
+            {planMode === "staged" && (
+              <div className="mt-3">
+                <p className="t-caption font-bold px-1 mb-1.5" style={{ color: "var(--text-muted)" }}>في الفترة المشتركة</p>
+                <div className="flex gap-1.5 flex-wrap">
+                  {(["even", "priority", "nearest"] as OverlapSplit[]).map((v) => (
+                    <button key={v} onClick={() => { updateRoadmapConfig((c) => setOverlapSplit(c, v)); onChange(ws); }}
+                      aria-pressed={split === v}
+                      className="t-caption font-black px-3 py-2 rounded-xl transition active:scale-[0.97]"
+                      style={split === v
+                        ? { background: "color-mix(in srgb, var(--accent) 16%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)" }
+                        : { background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                      {OVERLAP_SPLIT_LABEL[v]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {planLock.locked && (
               <p className="t-caption mt-2 px-3 py-2 rounded-xl leading-relaxed"
                 style={{ background: "color-mix(in srgb, var(--gold) 10%, var(--surface2))", color: "var(--text)", border: "1px solid color-mix(in srgb, var(--gold) 26%, transparent)" }}>

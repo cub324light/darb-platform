@@ -2,7 +2,7 @@
 /* ─── بوابة سند — لوحة الوالد (/parent) ───
    تعرض ملخّص الطالب الحقيقي (readParentDigest) للوالد المرتبط: هل ابني بخير؟ يتقدّم؟
    يحتاج دعماً؟ ماذا أفعل اليوم؟ — بلا بيانات تجريبية وبلا نظام جديد. */
-import Link from "next/link";
+import BackButton from "@/components/BackButton";
 import ParentDashboard from "@/components/parent/ParentDashboard";
 
 export default function ParentPage() {
@@ -10,9 +10,7 @@ export default function ParentPage() {
     <div className="min-h-dvh app-col flex flex-col">
       {/* الرأس */}
       <div className="px-5 py-4 flex items-center justify-between glass border-b border-[var(--border)] sticky top-0 z-10">
-        <Link href="/" className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition">
-          ← الرئيسية
-        </Link>
+        <BackButton href="/" label="الرئيسية" />
         <span className="font-black text-[var(--text)]">بوابة سند</span>
         <span className="w-12" />
       </div>

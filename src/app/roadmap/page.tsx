@@ -12,6 +12,7 @@ import NextThread from "@/components/NextThread";
 import PageGuide from "@/components/PageGuide";
 import ModuleWorkspace from "@/components/roadmap/ModuleWorkspace";
 import RoadmapSettings from "@/components/roadmap/RoadmapSettings";
+import ExamPlanTimeline from "@/components/roadmap/ExamPlanTimeline";
 import { loadUser, saveUser, ensureWorkspace, saveWorkspace, loadStats, loadTrackExamDates, localDayKey } from "@/lib/storage";
 import {
   moduleView, memberView, groupMembers, visibleModules,
@@ -28,7 +29,7 @@ import { recentResourceIds } from "@/lib/roadmap/resourceUse";
 import { loadCalendar } from "@/lib/roadmap/calendarStore";
 import { groupUpcoming, kindMeta } from "@/lib/roadmap/calendar";
 import {
-  readPriorityExam, readEligibilityCtx, readPlanSubjects, countRemaining, vaultCount, readTodayAvailability, readDailySignals,
+  readPriorityExam, readEligibilityCtx, readPlanSubjects, readStagedPlan, readPace, readAllExams, countRemaining, vaultCount, readTodayAvailability, readDailySignals,
   solvedQuestions, tasksDoneToday,
 } from "@/lib/roadmap/nowRead";
 import { loadRoadmapConfig } from "@/lib/roadmap/store";
@@ -122,6 +123,11 @@ export default function RoadmapPage() {
   /* موادُّ الجلسة تتبع نمطَ التوزيع: «بالتتابع» ⇒ اختبارُ الأولوية وحده،
      «معاً» ⇒ موادُّ اختباراتك كلِّها في يومٍ واحد. */
   const planSubjects = readPlanSubjects(ws);
+  /* خطّةُ الأشهر — تُعرض لمن اختار «متداخل» وعنده اختباران فأكثر */
+  const stagedOn = loadRoadmapConfig().examPlanMode === "staged";
+  const staged = stagedOn ? readStagedPlan(ws, today) : null;
+  const pace = stagedOn ? readPace(today) : null;
+  const examNames = new Map(readAllExams(ws).map((e) => [e.id, e.label]));
   const counts = planSubjects.length ? countRemaining(planSubjects) : { remainingLessons: 0, remainingDrills: 0, weakestSubject: null, totalItems: 0, doneItems: 0 };
   const avail = readTodayAvailability();
   const plan = priority ? buildSessionPlan({
@@ -297,6 +303,10 @@ export default function RoadmapPage() {
             {plan?.available ? (allDone ? "أنهيت مهامّ اليوم — جلسةٌ إضافية؟" : "تبدأ جلسة تركيزٍ الآن") : "افتح جلستك"}
           </span>
         </button>
+
+        {staged && pace && (
+          <ExamPlanTimeline plan={staged} pace={pace} labelOf={(id) => examNames.get(id) ?? id} />
+        )}
 
         <NextThread page="/roadmap" />
         <PageFooter />

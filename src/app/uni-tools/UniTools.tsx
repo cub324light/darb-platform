@@ -7,6 +7,7 @@
    قراءة التخزين بتهيئة كسولة والحفظ في معالجات الأحداث — لا setState في effect. */
 import { useState } from "react";
 import ToolTile from "@/components/ToolTile";
+import BackButton from "@/components/BackButton";
 import dynamic from "next/dynamic";
 const DayJournal = dynamic(() => import("@/components/journal/DayJournal"), { ssr: false });
 const MemoriesAlbum = dynamic(() => import("@/components/journal/MemoriesAlbum"), { ssr: false });
@@ -225,11 +226,7 @@ export default function UniTools() {
 
       {/* ── زر الرجوع للوحة البطاقات عند فتح أداة ── */}
       {tab !== null && (
-        <button onClick={() => setTab(null)}
-          className="flex items-center gap-2 self-start px-3.5 py-2 rounded-xl text-[15px] font-black transition active:scale-95"
-          style={{ background: "var(--surface)", color: "var(--accent-light)", border: "1px solid var(--border)" }}>
-          <span aria-hidden="true">→</span> رجوع للأدوات
-        </button>
+        <div className="self-start"><BackButton label="الأدوات" onBack={() => setTab(null)} /></div>
       )}
 
       {/* ═══ حاسبة المعدل ═══ */}
