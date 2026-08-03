@@ -11,6 +11,7 @@ import { toBoardStage } from "../examEligibility";
 import { requirementsOf } from "../recommendedExams";
 import { orderByPriority, isOnVacation } from "./model";
 import { loadRoadmapConfig } from "./store";
+import { greetSeed } from "../greetSeed";
 import { daysBetween, addDays } from "./metrics";
 import { loadCalendar } from "./calendarStore";
 import { loadSessions } from "./sessionStore";
@@ -197,6 +198,7 @@ export function readDailySignals(ws: Workspace): {
   const p = readPriorityExam(ws);
   const examDate = p?.examKey ? (loadTrackExamDates()[p.examKey] ?? null) : null;
   const d = examDate ? daysBetween(today, examDate) : null;
-  /* الساعةُ والعشوائيُّ من هنا لا من المحرّك — يبقى نقيّاً يُختبَر */
-  return { name: loadUser()?.name, hour: new Date().getHours(), rand: Math.random(), everStarted, yesterdayMins: dm[addDays(today, -1)] ?? 0, streakDays, daysToExam: d != null && d >= 0 ? d : null };
+  /* الساعةُ والعشوائيُّ من هنا لا من المحرّك — يبقى نقيّاً يُختبَر. والبذرةُ
+     بذرةُ الزيارة نفسُها التي تستعملها الرئيسية، فلا تختلف تحيّتان في جلسةٍ واحدة. */
+  return { name: loadUser()?.name, hour: new Date().getHours(), rand: greetSeed().hello, everStarted, yesterdayMins: dm[addDays(today, -1)] ?? 0, streakDays, daysToExam: d != null && d >= 0 ? d : null };
 }

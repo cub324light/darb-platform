@@ -3,14 +3,15 @@
    تحكّم خارجي (controlled): الحالة في الصفحة الأم. */
 import { memo } from "react";
 
-export type ProfileTab = "achievements" | "info" | "prefs";
+export type ProfileTab = "info" | "prefs";
 
 /* البروفايل مكان بيانات الطالب: الإنجازات + معلوماتي (بيانات الطالب) + الإعدادات (إعدادات
    التطبيق فقط). الإحصائيات/التقدم مكانها الرئيسية، والأهداف/النتائج مكانها «خطة اليوم». */
+/* «الإنجازات» خرجت من التبويبات إلى صفحتها `/profile/achievements`: سبعٌ وعشرون
+   شارةً بثلاث درجاتٍ لا تُعرض في لوحٍ تحت الملف. */
 export const PROFILE_TABS: { id: ProfileTab; label: string; icon: string }[] = [
-  { id: "achievements", label: "الإنجازات",  icon: "🏆" },
-  { id: "info",         label: "معلوماتي",   icon: "✨" },
-  { id: "prefs",        label: "الإعدادات",  icon: "⚙️" },
+  { id: "info",  label: "معلوماتي",  icon: "✨" },
+  { id: "prefs", label: "الإعدادات", icon: "⚙️" },
 ];
 
 function ProfileTabsBase({ active, onChange }: { active: ProfileTab; onChange: (t: ProfileTab) => void }) {

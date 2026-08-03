@@ -20,7 +20,8 @@ function goalText(u: DarbUser): string {
   return t.join(" · ");
 }
 
-interface Field { icon: string; label: string; value: string; wide?: boolean; }
+/** `counts`: هل يدخل هذا الحقلُ في اكتمال الملف؟ ما لا يُحصى لا يُطالَب به. */
+interface Field { icon: string; label: string; value: string; wide?: boolean; counts?: boolean; }
 
 export default function ProfileExtra() {
   const [user] = useState<DarbUser | null>(() => (typeof window !== "undefined" ? loadUser() : null));
@@ -28,18 +29,21 @@ export default function ProfileExtra() {
   const comp = profileCompletion(user);
   const done = comp.pct === 100;
 
+  /* ▓ ما يُحصى في الاكتمال هو وحده ما نطالبه به. كان الملفُّ يقول «مكتمل» ثم
+     يعرض تحته «➕ أضفها الآن» لحقلٍ لا يُحصى أصلاً — وعدٌ يناقض نفسه. */
+  const counted = new Set(comp.fields.map((f) => f.id));
   const list = (a?: string[]) => (a && a.length ? a.join("، ") : "");
   const fields: Field[] = [
-    { icon: "👤", label: "الاسم", value: user.name ?? "", wide: true },
-    { icon: "🎓", label: "المرحلة", value: user.grade || user.studyLevel || "" },
-    { icon: "🧭", label: "المسار الدراسي", value: user.academicTrack ? trackLabel(user.academicTrack) : "" },
-    { icon: "🎯", label: "الهدف", value: goalText(user) },
-    { icon: "📍", label: "المنطقة", value: user.region ?? "" },
-    { icon: "📚", label: "طريقة المذاكرة", value: user.studyStyle ? STYLE_LABEL[user.studyStyle] ?? "" : "" },
+    { icon: "👤", label: "الاسم", value: user.name ?? "", wide: true, counts: counted.has("name") },
+    { icon: "🎓", label: "المرحلة", value: user.grade || user.studyLevel || "", counts: counted.has("stage") },
+    { icon: "🧭", label: "المسار الدراسي", value: user.academicTrack ? trackLabel(user.academicTrack) : "", counts: counted.has("academicTrack") },
+    { icon: "🎯", label: "الهدف", value: goalText(user), counts: counted.has("goal") },
+    { icon: "📍", label: "المنطقة", value: user.region ?? "", counts: counted.has("region") },
+    { icon: "📚", label: "طريقة المذاكرة", value: user.studyStyle ? STYLE_LABEL[user.studyStyle] ?? "" : "", counts: counted.has("studyStyle") },
     { icon: "⏰", label: "ساعات المذاكرة", value: user.studyHours ? `${n(user.studyHours)} ساعات` : "" },
-    { icon: "🎨", label: "الهوايات", value: list(user.hobbies) },
-    { icon: "💡", label: "الاهتمامات", value: list(user.interests) },
-    { icon: "📗", label: "المواد المفضّلة", value: list(user.favSubjects) },
+    { icon: "🎨", label: "الهوايات", value: list(user.hobbies), counts: counted.has("hobbies") },
+    { icon: "💡", label: "الاهتمامات", value: list(user.interests), counts: counted.has("interests") },
+    { icon: "📗", label: "المواد المفضّلة", value: list(user.favSubjects), counts: counted.has("favSubjects") },
     { icon: "🧠", label: "طريقة التعلّم", value: list(user.learningStyle) },
   ];
 
@@ -73,7 +77,7 @@ export default function ProfileExtra() {
       <div>
         <p className="eyebrow mb-3">👤 معلوماتي</p>
         <div className="grid grid-cols-2 gap-3">
-          {fields.map((f) => f.value ? (
+          {fields.filter((f) => f.value || f.counts).map((f) => f.value ? (
             <div key={f.label} className={`rounded-2xl p-3.5 ${f.wide ? "col-span-2" : ""}`}
               style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
               <div className="flex items-center gap-1.5 mb-1.5">

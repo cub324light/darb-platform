@@ -16,7 +16,7 @@ import { readPriorityExam, countRemaining, readPlanSubjects, vaultCount, readTod
 import { loadRoadmapConfig } from "@/lib/roadmap/store";
 import { ROADMAP_TUNING } from "@/lib/roadmap/config";
 import { trackEvent } from "@/lib/analytics";
-import { n } from "@/lib/format";
+import { n, tasks as tasksWord, dur } from "@/lib/format";
 import Sheet from "@/components/Sheet";
 
 type Stage = "plan" | "done";
@@ -94,6 +94,9 @@ export default function SessionPage() {
   }
 
   const tasks = plan.tasks;
+  /* تقديرُ زمن الجلسة: مجموعُ دقائق المهامّ الموقوتة، والأسئلةُ بدقيقةٍ لكلّ سؤال.
+     تقديرٌ يُعلَن تقديراً (`~`) — لا وعدٌ يناقض مؤقّتَ «التركيز». */
+  const estMins = tasks.reduce((m, t) => m + (t.goalMins ?? t.goalCount ?? 0), 0);
 
   /* «ابدأ الآن» — تسليمٌ إلى ⏱️ التركيز (نظام التوقيت الوحيد)، ويعود بـ?done=N.
      نمرّر وزن المهمّة الأولى (task) واسمها (tlabel) ليعرف الطالب — وهو داخل التركيز —
@@ -148,7 +151,7 @@ export default function SessionPage() {
               style={{ background: "color-mix(in srgb, var(--success) 13%, transparent)", color: "var(--success)" }}>✓</div>
             <h1 className="t-h2 font-black mt-6" style={{ color: "var(--text)" }}>أحسنت.</h1>
             <p className="t-body mt-1.5" style={{ color: "var(--text-muted)" }}>أنهيت جلسة اليوم.</p>
-            <p className="t-display font-black font-mono-nums mt-5" style={{ color: "var(--text)" }}>{n(doneMins)} دقيقة</p>
+            <p className="t-h1 font-black font-mono-nums mt-4" style={{ color: "var(--text)" }}>{n(doneMins)} دقيقة</p>
             {rest.length > 0 && (
               <div className="mt-6">
                 <p className="t-caption font-black" style={{ color: "var(--text)" }}>بقي عليك</p>
@@ -169,17 +172,30 @@ export default function SessionPage() {
   /* ── 1) الخطة — «ماذا ستفعل اليوم؟» ── */
   return (
     <div className="min-h-dvh relative z-[1] page-enter">
-      <div className="max-w-xl mx-auto w-full px-5 pt-7" style={{ paddingBottom: "calc(var(--nav-h) + 175px)" }}>
+      <div className="max-w-xl mx-auto w-full px-5 pt-6" style={{ paddingBottom: "calc(var(--nav-h) + 150px)" }}>
         <BackButton href="/roadmap" label="مساري" />
 
-        <h1 className="t-h2 font-black mt-5" style={{ color: "var(--text)" }}>🎯 ماذا ستفعل اليوم؟</h1>
-        <p className="t-body mt-1.5" style={{ color: "var(--text-muted)" }}>جهّزت لك جلسة على قدّ يومك.</p>
+        <h1 className="t-h2 font-black mt-4" style={{ color: "var(--text)" }}>🎯 ماذا ستفعل اليوم؟</h1>
+        <p className="t-small mt-1" style={{ color: "var(--text-muted)" }}>جهّزت لك جلسة على قدّ يومك.</p>
 
-        {/* ما ستنجزه — البطل الرقميّ الوحيد. المدّة ليست هنا: هي تفضيلٌ محفوظٌ في ⏱️ التركيز،
-            فلو أعلنّا رقماً هنا لناقض المؤقّت الحقيقيّ الذي سيبدأ بعد «ابدأ الآن». */}
-        <div className="rounded-3xl mt-5 py-5 text-center" style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-          <p className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>جلسة اليوم</p>
-          <p className="t-display font-black font-mono-nums mt-0.5" style={{ color: "var(--text)" }}>{n(tasks.length)} مهام</p>
+        {/* ▓ كان العددُ بحجم `t-display` — أضخمِ خطٍّ في المنصّة — لِـ«ثلاث مهام».
+            رقمٌ صغيرٌ بخطٍّ عملاقٍ يبدو صرخةً بلا سبب. صار سطراً واحداً يجمع
+            الاختبارَ والعددَ والزمنَ المقدَّر، بحجمٍ يليق بما يقول.
+            (المدّةُ الفعليّة تبقى تفضيلَ «⏱️ التركيز» — وهذا **تقديرُ** الجلسة.) */}
+        <div className="rounded-2xl mt-4 px-4 py-3.5 flex items-center gap-3"
+          style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+          <span className="w-11 h-11 rounded-2xl grid place-items-center text-[20px] flex-shrink-0"
+            style={{ background: `color-mix(in srgb, ${exam.color ?? "var(--accent)"} 14%, var(--surface2))` }} aria-hidden="true">📋</span>
+          <span className="flex-1 min-w-0">
+            <span className="block t-caption font-bold" style={{ color: "var(--text-muted)" }}>جلسة اليوم · {exam.label}</span>
+            <span className="block t-h3 font-black" style={{ color: "var(--text)" }}>{tasksWord(tasks.length)}</span>
+          </span>
+          {estMins > 0 && (
+            <span className="t-caption font-black px-2.5 py-1 rounded-full flex-shrink-0 font-mono-nums"
+              style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>
+              ~{dur(estMins)}
+            </span>
+          )}
         </div>
 
         {/* وقتٌ محدود ⇒ المحرّك أعاد البناء فعلاً */}
@@ -221,7 +237,7 @@ export default function SessionPage() {
         <div className="max-w-xl mx-auto w-full">
           <p className="t-caption text-center" style={{ color: "var(--text-muted)" }}>{plan.motivation}</p>
           <p className="t-caption font-black text-center mt-1 mb-3" style={{ color: "var(--text)" }}>
-            {n(tasks.length)} مهام — تبدأ بجلسة تركيز
+            {tasksWord(tasks.length)} — تبدأ بجلسة تركيز
           </p>
           <button onClick={startSession}
             className="w-full rounded-2xl transition active:scale-[0.98]"

@@ -33,6 +33,9 @@ export interface StoreItem {
   desc?: string;
   price: number;           // بالفضة (صفرٌ = مجّانيّ يُفتح بالإنجاز وحده)
   requires?: StoreRequire;
+  /** لقبُ مستوى: يُمنَح تلقائياً عند بلوغه ولا يُعرض في المتجر ولا يُشترى.
+      وجودُه في الكتالوج ضروريٌّ ليعرف `equippedItem` كيف يرسمه. */
+  levelIndex?: number;
 }
 
 /** أصنافُ المتجر. ← أضِف هنا وحدها.
@@ -42,12 +45,25 @@ export interface StoreItem {
       وبألفٍ أسبوعان ونصف. جعلنا أوّلَ لقبٍ رخيصاً (٨٠) ليذوق الطالبُ الشراء
       في أوّل أسبوعه، ثم تتدرّج — والغالي منها مشروطٌ بإنجازٍ لا بمالٍ فقط. */
 export const CATALOG: StoreItem[] = [
-  /* ── ألقاب ── */
-  { id: "t-mubtade", slot: "title", label: "المبتدئ",   desc: "أوّلُ خطوةٍ في الطريق.", price: 80 },
-  { id: "t-multazim", slot: "title", label: "المُلتزم", desc: "من يذاكر ولو قلّ.", price: 250, requires: { minStreak: 3 } },
-  { id: "t-mujtahid", slot: "title", label: "المجتهد",  desc: "عشرُ ساعاتِ تركيزٍ خلفك.", price: 400, requires: { minFocusMins: 600 } },
-  { id: "t-sabir",    slot: "title", label: "الصابر",   desc: "أسبوعٌ متّصلٌ بلا انقطاع.", price: 700, requires: { minStreak: 7 } },
-  { id: "t-mutqin",   slot: "title", label: "المُتقن",  desc: "خمسون جلسةً منجزة.", price: 1200, requires: { minSessions: 50 } },
+  /* ── ألقابُ المستويات — تُمنَح مع كل مستوى XP جديد، ولا تُباع ──
+     اللقبُ هنا **جزاءُ رحلةٍ لا سلعة**: يبلغه الطالبُ فيلبسه بلا أن يدفع.
+     وأسماؤها أسماءُ المستويات نفسُها في `xp.ts` — لا اسمان لشيءٍ واحد. */
+  { id: "lvl-0", slot: "title", label: "مبتدئ",  desc: "بدايةُ الطريق — تُمنَح بأوّل دخول.", price: 0, levelIndex: 0 },
+  { id: "lvl-1", slot: "title", label: "طالب",   desc: "بلغتَ ٢٠٠ نقطة خبرة.",   price: 0, levelIndex: 1 },
+  { id: "lvl-2", slot: "title", label: "متمكّن", desc: "بلغتَ ٦٠٠ نقطة خبرة.",   price: 0, levelIndex: 2 },
+  { id: "lvl-3", slot: "title", label: "محترف",  desc: "بلغتَ ١٥٠٠ نقطة خبرة.",  price: 0, levelIndex: 3 },
+  { id: "lvl-4", slot: "title", label: "خبير",   desc: "بلغتَ ٣٥٠٠ نقطة خبرة.",  price: 0, levelIndex: 4 },
+
+  /* ── ألقابُ المتجر — تُشترى، وغيرُ ألقاب المستويات عمداً ──
+     لو باعَ المتجرُ «المبتدئ» وهو يُمنَح مجّاناً بالمستوى لَبدا المتجرُ يبيع ما
+     يملكه الطالبُ أصلاً. فألقابُه أسماءُ **صفةٍ لا مرتبة**: يختارها لأنها تشبهه. */
+  { id: "t-mudhabir", slot: "title", label: "المُثابر",   desc: "من لا ينقطع ولو قلّ.", price: 120, requires: { minStreak: 3 } },
+  { id: "t-sabir",    slot: "title", label: "الصابر",     desc: "أسبوعٌ متّصلٌ بلا انقطاع.", price: 350, requires: { minStreak: 7 } },
+  { id: "t-mujtahid", slot: "title", label: "المجتهد",    desc: "عشرُ ساعاتِ تركيزٍ خلفك.", price: 500, requires: { minFocusMins: 600 } },
+  { id: "t-mutqin",   slot: "title", label: "المُتقن",    desc: "خمسون جلسةً منجزة.", price: 900, requires: { minSessions: 50 } },
+  { id: "t-fares",    slot: "title", label: "فارسُ الفجر", desc: "لمن يذاكر والناسُ نيام.", price: 1100, requires: { minStreak: 14 } },
+  { id: "t-jabal",    slot: "title", label: "جبلٌ لا يميل", desc: "مئةُ ساعةِ تركيز.", price: 1800, requires: { minFocusMins: 6000 } },
+  { id: "t-lahib",    slot: "title", label: "لهيبُ درب",   desc: "ثلاثون يوماً متّصلة.", price: 2500, requires: { minStreak: 30 } },
 
   /* ── شارات ── */
   { id: "b-first",   slot: "badge", label: "🌱 أوّل جلسة", desc: "بدأتَ فعلاً.", price: 0, requires: { minSessions: 1 } },
@@ -61,5 +77,10 @@ export const CATALOG: StoreItem[] = [
 export const itemById = (catalog: StoreItem[], id: string): StoreItem | null =>
   catalog.find((i) => i.id === id) ?? null;
 
+/** أصنافُ الخانة **المعروضة في المتجر** — ألقابُ المستويات ليست بضاعة. */
 export const itemsInSlot = (catalog: StoreItem[], slot: CosmeticSlot): StoreItem[] =>
-  catalog.filter((i) => i.slot === slot);
+  catalog.filter((i) => i.slot === slot && i.levelIndex === undefined);
+
+/** لقبُ المستوى رقم `i` — يمنحه `levelRewards` عند بلوغه. */
+export const levelTitle = (catalog: StoreItem[], i: number): StoreItem | null =>
+  catalog.find((x) => x.levelIndex === i) ?? null;

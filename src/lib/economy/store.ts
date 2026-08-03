@@ -69,6 +69,15 @@ export function purchase(id: string): BuyResult {
   return res;
 }
 
+/** مَنحٌ بلا ثمن — لجزاء المستوى. يُملَك، ويُلبَس إن طُلب وكانت خانتُه فارغة. */
+export function grantItem(id: string, alsoWear: boolean): Owned {
+  const cur = loadOwned();
+  const next: Owned = cur.items.includes(id) ? cur : { ...cur, items: [...cur.items, id] };
+  const worn = alsoWear ? equip(CATALOG, next, id) : next;
+  saveOwned(worn);
+  return worn;
+}
+
 export function wear(id: string): Owned {
   const next = equip(CATALOG, loadOwned(), id);
   saveOwned(next);

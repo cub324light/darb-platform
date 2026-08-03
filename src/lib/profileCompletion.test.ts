@@ -4,15 +4,30 @@ import assert from "node:assert/strict";
 import { profileCompletion, pendingProfileRewards, type FullProfile } from "./profileCompletion";
 
 const registered: FullProfile = { name: "محمد", grade: "ثالث ثانوي", region: "الرياض", targets: ["university"], studyStyle: "both" };
-const full: FullProfile = { ...registered, hobbies: ["كرة"], interests: ["برمجة"], favSubjects: ["رياضيات"] };
+const full: FullProfile = { ...registered, academicTrack: "general", hobbies: ["كرة"], interests: ["برمجة"], favSubjects: ["رياضيات"] };
 
-test("الاكتمال: 8 معلومات (4 أساسية + 4 شخصية)", () => {
+test("الاكتمال: ٩ للثانويّ (٥ أساسية + ٤ شخصية)، و٨ لغيره", () => {
+  /* ملفٌّ فارغٌ لا نعرف صاحبَه — فلا نطالبه بمسارٍ دراسيّ */
   assert.equal(profileCompletion({}).total, 8);
   assert.equal(profileCompletion({}).done, 0);
-  /* مسجَّل مع طريقة مذاكرة → 5/8 */
+  /* ثانويٌّ ⇒ المسارُ الدراسي يُحصى: يقود موادَّ «المدرسة» فليس ترفاً */
+  assert.equal(profileCompletion(registered).total, 9);
   assert.equal(profileCompletion(registered).done, 5);
-  assert.equal(profileCompletion(full).done, 8);
+  assert.equal(profileCompletion(full).done, 9);
   assert.equal(profileCompletion(full).pct, 100);
+});
+
+test("الجامعيُّ لا يُسأل عن مسارٍ ثانويّ — ويبلغ المئة بدونه", () => {
+  const uni: FullProfile = { name: "سارة", studyLevel: "جامعي", region: "جدة", targets: ["university"],
+    studyStyle: "both", hobbies: ["قراءة"], interests: ["طب"], favSubjects: ["أحياء"] };
+  assert.equal(profileCompletion(uni).total, 8);
+  assert.equal(profileCompletion(uni).pct, 100);
+});
+
+test("ما يُطلب هو ما يُحصى — كلُّ حقلٍ في القائمة له معرّفٌ ثابت", () => {
+  const ids = profileCompletion(registered).fields.map((f) => f.id);
+  assert.equal(new Set(ids).size, ids.length, "معرّفٌ مكرّر يخلط العرضَ بالحساب");
+  assert.ok(ids.includes("academicTrack"), "المسارُ الدراسي غائبٌ عن ملفّ ثانويّ");
 });
 
 test("مكافأة تدريجية: +5 لكل معلومةٍ شخصية جديدة (مرّة لكلٍّ)", () => {

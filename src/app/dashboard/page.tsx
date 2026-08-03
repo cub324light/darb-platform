@@ -16,6 +16,7 @@ import Achievements from "@/components/dash/home/Achievements";
 import Link from "next/link";
 import { loadUser, loadStats, computeStreak, type DarbUser } from "@/lib/storage";
 import { helloFor, tipFor } from "@/lib/greeting";
+import { greetSeed } from "@/lib/greetSeed";
 import Customizable from "@/components/Customizable";
 import { isUniversityPhase, isUniversityGraduate } from "@/lib/phase";
 import dynamic from "next/dynamic";
@@ -26,12 +27,13 @@ export default function DashboardPage() {
     if (typeof window === "undefined") return null;
     const u = loadUser();
     const now = new Date();
-    /* عشوائيٌّ في كل فتحة — لا تحيّةَ يحفظها الطالبُ فتصير أثاثاً. ويُقرأ مرّةً
-       في المُهيّئ فلا يقفز النصُّ مع كل رسمة. */
+    /* عشوائيٌّ لكلّ **زيارة** لا لكلّ صفحة: البذرةُ في `sessionStorage`، فلا
+       تتبدّل التحيّةُ كلّما انتقل بين الرئيسية ومساري وهو لم يغادر جلسته. */
+    const seed = greetSeed();
     return {
       user: u,
-      hello: helloFor(now.getHours(), Math.random()),
-      tip: tipFor(Math.random()),
+      hello: helloFor(now.getHours(), seed.hello),
+      tip: tipFor(seed.tip),
       showPhaseBoard: isUniversityPhase(u) || isUniversityGraduate(u),
     };
   });
@@ -74,7 +76,7 @@ export default function DashboardPage() {
           </Link>
           <div className="mt-1.5"><WornCosmetics /></div>
           {/* كان هنا اسمُ الوقت («وقت التركيز») — لا يفيد الطالبَ بشيء.
-              صار نصيحةً عمليةً أو دفعةً، تُنتقى عشوائياً في كل فتحة. */}
+              صار نصيحةً عمليةً أو دفعةً، تُنتقى عشوائياً في كل زيارة. */}
           <p className="t-body font-bold mt-2 leading-relaxed" style={{ color: "var(--text)" }}>{init?.tip}</p>
         </div>
       </Dome>

@@ -12,7 +12,7 @@
 
    ▓ التركيزُ وأخطائي خارج هذا عمداً: الأولُ شاشةُ مؤقّتٍ لا أقسامَ فيها،
      والثاني سجلٌّ ترتيبُه زمنيٌّ لا رأيَ للطالب فيه. */
-import { useState, useRef, useCallback, type ReactNode, type PointerEvent as RPointerEvent } from "react";
+import { Fragment, useState, useRef, useCallback, type ReactNode, type PointerEvent as RPointerEvent } from "react";
 import Sheet from "@/components/Sheet";
 import { moveSection, toggleSection, hiddenCount, isCustomized, type SectionDef, type SectionState } from "@/lib/pageLayout";
 import { useLayout, saveLayout, resetLayout } from "@/lib/pageLayoutStore";
@@ -54,10 +54,13 @@ export default function Customizable({
         </button>
       </div>
 
+      {/* ▓ `Fragment` لا `div`: القسمُ يبقى ابناً مباشراً للحاوية، فيرث تمدّدها
+          (`align-items: stretch`). الغلافُ الوسيط جعل بطاقةَ «هدف اليوم» — وهي
+          `button` — تنكمش على محتواها فظهر فراغٌ إلى جانبها. */}
       {layout.map((s) => {
         if (!s.visible) return null;
         const sec = byId.get(s.id);
-        return sec ? <div key={s.id}>{sec.node}</div> : null;
+        return sec ? <Fragment key={s.id}>{sec.node}</Fragment> : null;
       })}
 
       {open && (

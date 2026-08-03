@@ -23,6 +23,29 @@ export const LEVELS: Level[] = [
   { name: "خبير",   minXp: 3500, color: "#DC2626", icon: "★" },
 ];
 
+/* ── جزاءُ المستوى ──
+   كلُّ مستوىً جديدٍ يُعطي فضّةً **ولقباً** يُلبَس. المستوى ليس رقماً يُعرض:
+   هو محطّةٌ يصل إليها الطالبُ فيأخذ منها شيئاً يملكه. تُصرف مرّةً واحدة.
+
+   المعايرة: المبتدئُ لمسةُ ترحيبٍ (٢٥)، ثم تتصاعد — والخبيرُ (٣٥٠٠ خبرة) يعادل
+   شهوراً من المذاكرة فيستحقّ ١٢٠٠. */
+export const LEVEL_SILVER: number[] = [25, 100, 250, 600, 1200];
+
+/** المستوى الذي بلغه (فهرسٌ في `LEVELS`). */
+export function levelIndexOf(xp: number): number {
+  let idx = 0;
+  LEVELS.forEach((l, i) => { if (xp >= l.minXp) idx = i; });
+  return idx;
+}
+
+/** فضّةُ المستويات المستحقّة ولمّا تُصرف — يُصرف كلُّ ما بلغه لا الأخير وحده. */
+export function pendingLevelRewards(xp: number, claimed: number[]): { levels: number[]; silver: number } {
+  const done = new Set(claimed);
+  const levels: number[] = [];
+  for (let i = 0; i <= levelIndexOf(xp); i++) if (!done.has(i)) levels.push(i);
+  return { levels, silver: levels.reduce((s, i) => s + (LEVEL_SILVER[i] ?? 0), 0) };
+}
+
 /** درجةُ الصعوبة — تُرتَّب بها الشبكة ويُعاير بها الثمن. */
 export type BadgeTier = "easy" | "mid" | "hard";
 

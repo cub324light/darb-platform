@@ -52,7 +52,8 @@ export function buy(i: {
 }): BuyResult {
   const { catalog, id, balance, owned } = i;
   const item = itemById(catalog, id);
-  if (!item) return { ok: false, reason: "unknown", balance, short: 0 };
+  /* لقبُ المستوى يُمنَح ولا يُباع — ولو تسرّب معرّفُه إلى نداءِ شراء */
+  if (!item || item.levelIndex !== undefined) return { ok: false, reason: "unknown", balance, short: 0 };
   if (owns(owned, id)) return { ok: false, reason: "owned", balance, short: 0 };
   if (!isUnlocked(item, i.progress ?? EMPTY_PROGRESS)) return { ok: false, reason: "locked", balance, short: 0 };
   if (balance < item.price) return { ok: false, reason: "poor", balance, short: item.price - balance };

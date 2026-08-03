@@ -4,7 +4,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   BADGE_DEFS, TIER_META, badgesInTier, getBadgeCurrent, getUnlockedBadgeIds,
-  pendingBadgeSilver, computeXP, getLevel, xpBreakdown, XP_SOURCES, type BadgeTier,
+  pendingBadgeSilver, computeXP, getLevel, xpBreakdown, XP_SOURCES,
+  LEVELS, LEVEL_SILVER, levelIndexOf, pendingLevelRewards, type BadgeTier,
 } from "./xp";
 import type { DarbStats } from "./storage";
 
@@ -108,6 +109,53 @@ test("شرحُ XP يطابق حسابها — لا جدولان يفترقان",
   assert.equal(parts.reduce((a, b) => a + b.points, 0), computeXP(s), "الشرحُ يقول غيرَ ما تحسبه الدالّة");
   assert.equal(parts.length, XP_SOURCES.length);
   assert.ok(XP_SOURCES.every((x) => x.points > 0 && x.label && x.per), "مصدرٌ بلا وزنٍ أو بلا اسم");
+});
+
+test("لكلّ مستوىً فضّةٌ، والأعلى أغلى", () => {
+  assert.equal(LEVEL_SILVER.length, LEVELS.length, "مستوىً بلا جائزة");
+  for (let i = 1; i < LEVEL_SILVER.length; i++) {
+    assert.ok(LEVEL_SILVER[i] > LEVEL_SILVER[i - 1], `المستوى ${i} ليس أغلى ممّا قبله`);
+  }
+  assert.ok(LEVEL_SILVER.every((v) => v > 0), "مستوىً بجائزةٍ صفر");
+});
+
+test("levelIndexOf يتبع عتبات المستويات", () => {
+  assert.equal(levelIndexOf(0), 0);
+  assert.equal(levelIndexOf(LEVELS[1].minXp - 1), 0);
+  assert.equal(levelIndexOf(LEVELS[1].minXp), 1);
+  assert.equal(levelIndexOf(999999), LEVELS.length - 1);
+});
+
+test("جزاءُ المستوى يُصرف مرّةً واحدة — ويشمل ما فات", () => {
+  /* طالبٌ قفز إلى الثالث قبل أن توجد الجائزة: يأخذ الثلاثة لا الأخير وحده */
+  const jump = pendingLevelRewards(LEVELS[2].minXp, []);
+  assert.deepEqual(jump.levels, [0, 1, 2]);
+  assert.equal(jump.silver, LEVEL_SILVER[0] + LEVEL_SILVER[1] + LEVEL_SILVER[2]);
+
+  const again = pendingLevelRewards(LEVELS[2].minXp, jump.levels);
+  assert.deepEqual(again.levels, [], "الصرفُ مرّتين يطبع فضةً من هواء");
+  assert.equal(again.silver, 0);
+
+  const next = pendingLevelRewards(LEVELS[3].minXp, [0, 1, 2]);
+  assert.deepEqual(next.levels, [3]);
+  assert.equal(next.silver, LEVEL_SILVER[3]);
+});
+
+test("لقبُ كلِّ مستوىً موجودٌ في الكتالوج ولا يُباع", async () => {
+  const { CATALOG, levelTitle, itemsInSlot } = await import("./economy/catalog");
+  const forSale = new Set(itemsInSlot(CATALOG, "title").map((x) => x.id));
+  LEVELS.forEach((lvl, i) => {
+    const t = levelTitle(CATALOG, i);
+    assert.ok(t, `المستوى «${lvl.name}» بلا لقب`);
+    assert.equal(t!.label, lvl.name, "اسمُ اللقب يخالف اسمَ المستوى — اسمان لشيءٍ واحد");
+    assert.equal(t!.price, 0);
+    assert.ok(!forSale.has(t!.id), "لقبُ مستوىً معروضٌ في المتجر — يبيع ما يُمنَح");
+  });
+  /* وألقابُ المتجر غيرُها: لا يبيع ما يملكه الطالبُ أصلاً */
+  const storeLabels = itemsInSlot(CATALOG, "title").map((x) => x.label);
+  for (const lvl of LEVELS) {
+    assert.ok(!storeLabels.includes(lvl.name), `«${lvl.name}» لقبُ مستوىً ومعروضٌ للبيع`);
+  }
 });
 
 test("مخزنُ الصرف لا يفتح رصيداً ثانياً", async () => {

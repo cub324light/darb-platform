@@ -7,6 +7,7 @@ import { loadUser, saveUser, addSilver, type DarbUser } from "@/lib/storage";
 import { profileCompletion, pendingProfileRewards } from "@/lib/profileCompletion";
 import { SA_REGIONS } from "@/lib/saRegions";
 import { SCHOOL_STAGES } from "@/lib/darbKnowledge";
+import { ACADEMIC_TRACKS, trackLabel, type AcademicTrack } from "@/lib/curriculum";
 import { n } from "@/lib/format";
 
 /* وجهاتُ الطالب — نفسُ معرّفات التسجيل، فما يُختار هنا يقرؤه ما يقرؤه هناك */
@@ -46,6 +47,7 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
 export default function ProfileEditor() {
   const [user, setUser] = useState<DarbUser | null>(() => (typeof window !== "undefined" ? loadUser() : null));
   const [celebrate, setCelebrate] = useState<string | null>(null);
+  const [coreOpen, setCoreOpen] = useState(false);
   if (!user) return null;
   const comp = profileCompletion(user);
 
@@ -72,6 +74,12 @@ export default function ProfileEditor() {
     commit({ [key]: arr.length ? arr : undefined });
   };
   const on = (key: "hobbies" | "interests" | "favSubjects", val: string) => (user[key] ?? []).includes(val);
+  const isSchool = !user.studyLevel || user.studyLevel === "ثانوي";
+  const unlockCore = () => {
+    if (confirm("هذه معلوماتٌ يقوم عليها المنتج: صفُّك ومسارُك يحدّدان موادّك، وهدفُك يحدّد اختباراتك. تفتحها للتعديل؟")) {
+      setCoreOpen(true);
+    }
+  };
   /* اختيارُ وجهةٍ يُلغي «درب يحدّد لي» — لا يجتمع أن يختار وأن يفوّض */
   const toggleTarget = (id: string) => {
     const cur = user.targets ?? [];
@@ -100,10 +108,36 @@ export default function ProfileEditor() {
         </div>
       )}
 
+      {/* ═══ معلوماتٌ أساسية — **مقفلةٌ حتى تُفتح** ═══
+          هذه ليست كالهوايات: صفُّك ومسارُك يقودان موادَّ «المدرسة»، وهدفُك يقود
+          اختباراتِ «مساري»، ومنطقتُك تقود أقربَ جامعة. تغييرُها بضغطةٍ عابرة
+          يقلب المنتجَ على الطالب وهو لا يدري — فتُفتح بقصدٍ ثم تُقفَل بعد التعديل. */}
       <div className="ds-card flex flex-col gap-5">
-        {/* ▓ الأربعةُ الأساسية: كانت تُملأ في التسجيل وحده، فمن فاته حقلٌ منها بقي
-            عند ٨٨٪ إلى الأبد — نقول له «باقي معلومةٌ واحدة» ولا مكانَ يضيفها فيه.
-            صارت هنا كلُّها، فالمئةُ صارت ممكنة. */}
+        <div className="flex items-center justify-between gap-2">
+          <p className="t-title font-black" style={{ color: "var(--text)" }}>
+            {coreOpen ? "🔓 معلوماتك الأساسية" : "🔒 معلوماتك الأساسية"}
+          </p>
+          <button onClick={() => (coreOpen ? setCoreOpen(false) : unlockCore())}
+            className="t-caption font-black px-3 py-1.5 rounded-xl"
+            style={{ background: coreOpen ? "var(--accent)" : "var(--surface2)", color: coreOpen ? "#fff" : "var(--text-muted)", border: "1px solid var(--border)" }}>
+            {coreOpen ? "أقفلها" : "عدّلها"}
+          </button>
+        </div>
+        {!coreOpen && (
+          <div className="flex flex-col gap-1.5">
+            <p className="t-small font-bold" style={{ color: "var(--text)" }}>
+              {[user.name, user.grade || user.studyLevel, user.academicTrack ? trackLabel(user.academicTrack) : null, user.region]
+                .filter(Boolean).join(" · ") || "لم تُضبط بعد"}
+            </p>
+            <p className="t-caption leading-relaxed" style={{ color: "var(--text-muted)" }}>
+              هذه تقود موادّك واختباراتك — لا تُغيَّر بضغطةٍ عابرة. اضغط «عدّلها» لفتحها.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {coreOpen && (
+      <div className="ds-card flex flex-col gap-5">
         <label className="flex flex-col gap-1.5">
           <span className="t-title font-bold" style={{ color: "var(--text)" }}>الاسم</span>
           <input value={user.name ?? ""} onChange={(e) => commit({ name: e.target.value })}
@@ -112,18 +146,26 @@ export default function ProfileEditor() {
             style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
         </label>
 
-        {/* الصفُّ للثانويّ وحده: الجامعيُّ والخرّيج تكفيهم حالتُهم التعليمية.
-            وتغييرُ الصفّ يغيّر موادَّ المنهج، فنقولها له صراحةً. */}
-        {(!user.studyLevel || user.studyLevel === "ثانوي") && (
-          <div>
+        {/* الصفُّ والمسارُ للثانويّ وحده: الجامعيُّ والخرّيج تكفيهم حالتُهم
+            التعليمية. وكلاهما يغيّر موادَّ المنهج، فنقولها له صراحةً. */}
+        {isSchool && (
+          <div className="flex flex-col gap-4">
             <Group title="صفّك">
               {SCHOOL_STAGES.map((g) => (
                 <Chip key={g} on={user.grade === g}
                   onClick={() => commit({ grade: user.grade === g ? undefined : g, studyLevel: "ثانوي" })}>{g}</Chip>
               ))}
             </Group>
-            <p className="t-caption mt-2" style={{ color: "var(--text-muted)" }}>
-              تغييرُ صفّك يغيّر موادّك في «المدرسة» — لا يمسّ تقدّمك ولا أخطاءك.
+            <Group title="مسارك الدراسي">
+              {ACADEMIC_TRACKS.map((t) => (
+                <Chip key={t.id} on={user.academicTrack === t.id}
+                  onClick={() => commit({ academicTrack: user.academicTrack === t.id ? undefined : (t.id as AcademicTrack) })}>
+                  {t.icon} {t.label}
+                </Chip>
+              ))}
+            </Group>
+            <p className="t-caption" style={{ color: "var(--text-muted)" }}>
+              صفُّك ومسارُك يحدّدان موادّك في «المدرسة» — ولا يمسّان تقدّمك ولا أخطاءك.
             </p>
           </div>
         )}
@@ -147,6 +189,11 @@ export default function ProfileEditor() {
           </Group>
         </div>
 
+      </div>
+      )}
+
+      <div className="ds-card flex flex-col gap-5">
+        <p className="t-title font-black" style={{ color: "var(--text)" }}>✨ معلوماتٌ تخصّك</p>
         <Group title="طريقة المذاكرة">
           {STUDY_STYLES.map((s) => <Chip key={s.id} on={user.studyStyle === s.id} onClick={() => commit({ studyStyle: user.studyStyle === s.id ? undefined : s.id })}>{s.label}</Chip>)}
         </Group>

@@ -14,13 +14,15 @@ import {
 import { getTrack } from "@/lib/tracks";
 import { getPlan } from "@/lib/plan";
 import type { PlanId } from "@/lib/types";
-import { computeXP, getLevel, getUnlockedBadgeIds } from "@/lib/xp";
+import Link from "next/link";
+import { computeXP, getLevel, getUnlockedBadgeIds, BADGE_DEFS } from "@/lib/xp";
+import { claimLevelRewards } from "@/lib/levelRewards";
+import { n } from "@/lib/format";
 
 import ProfileTabs, { type ProfileTab } from "@/components/profile/ProfileTabs";
 import ProfileSkeleton from "@/components/profile/ProfileSkeleton";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfilePreferences from "@/components/profile/ProfilePreferences";
-import ProfileAchievements from "@/components/profile/ProfileAchievements";
 import ProfileExtra from "@/components/profile/ProfileExtra";
 import ProfileAccount from "@/components/profile/ProfileAccount";
 import { readGuestMode } from "@/components/AuthGate";
@@ -40,10 +42,21 @@ export default function ProfilePage() {
   const [tab, setTab] = useState<ProfileTab>(() => {
     if (typeof window !== "undefined") {
       const t = new URLSearchParams(window.location.search).get("tab");
-      if (t === "info" || t === "prefs" || t === "achievements") return t;
+      if (t === "info" || t === "prefs") return t;
     }
-    return "achievements";
+    return "info";
   });
+
+  /* جزاءُ المستوى — فضّةٌ ولقبٌ يُمنحان عند بلوغه. مؤجَّلٌ خطوةً بعد الرسم:
+     ضبطُ الحالة داخل الأثر مباشرةً يُسلسل رسماتٍ متتالية. */
+  const [levelUp, setLevelUp] = useState<{ silver: number; titles: string[] } | null>(null);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const r = claimLevelRewards();
+      if (r.levels.length) setLevelUp({ silver: r.silver, titles: r.titles });
+    }, 0);
+    return () => clearTimeout(t);
+  }, []);
 
   /* توست نجاح الحفظ — يظهر ثانيتين ثم يختفي (يُقرأ من ?saved=1 بعد الرجوع من صفحة التعديل) */
   const [savedToast, setSavedToast] = useState(() =>
@@ -128,13 +141,34 @@ export default function ProfilePage() {
           onUserChange={updateUser}
         />
 
-        <ProfileTabs active={tab} onChange={setTab} />
-
-        {tab === "achievements" && (
-          <div id="profile-panel-achievements" role="tabpanel" aria-labelledby="profile-tab-achievements" className="profile-tab-panel">
-            <ProfileAchievements unlockedIds={unlockedIds} stats={stats} vaultCount={vaultCount} />
+        {levelUp && (
+          <div className="ds-card rise flex items-start gap-3"
+            style={{ background: "color-mix(in srgb, var(--gold) 12%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--gold) 40%, var(--border))" }}>
+            <span className="text-[22px] flex-shrink-0" aria-hidden="true">🎖️</span>
+            <p className="t-body font-black flex-1 min-w-0 leading-relaxed" style={{ color: "var(--text)" }}>
+              {levelUp.titles.length > 0 && <>وصلتَ لقب «{levelUp.titles[levelUp.titles.length - 1]}» — </>}
+              <span className="font-mono-nums">+{n(levelUp.silver)}</span> فضة في محفظتك.
+            </p>
+            <button onClick={() => setLevelUp(null)} className="t-caption font-bold px-2" style={{ color: "var(--text-muted)" }}>✕</button>
           </div>
         )}
+
+        {/* الإنجازات صفحةٌ قائمةٌ بذاتها الآن — وهذه بوّابتُها بأرقامها الحقيقية */}
+        <Link href="/profile/achievements"
+          className="ds-card ds-card-interactive flex items-center gap-3 no-underline"
+          style={{ ["--tint" as string]: "var(--gold)" }}>
+          <span className="w-11 h-11 rounded-2xl grid place-items-center text-[20px] flex-shrink-0"
+            style={{ background: "color-mix(in srgb, var(--gold) 14%, var(--surface2))" }} aria-hidden="true">🏆</span>
+          <span className="flex-1 min-w-0">
+            <span className="block t-title font-black" style={{ color: "var(--text)" }}>إنجازاتك</span>
+            <span className="block t-caption" style={{ color: "var(--text-muted)" }}>
+              {n(unlockedIds.size)} من {n(BADGE_DEFS.length)} شارة — وفيها فضّةٌ تُصرف
+            </span>
+          </span>
+          <span className="t-body font-black flex-shrink-0" style={{ color: "var(--accent-light)" }}>←</span>
+        </Link>
+
+        <ProfileTabs active={tab} onChange={setTab} />
 
         {tab === "info" && (
           <div id="profile-panel-info" role="tabpanel" aria-labelledby="profile-tab-info" className="profile-tab-panel">

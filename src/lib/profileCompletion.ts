@@ -1,11 +1,11 @@
 import { n as ar } from "@/lib/format";
 /* ─── اكتمال الملف الشخصي + مكافآته التدريجية — منطقٌ نقيّ (لا localStorage) ───
-   8 معلومات: 4 أساسية (من التسجيل) + 4 شخصية (البروفايل: هوايات/اهتمامات/مواد/طريقة مذاكرة).
+   ٩ معلومات للثانويّ (٥ أساسية + ٤ شخصية)، و٨ لغيره — المسارُ الدراسي يخصّه وحده.
    مكافآت تدريجية: +5 فضة مع كل معلومةٍ شخصية تُضاف (مرّة لكلٍّ)، ووسام + 30 فضة عند 100٪.
    مصدرٌ واحد: كل الحقول من DarbUser (لا تكرار). */
 
 export interface FullProfile {
-  name?: string; grade?: string; studyLevel?: string; region?: string;
+  name?: string; grade?: string; studyLevel?: string; region?: string; academicTrack?: string;
   targets?: string[]; goalUndecided?: boolean;
   hobbies?: string[]; interests?: string[]; favSubjects?: string[];
   studyStyle?: string; // طريقة المذاكرة (بالقراءة/بالفيديو/الاثنين)
@@ -21,6 +21,11 @@ const has = (a?: unknown[]): boolean => Array.isArray(a) && a.length > 0;
 export const REWARDED_FIELDS = ["hobbies", "interests", "favSubjects"] as const;
 
 /** حالة اكتمال الملف: منجز/الكل، النسبة، وحالة كل معلومة. */
+/* المسارُ الدراسي (عام/صحة/حاسب…) يخصّ الثانويّ وحده — ولا يُحصى على الجامعيّ
+   ولا على الخرّيج، فلا نطلب منهم ما لا يخصّهم ولا نمنعهم من المئة. */
+const wantsTrack = (u?: FullProfile | null): boolean =>
+  u?.studyLevel === "ثانوي" || !!u?.grade;
+
 export function profileCompletion(u?: FullProfile | null): CompletionResult {
   const fields: ProfileFieldState[] = [
     { id: "name",       label: "الاسم",            group: "core",     done: !!u?.name },
@@ -31,6 +36,8 @@ export function profileCompletion(u?: FullProfile | null): CompletionResult {
     { id: "hobbies",    label: "الهوايات",         group: "personal", done: has(u?.hobbies) },
     { id: "interests",  label: "الاهتمامات",       group: "personal", done: has(u?.interests) },
     { id: "favSubjects",label: "المواد المفضّلة",  group: "personal", done: has(u?.favSubjects) },
+    /* يُحصى للثانويّ وحده — وهو يقود موادَّ «المدرسة» فليس ترفاً */
+    ...(wantsTrack(u) ? [{ id: "academicTrack", label: "المسار الدراسي", group: "core" as const, done: !!u?.academicTrack }] : []),
   ];
   const done = fields.filter((f) => f.done).length;
   const total = fields.length;
