@@ -116,12 +116,21 @@ export default function Customizable({
     window.addEventListener("pointercancel", up);
   }, [draft, saved, defs]);
 
-  /* شريطُ التعديل يغطّي أسفل الشاشة — نترك له مكاناً فلا يحجب آخرَ قسم */
+  /* شريطُ التعديل يغطّي أسفل الشاشة — نترك له مكاناً فلا يحجب آخرَ قسم.
+     ونُعلِم الصفحةَ كلَّها أنّنا في وضع التعديل عبر سِمةٍ على `body`: زرُّ دويرب
+     العائم يقع في الزاوية نفسها فيركب على «حفظ»، ومن ضغط طرفَه فتح دويرب بدل
+     أن يحفظ. ويخفيه CSS ما دام الوضعُ مفعَّلاً — والصفحةُ محجوبةٌ عن التفاعل
+     أصلاً في هذا الوضع، فلا يُفقَد به شيء. السِّمةُ لا حالةَ React: الزرُّ في
+     شجرةٍ أخرى، ولا داعيَ لسياقٍ يربط بينهما. */
   useEffect(() => {
     if (!editing) return;
     const prevPad = document.body.style.paddingBottom;
     document.body.style.paddingBottom = "132px";
-    return () => { document.body.style.paddingBottom = prevPad; };
+    document.body.dataset.customizing = "1";
+    return () => {
+      document.body.style.paddingBottom = prevPad;
+      delete document.body.dataset.customizing;
+    };
   }, [editing]);
 
   const dirty = editing && draft!.some((s, i) => s.id !== saved[i]?.id || s.visible !== saved[i]?.visible);
