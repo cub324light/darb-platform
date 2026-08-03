@@ -35,8 +35,28 @@ export interface StoreItem {
   requires?: StoreRequire;
 }
 
-/** أصنافُ المتجر. ← أضِف هنا. */
-export const CATALOG: StoreItem[] = [];
+/** أصنافُ المتجر. ← أضِف هنا وحدها.
+
+    ▓ معايرةُ الأسعار: الطالبُ المجتهد يكسب ~٦٠ فضةً في اليوم (٥٠ دقيقةَ تركيزٍ
+      + ١٠ مكافأةَ أوّل جلسة). فاللقبُ بمئةٍ يومان، وبثلاثمئةٍ خمسةُ أيام،
+      وبألفٍ أسبوعان ونصف. جعلنا أوّلَ لقبٍ رخيصاً (٨٠) ليذوق الطالبُ الشراء
+      في أوّل أسبوعه، ثم تتدرّج — والغالي منها مشروطٌ بإنجازٍ لا بمالٍ فقط. */
+export const CATALOG: StoreItem[] = [
+  /* ── ألقاب ── */
+  { id: "t-mubtade", slot: "title", label: "المبتدئ",   desc: "أوّلُ خطوةٍ في الطريق.", price: 80 },
+  { id: "t-multazim", slot: "title", label: "المُلتزم", desc: "من يذاكر ولو قلّ.", price: 250, requires: { minStreak: 3 } },
+  { id: "t-mujtahid", slot: "title", label: "المجتهد",  desc: "عشرُ ساعاتِ تركيزٍ خلفك.", price: 400, requires: { minFocusMins: 600 } },
+  { id: "t-sabir",    slot: "title", label: "الصابر",   desc: "أسبوعٌ متّصلٌ بلا انقطاع.", price: 700, requires: { minStreak: 7 } },
+  { id: "t-mutqin",   slot: "title", label: "المُتقن",  desc: "خمسون جلسةً منجزة.", price: 1200, requires: { minSessions: 50 } },
+
+  /* ── شارات ── */
+  { id: "b-first",   slot: "badge", label: "🌱 أوّل جلسة", desc: "بدأتَ فعلاً.", price: 0, requires: { minSessions: 1 } },
+  { id: "b-week",    slot: "badge", label: "🔥 أسبوعٌ متّصل", desc: "سبعةُ أيامٍ بلا انقطاع.", price: 0, requires: { minStreak: 7 } },
+  { id: "b-owl",     slot: "badge", label: "🦉 بومة",  desc: "زينةٌ لمن أحبّها.", price: 150 },
+  { id: "b-rocket",  slot: "badge", label: "🚀 صاروخ", desc: "زينةٌ لمن أحبّها.", price: 150 },
+  { id: "b-moon",    slot: "badge", label: "🌙 هلال",  desc: "زينةٌ لمن أحبّها.", price: 150 },
+  { id: "b-crown",   slot: "badge", label: "👑 تاج",   desc: "مئةُ ساعةِ تركيز.", price: 900, requires: { minFocusMins: 6000 } },
+];
 
 export const itemById = (catalog: StoreItem[], id: string): StoreItem | null =>
   catalog.find((i) => i.id === id) ?? null;

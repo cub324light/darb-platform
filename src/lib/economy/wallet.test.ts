@@ -122,3 +122,10 @@ test("الرصيد مصدرُه واحد: الفضةُ في darb_stats لا رص
   assert.ok(src.includes("addSilver(-res.spent)"), "لا يخصم الثمن فعلاً");
   assert.ok(!/localStorage\.setItem\(\s*["'`]darb_stats/.test(src), "يكتب الإحصاءات مباشرةً — مرّ عبر storage");
 });
+
+test("المخزن يُعيد لقطةً ثابتةَ المرجع — وإلا علق useSyncExternalStore", async () => {
+  const { readFileSync } = await import("node:fs");
+  const src = readFileSync("src/lib/economy/store.ts", "utf8");
+  assert.ok(/cacheRaw/.test(src), "لا ذاكرةَ للقطة: كائنٌ جديد كلَّ نداء يوقع المكوّن في حلقة");
+  assert.ok(/cache = null; cacheRaw = null;/.test(src), "الكتابةُ لا تُبطل الذاكرة، فلا يظهر أثرُ الشراء");
+});

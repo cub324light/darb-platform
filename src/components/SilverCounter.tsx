@@ -3,6 +3,7 @@
    يقرأ الرصيد من darb_stats ويحدّثه دورياً وعند العودة للتبويب. عند أي تغيّرٍ
    في الرصيد تظهر حركةٌ بسيطة (نبضة + شارة ±N عابرة). عرضٌ فقط — لا يغيّر أي منطق. */
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { loadStats } from "@/lib/storage";
 import { n } from "@/lib/format";
 
@@ -48,7 +49,9 @@ export default function SilverCounter() {
   }, []);
 
   return (
-    <div className="relative flex items-center gap-1.5 px-3 py-2 rounded-xl" aria-label={`رصيد الفضة ${silver ?? 0}`}
+    /* يفتح المتجر: الفضةُ صارت تُصرف، فعدّادُها بابُها */
+    <Link href="/store" className="relative flex items-center gap-1.5 px-3 py-2 rounded-xl no-underline transition active:scale-95"
+      aria-label={`رصيد الفضة ${silver ?? 0} — افتح المتجر`}
       style={{ background: "color-mix(in srgb, var(--text-muted) 10%, transparent)", border: "1px solid var(--border)", color: "var(--text)" }}>
       <span className={`inline-flex items-center gap-1.5 ${pop ? "silver-pop" : ""}`}>
         <span className="text-[16px] leading-none" aria-hidden>🥈</span>
@@ -62,6 +65,6 @@ export default function SilverCounter() {
           {delta > 0 ? "+" : "−"}{n(Math.abs(delta))}
         </span>
       )}
-    </div>
+    </Link>
   );
 }

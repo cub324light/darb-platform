@@ -123,10 +123,10 @@ export default function RoadmapPage() {
   /* موادُّ الجلسة تتبع نمطَ التوزيع: «بالتتابع» ⇒ اختبارُ الأولوية وحده،
      «معاً» ⇒ موادُّ اختباراتك كلِّها في يومٍ واحد. */
   const planSubjects = readPlanSubjects(ws);
-  /* خطّةُ الأشهر — تُعرض لمن اختار «متداخل» وعنده اختباران فأكثر */
-  const stagedOn = loadRoadmapConfig().examPlanMode === "staged";
-  const staged = stagedOn ? readStagedPlan(ws, today) : null;
-  const pace = stagedOn ? readPace(today) : null;
+  /* خطّةُ الأشهر — لكلِّ نمط: بالتتابع فترتان، ومعاً مشتركةٌ ثم تفرّغ، ومتداخل
+     ثلاثُ فترات. تُعرض لمن عنده اختباران فأكثر. */
+  const staged = readStagedPlan(ws, today);
+  const pace = readPace(today);
   const examNames = new Map(readAllExams(ws).map((e) => [e.id, e.label]));
   const counts = planSubjects.length ? countRemaining(planSubjects) : { remainingLessons: 0, remainingDrills: 0, weakestSubject: null, totalItems: 0, doneItems: 0 };
   const avail = readTodayAvailability();
@@ -304,9 +304,7 @@ export default function RoadmapPage() {
           </span>
         </button>
 
-        {staged && pace && (
-          <ExamPlanTimeline plan={staged} pace={pace} labelOf={(id) => examNames.get(id) ?? id} />
-        )}
+        <ExamPlanTimeline plan={staged} pace={pace} labelOf={(id) => examNames.get(id) ?? id} />
 
         <NextThread page="/roadmap" />
         <PageFooter />

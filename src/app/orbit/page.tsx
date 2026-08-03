@@ -261,6 +261,9 @@ export default function OrbitPage() {
      المشترَك، فيقرؤه ويكتبه هنا وفي ورقة الإعدادات العامة سواءً — لا نسختان
      تتفرّقان. وقراءتُه بمخزنٍ خارجيّ لا في مُهيّئ `useState` (ترطيب). */
   const keepRunning = usePref("orbitKeep", true);
+  /* تنبيهُ النظام وصوتُ النهاية — يُطفئهما من أزعجاه من الإعدادات العامّة */
+  const notifyOn = usePref("notifyEnd", true);
+  const soundOn = usePref("soundEnd", true);
   const [showSettings, setShowSettings] = useState(false);
   const [showLog, setShowLog] = useState(false);
   const [sessionLog, setSessionLog] = useState<SessionLogEntry[]>(() =>
@@ -289,6 +292,7 @@ export default function OrbitPage() {
   }, []);
 
   const playBeep = useCallback(() => {
+    if (!soundOn) return;
     try {
       const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
       const osc = ctx.createOscillator();
@@ -299,26 +303,26 @@ export default function OrbitPage() {
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
       osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.8);
     } catch {}
-  }, []);
+  }, [soundOn]);
 
   /* إشعار نظام لو كان التطبيق بالخلفية وقت انتهاء الجلسة */
   const notify = useCallback((title: string, body: string) => {
     try {
-      if (document.hidden && "Notification" in window && Notification.permission === "granted") {
+      if (notifyOn && document.hidden && "Notification" in window && Notification.permission === "granted") {
         new Notification(title, { body, icon: "/icon.svg" });
       }
     } catch {}
-  }, []);
+  }, [notifyOn]);
 
   const startFocus = useCallback(() => {
     try {
-      if ("Notification" in window && Notification.permission === "default") {
+      if (notifyOn && "Notification" in window && Notification.permission === "default") {
         Notification.requestPermission();
       }
     } catch {}
     endAtRef.current = Date.now() + focusSecs * 1000;
     setPhase("focus"); timer.set(focusSecs);
-  }, [focusSecs, timer]);
+  }, [focusSecs, timer, notifyOn]);
 
   /* تسليمٌ من مساري: إن كانت المدّة محفوظةً سابقاً نبدأ فوراً بلا سؤال؛
      وإلا يظهر مُنتقي المدّة أوّلاً ثم تبدأ الجلسة بعد اختياره. */

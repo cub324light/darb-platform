@@ -18,20 +18,31 @@ function announce() {
   try { window.dispatchEvent(new Event(WALLET_CHANGED)); } catch { /* تجاهل */ }
 }
 
+/* ▓ لقطةٌ ثابتةُ المرجع ما لم يتغيّر المخزَّن. `useSyncExternalStore` يقارن
+   باللقطة نفسِها: إعادةُ كائنٍ جديدٍ كلَّ نداءٍ تجعله يظنّ أن شيئاً تغيّر في كل
+   رسمة، فيعلق المكوّنُ في حلقةٍ ولا يظهر أثرُ الشراء. (نفسُ الحارس في مخزنَي
+   الدفتر والمدرّسين — أُغفل هنا فظهر العطل عند أوّل شراءٍ حقيقيّ.) */
+let cache: Owned | null = null;
+let cacheRaw: string | null = null;
+
 export function loadOwned(): Owned {
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return EMPTY_OWNED;
+    if (raw === cacheRaw && cache) return cache;
+    cacheRaw = raw;
+    if (!raw) { cache = EMPTY_OWNED; return cache; }
     const p = JSON.parse(raw) as Partial<Owned>;
-    return reconcile(CATALOG, {
+    cache = reconcile(CATALOG, {
       items: Array.isArray(p.items) ? p.items.filter((x) => typeof x === "string") : [],
       equipped: (p.equipped && typeof p.equipped === "object" ? p.equipped : {}) as Owned["equipped"],
     });
-  } catch { return EMPTY_OWNED; }
+    return cache;
+  } catch { cache = EMPTY_OWNED; cacheRaw = null; return cache; }
 }
 
 function saveOwned(o: Owned): void {
   try { localStorage.setItem(KEY, JSON.stringify(o)); } catch { /* تجاهل */ }
+  cache = null; cacheRaw = null;
   announce();
 }
 

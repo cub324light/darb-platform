@@ -16,7 +16,7 @@ import { loadCalendar } from "./calendarStore";
 import { loadSessions } from "./sessionStore";
 import { eventsOnDay, availableStudyMinutes } from "./calendar";
 import { ROADMAP_TUNING } from "./config";
-import { buildStagedPlan, phaseOn, PLAN_MIN_DAYS, type PlanExamInput, type PlanPace, type StagedPlan } from "./examPlan";
+import { buildExamPlan, phaseOn, PLAN_MIN_DAYS, type PlanExamInput, type PlanPace, type StagedPlan } from "./examPlan";
 
 export interface PriorityExam {
   kind: "module" | "member"; id: string; label: string; icon?: string; color: string;
@@ -71,7 +71,8 @@ export function readPace(today: string = localDayKey()): PlanPace {
   return { minsPerDay: days > 0 ? Math.round(total / days) : 0, daysMeasured: days };
 }
 
-/** خطّةُ الأشهر المتداخلة — تُبنى من اختباراتك ومواعيدها ووتيرتك المقيسة. */
+/** خطّةُ الأشهر — تُبنى من اختباراتك ومواعيدها ووتيرتك المقيسة، بحسب النمط
+    الذي اخترتَه. تظهر للأنماط الثلاثة: لكلٍّ شكلُ فتراته. */
 export function readStagedPlan(ws: Workspace, today: string = localDayKey()): StagedPlan {
   const cfg = loadRoadmapConfig();
   const dates = loadTrackExamDates();
@@ -86,7 +87,8 @@ export function readStagedPlan(ws: Workspace, today: string = localDayKey()): St
       remainingItems: c.remainingLessons + c.remainingDrills,
     };
   });
-  return buildStagedPlan({
+  return buildExamPlan({
+    mode: cfg.examPlanMode ?? "sequential",
     exams, pace: readPace(today),
     split: cfg.overlapSplit ?? "priority",
     today,

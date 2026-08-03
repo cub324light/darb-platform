@@ -3,7 +3,7 @@
    القراءةُ بـ`useSyncExternalStore` لا في مُهيّئ `useState` — وإلا انكسر الترطيب
    (React #418)، وهو عطلٌ تكرّر في هذا المشروع فلا نعيده. */
 import { useSyncExternalStore } from "react";
-import { canSave, upsertNote, removeNote, type JournalNote, type SaveCheck } from "./journal";
+import { canSave, upsertNote, removeNote, togglePin, type JournalNote, type SaveCheck } from "./journal";
 
 const KEY = "darb_journal";
 export const JOURNAL_CHANGED = "darb:journalChanged";
@@ -41,6 +41,10 @@ export function saveNote(note: JournalNote): SaveCheck {
 
 export function deleteNote(id: string): void {
   write(removeNote(loadJournal(), id));
+}
+
+export function pinNote(id: string): void {
+  write(togglePin(loadJournal(), id));
 }
 
 export const newNoteId = (): string => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;

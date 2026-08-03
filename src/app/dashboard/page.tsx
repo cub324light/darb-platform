@@ -7,6 +7,7 @@
 import { useState, useEffect } from "react";
 import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
+import WornCosmetics from "@/components/store/WornCosmetics";
 import PageGuide from "@/components/PageGuide";
 import PhaseHome from "@/components/dash/PhaseHome";
 import TodayBlock from "@/components/dash/home/TodayBlock";
@@ -85,6 +86,7 @@ export default function DashboardPage() {
               السلام عليكم، {user ? user.name : <span className="skeleton" style={{ width: "70px", height: "1em", verticalAlign: "middle" }} />}
             </span>
           </Link>
+          <div className="mt-1.5"><WornCosmetics /></div>
           <p className="text-[17px] font-bold mt-2" style={{ color: "var(--text)" }}>{init?.greeting}</p>
           <p className="t-caption mt-0.5" style={{ color: "var(--text-muted)" }}>{init?.slogan}</p>
         </div>

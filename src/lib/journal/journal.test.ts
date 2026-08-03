@@ -10,6 +10,7 @@ import {
   notesOn, journalDays, upsertNote, removeNote, canSave, estimateBytes, LIMITS, GRID,
   simplify, finishStroke, undoStroke, emptyTable, setCell, setCol, addRow, addCol,
   removeRow, removeCol, isBlank, isBlankTable, photoPromptFor, PHOTO_PROMPTS,
+  searchNotes, pinnedNotes, togglePin, makeShape, eraseAt,
   type JournalNote, type Stroke,
 } from "./journal";
 
@@ -156,6 +157,75 @@ test("الورقةُ الفارغة تُعرف فلا نحفظ ورقاً أبي
   assert.ok(!isBlank(note({ kind: "draw", strokes: [{ color: "#fff", width: 3, pts: [0, 0, 5, 5] }] })));
   assert.ok(isBlankTable(emptyTable()), "جدولٌ بعناوينَ فقط فارغ");
   assert.ok(!isBlank(note({ kind: "table", table: setCell(emptyTable(), 0, 0, "رياضيات") })));
+});
+
+/* ── التثبيت والبحث ── */
+
+test("المثبَّتُ يعلو الأحدث في أوراق اليوم", () => {
+  const all = [
+    note({ id: "new", updatedAt: 900 }),
+    note({ id: "old-pinned", updatedAt: 10, pinned: true }),
+    note({ id: "mid", updatedAt: 500 }),
+  ];
+  assert.deepEqual(notesOn(all, "2026-08-02").map((x) => x.id), ["old-pinned", "new", "mid"]);
+  assert.deepEqual(pinnedNotes(all).map((x) => x.id), ["old-pinned"]);
+});
+
+test("togglePin يقلب المثبَّتَ ولا يمسّ غيره", () => {
+  const all = [note({ id: "a" }), note({ id: "b" })];
+  const p = togglePin(all, "a");
+  assert.equal(p[0].pinned, true);
+  assert.equal(p[1].pinned, undefined);
+  assert.equal(togglePin(p, "a")[0].pinned, false);
+  assert.equal(all[0].pinned, undefined, "غيّر الأصل — ليس نقيّاً");
+});
+
+test("البحث يشمل العنوان والنصّ والمادة وخلايا الجدول", () => {
+  const all = [
+    note({ id: "t", title: "مخطّط المتجهات", text: "" }),
+    note({ id: "x", text: "شرحوا قانون نيوتن" }),
+    note({ id: "s", subject: "فيزياء", text: "" }),
+    note({ id: "g", kind: "table", text: undefined, table: setCell(emptyTable(), 1, 1, "المتجهات") }),
+    note({ id: "z", text: "لا شيء" }),
+  ];
+  assert.deepEqual(searchNotes(all, "المتجهات").map((x) => x.id).sort(), ["g", "t"]);
+  assert.deepEqual(searchNotes(all, "نيوتن").map((x) => x.id), ["x"]);
+  assert.deepEqual(searchNotes(all, "فيزياء").map((x) => x.id), ["s"]);
+  assert.deepEqual(searchNotes(all, "   "), [], "بحثٌ فارغ يُرجع كلَّ شيء");
+  assert.deepEqual(searchNotes(all, "لا يوجد أبداً"), []);
+});
+
+/* ── الأشكال والممحاة ── */
+
+test("makeShape يحفظ نقطتين فقط ويقصّ خارج الشبكة", () => {
+  const s = makeShape("rect", "#fff", 4, -20, 10.6, 5000, 300);
+  assert.equal(s.shape, "rect");
+  assert.equal(s.pts.length, 4, "الشكلُ لا يحتاج أكثرَ من نقطتين");
+  assert.deepEqual(s.pts, [0, 11, GRID, 300]);
+});
+
+test("finishStroke لا يُبسّط الأشكال — نقطتاها كلُّ ما فيها", () => {
+  const shape = finishStroke(makeShape("line", "#fff", 3, 0, 0, 900, 900));
+  assert.deepEqual(shape.pts, [0, 0, 900, 900]);
+  assert.equal(shape.shape, "line");
+});
+
+test("الممحاة تحذف ما تمرّ عليه وتُبقي البعيد", () => {
+  const near: Stroke = { color: "#fff", width: 4, pts: [100, 100, 110, 110] };
+  const far: Stroke = { color: "#fff", width: 4, pts: [800, 800, 820, 820] };
+  const box: Stroke = makeShape("rect", "#fff", 4, 400, 400, 500, 500);
+
+  const after = eraseAt([near, far, box], 105, 105, 20);
+  assert.deepEqual(after, [far, box], "مسحت البعيد أو أبقت القريب");
+
+  const insideBox = eraseAt([near, far, box], 450, 450, 10);
+  assert.deepEqual(insideBox, [near, far], "لم تمسح الشكلَ من داخله");
+
+  assert.deepEqual(eraseAt([near, far, box], 5, 5, 5), [near, far, box], "مسحت بلا ملامسة");
+});
+
+test("الممحاة على فراغٍ لا تنكسر", () => {
+  assert.deepEqual(eraseAt([], 10, 10, 20), []);
 });
 
 test("المحرّك نقيّ: لا تخزين ولا نافذة ولا وقت", async () => {

@@ -13,8 +13,12 @@
 
 export type NoteKind = "draw" | "table" | "text";
 
-/** خطُّ رسمٍ واحد: نقاطٌ متتابعة `[x0,y0,x1,y1,…]` في شبكةٍ ٠..١٠٠٠. */
-export interface Stroke { color: string; width: number; pts: number[] }
+/** شكلُ الخطّ: حرٌّ بالإصبع، أو شكلٌ هندسيّ من نقطتين (بداية ونهاية). */
+export type StrokeShape = "free" | "line" | "rect" | "ellipse" | "arrow";
+
+/** خطُّ رسمٍ واحد: نقاطٌ متتابعة `[x0,y0,x1,y1,…]` في شبكةٍ ٠..١٠٠٠.
+    الأشكالُ الهندسية تُخزَّن بنقطتين فقط وتُرسم عند العرض — أصغرُ وأدقّ. */
+export interface Stroke { color: string; width: number; pts: number[]; shape?: StrokeShape }
 
 export interface TableData { cols: string[]; rows: string[][] }
 
@@ -26,6 +30,10 @@ export interface JournalNote {
   text?: string;
   strokes?: Stroke[];
   table?: TableData;
+  /** المادةُ التي تخصّها الورقة — تُربط بها فتظهر عند مراجعتها. */
+  subject?: string;
+  /** مثبَّتةٌ في أعلى الدفتر مهما تقادمت. */
+  pinned?: boolean;
   updatedAt: number;
 }
 
@@ -47,8 +55,33 @@ export const emptyTable = (): TableData => ({
 
 /* ── القراءة ── */
 
+/** المثبَّتُ أوّلاً ثم الأحدث — الترتيبُ الذي يتوقّعه الطالب. */
+const byPinThenNew = (a: JournalNote, b: JournalNote): number =>
+  (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || b.updatedAt - a.updatedAt;
+
 export const notesOn = (notes: JournalNote[], date: string): JournalNote[] =>
-  notes.filter((x) => x.date === date).sort((a, b) => b.updatedAt - a.updatedAt);
+  notes.filter((x) => x.date === date).sort(byPinThenNew);
+
+/** أوراقٌ مثبَّتة — تُعرض فوق أوراق اليوم مهما تقادمت. */
+export const pinnedNotes = (notes: JournalNote[]): JournalNote[] =>
+  notes.filter((x) => x.pinned).sort((a, b) => b.updatedAt - a.updatedAt);
+
+/** بحثٌ في العناوين والنصوص والمواد وخلايا الجداول. */
+export function searchNotes(notes: JournalNote[], q: string): JournalNote[] {
+  const needle = q.trim().toLowerCase();
+  if (!needle) return [];
+  const hit = (x: JournalNote): boolean => {
+    if ((x.title ?? "").toLowerCase().includes(needle)) return true;
+    if ((x.text ?? "").toLowerCase().includes(needle)) return true;
+    if ((x.subject ?? "").toLowerCase().includes(needle)) return true;
+    return (x.table?.rows ?? []).some((r) => r.some((c) => c.toLowerCase().includes(needle)))
+      || (x.table?.cols ?? []).some((c) => c.toLowerCase().includes(needle));
+  };
+  return notes.filter(hit).sort(byPinThenNew);
+}
+
+export const togglePin = (notes: JournalNote[], id: string): JournalNote[] =>
+  notes.map((x) => (x.id === id ? { ...x, pinned: !x.pinned } : x));
 
 export const noteById = (notes: JournalNote[], id: string): JournalNote | null =>
   notes.find((x) => x.id === id) ?? null;
@@ -99,13 +132,39 @@ export function simplify(pts: number[], tol = 6): number[] {
   return out;
 }
 
-/** خطٌّ جاهزٌ للتخزين: مبسَّطٌ ومقصوصٌ عند الحدّ وبإحداثياتٍ صحيحة. */
+/** خطٌّ جاهزٌ للتخزين: مبسَّطٌ ومقصوصٌ عند الحدّ وبإحداثياتٍ صحيحة.
+    الأشكالُ لا تُبسَّط — نقطتاها هما كلُّ ما فيها. */
 export function finishStroke(s: Stroke): Stroke {
+  if (s.shape && s.shape !== "free") {
+    return { ...s, pts: s.pts.slice(0, 4).map((v) => Math.max(0, Math.min(GRID, Math.round(v)))) };
+  }
   const pts = simplify(s.pts).map((v) => Math.max(0, Math.min(GRID, Math.round(v))));
   return { color: s.color, width: s.width, pts: pts.slice(0, LIMITS.maxPointsPerStroke) };
 }
 
 export const undoStroke = (strokes: Stroke[]): Stroke[] => strokes.slice(0, -1);
+
+/** شكلٌ هندسيّ من نقطتين — يُحفظ بنقطتيه لا بمئات النقاط. */
+export const makeShape = (shape: StrokeShape, color: string, width: number, x0: number, y0: number, x1: number, y1: number): Stroke =>
+  ({ shape, color, width, pts: [x0, y0, x1, y1].map((v) => Math.max(0, Math.min(GRID, Math.round(v)))) });
+
+/** الممحاة: تحذف كلَّ خطٍّ تمرّ عليه. المسافةُ إلى الخطّ الحرّ من نقاطه، وإلى
+    الشكل من صندوقه — يكفي للمسحِ بالإصبع ولا يحتاج هندسةً دقيقة. */
+export function eraseAt(strokes: Stroke[], x: number, y: number, radius: number): Stroke[] {
+  const near = (s: Stroke): boolean => {
+    if (s.shape && s.shape !== "free" && s.pts.length >= 4) {
+      const [x0, y0, x1, y1] = s.pts;
+      const lo = { x: Math.min(x0, x1) - radius, y: Math.min(y0, y1) - radius };
+      const hi = { x: Math.max(x0, x1) + radius, y: Math.max(y0, y1) + radius };
+      return x >= lo.x && x <= hi.x && y >= lo.y && y <= hi.y;
+    }
+    for (let i = 0; i < s.pts.length; i += 2) {
+      if (Math.hypot(s.pts[i] - x, s.pts[i + 1] - y) <= radius) return true;
+    }
+    return false;
+  };
+  return strokes.filter((s) => !near(s));
+}
 
 export const isBlankDrawing = (strokes: Stroke[] | undefined): boolean =>
   !strokes || strokes.length === 0;

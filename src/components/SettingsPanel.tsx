@@ -10,6 +10,7 @@ import { readGuestMode, exitGuestMode } from "@/components/AuthGate";
 import { usePref, setPref } from "@/lib/prefs";
 import { useCalSystem, applyCalSystem } from "@/lib/useCalSystem";
 import { restoreAllDismissed } from "@/lib/dismissed";
+import { useFontScale, applyFontScale, SCALE_LABEL, type FontScale } from "@/lib/fontScale";
 import { TOUR_KEY } from "@/lib/firstRun";
 
 /* صفٌّ في «تفضيلاتك»: عنوانٌ ووصفٌ ومفتاح. شكلٌ واحد لكل الصفوف. */
@@ -51,6 +52,10 @@ export default function SettingsButton() {
   const calSystem = useCalSystem();
   const calBands = usePref("calBands", true);
   const orbitKeep = usePref("orbitKeep", true);
+  const notifyEnd = usePref("notifyEnd", true);
+  const soundEnd = usePref("soundEnd", true);
+  const clock24 = usePref("clock24", false);
+  const fontScale = useFontScale();
   const [restored, setRestored] = useState(false);
   const restoreIntros = () => {
     restoreAllDismissed();
@@ -250,6 +255,36 @@ export default function SettingsButton() {
                   if (!next) { try { localStorage.removeItem("darb_orbit_session"); } catch {} }
                 }} />
             }
+          />
+          <PrefRow
+            title="حجم الخطّ"
+            desc="يكبّر المنتج كلَّه بنسبةٍ واحدة"
+            control={
+              <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--surface)" }}>
+                {(["small", "normal", "large"] as FontScale[]).map((v) => (
+                  <button key={v} onClick={() => applyFontScale(v)} aria-pressed={fontScale === v}
+                    className="px-2.5 py-1.5 rounded-lg t-caption font-black transition"
+                    style={fontScale === v ? { background: "var(--accent)", color: "#fff" } : { color: "var(--text-muted)" }}>
+                    {SCALE_LABEL[v]}
+                  </button>
+                ))}
+              </div>
+            }
+          />
+          <PrefRow
+            title="الساعة بنظام ٢٤"
+            desc={clock24 ? "١٤:٣٠" : "٢:٣٠ م"}
+            control={<Switch on={clock24} onToggle={() => setPref("clock24", !clock24)} label="الساعة بنظام ٢٤" />}
+          />
+          <PrefRow
+            title="تنبيه انتهاء جلسة التركيز"
+            desc="إشعارٌ من النظام لو كنت في تطبيقٍ آخر"
+            control={<Switch on={notifyEnd} onToggle={() => setPref("notifyEnd", !notifyEnd)} label="تنبيه انتهاء الجلسة" />}
+          />
+          <PrefRow
+            title="صوت انتهاء الجلسة"
+            desc="نغمةٌ قصيرة عند انتهاء التركيز أو الراحة"
+            control={<Switch on={soundEnd} onToggle={() => setPref("soundEnd", !soundEnd)} label="صوت انتهاء الجلسة" />}
           />
           <PrefRow
             title="الشروحات والبطاقات التعريفية"

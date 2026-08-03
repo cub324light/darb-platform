@@ -7,13 +7,15 @@
    جودةً وأسرعُ ولا يأكل تخزينَ المتصفّح فيُفشل حفظَ خطتك وأخطائك. */
 import { useState } from "react";
 import Sheet from "@/components/Sheet";
-import DrawPad from "./DrawPad";
+import DrawPad, { exportPng } from "./DrawPad";
 import FullPage from "./FullPage";
-import { useJournal, saveNote, deleteNote, newNoteId } from "@/lib/journal/store";
+import { useJournal, saveNote, deleteNote, newNoteId, pinNote } from "@/lib/journal/store";
 import {
   notesOn, journalDays, emptyTable, isBlank, setCell, setCol, addRow, addCol, removeRow,
+  searchNotes, pinnedNotes,
   type JournalNote, type NoteKind, type Stroke, type TableData,
 } from "@/lib/journal/journal";
+import { useSubjectNames } from "@/lib/journal/subjects";
 import { dateFull, n, sheets } from "@/lib/format";
 
 const KIND_META: Record<NoteKind, { icon: string; label: string; hint: string }> = {
@@ -30,9 +32,12 @@ export default function DayJournal() {
   const [picking, setPicking] = useState(false);
   const [openDay, setOpenDay] = useState<string | null>(null);
 
+  const [q, setQ] = useState("");
   const day = today();
   const todayNotes = notesOn(notes, day);
   const pastDays = journalDays(notes).filter((d) => d !== day);
+  const found = searchNotes(notes, q);
+  const pinned = pinnedNotes(notes).filter((x) => x.date !== day);
 
   const start = (kind: NoteKind) => {
     setPicking(false);
@@ -57,12 +62,33 @@ export default function DayJournal() {
         اكتب ماذا صار في يومك، أو ارسم المخطّط الذي شرحوه، أو رتّب حصصك جدولاً.
       </p>
 
-      {todayNotes.length === 0 ? (
-        <p className="t-caption text-center py-3" style={{ color: "var(--text-muted)" }}>ما فيه ورقة لليوم بعد.</p>
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="🔍 ابحث في دفترك…"
+        className="w-full rounded-xl px-4 py-2.5 t-small outline-none"
+        style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
+
+      {q.trim() ? (
+        found.length === 0 ? (
+          <p className="t-caption text-center py-3" style={{ color: "var(--text-muted)" }}>ما فيه ورقة تطابق «{q.trim()}».</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {found.map((x) => <NoteRow key={x.id} note={x} onOpen={() => setEditing(x)} showDate />)}
+          </div>
+        )
       ) : (
-        <div className="flex flex-col gap-2">
-          {todayNotes.map((x) => <NoteRow key={x.id} note={x} onOpen={() => setEditing(x)} />)}
-        </div>
+        <>
+          {pinned.length > 0 && (
+            <div className="flex flex-col gap-2">
+              {pinned.map((x) => <NoteRow key={x.id} note={x} onOpen={() => setEditing(x)} showDate />)}
+            </div>
+          )}
+          {todayNotes.length === 0 ? (
+            <p className="t-caption text-center py-3" style={{ color: "var(--text-muted)" }}>ما فيه ورقة لليوم بعد.</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {todayNotes.map((x) => <NoteRow key={x.id} note={x} onOpen={() => setEditing(x)} />)}
+            </div>
+          )}
+        </>
       )}
 
       <button onClick={() => setPicking(true)}
@@ -130,18 +156,19 @@ export default function DayJournal() {
 /* ── سطرُ ورقةٍ في الدفتر: الاسمُ وحده ──
    كانت البطاقةُ تعرض الرسمةَ والجدولَ معاينةً، فيصير الدفترُ جداراً من الصور
    يطول التمريرُ فيه. صار كالفهرس: نوعٌ واسم، وتُفتح بضغطة. */
-function NoteRow({ note, onOpen }: { note: JournalNote; onOpen: () => void }) {
+function NoteRow({ note, onOpen, showDate }: { note: JournalNote; onOpen: () => void; showDate?: boolean }) {
   const meta = KIND_META[note.kind];
+  const sub = [meta.label, note.subject, showDate ? dateFull(note.date, false) : null].filter(Boolean).join(" · ");
   return (
     <button onClick={onOpen}
       className="rounded-2xl px-4 py-3.5 flex items-center gap-3 text-right transition active:scale-[0.99] w-full"
-      style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+      style={{ background: "var(--surface2)", border: `1px solid ${note.pinned ? "color-mix(in srgb, var(--gold) 40%, transparent)" : "var(--border)"}` }}>
       <span className="text-[20px] flex-shrink-0" aria-hidden="true">{meta.icon}</span>
       <span className="flex-1 min-w-0">
         <span className="block t-body font-black truncate" style={{ color: "var(--text)" }}>
-          {note.title?.trim() || meta.label}
+          {note.pinned ? "📌 " : ""}{note.title?.trim() || meta.label}
         </span>
-        <span className="block t-caption" style={{ color: "var(--text-muted)" }}>{meta.label}</span>
+        <span className="block t-caption truncate" style={{ color: "var(--text-muted)" }}>{sub}</span>
       </span>
       <span className="t-body font-black flex-shrink-0" style={{ color: "var(--text-muted)" }}>←</span>
     </button>
@@ -154,6 +181,8 @@ function NoteRow({ note, onOpen }: { note: JournalNote; onOpen: () => void }) {
 function NoteEditor({ note, onClose }: { note: JournalNote; onClose: () => void }) {
   const [draft, setDraft] = useState<JournalNote>(note);
   const [err, setErr] = useState<string | null>(null);
+  const [ask, setAsk] = useState<{ loading: boolean; text: string } | null>(null);
+  const subjects = useSubjectNames();
   const meta = KIND_META[draft.kind];
   const named = (draft.title ?? "").trim().length > 0;
   const empty = isBlank(draft);
@@ -250,6 +279,39 @@ function NoteEditor({ note, onClose }: { note: JournalNote; onClose: () => void 
           </div>
         )}
 
+        {/* المادة — تُختار من موادّه لا من قائمةٍ جديدة، وتُبحث بها لاحقاً */}
+        {subjects.length > 0 && (
+          <label className="flex flex-col gap-1.5">
+            <span className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>المادة (اختياري)</span>
+            <select value={draft.subject ?? ""} onChange={(e) => setDraft((d) => ({ ...d, subject: e.target.value || undefined }))}
+              className="w-full rounded-xl px-4 py-3 t-body outline-none"
+              style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
+              <option value="">— بلا مادة —</option>
+              {subjects.map((x) => <option key={x}>{x}</option>)}
+            </select>
+          </label>
+        )}
+
+        <div className="flex gap-2 flex-wrap">
+          <button onClick={() => { pinNote(draft.id); setDraft((d) => ({ ...d, pinned: !d.pinned })); }}
+            className="flex-1 t-caption font-black py-2.5 rounded-xl"
+            style={draft.pinned
+              ? { background: "color-mix(in srgb, var(--gold) 16%, transparent)", border: "1.5px solid var(--gold)", color: "var(--gold)" }
+              : { background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>
+            📌 {draft.pinned ? "مثبَّتة" : "ثبّتها"}
+          </button>
+          {draft.kind === "draw" && (draft.strokes?.length ?? 0) > 0 && (
+            <button onClick={() => exportPng(draft.strokes ?? [], draft.title ?? "رسمة")}
+              className="flex-1 t-caption font-black py-2.5 rounded-xl"
+              style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>
+              ⬇︎ صدّرها صورة
+            </button>
+          )}
+        </div>
+
+        {/* دويرب يقرأ الورقة **بإذنك وحدك** — لا قراءةَ تلقائية لما تكتبه في دفترك */}
+        <AskDuwairb note={draft} state={ask} setState={setAsk} />
+
         {err && <p className="t-caption font-bold" style={{ color: "var(--danger)" }}>{err}</p>}
         {!canSaveNow && (
           <p className="t-caption" style={{ color: "var(--text-muted)" }}>
@@ -264,5 +326,65 @@ function NoteEditor({ note, onClose }: { note: JournalNote; onClose: () => void 
         </button>
       </div>
     </FullPage>
+  );
+}
+
+/* ── «اسأل دويرب عن هذه الورقة» ──
+   الدفترُ مكانٌ يكتب فيه الطالبُ ما لم يفهمه وما ضايقه. إرسالُ ذلك إلى نموذجِ
+   ذكاءٍ بلا علمه يخون الغرضَ من الدفتر. فالإرسالُ **بضغطةٍ منه**، ولا شيءَ
+   يُرسَل قبلها. */
+function AskDuwairb({ note, state, setState }: {
+  note: JournalNote;
+  state: { loading: boolean; text: string } | null;
+  setState: (v: { loading: boolean; text: string } | null) => void;
+}) {
+  const summarize = (): string => {
+    if (note.kind === "text") return note.text ?? "";
+    if (note.kind === "table") {
+      const t = note.table;
+      if (!t) return "";
+      return [t.cols.join(" | "), ...t.rows.map((r) => r.join(" | "))].join("\n");
+    }
+    return "";
+  };
+  const body = summarize().trim();
+  /* الرسمةُ خطوطٌ لا نصّ — لا نرسل إحداثياتٍ إلى نموذجٍ ونسمّيه سؤالاً */
+  if (note.kind === "draw") return null;
+  if (!body) return null;
+
+  const run = async () => {
+    setState({ loading: true, text: "" });
+    try {
+      const { askDuwairb } = await import("@/lib/orchestrator");
+      const { buildDuwairbProfile } = await import("@/lib/duwairb");
+      const { profile } = buildDuwairbProfile();
+      const prompt = `هذه ورقةٌ من دفتري الدراسيّ${note.subject ? ` في مادة ${note.subject}` : ""}` +
+        `${note.title ? ` بعنوان «${note.title}»` : ""}:\n${body}\n\n` +
+        `اشرح لي ما لم أفهمه فيها، واقترح كيف أذاكره.`;
+      const { text } = await askDuwairb({ prompt, mode: "explain", topic: "ورقة من دفتري", profile });
+      setState({ loading: false, text: (text || "تعذّر الشرح").trim() });
+    } catch (e) {
+      setState({ loading: false, text: e instanceof Error ? e.message : "تعذّر الاتصال — حاول مرة ثانية" });
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <button onClick={run} disabled={state?.loading}
+        className="w-full rounded-2xl py-3 t-body font-black transition active:scale-[0.98] disabled:opacity-60"
+        style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid color-mix(in srgb, var(--accent) 30%, transparent)", color: "var(--accent-light)" }}>
+        {state?.loading ? "…" : "🤖 اسأل دويرب عن هذه الورقة"}
+      </button>
+      <p className="t-caption" style={{ color: "var(--text-muted)" }}>
+        لا يقرأ دفترك إلا بضغطتك هذه — ولا شيءَ يُرسَل قبلها.
+      </p>
+      {state && !state.loading && state.text && (
+        <div className="rounded-2xl p-4"
+          style={{ background: "color-mix(in srgb, var(--accent) 6%, var(--surface2))", border: "1px solid color-mix(in srgb, var(--accent) 18%, transparent)" }}>
+          <p className="t-caption font-bold mb-1.5" style={{ color: "var(--accent-light)" }}>شرح دويرب 🤖</p>
+          <p className="t-body leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{state.text}</p>
+        </div>
+      )}
+    </div>
   );
 }

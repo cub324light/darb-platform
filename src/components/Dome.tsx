@@ -3,30 +3,27 @@ import { useEffect, useState, type ReactNode } from "react";
 import { ThemeToggle } from "@/components/Profile";
 import SettingsButton from "@/components/SettingsPanel";
 import SilverCounter from "@/components/SilverCounter";
+import FontScaleApply from "@/components/FontScaleApply";
+import { usePref, setPref } from "@/lib/prefs";
 import { Meteors } from "@/components/ui/meteors";
 
 /* ── ساعة صغيرة — ضغطة واحدة تبدّل بين 12 و24 ── */
 function ClockWidget() {
   const [time, setTime] = useState("");
-  const [fmt, setFmt] = useState<"12" | "24">(() =>
-    typeof window !== "undefined" ? (localStorage.getItem("darb_clock_fmt") as "12" | "24" ?? "12") : "12"
-  );
+  /* التفضيلُ في `prefs` المشترَك — تقرؤه الإعداداتُ العامّة أيضاً فلا نسختان */
+  const h24 = usePref("clock24", false);
 
   useEffect(() => {
     const tick = () => {
       const d = new Date();
-      setTime(d.toLocaleTimeString("ar-u-nu-latn", { hour: "2-digit", minute: "2-digit", hour12: fmt === "12" }));
+      setTime(d.toLocaleTimeString("ar-u-nu-latn", { hour: "2-digit", minute: "2-digit", hour12: !h24 }));
     };
     tick();
     const t = setInterval(tick, 10000);
     return () => clearInterval(t);
-  }, [fmt]);
+  }, [h24]);
 
-  const toggle = () => {
-    const next = fmt === "12" ? "24" : "12";
-    setFmt(next);
-    try { localStorage.setItem("darb_clock_fmt", next); } catch {}
-  };
+  const toggle = () => setPref("clock24", !h24);
 
   return (
     <button onClick={toggle}
@@ -95,6 +92,7 @@ export default function Dome({
 
   return (
     <div className="dome">
+      <FontScaleApply />
       {/* ── الزينة (خلف المحتوى، داخل القبة فقط) ── */}
       <div className="dome-decor" aria-hidden="true">
         {/* الليلي */}

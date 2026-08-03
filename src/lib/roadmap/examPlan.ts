@@ -99,10 +99,14 @@ export const SOLO_FRACTION = 2 / 3;
 const ceilDays = (x: number): number => Math.max(1, Math.ceil(x));
 
 /**
- * يبني الخطة المتداخلة: وحده ← مشتركة ← وحده.
+ * يبني خطّةَ الأشهر لأيّ نمط:
+ *   • بالتتابع — الأوّلُ وحده حتى يجهز، ثم الثاني وحده.
+ *   • متداخل   — وحده ← مشتركة ← وحده.
+ *   • معاً     — مشتركةٌ من اليوم الأوّل، ثم يتفرّغ لمن بقي عمله.
  * لا يُرجع شيئاً بلا وتيرةٍ مقيسة ولا باختبارٍ واحد — الصدقُ أولى من جدولٍ مخترع.
  */
-export function buildStagedPlan(i: {
+export function buildExamPlan(i: {
+  mode: ExamPlanMode;
   exams: PlanExamInput[];        // مرتّبةٌ بالأولوية
   pace: PlanPace;
   split: OverlapSplit;
@@ -121,53 +125,85 @@ export function buildStagedPlan(i: {
   const workB = b.remainingItems * MINS_PER_ITEM;
   const sh = overlapShare(i.split, a, b, i.today);
 
-  /* ① الأوّلُ وحده حتى يُنجز `SOLO_FRACTION` من عمله */
-  const d1 = ceilDays((workA * SOLO_FRACTION) / p);
-  const phase1: PlanPhase = {
-    kind: "solo", examIds: [a.id],
-    start: i.today, end: addDays(i.today, d1 - 1),
-    share: { [a.id]: 1 },
-  };
+  const phases: PlanPhase[] = [];
+  let readyA: string, readyB: string;
 
-  /* ② الفترةُ المشتركة: الأوّلُ يكمل بحصّته، والثاني يبدأ بحصّته */
-  const d2 = ceilDays((workA * (1 - SOLO_FRACTION)) / (p * sh.a));
-  const phase2: PlanPhase = {
-    kind: "overlap", examIds: [a.id, b.id],
-    start: addDays(i.today, d1), end: addDays(i.today, d1 + d2 - 1),
-    share: { [a.id]: sh.a, [b.id]: sh.b },
-  };
+  if (i.mode === "together") {
+    /* مشتركةٌ من اليوم الأول: كلٌّ بحصّته حتى يجهز أوّلُهما، ثم يتفرّغ الباقي. */
+    const dA = ceilDays(workA / (p * sh.a));
+    const dB = ceilDays(workB / (p * sh.b));
+    const dShared = Math.min(dA, dB);
+    phases.push({
+      kind: "overlap", examIds: [a.id, b.id],
+      start: i.today, end: addDays(i.today, dShared - 1),
+      share: { [a.id]: sh.a, [b.id]: sh.b },
+    });
+    const firstDone = dA <= dB ? a : b;
+    const rest = dA <= dB ? b : a;
+    const restWork = Math.max(0, (rest.id === a.id ? workA : workB) - p * (rest.id === a.id ? sh.a : sh.b) * dShared);
+    const dRest = restWork > 0 ? ceilDays(restWork / p) : 0;
+    const firstEnd = addDays(i.today, dShared - 1);
+    if (dRest > 0) {
+      phases.push({
+        kind: "solo", examIds: [rest.id],
+        start: addDays(i.today, dShared), end: addDays(i.today, dShared + dRest - 1),
+        share: { [rest.id]: 1 },
+      });
+    }
+    const restEnd = dRest > 0 ? phases[phases.length - 1].end : firstEnd;
+    readyA = firstDone.id === a.id ? firstEnd : restEnd;
+    readyB = firstDone.id === b.id ? firstEnd : restEnd;
+  } else if (i.mode === "sequential") {
+    /* واحدٌ حتى يجهز، ثم الذي يليه — أعمقُ تركيزاً وأطولُ زمناً. */
+    const d1 = ceilDays(workA / p);
+    phases.push({ kind: "solo", examIds: [a.id], start: i.today, end: addDays(i.today, d1 - 1), share: { [a.id]: 1 } });
+    readyA = phases[0].end;
+    const start2 = a.examDate && a.examDate > readyA ? addDays(a.examDate, 1) : addDays(readyA, 1);
+    const d2 = workB > 0 ? ceilDays(workB / p) : 0;
+    if (d2 > 0) {
+      phases.push({ kind: "solo", examIds: [b.id], start: start2, end: addDays(start2, d2 - 1), share: { [b.id]: 1 } });
+      readyB = phases[phases.length - 1].end;
+    } else readyB = readyA;
+  } else {
+    /* ① الأوّلُ وحده حتى يُنجز `SOLO_FRACTION` من عمله */
+    const d1 = ceilDays((workA * SOLO_FRACTION) / p);
+    phases.push({ kind: "solo", examIds: [a.id], start: i.today, end: addDays(i.today, d1 - 1), share: { [a.id]: 1 } });
 
-  const readyA = addDays(i.today, d1 + d2 - 1);
+    /* ② الفترةُ المشتركة: الأوّلُ يكمل بحصّته، والثاني يبدأ بحصّته */
+    const d2 = ceilDays((workA * (1 - SOLO_FRACTION)) / (p * sh.a));
+    phases.push({
+      kind: "overlap", examIds: [a.id, b.id],
+      start: addDays(i.today, d1), end: addDays(i.today, d1 + d2 - 1),
+      share: { [a.id]: sh.a, [b.id]: sh.b },
+    });
+    readyA = addDays(i.today, d1 + d2 - 1);
 
-  /* ③ الثاني وحده: من بعد الفترة المشتركة (أو من موعد اختبار الأوّل إن حُدّد
-        وكان بعدها — فالطالبُ لا يترك اختباراً قبل أن يؤدّيه). */
-  const doneB = p * sh.b * d2;                        // ما أنجزه الثاني في المشتركة
-  const restB = Math.max(0, workB - doneB);
-  const soloBStart = a.examDate && daysBetween(i.today, a.examDate) > d1 + d2 - 1
-    ? addDays(a.examDate, 1)
-    : addDays(i.today, d1 + d2);
-  const d3 = restB > 0 ? ceilDays(restB / p) : 0;
-
-  const phases: PlanPhase[] = [phase1, phase2];
-  let readyB = phase2.end;
-  if (d3 > 0) {
-    const phase3: PlanPhase = {
-      kind: "solo", examIds: [b.id],
-      start: soloBStart, end: addDays(soloBStart, d3 - 1),
-      share: { [b.id]: 1 },
-    };
-    phases.push(phase3);
-    readyB = phase3.end;
+    /* ③ الثاني وحده: بعد المشتركة (أو بعد موعد اختبار الأوّل إن حُدّد وكان بعدها
+          — فالطالبُ لا يترك اختباراً قبل أن يؤدّيه). */
+    const doneB = p * sh.b * d2;
+    const restB = Math.max(0, workB - doneB);
+    const soloBStart = a.examDate && a.examDate > readyA ? addDays(a.examDate, 1) : addDays(i.today, d1 + d2);
+    const d3 = restB > 0 ? ceilDays(restB / p) : 0;
+    if (d3 > 0) {
+      phases.push({ kind: "solo", examIds: [b.id], start: soloBStart, end: addDays(soloBStart, d3 - 1), share: { [b.id]: 1 } });
+      readyB = phases[phases.length - 1].end;
+    } else readyB = phases[1].end;
   }
 
+  const lastEnd = phases[phases.length - 1].end;
   return {
     ok: true,
     phases,
     readyBy: { [a.id]: readyA, [b.id]: readyB },
     minsPerDay: p,
-    totalDays: daysBetween(i.today, readyB) + 1,
+    totalDays: daysBetween(i.today, lastEnd) + 1,
   };
 }
+
+/** النمطُ المتداخل — غلافٌ على `buildExamPlan` يبقى للمستدعين القدامى. */
+export const buildStagedPlan = (i: {
+  exams: PlanExamInput[]; pace: PlanPace; split: OverlapSplit; today: string;
+}): StagedPlan => buildExamPlan({ ...i, mode: "staged" });
 
 /** كم يوماً بقي قبل أن نستطيع التقدير؟ */
 export const daysUntilForecast = (pace: PlanPace): number =>

@@ -6,7 +6,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  buildStagedPlan, overlapShare, phaseOn, phaseLabel, daysUntilForecast,
+  buildStagedPlan, buildExamPlan, overlapShare, phaseOn, phaseLabel, daysUntilForecast,
   PLAN_MIN_DAYS, MINS_PER_ITEM, SOLO_FRACTION, OVERLAP_SPLIT_LABEL,
   type PlanExamInput, type OverlapSplit,
 } from "./examPlan";
@@ -174,6 +174,81 @@ test("لكلّ توزيعٍ اسمٌ عربيّ يُعرض", () => {
   for (const k of ["even", "priority", "nearest"] as OverlapSplit[]) {
     assert.ok(OVERLAP_SPLIT_LABEL[k]?.length > 0);
   }
+});
+
+/* ── الأنماطُ الثلاثة كلُّها ترسم خطّة ── */
+
+const modePlan = (mode: "sequential" | "together" | "staged", over = {}) =>
+  buildExamPlan({ mode, exams: [A, B], pace: PACE, split: "priority", today: TODAY, ...over });
+
+test("كلُّ نمطٍ يُنتج خطّةً صالحة — لا نمطَ بلا جواب", () => {
+  for (const m of ["sequential", "together", "staged"] as const) {
+    const p = modePlan(m);
+    assert.ok(p.ok, `${m}: لا خطّة`);
+    assert.ok(p.phases.length >= 1, `${m}: بلا فترات`);
+    assert.ok(Object.keys(p.readyBy).length === 2, `${m}: جاهزيةٌ ناقصة`);
+    for (const ph of p.phases) {
+      const sum = Object.values(ph.share).reduce((x, y) => x + y, 0);
+      assert.ok(Math.abs(sum - 1) < 1e-9, `${m}: مجموعُ الحصص ${sum}`);
+      assert.ok(ph.start <= ph.end, `${m}: فترةٌ تنتهي قبل أن تبدأ`);
+    }
+    for (let k = 1; k < p.phases.length; k++) {
+      assert.equal(daysBetween(p.phases[k - 1].end, p.phases[k].start), 1, `${m}: فجوةٌ بين الفترتين ${k - 1} و${k}`);
+    }
+  }
+});
+
+test("«بالتتابع»: فترتان منفردتان، ولا فترةَ مشتركة", () => {
+  const p = modePlan("sequential");
+  assert.deepEqual(p.phases.map((x) => x.kind), ["solo", "solo"]);
+  assert.deepEqual(p.phases[0].examIds, ["qudurat"]);
+  assert.deepEqual(p.phases[1].examIds, ["step"]);
+});
+
+test("«معاً»: تبدأ مشتركةً من اليوم الأوّل", () => {
+  const p = modePlan("together");
+  assert.equal(p.phases[0].kind, "overlap");
+  assert.equal(p.phases[0].start, TODAY);
+  assert.equal(p.phases[0].examIds.length, 2);
+});
+
+test("الزمنُ الكلّيّ واحدٌ تقريباً في كل نمط — وهذه حقيقةٌ لا عيب", () => {
+  /* العملُ واحدٌ والوتيرةُ واحدة، فمجموعُ الأيام واحد مهما رتّبتَ. النمطُ يغيّر
+     **متى يجهز كلُّ اختبار** لا متى ينتهي الكلّ. ولا نَعِد الطالبَ بغير ذلك. */
+  const days = (["sequential", "together", "staged"] as const).map((m) => modePlan(m).totalDays);
+  const spread = Math.max(...days) - Math.min(...days);
+  assert.ok(spread <= 3, `الفرقُ بين الأنماط ${spread} يوماً — أكبرُ من تقريبِ الكسور`);
+});
+
+test("«بالتتابع» يُجهّز الأوّلَ أسرع، و«معاً» يقاربُ بين الجاهزيتين", () => {
+  const seq = modePlan("sequential");
+  const tog = modePlan("together");
+  assert.ok(seq.readyBy["qudurat"] < tog.readyBy["qudurat"],
+    "«بالتتابع» لم يُجهّز الأوّلَ قبل «معاً»");
+
+  const gap = (p: typeof seq) =>
+    Math.abs(daysBetween(p.readyBy["qudurat"], p.readyBy["step"]));
+  assert.ok(gap(tog) < gap(seq), `«معاً» لم يقارب: ${gap(tog)} مقابل ${gap(seq)}`);
+});
+
+test("«معاً»: من يجهز أوّلاً تنتهي مشاركتُه، والباقي يتفرّغ", () => {
+  /* الأوّلُ عملُه قليلٌ وحصّتُه أكبر ⇒ يجهز قبل الثاني بكثير */
+  const p = buildExamPlan({
+    mode: "together", pace: PACE, split: "priority", today: TODAY,
+    exams: [{ ...A, remainingItems: 10 }, { ...B, remainingItems: 200 }],
+  });
+  assert.ok(p.ok);
+  assert.equal(p.phases.length, 2);
+  assert.equal(p.phases[1].kind, "solo");
+  assert.deepEqual(p.phases[1].examIds, ["step"], "تفرّغ للاختبار الخطأ");
+  assert.ok(p.readyBy["qudurat"] < p.readyBy["step"]);
+});
+
+test("buildStagedPlan غلافٌ على النمط المتداخل — نتيجةٌ واحدة", () => {
+  assert.deepEqual(
+    buildStagedPlan({ exams: [A, B], pace: PACE, split: "priority", today: TODAY }),
+    modePlan("staged"),
+  );
 });
 
 test("المحرّك نقيّ: لا تخزين ولا نافذة ولا وقت", async () => {
