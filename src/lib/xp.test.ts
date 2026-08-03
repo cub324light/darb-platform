@@ -111,6 +111,20 @@ test("شرحُ XP يطابق حسابها — لا جدولان يفترقان",
   assert.ok(XP_SOURCES.every((x) => x.points > 0 && x.label && x.per), "مصدرٌ بلا وزنٍ أو بلا اسم");
 });
 
+test("الفضةُ لا تدخل XP — وإلا طُبع المالُ من الهواء", () => {
+  const base = stats({ totalFocusMins: 100, sessionsCount: 4, silver: 0 });
+  const rich = { ...base, silver: 99999 };
+  assert.equal(computeXP(rich), computeXP(base),
+    "الفضةُ ترفع الخبرة ⇒ جزاءُ المستوى يرفعها ⇒ مستوىً جديد ⇒ فضّةٌ أخرى: حلقةٌ لا تقف");
+  assert.ok(!XP_SOURCES.some((x) => x.id === "silver"), "الشرحُ ما زال يذكر الفضة");
+});
+
+test("الشراءُ لا يُنقص مستواك — الصرفُ ليس عقوبة", () => {
+  const before = stats({ totalFocusMins: 600, sessionsCount: 20, silver: 1500 });
+  const after = { ...before, silver: 300 };   // اشترى لقباً بـ١٬٢٠٠
+  assert.equal(getLevel(computeXP(after)).name, getLevel(computeXP(before)).name);
+});
+
 test("لكلّ مستوىً فضّةٌ، والأعلى أغلى", () => {
   assert.equal(LEVEL_SILVER.length, LEVELS.length, "مستوىً بلا جائزة");
   for (let i = 1; i < LEVEL_SILVER.length; i++) {

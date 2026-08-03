@@ -145,13 +145,20 @@ export function getBadgeCurrent(id: string, stats: DarbStats, vaultCount: number
 
 /* ── من أين تأتي XP؟ ──
    كان الوزنُ مدفوناً في الدالّة، فلا يعرف الطالبُ لِمَ ارتفع رقمُه. صار جدولاً
-   يُقرأ ويُعرض في الملف — نفسُ المصدر للحساب وللشرح، فلا يفترقان. */
+   يُقرأ ويُعرض في الملف — نفسُ المصدر للحساب وللشرح، فلا يفترقان.
+
+   ▓ **الفضةُ ليست منها** — وكانت. وأفسدت شيئين:
+     ١) جزاءُ المستوى يُعطي فضّة ⇒ ترتفع XP ⇒ يُبلَغ مستوىً جديد ⇒ فضّةٌ أخرى…
+        حلقةٌ تطبع المال: طالبٌ بخمس جلساتٍ بلغ «خبير» و٢٬٩٥٠ فضة (قِيس).
+     ٢) والشراءُ من المتجر يخصم الفضة ⇒ **تنقص خبرتُه وينزل مستواه** لأنه اشترى
+        لقباً. عقوبةٌ على الصرف في متجرٍ صنعناه للصرف.
+   فصارت XP قياسَ **الجهد** وحده: دقائقُ التركيز والجلسات. والفضةُ عملةٌ تُصرف
+   لا مقياسَ رحلة. */
 export interface XpSource { id: string; label: string; per: string; points: number; icon: string }
 
 export const XP_SOURCES: XpSource[] = [
   { id: "mins",     label: "دقائق التركيز", per: "كل دقيقة",  points: 2,  icon: "⏱" },
   { id: "sessions", label: "الجلسات",        per: "كل جلسة",   points: 15, icon: "🎯" },
-  { id: "silver",   label: "الفضة",          per: "كل فضة",    points: 3,  icon: "🥈" },
 ];
 
 const W = Object.fromEntries(XP_SOURCES.map((x) => [x.id, x.points])) as Record<string, number>;
@@ -159,8 +166,7 @@ const W = Object.fromEntries(XP_SOURCES.map((x) => [x.id, x.points])) as Record<
 export function computeXP(stats: DarbStats): number {
   return (
     Math.floor((stats.totalFocusMins ?? 0) * W.mins) +
-    (stats.sessionsCount ?? 0) * W.sessions +
-    (stats.silver ?? 0) * W.silver
+    (stats.sessionsCount ?? 0) * W.sessions
   );
 }
 
@@ -169,7 +175,6 @@ export function xpBreakdown(stats: DarbStats): { src: XpSource; amount: number; 
   const amounts: Record<string, number> = {
     mins: Math.floor(stats.totalFocusMins ?? 0),
     sessions: stats.sessionsCount ?? 0,
-    silver: stats.silver ?? 0,
   };
   return XP_SOURCES.map((src) => ({ src, amount: amounts[src.id] ?? 0, points: (amounts[src.id] ?? 0) * src.points }));
 }

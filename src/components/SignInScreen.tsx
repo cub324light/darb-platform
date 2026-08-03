@@ -296,6 +296,28 @@ export default function SignInScreen({
           </div>
         )}
 
+        {/* ══════ بطاقة 4: وليّ الأمر ══════
+            سندٌ منتَجٌ مستقلّ: الوالدُ يصله رابطُ ابنه ولا حسابَ له في درب، فلو
+            لم يجد مدخله هنا لَحاول الدخولَ بحسابٍ لا يملكه. */}
+        <a href="/sanad/join"
+          className="w-full rounded-2xl p-4 mt-3 no-underline block"
+          style={{ background: "var(--surface)", border: "1.5px solid color-mix(in srgb, var(--success) 32%, var(--border))" }}>
+          <div className="flex items-center gap-2.5 mb-3">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[16px]"
+              style={{ background: "color-mix(in srgb, var(--success) 14%, transparent)", border: "1px solid color-mix(in srgb, var(--success) 30%, transparent)" }}>
+              🤝
+            </div>
+            <div>
+              <p className="font-black text-[17px]" style={{ color: "var(--text)" }}>وليّ أمر؟</p>
+              <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>سجّل في سند وتابع مذاكرة ابنك بإذنه</p>
+            </div>
+          </div>
+          <span className="w-full py-3.5 rounded-xl font-bold text-[17px] min-h-[52px] flex items-center justify-center"
+            style={{ background: "transparent", border: "1.5px solid var(--success)", color: "var(--success)" }}>
+            ادخل إلى سند ←
+          </span>
+        </a>
+
         <p className="text-[12px] text-center mt-6 leading-relaxed" style={{ color: "var(--text-muted)" }}>
           بدخولك توافق على{" "}
           <a href="/privacy" className="underline" style={{ color: "var(--text-dim)" }}>سياسة الخصوصية</a>

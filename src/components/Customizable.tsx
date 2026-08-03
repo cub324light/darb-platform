@@ -44,6 +44,8 @@ export default function Customizable({
 
   /* ── السحب ── */
   const [dragId, setDragId] = useState<string | null>(null);
+  /* إزاحةُ الإصبع عن نقطة الإمساك — بها يتبع القسمُ الأصبعَ فيُرى السحب */
+  const [dragDy, setDragDy] = useState(0);
   const live = useRef<{ y: number; index: number; order: SectionState[]; hs: number[] } | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -58,6 +60,7 @@ export default function Customizable({
     const hs = order.map((s) => rootRef.current?.querySelector<HTMLElement>(`[data-sec="${s.id}"]`)?.offsetHeight ?? 120);
     live.current = { y: e.clientY, index: i, order, hs };
     setDragId(id);
+    setDragDy(0);
 
     const fixedIds = new Set(defs.filter((d) => d.fixed).map((d) => d.id));
 
@@ -67,6 +70,7 @@ export default function Customizable({
       ev.preventDefault();
       const cur = st.order.findIndex((s) => s.id === id);
       const dy = ev.clientY - st.y;
+      setDragDy(dy);
       /* نمشي بالارتفاعات الحقيقية: كم قسماً تجاوزه الإصبعُ فعلاً؟ */
       let target = cur;
       if (dy > 0) {
@@ -95,6 +99,7 @@ export default function Customizable({
       next.splice(target, 0, moved);
       /* نُعيد ضبط نقطة الأصل على الوضع الجديد فلا تتراكم القفزات */
       live.current = { ...st, order: next, index: target, y: ev.clientY };
+      setDragDy(0);          // الصفُّ استقرّ في مكانه الجديد — تعود الإزاحة صفراً
       setDraft(next);
     };
 
@@ -103,6 +108,7 @@ export default function Customizable({
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", up);
       setDragId(null);
+      setDragDy(0);
     };
 
     window.addEventListener("pointermove", move, { passive: false });
@@ -150,10 +156,17 @@ export default function Customizable({
             style={{
               outline: `1.5px dashed ${isDragging ? "var(--accent)" : "color-mix(in srgb, var(--accent) 35%, transparent)"}`,
               outlineOffset: 4,
-              opacity: s.visible ? (isDragging ? 0.92 : 1) : 0.4,
-              transform: isDragging ? "scale(1.01)" : "none",
-              boxShadow: isDragging ? "var(--elev-2)" : "none",
-              transition: "opacity .15s, transform .15s",
+              opacity: s.visible ? (isDragging ? 0.95 : 1) : 0.42,
+              /* ▓ الحركةُ هي التي تجعل السحبَ مفهوماً: المسحوبُ يتبع الإصبع
+                 لحظةً بلحظة، والبقيةُ تنزلق إلى مكانها الجديد. بلا هذا يبدو
+                 التخصيصُ معطّلاً وإن كان يعمل — وهذا ما وقع. */
+              transform: isDragging ? `translateY(${dragDy}px) scale(1.02)` : "none",
+              boxShadow: isDragging ? "0 16px 40px rgba(0,0,0,.4)" : "none",
+              zIndex: isDragging ? 30 : 1,
+              transition: isDragging
+                ? "box-shadow .15s ease"
+                : "transform .22s cubic-bezier(.2,.8,.3,1), opacity .18s ease",
+              willChange: isDragging ? "transform" : undefined,
             }}>
             {/* حاجزٌ يمنع الضغط على ما بداخل القسم أثناء التعديل */}
             <div className="absolute inset-0 z-10 rounded-2xl" style={{ background: "transparent" }} aria-hidden="true" />
@@ -176,15 +189,19 @@ export default function Customizable({
                     style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)", touchAction: "none" }}>
                     ⠿
                   </button>
+                  {/* سالبٌ أحمر يخفي، وزائدٌ أخضر يُرجع — علامتان تُفهمان بلا قراءة */}
                   <button onClick={() => setDraft((d) => toggleSection(d ?? saved, defs, s.id))}
                     aria-pressed={s.visible} aria-label={`${s.visible ? "أخفِ" : "أظهر"} ${sec.label}`}
-                    className="h-8 px-2.5 rounded-lg t-caption font-black"
+                    className="w-8 h-8 rounded-full grid place-items-center font-black leading-none"
                     style={{
-                      background: s.visible ? "var(--surface)" : "color-mix(in srgb, var(--accent) 16%, var(--surface))",
-                      border: `1px solid ${s.visible ? "var(--border)" : "var(--accent)"}`,
-                      color: s.visible ? "var(--text-muted)" : "var(--accent-light)",
+                      fontSize: "1.25rem",
+                      background: s.visible
+                        ? "color-mix(in srgb, var(--danger) 16%, var(--surface))"
+                        : "color-mix(in srgb, var(--success) 16%, var(--surface))",
+                      border: `1.5px solid ${s.visible ? "var(--danger)" : "var(--success)"}`,
+                      color: s.visible ? "var(--danger)" : "var(--success)",
                     }}>
-                    {s.visible ? "أخفِ" : "أظهر"}
+                    {s.visible ? "−" : "+"}
                   </button>
                 </>
               )}
@@ -203,7 +220,7 @@ export default function Customizable({
           style={{ bottom: "var(--nav-h)", background: "var(--surface)", backdropFilter: "blur(18px)", borderTop: "1px solid var(--border)" }}>
           <div className="max-w-xl mx-auto w-full flex flex-col gap-2">
             <p className="t-caption text-center" style={{ color: "var(--text-muted)" }}>
-              اسحب من المقبض ⠿ لترتيب الأقسام، و«أخفِ» لما لا يعنيك.
+              اسحب من المقبض ⠿ لترتيب الأقسام، واضغط − لإخفاء ما لا يعنيك.
             </p>
             <div className="flex gap-2">
               <button onClick={() => setDraft(null)}

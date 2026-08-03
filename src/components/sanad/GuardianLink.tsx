@@ -22,8 +22,15 @@ const NOT = [
   "موقعك أو رسائلك أو صورك",
 ];
 
+/** رابطُ التسجيل ومعه الرمز — الوالدُ يفتحه فيجد الرمزَ مكتوباً. */
+const joinUrl = (code: string): string => {
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://usedarb.com";
+  return `${origin}/sanad/join?code=${code}`;
+};
+
 export default function GuardianLink() {
   const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [code, setCode] = useState<PairCode | null>(null);
   const [guardians, setGuardians] = useState<Guardian[]>([]);
   const [left, setLeft] = useState(0);
@@ -113,8 +120,34 @@ export default function GuardianLink() {
                   ينتهي بعد {n(Math.floor(left / 60))}:{String(left % 60).padStart(2, "0")}
                 </p>
                 <p className="t-caption mt-2 leading-relaxed" style={{ color: "var(--text-dim)" }}>
-                  يفتح والدُك <span className="font-black" style={{ color: "var(--text)" }}>usedarb.com/sanad/join</span> ويكتبه.
+                  أرسِل له الرابط، أو اقرأ الرمزَ عليه.
                 </p>
+
+                {/* ▓ إرسالُ الرابط أسهلُ من إملاء ستّة حروفٍ في مكالمة — والرابطُ
+                   يحمل الرمزَ فيجده والدُك مكتوباً. */}
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={async () => {
+                      const url = joinUrl(code.code);
+                      const text = `سجّل في سند وتابع مذاكرتي: ${url}`;
+                      try {
+                        if (navigator.share) { await navigator.share({ title: "سند — درب", text, url }); return; }
+                      } catch { /* أغلق المشاركة — ننسخ بدلاً منها */ }
+                      try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* تجاهل */ }
+                    }}
+                    className="flex-1 rounded-xl py-2.5 t-caption font-black"
+                    style={{ background: "var(--success)", color: "#04231a" }}>
+                    ↗ إرسال الرابط
+                  </button>
+                  <button
+                    onClick={async () => {
+                      try { await navigator.clipboard.writeText(joinUrl(code.code)); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* تجاهل */ }
+                    }}
+                    className="flex-1 rounded-xl py-2.5 t-caption font-black"
+                    style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}>
+                    {copied ? "نُسخ ✓" : "⧉ نسخ الرابط"}
+                  </button>
+                </div>
               </div>
             ) : (
               <button onClick={() => setCode(issueCode())}
