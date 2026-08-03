@@ -13,75 +13,7 @@ export const COLORS = {
   danger: "#EF4444",
 } as const;
 
-export const PLANS = [
-  {
-    id: "free",
-    name: "مجاني",
-    price: 0,
-    period: "",
-    badge: "",
-    color: "#64748B",
-    features: [
-      "خزنة الأخطاء (20 سؤال)",
-      "3 دروس تأسيسية تجريبية",
-      "تايمر Orbit 50/10",
-      "الخريطة التفاعلية",
-      "Daily Streak",
-      "المجلس (قراءة فقط)",
-    ],
-    missing: ["خزنة غير محدودة", "كل دروس التأسيس", "المجلس (مشاركة)", "الأرينا"],
-  },
-  {
-    id: "shaheen",
-    name: "شاهين",
-    price: 5.99,
-    period: "شهر",
-    badge: "الأكثر شيوعاً",
-    color: "#2563EB",
-    features: [
-      "خزنة الأخطاء غير محدودة",
-      "كل دروس التأسيس",
-      "بنك المراجعة الذكية بالتكرار المتباعد",
-      "المجلس (مشاركة كاملة)",
-      "الأرينا 1v1",
-            "تحليل الأداء الأسبوعي",
-    ],
-    missing: [],
-  },
-  {
-    id: "anqa",
-    name: "عنقاء",
-    price: 14.99,
-    period: "شهر",
-    badge: "النخبة والمؤسسون",
-    color: "#F59E0B",
-    features: [
-      "كل مميزات شاهين",
-      "شهادة الانضباط الرقمية",
-      "خصم 79 ريال عند الانتقال للجامعة",
-      "دور المؤسس الدائم",
-      "أولوية في الميزات الجديدة",
-    ],
-    missing: [],
-  },
-] as const;
 
-export const PARENT_PLAN = {
-  id: "sand",
-  name: "سند",
-  price: 59.99,
-  period: "سنة",
-  color: "#10B981",
-  badge: "لولي الأمر",
-  features: [
-    "حالة الابن في الوقت الفعلي",
-    "تقارير أداء أسبوعية",
-    "مقارنة بالمتوسط العام",
-    "رسائل دعم بعد الجلسة",
-    "إضافة ابن واحد مجاناً",
-    "خصم 50% لأخ أو أخت",
-  ],
-};
 
 export const SUBJECTS = ["فيزياء", "رياضيات", "كيمياء", "أحياء"] as const;
 
@@ -142,12 +74,6 @@ export const RAKAN_SCHEDULE = {
   ],
 };
 
-export const ROADMAP_STAGES = [
-  { id: "foundation", name: "التأسيس", icon: "", range: [0, 25] },
-  { id: "building", name: "التدريب", icon: "", range: [25, 50] },
-  { id: "reinforcement", name: "التعزيز", icon: "", range: [50, 75] },
-  { id: "finale", name: "الختام", icon: "", range: [75, 100] },
-] as const;
 
 export const ERROR_CATEGORIES = [
   "استعجلت",

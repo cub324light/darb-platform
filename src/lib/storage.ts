@@ -315,11 +315,6 @@ export function recordQuiz(): void {
 }
 
 /* نسبة إتمام المسار — تُحدَّث من صفحة الخريطة عند تغيّر التقدم */
-export function recordTrackProgress(pct: number): void {
-  const s = loadStats();
-  s.trackProgress = Math.max(s.trackProgress ?? 0, Math.round(pct));
-  saveStats(s);
-}
 
 /* عدّاد خطط دويرب — يُستدعى عند تطبيق خطة على الجدول */
 export function recordPlanCreated(): void {
@@ -435,19 +430,8 @@ export function saveExamDate(date: string | null) {
 }
 
 /* ── تواريخ اختبار لكل مادة ── */
-const SUBJECT_EXAM_DATES_KEY = "darb_subject_exam_dates";
 
-export function loadSubjectExamDates(): Record<string, string> {
-  if (typeof window === "undefined") return {};
-  try {
-    const raw = localStorage.getItem(SUBJECT_EXAM_DATES_KEY);
-    return raw ? (JSON.parse(raw) as Record<string, string>) : {};
-  } catch { return {}; }
-}
 
-export function saveSubjectExamDates(dates: Record<string, string>) {
-  try { localStorage.setItem(SUBJECT_EXAM_DATES_KEY, JSON.stringify(dates)); } catch {}
-}
 
 /* ── تواريخ اختبار لكل مسار (مفتاح = TrackId) ── */
 const TRACK_EXAM_DATES_KEY = "darb_track_exam_dates";
@@ -676,9 +660,6 @@ export function saveGoals(g: DarbGoals) {
 }
 
 /* ── خريطة المهارات: معرّفات المهارات المُتقنة ── */
-const SKILLS_KEY = "darb_skills";
-export function loadSkills(): string[] { return loadList<string>(SKILLS_KEY); }
-export function saveSkills(ids: string[]) { saveList(SKILLS_KEY, ids); }
 
 /* ── تاريخ شبكة التخصص (طبقة History لشبكة القرارات) ──
    عدّاد لكل عقدة ضغطها الطالب — ما يراه كثيراً يهبط في الترتيب لاحقاً. */
@@ -719,42 +700,18 @@ export interface TrainingItem {
   title: string;
 }
 
-const EXAM_FLOW_KEY = "darb_exam_flow";
-const STAGE_REVIEWS_KEY = "darb_stage_reviews";
 
-export function loadExamFlow(): ExamFlow {
-  if (typeof window === "undefined") return {};
-  try { return JSON.parse(localStorage.getItem(EXAM_FLOW_KEY) ?? "{}") as ExamFlow; } catch { return {}; }
-}
 
-export function saveExamFlow(f: ExamFlow) {
-  try { localStorage.setItem(EXAM_FLOW_KEY, JSON.stringify(f)); } catch {}
-}
 
-export function loadStageReviews(): StageReviews {
-  if (typeof window === "undefined") return {};
-  try { return JSON.parse(localStorage.getItem(STAGE_REVIEWS_KEY) ?? "{}") as StageReviews; } catch { return {}; }
-}
 
-export function saveStageReviews(r: StageReviews) {
-  try { localStorage.setItem(STAGE_REVIEWS_KEY, JSON.stringify(r)); } catch {}
-}
 
 const TADREEB_ITEMS_KEY = "darb_tadreeb_items";
 const TADREEB_DONE_KEY  = "darb_tadreeb_done";
-const TASREEBAT_PCT_KEY = "darb_tasreebat_pct";
 
 export function loadTadreebItems(): TrainingItem[] { return loadList<TrainingItem>(TADREEB_ITEMS_KEY); }
 export function saveTadreebItems(items: TrainingItem[]) { saveList(TADREEB_ITEMS_KEY, items); }
 export function loadTadreebDone(): string[] { return loadList<string>(TADREEB_DONE_KEY); }
 export function saveTadreebDone(done: string[]) { saveList(TADREEB_DONE_KEY, done); }
-export function loadTasreebatPct(): number {
-  if (typeof window === "undefined") return 0;
-  try { return Math.min(99, Math.max(0, +(localStorage.getItem(TASREEBAT_PCT_KEY) ?? "0"))); } catch { return 0; }
-}
-export function saveTasreebatPct(n: number) {
-  try { localStorage.setItem(TASREEBAT_PCT_KEY, String(Math.min(99, Math.max(0, n)))); } catch {}
-}
 
 /* ── أحداث الجدول اليومي ── */
 export interface ScheduleEvent {
@@ -792,180 +749,17 @@ export function saveEvents(events: ScheduleEvent[]) {
 }
 
 /* ── الجدول الأسبوعي ── */
-const SCHEDULE_KEY = "darb_schedule";
 
 export type ScheduleEntry = { subject: string; hours: number };
 export type WeeklySchedule = Record<string, ScheduleEntry[]>; // "0"-"6" = الأحد–السبت
 
-export function loadSchedule(): WeeklySchedule | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem(SCHEDULE_KEY);
-    return raw ? (JSON.parse(raw) as WeeklySchedule) : null;
-  } catch { return null; }
-}
 
-export function saveSchedule(s: WeeklySchedule) {
-  try { localStorage.setItem(SCHEDULE_KEY, JSON.stringify(s)); } catch {}
-}
 
-/* ── إعدادات الصفحة الرئيسية: ترتيب وإظهار الأقسام ── */
-export type DashSectionId =
-  | "track" | "today" | "schedule" | "ai" | "weekly"
-  | "quote" | "stats" | "tools" | "community" | "certificate"
-  | "studiers" | "map";
-
-export interface DashItem { id: DashSectionId; visible: boolean; }
-export interface DashConfig { layout: DashItem[]; }
-
-/* أسماء ووصف كل قسم — تظهر في وضع التخصيص ودرج الإضافة */
-export const DASH_SECTION_META: Record<DashSectionId, { label: string; desc: string }> = {
-  track:       { label: "مسارك",        desc: "المواد والمسارات النشطة" },
-  today:       { label: "يومك",         desc: "تقدّم اليوم وزر أوربت والعدّاد" },
-  schedule:    { label: "جدول اليوم",   desc: "مواعيد المذاكرة وتعديلها" },
-  ai:          { label: "دويرب",        desc: "مساعدك الذكي للجداول والنصائح" },
-  weekly:      { label: "أسبوعك",       desc: "رسم دقائق التركيز اليومية" },
-  quote:       { label: "اقتباس اليوم", desc: "جملة تحفيزية تتغيّر يومياً" },
-  stats:       { label: "إحصائياتك",     desc: "ساعات التركيز والجلسات والأخطاء" },
-  tools:       { label: "أسرع وصول",   desc: "اختصارات: جلسة أوربت، خطة ذكية، تحليل ملف، إضافة خطأ" },
-  community:   { label: "المجتمع",      desc: "المجلس والأرينا" },
-  certificate: { label: "الشهادة",      desc: "شهادة الانضباط والترقية" },
-  studiers:    { label: "كم يذاكر الآن",   desc: "عدد الطلاب النشطين على المنصة الآن" },
-  map:         { label: "خريطة السعودية",   desc: "توزيع الطلاب على مناطق المملكة" },
-};
-
-/* التركيز على المهمة — «يعرف الطالب ماذا يذاكر الآن ويبدأ بخطوة واحدة»:
-   يظهر افتراضياً أربعة أقسام فقط بهذا الترتيب —
-   1) يومك (البطل: ماذا الآن + الفعل الواحد)  2) جدول اليوم (خطة اليوم)
-   3) أسرع وصول (اختصارات)  4) مساراتك (تقدّم موجز).
-   بقية الأقسام تبقى متاحة عبر «تخصيص» لكنها مخفيّة افتراضياً حتى لا تُشتّت المهمة. */
-const DASH_DEFAULT_ORDER: DashSectionId[] = [
-  // ظاهر افتراضياً — يخدم مهمة الصفحة الواحدة
-  "today", "schedule", "tools", "track",
-  // مخفيّ افتراضياً — متاح دائماً من «تخصيص» (لا يُحذف كوده)
-  "ai", "weekly", "stats", "quote", "community", "certificate", "studiers", "map",
-];
-
-function defaultLayout(): DashItem[] {
-  // مخفيّ افتراضياً: كل ما لا يخدم «ماذا أذاكر الآن» مباشرةً — يُرجَّع من «تخصيص»
-  const hidden = new Set<DashSectionId>([
-    "ai", "weekly", "stats", "quote", "community", "certificate", "studiers", "map",
-  ]);
-  return DASH_DEFAULT_ORDER.map((id) => ({ id, visible: !hidden.has(id) }));
-}
-
-const DASH_CONFIG_KEY = "darb_dash_config";
-const DASH_SCHED2_KEY = "darb_dash_sched_v2"; // علم ترحيل لمرة واحدة
-const DASH_TODAY_FIRST_KEY = "darb_dash_today_first_v1"; // ترحيل: يومك أولاً + دويرب ثانياً
-const DASH_HERO_V2_KEY = "darb_dash_hero_v2"; // ترحيل: ترتيب «الانطباع الأول» الجديد
-const DASH_FOCUS_KEY = "darb_dash_focus_v1"; // ترحيل: إعادة ضبط لتخطيط «ماذا أذاكر الآن» المُنقّى (4 أقسام)
-
-/* ترحيل لمرة واحدة: انقل «جدول اليوم» ليصير ثاني عنصر — يُحترم تخصيص المستخدم بعدها */
-function migrateScheduleSecond(layout: DashItem[]): DashItem[] {
-  try {
-    if (localStorage.getItem(DASH_SCHED2_KEY)) return layout;
-    const out = [...layout];
-    const idx = out.findIndex((i) => i.id === "schedule");
-    if (idx > 1) {
-      const [sched] = out.splice(idx, 1);
-      out.splice(1, 0, sched);
-    }
-    localStorage.setItem(DASH_SCHED2_KEY, "1");
-    localStorage.setItem(DASH_CONFIG_KEY, JSON.stringify({ layout: out }));
-    return out;
-  } catch {
-    return layout;
-  }
-}
-
-/* ترحيل لمرة واحدة: ضع «يومك» أولاً و«دويرب» ثانياً */
-function migrateTodayFirst(layout: DashItem[]): DashItem[] {
-  try {
-    if (localStorage.getItem(DASH_TODAY_FIRST_KEY)) return layout;
-    localStorage.setItem(DASH_TODAY_FIRST_KEY, "1");
-    const todayItem = layout.find((l) => l.id === "today");
-    const aiItem    = layout.find((l) => l.id === "ai");
-    const rest      = layout.filter((l) => l.id !== "today" && l.id !== "ai");
-    const out       = [...(todayItem ? [todayItem] : []), ...(aiItem ? [aiItem] : []), ...rest];
-    localStorage.setItem(DASH_CONFIG_KEY, JSON.stringify({ layout: out }));
-    return out;
-  } catch {
-    return layout;
-  }
-}
-
-/* ترحيل لمرة واحدة: أعد ترتيب الأقسام إلى ترتيب «الانطباع الأول» الجديد —
-   نحافظ على إظهار/إخفاء كل قسم كما خصّصه المستخدم، ونغيّر الترتيب فقط. */
-function migrateHeroOrder(layout: DashItem[]): DashItem[] {
-  try {
-    if (localStorage.getItem(DASH_HERO_V2_KEY)) return layout;
-    localStorage.setItem(DASH_HERO_V2_KEY, "1");
-    const visById = new Map(layout.map((l) => [l.id, l.visible]));
-    const hiddenByDefault = new Set<DashSectionId>(["studiers", "map"]);
-    const out: DashItem[] = DASH_DEFAULT_ORDER.map((id) => ({
-      id,
-      visible: visById.has(id) ? visById.get(id)! : !hiddenByDefault.has(id),
-    }));
-    localStorage.setItem(DASH_CONFIG_KEY, JSON.stringify({ layout: out }));
-    return out;
-  } catch {
-    return layout;
-  }
-}
-
-/* ترحيل لمرة واحدة: إعادة ضبط تخطيط كل المستخدمين إلى الافتراضي المُنقّى الجديد —
-   «يومك ← جدول اليوم ← أسرع وصول ← مساراتك» ظاهرة، والبقية مخفيّة (متاحة عبر «تخصيص»).
-   يُطبَّق مرة واحدة فقط ثم يُحترم تخصيص المستخدم بعده — كنمط migrateTodayFirst/migrateHeroOrder. */
-function migrateFocusV1(layout: DashItem[]): DashItem[] {
-  try {
-    if (localStorage.getItem(DASH_FOCUS_KEY)) return layout;
-    localStorage.setItem(DASH_FOCUS_KEY, "1");
-    const out = defaultLayout();
-    localStorage.setItem(DASH_CONFIG_KEY, JSON.stringify({ layout: out }));
-    return out;
-  } catch {
-    return layout;
-  }
-}
-
-export function loadDashConfig(): DashConfig {
-  if (typeof window === "undefined") return { layout: defaultLayout() };
-  try {
-    const raw = localStorage.getItem(DASH_CONFIG_KEY);
-    if (!raw) return { layout: migrateFocusV1(migrateHeroOrder(migrateTodayFirst(migrateScheduleSecond(defaultLayout())))) };
-    const parsed = JSON.parse(raw);
-
-    // الصيغة الجديدة: { layout: [...] } — نُكمل أي قسم ناقص ونُسقط المجهول
-    if (parsed && Array.isArray(parsed.layout)) {
-      const known: DashItem[] = parsed.layout.filter(
-        (it: DashItem) => it && DASH_DEFAULT_ORDER.includes(it.id)
-      );
-      const seen = new Set(known.map((it) => it.id));
-      const hiddenByDefault = new Set<DashSectionId>(["studiers", "map"]);
-      const merged = [
-        ...known,
-        ...DASH_DEFAULT_ORDER.filter((id) => !seen.has(id)).map((id) => ({ id, visible: !hiddenByDefault.has(id) })),
-      ];
-      return { layout: migrateFocusV1(migrateHeroOrder(migrateTodayFirst(migrateScheduleSecond(merged)))) };
-    }
-
-    // ترحيل من الصيغة القديمة: { showStats, showWeekly, showSchedule, showTools, showAI }
-    const oldVis: Partial<Record<DashSectionId, boolean>> = {
-      stats: parsed.showStats,
-      weekly: parsed.showWeekly,
-      schedule: parsed.showSchedule,
-      tools: parsed.showTools,
-      ai: parsed.showAI,
-    };
-    return { layout: migrateFocusV1(migrateHeroOrder(migrateTodayFirst(migrateScheduleSecond(DASH_DEFAULT_ORDER.map((id) => ({ id, visible: oldVis[id] ?? true })))))) };
-  } catch {
-    return { layout: defaultLayout() };
-  }
-}
-
-export function saveDashConfig(cfg: DashConfig) {
-  try { localStorage.setItem(DASH_CONFIG_KEY, JSON.stringify(cfg)); } catch {}
-}
+/* ── حُذف نظامُ «إعدادات الصفحة الرئيسية» (DashConfig) ──
+   كان يرتّب أقسامَ الرئيسية ويخفيها، ثم ضاع زرُّه في إعادة تنظيمها فبقي مكتوباً
+   كاملاً — بأنواعه وأربع دوالِّ ترحيلٍ ومفاتيحها — **ولا يستدعيه أحد**. حلَّ محلَّه
+   `pageLayout.ts` العامّ الذي يخدم كلَّ صفحةٍ لا الرئيسية وحدها.
+   ومفاتيحُه القديمة تبقى في `resetAll` لتُمسح من أجهزة من استعملها. */
 
 /* ── مخطط الدراسة الذكي — تعديلات المستخدم على الساعات وترتيب المواد ── */
 export interface StudyPlanSubject {

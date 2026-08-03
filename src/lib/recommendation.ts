@@ -22,7 +22,6 @@ import type { TrackId } from "./tracks";
 import type { GoldenPathState } from "./goldenPath";
 import type { StudentPhase } from "./phase";
 import type { ExamAlert } from "./examProvider";
-import type { DashSectionId } from "./storage";
 import type { StudentContext, StudyWindow } from "./memory/types";
 import { nsKey } from "./engineNamespace";
 import { n as ar } from "@/lib/format";
@@ -63,7 +62,9 @@ export interface Recommendation {
   title: string;
   subtitle?: string;
   tone: RecTone;
-  cardId?: DashSectionId;   // لـ promote/hide: أي قسم لوحة يخصّ
+  /* لـ promote/hide: أيّ قسمٍ يخصّ. كان يشير إلى `DashSectionId` المحذوف —
+     وصار معرّفَ قسمٍ نصّياً كما في `pageLayout`. */
+  cardId?: string;
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -339,13 +340,13 @@ export function recommendationsForPage(recs: Recommendation[], page: string): Re
 }
 
 /** أقسام لوحة يُوصى بإخفائها. */
-export function hiddenCards(recs: Recommendation[]): DashSectionId[] {
-  return recs.filter((r) => r.kind === "hide" && r.cardId).map((r) => r.cardId!) as DashSectionId[];
+export function hiddenCards(recs: Recommendation[]): string[] {
+  return recs.filter((r) => r.kind === "hide" && r.cardId).map((r) => r.cardId!) as string[];
 }
 
 /** أقسام لوحة يُوصى برفعها للأعلى. */
-export function promotedCards(recs: Recommendation[]): DashSectionId[] {
-  return recs.filter((r) => r.kind === "promote" && r.cardId).map((r) => r.cardId!) as DashSectionId[];
+export function promotedCards(recs: Recommendation[]): string[] {
+  return recs.filter((r) => r.kind === "promote" && r.cardId).map((r) => r.cardId!) as string[];
 }
 
 /* ════════════════════════════════════════════════════════════

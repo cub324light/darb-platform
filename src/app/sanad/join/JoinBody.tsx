@@ -5,6 +5,10 @@
    ▓ يدخل **بلا رابط**: من فتح الصفحة بنفسه يمرّ بالخطوات كاملة، ومن جاءه رابطٌ
      من ابنه (`?code=`) وجد الرمزَ مكتوباً فيتخطّى آخرَ خطوة.
 
+   ▓ **الحسابُ إلزاميّ** (بأمر المالك): بلا حسابٍ يضيع ربطُه بأوّل مسحٍ للمتصفّح
+     أو تغييرِ جهاز، ولا سبيلَ لإرجاعه إليه. ومتابعةُ ابنه من جوّاله تقوم على
+     حسابٍ أصلاً.
+
    ▓ ولا رقمَ جوّالٍ يفتح ملفَّ من ليس ابنه: الرمزُ يصنعه الطالبُ ويرسله، فالإذنُ
      منه ابتداءً. */
 import { useEffect, useState } from "react";
@@ -169,23 +173,20 @@ export default function JoinBody() {
         <section className="ds-card ds-stack-tight">
           <h2 className="t-h3" style={{ color: "var(--text)" }}>حسابُك</h2>
           <p className="t-caption leading-relaxed" style={{ color: "var(--text-muted)" }}>
-            بالحساب تتابع ابنك من جوّالك أنت، ويبقى الربطُ لو غيّرتَ جهازك.
+بالحساب تتابع ابنك من جوّالك أنت، ويبقى الربطُ لو غيّرتَ جهازك.
           </p>
           <Field label="البريد" type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
           <Field label="كلمة المرور" type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="ستّة أحرفٍ فأكثر" />
           {err && <p className="t-caption font-bold" style={{ color: "var(--danger)" }}>{err}</p>}
-          <div className="flex gap-2 mt-1">
-            <button onClick={signUp} disabled={busy}
-              className="flex-1 rounded-2xl py-3 t-body font-black disabled:opacity-60"
-              style={{ background: "var(--success)", color: "#04231a" }}>
-              {busy ? "…" : "أنشئ الحساب"}
-            </button>
-            <button onClick={() => setStep("subscribe")}
-              className="rounded-2xl px-4 py-3 t-caption font-black"
-              style={{ background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}>
-              تخطَّ
-            </button>
-          </div>
+          <button onClick={signUp} disabled={busy || !email.trim() || pass.length < 6}
+            className="rounded-2xl py-3 t-body font-black mt-1 disabled:opacity-50"
+            style={{ background: "var(--success)", color: "#04231a" }}>
+            {busy ? "…" : "أنشئ الحساب"}
+          </button>
+          <p className="t-caption leading-relaxed" style={{ color: "var(--text-dim)" }}>
+            الحسابُ لازمٌ هنا: بدونه يضيع ربطُك بأوّل مسحٍ للمتصفّح أو تغييرِ جهاز.
+            وإن كان لك حسابٌ سابقٌ بالبريد نفسِه دخلناك به.
+          </p>
         </section>
       )}
 

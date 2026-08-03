@@ -176,8 +176,7 @@ export default function Customizable({
                 <span className="t-caption font-black px-2 py-1 rounded-lg flex items-center gap-1"
                   style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-dim)" }}>🔒 ثابت</span>
               ) : (
-                <>
-                  <button
+                <button
                     onPointerDown={(e) => onDown(e, s.id)}
                     onKeyDown={(e) => {
                       if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
@@ -188,25 +187,28 @@ export default function Customizable({
                     className="w-8 h-8 rounded-lg grid place-items-center t-small font-black cursor-grab active:cursor-grabbing"
                     style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)", touchAction: "none" }}>
                     ⠿
-                  </button>
-                  {/* سالبٌ أحمر يخفي، وزائدٌ أخضر يُرجع — علامتان تُفهمان بلا قراءة */}
-                  <button onClick={() => setDraft((d) => toggleSection(d ?? saved, defs, s.id))}
-                    aria-pressed={s.visible} aria-label={`${s.visible ? "أخفِ" : "أظهر"} ${sec.label}`}
-                    className="w-8 h-8 rounded-full grid place-items-center font-black leading-none"
-                    style={{
-                      fontSize: "1.25rem",
-                      background: s.visible
-                        ? "color-mix(in srgb, var(--danger) 16%, var(--surface))"
-                        : "color-mix(in srgb, var(--success) 16%, var(--surface))",
-                      border: `1.5px solid ${s.visible ? "var(--danger)" : "var(--success)"}`,
-                      color: s.visible ? "var(--danger)" : "var(--success)",
-                    }}>
-                    {s.visible ? "−" : "+"}
-                  </button>
-                </>
+                </button>
               )}
               <span className="t-caption font-mono-nums px-1.5 py-1 rounded-lg"
                 style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-dim)" }}>{n(i + 1)}</span>
+              {/* سالبٌ أحمر يخفي، وزائدٌ أخضر يُرجع — علامتان تُفهمان بلا قراءة.
+                  وهو **آخرُ العناصر** فيقع أقصى اليسار في الاتجاه العربي.
+                  والثابتُ لا سالبَ له: لا يُخفى أصلاً. */}
+              {!sec.fixed && (
+              <button onClick={() => setDraft((d) => toggleSection(d ?? saved, defs, s.id))}
+                aria-pressed={s.visible} aria-label={`${s.visible ? "أخفِ" : "أظهر"} ${sec.label}`}
+                className="w-8 h-8 rounded-full grid place-items-center font-black leading-none"
+                style={{
+                  fontSize: "1.25rem",
+                  background: s.visible
+                    ? "color-mix(in srgb, var(--danger) 16%, var(--surface))"
+                    : "color-mix(in srgb, var(--success) 16%, var(--surface))",
+                  border: `1.5px solid ${s.visible ? "var(--danger)" : "var(--success)"}`,
+                  color: s.visible ? "var(--danger)" : "var(--success)",
+                }}>
+                {s.visible ? "−" : "+"}
+              </button>
+              )}
             </div>
 
             <div style={{ pointerEvents: "none" }}>{sec.node}</div>
