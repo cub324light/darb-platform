@@ -437,9 +437,11 @@ export default function Calendar({
                   const p = primaryPeriodOn(cellKey);
                   if (!p) return null;
                   const tone = PERIOD_TONE[p.kind];
-                  const isFirst = cellKey === p.start;
-                  const isLast = cellKey === p.end;
-                  const r = 10;
+                  /* يستدير عند طرفَي الفترة **وعند طرفَي الصفّ**: الشريطُ ينقطع
+                     آخرَ كل أسبوعٍ على أي حال، فالقطعُ المربّع يبدو كسراً. */
+                  const isFirst = cellKey === p.start || ci === 0;
+                  const isLast = cellKey === p.end || ci === 6;
+                  const r = 14;
                   return (
                     <span aria-hidden="true" className="absolute"
                       style={{

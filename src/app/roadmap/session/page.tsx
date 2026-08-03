@@ -12,7 +12,7 @@ import { loadUser, ensureWorkspace } from "@/lib/storage";
 import { buildSessionPlan, type SessionPlan, type SessionTask } from "@/lib/roadmap/session";
 import { remainingSteps } from "@/lib/roadmap/remainingSteps";
 import { focusHandoffQuery } from "@/lib/roadmap/handoff";
-import { readPriorityExam, countRemaining, vaultCount, readTodayAvailability, type PriorityExam } from "@/lib/roadmap/nowRead";
+import { readPriorityExam, countRemaining, readPlanSubjects, vaultCount, readTodayAvailability, type PriorityExam } from "@/lib/roadmap/nowRead";
 import { loadRoadmapConfig } from "@/lib/roadmap/store";
 import { ROADMAP_TUNING } from "@/lib/roadmap/config";
 import { trackEvent } from "@/lib/analytics";
@@ -53,11 +53,18 @@ export default function SessionPage() {
     return readPriorityExam(ws);
   });
   const [avail] = useState(() => (typeof window !== "undefined" ? readTodayAvailability() : { minutes: 0, adjusted: false, blocked: false, onVacation: false }));
-  const [counts] = useState(() => (exam ? countRemaining(exam.subjects) : { remainingLessons: 0, remainingDrills: 0, weakestSubject: null, totalItems: 0, doneItems: 0 }));
+  /* نفسُ نمط التوزيع الذي تقرؤه لوحةُ مساري — مصدرٌ واحد لا قراءتان */
+  const [planSubjects] = useState(() => {
+    if (typeof window === "undefined") return [] as { name: string; color: string }[];
+    const u = loadUser(); if (!u) return [];
+    const w = ensureWorkspace(u).workspace;
+    return w ? readPlanSubjects(w) : [];
+  });
+  const [counts] = useState(() => (planSubjects.length ? countRemaining(planSubjects) : { remainingLessons: 0, remainingDrills: 0, weakestSubject: null, totalItems: 0, doneItems: 0 }));
   const [plan, setPlan] = useState<SessionPlan | null>(() => {
     if (typeof window === "undefined" || !exam) return null;
     return buildSessionPlan({
-      subjects: exam.subjects.map((s) => s.name),
+      subjects: planSubjects.map((s) => s.name),
       weakestSubject: counts.weakestSubject,
       remainingLessons: counts.remainingLessons,
       remainingDrills: counts.remainingDrills,

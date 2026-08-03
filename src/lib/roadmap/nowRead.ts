@@ -57,6 +57,25 @@ export function readAllExams(ws: Workspace): PriorityExam[] {
   return entries;
 }
 
+/** اختباراتُ الجدول اليوم — يقودها نمطُ التوزيع الذي اختاره الطالب:
+    «بالتتابع» ⇒ صاحبُ الأولوية وحده، و«معاً» ⇒ كلُّها مرتّبةً بالأولوية.
+    مصدرٌ واحد لكل من يبني جلسةً، فلا تتفرّق قراءةُ النمط بين صفحتين. */
+export function readPlanExams(ws: Workspace): PriorityExam[] {
+  const cfg = loadRoadmapConfig();
+  const entries = readAllExams(ws);
+  if (entries.length === 0) return [];
+  const ordered = orderByPriority(cfg, entries.map((e) => e.id));
+  const sorted = ordered.map((id) => entries.find((e) => e.id === id)!).filter(Boolean);
+  return (cfg.examPlanMode ?? "sequential") === "together" ? sorted : sorted.slice(0, 1);
+}
+
+/** موادُّ الجدول بلا تكرار — اتّحادُ مواد اختبارات النمط الحاليّ. */
+export function readPlanSubjects(ws: Workspace): { name: string; color: string }[] {
+  const seen = new Map<string, { name: string; color: string }>();
+  for (const e of readPlanExams(ws)) for (const s of e.subjects) if (!seen.has(s.name)) seen.set(s.name, s);
+  return [...seen.values()];
+}
+
 /** الاختبار صاحب الأولوية #1 من Workspace + ترتيب الأولوية المخزّن. */
 export function readPriorityExam(ws: Workspace): PriorityExam | null {
   const cfg = loadRoadmapConfig();

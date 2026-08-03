@@ -5,7 +5,7 @@ import {
   getExamMeta, setExamMeta, onExamAdded, onExamRemoved,
   setPriorityOrder, priorityLock, orderByPriority, setStudyMode,
   setVacation, clearVacation, vacationState, isOnVacation, setDestination,
-  examStatus, type RoadmapConfig,
+  examStatus, setExamPlanMode, examPlanLock, EXAM_PLAN_LOCK_DAYS, type RoadmapConfig,
 } from "./model";
 
 const DAY = 86_400_000;
@@ -102,4 +102,40 @@ test("examStatus: الاشتقاق من الحقائق (الأبعد وصولا�
   assert.equal(examStatus({ progress: 40, registered: true, examPassed: true, hasResult: false, waitingResult: false }), "taken");
   assert.equal(examStatus({ progress: 40, registered: true, examPassed: true, hasResult: false, waitingResult: true }), "waiting-result");
   assert.equal(examStatus({ progress: 100, registered: true, examPassed: true, hasResult: true, waitingResult: true }), "done");
+});
+
+/* ═══ نمطُ توزيع الاختبارات — معاً أم بالتتابع ═══ */
+
+test("setExamPlanMode يحفظ النمط ويقفله أسبوعاً", () => {
+  const now = 1_700_000_000_000;
+  const DAY = 86_400_000;
+  const c = setExamPlanMode({}, "together", now);
+  assert.equal(c.examPlanMode, "together");
+  assert.equal(c.examPlanLockedAt, now);
+
+  const day1 = examPlanLock(c, now + DAY);
+  assert.equal(day1.locked, true);
+  assert.equal(day1.daysLeft, EXAM_PLAN_LOCK_DAYS - 1);
+
+  assert.equal(examPlanLock(c, now + EXAM_PLAN_LOCK_DAYS * DAY).locked, false, "يُفتح عند انقضاء المدّة");
+});
+
+test("بلا اختيارٍ سابق لا قفل", () => {
+  assert.equal(examPlanLock({}).locked, false);
+});
+
+test("تغييرُ النمط يعيد بدء القفل — لا يورّث قفلاً قديماً", () => {
+  const now = 1_700_000_000_000;
+  const first = setExamPlanMode({}, "together", now);
+  const second = setExamPlanMode(first, "sequential", now + 10 * 86_400_000);
+  assert.equal(second.examPlanMode, "sequential");
+  assert.equal(second.examPlanLockedAt, now + 10 * 86_400_000);
+});
+
+test("النمطُ وقفلُ الأولوية مستقلّان — قفلُ أحدهما لا يقفل الآخر", () => {
+  const now = 1_700_000_000_000;
+  const c = setExamPlanMode({}, "together", now);
+  assert.equal(priorityLock(c, now).locked, false, "قفلُ النمط أقفل الأولوية");
+  const d = setPriorityOrder({}, ["qudurat"], now);
+  assert.equal(examPlanLock(d, now).locked, false, "قفلُ الأولوية أقفل النمط");
 });

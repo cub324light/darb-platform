@@ -14,6 +14,11 @@ import { ROADMAP_TUNING } from "./config";
 /** نمط المذاكرة (اختيارٌ واحدٌ لمساري الآن؛ per-exam مستقبلاً عبر meta بلا إعادة تصميم). */
 export type StudyMode = "focus" | "distribute" | "smart";
 
+/* نمطُ توزيع الاختبارات على الأيام — سؤالُ من عنده أكثر من اختبار:
+   «معاً في اليوم الواحد، أم واحداً حتى أُنهيه ثم الذي يليه؟»
+   كان جواباً يقوله دويرب في المحادثة فيضيع، فصار إعداداً يقود الجدولَ فعلاً. */
+export type ExamPlanMode = "sequential" | "together";
+
 /** وضع الإجازة — توقّفٌ مؤقّتٌ معلنٌ للمذاكرة. حين يكون نشطاً لا يُحاسَب الطالب على قلّة
     الالتزام ولا تُطلق إنذارات الخطر (الطبقات الأعلى تقرأ isOnVacation فتُهدّئ نبرتها).
     since = بداية الإجازة، until = تاريخ عودةٍ اختياريّ (تنتهي الإجازة تلقائياً بعده). */
@@ -39,6 +44,8 @@ export interface RoadmapConfig {
   examMeta?: Record<string, ExamPlanMeta>; // ميتاداتا لكل اختبار (مفتاحها examId)
   priorityLockedAt?: number;               // ms — قفل الأولوية (7 أيام)
   studyMode?: StudyMode;                    // نمط المذاكرة
+  examPlanMode?: ExamPlanMode;              // معاً أم بالتتابع (لمن عنده أكثر من اختبار)
+  examPlanLockedAt?: number;                // ms — يُقفل النمط أسبوعاً بعد اختياره
   vacation?: VacationState;                 // وضع الإجازة (توقّفٌ مؤقّت معلن)
   destination?: Destination;                // وجهتي (الجامعة/التخصص الهدف)
   meta?: Record<string, unknown>;           // مفتوح: دراسة جماعية · توصيات دويرب · ...
@@ -49,6 +56,7 @@ export type ExamStatus = "not-started" | "studying" | "registered" | "taken" | "
 
 export const MAX_EXAMS = ROADMAP_TUNING.maxExams;
 export const PRIORITY_LOCK_DAYS = ROADMAP_TUNING.priorityLockDays;
+export const EXAM_PLAN_LOCK_DAYS = ROADMAP_TUNING.examPlanLockDays;
 const DAY_MS = 86_400_000;
 
 /** أسباب حذف اختبارٍ — تُلتقط للتحليلات (لا تُخزَّن في النموذج؛ تُرسَل حدثاً). */
@@ -123,6 +131,20 @@ export function orderByPriority(c: RoadmapConfig, ids: string[]): string[] {
 
 export function setStudyMode(c: RoadmapConfig, mode: StudyMode): RoadmapConfig {
   return { ...c, studyMode: mode };
+}
+
+/** يختار نمطَ توزيع الاختبارات ويقفله أسبوعاً — التنقّلُ بين النمطين كل يومٍ
+    يجعل الجدولَ يتقلّب فلا يستقرّ الطالبُ على شيء. */
+export function setExamPlanMode(c: RoadmapConfig, mode: ExamPlanMode, now: number = Date.now()): RoadmapConfig {
+  return { ...c, examPlanMode: mode, examPlanLockedAt: now };
+}
+
+export function examPlanLock(c: RoadmapConfig, now: number = Date.now()): PriorityLockState {
+  if (!c.examPlanLockedAt) return { locked: false, daysLeft: 0, unlockAt: null };
+  const unlockAt = c.examPlanLockedAt + EXAM_PLAN_LOCK_DAYS * DAY_MS;
+  const remainingMs = unlockAt - now;
+  if (remainingMs <= 0) return { locked: false, daysLeft: 0, unlockAt };
+  return { locked: true, daysLeft: Math.ceil(remainingMs / DAY_MS), unlockAt };
 }
 
 /* ── وجهتي (نقيّ) ── */

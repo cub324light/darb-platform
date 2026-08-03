@@ -14,6 +14,7 @@ export interface RoadmapTuning {
   /* حدود الاختبارات + قفل الأولوية */
   maxExams: number;               // أقصى عدد اختباراتٍ مخطّطة
   priorityLockDays: number;       // مدّة قفل ترتيب الأولوية بالأيام
+  examPlanLockDays: number;       // مدّة قفل نمط توزيع الاختبارات بالأيام
 
   /* الجاهزية: أوزان العوامل + حدود النطاق + أدنى عددٍ من العوامل «الكافية» */
   readiness: { weights: ReadinessWeights; goodAt: number; watchAt: number; minFactors: number; };
@@ -36,7 +37,8 @@ export interface RoadmapTuning {
 /* القيم الافتراضية — «تعريف المؤشّرات». عدّلها هنا فقط. */
 export const ROADMAP_TUNING: RoadmapTuning = {
   maxExams: 3,
-  priorityLockDays: 7,
+  priorityLockDays: 3,
+  examPlanLockDays: 7,
   readiness: {
     weights: { commitment: 0.28, progress: 0.28, results: 0.20, errors: 0.16, proximity: 0.08 },
     goodAt: 0.70,

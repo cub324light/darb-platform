@@ -153,3 +153,23 @@ export function isBlank(note: JournalNote): boolean {
   if (note.kind === "table") return isBlankTable(note.table);
   return (note.text ?? "").trim() === "";
 }
+
+/* ═══ تذكيراتُ التصوير ═══
+   بعد أن يصنع الطالبُ ألبومَه نُذكّره **بماذا يصوّر** — فالألبومُ الفارغ لا ينفع.
+   الاختيارُ حتميّ من مفتاح اليوم: لا عشوائيةَ تتغيّر مع كل رسمةِ صفحة. */
+export const PHOTO_PROMPTS: { icon: string; text: string }[] = [
+  { icon: "📐", text: "صوّر السبورة بعد شرح الدرس — قبل ما تُمسح." },
+  { icon: "📄", text: "صوّر صفحة الواجب اللي حلّيتها اليوم." },
+  { icon: "❌", text: "صوّر سؤالاً غلطت فيه — ثم سجّله في «أخطائي»." },
+  { icon: "📚", text: "صوّر صفحة الكتاب اللي بتذاكرها الليلة." },
+  { icon: "🧪", text: "صوّر تجربة المختبر أو الرسم اللي على الورقة." },
+  { icon: "🗓️", text: "صوّر جدول اختباراتك المعلَّق في المدرسة." },
+  { icon: "✍️", text: "صوّر ملخّصك بخطّك — تراجعه قبل الاختبار." },
+];
+
+/** تذكيرُ اليوم — يُختار من مفتاح اليوم فيثبت طوال اليوم ويتغيّر غداً. */
+export function photoPromptFor(dayKey: string): { icon: string; text: string } {
+  let h = 0;
+  for (let i = 0; i < dayKey.length; i++) h = (h * 31 + dayKey.charCodeAt(i)) >>> 0;
+  return PHOTO_PROMPTS[h % PHOTO_PROMPTS.length];
+}

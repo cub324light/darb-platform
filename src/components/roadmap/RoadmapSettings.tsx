@@ -17,7 +17,7 @@ import {
 } from "@/lib/modules";
 import { readPriorityExam } from "@/lib/roadmap/nowRead";
 import { updateRoadmapConfig, loadRoadmapConfig } from "@/lib/roadmap/store";
-import { setPriorityOrder, onExamRemoved, priorityLock } from "@/lib/roadmap/model";
+import { setPriorityOrder, onExamRemoved, priorityLock, setExamPlanMode, examPlanLock, type ExamPlanMode } from "@/lib/roadmap/model";
 import { n, days } from "@/lib/format";
 
 /** الحدُّ الأقصى — مصدرُه `AddModuleMenu` نفسُه (٣ اختبارات: تركيزٌ على القليل). */
@@ -45,10 +45,12 @@ export default function RoadmapSettings({ ws, ctx, onChange, onClose }: {
   const [confirming, setConfirming] = useState<string | null>(null);
 
   const count = examCount(ws);
-  const remaining = Math.max(0, EXAM_CAP - count);
   /* الأولويةُ الحقيقية — تلك التي يقرؤها «اختبارك» وجلسةُ اليوم */
   const priorityId = readPriorityExam(ws)?.id ?? null;
-  const lock = priorityLock(loadRoadmapConfig());
+  const cfg = loadRoadmapConfig();
+  const lock = priorityLock(cfg);
+  const planMode: ExamPlanMode = cfg.examPlanMode ?? "sequential";
+  const planLock = examPlanLock(cfg);
 
   const add = (t: AddTarget) => {
     onChange(t.kind === "module" ? addModule(ws, t.id as ModuleId) : addMember(ws, t.id as ExamMemberId));
@@ -106,7 +108,48 @@ export default function RoadmapSettings({ ws, ctx, onChange, onClose }: {
   return (
     <Sheet onClose={onClose} title="إعدادات مساري">
       <div className="flex flex-col gap-4">
-        <AddModuleMenu ws={ws} ctx={ctx} onAdd={add} capReached={count >= EXAM_CAP} remaining={remaining} />
+        <AddModuleMenu ws={ws} ctx={ctx} onAdd={add} capReached={count >= EXAM_CAP} />
+
+        {/* نمطُ التوزيع — سؤالُ من عنده أكثر من اختبار. كان جواباً يقوله دويرب
+            في المحادثة فيضيع بانتهائها؛ صار إعداداً يقود جلسةَ اليوم فعلاً. */}
+        {rows.length > 1 && (
+          <div>
+            <p className="eyebrow px-1 mb-2">كيف تذاكرها؟</p>
+            <div className="flex flex-col gap-2">
+              {([
+                ["sequential", "واحداً بعد واحد", "تُنهي اختبارَ أولويتك ثم تبدأ الذي يليه — تركيزٌ أعمق."],
+                ["together", "كلَّها معاً", "يومُك يُقسَم بين اختباراتك — تقدّمٌ في كلٍّ منها."],
+              ] as const).map(([v, label, desc]) => {
+                const on = planMode === v;
+                const blocked = planLock.locked && !on;
+                return (
+                  <button key={v} onClick={() => { updateRoadmapConfig((c) => setExamPlanMode(c, v)); onChange(ws); }}
+                    disabled={blocked} aria-pressed={on}
+                    className="rounded-2xl px-4 py-3 flex items-center gap-3 text-right transition active:scale-[0.98]"
+                    style={{
+                      background: on ? "color-mix(in srgb, var(--accent) 10%, var(--surface2))" : "var(--surface2)",
+                      border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}`,
+                      opacity: blocked ? 0.5 : 1,
+                    }}>
+                    <span className="flex-1 min-w-0">
+                      <span className="block t-body font-black" style={{ color: "var(--text)" }}>{label}</span>
+                      <span className="block t-caption leading-snug" style={{ color: "var(--text-muted)" }}>{desc}</span>
+                    </span>
+                    <span className="t-body font-black flex-shrink-0" style={{ color: on ? "var(--accent-light)" : "var(--text-muted)" }}>
+                      {on ? "✓" : blocked ? "🔒" : ""}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {planLock.locked && (
+              <p className="t-caption mt-2 px-3 py-2 rounded-xl leading-relaxed"
+                style={{ background: "color-mix(in srgb, var(--gold) 10%, var(--surface2))", color: "var(--text)", border: "1px solid color-mix(in srgb, var(--gold) 26%, transparent)" }}>
+                🔒 النمط مقفل {days(planLock.daysLeft)} — الجدولُ يحتاج وقتاً ليُثمر، وتغييرُه كل يومٍ يبدأ من الصفر.
+              </p>
+            )}
+          </div>
+        )}
 
         <div>
           <p className="eyebrow px-1 mb-2">اختباراتك ({n(count)})</p>
@@ -145,13 +188,13 @@ export default function RoadmapSettings({ ws, ctx, onChange, onClose }: {
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <button onClick={() => makePriority(r)} disabled={r.id === priorityId}
+                      <button onClick={() => makePriority(r)} disabled={r.id === priorityId || lock.locked}
                         aria-pressed={r.id === priorityId}
-                        className="flex-1 t-caption font-black py-2 rounded-xl transition active:scale-[0.97]"
+                        className="flex-1 t-caption font-black py-2 rounded-xl transition active:scale-[0.97] disabled:opacity-100"
                         style={r.id === priorityId
                           ? { background: `color-mix(in srgb, ${r.color} 16%, transparent)`, border: `1.5px solid ${r.color}`, color: r.color }
-                          : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}>
-                        {r.id === priorityId ? "★ أولويتك" : "☆ اجعله أولويتك"}
+                          : { background: "var(--surface)", border: "1px solid var(--border)", color: lock.locked ? "var(--text-muted)" : "var(--text)", opacity: lock.locked ? 0.5 : 1 }}>
+                        {r.id === priorityId ? "★ أولويتك" : lock.locked ? "🔒 مقفلة" : "☆ اجعله أولويتك"}
                       </button>
                       {r.moduleId && (
                         <button onClick={() => onChange(hideModule(ws, r.moduleId!, !r.hidden))}
@@ -171,13 +214,12 @@ export default function RoadmapSettings({ ws, ctx, onChange, onClose }: {
               ))}
             </div>
           )}
-          {/* القفلُ خبرٌ لا سدّ: النصيحةُ أن تثبت على اختبارٍ أسبوعاً، والقرارُ لك.
-              (`priorityLock` مبنيٌّ في النموذج ولا يُطبَّق في أي شاشة — فلا نمنع
-              الطالبَ بقاعدةٍ لم يُتَّفق على تطبيقها، بل نخبره بها.) */}
+          {/* القفلُ يُطبَّق: اختيارُ الأولوية قرارُ أسبوع لا مزاجُ يوم. ثلاثةُ أيامٍ
+              مدّةٌ كافيةٌ ليظهر أثرُ التركيز، وقصيرةٌ فلا تحبس من غيّر ظرفُه. */}
           {lock.locked && rows.length > 1 && (
             <p className="t-caption mt-2.5 px-3 py-2 rounded-xl leading-relaxed"
               style={{ background: "color-mix(in srgb, var(--gold) 10%, var(--surface2))", color: "var(--text)", border: "1px solid color-mix(in srgb, var(--gold) 26%, transparent)" }}>
-              💡 اخترتَ أولويتك قريباً — التركيز على اختبارٍ واحد {days(lock.daysLeft)} أنفعُ من التنقّل بينها. وتقدر تغيّرها الآن إن احتجت.
+              🔒 أولويتك مقفلة {days(lock.daysLeft)} — التنقّل بين الاختبارات كل يومٍ يضيّع التركيز. تفتح تلقائياً بعدها.
             </p>
           )}
           <p className="t-caption mt-2.5 px-1 leading-relaxed" style={{ color: "var(--text-muted)" }}>

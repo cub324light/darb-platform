@@ -7,7 +7,8 @@
    جودةً وأسرعُ ولا يأكل تخزينَ المتصفّح فيُفشل حفظَ خطتك وأخطائك. */
 import { useState } from "react";
 import Sheet from "@/components/Sheet";
-import DrawPad, { StrokesPreview } from "./DrawPad";
+import DrawPad from "./DrawPad";
+import FullPage from "./FullPage";
 import { useJournal, saveNote, deleteNote, newNoteId } from "@/lib/journal/store";
 import {
   notesOn, journalDays, emptyTable, isBlank, setCell, setCol, addRow, addCol, removeRow,
@@ -60,7 +61,7 @@ export default function DayJournal() {
         <p className="t-caption text-center py-3" style={{ color: "var(--text-muted)" }}>ما فيه ورقة لليوم بعد.</p>
       ) : (
         <div className="flex flex-col gap-2">
-          {todayNotes.map((x) => <NoteCard key={x.id} note={x} onOpen={() => setEditing(x)} />)}
+          {todayNotes.map((x) => <NoteRow key={x.id} note={x} onOpen={() => setEditing(x)} />)}
         </div>
       )}
 
@@ -113,7 +114,7 @@ export default function DayJournal() {
         <Sheet onClose={() => setOpenDay(null)} title={dateFull(openDay, false)}>
           <div className="flex flex-col gap-2">
             {notesOn(notes, openDay).map((x) => (
-              <NoteCard key={x.id} note={x} onOpen={() => { setOpenDay(null); setEditing(x); }} />
+              <NoteRow key={x.id} note={x} onOpen={() => { setOpenDay(null); setEditing(x); }} />
             ))}
           </div>
         </Sheet>
@@ -126,56 +127,41 @@ export default function DayJournal() {
   );
 }
 
-/* ── بطاقةُ ورقةٍ في القائمة ── */
-function NoteCard({ note, onOpen }: { note: JournalNote; onOpen: () => void }) {
+/* ── سطرُ ورقةٍ في الدفتر: الاسمُ وحده ──
+   كانت البطاقةُ تعرض الرسمةَ والجدولَ معاينةً، فيصير الدفترُ جداراً من الصور
+   يطول التمريرُ فيه. صار كالفهرس: نوعٌ واسم، وتُفتح بضغطة. */
+function NoteRow({ note, onOpen }: { note: JournalNote; onOpen: () => void }) {
   const meta = KIND_META[note.kind];
   return (
-    <button onClick={onOpen} className="rounded-2xl p-3 text-right transition active:scale-[0.99] w-full"
+    <button onClick={onOpen}
+      className="rounded-2xl px-4 py-3.5 flex items-center gap-3 text-right transition active:scale-[0.99] w-full"
       style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-      <div className="flex items-center gap-2 mb-1.5">
-        <span aria-hidden="true">{meta.icon}</span>
-        <span className="t-caption font-black" style={{ color: "var(--text-dim)" }}>{note.title?.trim() || meta.label}</span>
-      </div>
-      {note.kind === "draw" && <StrokesPreview strokes={note.strokes ?? []} height={110} />}
-      {note.kind === "table" && <MiniTable t={note.table} />}
-      {note.kind === "text" && (
-        <p className="t-small leading-relaxed line-clamp-3 whitespace-pre-wrap" style={{ color: "var(--text)" }}>{note.text}</p>
-      )}
+      <span className="text-[20px] flex-shrink-0" aria-hidden="true">{meta.icon}</span>
+      <span className="flex-1 min-w-0">
+        <span className="block t-body font-black truncate" style={{ color: "var(--text)" }}>
+          {note.title?.trim() || meta.label}
+        </span>
+        <span className="block t-caption" style={{ color: "var(--text-muted)" }}>{meta.label}</span>
+      </span>
+      <span className="t-body font-black flex-shrink-0" style={{ color: "var(--text-muted)" }}>←</span>
     </button>
   );
 }
 
-function MiniTable({ t }: { t?: TableData }) {
-  if (!t) return null;
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full" style={{ borderCollapse: "collapse" }}>
-        <tbody>
-          {t.rows.slice(0, 3).map((r, i) => (
-            <tr key={i}>
-              {r.map((c, j) => (
-                <td key={j} className="t-caption px-2 py-1 truncate"
-                  style={{ border: "1px solid var(--border)", color: c ? "var(--text)" : "var(--text-muted)", maxWidth: 120 }}>
-                  {c || "—"}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-/* ── محرّرُ الورقة ── */
+/* ── محرّرُ الورقة — شاشةٌ كاملة ──
+   الاسمُ **مطلوب**: الدفترُ يُعرض أسماءً، فورقةٌ بلا اسمٍ سطرٌ لا يدلّ على شيء
+   ويضطرّ الطالبُ لفتح كلِّ ورقةٍ ليعرف ما فيها. */
 function NoteEditor({ note, onClose }: { note: JournalNote; onClose: () => void }) {
   const [draft, setDraft] = useState<JournalNote>(note);
   const [err, setErr] = useState<string | null>(null);
   const meta = KIND_META[draft.kind];
+  const named = (draft.title ?? "").trim().length > 0;
+  const empty = isBlank(draft);
+  const canSaveNow = named && !empty;
 
   const save = () => {
-    if (isBlank(draft)) { onClose(); return; }
-    const r = saveNote({ ...draft, updatedAt: Date.now() });
+    if (!canSaveNow) return;
+    const r = saveNote({ ...draft, title: draft.title!.trim(), updatedAt: Date.now() });
     if (!r.ok) {
       setErr(r.reason === "too-many-strokes"
         ? "الرسمة كبيرة جداً — امسح بعض الخطوط."
@@ -189,19 +175,32 @@ function NoteEditor({ note, onClose }: { note: JournalNote; onClose: () => void 
   const setT = (next: TableData) => setDraft((d) => ({ ...d, table: next }));
 
   return (
-    <Sheet onClose={onClose} title={`${meta.icon} ${meta.label}`}>
-      <div className="flex flex-col gap-3">
-        <input value={draft.title ?? ""} onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
-          placeholder="عنوان الورقة (اختياري) — مثل: درس المتجهات"
-          className="w-full rounded-xl px-4 py-3 t-body font-bold outline-none"
-          style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
+    <FullPage
+      title={`${meta.icon} ${meta.label}`}
+      onClose={onClose}
+      action={
+        <button onClick={save} disabled={!canSaveNow}
+          className="t-small font-black px-4 py-2 rounded-xl transition active:scale-[0.97] disabled:opacity-45"
+          style={{ background: "var(--accent)", color: "#fff" }}>
+          حفظ
+        </button>
+      }>
+      <div className="flex flex-col gap-3 max-w-2xl mx-auto w-full">
+        <label className="flex flex-col gap-1.5">
+          <span className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>اسم الورقة</span>
+          <input value={draft.title ?? ""} onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
+            placeholder={draft.kind === "draw" ? "مثل: مخطّط المتجهات" : draft.kind === "table" ? "مثل: حصص الأحد" : "مثل: ماذا صار اليوم"}
+            autoFocus={!named}
+            className="w-full rounded-xl px-4 py-3 t-body font-bold outline-none"
+            style={{ background: "var(--surface2)", border: `1.5px solid ${named ? "var(--border)" : "color-mix(in srgb, var(--accent) 45%, var(--border))"}`, color: "var(--text)" }} />
+        </label>
 
         {draft.kind === "draw" && (
-          <DrawPad value={draft.strokes ?? []} onChange={(s: Stroke[]) => setDraft((d) => ({ ...d, strokes: s }))} />
+          <DrawPad value={draft.strokes ?? []} onChange={(s: Stroke[]) => setDraft((d) => ({ ...d, strokes: s }))} height={420} />
         )}
 
         {draft.kind === "text" && (
-          <textarea value={draft.text ?? ""} onChange={(e) => setDraft((d) => ({ ...d, text: e.target.value }))} rows={8}
+          <textarea value={draft.text ?? ""} onChange={(e) => setDraft((d) => ({ ...d, text: e.target.value }))} rows={16}
             placeholder="وش صار لك اليوم؟ ماذا شرحوا، وما الذي ما فهمته…"
             className="w-full rounded-2xl px-4 py-3 t-body outline-none resize-none"
             style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
@@ -252,17 +251,18 @@ function NoteEditor({ note, onClose }: { note: JournalNote; onClose: () => void 
         )}
 
         {err && <p className="t-caption font-bold" style={{ color: "var(--danger)" }}>{err}</p>}
+        {!canSaveNow && (
+          <p className="t-caption" style={{ color: "var(--text-muted)" }}>
+            {!named ? "سمِّ الورقة أوّلاً — الدفترُ يعرض الأسماء." : "الورقة فارغة بعد."}
+          </p>
+        )}
 
-        <div className="grid grid-cols-2 gap-2.5">
-          <button onClick={save} className="rounded-2xl py-3 t-body font-black"
-            style={{ background: "var(--accent)", color: "#fff" }}>حفظ</button>
-          <button onClick={() => { deleteNote(draft.id); onClose(); }}
-            className="rounded-2xl py-3 t-body font-black"
-            style={{ background: "transparent", border: "1.5px solid color-mix(in srgb, var(--danger) 40%, transparent)", color: "var(--danger)" }}>
-            حذف
-          </button>
-        </div>
+        <button onClick={() => { deleteNote(draft.id); onClose(); }}
+          className="rounded-2xl py-3 t-body font-black mt-2"
+          style={{ background: "transparent", border: "1.5px solid color-mix(in srgb, var(--danger) 40%, transparent)", color: "var(--danger)" }}>
+          حذف الورقة
+        </button>
       </div>
-    </Sheet>
+    </FullPage>
   );
 }

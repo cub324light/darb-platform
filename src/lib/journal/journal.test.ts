@@ -9,7 +9,8 @@ import assert from "node:assert/strict";
 import {
   notesOn, journalDays, upsertNote, removeNote, canSave, estimateBytes, LIMITS, GRID,
   simplify, finishStroke, undoStroke, emptyTable, setCell, setCol, addRow, addCol,
-  removeRow, removeCol, isBlank, isBlankTable, type JournalNote, type Stroke,
+  removeRow, removeCol, isBlank, isBlankTable, photoPromptFor, PHOTO_PROMPTS,
+  type JournalNote, type Stroke,
 } from "./journal";
 
 const note = (over: Partial<JournalNote> = {}): JournalNote => ({
@@ -165,4 +166,12 @@ test("المحرّك نقيّ: لا تخزين ولا نافذة ولا وقت",
   for (const bad of ["localStorage", "window.", "new Date(", "Date.now("]) {
     assert.ok(!code.includes(bad), `المحرّك يلمس ${bad} — نقلْه إلى store.ts`);
   }
+});
+
+test("photoPromptFor: يثبت في اليوم ويتغيّر بين الأيام", () => {
+  assert.deepEqual(photoPromptFor("2026-08-02"), photoPromptFor("2026-08-02"), "تغيّر داخل اليوم نفسه");
+  const week = ["2026-08-02","2026-08-03","2026-08-04","2026-08-05","2026-08-06","2026-08-07","2026-08-08"]
+    .map((d) => photoPromptFor(d).text);
+  assert.ok(new Set(week).size >= 4, `أسبوعٌ فيه ${new Set(week).size} تذكيراً فقط — يتكرّر كثيراً`);
+  for (const d of week) assert.ok(PHOTO_PROMPTS.some((p) => p.text === d), "تذكيرٌ من خارج القائمة");
 });

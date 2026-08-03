@@ -8,6 +8,8 @@
    ونسخٌ احتياطيّ عند آبل/جوجل، ويبقى معه لو ترك درب. نحن نُرشد، ولا نملك صورَه. */
 import { useState } from "react";
 import Sheet from "@/components/Sheet";
+import { usePref, setPref } from "@/lib/prefs";
+import { photoPromptFor } from "@/lib/journal/journal";
 
 type Phone = "ios" | "android";
 
@@ -34,24 +36,54 @@ const STEPS: Record<Phone, { label: string; steps: string[]; extra?: string }> =
   },
 };
 
+const today = () => new Date().toISOString().slice(0, 10);
+
 export default function MemoriesAlbum() {
   const [open, setOpen] = useState<Phone | null>(null);
+  /* «فعلتها» — بعدها لا نُعيد الشرح، بل نُذكّره بماذا يصوّر. الألبومُ الفارغ لا ينفع. */
+  const ready = usePref("albumReady", false);
+  const prompt = photoPromptFor(today());
+
   return (
     <section className="ds-card ds-stack-tight">
       <h2 className="t-h3" style={{ color: "var(--text)" }}>📸 ذكرياتك الدراسية</h2>
-      <p className="t-caption leading-relaxed" style={{ color: "var(--text-muted)" }}>
-        صورُ مذاكرتك مكانُها ألبومٌ في جوّالك — جودةٌ كاملة، ونسخةٌ احتياطية عند آبل أو جوجل،
-        وتبقى معك. لا نحفظها عندنا: صورةٌ واحدة تملأ مساحةَ المتصفّح فتضيع خطتُك وأخطاؤك.
-      </p>
-      <div className="grid grid-cols-2 gap-2.5">
-        {(["ios", "android"] as Phone[]).map((p) => (
-          <button key={p} onClick={() => setOpen(p)}
-            className="rounded-2xl py-3 t-body font-black transition active:scale-[0.98]"
-            style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
-            {STEPS[p].label}
+
+      {ready ? (
+        <>
+          <div className="rounded-2xl p-4 flex items-start gap-3"
+            style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface2))", border: "1.5px solid color-mix(in srgb, var(--accent) 26%, transparent)" }}>
+            <span className="text-[24px] flex-shrink-0" aria-hidden="true">{prompt.icon}</span>
+            <div className="flex-1 min-w-0">
+              <p className="t-caption font-black mb-0.5" style={{ color: "var(--accent-light)" }}>تذكير اليوم</p>
+              <p className="t-body leading-relaxed" style={{ color: "var(--text)" }}>{prompt.text}</p>
+            </div>
+          </div>
+          <p className="t-caption leading-relaxed" style={{ color: "var(--text-muted)" }}>
+            احفظها في ألبوم «ذكرياتي الدراسية» — تتغيّر الفكرة كل يوم.
+          </p>
+          <button onClick={() => setPref("albumReady", false)}
+            className="t-caption font-bold self-start px-3 py-2 rounded-xl"
+            style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+            أعِد الشرح
           </button>
-        ))}
-      </div>
+        </>
+      ) : (
+        <>
+          <p className="t-caption leading-relaxed" style={{ color: "var(--text-muted)" }}>
+            صورُ مذاكرتك مكانُها ألبومٌ في جوّالك — جودةٌ كاملة، ونسخةٌ احتياطية عند آبل أو جوجل،
+            وتبقى معك. لا نحفظها عندنا: صورةٌ واحدة تملأ مساحةَ المتصفّح فتضيع خطتُك وأخطاؤك.
+          </p>
+          <div className="grid grid-cols-2 gap-2.5">
+            {(["ios", "android"] as Phone[]).map((p) => (
+              <button key={p} onClick={() => setOpen(p)}
+                className="rounded-2xl py-3 t-body font-black transition active:scale-[0.98]"
+                style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }}>
+                {STEPS[p].label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
       {open && (
         <Sheet onClose={() => setOpen(null)} title={`ألبوم الذكريات — ${STEPS[open].label}`}>
@@ -72,6 +104,11 @@ export default function MemoriesAlbum() {
               💡 {STEPS[open].extra}
             </p>
           )}
+          <button onClick={() => { setPref("albumReady", true); setOpen(null); }}
+            className="w-full rounded-2xl py-3.5 t-body font-black mt-5 transition active:scale-[0.98]"
+            style={{ background: "var(--accent)", color: "#fff" }}>
+            ✓ فعلتها — ذكّرني بماذا أصوّر
+          </button>
         </Sheet>
       )}
     </section>

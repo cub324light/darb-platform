@@ -28,7 +28,7 @@ import { recentResourceIds } from "@/lib/roadmap/resourceUse";
 import { loadCalendar } from "@/lib/roadmap/calendarStore";
 import { groupUpcoming, kindMeta } from "@/lib/roadmap/calendar";
 import {
-  readPriorityExam, readEligibilityCtx, countRemaining, vaultCount, readTodayAvailability, readDailySignals,
+  readPriorityExam, readEligibilityCtx, readPlanSubjects, countRemaining, vaultCount, readTodayAvailability, readDailySignals,
   solvedQuestions, tasksDoneToday,
 } from "@/lib/roadmap/nowRead";
 import { loadRoadmapConfig } from "@/lib/roadmap/store";
@@ -119,10 +119,13 @@ export default function RoadmapPage() {
   const examDate = priority?.examKey ? (loadTrackExamDates()[priority.examKey] ?? null) : null;
   const daysLeft = examDate ? daysBetween(today, examDate) : null;
 
-  const counts = priority ? countRemaining(priority.subjects) : { remainingLessons: 0, remainingDrills: 0, weakestSubject: null, totalItems: 0, doneItems: 0 };
+  /* موادُّ الجلسة تتبع نمطَ التوزيع: «بالتتابع» ⇒ اختبارُ الأولوية وحده،
+     «معاً» ⇒ موادُّ اختباراتك كلِّها في يومٍ واحد. */
+  const planSubjects = readPlanSubjects(ws);
+  const counts = planSubjects.length ? countRemaining(planSubjects) : { remainingLessons: 0, remainingDrills: 0, weakestSubject: null, totalItems: 0, doneItems: 0 };
   const avail = readTodayAvailability();
   const plan = priority ? buildSessionPlan({
-    subjects: priority.subjects.map((s) => s.name), weakestSubject: counts.weakestSubject,
+    subjects: planSubjects.map((s) => s.name), weakestSubject: counts.weakestSubject,
     remainingLessons: counts.remainingLessons, remainingDrills: counts.remainingDrills,
     activeErrors: vaultCount(), availableMinutes: avail.minutes, mode: loadRoadmapConfig().studyMode,
   }) : null;

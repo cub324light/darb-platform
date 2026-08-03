@@ -22,6 +22,7 @@ import DismissibleNote from "@/components/DismissibleNote";
 import dynamic from "next/dynamic";
 const DayJournal = dynamic(() => import("@/components/journal/DayJournal"), { ssr: false });
 const MemoriesAlbum = dynamic(() => import("@/components/journal/MemoriesAlbum"), { ssr: false });
+const TeachersCard = dynamic(() => import("@/components/school/TeachersCard"), { ssr: false });
 
 const noop = () => () => {};
 const useMounted = () => useSyncExternalStore(noop, () => true, () => false);
@@ -183,11 +184,10 @@ export default function SchoolPage() {
         <SchoolChecklist storageKey="darb_school_requirements" title="قائمة المتطلبات" icon="🎒" placeholder="آلة حاسبة، كتاب الرياضيات، ملف بلاستيكي…" />
         <SchoolChecklist storageKey="darb_school_projects" title="المشاريع" icon="📂" placeholder="مشروع + المادة (مثل: بحث الأحياء)…" />
 
-        {/* إعلانات المعلمين — بصدق: يحتاج نظام معلّمين (قريباً) */}
-        <section className="ds-card ds-stack-tight" style={{ opacity: 0.85 }}>
-          <h2 className="t-h3" style={{ color: "var(--text)" }}>📢 إعلانات المعلمين</h2>
-          <p className="t-caption" style={{ color: "var(--text-muted)" }}>ستظهر هنا إعلانات معلميك عند ربط مدرستك بدرب — قريباً. لن نعرض بياناتٍ تجريبية.</p>
-        </section>
+        {/* مدرّسوك: دليلٌ ودفترُ ملاحظاتٍ لكلٍّ منهم.
+            حلّ محلَّ بطاقة «إعلانات المعلمين» — تلك تنتظر ربطَ المدرسة بدرب،
+            وهذه يملؤها الطالبُ اليوم بنفسه. */}
+        <TeachersCard />
       </div>
       <div className="h-6" />
       <PageFooter />
