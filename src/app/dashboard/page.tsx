@@ -15,7 +15,7 @@ import HomeSignals from "@/components/dash/home/HomeSignals";
 import Achievements from "@/components/dash/home/Achievements";
 import Link from "next/link";
 import { loadUser, loadStats, computeStreak, type DarbUser } from "@/lib/storage";
-import { helloFor, tipFor, dayIndexOf } from "@/lib/greeting";
+import { helloFor, tipFor } from "@/lib/greeting";
 import Customizable from "@/components/Customizable";
 import { isUniversityPhase, isUniversityGraduate } from "@/lib/phase";
 import dynamic from "next/dynamic";
@@ -26,12 +26,12 @@ export default function DashboardPage() {
     if (typeof window === "undefined") return null;
     const u = loadUser();
     const now = new Date();
-    /* يومُ السنة يقود الدوران: النصُّ نفسُه من فتح الصفحة إلى إغلاقها، ويتبدّل غداً */
-    const dayIdx = dayIndexOf(now.getFullYear(), now.getMonth(), now.getDate());
+    /* عشوائيٌّ في كل فتحة — لا تحيّةَ يحفظها الطالبُ فتصير أثاثاً. ويُقرأ مرّةً
+       في المُهيّئ فلا يقفز النصُّ مع كل رسمة. */
     return {
       user: u,
-      hello: helloFor(now.getHours(), dayIdx),
-      tip: tipFor(dayIdx),
+      hello: helloFor(now.getHours(), Math.random()),
+      tip: tipFor(Math.random()),
       showPhaseBoard: isUniversityPhase(u) || isUniversityGraduate(u),
     };
   });
@@ -74,7 +74,7 @@ export default function DashboardPage() {
           </Link>
           <div className="mt-1.5"><WornCosmetics /></div>
           {/* كان هنا اسمُ الوقت («وقت التركيز») — لا يفيد الطالبَ بشيء.
-              صار نصيحةً عمليةً أو دفعةً، تتبدّل كلَّ يوم. */}
+              صار نصيحةً عمليةً أو دفعةً، تُنتقى عشوائياً في كل فتحة. */}
           <p className="t-body font-bold mt-2 leading-relaxed" style={{ color: "var(--text)" }}>{init?.tip}</p>
         </div>
       </Dome>

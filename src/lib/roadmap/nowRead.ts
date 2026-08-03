@@ -187,7 +187,7 @@ export function readTodayAvailability(): TodayAvailability {
 
 /* ── إشارات رسالة دويرب اليومية (حقيقية فقط) ── */
 export function readDailySignals(ws: Workspace): {
-  name?: string; everStarted: boolean; yesterdayMins: number; streakDays: number; daysToExam: number | null;
+  name?: string; hour: number; rand: number; everStarted: boolean; yesterdayMins: number; streakDays: number; daysToExam: number | null;
 } {
   const today = localDayKey();
   const dm = loadStats().dayMins ?? {};
@@ -197,5 +197,6 @@ export function readDailySignals(ws: Workspace): {
   const p = readPriorityExam(ws);
   const examDate = p?.examKey ? (loadTrackExamDates()[p.examKey] ?? null) : null;
   const d = examDate ? daysBetween(today, examDate) : null;
-  return { name: loadUser()?.name, everStarted, yesterdayMins: dm[addDays(today, -1)] ?? 0, streakDays, daysToExam: d != null && d >= 0 ? d : null };
+  /* الساعةُ والعشوائيُّ من هنا لا من المحرّك — يبقى نقيّاً يُختبَر */
+  return { name: loadUser()?.name, hour: new Date().getHours(), rand: Math.random(), everStarted, yesterdayMins: dm[addDays(today, -1)] ?? 0, streakDays, daysToExam: d != null && d >= 0 ? d : null };
 }

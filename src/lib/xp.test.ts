@@ -1,10 +1,10 @@
-/* اختبارُ الشارات — يقفل ما طلبه المالك: أربعٌ وعشرون على ثلاث درجات، ولكلٍّ فضّة.
+/* اختبارُ الشارات — يقفل ما طلبه المالك: تسعٌ لكلّ درجة، ولكلٍّ فضّة.
    تشغيل: npx tsx --test src/lib/xp.test.ts */
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   BADGE_DEFS, TIER_META, badgesInTier, getBadgeCurrent, getUnlockedBadgeIds,
-  pendingBadgeSilver, computeXP, getLevel, type BadgeTier,
+  pendingBadgeSilver, computeXP, getLevel, xpBreakdown, XP_SOURCES, type BadgeTier,
 } from "./xp";
 import type { DarbStats } from "./storage";
 
@@ -15,14 +15,14 @@ const stats = (p: Partial<DarbStats> = {}): DarbStats => ({
   todayFocusMins: 0, todayKey: "2026-08-03", dayMins: {}, ...p,
 });
 
-test("أربعٌ وعشرون شارة، ثمانٍ لكلّ درجة", () => {
-  assert.equal(BADGE_DEFS.length, 24);
-  for (const t of TIERS) assert.equal(badgesInTier(t).length, 8, `الدرجة ${t}`);
+test("سبعٌ وعشرون شارة، تسعٌ لكلّ درجة", () => {
+  assert.equal(BADGE_DEFS.length, 27);
+  for (const t of TIERS) assert.equal(badgesInTier(t).length, 9, `الدرجة ${t}`);
 });
 
 test("لا معرّفَ مكرّر ولا اسمٌ مكرّر", () => {
-  assert.equal(new Set(BADGE_DEFS.map((b) => b.id)).size, 24, "معرّفٌ مكرّر يخلط الفتحَ والصرف");
-  assert.equal(new Set(BADGE_DEFS.map((b) => b.label)).size, 24);
+  assert.equal(new Set(BADGE_DEFS.map((b) => b.id)).size, 27, "معرّفٌ مكرّر يخلط الفتحَ والصرف");
+  assert.equal(new Set(BADGE_DEFS.map((b) => b.label)).size, 27);
 });
 
 test("كلُّ شارةٍ تعطي فضّة، وكلُّها موصوفةٌ بهدفٍ ووحدة", () => {
@@ -49,6 +49,7 @@ test("كلُّ شارةٍ لها مقياسٌ حقيقيّ — لا شارةَ �
     silver: 99999, totalFocusMins: 99999, sessionsCount: 9999,
     sessionDays: Array.from({ length: 200 }, (_, i) => back(i)),
     plansCount: 999, aiChats: 999, quizCount: 999, analyzedCount: 999, trackProgress: 100,
+    dayMins: { "2026-08-01": 300 },
   });
   for (const b of BADGE_DEFS) {
     assert.ok(getBadgeCurrent(b.id, maxed, 9999) > 0, `${b.id} لا مقياسَ له — تبقى مقفلةً للأبد`);
@@ -99,6 +100,14 @@ test("المستوى يتدرّج، والخبرة تُحسب من الثلاث�
   assert.equal(getLevel(200).name, "طالب");
   assert.equal(getLevel(999999).progress, 100, "الأعلى مكتملٌ لا كسر");
   assert.ok(computeXP(stats({ totalFocusMins: 10, sessionsCount: 1, silver: 1 })) > 0);
+});
+
+test("شرحُ XP يطابق حسابها — لا جدولان يفترقان", () => {
+  const s = stats({ totalFocusMins: 100, sessionsCount: 4, silver: 10 });
+  const parts = xpBreakdown(s);
+  assert.equal(parts.reduce((a, b) => a + b.points, 0), computeXP(s), "الشرحُ يقول غيرَ ما تحسبه الدالّة");
+  assert.equal(parts.length, XP_SOURCES.length);
+  assert.ok(XP_SOURCES.every((x) => x.points > 0 && x.label && x.per), "مصدرٌ بلا وزنٍ أو بلا اسم");
 });
 
 test("مخزنُ الصرف لا يفتح رصيداً ثانياً", async () => {

@@ -2,9 +2,13 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { pickDailyMessage } from "./dailyMessage";
 
-test("pickDailyMessage: ترحيبٌ بالاسم", () => {
-  assert.equal(pickDailyMessage({ name: "محمد", everStarted: true }).greeting, "السلام عليكم يا محمد 👋");
-  assert.equal(pickDailyMessage({ everStarted: true }).greeting, "السلام عليكم 👋");
+test("pickDailyMessage: ترحيبٌ بالاسم — ويتبدّل، لا سطرٌ واحدٌ للأبد", () => {
+  const say = (r: number) => pickDailyMessage({ name: "محمد", everStarted: true, hour: 14, rand: r }).greeting;
+  for (let k = 0; k < 20; k++) assert.ok(say(k / 20).includes("محمد"), "سقط الاسم من التحيّة");
+  assert.ok(new Set(Array.from({ length: 20 }, (_, k) => say(k / 20))).size >= 5, "تحيّةٌ واحدةٌ لا تتبدّل");
+
+  const bare = pickDailyMessage({ everStarted: true, hour: 14, rand: 0.3 }).greeting;
+  assert.ok(bare.length > 0 && !/\s(يا|بـ)$/.test(bare), `تحيّةٌ معلّقةٌ بلا اسم: «${bare}»`);
 });
 
 test("pickDailyMessage: الرسالة تتبع حالة الطالب الحقيقية", () => {

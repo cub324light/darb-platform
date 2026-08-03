@@ -4,7 +4,7 @@
 import { memo, useState } from "react";
 import type { DarbUser } from "@/lib/storage";
 import type { Track } from "@/lib/tracks";
-import type { Level } from "@/lib/xp";
+import { XP_SOURCES, type Level } from "@/lib/xp";
 import { PLAN_NAMES, PLAN_COLORS } from "@/lib/plan";
 import type { PlanId } from "@/lib/types";
 import { n } from "@/lib/format";
@@ -40,6 +40,7 @@ function Avatar({ avatar, photoURL, name }: { avatar?: string; photoURL: string 
 }
 
 function ProfileHeaderBase({ user, track, level, xp, joinLabel, planId, photoURL, onUserChange }: Props) {
+  const [xpOpen, setXpOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameVal, setNameVal] = useState(user.name ?? "");
   const [editingBio, setEditingBio] = useState(false);
@@ -159,10 +160,37 @@ function ProfileHeaderBase({ user, track, level, xp, joinLabel, planId, photoURL
           role="progressbar" aria-label="تقدّم المستوى" aria-valuenow={level.progress} aria-valuemin={0} aria-valuemax={100}>
           <div className="h-full rounded-full transition-all duration-700" style={{ width: `${level.progress}%`, background: level.color }} />
         </div>
-        {level.next && (
-          <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
-            {level.next.name} — يحتاج {n(level.next.minXp)} XP
-          </p>
+        <div className="flex items-center justify-between gap-2 mt-1">
+          {level.next ? (
+            <p className="t-caption" style={{ color: "var(--text-muted)" }}>
+              {level.next.name} — يحتاج {n(level.next.minXp)} XP
+            </p>
+          ) : <span />}
+          {/* «وش يرفع الرقم؟» سؤالٌ يسأله كلُّ من رأى XP ولم يجد جواباً */}
+          <button onClick={() => setXpOpen((v) => !v)} aria-expanded={xpOpen}
+            className="t-caption font-black px-2 py-1 rounded-lg flex-shrink-0"
+            style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--accent-light)" }}>
+            كيف تكسب XP؟
+          </button>
+        </div>
+
+        {xpOpen && (
+          <div className="rounded-2xl p-3.5 mt-2 flex flex-col gap-2"
+            style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+            {XP_SOURCES.map((s) => (
+              <div key={s.id} className="flex items-center gap-2.5">
+                <span className="w-8 h-8 rounded-xl grid place-items-center t-small flex-shrink-0"
+                  style={{ background: "var(--surface)", border: "1px solid var(--border)" }} aria-hidden="true">{s.icon}</span>
+                <span className="flex-1 min-w-0">
+                  <span className="block t-small font-black truncate" style={{ color: "var(--text)" }}>{s.label}</span>
+                  <span className="block t-caption" style={{ color: "var(--text-muted)" }}>{s.per} = {n(s.points)} XP</span>
+                </span>
+              </div>
+            ))}
+            <p className="t-caption leading-relaxed" style={{ color: "var(--text-muted)" }}>
+              الـXP رقمُ رحلتك ولا يُنفَق — يرفع مستواك فقط. الذي تصرفه في المتجر هو الفضة.
+            </p>
+          </div>
         )}
       </div>
 

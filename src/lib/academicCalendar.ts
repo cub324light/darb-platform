@@ -115,9 +115,9 @@ export const SAUDI_ACADEMIC_YEARS: AcademicYearData[] = [
 /* ── تفضيلات الطالب للتقويم (تُخزَّن في darb_calendar؛ كلها اختيارية) ──
    تُشتقّ تلقائياً من ملف الطالب إن لم يُدخِلها (لا يعتمد على إدخال يدوي). */
 export interface CalendarConfig {
-  studentType?: StudentType;
-  region?: string;
-  graduationYear?: number;
+  /* حُذفت `studentType`/`region`/`graduationYear`: كانت تُكتب في التخزين ولا
+     يقرؤها شيء — ثلاثُ قوائمَ يضغطها الطالبُ فلا يتغيّر شيء. المنطقةُ مكانها
+     `DarbUser.region` (يقرؤها اكتمالُ الملف وأقربُ جامعة). */
   /* تجاوزات يدوية تُضاف فوق التقويم الرسمي */
   customBreaks?: { label: string; start: string; end: string }[];
   customFinals?: { label: string; start: string; end: string }[];

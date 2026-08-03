@@ -24,8 +24,6 @@ import ProfileAchievements from "@/components/profile/ProfileAchievements";
 import ProfileExtra from "@/components/profile/ProfileExtra";
 import ProfileAccount from "@/components/profile/ProfileAccount";
 import { readGuestMode } from "@/components/AuthGate";
-import dynamic from "next/dynamic";
-const CalendarSettings = dynamic(() => import("@/components/CalendarSettings"), { ssr: false });
 
 function fmtJoin(d: string): string {
   try { return "انضم " + new Date(d + "T12:00:00").toLocaleDateString("ar-u-nu-latn", { year: "numeric", month: "long" }); }
@@ -146,8 +144,11 @@ export default function ProfilePage() {
 
         {tab === "prefs" && (
           <div id="profile-panel-prefs" role="tabpanel" aria-labelledby="profile-tab-prefs" className="profile-tab-panel flex flex-col gap-5">
+            {/* حُذف «إعدادات التقويم» من هنا: ثلاثةُ حقولٍ تُكتب في التخزين
+                ولا يقرؤها شيءٌ في المنتج (نوعُ الطالب · المنطقة · سنةُ التخرّج).
+                والمنطقةُ منها كانت نسخةً ثانيةً لا تُحسب في اكتمال ملفك — مكانها
+                الحقيقيّ «معلوماتي». إعدادٌ لا يُغيّر شيئاً أسوأُ من غيابه. */}
             <ProfilePreferences isPrivate={isPrivate} onTogglePrivacy={togglePrivacy} />
-            <CalendarSettings />
             <ProfileAccount />
           </div>
         )}

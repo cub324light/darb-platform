@@ -35,7 +35,7 @@ import {
 } from "@/lib/roadmap/nowRead";
 import { loadRoadmapConfig } from "@/lib/roadmap/store";
 import { daysBetween } from "@/lib/roadmap/metrics";
-import { n, pct, days as daysWord } from "@/lib/format";
+import { n, pct, days as daysWord, tasks as tasksWord } from "@/lib/format";
 
 const STATE_ORDER: Record<ModuleState, number> = { active: 0, "needs-retake": 1, added: 2, paused: 3, completed: 4, "not-added": 5 };
 const byPriority = (a: ModuleInstance, b: ModuleInstance): number =>
@@ -213,7 +213,9 @@ export default function RoadmapPage() {
           className="ds-card ds-card-interactive flex flex-col gap-3 text-right rise rise-1" style={{ ["--tint" as string]: "var(--accent)" }}>
           <span className="flex items-center gap-2">
             <span className="eyebrow flex-1" style={{ color: "var(--text-muted)" }}>📊 هذا الأسبوع</span>
-            {stats.week.commitmentPct != null && (
+            {/* «التزام ٠٪» لمن لم يبدأ بعد ليست معلومةً — هي حكمٌ على لا شيء.
+                فالرقاقةُ لا تظهر إلا بعد أن يصير للأسبوع محتوى. */}
+            {hasWeek && stats.week.commitmentPct != null && (
               <span className="t-caption font-black px-2.5 py-1 rounded-full font-mono-nums"
                 style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>
                 التزام {pct(stats.week.commitmentPct)}
@@ -221,19 +223,21 @@ export default function RoadmapPage() {
             )}
             <span className="t-caption" style={{ color: "var(--text-dim)" }}>↗</span>
           </span>
-          {hasWeek ? (
-            <span className="grid grid-cols-4">
-              {weekMetrics.map((m, i) => (
-                <span key={m.l} className="flex flex-col items-center gap-0.5 px-1"
-                  style={i > 0 ? { borderInlineStart: "1px solid var(--border)" } : undefined}>
-                  <span className="text-[15px] leading-none" aria-hidden="true">{m.icon}</span>
-                  <span className="t-h2 font-black font-mono-nums leading-tight" style={{ color: "var(--text)" }}>{m.v}</span>
-                  <span className="t-caption text-center leading-tight" style={{ color: "var(--text-dim)" }}>{m.l}</span>
-                </span>
-              ))}
-            </span>
-          ) : (
-            <span className="t-body" style={{ color: "var(--text-muted)" }}>ابدأ أول جلسة، وسنعرض تقدمك هنا.</span>
+          {/* البطاقةُ تحفظ شكلها فارغةً وممتلئة: أربعةُ مقاييسَ بشرطاتٍ قبل أن
+              يبدأ، فيرى **ما الذي سيمتلئ** بدل جملةٍ وحيدةٍ في فراغ. */}
+          <span className="grid grid-cols-4">
+            {weekMetrics.map((m, i) => (
+              <span key={m.l} className="flex flex-col items-center gap-0.5 px-1"
+                style={i > 0 ? { borderInlineStart: "1px solid var(--border)" } : undefined}>
+                <span className="text-[15px] leading-none" aria-hidden="true">{m.icon}</span>
+                <span className="t-h2 font-black font-mono-nums leading-tight"
+                  style={{ color: hasWeek ? "var(--text)" : "var(--text-dim)" }}>{hasWeek ? m.v : "—"}</span>
+                <span className="t-caption text-center leading-tight" style={{ color: "var(--text-dim)" }}>{m.l}</span>
+              </span>
+            ))}
+          </span>
+          {!hasWeek && (
+            <span className="t-caption" style={{ color: "var(--text-muted)" }}>ابدأ أول جلسة، وتمتلئ هذه الأرقام بأسبوعك.</span>
           )}
         </button>
         ) },
@@ -241,24 +245,41 @@ export default function RoadmapPage() {
         /* 🎯 هدف اليوم — ماذا سأفعل؟ (عدد المهام · المهمة الحالية · هل أنهيتها) */
         { id: "goal", label: "هدف اليوم", desc: "عددُ مهامّك والمهمّة التالية", node: (
         <button onClick={() => router.push("/roadmap/session")}
-          className="ds-card ds-card-interactive flex items-center gap-3 text-right rise rise-2"
-          style={{ ["--tint" as string]: "var(--accent)" }}>
-          <span className="w-11 h-11 rounded-2xl grid place-items-center text-[20px] flex-shrink-0"
-            style={{ background: "color-mix(in srgb, var(--accent) 12%, var(--surface2))" }} aria-hidden="true">🎯</span>
-          <span className="flex-1 min-w-0 flex flex-col gap-0.5">
-            <span className="eyebrow" style={{ color: "var(--text-dim)" }}>هدف اليوم</span>
-            <span className="t-h3 font-black leading-snug" style={{ color: "var(--text)" }}>
-              {plan?.available ? `${n(totalTasks)} مهام` : "يومك مشغول"}
+          className="ds-card ds-card-interactive flex flex-col gap-2.5 text-right rise rise-2"
+          style={{ ["--tint" as string]: allDone ? "var(--success)" : "var(--accent)" }}>
+          <span className="flex items-center gap-3 w-full">
+            <span className="w-11 h-11 rounded-2xl grid place-items-center text-[20px] flex-shrink-0"
+              style={{ background: `color-mix(in srgb, ${allDone ? "var(--success)" : "var(--accent)"} 12%, var(--surface2))` }} aria-hidden="true">
+              {allDone ? "✓" : "🎯"}
             </span>
-            <span className="t-caption leading-snug" style={{ color: "var(--text-muted)" }}>
-              {plan?.available
-                ? (allDone ? "أنهيت مهامّ اليوم ✓" : doneToday > 0 ? `أنجزت ${n(doneToday)} من ${n(totalTasks)} — التالية: ${plan.tasks[Math.min(doneToday, totalTasks - 1)]?.label ?? ""}` : plan.tasks[0]?.label ?? "")
-                : (plan?.hint ?? "حدّد ساعات مذاكرتك")}
+            <span className="flex-1 min-w-0 flex flex-col gap-0.5">
+              <span className="eyebrow" style={{ color: "var(--text-dim)" }}>هدف اليوم</span>
+              <span className="t-h3 font-black leading-snug" style={{ color: "var(--text)" }}>
+                {plan?.available ? (allDone ? "أنهيتَ مهامّ اليوم" : tasksWord(totalTasks)) : "يومك مشغول"}
+              </span>
+              <span className="t-caption leading-snug line-clamp-2" style={{ color: "var(--text-muted)" }}>
+                {plan?.available
+                  ? (allDone ? "جلسةٌ إضافية؟ أنت في المقدّمة اليوم." : doneToday > 0 ? `التالية: ${plan.tasks[Math.min(doneToday, totalTasks - 1)]?.label ?? ""}` : plan.tasks[0]?.label ?? "")
+                  : (plan?.hint ?? "حدّد ساعات مذاكرتك")}
+              </span>
             </span>
+            {plan?.available && !allDone && (
+              <span className="t-caption font-black px-3 py-1.5 rounded-full flex-shrink-0"
+                style={{ background: "color-mix(in srgb, var(--accent) 14%, transparent)", color: "var(--accent-light)" }}>ابدأ الآن</span>
+            )}
           </span>
-          {plan?.available && !allDone && (
-            <span className="t-caption font-black px-3 py-1.5 rounded-full flex-shrink-0"
-              style={{ background: "color-mix(in srgb, var(--accent) 14%, transparent)", color: "var(--accent-light)" }}>ابدأ الآن</span>
+
+          {/* شريطُ التقدّم: «كم أنجزتُ من مهامّ اليوم؟» كان رقماً في سطرٍ صغير */}
+          {plan?.available && totalTasks > 0 && (
+            <span className="w-full flex items-center gap-2">
+              <span className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
+                <span className="block h-full rounded-full transition-all duration-700"
+                  style={{ width: `${Math.min(100, Math.round((doneToday / totalTasks) * 100))}%`, background: allDone ? "var(--success)" : "var(--accent)" }} />
+              </span>
+              <span className="t-caption font-mono-nums flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+                {n(Math.min(doneToday, totalTasks))}/{n(totalTasks)}
+              </span>
+            </span>
           )}
         </button>
         ) },

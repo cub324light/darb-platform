@@ -97,24 +97,13 @@ function ProfileAchievementsBase({ unlockedIds, stats, vaultCount }: Props) {
             </div>
 
             <div className="grid grid-cols-3 gap-2">
-              {items.map((b) => {
-                const unlocked = unlockedIds.has(b.id);
-                const isOpen = openBadge === b.id;
-                return (
-                  <button key={b.id} onClick={() => setOpenBadge(isOpen ? null : b.id)} aria-label={b.label} aria-expanded={isOpen}
-                    className={`relative rounded-2xl p-3 flex flex-col items-center gap-1 text-center transition active:scale-[0.97]${unlocked ? " badge-glow" : ""}`}
-                    style={{
-                      background: unlocked ? `color-mix(in srgb, ${meta.color} 8%, var(--surface2))` : "var(--surface2)",
-                      border: `1.5px solid ${isOpen ? "var(--accent)" : unlocked ? `color-mix(in srgb, ${meta.color} 45%, transparent)` : "var(--border)"}`,
-                      opacity: unlocked ? 1 : 0.48,
-                    }}>
-                    <span className="text-2xl" aria-hidden="true">{b.icon}</span>
-                    <p className="t-caption font-bold leading-tight" style={{ color: unlocked ? "var(--text)" : "var(--text-muted)" }}>{b.label}</p>
-                    <p className="t-caption font-mono-nums leading-none" style={{ color: "var(--text-muted)" }}>🥈 {n(b.silver)}</p>
-                    {unlocked && <span className="absolute top-1.5 left-1.5 text-[11px] leading-none" aria-hidden="true">✓</span>}
-                  </button>
-                );
-              })}
+              {items.map((b) => (
+                <BadgeCard key={b.id} badge={b} tone={meta.color}
+                  unlocked={unlockedIds.has(b.id)}
+                  open={openBadge === b.id}
+                  current={getBadgeCurrent(b.id, stats, vaultCount)}
+                  onClick={() => setOpenBadge(openBadge === b.id ? null : b.id)} />
+              ))}
             </div>
 
             {openBadge && items.some((b) => b.id === openBadge) && (
@@ -126,6 +115,48 @@ function ProfileAchievementsBase({ unlockedIds, stats, vaultCount }: Props) {
         );
       })}
     </div>
+  );
+}
+
+/* ── بطاقةُ شارة ──
+   المقفلةُ لم تعد رمادية صامتة: تحتها شريطٌ يقول كم قطع منها، فيرى الطالبُ أنه
+   على بُعد خطوةٍ من واحدةٍ وبعيدٌ عن أخرى. والمفتوحةُ لها ميدالية: هالةٌ ملوّنة
+   بدرجتها وعلامةُ صحّ. */
+function BadgeCard({ badge, tone, unlocked, open, current, onClick }: {
+  badge: BadgeDef; tone: string; unlocked: boolean; open: boolean; current: number; onClick: () => void;
+}) {
+  const p = Math.min(100, Math.round((current / badge.goal) * 100));
+  return (
+    <button onClick={onClick} aria-label={badge.label} aria-expanded={open}
+      className="relative rounded-2xl p-2.5 pt-3 flex flex-col items-center gap-1.5 text-center transition active:scale-[0.97] overflow-hidden"
+      style={{
+        background: unlocked ? `color-mix(in srgb, ${tone} 10%, var(--surface2))` : "var(--surface2)",
+        border: `1.5px solid ${open ? "var(--accent)" : unlocked ? `color-mix(in srgb, ${tone} 55%, transparent)` : "var(--border)"}`,
+        boxShadow: unlocked ? `0 0 0 3px color-mix(in srgb, ${tone} 10%, transparent)` : "none",
+      }}>
+      {/* الميدالية — قرصٌ ملوّنٌ للمفتوحة، وباهتٌ للمقفلة */}
+      <span aria-hidden="true"
+        className="w-11 h-11 rounded-full grid place-items-center text-[21px] flex-shrink-0"
+        style={unlocked
+          ? { background: `color-mix(in srgb, ${tone} 22%, transparent)`, border: `1.5px solid color-mix(in srgb, ${tone} 55%, transparent)` }
+          : { background: "var(--surface)", border: "1px solid var(--border)", filter: "grayscale(1)", opacity: 0.5 }}>
+        {badge.icon}
+      </span>
+
+      <p className="t-caption font-black leading-tight" style={{ color: unlocked ? "var(--text)" : "var(--text-muted)" }}>{badge.label}</p>
+
+      {unlocked ? (
+        <span className="t-caption font-black leading-none px-2 py-0.5 rounded-full"
+          style={{ background: `color-mix(in srgb, ${tone} 16%, transparent)`, color: tone }}>مفتوحة ✓</span>
+      ) : (
+        <span className="w-full flex flex-col gap-1">
+          <span className="w-full rounded-full h-1.5 overflow-hidden" style={{ background: "var(--border)" }}>
+            <span className="block h-full rounded-full transition-all duration-700" style={{ width: `${p}%`, background: tone }} />
+          </span>
+          <span className="t-caption font-mono-nums leading-none" style={{ color: "var(--text-muted)" }}>🥈 {n(badge.silver)}</span>
+        </span>
+      )}
+    </button>
   );
 }
 

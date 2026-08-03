@@ -1,5 +1,5 @@
 /* ═══════════ المستوى والشارات — محرّكٌ نقيّ ═══════════
-   ▓ أربعٌ وعشرون شارة على ثلاث درجات: سهلٌ يبدأ به، ومتوسّطٌ يُلزمه أسبوعاً،
+   ▓ سبعٌ وعشرون شارة، تسعٌ لكلّ درجة: سهلٌ يبدأ به، ومتوسّطٌ يُلزمه أسبوعاً،
      وصعبٌ يشتري بالشهور. ولكلٍّ **فضّةٌ تُصرف** — لا شارةٌ مُعلّقة على الجدار
      وحدها: الفضةُ تُنفَق في المتجر، فالإنجازُ يصير شيئاً يملكه لا صورةً يراها.
 
@@ -46,9 +46,9 @@ export interface BadgeDef {
 /* ── المعايرة ──
    الطالبُ المجتهد يكسب ~٦٠ فضةً في اليوم من «تركيز». فالسهلةُ ٢٠–٤٠ (لمسةُ
    ترحيب)، والمتوسّطةُ ٧٥–١٥٠ (يومان أو ثلاثة)، والصعبةُ ٢٥٠–٦٠٠ (أسبوعٌ فأكثر).
-   مجموعُها ٤٬٤٤٥ — لا يفتح المتجرَ كلَّه، فيبقى للمذاكرة معنى. */
+   مجموعُها ٤٬٧٨٠ — لا يفتح المتجرَ كلَّه، فيبقى للمذاكرة معنى. */
 export const BADGE_DEFS: BadgeDef[] = [
-  /* ── سهلة: ثماني شاراتٍ يبلغها في أيامه الأولى ── */
+  /* ── سهلة: تسعُ شاراتٍ يبلغها في أيامه الأولى ── */
   { id: "first_session", label: "الشعلة الأولى", icon: "🔥", desc: "أتمم أول جلسة تركيز",       goal: 1,   unit: "جلسة", tier: "easy", silver: 20 },
   { id: "sessions_5",    label: "خمس جلسات",     icon: "✋", desc: "أكمل خمس جلسات تركيز",       goal: 5,   unit: "جلسة", tier: "easy", silver: 25 },
   { id: "streak_3",      label: "ثلاثة أيام",    icon: "📆", desc: "ذاكر ثلاثة أيام متتالية",    goal: 3,   unit: "يوم",  tier: "easy", silver: 30 },
@@ -57,8 +57,9 @@ export const BADGE_DEFS: BadgeDef[] = [
   { id: "first_plan",    label: "أول خطة",       icon: "📋", desc: "طبّق خطة دويرب على جدولك",   goal: 1,   unit: "خطة",  tier: "easy", silver: 30 },
   { id: "first_chat",    label: "سألتَ دويرب",   icon: "💬", desc: "افتح أول محادثة مع دويرب",   goal: 1,   unit: "محادثة", tier: "easy", silver: 20 },
   { id: "silver_100",    label: "مئويّ",         icon: "🥈", desc: "اجمع مئة فضة",               goal: 100, unit: "فضة",  tier: "easy", silver: 40 },
+  { id: "quiz_1",        label: "جرّبتَ نفسك",   icon: "🧪", desc: "ولّد أول اختبارٍ قصير",       goal: 1,   unit: "اختبار", tier: "easy", silver: 25 },
 
-  /* ── متوسطة: ثماني شاراتٍ تحتاج انتظاماً لا حماساً ── */
+  /* ── متوسطة: تسعُ شاراتٍ تحتاج انتظاماً لا حماساً ── */
   { id: "streak_7",      label: "أسبوع منتظم",   icon: "📅", desc: "ذاكر سبعة أيام متتالية",     goal: 7,    unit: "يوم",  tier: "mid", silver: 100 },
   { id: "sessions_20",   label: "مثابر",         icon: "💪", desc: "أكمل عشرين جلسة تركيز",      goal: 20,   unit: "جلسة", tier: "mid", silver: 90 },
   { id: "hours_10",      label: "عشر ساعات",     icon: "⏱",  desc: "اجمع عشر ساعات تركيز",       goal: 600,  unit: "دقيقة", tier: "mid", silver: 100 },
@@ -67,8 +68,9 @@ export const BADGE_DEFS: BadgeDef[] = [
   { id: "quiz_10",       label: "مُختبِرُ نفسه", icon: "❓", desc: "ولّد عشرة اختبارات قصيرة",   goal: 10,   unit: "اختبار", tier: "mid", silver: 90 },
   { id: "analyzed_5",    label: "قارئُ ملفّات",  icon: "📄", desc: "حلّل خمسة ملفات بالذكاء",    goal: 5,    unit: "ملف",  tier: "mid", silver: 75 },
   { id: "days_30",       label: "شهرٌ في درب",   icon: "🌙", desc: "ذاكر ثلاثين يوماً (ولو متفرّقة)", goal: 30, unit: "يوم", tier: "mid", silver: 150 },
+  { id: "day_180",       label: "يومٌ ثقيل",     icon: "🪨", desc: "ثلاثُ ساعات تركيزٍ في يومٍ واحد", goal: 180, unit: "دقيقة", tier: "mid", silver: 120 },
 
-  /* ── صعبة: ثماني شاراتٍ لا تُشترى إلا بالشهور ── */
+  /* ── صعبة: تسعُ شاراتٍ لا تُشترى إلا بالشهور ── */
   { id: "streak_30",     label: "الأسطورة",      icon: "🏆", desc: "ذاكر ثلاثين يوماً متتالياً",  goal: 30,   unit: "يوم",  tier: "hard", silver: 500 },
   { id: "streak_100",    label: "مئةُ يوم",      icon: "💯", desc: "ذاكر مئة يوم متتالٍ",         goal: 100,  unit: "يوم",  tier: "hard", silver: 600 },
   { id: "hours_50",      label: "خمسون ساعة",    icon: "💎", desc: "اجمع خمسين ساعة تركيز",       goal: 3000, unit: "دقيقة", tier: "hard", silver: 300 },
@@ -77,6 +79,7 @@ export const BADGE_DEFS: BadgeDef[] = [
   { id: "vault_50",      label: "خزنةٌ ممتلئة",  icon: "🗄️", desc: "سجّل خمسين خطأ في خزنتك",     goal: 50,   unit: "خطأ",  tier: "hard", silver: 300 },
   { id: "silver_1000",   label: "ملكُ الفضة",    icon: "👑", desc: "اجمع ألف فضة",                goal: 1000, unit: "فضة",  tier: "hard", silver: 250 },
   { id: "track_complete",label: "أتممتَ المسار", icon: "🎓", desc: "أكمل ثمانين بالمئة من مسارك", goal: 80,   unit: "٪",    tier: "hard", silver: 550 },
+  { id: "plans_20",      label: "مهندسُ خطط",    icon: "🧱", desc: "طبّق عشرين خطةً على جدولك",   goal: 20,   unit: "خطة",  tier: "hard", silver: 300 },
 ];
 
 export const badgesInTier = (tier: BadgeTier): BadgeDef[] => BADGE_DEFS.filter((b) => b.tier === tier);
@@ -103,9 +106,13 @@ export function getBadgeCurrent(id: string, stats: DarbStats, vaultCount: number
     case "vault_10":
     case "vault_50":      return vaultCount;
     case "first_plan":
-    case "plans_5":       return stats.plansCount ?? 0;
+    case "plans_5":
+    case "plans_20":      return stats.plansCount ?? 0;
     case "first_chat":    return stats.aiChats ?? 0;
+    case "quiz_1":
     case "quiz_10":       return stats.quizCount ?? 0;
+    /* أثقلُ يومٍ مرّ به — من `dayMins` نفسِها التي يرسم بها «أسبوعك» */
+    case "day_180":       return Math.max(0, ...Object.values(stats.dayMins ?? {}));
     case "analyzed_5":    return stats.analyzedCount ?? 0;
     case "days_30":       return (stats.sessionDays ?? []).length;
     case "track_complete":return stats.trackProgress ?? 0;
@@ -113,12 +120,35 @@ export function getBadgeCurrent(id: string, stats: DarbStats, vaultCount: number
   }
 }
 
+/* ── من أين تأتي XP؟ ──
+   كان الوزنُ مدفوناً في الدالّة، فلا يعرف الطالبُ لِمَ ارتفع رقمُه. صار جدولاً
+   يُقرأ ويُعرض في الملف — نفسُ المصدر للحساب وللشرح، فلا يفترقان. */
+export interface XpSource { id: string; label: string; per: string; points: number; icon: string }
+
+export const XP_SOURCES: XpSource[] = [
+  { id: "mins",     label: "دقائق التركيز", per: "كل دقيقة",  points: 2,  icon: "⏱" },
+  { id: "sessions", label: "الجلسات",        per: "كل جلسة",   points: 15, icon: "🎯" },
+  { id: "silver",   label: "الفضة",          per: "كل فضة",    points: 3,  icon: "🥈" },
+];
+
+const W = Object.fromEntries(XP_SOURCES.map((x) => [x.id, x.points])) as Record<string, number>;
+
 export function computeXP(stats: DarbStats): number {
   return (
-    Math.floor(stats.totalFocusMins * 2) +
-    stats.sessionsCount * 15 +
-    stats.silver * 3
+    Math.floor((stats.totalFocusMins ?? 0) * W.mins) +
+    (stats.sessionsCount ?? 0) * W.sessions +
+    (stats.silver ?? 0) * W.silver
   );
+}
+
+/** كم XP جاءت من كل مصدرٍ — للشرح لا للحساب. */
+export function xpBreakdown(stats: DarbStats): { src: XpSource; amount: number; points: number }[] {
+  const amounts: Record<string, number> = {
+    mins: Math.floor(stats.totalFocusMins ?? 0),
+    sessions: stats.sessionsCount ?? 0,
+    silver: stats.silver ?? 0,
+  };
+  return XP_SOURCES.map((src) => ({ src, amount: amounts[src.id] ?? 0, points: (amounts[src.id] ?? 0) * src.points }));
 }
 
 function computeStreakDays(stats: DarbStats): number {

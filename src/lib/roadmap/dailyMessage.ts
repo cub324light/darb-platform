@@ -4,11 +4,16 @@
    ▸ الهدف: ترحيبٌ + رسالةٌ واحدةٌ مناسبةٌ لحال الطالب. الحالة تتغيّر يومياً فتتغيّر الرسالة.
    ▸ نقاءٌ تام: تستقبل الإشارات كمُدخَل؛ القارئ يجمّعها من التخزين خارج هذه الدالّة. */
 import { n } from "../format";
+import { duwairbGreeting } from "../greeting";
 
 export interface DailyMessage { greeting: string; message: string; }
 
 export interface DailySignals {
   name?: string;
+  /** ساعةُ اللحظة (٠..٢٣) ورقمٌ عشوائيّ — بهما تتبدّل التحيّة فلا تصير أثاثاً.
+      يأتيان من القارئ لا من هنا: المحرّكُ نقيٌّ لا يعرف الوقتَ ولا العشوائيّ. */
+  hour?: number;
+  rand?: number;
   everStarted: boolean;         // هل بدأ المذاكرة يوماً؟
   yesterdayMins?: number;       // دقائق الأمس (لكشف الاجتهاد/الخمول)
   streakDays?: number;          // سلسلة الأيام المتتالية حتى اليوم
@@ -17,7 +22,8 @@ export interface DailySignals {
 
 /* تُختار أعلى رسالةٍ مطابقةٍ لحالة الطالب (أولويةٌ من الأخصّ للأعمّ). */
 export function pickDailyMessage(s: DailySignals): DailyMessage {
-  const greeting = s.name ? `السلام عليكم يا ${s.name} 👋` : "السلام عليكم 👋";
+  /* التحيّة تتبدّل كتحيّة الرئيسية — كانت سطراً واحداً لا يتغيّر أبداً */
+  const greeting = duwairbGreeting(s.name, s.hour ?? 12, s.rand ?? 0);
   const streak = s.streakDays ?? 0;
   const yst = s.yesterdayMins ?? 0;
   const dte = s.daysToExam ?? null;
