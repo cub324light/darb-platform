@@ -5,8 +5,10 @@
 import { loadUser, loadStats, loadList, loadTrackExamDates, localDayKey } from "../storage";
 import {
   moduleView, memberView, moduleContent, memberContent, isGroup, groupMembers, visibleModules,
-  type Workspace,
+  type Workspace, type EligibilityContext,
 } from "../modules";
+import { toBoardStage } from "../examEligibility";
+import { requirementsOf } from "../recommendedExams";
 import { orderByPriority, isOnVacation } from "./model";
 import { loadRoadmapConfig } from "./store";
 import { daysBetween, addDays } from "./metrics";
@@ -18,6 +20,22 @@ import { ROADMAP_TUNING } from "./config";
 export interface PriorityExam {
   kind: "module" | "member"; id: string; label: string; icon?: string; color: string;
   examKey?: string; subjects: { name: string; color: string }[];
+}
+
+/** سياقُ الأهلية للطالب الحالي — مصدرٌ واحد لقائمة «إضافة اختبار».
+    كان يُشتقّ في كل مستدعٍ على حدة، فيتفرّق تعريفُ «مستهدَف» بين موضعين. */
+export function readEligibilityCtx(today: string): EligibilityContext {
+  const u = loadUser();
+  const stage = toBoardStage({ studyLevel: u?.studyLevel, grade: u?.grade }) ?? "third";
+  return {
+    stage,
+    isUniGrad: u?.gradStage === "خريج جامعة",
+    /* «الفصل الأول» يعني أنه لم يُنهِه بعد — والمبكرُ يُتاح بعده */
+    afterFirstTerm: u?.academicTerm ? u.academicTerm !== "first" : false,
+    /* مستهدَف = اختار وجهةً تتطلّب اختبار قياس */
+    isTargeted: requirementsOf(u?.targets ?? []).size > 0,
+    today,
+  };
 }
 
 /** كلُّ اختبارات الطالب الظاهرة في Workspace — مصدرٌ واحد لمن يحتاج القائمة

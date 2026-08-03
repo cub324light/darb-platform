@@ -11,6 +11,7 @@ import PageFooter from "@/components/PageFooter";
 import NextThread from "@/components/NextThread";
 import PageGuide from "@/components/PageGuide";
 import ModuleWorkspace from "@/components/roadmap/ModuleWorkspace";
+import RoadmapSettings from "@/components/roadmap/RoadmapSettings";
 import { loadUser, saveUser, ensureWorkspace, saveWorkspace, loadStats, loadTrackExamDates, localDayKey } from "@/lib/storage";
 import {
   moduleView, memberView, groupMembers, visibleModules,
@@ -27,7 +28,7 @@ import { recentResourceIds } from "@/lib/roadmap/resourceUse";
 import { loadCalendar } from "@/lib/roadmap/calendarStore";
 import { groupUpcoming, kindMeta } from "@/lib/roadmap/calendar";
 import {
-  readPriorityExam, countRemaining, vaultCount, readTodayAvailability, readDailySignals,
+  readPriorityExam, readEligibilityCtx, countRemaining, vaultCount, readTodayAvailability, readDailySignals,
   solvedQuestions, tasksDoneToday,
 } from "@/lib/roadmap/nowRead";
 import { loadRoadmapConfig } from "@/lib/roadmap/store";
@@ -79,7 +80,7 @@ export default function RoadmapPage() {
     return ensured.workspace ?? null;
   });
   const [sel, setSel] = useState<{ kind: "module" | "member"; id: string } | null>(null);
-  const [devMsg, setDevMsg] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   if (!ws) return <div className="min-h-dvh" />;
 
@@ -113,6 +114,7 @@ export default function RoadmapPage() {
   /* ── لقطة اليوم: كل رقمٍ من محرّكٍ نقيّ ── */
   const today = localDayKey();
   const priority = readPriorityExam(ws);
+  const eligibilityCtx = readEligibilityCtx(today);
   const daily = pickDailyMessage(readDailySignals(ws));
   const examDate = priority?.examKey ? (loadTrackExamDates()[priority.examKey] ?? null) : null;
   const daysLeft = examDate ? daysBetween(today, examDate) : null;
@@ -154,8 +156,7 @@ export default function RoadmapPage() {
   const shownNames = (usedNames.length > 0 ? usedNames : OFFICIAL_LINKS.map(shortOf)).slice(0, 3);
   const restCount = Math.max(0, OFFICIAL_LINKS.length - shownNames.length);
 
-  const openExam = () => { if (priority) setSel({ kind: priority.kind, id: priority.id }); else setDevToast(); };
-  const setDevToast = () => { setDevMsg(true); setTimeout(() => setDevMsg(false), 2400); };
+  const openExam = () => { if (priority) setSel({ kind: priority.kind, id: priority.id }); else setSettingsOpen(true); };
 
   /* «هذا الأسبوع» — أربعة مقاييس حقيقية */
   const weekMetrics = [
@@ -185,7 +186,7 @@ export default function RoadmapPage() {
           style={{ background: "color-mix(in srgb, var(--accent) 8%, var(--surface))", borderColor: "color-mix(in srgb, var(--accent) 24%, var(--border))" }}>
           <div className="flex items-start gap-2">
             <p className="t-title font-black flex-1" style={{ color: "var(--text)" }}>{daily.greeting}</p>
-            <button onClick={setDevToast} aria-label="إعدادات مساري" title="إعدادات مساري"
+            <button onClick={() => setSettingsOpen(true)} aria-label="إعدادات مساري" title="إعدادات مساري"
               className="w-9 h-9 rounded-full grid place-items-center text-[16px] transition active:scale-90 flex-shrink-0"
               style={{ background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "var(--elev-1)" }}>
               ⚙️
@@ -298,12 +299,15 @@ export default function RoadmapPage() {
         <PageFooter />
       </div>
 
-      {devMsg && (
-        <div className="fixed left-1/2 -translate-x-1/2 rounded-xl px-4 py-2.5 t-caption font-bold z-50 rise"
-          style={{ bottom: "calc(var(--nav-h) + 12px)", background: "var(--surface)", border: "1.5px solid var(--border)", color: "var(--text)", boxShadow: "var(--elev-2)" }}>
-          {priority ? "إعدادات مساري قيد التطوير." : "أضف اختبارك من الإعدادات — قيد التطوير."}
-        </div>
+      {settingsOpen && (
+        <RoadmapSettings
+          ws={ws}
+          ctx={eligibilityCtx}
+          onChange={(next) => { setWs(next); saveWorkspace(next); }}
+          onClose={() => setSettingsOpen(false)}
+        />
       )}
+
     </div>
   );
 }

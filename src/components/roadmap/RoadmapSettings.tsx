@@ -1,0 +1,191 @@
+"use client";
+/* ═══════════ إعدادات مساري ═══════════
+   كان زرُّ الترس يعرض «قيد التطوير» — وعدٌ مكشوفٌ للطالب. والغريبُ أن كلَّ ما
+   يحتاجه مبنيٌّ منذ زمن: `Workspace` يملك `hidden` و`priority` و`order`، و
+   `AddModuleMenu` مكتوبٌ كاملاً بقائمته الهرمية وأسباب المنع — ولا يستدعيه أحد.
+   فهذه الورقةُ واجهةٌ فوق نظامٍ قائم، لا نظامٌ جديد.
+
+   ما تفعله: تضيف اختباراً (بقيود الأهلية والنوافذ الرسمية)، وتثبّت اختبارَ
+   الأولوية، وتُخفي ما لا تريده الآن دون أن تفقد تقدّمك فيه، وتحذفه إن أردت. */
+import { useState } from "react";
+import Sheet from "@/components/Sheet";
+import AddModuleMenu from "./AddModuleMenu";
+import {
+  addModule, addMember, removeModule, removeMember, hideModule, setPriority,
+  orderedModules, groupMembers, isGroup, moduleView, memberView, examCount,
+  type AddTarget, type EligibilityContext, type Workspace, type ModuleId, type ExamMemberId,
+} from "@/lib/modules";
+import { readPriorityExam } from "@/lib/roadmap/nowRead";
+import { updateRoadmapConfig, loadRoadmapConfig } from "@/lib/roadmap/store";
+import { setPriorityOrder, onExamRemoved, priorityLock } from "@/lib/roadmap/model";
+import { n, days } from "@/lib/format";
+
+/** الحدُّ الأقصى — مصدرُه `AddModuleMenu` نفسُه (٣ اختبارات: تركيزٌ على القليل). */
+const EXAM_CAP = 3;
+
+interface Row {
+  key: string;
+  /** معرّفُ الاختبار كما يعرفه `readPriorityExam` — وحدةً كان أو عضواً. */
+  id: string;
+  moduleId?: ModuleId;   // للوحدات المفردة فقط (الإخفاء وعلَم الأولوية عليها)
+  label: string;
+  icon?: string;
+  color: string;
+  hidden: boolean;
+  /** الحذفُ والإخفاء يفترقان: العضوُ يُحذف من مجموعته، والوحدةُ من الجذر. */
+  onRemove: () => Workspace;
+}
+
+export default function RoadmapSettings({ ws, ctx, onChange, onClose }: {
+  ws: Workspace;
+  ctx: EligibilityContext;
+  onChange: (next: Workspace) => void;
+  onClose: () => void;
+}) {
+  const [confirming, setConfirming] = useState<string | null>(null);
+
+  const count = examCount(ws);
+  const remaining = Math.max(0, EXAM_CAP - count);
+  /* الأولويةُ الحقيقية — تلك التي يقرؤها «اختبارك» وجلسةُ اليوم */
+  const priorityId = readPriorityExam(ws)?.id ?? null;
+  const lock = priorityLock(loadRoadmapConfig());
+
+  const add = (t: AddTarget) => {
+    onChange(t.kind === "module" ? addModule(ws, t.id as ModuleId) : addMember(ws, t.id as ExamMemberId));
+  };
+
+  /* ▓ فخٌّ حقيقيّ: في المشروع «أولويتان» لا واحدة — علَمُ `ModuleInstance.priority`
+     يرتّب بطاقاتِ الصفحة، و`RoadmapConfig.examMeta[id].priority` هو الذي يقرؤه
+     `readPriorityExam` فيقرّر «اختبارك» وجلسةَ اليوم وعدّادَ الأيام. لو كتبنا
+     الأول وحده لضغط الطالبُ «اجعله أولويتك» فلا يتغيّر شيءٌ ممّا يراه. فنكتبهما
+     معاً: الترتيبُ مصدرُ الحقيقة، والعلَمُ يتبعه حتى لا تتناقض البطاقات. */
+  const makePriority = (row: Row) => {
+    const others = rows.map((x) => x.id).filter((x) => x !== row.id);
+    updateRoadmapConfig((c) => setPriorityOrder(c, [row.id, ...others]));
+    let next = ws;
+    for (const m of ws.modules) {
+      if (m.kind === "core" || isGroup(m.id)) continue;
+      next = setPriority(next, m.id, m.id === row.moduleId);
+    }
+    /* المخفيُّ لا يُقرأ أولويةً (`readAllExams` يمرّ على الظاهر وحده)، فاختيارُه
+       أولويةً وهو مخفيٌّ لا يُغيّر شيئاً يراه الطالب. فنُظهره معه. */
+    if (row.moduleId && row.hidden) next = hideModule(next, row.moduleId, false);
+    onChange(next);
+  };
+
+  /* الحذفُ ينظّف ميتاداتا الاختبار أيضاً، وإلا بقي المحذوفُ «أولويةً» في الإعداد */
+  const remove = (row: Row) => {
+    updateRoadmapConfig((c) => onExamRemoved(c, row.id));
+    onChange(row.onRemove());
+  };
+
+  /* صفوفُ العرض: الوحداتُ المفردة، وأعضاءُ المجموعات (فالعضوُ هو الاختبار لا الحاوية).
+     الـCore (الجامعة) لا يُدار هنا — ليس اختباراً يختاره الطالب. */
+  const rows: Row[] = [];
+  for (const m of orderedModules(ws)) {
+    if (m.kind === "core") continue;
+    if (isGroup(m.id)) {
+      for (const mem of groupMembers(ws, m.id)) {
+        const v = memberView(mem.id);
+        rows.push({
+          key: `member-${mem.id}`, id: mem.id, label: v.label, color: v.color,
+          hidden: m.hidden,
+          onRemove: () => removeMember(ws, mem.id),
+        });
+      }
+    } else {
+      const v = moduleView(m.id);
+      rows.push({
+        key: `module-${m.id}`, id: m.id, moduleId: m.id, label: v.label, icon: v.icon, color: v.color,
+        hidden: m.hidden,
+        onRemove: () => removeModule(ws, m.id),
+      });
+    }
+  }
+
+  return (
+    <Sheet onClose={onClose} title="إعدادات مساري">
+      <div className="flex flex-col gap-4">
+        <AddModuleMenu ws={ws} ctx={ctx} onAdd={add} capReached={count >= EXAM_CAP} remaining={remaining} />
+
+        <div>
+          <p className="eyebrow px-1 mb-2">اختباراتك ({n(count)})</p>
+          {rows.length === 0 ? (
+            <p className="t-caption text-center py-4" style={{ color: "var(--text-muted)" }}>
+              ما أضفتَ اختباراً بعد — ابدأ من «إضافة اختبار» فوق.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {rows.map((r) => (
+                <div key={r.key} className="rounded-2xl p-3.5 flex flex-col gap-2.5"
+                  style={{ background: "var(--surface2)", border: `1.5px solid ${r.id === priorityId ? r.color : "var(--border)"}`, opacity: r.hidden ? 0.6 : 1 }}>
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-[20px] flex-shrink-0" aria-hidden="true">{r.icon ?? "📄"}</span>
+                    <span className="t-body font-black flex-1 min-w-0 truncate" style={{ color: "var(--text)" }}>{r.label}</span>
+                    {r.id === priorityId && (
+                      <span className="t-caption font-black px-2 py-0.5 rounded-full flex-shrink-0"
+                        style={{ background: `color-mix(in srgb, ${r.color} 18%, transparent)`, color: r.color }}>أولويتك</span>
+                    )}
+                    {r.hidden && (
+                      <span className="t-caption font-bold flex-shrink-0" style={{ color: "var(--text-muted)" }}>مخفيّ</span>
+                    )}
+                  </div>
+
+                  {confirming === r.key ? (
+                    <div className="flex items-center gap-2">
+                      <span className="t-caption flex-1" style={{ color: "var(--text-muted)" }}>
+                        يُحذف من مساري. تقدّمُك في دروسه يبقى محفوظاً.
+                      </span>
+                      <button onClick={() => { remove(r); setConfirming(null); }}
+                        className="t-caption font-black px-3 py-2 rounded-xl"
+                        style={{ background: "#EF4444", color: "#fff" }}>احذف</button>
+                      <button onClick={() => setConfirming(null)}
+                        className="t-caption font-bold px-3 py-2 rounded-xl"
+                        style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>تراجع</button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => makePriority(r)} disabled={r.id === priorityId}
+                        aria-pressed={r.id === priorityId}
+                        className="flex-1 t-caption font-black py-2 rounded-xl transition active:scale-[0.97]"
+                        style={r.id === priorityId
+                          ? { background: `color-mix(in srgb, ${r.color} 16%, transparent)`, border: `1.5px solid ${r.color}`, color: r.color }
+                          : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}>
+                        {r.id === priorityId ? "★ أولويتك" : "☆ اجعله أولويتك"}
+                      </button>
+                      {r.moduleId && (
+                        <button onClick={() => onChange(hideModule(ws, r.moduleId!, !r.hidden))}
+                          className="flex-1 t-caption font-black py-2 rounded-xl transition active:scale-[0.97]"
+                          style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}>
+                          {r.hidden ? "أظهِره" : "أخفِه"}
+                        </button>
+                      )}
+                      <button onClick={() => setConfirming(r.key)} aria-label={`حذف ${r.label}`}
+                        className="t-caption font-black px-3 py-2 rounded-xl transition active:scale-[0.97]"
+                        style={{ background: "transparent", border: "1px solid color-mix(in srgb, #EF4444 40%, transparent)", color: "#EF4444" }}>
+                        حذف
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          {/* القفلُ خبرٌ لا سدّ: النصيحةُ أن تثبت على اختبارٍ أسبوعاً، والقرارُ لك.
+              (`priorityLock` مبنيٌّ في النموذج ولا يُطبَّق في أي شاشة — فلا نمنع
+              الطالبَ بقاعدةٍ لم يُتَّفق على تطبيقها، بل نخبره بها.) */}
+          {lock.locked && rows.length > 1 && (
+            <p className="t-caption mt-2.5 px-3 py-2 rounded-xl leading-relaxed"
+              style={{ background: "color-mix(in srgb, var(--gold) 10%, var(--surface2))", color: "var(--text)", border: "1px solid color-mix(in srgb, var(--gold) 26%, transparent)" }}>
+              💡 اخترتَ أولويتك قريباً — التركيز على اختبارٍ واحد {days(lock.daysLeft)} أنفعُ من التنقّل بينها. وتقدر تغيّرها الآن إن احتجت.
+            </p>
+          )}
+          <p className="t-caption mt-2.5 px-1 leading-relaxed" style={{ color: "var(--text-muted)" }}>
+            «أخفِه» يزيله من بطاقاتك ويبقي تقدّمك — تُظهره متى شئت. و«أولويتك» يقرّر
+            أيَّ اختبارٍ يبني حوله دويرب جلسةَ اليوم.
+          </p>
+        </div>
+      </div>
+    </Sheet>
+  );
+}
