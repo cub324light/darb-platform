@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { recordAiUsage } from "@/lib/aiUsage";
 import { getVerifiedUid, getAdminDbOptional } from "@/lib/server/firebaseAdmin";
 import { checkUserRateLimit, checkDailyLimit } from "@/lib/server/rateLimit";
+import { serverLimits } from "@/lib/server/plan";
 import { isUserBlocked } from "@/lib/server/moderation";
 import { chatComplete, LLMError, type LLMUserContent } from "@/lib/server/llm";
 import { formatProfileBlock, sessionIntervalRule, type DuwairbProfile, type DuwairbExam } from "@/lib/duwairb";
@@ -349,9 +350,16 @@ export async function POST(req: NextRequest) {
   if (!(await checkUserRateLimit(uid))) {
     return NextResponse.json({ error: "طلبات كثيرة، انتظر دقيقة" }, { status: 429 });
   }
-  /* M-5: حدّ يومي لكل مستخدم — يحدّ من استنزاف الميزانية لكل حساب */
-  if (!(await checkDailyLimit("chat_" + uid, 150))) {
-    return NextResponse.json({ error: "وصلت حدّك اليومي من دويرب — عُد غداً" }, { status: 429 });
+  /* M-5: حدّ يوميّ لكل مستخدم — يحدّ من استنزاف الميزانية، وهو الآن **حسب الباقة**.
+     الباقةُ تُقرأ من Firestore لا من جسم الطلب: قواعدُ الأمان تمنع العميلَ من
+     كتابة `plan`، فما نقرؤه لا يُزوَّر. وصفحةُ الباقات تعرض الرقمَ نفسَه من
+     `planLimits` — فلا تَعِد الصفحةُ بما لا يفرضه الخادم. */
+  const chatLimit = (await serverLimits(uid)).chatPerDay;
+  if (!(await checkDailyLimit("chat_" + uid, chatLimit))) {
+    return NextResponse.json(
+      { error: `وصلت حدّك اليومي من دويرب (${chatLimit} رسالة) — عُد غداً، أو رقِّ باقتك.` },
+      { status: 429 },
+    );
   }
 
   const body = await req.json().catch(() => null);

@@ -4,25 +4,48 @@ import Link from "next/link";
 import BackButton from "@/components/BackButton";
 import { useRouter } from "next/navigation";
 import { getPlan, setPlan, PLAN_NAMES, PLAN_PRICE, SANAD_PRICE } from "@/lib/plan";
-import { price } from "@/lib/format";
+import { PLAN_LIMITS, limitLabel } from "@/lib/planLimits";
+import { price, n } from "@/lib/format";
 import type { PlanId } from "@/lib/types";
 
 /* ▓ مبدأُ التقسيم: **ما يذاكر به الطالبُ مجّانيّ**. لا نبيع أدواتِ المذاكرة —
-   تركيزٌ ومساري والتقويم والدفتر والمدرسة وأخطائي كلُّها في المجاني بلا نقصان.
-   المدفوعُ يشتري **السعةَ والذكاء**: حدودٌ أوسع، ودويرب بلا عدّاد، وتحليلٌ أعمق.
-   من لا يدفع يبقى طالباً كاملاً في درب — لا معاقَباً. */
+   تركيزٌ ومساري والتقويم والدفتر والمدرسة وأخطائي وبنكُ المراجعة كلُّها في
+   المجاني بلا نقصان. المدفوعُ يشتري **السعةَ والذكاء** وحدهما، وهما ما يُكلّفنا.
+   من لا يدفع يبقى طالباً كاملاً في درب — لا معاقَباً.
+
+   ▓ كلُّ صفٍّ هنا **مفروضٌ في الكود**. كان الجدولُ يَعِد بستّةِ فروقٍ لا وجودَ
+   لها: الجميعُ كان يأخذ مئةً وخمسين رسالةَ دويرب وثلاثين تحليلاً في اليوم،
+   وبنكُ المراجعة والتقريرُ الأسبوعيُّ مفتوحان للجميع أصلاً. من أراد صفّاً
+   جديداً فليبنِ فرضَه أوّلاً ثم يكتبه هنا — لا العكس.
+
+   ▓ الأرقامُ من `planLimits` نفسِه الذي يقرؤه الخادم، فلا تفترق الصفحةُ عن
+   السلوك. و«بلا حدّ» كلمةٌ لا نكتبها في الذكاء: له سقفٌ دائماً، ونقوله. */
+const L = PLAN_LIMITS;
 const COMPARE_FEATURES = [
   { label: "تركيز · مساري · التقويم · الدفتر", free: "✓", shaheen: "✓", anqa: "✓" },
   { label: "المدرسة (الواجبات والمدرّسون)", free: "✓", shaheen: "✓", anqa: "✓" },
-  { label: "خزنة الأخطاء", free: "25 لكل مادة", shaheen: "غير محدودة", anqa: "غير محدودة" },
-  { label: "دويرب (رسائل يومياً)", free: "محدود", shaheen: "بلا حدّ", anqa: "بلا حدّ" },
-  { label: "تحليل ملفاتك بالذكاء", free: "—", shaheen: "✓", anqa: "✓" },
-  { label: "توليد اختبارات قصيرة", free: "محدود", shaheen: "بلا حدّ", anqa: "بلا حدّ" },
   { label: "خطّتك عبر الأشهر", free: "✓", shaheen: "✓", anqa: "✓" },
-  { label: "بنك المراجعة بالتكرار المتباعد", free: "—", shaheen: "✓", anqa: "✓" },
-  { label: "تقرير أسبوعيّ مفصّل", free: "—", shaheen: "✓", anqa: "✓" },
-  { label: "المجلس (مشاركة)", free: "قراءة فقط", shaheen: "✓", anqa: "✓" },
-  { label: "شهادة الانضباط", free: "—", shaheen: "—", anqa: "✓" },
+  { label: "بنك المراجعة بالتكرار المتباعد", free: "✓", shaheen: "✓", anqa: "✓" },
+  { label: "تقرير أسبوعيّ عن مذاكرتك", free: "✓", shaheen: "✓", anqa: "✓" },
+  { label: "المجلس (بعد توثيق بريدك)", free: "✓", shaheen: "✓", anqa: "✓" },
+  {
+    label: "خزنة الأخطاء",
+    free: limitLabel(L.free.vaultPerSubject, "لكل مادة"),
+    shaheen: limitLabel(L.shaheen.vaultPerSubject, "لكل مادة"),
+    anqa: limitLabel(L.anqa.vaultPerSubject, "لكل مادة"),
+  },
+  {
+    label: "دويرب — رسائل يومياً",
+    free: n(L.free.chatPerDay),
+    shaheen: n(L.shaheen.chatPerDay),
+    anqa: n(L.anqa.chatPerDay),
+  },
+  {
+    label: "تحليل ملفاتك بالذكاء — يومياً",
+    free: n(L.free.analyzePerDay),
+    shaheen: n(L.shaheen.analyzePerDay),
+    anqa: n(L.anqa.analyzePerDay),
+  },
   { label: "الجديد يصلك أولاً", free: "—", shaheen: "—", anqa: "✓" },
 ];
 
@@ -93,13 +116,18 @@ export default function PricingPage() {
                 </div>
               </div>
               <div className="space-y-1.5 mb-4">
-                {["كل أدوات المذاكرة: تركيز · مساري · التقويم · الدفتر · المدرسة", "خزنة الأخطاء — 25 لكل مادة", "دويرب برسائل محدودة يومياً", "خطّتك عبر الأشهر والتقويم الرسميّ"].map((f) => (
+                {["كل أدوات المذاكرة: تركيز · مساري · التقويم · الدفتر · المدرسة",
+                  `خزنة الأخطاء — ${n(L.free.vaultPerSubject)} لكل مادة`,
+                  `دويرب — ${n(L.free.chatPerDay)} رسالة يومياً`,
+                  `تحليل ملفاتك — ${n(L.free.analyzePerDay)} يومياً`,
+                  "بنك المراجعة والتقرير الأسبوعيّ",
+                  "خطّتك عبر الأشهر والتقويم الرسميّ"].map((f) => (
                   <div key={f} className="flex items-center gap-2">
                     <span className="text-[var(--success)] text-xs">✓</span>
                     <span className="text-xs text-[var(--text-dim)]">{f}</span>
                   </div>
                 ))}
-                {["خزنة غير محدودة", "دويرب بلا حدّ", "تحليل ملفاتك بالذكاء"].map((f) => (
+                {["خزنة غير محدودة", `دويرب — ${n(L.shaheen.chatPerDay)} رسالة يومياً`, `تحليل — ${n(L.shaheen.analyzePerDay)} ملفاً يومياً`].map((f) => (
                   <div key={f} className="flex items-center gap-2 opacity-40">
                     <span className="text-xs">—</span>
                     <span className="text-xs text-[var(--text-muted)] line-through">{f}</span>
@@ -150,11 +178,9 @@ export default function PricingPage() {
               <div className="space-y-1.5 mb-4">
                 {[
                   "خزنة الأخطاء غير محدودة",
-                  "دويرب بلا عدّاد رسائل",
-                  "تحليل ملفاتك ومذكّراتك بالذكاء",
-                  "اختبارات قصيرة بلا حدّ",
-                  "بنك المراجعة بالتكرار المتباعد",
-                  "تقرير أسبوعيّ مفصّل عن مذاكرتك",
+                  `دويرب — ${n(L.shaheen.chatPerDay)} رسالة يومياً بدل ${n(L.free.chatPerDay)}`,
+                  `تحليل ملفاتك ومذكّراتك — ${n(L.shaheen.analyzePerDay)} يومياً بدل ${n(L.free.analyzePerDay)}`,
+                  "وتوليد أسئلة التدريب من الحصّة نفسها",
                 ].map((f) => (
                   <div key={f} className="flex items-center gap-2">
                     <span className="text-[var(--accent-light)] text-xs">✓</span>
@@ -198,9 +224,11 @@ export default function PricingPage() {
               </div>
 
               <div className="space-y-1.5 mb-4">
+                {/* «شهادة الانضباط» حُذفت: لم تُبنَ قطُّ، وكانت مكتوبةً هنا وحدها.
+                    ما بقي صادقٌ كلُّه — وعنقاءُ اليومَ تشتري الانتماءَ لا سعةً
+                    زائدة، فلتُقَل كما هي حتى يُبنى لها فرقٌ حقيقيّ. */}
                 {[
                   "كل مميزات شاهين",
-                  "شهادة الانضباط الرقمية",
                   "الميزات الجديدة تصلك أولاً",
                   "دور المؤسس الدائم",
                 ].map((f) => (

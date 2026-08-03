@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { recordAiUsage } from "@/lib/aiUsage";
 import { getVerifiedUid, getAdminDbOptional } from "@/lib/server/firebaseAdmin";
 import { checkUserRateLimit, checkDailyLimit } from "@/lib/server/rateLimit";
+import { serverLimits } from "@/lib/server/plan";
 import { isUserBlocked } from "@/lib/server/moderation";
 
 /* المصادقة + تسجيل الاستهلاك يحتاجان Node APIs */
@@ -155,9 +156,14 @@ export async function POST(req: NextRequest) {
   if (!(await checkUserRateLimit(uid, ANALYZE_LIMIT))) {
     return NextResponse.json({ error: "طلبات كثيرة، انتظر دقيقة" }, { status: 429 });
   }
-  /* M-5: حدّ يومي لتحليل الملفات لكل مستخدم (التحليل أثقل — حتى 9 نداءات Groq) */
-  if (!(await checkDailyLimit("analyze_" + uid, 30))) {
-    return NextResponse.json({ error: "وصلت حدّك اليومي من تحليل الملفات — عُد غداً" }, { status: 429 });
+  /* M-5: حدّ يوميّ لتحليل الملفات (التحليل أثقل — حتى 9 نداءات Groq)، وهو الآن
+     **حسب الباقة** من `planLimits` — الرقمُ نفسُه المعروضُ في صفحة الباقات. */
+  const analyzeDaily = (await serverLimits(uid)).analyzePerDay;
+  if (!(await checkDailyLimit("analyze_" + uid, analyzeDaily))) {
+    return NextResponse.json(
+      { error: `وصلت حدّك اليومي من تحليل الملفات (${analyzeDaily}) — عُد غداً، أو رقِّ باقتك.` },
+      { status: 429 },
+    );
   }
 
   const body = await req.json().catch(() => null);
