@@ -13,9 +13,6 @@ import type {
 let cache: { snap: ContentSnapshot; at: number } | null = null;
 const TTL_MS = 5 * 60_000;
 
-/* يبطل الخبيئة بعد أي تحديث للمحتوى (مثلاً بعد إعادة الرفع من السكربت) */
-export function invalidateContentCache(): void { cache = null; }
-
 /* now اختياري (افتراضياً وقت النداء) — الصفحات الخادمية تناديها بلا وسيط
    كي لا تستدعي Date.now() داخل جسم المكوّن (قاعدة نقاء React Compiler) */
 export async function getContentSnapshot(now: number = Date.now()): Promise<ContentSnapshot> {

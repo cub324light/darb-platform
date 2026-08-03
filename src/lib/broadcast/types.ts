@@ -20,10 +20,6 @@ export const BROADCAST_TYPES: { id: BroadcastType; label: string; icon: string }
   { id: "admin_message", label: "رسالة من الإدارة", icon: "🛡️" },
 ];
 
-export function broadcastTypeLabel(t: BroadcastType): string {
-  return BROADCAST_TYPES.find((x) => x.id === t)?.label ?? t;
-}
-
 /* ─── فلتر الجمهور — قابل للتوسّع بأنواع مستقبلية ─── */
 export type AudienceKind = "all" | "stage" | "grade" | "university" | "rank" | "inactive" | "score";
 

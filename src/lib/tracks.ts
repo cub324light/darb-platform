@@ -126,14 +126,6 @@ export const TRACKS: Track[] = [
   },
 ];
 
-/* ── تجميع المسارات حسب المرحلة ── */
-/* أقسام اختيار الاختبارات — المدرسة ليست منها (قسم مستقل، ليست اختباراً). */
-export const TRACK_GROUPS: { label: string; ids: TrackId[] }[] = [
-  { label: "اختبارات القبول السعودية", ids: ["قدرات", "تحصيلي", "تحصيلي مبكر"] },
-  { label: "اختبارات اللغة الإنجليزية", ids: ["ستيب", "ايلتس", "توفل", "دوليقو"] },
-  { label: "برامج القبول",              ids: ["CPC", "ITC"] },
-];
-
 /* ── المواد الكاملة مع التجميع والمختبِر ── */
 export interface SubjectInfo {
   name: string;
@@ -198,19 +190,6 @@ export function colorForSubject(ids: TrackId[], subject: string): string {
     if (s) return s.color;
   }
   return TRACK_BLUE;
-}
-
-export function subjectColor(track: Track, subject: string): string {
-  return track.subjects.find((s) => s.name === subject)?.color ?? TRACK_BLUE;
-}
-
-export function subjectIcon(track: Track, subject: string): string {
-  return track.subjects.find((s) => s.name === subject)?.icon ?? "";
-}
-
-export function resolveSubjects(names: string[]): { name: string; color: string }[] {
-  const all = SUBJECT_GROUPS.flatMap((g) => g.subjects);
-  return names.map((n) => all.find((s) => s.name === n) ?? { name: n, color: TRACK_BLUE });
 }
 
 /* ─── نطاقات درجات الاختبارات («نتائجي») ───

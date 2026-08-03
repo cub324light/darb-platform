@@ -429,10 +429,6 @@ export function saveExamDate(date: string | null) {
   } catch {}
 }
 
-/* ── تواريخ اختبار لكل مادة ── */
-
-
-
 /* ── تواريخ اختبار لكل مسار (مفتاح = TrackId) ── */
 const TRACK_EXAM_DATES_KEY = "darb_track_exam_dates";
 
@@ -678,32 +674,12 @@ export function recordGraphVisit(label: string): Record<string, number> {
   return v;
 }
 
-/* ── تقدم الاختبار والدرجات ── */
-export interface ExamFlow {
-  grade?: number;
-  skippedGrade?: boolean;
-  skippedTadreeb?: boolean;
-  happy?: boolean;
-  plan?: string;
-}
-
-/* مراجعات كل ربع لكل مرحلة */
-export interface StageReviews {
-  tasees25?: boolean; tasees50?: boolean; tasees75?: boolean;
-  tadreeb25?: boolean; tadreeb50?: boolean; tadreeb75?: boolean;
-}
-
 /* ── عناصر مرحلة التدريب ── */
 export interface TrainingItem {
   id: string;
   subject: string;
   title: string;
 }
-
-
-
-
-
 
 const TADREEB_ITEMS_KEY = "darb_tadreeb_items";
 const TADREEB_DONE_KEY  = "darb_tadreeb_done";
@@ -751,9 +727,6 @@ export function saveEvents(events: ScheduleEvent[]) {
 /* ── الجدول الأسبوعي ── */
 
 export type ScheduleEntry = { subject: string; hours: number };
-export type WeeklySchedule = Record<string, ScheduleEntry[]>; // "0"-"6" = الأحد–السبت
-
-
 
 /* ── حُذف نظامُ «إعدادات الصفحة الرئيسية» (DashConfig) ──
    كان يرتّب أقسامَ الرئيسية ويخفيها، ثم ضاع زرُّه في إعادة تنظيمها فبقي مكتوباً

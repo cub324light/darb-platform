@@ -11,12 +11,6 @@ import { events } from "../events";
 let _orchestrator: DuwairbOrchestrator | null = null;
 let _provider: LLMProvider = new GroqProvider();
 
-/** يبدّل مزوّد النموذج (Groq/GPT/Claude/Gemini…) دون لمس المعمارية. */
-export function setLLMProvider(p: LLMProvider): void {
-  _provider = p;
-  _orchestrator = null;
-}
-
 export function duwairb(): DuwairbOrchestrator {
   if (!_orchestrator) {
     _orchestrator = new DuwairbOrchestrator({

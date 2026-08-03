@@ -21,23 +21,6 @@ export function sm2(card: { interval: number; repetitions: number; easeFactor: n
   return { interval, repetitions, easeFactor, dueDate };
 }
 
-export function getDueCards<T extends { dueDate: number }>(cards: T[]): T[] {
-  const now = Date.now();
-  return cards.filter(c => c.dueDate <= now);
-}
-
-export function gradeLabel(grade: SM2Grade): string {
-  const labels: Record<SM2Grade, string> = {
-    0: "ما أعرف",
-    1: "غلط تماماً",
-    2: "صعب",
-    3: "متوسط",
-    4: "سهل",
-    5: "سهل جداً",
-  };
-  return labels[grade];
-}
-
 export function nextReviewText(dueDate: number): string {
   const diff = dueDate - Date.now();
   const minutes = Math.round(diff / 60000);

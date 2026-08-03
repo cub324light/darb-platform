@@ -116,10 +116,6 @@ export function setPriority(ws: Workspace, id: ModuleId, priority: boolean, now:
   return patch(ws, id, () => ({ priority }), now);
 }
 
-export function touchActivity(ws: Workspace, id: ModuleId, now: number = Date.now()): Workspace {
-  return patch(ws, id, () => ({ lastActivityAt: now }), now);
-}
-
 /* ── تقدّم/حالة/درجة الوحدة المفردة ── */
 export function setProgress(ws: Workspace, id: ModuleId, progress: number, now: number = Date.now()): Workspace {
   if (isGroup(id)) return ws; // المجموعة يقودها أعضاؤها
@@ -177,7 +173,6 @@ export const groupMembers = (ws: Workspace, id: ModuleId): ModuleMember[] => get
 export const orderedModules = (ws: Workspace): ModuleInstance[] =>
   [...ws.modules].sort((a, b) => Number(Boolean(b.priority)) - Number(Boolean(a.priority)) || a.order - b.order);
 export const visibleModules = (ws: Workspace): ModuleInstance[] => orderedModules(ws).filter((m) => !m.hidden);
-export const coreInstances = (ws: Workspace): ModuleInstance[] => ws.modules.filter((m) => m.kind === "core");
 export const optionalInstances = (ws: Workspace): ModuleInstance[] => ws.modules.filter((m) => m.kind === "optional");
 
 /* عدد الاختبارات المختارة (لحدّ مساري الأقصى): كل وحدةٍ مفردةٍ اختيارية (قدرات/تحصيلي)

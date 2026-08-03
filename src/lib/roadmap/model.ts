@@ -67,7 +67,6 @@ export const DELETE_REASONS = [
   { id: "by-mistake", label: "أضفته بالخطأ" },
   { id: "postponed", label: "أجّلته لوقتٍ لاحق" },
 ] as const;
-export type DeleteReasonId = (typeof DELETE_REASONS)[number]["id"] | "other";
 
 /* ── حدود الإضافة (max 3) — نقيّة، تأخذ العدد الحاليّ صراحةً ── */
 export const remainingSlots = (count: number): number => Math.max(0, MAX_EXAMS - count);
@@ -200,7 +199,3 @@ export function examStatus(f: ExamStatusFacts): ExamStatus {
   return "not-started";
 }
 
-export const EXAM_STATUS_LABEL: Record<ExamStatus, string> = {
-  "not-started": "لم يبدأ", studying: "تذاكر", registered: "مسجّل",
-  taken: "اختبرت", "waiting-result": "بانتظار النتيجة", done: "مكتمل",
-};

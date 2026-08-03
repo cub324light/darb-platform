@@ -90,17 +90,6 @@ export async function resendVerification(): Promise<void> {
   if (u && !u.emailVerified) await sendEmailVerification(u);
 }
 
-/* هل البريد موثّق؟ حسابات Google موثّقة تلقائياً (emailVerified === true). */
-export function isEmailVerified(): boolean {
-  return auth.currentUser?.emailVerified ?? false;
-}
-
-/* يحتاج توثيقاً: مسجّل دخول لكن بريده غير موثّق (دخول بالإيميل قبل الضغط على الرابط). */
-export function needsEmailVerification(): boolean {
-  const u = auth.currentUser;
-  return !!u && !u.emailVerified;
-}
-
 /* يعيد تحميل بيانات المستخدم من الخادم (بعد ضغطه رابط التوثيق) ويرجع حالة التوثيق. */
 export async function reloadVerification(): Promise<boolean> {
   const u = auth.currentUser;
@@ -126,10 +115,6 @@ export async function signOutUser() {
   /* C2: امسح بيانات المستخدم المحلية عند الخروج كي لا يراها المستخدم التالي
      على الجهاز نفسه. بياناته محفوظة في السحابة وتُسحب عند دخوله مجدداً. */
   ensureLocalOwnership(null);
-}
-
-export async function sendPasswordReset(email: string) {
-  await sendPasswordResetEmail(auth, email);
 }
 
 /* ─── Google — popup أولاً دائماً (أكثر موثوقية ويُظهر الأخطاء فوراً)؛

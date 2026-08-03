@@ -90,11 +90,6 @@ export function skillsForTrack(trackId: string): GlobalSkill[] {
   return GLOBAL_SKILLS.filter((s) => s.tracks.includes(trackId));
 }
 
-/* هل لهذا المسار شجرة متطلبات ذات معنى؟ (مهارة واحدة على الأقل لها prereqs) */
-export function hasSkillTree(trackId: string): boolean {
-  return GLOBAL_SKILLS.some((s) => s.tracks.includes(trackId) && (s.prereqs?.length ?? 0) > 0);
-}
-
 /* حالة مهارة من مجموعة المُتقنة: مُتقنة / متاحة / مقفلة */
 export function skillNodeStatus(skill: GlobalSkill, masteredIds: Set<string>): NodeStatus {
   if (masteredIds.has(skill.id)) return "mastered";

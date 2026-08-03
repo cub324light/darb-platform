@@ -1,9 +1,9 @@
-/* ─── جلسة المحرّكات: تبديل المستخدم وإعادة البناء ───
-   عند تغيّر المصادقة نبدّل فضاء الأسماء ونُسقِط مثائل المحرّكات (ذاكرة/أحداث/
-   إشعارات/منسّق) كي تُعاد قراءتها من المفاتيح المنطَّقة الجديدة — فلا تتسرّب
-   بيانات حساب لآخر. يُستورَد من تجهيز المصادقة فقط (لا من المحرّكات → لا دوران). */
+/* ─── جلسة المحرّكات: إعادة البناء بعد تبديل المستخدم ───
+   حين يبدّل `AuthGate` فضاءَ الأسماء (setNamespace) نُسقِط مثائل المحرّكات
+   (ذاكرة/أحداث/إشعارات/منسّق) كي تُعاد قراءتها من المفاتيح المنطَّقة الجديدة —
+   فلا تتسرّب بيانات حساب لآخر. يُستورَد من تجهيز المصادقة والمزامنة فقط
+   (لا من المحرّكات → لا دوران). */
 "use client";
-import { setNamespace } from "./engineNamespace";
 import { __setMemoryEngine } from "./memory";
 import { __resetEvents } from "./events";
 import { __resetNotifications } from "./notifications";
@@ -17,8 +17,3 @@ export function resetEngineSingletons(): void {
   __resetDuwairb();
 }
 
-/** يبدّل فضاء المحرّكات لمستخدم (uid أو null للضيف). آمن للاستدعاء المتكرّر. */
-export function switchEngineUser(uid: string | null): void {
-  if (!setNamespace(uid)) return; // لا تغيير في الفضاء
-  resetEngineSingletons();
-}

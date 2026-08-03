@@ -33,10 +33,6 @@ export const SOURCE_CATEGORIES: readonly CategoryDef[] = [
   { id: "regulations",      label: "الأنظمة واللوائح",          icon: "⚖️" },
 ] as const;
 
-export function categoryLabel(id: SourceCategory): string {
-  return SOURCE_CATEGORIES.find((c) => c.id === id)?.label ?? id;
-}
-
 /* أفضل طريقة لجلب البيانات من المصدر */
 export type FetchMethod = "api" | "rss" | "scrape" | "pdf" | "manual";
 

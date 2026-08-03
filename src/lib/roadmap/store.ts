@@ -9,13 +9,6 @@ export function loadRoadmapConfig(): RoadmapConfig {
   return loadUser()?.roadmap ?? {};
 }
 
-/** يحفظ الإعداد داخل DarbUser (يُدمج فوق أحدث نسخةٍ تجنّباً لطمس تعديلاتٍ متزامنة). */
-export function saveRoadmapConfig(config: RoadmapConfig): void {
-  const u = loadUser();
-  if (!u) return;
-  saveUser({ ...u, roadmap: config });
-}
-
 /** يطبّق تحويلاً نقيّاً على الإعداد الحاليّ ويحفظه (قراءة-تعديل-حفظ آمنة). */
 export function updateRoadmapConfig(fn: (c: RoadmapConfig) => RoadmapConfig): RoadmapConfig {
   const u = loadUser();

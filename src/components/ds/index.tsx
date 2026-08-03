@@ -53,12 +53,6 @@ export function CardGrid({ cols = 2, children, className = "" }: { cols?: 2 | 3 
   return <div className={`ds-grid ds-grid-${cols} ${className}`.trim()}>{children}</div>;
 }
 
-/* مكدّس رأسي بإيقاع موحّد بين الأقسام */
-export function Stack({ gap = "section", children, className = "" }: { gap?: "tight" | "section" | "loose"; children: ReactNode; className?: string }) {
-  const cls = gap === "loose" ? "ds-stack" : gap === "tight" ? "ds-stack-tight" : "ds-section";
-  return <div className={`${cls} ${className}`.trim()}>{children}</div>;
-}
-
 /* رقم بارز (إحصاء) بخط أحادي المسافة — للوحات والبطاقات الرقمية */
 export function Stat({ value, label, color = "var(--accent-light)" }: { value: ReactNode; label: string; color?: string }) {
   return (

@@ -12,9 +12,3 @@ export const QUOTES = [
   "أنت أقرب من أمس، وأبعد ما تكون عن البداية.",
 ];
 
-/* يتغيّر مرة كل يوم بحسب رقم اليوم في السنة */
-export function quoteOfToday(): string {
-  const d = new Date();
-  const dayOfYear = Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 0).getTime()) / 86400000);
-  return QUOTES[dayOfYear % QUOTES.length];
-}

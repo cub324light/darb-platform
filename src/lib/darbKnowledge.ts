@@ -77,9 +77,6 @@ export const SCHOOL_STAGES: readonly SchoolStage[] = [
   "ثالث ثانوي",
 ] as const;
 
-/* الحالة التعليمية الخام كما تُخزَّن في DarbUser.studyLevel */
-export type EduStatus = "ثانوي" | "جامعي" | "خريج";
-
 export const stageOf = (u?: DarbUser | null): SchoolStage | undefined => {
   const g = u?.grade;
   return (SCHOOL_STAGES as readonly string[]).includes(g ?? "")
@@ -281,7 +278,6 @@ export function canTakeEarlyTahsili(u?: DarbUser | null): boolean {
   const stage = stageOf(u);
   return stage === "ثاني ثانوي" || stage === "ثالث ثانوي";
 }
-
 
 /* أنماط الوجهات التي تتطلب إثبات لغة إنجليزية (SSoT — يستهلكها المسار الذهبي وغيره) */
 const ENGLISH_REQUIRED_UNIVERSITY = /بترول|فهد للبترول|kfupm|عفت|effat|الفيصل|alfaisal/i;

@@ -33,32 +33,6 @@ export function saveSkillProgress(progress: Record<string, SkillProgress>) {
   } catch {}
 }
 
-/* ── تسجيل إجابة — يُستدعى من مكوّنات الاختبار ── */
-export function recordSkillAnswer(skillId: string, correct: boolean): SkillProgress {
-  const all = loadSkillProgress();
-  const prev = all[skillId] ?? {
-    skillId,
-    masteryScore: 0,
-    answeredCount: 0,
-    correctCount: 0,
-    lastUpdated: today(),
-  };
-  // خوارزمية ELO مبسّطة: صح → نقترب من 100 بنسبة 10% | خطأ → نبتعد 10%
-  const raw = correct
-    ? prev.masteryScore + (100 - prev.masteryScore) * 0.1
-    : prev.masteryScore * 0.9;
-  const updated: SkillProgress = {
-    skillId,
-    masteryScore: Math.round(Math.min(100, Math.max(0, raw))),
-    answeredCount: prev.answeredCount + 1,
-    correctCount: prev.correctCount + (correct ? 1 : 0),
-    lastUpdated: today(),
-  };
-  all[skillId] = updated;
-  saveSkillProgress(all);
-  return updated;
-}
-
 /* ── ضبط يدوي (تقييم ذاتي) ── */
 export function setSkillSelfAssessment(skillId: string, level: "none" | "partial" | "mastered"): SkillProgress {
   const scores: Record<string, number> = { none: 15, partial: 50, mastered: 85 };

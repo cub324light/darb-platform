@@ -161,7 +161,3 @@ export function evaluateGoal(inp: GoalRealityInputs): GoalRealityResult {
   return { verdict, icon, reason, suggestion, feasibilityScore: score };
 }
 
-/* جملة مختصرة للحقن في برومبت دويرب */
-export function goalRealityLine(r: GoalRealityResult): string {
-  return `تقييم واقعية الهدف: ${r.icon} ${r.verdict} — ${r.reason.slice(0, 80)}`;
-}

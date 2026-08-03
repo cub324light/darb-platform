@@ -7,10 +7,6 @@
    الجديدة (الفصول، الإجازات، الاختبارات النهائية) وحدّث UPDATED_FOR.
    كل المنطق مشتقّ من هذه البيانات، فلا حاجة لتعديل الدوال.
    التواريخ ميلادية (YYYY-MM-DD) شاملة الطرفين. */
-import { weeks, days } from "./format";
-
-export type StudentType = "ثانوي" | "جامعي";
-
 export type PeriodKind =
   | "term"           // فصل دراسي
   | "break"          // إجازة بين الفصول/مطوّلة
@@ -332,24 +328,6 @@ export function calendarSignals(snap: CalendarSnapshot): CalendarSignals {
     inSchoolFinals: snap.inSchoolFinals,
     daysToNextExam: snap.nextExam ? snap.nextExam.daysUntil : null,
   };
-}
-
-/* ── حقائق التقويم لدويرب (يجيب على: إجازة؟ اختبارات قريبة؟ دراسة؟ كم أسبوع؟) ── */
-export function calendarFactsForDuwairb(snap: CalendarSnapshot): string {
-  if (!snap.hasData) return "";
-  const lines = [
-    `- الوضع الدراسي الآن: ${snap.phaseLabel}`,
-    `- هل الطالب في إجازة؟ ${snap.onVacation ? "نعم" : "لا"}`,
-    `- هل توجد اختبارات مدرسية حالياً؟ ${snap.inSchoolFinals ? "نعم — قدّم اختبارات المدرسة" : "لا"}`,
-  ];
-  if (snap.nextExam) {
-    const approx = snap.nextExam.approximate ? " (تقديري)" : "";
-    lines.push(`- أقرب اختبار: ${snap.nextExam.label} بعد ${weeks(snap.nextExam.weeksUntil)} تقريباً${approx}`);
-  }
-  if (snap.nextSchoolFinals && snap.nextSchoolFinals.daysUntil <= 30) {
-    lines.push(`- اختبارات مدرسية قادمة خلال ${days(snap.nextSchoolFinals.daysUntil)}`);
-  }
-  return `حالة التقويم الدراسي السعودي (استعملها لمواءمة خطتك مع واقع الطالب):\n${lines.join("\n")}`;
 }
 
 /* ═══════════ خطُّ الزمن المدرسيّ — للعرض في «المدرسة» ═══════════

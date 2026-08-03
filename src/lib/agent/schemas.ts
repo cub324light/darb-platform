@@ -136,8 +136,6 @@ export const SCHEMAS = {
   University, UniversityDetail, ExamWindow, Exam, AcademicCalendar, FaqItem,
 } as const;
 
-export type SchemaName = keyof typeof SCHEMAS;
-
 /* ═══ مدخلاتُ أدوات MCP — مخطّطاتٌ صغيرة، لكنّها هي نفسها معاملاتُ OpenAPI ═══ */
 export const TOOL_INPUTS = {
   list_universities: {

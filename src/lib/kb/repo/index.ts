@@ -25,5 +25,3 @@ export function getContentRepository(): ContentRepository {
   return cached;
 }
 
-/* للاختبار/الحقن: يعيد ضبط المصنع */
-export function __setContentRepository(repo: ContentRepository | null) { cached = repo; }

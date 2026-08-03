@@ -27,10 +27,6 @@ export function detectContact(text: string): string | null {
   return null;
 }
 
-export function containsContact(text: string): boolean {
-  return detectContact(text) !== null;
-}
-
 /** ينظّف الاسم من أي وسيلة تواصل (للاسم نكتفي بالإزالة بدل الرفض) */
 export function stripContact(text: string): string {
   let out = text;

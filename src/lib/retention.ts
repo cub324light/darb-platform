@@ -3,7 +3,7 @@
    في مفتاحين: darb_daily (تسجيل اليوم) و darb_retention (آخر فتح/معالم/أسبوعي/استعادة).
    كل دالة نقية وقابلة للاختبار، وتُحرس بـ typeof window. */
 import {
-  loadStats, loadUser, localDayKey, computeStreak, addSessionDay,
+  loadStats, localDayKey, computeStreak, addSessionDay,
   type DarbStats,
 } from "./storage";
 
@@ -38,19 +38,6 @@ export function loadDailyCheckin(): DailyCheckin | null {
     return d.day === localDayKey() ? d : null; // اليوم فقط
   } catch { return null; }
 }
-export function saveDailyCheckin(goalHours: number, subject: string): void {
-  try { localStorage.setItem(DAILY_KEY, JSON.stringify({ day: localDayKey(), goalHours, subject })); } catch {}
-}
-/* تخطّي تسجيل اليوم — لا نُلحّ على الطالب مجدداً اليوم */
-export function skipDailyCheckin(): void {
-  try { localStorage.setItem(DAILY_KEY, JSON.stringify({ day: localDayKey(), goalHours: 0, subject: "" })); } catch {}
-}
-/* يحتاج تسجيلاً إن كان مستخدماً مكتمل التهيئة ولم يسجّل اليوم */
-export function needsDailyCheckin(): boolean {
-  const u = loadUser();
-  if (!u?.onboarded) return false;
-  return loadDailyCheckin() === null;
-}
 
 /* ════════ حالة العودة العامة ════════ */
 interface RetentionState {
@@ -80,22 +67,6 @@ export function recordOpenToday(): void {
   const s = loadRet();
   s.lastOpen = localDayKey();
   saveRet(s);
-}
-/* ملخّص «ما فاتك» للترحيب بالعودة */
-export function comebackSummary(): { daysAway: number; streakBroke: boolean; dueCards: number; lastStudyDaysAgo: number | null } {
-  const stats = loadStats();
-  const away = daysAway();
-  const brk = streakBreak(stats);
-  let dueCards = 0;
-  try {
-    const cards = JSON.parse(localStorage.getItem("darb_cards") ?? "[]") as { dueDate?: number }[];
-    const now = Date.now();
-    dueCards = Array.isArray(cards) ? cards.filter((c) => (c.dueDate ?? Infinity) <= now).length : 0;
-  } catch {}
-  const days = [...new Set(stats.sessionDays)].sort();
-  const last = days[days.length - 1];
-  const lastStudyDaysAgo = last ? daysBetween(last, localDayKey()) : null;
-  return { daysAway: away, streakBroke: brk.broke, dueCards, lastStudyDaysAgo };
 }
 
 /* ════════ 3) استعادة الستريك (Streak Recovery) ════════ */

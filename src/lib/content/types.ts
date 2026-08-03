@@ -64,8 +64,6 @@ export const CONTENT_COLLECTIONS = [
   "success_stories",
 ] as const;
 
-export type ContentCollection = (typeof CONTENT_COLLECTIONS)[number];
-
 /* overlay من Firestore — كل مجموعة اختيارية (offline-first: البذرة تكفي) */
 export interface ContentOverlay {
   faq_general?: FaqDoc[];

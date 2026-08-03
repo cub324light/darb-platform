@@ -334,11 +334,6 @@ export function topRecommendation(recs: Recommendation[]): Recommendation | null
   return feedRecommendations(recs)[0] ?? null;
 }
 
-/** توصيات تخصّ صفحة بعينها (لحقنها في رؤوس الصفحات لاحقاً). */
-export function recommendationsForPage(recs: Recommendation[], page: string): Recommendation[] {
-  return recs.filter((r) => r.targetPage === page);
-}
-
 /** أقسام لوحة يُوصى بإخفائها. */
 export function hiddenCards(recs: Recommendation[]): string[] {
   return recs.filter((r) => r.kind === "hide" && r.cardId).map((r) => r.cardId!) as string[];

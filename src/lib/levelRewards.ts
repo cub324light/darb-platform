@@ -6,7 +6,7 @@
    يُصرف مرّةً واحدة عبر `darb_levels_claimed`. ومن بلغ مستوياتٍ قبل أن توجد
    الجائزة يأخذها كلَّها الآن — لا نعاقبه على أنه سبقنا. */
 import { loadStats, addSilver } from "./storage";
-import { computeXP, pendingLevelRewards, LEVELS, levelIndexOf } from "./xp";
+import { computeXP, pendingLevelRewards } from "./xp";
 import { CATALOG, levelTitle } from "./economy/catalog";
 import { loadOwned, grantItem } from "./economy/store";
 
@@ -53,5 +53,3 @@ export function claimLevelRewards(): LevelClaim {
   return { levels: due.levels, silver: due.silver, titles };
 }
 
-/** اسمُ المستوى الحاليّ — للرسالة التي يراها الطالب. */
-export const currentLevelName = (xp: number): string => LEVELS[levelIndexOf(xp)]?.name ?? "";

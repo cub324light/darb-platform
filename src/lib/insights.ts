@@ -39,18 +39,6 @@ export function mostActiveTime(log: SessionLogEntry[]): { period: DayPeriod; min
   return { period: top[0] as DayPeriod, mins: top[1] };
 }
 
-/* ── أكثر مادة دراسة (بالدقائق) من سجل الجلسات كاملاً ── */
-export function mostStudiedSubject(log: SessionLogEntry[]): { name: string; mins: number } | null {
-  if (!log.length) return null;
-  const bySubject: Record<string, number> = {};
-  for (const e of log) {
-    if (e.subject && e.subject !== "—") bySubject[e.subject] = (bySubject[e.subject] ?? 0) + e.focusMins;
-  }
-  const top = Object.entries(bySubject).sort((a, b) => b[1] - a[1])[0];
-  if (!top || top[1] <= 0) return null;
-  return { name: top[0], mins: top[1] };
-}
-
 /* ── أطول ستريك تاريخي: أطول تسلسل أيام متتالية في sessionDays ──
    يُحسب لحظياً — لا تخزين إضافي. */
 export function longestStreak(stats: DarbStats): number {
@@ -67,20 +55,6 @@ export function longestStreak(stats: DarbStats): number {
     }
   }
   return best;
-}
-
-/* ── التحسّن الشهري: مقارنة دقائق آخر 30 يوماً بالـ30 التي قبلها ──
-   يعتمد على dayMins (محفوظ حتى 60 يوماً). null إن لا أساس للمقارنة. */
-export function monthlyDelta(stats: DarbStats): { mins: number; prevMins: number; deltaPct: number | null } {
-  const dayMins = stats.dayMins ?? {};
-  const sum = (keys: string[]) => keys.reduce((n, k) => n + (dayMins[k] ?? 0), 0);
-  const mins = sum(dayKeysBack(0, 30));
-  const prevMins = sum(dayKeysBack(30, 30));
-  // لا نعرض تغييراً إن لم يكن هناك قاعدة كافية (أقل من ساعة في الشهر السابق)
-  const deltaPct = prevMins >= 60
-    ? Math.max(-200, Math.min(200, Math.round(((mins - prevMins) / prevMins) * 100)))
-    : null;
-  return { mins, prevMins, deltaPct };
 }
 
 /* عدد الأيام النشطة ضمن آخر n يوم */

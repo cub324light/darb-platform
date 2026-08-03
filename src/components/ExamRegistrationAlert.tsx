@@ -4,7 +4,7 @@
    يُخفى تلقائياً إذا لا يوجد تنبيه نشط. */
 import { useMemo, useState } from "react";
 import { activeExamTrackIds } from "@/lib/storage";
-import { buildExamAlerts, nearestActiveWindow, type ExamAlert } from "@/lib/examProvider";
+import { buildExamAlerts, type ExamAlert } from "@/lib/examProvider";
 import type { TrackId } from "@/lib/tracks";
 import { n as ar } from "@/lib/format";
 
@@ -15,7 +15,6 @@ function todayStr(): string {
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
-
 
 function AlertCard({ alert, onDismiss }: { alert: ExamAlert; onDismiss: () => void }) {
   const isOpen = alert.status === "open";
@@ -85,41 +84,3 @@ export default function ExamRegistrationAlert() {
   );
 }
 
-/* ── بطاقة معلومات الاختبار الكاملة (لصفحة الملف الشخصي / الأهداف) ── */
-export function ExamWindowInfo({ trackId }: { trackId: TrackId }) {
-  const today = todayStr();
-  const info = useMemo(() => nearestActiveWindow(trackId, today), [trackId, today]);
-
-  if (!info) {
-    return (
-      <p className="text-[14px] px-1" style={{ color: "var(--text-muted)" }}>
-        ⏳ بانتظار إعلان هيئة تقويم التعليم والتدريب عن مواعيد {String(trackId)}.
-      </p>
-    );
-  }
-
-  const { window: w, status } = info;
-  if (status === "pending") {
-    return (
-      <p className="text-[14px] px-1" style={{ color: "var(--text-muted)" }}>
-        ⏳ بانتظار إعلان هيئة تقويم التعليم والتدريب — {w.yearLabel}.
-      </p>
-    );
-  }
-
-  const isOpen = status === "open";
-  const color = isOpen ? "var(--success)" : "var(--gold)";
-  return (
-    <div className="rounded-xl px-3 py-2 text-[14px]"
-      style={{ background: `color-mix(in srgb, ${color} 8%, var(--surface2))`, border: `1px solid color-mix(in srgb, ${color} 20%, transparent)` }}>
-      <span className="font-black" style={{ color }}>{isOpen ? "🟢 التسجيل مفتوح" : "🔔 التسجيل قادم"}</span>
-      <span className="mr-2" style={{ color: "var(--text-muted)" }}>{w.yearLabel}</span>
-      {isOpen && w.registrationEnd && (
-        <span style={{ color: "var(--text-muted)" }}> · ينتهي {w.registrationEnd}</span>
-      )}
-      {status === "upcoming" && w.registrationStart && (
-        <span style={{ color: "var(--text-muted)" }}> · يبدأ {w.registrationStart}</span>
-      )}
-    </div>
-  );
-}

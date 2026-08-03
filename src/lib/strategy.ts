@@ -377,13 +377,3 @@ export function subjectPriorityOrder(strategy: StudyStrategy): string[] {
   return sorted.map((s) => s.name);
 }
 
-/* ── نص عادي مختصر (للتقارير/الإيميل المستقبلي) ── */
-export function strategyPlainText(s: StudyStrategy): string {
-  return [
-    `الكثافة: ${s.labels.intensity}`,
-    `التوزيع: ${s.labels.allocation}`,
-    `${arN(s.weeklyHoursTotal)} ساعة أسبوعياً على ${arN(s.studyDaysPerWeek)} أيام`,
-    `الجلسة: ${s.session.label}`,
-    `المراجعة: ${s.labels.review}`,
-  ].join(" · ");
-}

@@ -1,17 +1,17 @@
 /* ═══════════════════════════════════════════════════════════════════════
    Events — طبقة الوصول (السطح العام الموحّد)
    نقطة الاستيراد الوحيدة: import { events, emit } from "@/lib/events"
-   تُسجّل المُتفاعلات الأساسية (الذاكرة + التوصيات) مرة واحدة. التحليلات تُوصَّل
-   من التطبيق (مزوّد محدّد) فيبقى المحرّك مستقلاً عن أي مزوّد.
+   تُسجّل المُتفاعلات الأساسية (الذاكرة + التوصيات) مرة واحدة. متفاعل التحليلات
+   مُصدَّرٌ هنا ولا يُوصَّل بعد — يوصّله التطبيق حين يُختار مزوّدٌ فعليّ، فيبقى
+   المحرّك مستقلاً عن أي مزوّد.
    ═══════════════════════════════════════════════════════════════════════ */
 import { EventEngine } from "./engine";
 import { LocalEventStore } from "./store";
-import { makeMemoryReactor, makeRecommendationReactor, makeAnalyticsReactor } from "./reactors";
+import { makeMemoryReactor, makeRecommendationReactor } from "./reactors";
 import { memory } from "../memory";
-import type { AnalyticsSink, EmitInput, EventType, DomainEvent } from "./types";
+import type { EmitInput, EventType, DomainEvent } from "./types";
 
 let _engine: EventEngine | null = null;
-let _analyticsWired = false;
 
 /** المحرّك الافتراضي — مع المُتفاعلات الأساسية مسجَّلة. */
 export function events(): EventEngine {
@@ -31,16 +31,8 @@ export function emit<T extends EventType>(input: EmitInput<T>): DomainEvent<T> {
   return events().emit(input);
 }
 
-/** يوصّل مغذّي تحليلات (من التطبيق) — مرة واحدة. يُبقي المحرّك مستقلاً عن المزوّد. */
-export function wireAnalytics(sink: AnalyticsSink): void {
-  if (_analyticsWired) return;
-  const r = makeAnalyticsReactor(sink);
-  events().subscribe(r.react, r.handles, r.name);
-  _analyticsWired = true;
-}
-
 /* لإعادة الضبط في الاختبارات */
-export function __resetEvents(): void { _engine = null; _analyticsWired = false; }
+export function __resetEvents(): void { _engine = null; }
 
 export { EventEngine } from "./engine";
 export { InMemoryEventStore, LocalEventStore, EVENT_LOG_KEY, MAX_LOCAL_EVENTS, MAX_LOCAL_AGE_DAYS } from "./store";

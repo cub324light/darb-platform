@@ -84,5 +84,4 @@ export const SEED_SOURCES: Source[] = SEEDS.map((s) => ({
   origin: "seed",
 }));
 
-export const SEED_SOURCE_BY_ID: Map<string, Source> = new Map(SEED_SOURCES.map((s) => [s.id, s]));
 export { DAY as MS_PER_DAY };

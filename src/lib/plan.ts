@@ -16,8 +16,6 @@ export const PLAN_COLORS: Record<PlanId, string> = {
   anqa: "#F59E0B",
 };
 
-export const PLAN_ORDER: PlanId[] = ["free", "shaheen", "anqa"];
-
 /* ═══════════ الأسعار — مصدرٌ واحد ═══════════
    كانت الأرقامُ مكتوبةً داخل JSX صفحةِ الباقات وفي `constants.ts` معاً، فتتفرّق
    نسختان عند أول تعديل. صارت هنا: من أراد تغييرَ سعرٍ غيّره في مكانٍ واحد.

@@ -83,9 +83,6 @@ export function searchNotes(notes: JournalNote[], q: string): JournalNote[] {
 export const togglePin = (notes: JournalNote[], id: string): JournalNote[] =>
   notes.map((x) => (x.id === id ? { ...x, pinned: !x.pinned } : x));
 
-export const noteById = (notes: JournalNote[], id: string): JournalNote | null =>
-  notes.find((x) => x.id === id) ?? null;
-
 /** أيامٌ فيها ورقةٌ واحدة على الأقلّ — الأحدثُ أوّلاً. */
 export const journalDays = (notes: JournalNote[]): string[] =>
   [...new Set(notes.map((n) => n.date))].sort((a, b) => b.localeCompare(a));

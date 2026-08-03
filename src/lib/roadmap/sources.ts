@@ -48,11 +48,6 @@ export interface Progress {
   pct: number;
 }
 
-export const SOURCE_KIND_LABEL: Record<SourceKind, string> = {
-  video: "فيديو",
-  pages: "صفحة",
-};
-
 /** وحدةُ العدّ بصيغة الجمع العربيّة المناسبة للعدد. */
 export function unitLabel(kind: SourceKind, count: number): string {
   if (kind === "video") return count >= 3 && count <= 10 ? "فيديوهات" : "فيديو";

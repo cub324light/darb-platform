@@ -82,16 +82,3 @@ export function Breadcrumbs({ items }: { items: { name: string; path: string }[]
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />;
 }
 
-/** صفحةُ أسئلةٍ شائعة — تُغذّى بأسئلةٍ حقيقية من محتوى درب. */
-export function FaqJsonLd({ items }: { items: { question: string; answer: string }[] }) {
-  const data = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: items.map((f) => ({
-      "@type": "Question",
-      name: f.question,
-      acceptedAnswer: { "@type": "Answer", text: f.answer },
-    })),
-  };
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />;
-}

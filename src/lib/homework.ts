@@ -69,10 +69,6 @@ export function addHomework(list: Homework[], input: HwInput): Homework[] {
   return [...list, makeHomework(input)];
 }
 
-export function updateHomework(list: Homework[], id: string, patch: Partial<Homework>): Homework[] {
-  return list.map((h) => (h.id === id ? { ...h, ...patch } : h));
-}
-
 export function removeHomework(list: Homework[], id: string): Homework[] {
   return list.filter((h) => h.id !== id);
 }

@@ -3,19 +3,6 @@ import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db, auth } from "./firebase";
 import { stripContact } from "./contactFilter";
 
-/* UID المستخدم — يُفضّل Firebase Auth UID لربط البريد الإلكتروني، بديله localStorage */
-export function getOrCreateUid(): string {
-  if (typeof window === "undefined") return "ssr";
-  const firebaseUid = auth.currentUser?.uid;
-  if (firebaseUid) return firebaseUid;
-  let uid = localStorage.getItem("darb_uid");
-  if (!uid) {
-    uid = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-    localStorage.setItem("darb_uid", uid);
-  }
-  return uid;
-}
-
 /* ─── تسجيل مستخدم جديد (عند الـ onboarding) ─── */
 export async function registerUser(
   name: string,

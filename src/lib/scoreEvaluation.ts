@@ -74,5 +74,3 @@ export const evalBarPct = (score?: number | null): number =>
 /** نصّ الدرجة «X من 100» بالأرقام العربية-الهندية. */
 export const scoreOutOf = (score: number): string => `${n(score)} من ${n(EVAL_MAX)}`;
 
-export const SCORE_EVALUATION_DISCLAIMER =
-  "التقييم العام إرشادي حسب توزيع الجهات الرسمية — لا يغيّر شروط القبول الخاصة بكل فرصة.";
