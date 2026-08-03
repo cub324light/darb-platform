@@ -29,6 +29,11 @@ export const frac = (a: number, total: number): string => `${n(a)}/${n(total)}`;
 /* مبلغٌ بالريال السعودي (1500 → 1٬500 ﷼) */
 export const sar = (x: number): string => `${n(x)} ﷼`;
 
+/* سعرٌ قد يكون كسرياً (٥٫٩٩) — خانتان بعد الفاصلة للكسر، وبلا كسرٍ للصحيح.
+   الفاصلةُ العربية (٫) لا النقطة: هي فاصلةُ الكسر في الترقيم الذي نكتب به. */
+export const price = (x: number): string =>
+  Number.isInteger(x) ? n(x) : x.toLocaleString(AR, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 const toDate = (iso: string): Date => new Date(iso.length <= 10 ? `${iso}T12:00:00` : iso);
 
 /* تاريخٌ عربي مختصر (11 يوليو) */

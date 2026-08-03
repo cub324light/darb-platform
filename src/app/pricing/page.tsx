@@ -3,7 +3,8 @@ import { useState } from "react";
 import Link from "next/link";
 import BackButton from "@/components/BackButton";
 import { useRouter } from "next/navigation";
-import { getPlan, setPlan, PLAN_NAMES } from "@/lib/plan";
+import { getPlan, setPlan, PLAN_NAMES, PLAN_PRICE, SANAD_PRICE } from "@/lib/plan";
+import { price } from "@/lib/format";
 import type { PlanId } from "@/lib/types";
 
 const COMPARE_FEATURES = [
@@ -20,7 +21,6 @@ const COMPARE_FEATURES = [
 ];
 
 export default function PricingPage() {
-  const [lifeTime, setLifeTime] = useState(false);
   const router = useRouter();
   const [current, setCurrent] = useState<PlanId>(() =>
     typeof window !== "undefined" ? getPlan() : "free"
@@ -137,8 +137,8 @@ export default function PricingPage() {
                   <p className="text-xs text-[var(--text-muted)]">للطالب الجاد</p>
                 </div>
                 <div className="text-left">
-                  <span className="font-mono-nums text-3xl font-black text-[var(--accent-light)]">35</span>
-                  <span className="text-xs text-[var(--text-muted)]"> ريال/شهر</span>
+                  <span className="font-mono-nums text-3xl font-black text-[var(--accent-light)]">{price(PLAN_PRICE.shaheen!.amount)}</span>
+                  <span className="text-xs text-[var(--text-muted)]"> ريال/{PLAN_PRICE.shaheen!.period}</span>
                 </div>
               </div>
               <div className="space-y-1.5 mb-4">
@@ -186,31 +186,9 @@ export default function PricingPage() {
                   <p className="text-xs text-[var(--text-muted)]">للنخبة فقط</p>
                 </div>
                 <div className="text-left">
-                  <span className="font-mono-nums text-3xl font-black text-[var(--gold)]">
-                    {lifeTime ? "279" : "119"}
-                  </span>
-                  <span className="text-xs text-[var(--text-muted)]">
-                    {lifeTime ? " ريال مدى الحياة" : " ريال/سنة"}
-                  </span>
+                  <span className="font-mono-nums text-3xl font-black text-[var(--gold)]">{price(PLAN_PRICE.anqa!.amount)}</span>
+                  <span className="text-xs text-[var(--text-muted)]"> ريال/{PLAN_PRICE.anqa!.period}</span>
                 </div>
-              </div>
-
-              {/* Toggle yearly/lifetime */}
-              <div className="flex items-center gap-2 mb-4">
-                <button
-                  onClick={() => setLifeTime(false)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition ${!lifeTime ? "text-[var(--gold)]" : "glass text-[var(--text-muted)]"}`}
-                  style={!lifeTime ? { background: "rgba(245,158,11,0.08)", border: "1px solid #F59E0B" } : undefined}
-                >
-                  سنوي — 119
-                </button>
-                <button
-                  onClick={() => setLifeTime(true)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition ${lifeTime ? "text-[var(--gold)]" : "glass text-[var(--text-muted)]"}`}
-                  style={lifeTime ? { background: "rgba(245,158,11,0.08)", border: "1px solid #F59E0B" } : undefined}
-                >
-                  مدى الحياة — 279
-                </button>
               </div>
 
               <div className="space-y-1.5 mb-4">
@@ -235,12 +213,6 @@ export default function PricingPage() {
               >
                 {current === "anqa" ? "باقتك الحالية ✓" : "فعّل عنقاء — تجربة مجانية"}
               </button>
-
-              {lifeTime && (
-                <p className="text-[19px] text-center text-[var(--text-muted)] mt-2">
-                  لماذا 279 تحديداً؟ لأنه رقم محسوب — يعكس قيمة حقيقية.
-                </p>
-              )}
             </div>
           </div>
         </div>
@@ -264,8 +236,8 @@ export default function PricingPage() {
               <p className="text-xs text-[var(--text-muted)]">متابعة الابن بدون ضغط</p>
             </div>
             <div className="text-left">
-              <span className="font-mono-nums text-3xl font-black text-[var(--success)]">49</span>
-              <span className="text-xs text-[var(--text-muted)]"> ريال/شهر</span>
+              <span className="font-mono-nums text-3xl font-black text-[var(--success)]">{price(SANAD_PRICE.amount)}</span>
+              <span className="text-xs text-[var(--text-muted)]"> ريال/{SANAD_PRICE.period}</span>
             </div>
           </div>
           <div className="space-y-1.5 mb-4">
@@ -282,12 +254,12 @@ export default function PricingPage() {
               </div>
             ))}
           </div>
-          <div
-            className="block w-full py-3 rounded-2xl font-bold text-center text-sm"
-            style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}
+          <Link href="/sanad"
+            className="block w-full py-3 rounded-2xl font-bold text-center text-sm no-underline"
+            style={{ background: "color-mix(in srgb, var(--success) 10%, transparent)", border: "1.5px solid var(--success)", color: "var(--success)" }}
           >
-            قريباً
-          </div>
+            اعرف سند ←
+          </Link>
         </div>
 
         {/* Pay with effort */}
@@ -330,9 +302,8 @@ export default function PricingPage() {
 
         {/* Footer note */}
         <p className="text-center text-xs text-[var(--text-muted)] mt-8">
-          سبب 279 تحديداً: يبدو &ldquo;محسوباً&rdquo; مش &ldquo;مقرباً&rdquo; — يزيد المصداقية.
-          <br />
-          سبب 35: يعكس قيمة أعلى ولا يزال أرخص من أي منافس.
+          الأسعار بالريال السعودي، وتُلغى متى شئت. والباقة المجانية تبقى مجانية —
+          ليست تجربةً تنتهي.
         </p>
       </div>
     </div>

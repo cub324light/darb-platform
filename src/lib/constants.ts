@@ -34,7 +34,7 @@ export const PLANS = [
   {
     id: "shaheen",
     name: "شاهين",
-    price: 35,
+    price: 5.99,
     period: "شهر",
     badge: "الأكثر شيوعاً",
     color: "#2563EB",
@@ -51,9 +51,8 @@ export const PLANS = [
   {
     id: "anqa",
     name: "عنقاء",
-    price: 119,
-    period: "سنة",
-    priceLifetime: 279,
+    price: 14.99,
+    period: "شهر",
     badge: "النخبة والمؤسسون",
     color: "#F59E0B",
     features: [
@@ -70,8 +69,8 @@ export const PLANS = [
 export const PARENT_PLAN = {
   id: "sand",
   name: "سند",
-  price: 49,
-  period: "شهر",
+  price: 59.99,
+  period: "سنة",
   color: "#10B981",
   badge: "لولي الأمر",
   features: [

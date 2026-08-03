@@ -239,10 +239,14 @@ export function loadStats(): DarbStats {
   }
 }
 
+/** يُبَثّ عند كل تغيّرٍ في الإحصاءات — فيسمعه عدّادُ الفضة بدل أن يستجوب كلَّ ثانية. */
+export const STATS_CHANGED = "darb:statsChanged";
+
 function saveStats(s: DarbStats) {
   try {
     localStorage.setItem(STATS_KEY, JSON.stringify(s));
   } catch {}
+  try { window.dispatchEvent(new Event(STATS_CHANGED)); } catch { /* خادمٌ أو نافذةٌ مغلقة */ }
 }
 
 /* ── سجل الجلسات: كل جلسة Orbit منجزة (المادة، المدة، الوقت) ── */

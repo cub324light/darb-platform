@@ -18,6 +18,23 @@ export const PLAN_COLORS: Record<PlanId, string> = {
 
 export const PLAN_ORDER: PlanId[] = ["free", "shaheen", "anqa"];
 
+/* ═══════════ الأسعار — مصدرٌ واحد ═══════════
+   كانت الأرقامُ مكتوبةً داخل JSX صفحةِ الباقات وفي `constants.ts` معاً، فتتفرّق
+   نسختان عند أول تعديل. صارت هنا: من أراد تغييرَ سعرٍ غيّره في مكانٍ واحد.
+   (بأمر المالك ٢٠٢٦-٠٨-٠٣: شاهين ٥٫٩٩ شهرياً · عنقاء ١٤٫٩٩ شهرياً · سند ٥٩٫٩٩ سنوياً.) */
+export type BillingPeriod = "شهر" | "سنة";
+
+export interface PlanPrice { amount: number; period: BillingPeriod }
+
+export const PLAN_PRICE: Record<PlanId, PlanPrice | null> = {
+  free: null,
+  shaheen: { amount: 5.99, period: "شهر" },
+  anqa: { amount: 14.99, period: "شهر" },
+};
+
+/** سند منتجٌ مستقلٌّ لوليّ الأمر — ليس باقةَ طالب، فلا يدخل `PlanId`. */
+export const SANAD_PRICE: PlanPrice = { amount: 59.99, period: "سنة" };
+
 /* حد الخزنة لكل مادة في الباقة المجانية — غير محدود للمدفوع */
 export const VAULT_FREE_LIMIT = 25;
 

@@ -145,6 +145,8 @@ export default function RoadmapPage() {
   const doneToday = tasksDoneToday();
   const totalTasks = plan?.tasks.length ?? 0;
   const allDone = totalTasks > 0 && doneToday >= totalTasks;
+  /* المهمّةُ التالية — بها يبدأ الزرُّ، وباسمها يُخبر الطالبَ بأيّ مادّةٍ يبدأ */
+  const nextTask = plan?.tasks[Math.min(doneToday, Math.max(0, totalTasks - 1))] ?? plan?.tasks[0];
 
   /* 🗓️ التقويم — ماذا عندي؟ عنوانُ أقرب حدثٍ وحده هو القيمة (قصيرٌ يحتمل الخطّ الكبير)،
      والظرف («اليوم»/«غداً») ينزل إلى الوصف مع الحدث الذي يليه — لا دمجَ في سطرٍ واحد. */
@@ -242,48 +244,6 @@ export default function RoadmapPage() {
         </button>
         ) },
 
-        /* 🎯 هدف اليوم — ماذا سأفعل؟ (عدد المهام · المهمة الحالية · هل أنهيتها) */
-        { id: "goal", label: "هدف اليوم", desc: "عددُ مهامّك والمهمّة التالية", node: (
-        <button onClick={() => router.push("/roadmap/session")}
-          className="ds-card ds-card-interactive flex flex-col gap-2.5 text-right rise rise-2"
-          style={{ ["--tint" as string]: allDone ? "var(--success)" : "var(--accent)" }}>
-          <span className="flex items-center gap-3 w-full">
-            <span className="w-11 h-11 rounded-2xl grid place-items-center text-[20px] flex-shrink-0"
-              style={{ background: `color-mix(in srgb, ${allDone ? "var(--success)" : "var(--accent)"} 12%, var(--surface2))` }} aria-hidden="true">
-              {allDone ? "✓" : "🎯"}
-            </span>
-            <span className="flex-1 min-w-0 flex flex-col gap-0.5">
-              <span className="eyebrow" style={{ color: "var(--text-dim)" }}>هدف اليوم</span>
-              <span className="t-h3 font-black leading-snug" style={{ color: "var(--text)" }}>
-                {plan?.available ? (allDone ? "أنهيتَ مهامّ اليوم" : tasksWord(totalTasks)) : "يومك مشغول"}
-              </span>
-              <span className="t-caption leading-snug line-clamp-2" style={{ color: "var(--text-muted)" }}>
-                {plan?.available
-                  ? (allDone ? "جلسةٌ إضافية؟ أنت في المقدّمة اليوم." : doneToday > 0 ? `التالية: ${plan.tasks[Math.min(doneToday, totalTasks - 1)]?.label ?? ""}` : plan.tasks[0]?.label ?? "")
-                  : (plan?.hint ?? "حدّد ساعات مذاكرتك")}
-              </span>
-            </span>
-            {plan?.available && !allDone && (
-              <span className="t-caption font-black px-3 py-1.5 rounded-full flex-shrink-0"
-                style={{ background: "color-mix(in srgb, var(--accent) 14%, transparent)", color: "var(--accent-light)" }}>ابدأ الآن</span>
-            )}
-          </span>
-
-          {/* شريطُ التقدّم: «كم أنجزتُ من مهامّ اليوم؟» كان رقماً في سطرٍ صغير */}
-          {plan?.available && totalTasks > 0 && (
-            <span className="w-full flex items-center gap-2">
-              <span className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
-                <span className="block h-full rounded-full transition-all duration-700"
-                  style={{ width: `${Math.min(100, Math.round((doneToday / totalTasks) * 100))}%`, background: allDone ? "var(--success)" : "var(--accent)" }} />
-              </span>
-              <span className="t-caption font-mono-nums flex-shrink-0" style={{ color: "var(--text-muted)" }}>
-                {n(Math.min(doneToday, totalTasks))}/{n(totalTasks)}
-              </span>
-            </span>
-          )}
-        </button>
-        ) },
-
         /* الشبكة ٢×٢ — كل بطاقة تجيب سؤالاً واحداً، بلا تكرارٍ مع صفحةٍ أخرى */
         { id: "tiles", label: "بطاقاتك الأربع", desc: "اختبارك · خطتي · التقويم · المصادر", node: (
         <div className="grid grid-cols-2 gap-2.5 rise rise-3">
@@ -314,26 +274,59 @@ export default function RoadmapPage() {
         </div>
         ) },
 
-        /* ▶ البطل — أضخم عنصرٍ في الصفحة. ثابتٌ لا يُخفى: صفحةٌ لا تبدأ منها
-           المذاكرةُ ليست «مساري». */
-        { id: "start", label: "ابدأ المذاكرة", desc: "زرُّ بدء جلسة اليوم", fixed: true, node: (
+        /* ▶ البطل — وفيه **هدفُ اليوم**. كانا بطاقتين: واحدةٌ تقول ماذا عليك
+           وأخرى تقول ابدأ، والطالبُ يقرأ الأولى ثم يضغط الثانية. صارا واحداً:
+           ماذا عليك اليوم · كم أنجزت · وبأيّ مادّةٍ يبدأ — في الزرّ الذي يبدأ.
+           ثابتٌ لا يُخفى: صفحةٌ لا تبدأ منها المذاكرةُ ليست «مساري». */
+        { id: "start", label: "ابدأ المذاكرة", desc: "هدفُ اليوم وزرُّ البدء", fixed: true, node: (
         <button onClick={() => {
-            const t = plan?.tasks[0];
+            /* يبدأ بالمهمّة **التالية** لا بالأولى دائماً: من أنجز اثنتين يكمل
+               من الثالثة، فتبدأ الجلسةُ على مادّتها هي. */
+            const t = nextTask;
             router.push(`/orbit?${focusHandoffQuery({
               subject: t?.subject ?? counts.weakestSubject ?? undefined,
               taskMins: t?.goalMins, taskLabel: t?.label,
             })}`);
           }}
-          className="w-full transition active:scale-[0.98] rise rise-4"
+          className="w-full text-right transition active:scale-[0.98] rise rise-3"
           style={{
-            background: "linear-gradient(135deg, var(--accent), var(--accent-hi, var(--accent-light)))",
-            color: "#fff", border: "none", borderRadius: "var(--r-lg)", padding: "16px 20px",
+            background: allDone
+              ? "linear-gradient(135deg, var(--success), color-mix(in srgb, var(--success) 70%, var(--accent)))"
+              : "linear-gradient(135deg, var(--accent), var(--accent-hi, var(--accent-light)))",
+            color: "#fff", border: "none", borderRadius: "var(--r-lg)", padding: "16px 18px",
             boxShadow: "0 12px 32px color-mix(in srgb, var(--accent) 32%, transparent), 0 2px 6px rgba(0,0,0,.06)",
           }}>
-          <span className="block t-title font-black" style={{ letterSpacing: "0" }}>▶ ابدأ المذاكرة</span>
-          <span className="block t-caption font-bold mt-1" style={{ color: "rgba(255,255,255,.86)" }}>
-            {plan?.available ? (allDone ? "أنهيت مهامّ اليوم — جلسةٌ إضافية؟" : "تبدأ جلسة تركيزٍ الآن") : "افتح جلستك"}
+          <span className="flex items-center gap-3 w-full">
+            <span className="w-11 h-11 rounded-2xl grid place-items-center text-[20px] flex-shrink-0"
+              style={{ background: "rgba(255,255,255,.16)" }} aria-hidden="true">{allDone ? "✓" : "▶"}</span>
+            <span className="flex-1 min-w-0 flex flex-col gap-0.5">
+              <span className="eyebrow" style={{ color: "rgba(255,255,255,.8)" }}>
+                {plan?.available && !allDone ? `هدف اليوم · ${tasksWord(totalTasks)}` : "هدف اليوم"}
+              </span>
+              <span className="block t-title font-black" style={{ letterSpacing: "0" }}>
+                {allDone ? "أنهيتَ مهامّ اليوم" : "ابدأ المذاكرة"}
+              </span>
+              <span className="block t-caption font-bold line-clamp-2" style={{ color: "rgba(255,255,255,.86)" }}>
+                {!plan?.available
+                  ? (plan?.hint ?? "حدّد ساعات مذاكرتك")
+                  : allDone ? "جلسةٌ إضافية؟ أنت في المقدّمة اليوم."
+                  : `تبدأ بـ${nextTask?.label ?? "جلسة تركيز"}`}
+              </span>
+            </span>
           </span>
+
+          {/* كم أنجزتَ من مهامّ اليوم — كان في البطاقة المحذوفة */}
+          {plan?.available && totalTasks > 0 && (
+            <span className="w-full flex items-center gap-2 mt-3">
+              <span className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,.25)" }}>
+                <span className="block h-full rounded-full transition-all duration-700"
+                  style={{ width: `${Math.min(100, Math.round((doneToday / totalTasks) * 100))}%`, background: "#fff" }} />
+              </span>
+              <span className="t-caption font-mono-nums font-black flex-shrink-0" style={{ color: "rgba(255,255,255,.92)" }}>
+                {n(Math.min(doneToday, totalTasks))}/{n(totalTasks)}
+              </span>
+            </span>
+          )}
         </button>
         ) },
 
