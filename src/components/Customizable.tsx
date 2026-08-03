@@ -171,7 +171,11 @@ export default function Customizable({
             {/* حاجزٌ يمنع الضغط على ما بداخل القسم أثناء التعديل */}
             <div className="absolute inset-0 z-10 rounded-2xl" style={{ background: "transparent" }} aria-hidden="true" />
 
-            <div className="absolute -top-3 right-2 z-20 flex items-center gap-1.5">
+            {/* ▓ الصفُّ يمتدّ عرضَ القسم كلَّه لا يتكوّم في زاويةٍ واحدة: المقبضُ
+               والرقمُ يميناً، والسالبُ الأحمر **أقصى اليسار** — طرفانِ متقابلان،
+               فلا تُخفي قسماً وأنت تقصد سحبَه. والوسطُ لا يلتقط لمسةً. */}
+            <div className="absolute -top-3 left-2 right-2 z-20 flex items-center justify-between pointer-events-none">
+              <div className="flex items-center gap-1.5 pointer-events-auto">
               {sec.fixed ? (
                 <span className="t-caption font-black px-2 py-1 rounded-lg flex items-center gap-1"
                   style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-dim)" }}>🔒 ثابت</span>
@@ -191,13 +195,14 @@ export default function Customizable({
               )}
               <span className="t-caption font-mono-nums px-1.5 py-1 rounded-lg"
                 style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-dim)" }}>{n(i + 1)}</span>
+              </div>
+
               {/* سالبٌ أحمر يخفي، وزائدٌ أخضر يُرجع — علامتان تُفهمان بلا قراءة.
-                  وهو **آخرُ العناصر** فيقع أقصى اليسار في الاتجاه العربي.
                   والثابتُ لا سالبَ له: لا يُخفى أصلاً. */}
               {!sec.fixed && (
               <button onClick={() => setDraft((d) => toggleSection(d ?? saved, defs, s.id))}
                 aria-pressed={s.visible} aria-label={`${s.visible ? "أخفِ" : "أظهر"} ${sec.label}`}
-                className="w-8 h-8 rounded-full grid place-items-center font-black leading-none"
+                className="w-8 h-8 rounded-full grid place-items-center font-black leading-none pointer-events-auto"
                 style={{
                   fontSize: "1.25rem",
                   background: s.visible
