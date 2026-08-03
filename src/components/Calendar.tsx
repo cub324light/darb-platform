@@ -53,6 +53,29 @@ function hijriMonthStart(ref: Date): Date {
 
 interface PeekState { key: string; cx: number; top: number; bottom: number; place: "top" | "bottom"; }
 
+/* مفتاحُ طبقةٍ على الأيام — شكلٌ واحدٌ لطبقتين: تقويمُ الوزارة، وخطّةُ الطالب.
+   نسخةٌ واحدةٌ لا نسختان تتفرّقان يوم يُعدَّل شكلُ المفتاح. */
+function BandToggle({ label, on, onToggle }: { label: string; on: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={on}
+      className="w-full flex items-center justify-between gap-3 rounded-2xl px-4 py-3 transition active:scale-[0.99]"
+      style={{
+        background: on ? "color-mix(in srgb, var(--accent) 8%, var(--surface2))" : "var(--surface2)",
+        border: `1.5px solid ${on ? "color-mix(in srgb, var(--accent) 40%, transparent)" : "var(--border)"}`,
+      }}
+    >
+      <span className="t-small font-black text-right" style={{ color: "var(--text)" }}>{label}</span>
+      <span aria-hidden="true" className="w-12 h-7 rounded-full flex items-center transition flex-shrink-0 px-0.5"
+        style={{ background: on ? "var(--accent)" : "var(--border)", justifyContent: on ? "flex-start" : "flex-end" }}>
+        <span className="w-6 h-6 rounded-full" style={{ background: "#fff" }} />
+      </span>
+    </button>
+  );
+}
+
 /** اختبارُ الطالب كما يعرفه التقويم — مفتاحٌ واسمٌ ولون. */
 export interface CalendarExam { key: string; label: string; color?: string }
 
@@ -92,6 +115,9 @@ export default function Calendar({
   const [mode, setMode] = useState<Mode>("gregorian");
   /* ظِلُّ التقويم الدراسي — ظاهرٌ افتراضاً، ويُطفئه من لا يريده فيبقى مطفأً */
   const showBands = usePref("calBands", true);
+  /* وخطّتك أنت مفتاحٌ ثانٍ مستقلّ: تقويمُ الوزارة حقيقةٌ ثابتة، وخطّتُك تقديرٌ
+     يتحرّك — فمن أراد أن يرى الفصلَ وحده أطفأ خطّته، والعكس. */
+  const showPlan = usePref("calPlanBands", true);
   const [viewDate, setViewDate] = useState(new Date());
   const [peek, setPeek] = useState<PeekState | null>(null);
   /* اليومُ المفتوح في ورقته — الضغطُ يفتح يومَه لا يحدّد اختباراً بالخطأ */
@@ -238,6 +264,21 @@ export default function Calendar({
     return [...seen.values()];
   })();
 
+  /* مفتاحُ خطّتك — فتراتُك الظاهرةُ في هذا الشهر وحدها، بالاسم الذي بنيناه لها:
+     «القدرات» وحدها، أو «القدرات + STEP» في الفترة المشتركة. */
+  const monthPlanTones = (() => {
+    if (!showPlan || !planPhases?.length) return [] as { label: string; color: string }[];
+    const seen = new Map<string, { label: string; color: string }>();
+    for (const c of cells) {
+      if (!c.inMonth) continue;
+      const k = dk(c.greg);
+      const ph = planPhases.find((x) => k >= x.start && k <= x.end);
+      if (!ph || seen.has(ph.label)) continue;
+      seen.set(ph.label, { label: ph.label, color: ph.overlap ? "var(--gold)" : "var(--accent-light)" });
+    }
+    return [...seen.values()];
+  })();
+
   const header = () => {
     if (mode === "gregorian") {
       return `${GREG_MONTHS[viewDate.getMonth()]} ${year(viewDate.getFullYear())}`;
@@ -356,29 +397,10 @@ export default function Calendar({
       {/* التقويم الدراسي على الأيام — إظهارٌ وإطفاء، ومفتاحُ الألوان تحته.
           لا نعرض إلا الفتراتِ الظاهرةَ في الشهر المعروض، فلا يقرأ الطالبُ
           مفتاحاً لألوانٍ لا يراها. */}
-      <div className="mb-3">
-        {/* مفتاحٌ ظاهرُ الحالة — كان سطراً يقول «ظاهر/مخفيّ» فلا يُقرأ زرّاً */}
-        <button
-          type="button"
-          onClick={() => setPref("calBands", !showBands)}
-          aria-pressed={showBands}
-          className="w-full flex items-center justify-between gap-3 rounded-2xl px-4 py-3 transition active:scale-[0.99]"
-          style={{
-            background: showBands ? "color-mix(in srgb, var(--accent) 8%, var(--surface2))" : "var(--surface2)",
-            border: `1.5px solid ${showBands ? "color-mix(in srgb, var(--accent) 40%, transparent)" : "var(--border)"}`,
-          }}
-        >
-          <span className="t-small font-black text-right" style={{ color: "var(--text)" }}>
-            🗓️ التقويم الدراسي على الأيام
-          </span>
-          <span aria-hidden="true" className="w-12 h-7 rounded-full flex items-center transition flex-shrink-0 px-0.5"
-            style={{ background: showBands ? "var(--accent)" : "var(--border)", justifyContent: showBands ? "flex-start" : "flex-end" }}>
-            <span className="w-6 h-6 rounded-full" style={{ background: "#fff" }} />
-          </span>
-        </button>
-
+      <div className="mb-3 flex flex-col gap-2">
+        <BandToggle label="🗓️ التقويم الدراسي على الأيام" on={showBands} onToggle={() => setPref("calBands", !showBands)} />
         {showBands && monthTones.length > 0 && (
-          <div className="flex flex-wrap gap-x-3 gap-y-1.5 mt-2 px-1">
+          <div className="flex flex-wrap gap-x-3 gap-y-1.5 px-1">
             {monthTones.map((t) => (
               <span key={t.label} className="flex items-center gap-1.5">
                 <span aria-hidden="true" className="rounded-md"
@@ -387,6 +409,25 @@ export default function Calendar({
               </span>
             ))}
           </div>
+        )}
+
+        {/* المفتاحُ الثاني: خطّتك أنت. لا يظهر لمن لا خطّةَ له — زرٌّ لا يحرّك
+            شيئاً أسوأُ من غيابه. */}
+        {!!planPhases?.length && (
+          <>
+            <BandToggle label="🎯 خطّتك على الأيام" on={showPlan} onToggle={() => setPref("calPlanBands", !showPlan)} />
+            {showPlan && monthPlanTones.length > 0 && (
+              <div className="flex flex-wrap gap-x-3 gap-y-1.5 px-1">
+                {monthPlanTones.map((t) => (
+                  <span key={t.label} className="flex items-center gap-1.5">
+                    <span aria-hidden="true" className="rounded-full"
+                      style={{ width: 16, height: 4, background: t.color }} />
+                    <span className="t-caption" style={{ color: "var(--text-muted)" }}>{t.label}</span>
+                  </span>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -475,15 +516,24 @@ export default function Calendar({
                 </span>
                 {/* خطُّ خطّتك: رفيعٌ أسفل الخليّة — المشتركةُ ذهبيّةٌ ممتلئة،
                     والمنفردةُ زرقاءُ هادئة. لا يُزاحم ظِلَّ التقويم الدراسي. */}
-                {cell.inMonth && planPhases && (() => {
+                {showPlan && cell.inMonth && planPhases && (() => {
                   const ph = planPhases.find((x) => cellKey >= x.start && cellKey <= x.end);
                   if (!ph) return null;
+                  /* يستدير عند طرفَي الفترة وطرفَي الصفّ — كظِلّ التقويم الدراسي
+                     فوقه، فيُقرأ الاثنان بمنطقٍ واحد. */
+                  const isFirst = cellKey === ph.start || ci === 0;
+                  const isLast = cellKey === ph.end || ci === 6;
+                  const r = 4;
                   return (
                     <span aria-hidden="true" className="absolute"
                       style={{
-                        bottom: 1, insetInlineStart: 1, insetInlineEnd: 1, height: 3, borderRadius: 3,
+                        bottom: 1, insetInlineStart: 0, insetInlineEnd: 0, height: 4,
                         background: ph.overlap ? "var(--gold)" : "var(--accent-light)",
-                        opacity: ph.overlap ? 0.95 : 0.6,
+                        opacity: ph.overlap ? 0.95 : 0.62,
+                        borderStartStartRadius: isFirst ? r : 0,
+                        borderEndStartRadius: isFirst ? r : 0,
+                        borderStartEndRadius: isLast ? r : 0,
+                        borderEndEndRadius: isLast ? r : 0,
                       }} />
                   );
                 })()}

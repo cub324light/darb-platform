@@ -51,6 +51,7 @@ export default function SettingsButton() {
      الترطيب ولا تنشئ نسخةً ثانيةً من الحقيقة. */
   const calSystem = useCalSystem();
   const calBands = usePref("calBands", true);
+  const calPlanBands = usePref("calPlanBands", true);
   const orbitKeep = usePref("orbitKeep", true);
   const notifyEnd = usePref("notifyEnd", true);
   const soundEnd = usePref("soundEnd", true);
@@ -243,6 +244,11 @@ export default function SettingsButton() {
             title="التقويم الدراسي على الأيام"
             desc="ظلٌّ ملوّن يبيّن أيام الدراسة والإجازات والاختبارات"
             control={<Switch on={calBands} onToggle={() => setPref("calBands", !calBands)} label="التقويم الدراسي على الأيام" />}
+          />
+          <PrefRow
+            title="خطّتك على الأيام"
+            desc="خطٌّ تحت أيام فتراتك: اختبارٌ وحده، أو فترةٌ مشتركة"
+            control={<Switch on={calPlanBands} onToggle={() => setPref("calPlanBands", !calPlanBands)} label="خطّتك على الأيام" />}
           />
           <PrefRow
             title="إبقاء جلسة تركيز شغّالة"

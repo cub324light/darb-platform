@@ -16,6 +16,8 @@ import {
   type JournalNote, type NoteKind, type Stroke, type TableData,
 } from "@/lib/journal/journal";
 import { useSubjectNames } from "@/lib/journal/subjects";
+import { primaryPeriodOn } from "@/lib/academicCalendar";
+import { PERIOD_TONE } from "@/lib/calendarTone";
 import { dateFull, n, sheets } from "@/lib/format";
 
 const KIND_META: Record<NoteKind, { icon: string; label: string; hint: string }> = {
@@ -25,6 +27,27 @@ const KIND_META: Record<NoteKind, { icon: string; label: string; hint: string }>
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
+
+/* ── سياقُ اليوم من التقويم الدراسي ──
+   الورقةُ مؤرَّخة، والتاريخُ وحده لا يذكّر: «الأحد ١١ يناير» تنسى ما كانت، لكن
+   «الفصل الدراسي الأول» أو «إجازة الفصل الأول» تُرجعك إلى يومك. مصدرُها تقويمُ
+   الوزارة نفسُه الذي يقرؤه التقويم — لا يُدخَل يدوياً ولا يُخمَّن. */
+function DayContext({ date, className }: { date: string; className?: string }) {
+  const p = primaryPeriodOn(date);
+  if (!p) return null;
+  const tone = PERIOD_TONE[p.kind];
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full t-caption font-bold flex-shrink-0 ${className ?? ""}`}
+      style={{
+        background: `color-mix(in srgb, ${tone.color} 12%, var(--surface2))`,
+        border: `1px solid color-mix(in srgb, ${tone.color} 28%, transparent)`,
+        color: "var(--text)",
+      }}>
+      <span aria-hidden="true">{tone.icon}</span>
+      <span className="truncate">{p.label}</span>
+    </span>
+  );
+}
 
 export default function DayJournal() {
   const notes = useJournal();
@@ -61,6 +84,12 @@ export default function DayJournal() {
       <p className="t-caption" style={{ color: "var(--text-muted)" }}>
         اكتب ماذا صار في يومك، أو ارسم المخطّط الذي شرحوه، أو رتّب حصصك جدولاً.
       </p>
+
+      {/* أين أنت اليوم من السنة الدراسية — كما يقولها التقويم */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>{dateFull(day, false)}</span>
+        <DayContext date={day} />
+      </div>
 
       <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="🔍 ابحث في دفترك…"
         className="w-full rounded-xl px-4 py-2.5 t-small outline-none"
@@ -107,8 +136,11 @@ export default function DayJournal() {
               <button key={d} onClick={() => setOpenDay(d)}
                 className="rounded-xl px-3 py-2.5 flex items-center justify-between gap-2 text-right transition active:scale-[0.99]"
                 style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-                <span className="t-small font-bold" style={{ color: "var(--text)" }}>{dateFull(d, false)}</span>
-                <span className="t-caption font-mono-nums" style={{ color: "var(--text-muted)" }}>{n(notesOn(notes, d).length)}</span>
+                <span className="t-small font-bold min-w-0 truncate" style={{ color: "var(--text)" }}>{dateFull(d, false)}</span>
+                <span className="flex items-center gap-2 flex-shrink-0">
+                  <DayContext date={d} />
+                  <span className="t-caption font-mono-nums" style={{ color: "var(--text-muted)" }}>{n(notesOn(notes, d).length)}</span>
+                </span>
               </button>
             ))}
           </div>
@@ -139,6 +171,7 @@ export default function DayJournal() {
       {openDay && (
         <Sheet onClose={() => setOpenDay(null)} title={dateFull(openDay, false)}>
           <div className="flex flex-col gap-2">
+            <DayContext date={openDay} className="self-start" />
             {notesOn(notes, openDay).map((x) => (
               <NoteRow key={x.id} note={x} onOpen={() => { setOpenDay(null); setEditing(x); }} />
             ))}
@@ -215,6 +248,12 @@ function NoteEditor({ note, onClose }: { note: JournalNote; onClose: () => void 
         </button>
       }>
       <div className="flex flex-col gap-3 max-w-2xl mx-auto w-full">
+        {/* يومُ الورقة وموقعُه من السنة الدراسية — تقرؤه بعد شهورٍ فتتذكّر */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>{dateFull(draft.date, false)}</span>
+          <DayContext date={draft.date} />
+        </div>
+
         <label className="flex flex-col gap-1.5">
           <span className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>اسم الورقة</span>
           <input value={draft.title ?? ""} onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
