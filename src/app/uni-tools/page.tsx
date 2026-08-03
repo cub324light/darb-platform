@@ -8,6 +8,7 @@ import BackButton from "@/components/BackButton";
 import PageFooter from "@/components/PageFooter";
 import UniTools from "./UniTools";
 import PriorityHint from "@/components/PriorityHint";
+import Customizable from "@/components/Customizable";
 
 export const metadata: Metadata = {
   title: "أدوات الجامعة | درب",
@@ -31,20 +32,23 @@ export default function UniToolsPage() {
       <div className="h-4" />
 
       <div className="page-content">
-        <PriorityHint />
-        <UniTools />
-
-        {/* جسر إلى الخطة القائمة — إعادة استخدام لا تكرار */}
-        <section className="rounded-2xl p-4 flex items-center gap-3"
-          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-          <span className="text-[20px]" aria-hidden="true">📅</span>
-          <p className="text-[15px] font-bold flex-1" style={{ color: "var(--text-muted)" }}>
-            جدولك وخطتك الأسبوعية في{" "}
-            <Link href="/plan" className="font-black" style={{ color: "var(--accent-light)" }}>
-              خطتي ←
-            </Link>
-          </p>
-        </section>
+        <Customizable page="uni-tools" sections={[
+          { id: "hint", label: "أولويتك الآن", desc: "تذكيرٌ بما يخصّك", node: <PriorityHint /> },
+          { id: "tools", label: "الحاسبات", desc: "المعدل والغياب والفاينل والتحويل", fixed: true, node: <UniTools /> },
+          /* جسر إلى الخطة القائمة — إعادة استخدام لا تكرار */
+          { id: "plan-link", label: "رابط خطتي", desc: "جدولك الأسبوعي", node: (
+            <section className="rounded-2xl p-4 flex items-center gap-3"
+              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+              <span className="text-[20px]" aria-hidden="true">📅</span>
+              <p className="text-[15px] font-bold flex-1" style={{ color: "var(--text-muted)" }}>
+                جدولك وخطتك الأسبوعية في{" "}
+                <Link href="/plan" className="font-black" style={{ color: "var(--accent-light)" }}>
+                  خطتي ←
+                </Link>
+              </p>
+            </section>
+          ) },
+        ]} />
       </div>
 
       <div className="h-6" />

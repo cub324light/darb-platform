@@ -15,39 +15,23 @@ import HomeSignals from "@/components/dash/home/HomeSignals";
 import Achievements from "@/components/dash/home/Achievements";
 import Link from "next/link";
 import { loadUser, loadStats, computeStreak, type DarbUser } from "@/lib/storage";
+import { helloFor, tipFor, dayIndexOf } from "@/lib/greeting";
+import Customizable from "@/components/Customizable";
 import { isUniversityPhase, isUniversityGraduate } from "@/lib/phase";
 import dynamic from "next/dynamic";
 const RetentionHost = dynamic(() => import("@/components/retention/RetentionHost"), { ssr: false });
-
-function computeGreeting(h: number): string {
-  if (h < 5) return "وقت الذئاب";
-  if (h < 12) return "صباح التفوق";
-  if (h < 17) return "وقت التركيز";
-  if (h < 21) return "مساء الإنجاز";
-  return "الليل للنخبة";
-}
-
-/* شعار اليوم — سطرٌ تحفيزي ثابت لكل يوم (دوري، لا عشوائي كي لا يقفز عند إعادة التحميل). */
-const SLOGANS = [
-  "خطوةٌ اليوم خيرٌ من قفزةٍ غداً.",
-  "الاستمرار أقوى من الحماس.",
-  "أنت أقرب مما تظن — واصل.",
-  "كل جلسةٍ تقرّبك من هدفك.",
-  "التفوّق عادةٌ لا صدفة.",
-  "ابدأ صغيراً، لكن ابدأ الآن.",
-  "يومٌ منظّم يساوي أسبوعاً مبعثراً.",
-];
 
 export default function DashboardPage() {
   const [init] = useState(() => {
     if (typeof window === "undefined") return null;
     const u = loadUser();
     const now = new Date();
-    const dayIdx = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000);
+    /* يومُ السنة يقود الدوران: النصُّ نفسُه من فتح الصفحة إلى إغلاقها، ويتبدّل غداً */
+    const dayIdx = dayIndexOf(now.getFullYear(), now.getMonth(), now.getDate());
     return {
       user: u,
-      greeting: computeGreeting(now.getHours()),
-      slogan: SLOGANS[dayIdx % SLOGANS.length],
+      hello: helloFor(now.getHours(), dayIdx),
+      tip: tipFor(dayIdx),
       showPhaseBoard: isUniversityPhase(u) || isUniversityGraduate(u),
     };
   });
@@ -83,12 +67,15 @@ export default function DashboardPage() {
               {(user?.name ?? "د").charAt(0)}
             </span>
             <span className="title-lg" style={{ color: "var(--accent-light)" }}>
-              السلام عليكم، {user ? user.name : <span className="skeleton" style={{ width: "70px", height: "1em", verticalAlign: "middle" }} />}
+              {init?.hello.before ?? "السلام عليكم، "}
+              {user ? user.name : <span className="skeleton" style={{ width: "70px", height: "1em", verticalAlign: "middle" }} />}
+              {init?.hello.after}
             </span>
           </Link>
           <div className="mt-1.5"><WornCosmetics /></div>
-          <p className="text-[17px] font-bold mt-2" style={{ color: "var(--text)" }}>{init?.greeting}</p>
-          <p className="t-caption mt-0.5" style={{ color: "var(--text-muted)" }}>{init?.slogan}</p>
+          {/* كان هنا اسمُ الوقت («وقت التركيز») — لا يفيد الطالبَ بشيء.
+              صار نصيحةً عمليةً أو دفعةً، تتبدّل كلَّ يوم. */}
+          <p className="t-body font-bold mt-2 leading-relaxed" style={{ color: "var(--text)" }}>{init?.tip}</p>
         </div>
       </Dome>
 
@@ -102,11 +89,11 @@ export default function DashboardPage() {
           /* الجامعي/خريج الجامعة: لوحاتهم التشغيلية/المهنية كما هي */
           <PhaseHome />
         ) : (
-          <>
-            <TodayBlock />
-            <HomeSignals />
-            <Achievements />
-          </>
+          <Customizable page="dashboard" className="flex flex-col gap-4" sections={[
+            { id: "today", label: "ماذا سأفعل اليوم؟", desc: "مهامك وساعاتك وأقرب اختبار", node: <TodayBlock /> },
+            { id: "signals", label: "قريباً وآخر التحديثات", desc: "مواعيد الجهات الرسمية وأخبار درب", node: <HomeSignals /> },
+            { id: "achievements", label: "إنجازاتك", desc: "أيامك المتتالية وجلساتك وساعاتك", node: <Achievements /> },
+          ]} />
         )}
       </div>
 

@@ -10,6 +10,7 @@ import { readGuestMode, exitGuestMode } from "@/components/AuthGate";
 import { usePref, setPref } from "@/lib/prefs";
 import { useCalSystem, applyCalSystem } from "@/lib/useCalSystem";
 import { restoreAllDismissed } from "@/lib/dismissed";
+import { resetAllLayouts } from "@/lib/pageLayoutStore";
 import { useFontScale, applyFontScale, SCALE_LABEL, type FontScale } from "@/lib/fontScale";
 import { TOUR_KEY } from "@/lib/firstRun";
 
@@ -58,6 +59,7 @@ export default function SettingsButton() {
   const clock24 = usePref("clock24", false);
   const fontScale = useFontScale();
   const [restored, setRestored] = useState(false);
+  const [layoutsReset, setLayoutsReset] = useState(false);
   const restoreIntros = () => {
     restoreAllDismissed();
     try {
@@ -428,14 +430,21 @@ export default function SettingsButton() {
           <span className="text-[var(--accent-light)]">←</span>
         </a>
 
-        {/* تخصيص الصفحة الرئيسية */}
-        <p className="label mb-3">تخصيص الصفحة الرئيسية</p>
-        <div className="rounded-2xl px-4 py-3.5 mb-6"
+        {/* تخصيص الصفحات — كان هذا القسم يَعِد بزرٍّ حُذف من الرئيسية، فصار
+            الوعدُ مكذوباً. الزرُّ رجع، وفي كلّ صفحةٍ لا في الرئيسية وحدها. */}
+        <p className="label mb-3">تخصيص الصفحات</p>
+        <div className="rounded-2xl px-4 py-3.5 mb-3"
           style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-          <p className="text-[16px] font-semibold leading-relaxed" style={{ color: "var(--text-muted)" }}>
-            التخصيص من الصفحة الرئيسية مباشرة — اضغط «تخصيص»، سحب الأقسام وإعادة ترتيبها وإخفاءها.
+          <p className="t-small font-semibold leading-relaxed" style={{ color: "var(--text-muted)" }}>
+            في أعلى كل صفحة زرُّ «✥ تخصيص»: رتّب أقسامها وأخفِ ما لا يعنيك.
+            و«تركيز» و«أخطائي» بلا تخصيص — الأولى شاشةُ مؤقّت، والثانية سجلٌّ ترتيبُه زمنيّ.
           </p>
         </div>
+        <button onClick={() => { resetAllLayouts(); setLayoutsReset(true); }}
+          className="w-full py-3 rounded-2xl t-small font-bold transition mb-6"
+          style={{ background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-muted)" }}>
+          {layoutsReset ? "رجعت كل الصفحات لترتيبها الأصلي ✓" : "أعِد ترتيب كل الصفحات الأصليّ"}
+        </button>
 
         {/* لوحة الإدارة — للمشرف فقط */}
         {authUser?.email === "cublight231@gmail.com" && (

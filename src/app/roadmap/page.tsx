@@ -13,6 +13,7 @@ import PageGuide from "@/components/PageGuide";
 import ModuleWorkspace from "@/components/roadmap/ModuleWorkspace";
 import RoadmapSettings from "@/components/roadmap/RoadmapSettings";
 import ExamPlanTimeline from "@/components/roadmap/ExamPlanTimeline";
+import Customizable from "@/components/Customizable";
 import { loadUser, saveUser, ensureWorkspace, saveWorkspace, loadStats, loadTrackExamDates, localDayKey } from "@/lib/storage";
 import {
   moduleView, memberView, groupMembers, visibleModules,
@@ -204,7 +205,10 @@ export default function RoadmapPage() {
           <p className="t-body leading-relaxed" style={{ color: "var(--text-dim)" }}>{daily.message}</p>
         </header>
 
-        {/* هذا الأسبوع — الأرقام الحقيقية بتصميمٍ فاخر (تفتح الإحصائيات الكاملة) */}
+        {/* الأقسامُ يرتّبها الطالبُ ويخفي ما لا يعنيه — والترويسةُ فوقها ثابتة.
+            «هذا الأسبوع» أرقامٌ حقيقية تفتح الإحصائيات الكاملة. */}
+        <Customizable page="roadmap" className="flex flex-col gap-2.5" sections={[
+        { id: "week", label: "هذا الأسبوع", desc: "أرقامُ أسبوعك والتزامك", node: (
         <button onClick={() => router.push("/roadmap/stats")}
           className="ds-card ds-card-interactive flex flex-col gap-3 text-right rise rise-1" style={{ ["--tint" as string]: "var(--accent)" }}>
           <span className="flex items-center gap-2">
@@ -232,8 +236,10 @@ export default function RoadmapPage() {
             <span className="t-body" style={{ color: "var(--text-muted)" }}>ابدأ أول جلسة، وسنعرض تقدمك هنا.</span>
           )}
         </button>
+        ) },
 
-        {/* 🎯 هدف اليوم — ماذا سأفعل؟ (بطاقةٌ عريضة: عدد المهام · المهمة الحالية · هل أنهيتها) */}
+        /* 🎯 هدف اليوم — ماذا سأفعل؟ (عدد المهام · المهمة الحالية · هل أنهيتها) */
+        { id: "goal", label: "هدف اليوم", desc: "عددُ مهامّك والمهمّة التالية", node: (
         <button onClick={() => router.push("/roadmap/session")}
           className="ds-card ds-card-interactive flex items-center gap-3 text-right rise rise-2"
           style={{ ["--tint" as string]: "var(--accent)" }}>
@@ -255,8 +261,10 @@ export default function RoadmapPage() {
               style={{ background: "color-mix(in srgb, var(--accent) 14%, transparent)", color: "var(--accent-light)" }}>ابدأ الآن</span>
           )}
         </button>
+        ) },
 
-        {/* الشبكة 2×2 — كل بطاقة تجيب سؤالاً واحداً، بلا تكرارٍ مع صفحةٍ أخرى */}
+        /* الشبكة ٢×٢ — كل بطاقة تجيب سؤالاً واحداً، بلا تكرارٍ مع صفحةٍ أخرى */
+        { id: "tiles", label: "بطاقاتك الأربع", desc: "اختبارك · خطتي · التقويم · المصادر", node: (
         <div className="grid grid-cols-2 gap-2.5 rise rise-3">
           <Tile icon="🧠" label="اختبارك" tint={priority?.color ?? "var(--accent)"}
             value={priority?.label ?? "لا اختبار بعد"}
@@ -283,8 +291,11 @@ export default function RoadmapPage() {
             lines={[shownNames.slice(1).join("، "), restCount > 0 ? "+ باقي المصادر ←" : "افتح المواقع الرسمية ↗"]}
             onClick={() => router.push("/roadmap/resources")} />
         </div>
+        ) },
 
-        {/* ▶ البطل — أضخم عنصرٍ في الصفحة */}
+        /* ▶ البطل — أضخم عنصرٍ في الصفحة. ثابتٌ لا يُخفى: صفحةٌ لا تبدأ منها
+           المذاكرةُ ليست «مساري». */
+        { id: "start", label: "ابدأ المذاكرة", desc: "زرُّ بدء جلسة اليوم", fixed: true, node: (
         <button onClick={() => {
             const t = plan?.tasks[0];
             router.push(`/orbit?${focusHandoffQuery({
@@ -303,8 +314,12 @@ export default function RoadmapPage() {
             {plan?.available ? (allDone ? "أنهيت مهامّ اليوم — جلسةٌ إضافية؟" : "تبدأ جلسة تركيزٍ الآن") : "افتح جلستك"}
           </span>
         </button>
+        ) },
 
-        <ExamPlanTimeline plan={staged} pace={pace} labelOf={(id) => examNames.get(id) ?? id} />
+        { id: "months", label: "خطّتك عبر الأشهر", desc: "متى تجهز لكلّ اختبار", node: (
+          <ExamPlanTimeline plan={staged} pace={pace} labelOf={(id) => examNames.get(id) ?? id} />
+        ) },
+        ]} />
 
         <NextThread page="/roadmap" />
         <PageFooter />

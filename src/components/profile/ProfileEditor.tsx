@@ -5,7 +5,18 @@
 import { useState } from "react";
 import { loadUser, saveUser, addSilver, type DarbUser } from "@/lib/storage";
 import { profileCompletion, pendingProfileRewards } from "@/lib/profileCompletion";
+import { SA_REGIONS } from "@/lib/saRegions";
+import { SCHOOL_STAGES } from "@/lib/darbKnowledge";
 import { n } from "@/lib/format";
+
+/* وجهاتُ الطالب — نفسُ معرّفات التسجيل، فما يُختار هنا يقرؤه ما يقرؤه هناك */
+const TARGETS: { id: string; icon: string; label: string }[] = [
+  { id: "university",  icon: "🎓", label: "الجامعة" },
+  { id: "aramco",      icon: "🏭", label: "أرامكو" },
+  { id: "itc",         icon: "🛠️", label: "ITC" },
+  { id: "military",    icon: "🪖", label: "الكليات العسكرية" },
+  { id: "scholarship", icon: "✈️", label: "الابتعاث" },
+];
 
 const STUDY_STYLES: { id: "book" | "video" | "both"; label: string }[] = [
   { id: "book", label: "📘 بالقراءة" }, { id: "video", label: "🎬 بالفيديو" }, { id: "both", label: "🧩 الاثنين" },
@@ -61,6 +72,12 @@ export default function ProfileEditor() {
     commit({ [key]: arr.length ? arr : undefined });
   };
   const on = (key: "hobbies" | "interests" | "favSubjects", val: string) => (user[key] ?? []).includes(val);
+  /* اختيارُ وجهةٍ يُلغي «درب يحدّد لي» — لا يجتمع أن يختار وأن يفوّض */
+  const toggleTarget = (id: string) => {
+    const cur = user.targets ?? [];
+    const arr = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id];
+    commit({ targets: arr.length ? arr : undefined, goalUndecided: arr.length ? false : user.goalUndecided });
+  };
 
   return (
     <div className="flex flex-col gap-5">
@@ -84,6 +101,52 @@ export default function ProfileEditor() {
       )}
 
       <div className="ds-card flex flex-col gap-5">
+        {/* ▓ الأربعةُ الأساسية: كانت تُملأ في التسجيل وحده، فمن فاته حقلٌ منها بقي
+            عند ٨٨٪ إلى الأبد — نقول له «باقي معلومةٌ واحدة» ولا مكانَ يضيفها فيه.
+            صارت هنا كلُّها، فالمئةُ صارت ممكنة. */}
+        <label className="flex flex-col gap-1.5">
+          <span className="t-title font-bold" style={{ color: "var(--text)" }}>الاسم</span>
+          <input value={user.name ?? ""} onChange={(e) => commit({ name: e.target.value })}
+            placeholder="اسمك كما تحبّ أن نناديك"
+            className="w-full rounded-xl px-4 py-3 t-body font-bold outline-none"
+            style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
+        </label>
+
+        {/* الصفُّ للثانويّ وحده: الجامعيُّ والخرّيج تكفيهم حالتُهم التعليمية.
+            وتغييرُ الصفّ يغيّر موادَّ المنهج، فنقولها له صراحةً. */}
+        {(!user.studyLevel || user.studyLevel === "ثانوي") && (
+          <div>
+            <Group title="صفّك">
+              {SCHOOL_STAGES.map((g) => (
+                <Chip key={g} on={user.grade === g}
+                  onClick={() => commit({ grade: user.grade === g ? undefined : g, studyLevel: "ثانوي" })}>{g}</Chip>
+              ))}
+            </Group>
+            <p className="t-caption mt-2" style={{ color: "var(--text-muted)" }}>
+              تغييرُ صفّك يغيّر موادّك في «المدرسة» — لا يمسّ تقدّمك ولا أخطاءك.
+            </p>
+          </div>
+        )}
+
+        <Group title="المنطقة">
+          {SA_REGIONS.map((r) => (
+            <Chip key={r} on={user.region === r} onClick={() => commit({ region: user.region === r ? undefined : r })}>{r}</Chip>
+          ))}
+        </Group>
+
+        <div>
+          <Group title="الهدف">
+            {TARGETS.map((t) => (
+              <Chip key={t.id} on={!user.goalUndecided && (user.targets ?? []).includes(t.id)}
+                onClick={() => toggleTarget(t.id)}>{t.icon} {t.label}</Chip>
+            ))}
+            <Chip on={!!user.goalUndecided}
+              onClick={() => commit({ goalUndecided: !user.goalUndecided, ...(user.goalUndecided ? {} : { targets: undefined }) })}>
+              🤝 درب يحدّد لي
+            </Chip>
+          </Group>
+        </div>
+
         <Group title="طريقة المذاكرة">
           {STUDY_STYLES.map((s) => <Chip key={s.id} on={user.studyStyle === s.id} onClick={() => commit({ studyStyle: user.studyStyle === s.id ? undefined : s.id })}>{s.label}</Chip>)}
         </Group>
