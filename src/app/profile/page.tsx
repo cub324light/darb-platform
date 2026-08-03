@@ -25,6 +25,7 @@ import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfilePreferences from "@/components/profile/ProfilePreferences";
 import ProfileExtra from "@/components/profile/ProfileExtra";
 import ProfileAccount from "@/components/profile/ProfileAccount";
+import GuardianLink from "@/components/sanad/GuardianLink";
 import { readGuestMode } from "@/components/AuthGate";
 
 function fmtJoin(d: string): string {
@@ -183,6 +184,8 @@ export default function ProfilePage() {
                 والمنطقةُ منها كانت نسخةً ثانيةً لا تُحسب في اكتمال ملفك — مكانها
                 الحقيقيّ «معلوماتي». إعدادٌ لا يُغيّر شيئاً أسوأُ من غيابه. */}
             <ProfilePreferences isPrivate={isPrivate} onTogglePrivacy={togglePrivacy} />
+            {/* ربطُ وليّ الأمر — بيد الطالب: هو من يُنشئ الرمز ومن يفصل */}
+            <GuardianLink />
             <ProfileAccount />
           </div>
         )}

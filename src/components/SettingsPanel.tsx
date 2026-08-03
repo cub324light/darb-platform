@@ -430,6 +430,32 @@ export default function SettingsButton() {
           <span className="text-[var(--accent-light)]">←</span>
         </a>
 
+        {/* ── الاشتراك وسند ──
+            مكانُ الاشتراك: **الإعدادات** (متاحةٌ من كل صفحة) و**بطاقةُ الباقة في
+            ملفك**. لا نضع زرَّ ترقيةٍ في كل زاوية: منتَجٌ يطلب المال في كل شاشةٍ
+            يفقد ثقةَ من يذاكر فيه. */}
+        <p className="label mb-3">الاشتراك</p>
+        <a href="/pricing"
+          className="w-full flex items-center gap-3 rounded-2xl px-4 py-3.5 mb-2 no-underline transition"
+          style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+          <span className="text-[20px]" aria-hidden="true">✦</span>
+          <span className="flex-1 text-right">
+            <span className="block font-bold text-[16px] text-[var(--text)]">باقتك والأسعار</span>
+            <span className="block text-[14px] text-[var(--text-muted)]">شاهين وعنقاء — وما الذي يفتحه كلٌّ منهما</span>
+          </span>
+          <span className="text-[var(--accent-light)]">←</span>
+        </a>
+        <a href="/sanad"
+          className="w-full flex items-center gap-3 rounded-2xl px-4 py-3.5 mb-6 no-underline transition"
+          style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+          <span className="text-[20px]" aria-hidden="true">🤝</span>
+          <span className="flex-1 text-right">
+            <span className="block font-bold text-[16px] text-[var(--text)]">سند — لوليّ أمرك</span>
+            <span className="block text-[14px] text-[var(--text-muted)]">ملخّصٌ أسبوعيّ بإذنك، وتفصله متى شئت</span>
+          </span>
+          <span className="text-[var(--success)]">←</span>
+        </a>
+
         {/* تخصيص الصفحات — كان هذا القسم يَعِد بزرٍّ حُذف من الرئيسية، فصار
             الوعدُ مكذوباً. الزرُّ رجع، وفي كلّ صفحةٍ لا في الرئيسية وحدها. */}
         <p className="label mb-3">تخصيص الصفحات</p>

@@ -7,17 +7,23 @@ import { getPlan, setPlan, PLAN_NAMES, PLAN_PRICE, SANAD_PRICE } from "@/lib/pla
 import { price } from "@/lib/format";
 import type { PlanId } from "@/lib/types";
 
+/* ▓ مبدأُ التقسيم: **ما يذاكر به الطالبُ مجّانيّ**. لا نبيع أدواتِ المذاكرة —
+   تركيزٌ ومساري والتقويم والدفتر والمدرسة وأخطائي كلُّها في المجاني بلا نقصان.
+   المدفوعُ يشتري **السعةَ والذكاء**: حدودٌ أوسع، ودويرب بلا عدّاد، وتحليلٌ أعمق.
+   من لا يدفع يبقى طالباً كاملاً في درب — لا معاقَباً. */
 const COMPARE_FEATURES = [
+  { label: "تركيز · مساري · التقويم · الدفتر", free: "✓", shaheen: "✓", anqa: "✓" },
+  { label: "المدرسة (الواجبات والمدرّسون)", free: "✓", shaheen: "✓", anqa: "✓" },
   { label: "خزنة الأخطاء", free: "25 لكل مادة", shaheen: "غير محدودة", anqa: "غير محدودة" },
-  { label: "دروس التأسيس", free: "3 تجريبية", shaheen: "الكل", anqa: "الكل" },
-  { label: "أوربت 50/10", free: "✓", shaheen: "✓", anqa: "✓" },
-  { label: "الخريطة + الستريك", free: "✓", shaheen: "✓", anqa: "✓" },
+  { label: "دويرب (رسائل يومياً)", free: "محدود", shaheen: "بلا حدّ", anqa: "بلا حدّ" },
+  { label: "تحليل ملفاتك بالذكاء", free: "—", shaheen: "✓", anqa: "✓" },
+  { label: "توليد اختبارات قصيرة", free: "محدود", shaheen: "بلا حدّ", anqa: "بلا حدّ" },
+  { label: "خطّتك عبر الأشهر", free: "✓", shaheen: "✓", anqa: "✓" },
   { label: "بنك المراجعة بالتكرار المتباعد", free: "—", shaheen: "✓", anqa: "✓" },
+  { label: "تقرير أسبوعيّ مفصّل", free: "—", shaheen: "✓", anqa: "✓" },
   { label: "المجلس (مشاركة)", free: "قراءة فقط", shaheen: "✓", anqa: "✓" },
-  { label: "الأرينا 1v1", free: "—", shaheen: "✓", anqa: "✓" },
   { label: "شهادة الانضباط", free: "—", shaheen: "—", anqa: "✓" },
-  { label: "دور المؤسس", free: "—", shaheen: "—", anqa: "✓" },
-  { label: "خصم 79 ريال (جامعة)", free: "—", shaheen: "—", anqa: "✓" },
+  { label: "الجديد يصلك أولاً", free: "—", shaheen: "—", anqa: "✓" },
 ];
 
 export default function PricingPage() {
@@ -87,13 +93,13 @@ export default function PricingPage() {
                 </div>
               </div>
               <div className="space-y-1.5 mb-4">
-                {["خزنة الأخطاء (25 لكل مادة)", "3 دروس تجريبية", "أوربت 50/10 كامل", "الخريطة + الستريك"].map((f) => (
+                {["كل أدوات المذاكرة: تركيز · مساري · التقويم · الدفتر · المدرسة", "خزنة الأخطاء — 25 لكل مادة", "دويرب برسائل محدودة يومياً", "خطّتك عبر الأشهر والتقويم الرسميّ"].map((f) => (
                   <div key={f} className="flex items-center gap-2">
                     <span className="text-[var(--success)] text-xs">✓</span>
                     <span className="text-xs text-[var(--text-dim)]">{f}</span>
                   </div>
                 ))}
-                {["خزنة غير محدودة", "بنك التكرار المتباعد", "المجلس (مشاركة)"].map((f) => (
+                {["خزنة غير محدودة", "دويرب بلا حدّ", "تحليل ملفاتك بالذكاء"].map((f) => (
                   <div key={f} className="flex items-center gap-2 opacity-40">
                     <span className="text-xs">—</span>
                     <span className="text-xs text-[var(--text-muted)] line-through">{f}</span>
@@ -144,11 +150,11 @@ export default function PricingPage() {
               <div className="space-y-1.5 mb-4">
                 {[
                   "خزنة الأخطاء غير محدودة",
-                  "كل دروس التأسيس",
-                  "بنك المراجعة الذكية بالتكرار المتباعد",
-                  "المجلس (مشاركة كاملة)",
-                  "الأرينا 1v1",
-                  "5 طيور للاختيار",
+                  "دويرب بلا عدّاد رسائل",
+                  "تحليل ملفاتك ومذكّراتك بالذكاء",
+                  "اختبارات قصيرة بلا حدّ",
+                  "بنك المراجعة بالتكرار المتباعد",
+                  "تقرير أسبوعيّ مفصّل عن مذاكرتك",
                 ].map((f) => (
                   <div key={f} className="flex items-center gap-2">
                     <span className="text-[var(--accent-light)] text-xs">✓</span>
@@ -195,9 +201,8 @@ export default function PricingPage() {
                 {[
                   "كل مميزات شاهين",
                   "شهادة الانضباط الرقمية",
-                  "خصم 79 ريال عند الجامعة",
+                  "الميزات الجديدة تصلك أولاً",
                   "دور المؤسس الدائم",
-                  "أولوية في الميزات الجديدة",
                 ].map((f) => (
                   <div key={f} className="flex items-center gap-2">
                     <span className="text-[var(--gold)] text-xs">✓</span>
@@ -242,11 +247,11 @@ export default function PricingPage() {
           </div>
           <div className="space-y-1.5 mb-4">
             {[
-              "حالة الابن في الوقت الفعلي",
-              "تقارير أداء أسبوعية",
-              "مقارنة بالمتوسط العام",
-              "إضافة ابن واحد مجاناً",
-              "خصم 50% لأخ أو أخت",
+              "ملخّصٌ أسبوعيّ صادق عن مذاكرته",
+              "أين يتعثّر، وبماذا تدعمه",
+              "كم بقي على أقرب اختبارٍ له",
+              "ابنٌ واحدٌ مشمول، وخصمُ النصف لكلّ أخ",
+              "ولا يرى محادثاته ولا دفترَه ولا موقعَه",
             ].map((f) => (
               <div key={f} className="flex items-center gap-2">
                 <span className="text-[var(--success)] text-xs">✓</span>
@@ -267,10 +272,10 @@ export default function PricingPage() {
           className="rounded-2xl p-4 mb-8 text-center"
           style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.15)" }}
         >
-          <p className="text-sm font-bold text-[var(--gold)] mb-1">ادفع بجهدك</p>
-          <p className="text-xs text-[var(--text-dim)]">
-            تقدر تستخدم عملة Silver المكتسبة من المذاكرة لتمديد اشتراكك.
-            الانضباط له قيمة حقيقية في درب.
+          <p className="text-sm font-bold text-[var(--gold)] mb-1">ما نبيعه وما لا نبيعه</p>
+          <p className="text-xs text-[var(--text-dim)] leading-relaxed">
+            أدواتُ المذاكرة كلُّها في المجاني: تركيز · مساري · التقويم · الدفتر · المدرسة · أخطائي.
+            المدفوعُ يشتري السعةَ والذكاء — لا يشتري حقَّك في أن تذاكر.
           </p>
         </div>
 
