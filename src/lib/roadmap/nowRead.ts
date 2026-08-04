@@ -8,6 +8,7 @@ import {
   type Workspace, type EligibilityContext,
 } from "../modules";
 import { toBoardStage } from "../examEligibility";
+import { phaseIdOf, phaseAllows } from "../transition";
 import { requirementsOf } from "../recommendedExams";
 import { orderByPriority, isOnVacation } from "./model";
 import { loadRoadmapConfig } from "./store";
@@ -43,6 +44,13 @@ export function readEligibilityCtx(today: string): EligibilityContext {
 /** كلُّ اختبارات الطالب الظاهرة في Workspace — مصدرٌ واحد لمن يحتاج القائمة
     (التقويم يسأل: «أيَّ اختبارٍ هذا اليوم؟»)، ولمن يحتاج الأولَ منها. */
 export function readAllExams(ws: Workspace): PriorityExam[] {
+  /* ▓ البوابةُ الواحدة: مرحلةٌ لا تسمح بدراسة الثانوية لا تُبنى لها خطّةُ قدرات
+     ولا تحصيلي — لا هنا ولا في «مساري» ولا في الجلسة ولا في التقويم ولا في سياق
+     دويرب، لأنّ خمستهم يمرّون من هذا القارئ. وشرطٌ واحدٌ هنا خيرٌ من خمسةٍ متفرّقة.
+     ▸ ولا يُحذف من `Workspace` شيء: وحداتُ الطالب وتقدّمُه باقيةٌ كما هي —
+       الاختفاءُ عرضٌ لا حذف، ولو عاد إلى مرحلةٍ تسمح بها عادت كما تركها. */
+  if (!phaseAllows(phaseIdOf(loadUser()), "secondary-study")) return [];
+
   const entries: PriorityExam[] = [];
   for (const m of visibleModules(ws)) {
     if (m.kind === "core") continue;

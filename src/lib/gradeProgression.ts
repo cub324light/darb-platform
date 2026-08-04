@@ -5,11 +5,16 @@
    الحالي من academicCalendar، وعدد الأعوام المنقضية = عدد خطوات الترقية.
 
    جزءان: دالة نقيّة (advanceGradeByCalendar) قابلة للاختبار، وجسرٌ يقرأ/يحفظ التخزين
-   (syncGradeWithCalendar) يُستدعى مرّة عند تحميل التطبيق. لا تخمين — كله من التقويم. */
+   (syncGradeWithCalendar) يُستدعى مرّة عند تحميل التطبيق. لا تخمين — كله من التقويم.
 
-import type { DarbUser } from "./storage";
+   ▓ تفويضٌ إلى محرّك الانتقال: بقي **قرارُ** الترقية هنا كما هو (وتحرسه اختباراته
+     كما هي)، أمّا **تنفيذُها** فصار عبر `transitionTo` — فلا يكتب أحدٌ حقولَ
+     المرحلة بعد التسجيل إلا مصدرٌ واحد. وأثرُه على الطالب أن الترقية صارت تُطلق
+     أحداثَها وتُحدّث ذاكرةَ دويرب وتضيف وحدات المرحلة، وكانت تكتب حقلين وتصمت. */
+
 import { loadUser, saveUser } from "./storage";
 import { currentAcademicYearId } from "./academicCalendar";
+import { transitionTo, phaseIdOf, phaseDef, type PhaseId } from "./transition";
 
 const GRADE_ORDER = ["أول ثانوي", "ثاني ثانوي", "ثالث ثانوي"] as const;
 type Grade = (typeof GRADE_ORDER)[number];
@@ -69,13 +74,26 @@ export function syncGradeWithCalendar(now: Date = new Date()): boolean {
   });
   if (!adv.advanced) return false;
 
-  const next: DarbUser = {
-    ...u,
-    studyLevel: adv.studyLevel,
-    grade: adv.grade,
-    gradeYearId: currentYearId, // حدّث المرساة فلا يُعاد الترقّي
-  };
-  if (adv.gradStage) next.gradStage = adv.gradStage;
-  saveUser(next);
+  /* خطوةً خطوة: مَن غاب عامين مرَّ بالصفّ الأوسط فعلاً، فيُسجَّل مرورُه به.
+     والسجلُّ وحدَه يعرف الخطوةَ التالية بالتقويم — لا سُلّمَ ثانٍ هنا. */
+  let moved = false;
+  for (let i = 0; i < adv.steps; i++) {
+    const from = phaseIdOf(loadUser());
+    const to = from ? nextCalendarPhase(from) : null;
+    if (!to || !transitionTo(to, now)) break;
+    moved = true;
+  }
+  if (!moved) return false;
+
+  /* المرساةُ تُحدَّث في كل خطوة داخل الجسر؛ ونؤكّدها هنا لمن توقّف سُلّمُه دون
+     الهدف (خرّيجٌ لا يترقّى بالتقويم) فلا يُعاد الحسابُ كلَّ تحميل. */
+  const after = loadUser();
+  if (after && after.gradeYearId !== currentYearId) saveUser({ ...after, gradeYearId: currentYearId });
   return true;
+}
+
+/** الخطوةُ التالية بالتقويم من السجلّ — والمُعلَنةُ (كالجامعة) ليست منها. */
+function nextCalendarPhase(from: PhaseId): PhaseId | null {
+  const next = phaseDef(from)?.next ?? [];
+  return (next.find((id) => phaseDef(id)?.advance === "calendar") as PhaseId | undefined) ?? null;
 }

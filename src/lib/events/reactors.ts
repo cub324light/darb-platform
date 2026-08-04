@@ -26,7 +26,7 @@ export function makeMemoryReactor(mem: MemoryEngine): Reactor {
       "StudentRegistered", "GoalChanged", "UniversitySelected",
       "ScoreUpdated", "ExamCompleted", "STEPCompleted",
       "StudentFinishedSession", "SessionTaskSkipped", "VaultErrorAdded",
-      "UniversityPhaseEntered", "CareerPhaseEntered",
+      "UniversityPhaseEntered", "CareerPhaseEntered", "StudentPhaseChanged",
       "DuwairbConversationFinished",
     ],
     react: (e) => {
@@ -84,6 +84,25 @@ export function makeMemoryReactor(mem: MemoryEngine): Reactor {
           mem.remember({ type: "learning.weakSubject", value: { subject: e.metadata.subject, severity: 0.5 },
             source: "event", educationalStage: stage, evidence: evidence(e) });
           break;
+        /* ▓ تغيّرُ المرحلة — الذاكرةُ تُحدَّث في مكانها لا تُبنى من جديد:
+           `identity.studyLevel` و`identity.grade` لهما `naturalKey: "self"`
+           فمعرّفُهما ثابت، و`remember` يدمج ويرفع النسخة بلا سجلٍّ ثانٍ.
+           والصفُّ الذي لم يعد صحيحاً (ثالث ← خريج) يُبطَل لا يُحذَف: يبقى
+           بتاريخه ودليله ويخرج من القراءة — فلا يظنّ دويربُ خرّيجاً ثالثَ ثانوي. */
+        case "StudentPhaseChanged": {
+          const m = e.metadata;
+          if (m.studyLevel) {
+            mem.remember({ type: "identity.studyLevel", value: { level: m.studyLevel },
+              source: "event", educationalStage: stage, evidence: evidence(e) });
+          }
+          if (m.grade) {
+            mem.remember({ type: "identity.grade", value: { grade: m.grade },
+              source: "event", educationalStage: stage, evidence: evidence(e) });
+          } else if (m.clearedGrade) {
+            mem.invalidateMemory("identity.grade:self", `انتقل إلى ${m.to} — لم يعد له صفٌّ دراسيّ`);
+          }
+          break;
+        }
         case "UniversityPhaseEntered":
           mem.remember({ type: "identity.studyLevel", value: { level: "جامعي" }, source: "event", educationalStage: "university", evidence: evidence(e) });
           mem.remember({ type: "relationship.milestone", value: { text: "دخل المرحلة الجامعية" }, source: "event", educationalStage: "university", dedupeKey: e.id, evidence: evidence(e) });

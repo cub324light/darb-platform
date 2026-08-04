@@ -3,7 +3,8 @@
    حقولٌ اختيارية تُحفَظ فوراً في DarbUser (مصدرٌ واحد). لعبةٌ تدريجية: +5 فضة مع كل معلومةٍ
    جديدة، ووسام + 30 عند 100٪ (مرّة لكلٍّ). التعديل لاحقاً لا يمنح فضةً من جديد. */
 import { useState } from "react";
-import { loadUser, saveUser, addSilver, type DarbUser } from "@/lib/storage";
+import { loadUser, saveUser, addSilver, loadAdmissions, type DarbUser } from "@/lib/storage";
+import { transitionTo, phaseIdOf, phaseDef, declarableFrom } from "@/lib/transition";
 import { profileCompletion, pendingProfileRewards } from "@/lib/profileCompletion";
 import { SA_REGIONS } from "@/lib/saRegions";
 import { SCHOOL_STAGES } from "@/lib/darbKnowledge";
@@ -75,6 +76,23 @@ export default function ProfileEditor() {
   };
   const on = (key: "hobbies" | "interests" | "favSubjects", val: string) => (user[key] ?? []).includes(val);
   const isSchool = !user.studyLevel || user.studyLevel === "ثانوي";
+
+  /* ═══ مرحلتك — الموضعُ **الوحيد** الذي يُعلن فيه الطالبُ انتقالَه ═══
+     لا اقتراحَ تلقائيّ ولا انتقالَ تلقائيّ: قرارٌ صريحٌ منه هنا ولا شيء غيره.
+     و«الانتقال إلى عالم الجامعة» لا يظهر إلا لمن عنده قبولٌ مسجَّل فعلاً —
+     إشارةٌ كتبها هو بيده في «القبول الجامعي»، لا استنتاجٌ منّا. */
+  const phase = phaseIdOf(user);
+  const hasAccepted = loadAdmissions().some((a) => a.status === "accepted");
+  const stageMoves = declarableFrom(user).filter((to) => (to === "university" ? hasAccepted : true));
+
+  const declare = (to: string) => {
+    const label = phaseDef(to)?.label ?? "";
+    if (!confirm(`الانتقال إلى «${label}»؟\n\nيتغيّر: مرحلتك وما تعرضه لك درب.\nيبقى كما هو: أهدافك وأخطاؤك وإحصاءاتك وجلساتك وتقدّمك — لا يُحذف شيء.`)) return;
+    if (transitionTo(to as Parameters<typeof transitionTo>[0])) {
+      const u = loadUser();
+      if (u) setUser(u);
+    }
+  };
   const unlockCore = () => {
     if (confirm("هذه معلوماتٌ يقوم عليها المنتج: صفُّك ومسارُك يحدّدان موادّك، وهدفُك يحدّد اختباراتك. تفتحها للتعديل؟")) {
       setCoreOpen(true);
@@ -145,6 +163,21 @@ export default function ProfileEditor() {
             className="w-full rounded-xl px-4 py-3 t-body font-bold outline-none"
             style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)" }} />
         </label>
+
+        {/* مرحلتك — الحالةُ ثم فعلٌ واحدٌ إن كان له فعلٌ مسموح */}
+        <Group title="مرحلتك">
+          <span className="px-3.5 py-2 rounded-full t-small font-bold"
+            style={{ background: "var(--surface2)", color: "var(--text)", border: "1.5px solid var(--border)" }}>
+            {phase ? phaseDef(phase)?.label : "لم تُحدَّد بعد"}
+          </span>
+          {stageMoves.map((to) => (
+            <button key={to} onClick={() => declare(to)}
+              className="px-3.5 py-2 rounded-full t-small font-black transition active:scale-95"
+              style={{ background: "var(--accent)", color: "#fff", border: "1.5px solid var(--accent)" }}>
+              {to === "university" ? "الانتقال إلى عالم الجامعة" : `الانتقال إلى «${phaseDef(to)?.label}»`}
+            </button>
+          ))}
+        </Group>
 
         {/* الصفُّ والمسارُ للثانويّ وحده: الجامعيُّ والخرّيج تكفيهم حالتُهم
             التعليمية. وكلاهما يغيّر موادَّ المنهج، فنقولها له صراحةً. */}

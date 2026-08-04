@@ -10,6 +10,9 @@ export const EVENT_REGISTRY: EventRegistry = {
   StudentRegistered:      { type: "StudentRegistered", category: "lifecycle", milestone: true, label: () => "انضمّ إلى درب" },
   UniversityPhaseEntered: { type: "UniversityPhaseEntered", category: "lifecycle", milestone: true, label: () => "دخل المرحلة الجامعية" },
   CareerPhaseEntered:     { type: "CareerPhaseEntered", category: "lifecycle", milestone: true, label: () => "دخل مرحلة العمل" },
+  StudentPhaseChanged:    { type: "StudentPhaseChanged", category: "lifecycle", milestone: false,
+                            label: (e) => `انتقل إلى ${e.metadata.to}`,
+                            validate: (m) => typeof m.to === "string" && m.to.length > 0 },
 
   /* الجلسات */
   StudentStartedSession:  { type: "StudentStartedSession", category: "session", milestone: false, label: () => "بدأ جلسة تركيز" },

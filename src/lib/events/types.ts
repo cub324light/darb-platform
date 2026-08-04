@@ -42,6 +42,18 @@ export interface EventMetaMap {
   "StudentRegistered":      { snapshot: ImportSnapshot };
   "UniversityPhaseEntered": { from?: string };
   "CareerPhaseEntered":     { from?: string };
+  /* تغيّرُ المرحلة — الحدثُ العامُّ الذي تُكتب به الذاكرة. أُنشئ لأن ترقيةَ
+     الصفوف ومخرجَها إلى «خريج ثانوي» **لا حدثَ لهما إطلاقاً**، ومعمارُ الذاكرة
+     صارم: لا تُكتب مباشرة. فبلا حدثٍ تبقى `identity.studyLevel` تقول «ثانوي»
+     عن خرّيج — وهي `pinned` بلا اضمحلال، أي كذبةٌ أبدية.
+     `from`/`to` معرّفا المرحلة في `transition/registry`، و`studyLevel`/`grade`
+     قيمتاها كما تُحفظان في ملفّ الطالب (لا اشتقاقَ في المُتفاعِل). */
+  "StudentPhaseChanged": {
+    from?: string; to: string;
+    studyLevel?: "ثانوي" | "جامعي" | "خريج";
+    grade?: string;
+    clearedGrade?: boolean;
+  };
 
   /* ── الجلسات ── */
   "StudentStartedSession":  { sessionKind?: string; subject?: string };
