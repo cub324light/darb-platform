@@ -5,7 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   UNIVERSITIES, MAJORS, universityMapUrl, universityCity, universitiesByRegion,
-  majorsAt, hasMajorList,
+  majorsAt, hasMajorList, gapAnalysis, universityReadiness, qsRankText,
 } from "./university";
 import {
   UNIVERSITY_COLLEGES, collegesAt, majorsIn, allMajorsAt, collegeOfMajor, categoryOfMajor, UNIVERSITY_YEARS,
@@ -211,4 +211,61 @@ test("السنوات الجامعية خمسٌ، ومفاتيحها هي الم�
     ["الأولى", "الثانية", "الثالثة", "الرابعة", "الخامسة+"],
     "تغييرُ المفاتيح يفقد سنةَ كل مسجَّلٍ سابق");
   assert.equal(UNIVERSITY_YEARS[0].label, "السنة الأولى");
+});
+
+/* ═══════════ «المطلوب» لا يأتي إلا من الطالب ═══════════
+   حارسُ العطل الذي أُصلح: كان مستوى التخصّص النوعيّ («مرتفع») يُترجَم رقماً
+   (٨٥) ثم يُعرَض على الطالب شرطَ قبول. لا مصدرَ لذلك الرقم — فحُذف. */
+
+test("الفجوة: بلا هدفٍ من الطالب لا صفَّ ولا رقم — ولو كانت درجاته كلُّها موجودة", () => {
+  const g = gapAnalysis(undefined, { qudurat: 82, tahsili: 79, step: 60 }, 4);
+  assert.equal(g.hasData, false);
+  assert.equal(g.items.length, 0);
+  assert.equal(g.remainingTotal, 0);
+  assert.equal(g.allMet, false, "«الكلُّ مكتمل» ادّعاءٌ لا يصحّ بلا هدفٍ واحد");
+});
+
+test("الفجوة: صفٌّ لكلِّ هدفٍ حدّده الطالب وحدَه", () => {
+  const g = gapAnalysis({ qudurat: 90, tahsili: null, step: undefined },
+    { qudurat: 82, tahsili: 79, step: 60 }, 4);
+  assert.equal(g.items.length, 1, "التحصيلي وSTEP بلا هدفٍ فلا صفَّ لهما رغم وجود درجتيهما");
+  assert.equal(g.items[0].label, "القدرات");
+  assert.equal(g.items[0].target, 90);
+  assert.equal(g.items[0].gap, 8);
+  assert.equal(g.items[0].met, false);
+  assert.equal(g.items[0].weeklyNeed, 2);
+});
+
+test("الفجوة: هدفٌ بلا درجةٍ بعد ⇒ الفجوةُ كامل الهدف، لا «صفر»", () => {
+  const g = gapAnalysis({ tahsili: 95 }, {}, null);
+  assert.equal(g.items.length, 1);
+  assert.equal(g.items[0].current, null);
+  assert.equal(g.items[0].gap, 95);
+  assert.equal(g.items[0].weeklyNeed, undefined);
+});
+
+test("الفجوة: بلوغُ الهدف يُحسب من الهدف نفسه", () => {
+  const g = gapAnalysis({ qudurat: 80, step: 70 }, { qudurat: 84, step: 71 });
+  assert.equal(g.allMet, true);
+  assert.equal(g.remainingTotal, 0);
+});
+
+test("مؤشر الوصول: التخصّص لا يولّد عتبةً — بلا أهدافٍ لا مقارنةَ درجات", () => {
+  const noTargets = universityReadiness({ quduratScore: 82, tahsiliScore: 79, majorName: "طب" });
+  assert.ok(!noTargets.reasons.some((r) => r.includes("المطلوب")),
+    "لا يُذكر «المطلوب» لأن لا مصدرَ له");
+  assert.ok(!noTargets.reasons.some((r) => r.includes("هدفك")),
+    "ولا يُذكر «هدفك» لأن الطالب لم يحدّده");
+  assert.equal(noTargets.hasData, false, "درجاتٌ بلا أهدافٍ لا تكفي وحدَها للحكم");
+
+  const withTargets = universityReadiness({
+    targets: { qudurat: 90 }, quduratScore: 82, tahsiliScore: 79,
+  });
+  assert.ok(withTargets.reasons.some((r) => r.includes("دون هدفك (90)")));
+});
+
+test("لا رقمَ يُنسب إلى جهةٍ لم تنشره: كل ترتيبٍ معروضٍ له سنةُ إصدار", () => {
+  for (const u of UNIVERSITIES) {
+    if (qsRankText(u, String)) assert.ok(u.qsYear, `${u.id}: ترتيبٌ بلا سنة`);
+  }
 });

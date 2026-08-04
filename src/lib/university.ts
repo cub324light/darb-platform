@@ -541,20 +541,38 @@ export function requirementsText(req: MajorRequirements): string {
   return parts.join("، ");
 }
 
-/* عتبة الدرجة المقابلة لكل مستوى (قدرات/تحصيلي من 100) */
-const LEVEL_THRESHOLD: Record<Exclude<ReqLevel, never>, number> = {
-  "مرتفع": 85,
-  "يفضّل مرتفع": 80,
-  "متوسط": 75,
-  "منخفض": 65,
-};
-function thresholdFor(level: ReqLevel): number { return LEVEL_THRESHOLD[level] ?? 75; }
+/* ════════ «المطلوب» — من أين يأتي الرقم؟ ════════
+   ▓ كان هنا جدولٌ اسمه `LEVEL_THRESHOLD` يحوّل المستوى النوعيّ إلى رقم
+     (مرتفع → ٨٥ · متوسط → ٧٥ · منخفض → ٦٥)، ثم تبني عليه ثلاثةُ محرّكات
+     فتقول للطالب: «القدرات ٨٢ — **دون المطلوب** (مرتفع ≈ ٨٥)».
+
+     و«٨٥» رقمُنا نحن. لا جهة قبولٍ نشرته، ولا نعرف نسبة القبول في تخصّصٍ
+     بجامعةٍ في سنة. فيقرؤه الطالبُ شرطاً للطبّ ويبني عليه قرار مصير.
+
+   ▓ فحُذف. و«المطلوب» الآن **هدفُ الطالب الذي كتبه بيده** (`DarbGoals`:
+     quduratTarget · tahsiliTarget · stepTarget) — رقمٌ يعرف مصدره لأنه هو
+     مصدرُه. وبلا هدفٍ لا فجوة: حالةٌ فارغةٌ صادقة تدعوه ليحدّده.
+
+   ▓ والوصفُ النوعيّ للتخصّص باقٍ كما هو (`MajorRequirements` +
+     `requirementsText`): «الطبّ يحتاج قدراتٍ مرتفعة» جملةٌ صادقةٌ مقيَّدة،
+     لا تدّعي رقماً. الذي حُذف هو تحويلُها إلى عدد. */
+
+/** أهدافُ الطالب الرقمية — مصدرها `DarbGoals` وحدَه (كتبها هو). */
+export interface StudentTargets {
+  qudurat?: number | null;
+  tahsili?: number | null;
+  step?: number | null;
+}
+
+const finiteOrNull = (v: number | null | undefined): number | null =>
+  v == null || !Number.isFinite(v) ? null : v;
 
 /* ════════ محرّك مؤشر الوصول الجامعي (نقي وحتمي) ════════ */
 export type ReadinessLevel = "منخفض" | "متوسط" | "مرتفع";
 
 export interface UniversityReadinessInputs {
-  requirements?: MajorRequirements;
+  /** أهدافُ الطالب الرقمية — لا عتبةٌ مشتقّةٌ من مستوىً نوعيّ. */
+  targets?: StudentTargets;
   readinessPct?: number | null;           // الجاهزية الحالية (محرّك الاستراتيجية)
   quduratScore?: number | null;           // أحدث/أعلى درجة قدرات
   tahsiliScore?: number | null;           // أحدث/أعلى درجة تحصيلي
@@ -573,7 +591,7 @@ export interface UniversityReadinessResult {
 }
 
 export function universityReadiness(inp: UniversityReadinessInputs): UniversityReadinessResult {
-  const req = inp.requirements ?? {};
+  const t = inp.targets ?? {};
   const reasons: string[] = [];
   let score = 0;
   let weight = 0;
@@ -585,20 +603,20 @@ export function universityReadiness(inp: UniversityReadinessInputs): UniversityR
     reasons.push(`جاهزيتك الحالية ${Math.round(inp.readinessPct)}٪`);
   }
 
-  /* 2) مطابقة الدرجات الفعلية للمتطلبات */
-  const examChecks: { label: string; have: number | null | undefined; level?: ReqLevel }[] = [
-    { label: "القدرات", have: inp.quduratScore, level: req.qudurat },
-    { label: "التحصيلي", have: inp.tahsiliScore, level: req.tahsili },
-    { label: "STEP", have: inp.stepScore, level: req.step },
+  /* 2) مطابقة الدرجات الفعلية **لأهداف الطالب** — وبلا هدفٍ لا مقارنة.
+     (الغائبُ لا يُسهم ولا يصير سبباً — نفسُ انضباط `null` في بقية المحرّكات.) */
+  const examChecks: { label: string; have: number | null | undefined; target: number | null }[] = [
+    { label: "القدرات", have: inp.quduratScore, target: finiteOrNull(t.qudurat) },
+    { label: "التحصيلي", have: inp.tahsiliScore, target: finiteOrNull(t.tahsili) },
+    { label: "STEP", have: inp.stepScore, target: finiteOrNull(t.step) },
   ];
   for (const c of examChecks) {
-    if (c.level == null || c.have == null) continue;
-    const need = thresholdFor(c.level);
-    const ratio = Math.max(0, Math.min(1.1, c.have / need));
+    if (c.target == null || c.target <= 0 || c.have == null) continue;
+    const ratio = Math.max(0, Math.min(1.1, c.have / c.target));
     score += ratio * 20;
     weight += 20;
-    if (c.have >= need) reasons.push(`${c.label}: ${c.have} يلبّي المطلوب (${c.level})`);
-    else reasons.push(`${c.label}: ${c.have} دون المطلوب (${c.level} ≈ ${need})`);
+    if (c.have >= c.target) reasons.push(`${c.label}: ${c.have} بلغتَ هدفك (${c.target})`);
+    else reasons.push(`${c.label}: ${c.have} دون هدفك (${c.target})`);
   }
 
   /* 3) الطاقة الأسبوعية */
@@ -628,36 +646,21 @@ export function universityReadiness(inp: UniversityReadinessInputs): UniversityR
   else { level = "منخفض"; icon = "🔴"; }
 
   if (!hasData) {
-    reasons.push("أضف نتائجك وحدّد هدفك لأحسب مؤشر وصول دقيقاً");
+    reasons.push("أضف نتائجك وحدّد درجاتك المستهدفة لأحسب مؤشر وصول دقيقاً");
   }
 
   return { level, icon, score: clamped, reasons: reasons.slice(0, 4), hasData };
 }
 
-/* ════════ ذكاء القبول: ماذا أحتاج + تحليل الفجوة ════════ */
+/* ════════ ذكاء القبول: كم بيني وبين هدفي؟ ════════
+   الفجوةُ تُقاس **إلى هدف الطالب** لا إلى عتبةٍ مخترَعة. فإن لم يحدّد هدفاً
+   لاختبارٍ فلا صفَّ له — لا نملأ فراغه برقمٍ من عندنا. */
 
-/* الدرجات التقريبية المطلوبة لتخصص (إرشادية — مشتقّة من مستويات المتطلبات) */
-export interface RequiredScores {
-  qudurat?: number;
-  tahsili?: number;
-  step?: number;
-  gpa?: number;
-}
-export function requiredScores(req?: MajorRequirements): RequiredScores {
-  if (!req) return {};
-  const out: RequiredScores = {};
-  if (req.qudurat) out.qudurat = thresholdFor(req.qudurat);
-  if (req.tahsili) out.tahsili = thresholdFor(req.tahsili);
-  if (req.step)    out.step    = thresholdFor(req.step);
-  if (req.gpa)     out.gpa     = thresholdFor(req.gpa);
-  return out;
-}
-
-/* تحليل الفجوة لمكوّن واحد: الحالي مقابل المطلوب */
+/* الحالي مقابل هدف الطالب */
 export interface GapItem {
   label: string;
   current: number | null;
-  required: number;
+  target: number;         // هدفُ الطالب لهذا الاختبار
   gap: number;            // المتبقّي (موجب = يحتاج رفع)؛ ≤0 = مكتمل
   met: boolean;
   weeklyNeed?: number;    // نقاط/أسبوع للوصول قبل الاختبار (إن توفّرت المدة)
@@ -666,33 +669,31 @@ export interface GapAnalysis {
   items: GapItem[];
   remainingTotal: number; // مجموع النقاط المتبقية عبر كل المكوّنات
   allMet: boolean;
-  hasData: boolean;
+  hasData: boolean;       // هل حدّد الطالبُ هدفاً واحداً على الأقل؟
 }
 export function gapAnalysis(
-  req: MajorRequirements | undefined,
-  have: { qudurat?: number | null; tahsili?: number | null; step?: number | null; gpa?: number | null },
+  targets: StudentTargets | undefined,
+  have: { qudurat?: number | null; tahsili?: number | null; step?: number | null },
   weeksUntilExam?: number | null,
 ): GapAnalysis {
-  const need = requiredScores(req);
-  const rows: { key: keyof RequiredScores; label: string; have: number | null | undefined }[] = [
-    { key: "qudurat", label: "القدرات", have: have.qudurat },
-    { key: "tahsili", label: "التحصيلي", have: have.tahsili },
-    { key: "step",    label: "STEP",    have: have.step },
-    { key: "gpa",     label: "الثانوية", have: have.gpa },
+  const t = targets ?? {};
+  const rows: { label: string; target: number | null; have: number | null | undefined }[] = [
+    { label: "القدرات", target: finiteOrNull(t.qudurat), have: have.qudurat },
+    { label: "التحصيلي", target: finiteOrNull(t.tahsili), have: have.tahsili },
+    { label: "STEP",    target: finiteOrNull(t.step),    have: have.step },
   ];
   const items: GapItem[] = [];
   let remainingTotal = 0;
   for (const r of rows) {
-    const required = need[r.key];
-    if (required == null) continue;
+    if (r.target == null || r.target <= 0) continue;
     const current = r.have == null || Number.isNaN(r.have) ? null : r.have;
-    const gap = current == null ? required : Math.max(0, Math.round((required - current) * 10) / 10);
-    const met = current != null && current >= required;
+    const gap = current == null ? r.target : Math.max(0, Math.round((r.target - current) * 10) / 10);
+    const met = current != null && current >= r.target;
     if (!met) remainingTotal += gap;
     const weeklyNeed = !met && weeksUntilExam && weeksUntilExam > 0
       ? Math.round((gap / weeksUntilExam) * 10) / 10
       : undefined;
-    items.push({ label: r.label, current, required, gap, met, weeklyNeed });
+    items.push({ label: r.label, current, target: r.target, gap, met, weeklyNeed });
   }
   const hasData = items.length > 0;
   return { items, remainingTotal: Math.round(remainingTotal * 10) / 10, allMet: hasData && items.every((i) => i.met), hasData };

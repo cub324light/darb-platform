@@ -102,13 +102,32 @@ test("أول ثانوي: المدرسة فقط متاحة، لا قدرات ول
   assert.ok(!(unis.note ?? "").includes("التحصيلي المبكر"));
 });
 
-test("الكليات: الجامعة المستهدفة أولاً + متطلبات التخصص مع الفجوة", () => {
+test("الكليات: الجامعة المستهدفة أولاً + متطلبات التخصص وصفاً نوعياً", () => {
   const colleges = buildOpportunities(FULL)[1];
   assert.ok(colleges.items[0].title.includes("جامعة الملك سعود"), colleges.items[0].title);
   const req = colleges.items.find((i) => i.id === "major-medicine");
   assert.ok(req, "لا عنصر متطلبات للتخصص");
   assert.match(req.detail, /قدرات/);
-  assert.equal(req.linkTo, "/university");
+  /* بلا أهدافٍ حدّدها الطالب: لا فجوةَ رقمية — ودعوةٌ لتحديد الهدف لا رقمٌ مخترَع */
+  assert.match(req.hint ?? "", /المستهدفة/);
+  assert.equal(req.linkTo, "/plan");
+  assert.ok(!/ينقص ≈/.test(JSON.stringify(req)), "لا رقمَ نقصٍ بلا هدف");
+});
+
+test("الكليات: الفجوة الرقمية تظهر حين يحدّد الطالبُ أهدافه — ومنها وحدَها", () => {
+  const withTargets = buildOpportunities({
+    ...FULL, targets: { qudurat: 95, tahsili: 90 },
+  })[1].items.find((i) => i.id === "major-medicine");
+  assert.ok(withTargets);
+  assert.equal(withTargets.status, "يحتاج شرط");
+  assert.match(withTargets.hint ?? "", /ينقص ≈ 13 نقطة/);   // (95−88) + (90−84)
+  assert.equal(withTargets.linkTo, "/university");
+
+  const met = buildOpportunities({
+    ...FULL, targets: { qudurat: 80, tahsili: 80 },
+  })[1].items.find((i) => i.id === "major-medicine");
+  assert.equal(met!.status, "متاح");
+  assert.match(met!.hint ?? "", /بلغتَ/);
 });
 
 test("بدون جامعة مستهدفة: كليات أعلى جامعة ملاءمةً لدرجات الطالب", () => {

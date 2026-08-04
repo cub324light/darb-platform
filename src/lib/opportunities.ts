@@ -26,6 +26,7 @@ import {
   weightedVerdict,
   requirementsText,
   gapAnalysis,
+  type StudentTargets,
   housingInfo,
   type UniversityOption,
   type WeightedFormula,
@@ -49,6 +50,8 @@ export interface OpportunityInputs {
   step?: number | null;
   universityId?: string;        // الوجهة من darb_goals
   majorId?: string;
+  /** أهدافُ الطالب الرقمية — مصدرُ «المطلوب» الوحيد في تحليل الفجوة. */
+  targets?: StudentTargets;
 }
 
 export type OpportunityStatus = "متاح" | "قريب" | "يحتاج شرط";
@@ -238,9 +241,11 @@ function collegesGroup(
   /* متطلبات التخصص المستهدف + تحليل الفجوة إن توفّرت درجات */
   const major = findMajor(inp.majorId);
   if (major && major.id !== "other") {
+    /* الوصفُ النوعيّ للتخصّص يبقى كما هو («قدرات: مرتفع») — هو ما نعرفه فعلاً.
+       والفجوةُ الرقمية تُقاس إلى **هدف الطالب**، فبلا هدفٍ لا رقم. */
     const reqText = requirementsText(major.requirements);
-    const gap = gapAnalysis(major.requirements, {
-      qudurat: inp.qudurat, tahsili: inp.tahsili, step: inp.step, gpa: inp.highschoolPct,
+    const gap = gapAnalysis(inp.targets, {
+      qudurat: inp.qudurat, tahsili: inp.tahsili, step: inp.step,
     });
     const hasScores = gap.items.some((i) => i.current != null);
     if (!gap.hasData) {
@@ -248,8 +253,9 @@ function collegesGroup(
         id: `major-${major.id}`,
         title: `متطلبات ${major.name}`,
         status: "قريب",
-        detail: "لا تتوفّر متطلبات مُقدّرة لهذا التخصص — راجع جهة القبول مباشرة.",
-        linkTo: "/university",
+        detail: reqText || "متطلبات هذا التخصص غير مُدرَجة — راجع جهة القبول مباشرة.",
+        hint: "حدّد درجاتك المستهدفة في «خطتي» لأقيس لك ما ينقصك.",
+        linkTo: "/plan",
       });
     } else if (!hasScores) {
       items.push({
@@ -267,8 +273,8 @@ function collegesGroup(
         status: gap.allMet ? "متاح" : "يحتاج شرط",
         detail: reqText,
         hint: gap.allMet
-          ? "درجاتك تلبّي المطلوب التقديري — ركّز على إتمام التقديم."
-          : `ينقص ≈ ${gap.remainingTotal} نقطة إجمالاً — التفصيل في لوحة القبول.`,
+          ? "بلغتَ درجاتك المستهدفة — ركّز على إتمام التقديم."
+          : `ينقص ≈ ${gap.remainingTotal} نقطة لبلوغ أهدافك — التفصيل في لوحة القبول.`,
         linkTo: "/university",
       });
     }

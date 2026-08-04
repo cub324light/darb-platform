@@ -19,20 +19,30 @@ test("evaluateSatisfaction مع عتبة: أخضر/أصفر/أحمر", () => {
   assert.equal(evaluateSatisfaction(70, 85).band, "red");     // أقل بكثير
 });
 
-test("evaluateSatisfaction بلا عتبة: بنود عامة 85/75", () => {
+test("بلا هدف: تقديرٌ عام لا يدّعي هدفاً — ولا يذكر «هدفك» إطلاقاً", () => {
   assert.equal(evaluateSatisfaction(88, null).band, "green");
   assert.equal(evaluateSatisfaction(78, null).band, "yellow");
   assert.equal(evaluateSatisfaction(60, null).band, "red");
-  assert.match(evaluateSatisfaction(60, null).note, /حدّد/);
+  for (const v of [88, 78, 60]) {
+    const s = evaluateSatisfaction(v, null);
+    assert.match(s.note, /حدّد/);
+    assert.ok(!s.title.includes("هدفك"), "لا يُنسب إلى هدفٍ لم يحدّده الطالب");
+    assert.ok(!s.note.includes("متطلّب"), "ولا يُدّعى متطلّبُ تخصّص");
+  }
 });
 
-test("العتبة من الهدف الرقمي عند غياب التخصص", () => {
+test("العتبة هدفُ الطالب وحدَه — والتخصّصُ لا يولّد عتبة", () => {
   const goals = { quduratTarget: 90 } as DarbGoals;
   const s = satisfactionForResult("القدرات", "86", goals);
   assert.ok(s);
   assert.equal(s!.band, "yellow");         // 86 ضمن 5 تحت 90
-  assert.equal(s!.fromMajor, false);
   assert.equal(s!.threshold, 90);
+  assert.equal(s!.note, "هدفك 90.");
+
+  /* الطبُّ متطلّبُه «مرتفع» — وكان يُترجَم 85 فيصير عتبةً. الآن: لا عتبة. */
+  const medOnly = satisfactionForResult("التحصيلي", "80", { majorId: "medicine" } as DarbGoals);
+  assert.ok(medOnly);
+  assert.equal(medOnly!.threshold, null, "لا عتبةَ من التخصّص بعد اليوم");
 });
 
 test("satisfactionForResult يعيد null لاختبار بلا مفتاح أو درجة غير صالحة", () => {

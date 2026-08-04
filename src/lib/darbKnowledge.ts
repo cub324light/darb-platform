@@ -45,7 +45,6 @@ export {
 export {
   computeWeighted,
   weightedVerdict,
-  requiredScores,
   requirementsText,
   universityReadiness,
   gapAnalysis,
@@ -60,6 +59,7 @@ export type {
   WeightedInputs,
   WeightedResult,
   MajorRequirements,
+  StudentTargets,
   MajorOption,
   MajorCategory,
   UniversityOption,
@@ -93,8 +93,13 @@ export function getStudentPhase(u?: DarbUser | null): StudentPhase {
    2) نطاقات الدرجات (Score Bands) — مقياس موحّد
    ────────────────────────────────────────────────────────────
    خمس طبقات ثابتة. القدرات/التحصيلي/STEP على مقياس 0–100،
-   والمعدل التراكمي على مقياس 0–5. العتبات متّسقة مع
-   LEVEL_THRESHOLD في university.ts (مرتفع 85 · متوسط 75 · منخفض 65).
+   والمعدل التراكمي على مقياس 0–5.
+
+   ▓ هذه النطاقاتُ **وصفٌ عامٌّ لمستوى الدرجة** («٨٥ درجةٌ مرتفعة») لا ادّعاءُ
+     شرطِ قبولٍ لتخصّصٍ بعينه. وهذا هو الفرق الذي حُذف من أجله `LEVEL_THRESHOLD`:
+     ذاك كان يقول «المطلوب للطبّ ٨٥» — وهذا يقول «٨٥ مرتفعة». الأولُ ادّعاءٌ عن
+     جهةِ قبول، والثاني وصفٌ لسلّمٍ من مئة. ولا يجوز أن يعود الأولُ من هنا: لا
+     تُشتقّ من هذه النطاقات عتبةُ تخصّص.
    ════════════════════════════════════════════════════════════ */
 
 export type BandTier = "excellent" | "high" | "good" | "fair" | "low";

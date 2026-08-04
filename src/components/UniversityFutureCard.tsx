@@ -25,7 +25,8 @@ export default function UniversityFutureCard({ onOpenTab }: { onOpenTab?: () => 
       return null;
     };
     const readiness = universityReadiness({
-      requirements: major?.requirements,
+      /* «المطلوب» = هدفُ الطالب الذي كتبه، لا عتبةٌ مشتقّةٌ من مستوى التخصّص */
+      targets: { qudurat: goals.quduratTarget, tahsili: goals.tahsiliTarget, step: goals.stepTarget },
       readinessPct: strategy.readinessPct,
       quduratScore: scoreOf("قدرات"),
       tahsiliScore: scoreOf("تحصيلي"),

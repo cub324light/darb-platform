@@ -6,7 +6,7 @@
    كل القرارات من محرّكات مركزية في university.ts (لا منطق مكرّر). */
 import { useMemo, useState } from "react";
 import {
-  UNIVERSITIES, MAJORS, findUniversity, findMajor, universityReadiness, gapAnalysis,
+  UNIVERSITIES, MAJORS, findUniversity, findMajor, universityReadiness, gapAnalysis, requirementsText,
 } from "@/lib/university";
 import { collegesAt, majorsIn, categoryOfMajor, collegeOfMajor, hasColleges } from "@/lib/universityColleges";
 import { loadGoals, saveGoals, currentScoreMap, activeExamTrackIds, loadTrackExamDates, type DarbGoals } from "@/lib/storage";
@@ -87,8 +87,13 @@ export default function UniversityFuture() {
     qudurat: scoreOf(scoreMap, "قدرات"),
     tahsili: scoreOf(scoreMap, "تحصيلي"),
     step: scoreOf(scoreMap, "STEP", "ستيب"),
-    gpa: goals.highschoolPct ?? null,
-  }), [scoreMap, goals.highschoolPct]);
+  }), [scoreMap]);
+
+  /* «المطلوب» = ما كتبه الطالبُ هدفاً في «أهدافي». بلا هدفٍ لا فجوة — ولا
+     نشتقّ له عتبةً من مستوى التخصّص النوعيّ (كان ذاك رقمَنا لا رقمَ جهةِ قبول). */
+  const targets = useMemo(() => ({
+    qudurat: goals.quduratTarget, tahsili: goals.tahsiliTarget, step: goals.stepTarget,
+  }), [goals.quduratTarget, goals.tahsiliTarget, goals.stepTarget]);
 
   /* أسابيع حتى أقرب اختبار — لتقدير الحاجة الأسبوعية في الفجوة */
   const weeksUntilExam = useMemo(() => {
@@ -105,7 +110,7 @@ export default function UniversityFuture() {
   const readiness = useMemo(() => {
     const strategy = getStrategy();
     return universityReadiness({
-      requirements: selectedMajor?.requirements,
+      targets,
       readinessPct: strategy.readinessPct,
       quduratScore: have.qudurat,
       tahsiliScore: have.tahsili,
@@ -115,12 +120,12 @@ export default function UniversityFuture() {
       /* الاسم الدقيق هو الذي يراه الطالب («العمارة» لا «هندسة مدنية») */
       majorName: goals.major ?? selectedMajor?.name,
     });
-  }, [selectedMajor, have, goals.major]);
+  }, [targets, have, goals.major, selectedMajor?.name]);
 
   /* تحليل الفجوة — «ماذا ينقصني للوصول؟» */
   const gap = useMemo(
-    () => (selectedMajor ? gapAnalysis(selectedMajor.requirements, have, weeksUntilExam) : null),
-    [selectedMajor, have, weeksUntilExam],
+    () => gapAnalysis(targets, have, weeksUntilExam),
+    [targets, have, weeksUntilExam],
   );
 
   const exam = useMemo(() => nearestExamDays(), []);
@@ -290,22 +295,33 @@ export default function UniversityFuture() {
             <span className="text-[20px]">🎯</span>
             <p className="text-[16px] font-black flex-1" style={{ color: "var(--text)" }}>ماذا ينقصني للوصول إلى {selectedMajor.name}؟</p>
           </div>
-          {!gap?.hasData ? (
-            <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>لا تتوفّر متطلبات مُقدّرة لهذا التخصص — راجع «القبول الجامعي».</p>
+
+          {/* ما نعرفه عن التخصّص فعلاً: وصفٌ نوعيٌّ لا رقم */}
+          {requirementsText(selectedMajor.requirements) && (
+            <div className="rounded-xl px-3 py-2.5" style={{ background: "var(--surface2)" }}>
+              <p className="text-[13px] font-black mb-0.5" style={{ color: "var(--text)" }}>ما يحتاجه هذا التخصص</p>
+              <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>{requirementsText(selectedMajor.requirements)}</p>
+            </div>
+          )}
+
+          {!gap.hasData ? (
+            <p className="text-[15px]" style={{ color: "var(--text-muted)" }}>
+              حدّد درجاتك المستهدفة في «أهدافي» أعلاه، وأقيس لك كم بقي بينك وبينها.
+            </p>
           ) : (
             <>
               <div className="flex flex-col gap-2">
                 {gap.items.map((it) => {
                   const color = it.met ? "var(--success)" : it.current == null ? "var(--text-muted)" : "var(--gold)";
-                  const pct = Math.max(0, Math.min(100, it.current == null ? 0 : (it.current / it.required) * 100));
+                  const pct = Math.max(0, Math.min(100, it.current == null ? 0 : (it.current / it.target) * 100));
                   return (
                     <div key={it.label} className="rounded-xl px-3 py-2.5" style={{ background: "var(--surface2)" }}>
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-[15px] font-black" style={{ color: "var(--text)" }}>{it.label}</span>
                         <span className="text-[14px] font-bold" style={{ color }}>
-                          {it.current == null ? `المطلوب ${ar(it.required)}+` :
-                            it.met ? `✅ ${ar(it.current)} (المطلوب ${ar(it.required)})` :
-                            `${ar(it.current)} / ${ar(it.required)} — ينقص ${ar(it.gap)}`}
+                          {it.current == null ? `هدفك ${ar(it.target)}` :
+                            it.met ? `✅ ${ar(it.current)} (هدفك ${ar(it.target)})` :
+                            `${ar(it.current)} / ${ar(it.target)} — ينقص ${ar(it.gap)}`}
                         </span>
                       </div>
                       <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
@@ -313,7 +329,7 @@ export default function UniversityFuture() {
                       </div>
                       {!it.met && it.weeklyNeed != null && it.weeklyNeed > 0 && (
                         <p className="text-[12px] mt-1.5" style={{ color: "var(--text-muted)" }}>
-                          ≈ {ar(it.weeklyNeed)} نقطة/أسبوع للوصول قبل اختبارك
+                          ≈ {ar(it.weeklyNeed)} نقطة/أسبوع لبلوغ هدفك قبل اختبارك
                         </p>
                       )}
                     </div>
@@ -325,12 +341,12 @@ export default function UniversityFuture() {
                 <span className="text-[18px]">{gap.allMet ? "🟢" : "📈"}</span>
                 <p className="text-[14px] font-bold" style={{ color: "var(--text)" }}>
                   {gap.allMet
-                    ? "درجاتك تلبّي المطلوب التقديري لهذا التخصص — ركّز على إتمام التقديم."
-                    : `إجمالي ما تحتاج رفعه ≈ ${ar(gap.remainingTotal)} نقطة موزّعة على ما سبق.`}
+                    ? "بلغتَ درجاتك المستهدفة — ركّز على إتمام التقديم."
+                    : `إجمالي ما تحتاج رفعه ≈ ${ar(gap.remainingTotal)} نقطة لبلوغ أهدافك.`}
                 </p>
               </div>
               <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-                الدرجات المطلوبة تقديرية إرشادية — تختلف حسب الجامعة والسنة والمنافسة.
+                هذه أهدافُك أنت. ونِسَب القبول الفعلية تُعلنها الجامعاتُ سنوياً وتختلف بالتخصص والمنافسة.
               </p>
             </>
           )}

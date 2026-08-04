@@ -86,6 +86,8 @@ export default function OpportunitiesPage() {
     qudurat, tahsili, step,
     universityId: goals.universityId,
     majorId: goals.majorId,
+    /* «المطلوب» = ما كتبه الطالبُ هدفاً، لا عتبةٌ نشتقّها له */
+    targets: { qudurat: goals.quduratTarget, tahsili: goals.tahsiliTarget, step: goals.stepTarget },
   });
 
   /* هل توجد أي بيانات نبني عليها؟ (لحالة الفراغ الكامل الأنيقة) */
