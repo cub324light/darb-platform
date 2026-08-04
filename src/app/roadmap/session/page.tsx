@@ -123,6 +123,12 @@ export default function SessionPage() {
     if (skipIdx == null) return;
     const t = tasks[skipIdx];
     trackEvent("session_task_skipped", { kind: t.kind, reason });
+    /* والتحليلاتُ لا تصل الذاكرة: التخطّي إشارةٌ عن الطالب يجب أن يعرفها دويرب. */
+    import("@/lib/events").then(({ emit }) => emit({
+      eventType: "SessionTaskSkipped",
+      metadata: { taskKind: t.kind, subject: t.subject, reason },
+      actor: { kind: "student" }, source: "ui",
+    })).catch(() => {});
     let next = tasks.filter((_, i) => i !== skipIdx);
     if (reason === "swap" && (t.kind === "review" || t.kind === "drill")) {
       const other = exam.subjects.map((s) => s.name).find((s) => s !== t.subject);

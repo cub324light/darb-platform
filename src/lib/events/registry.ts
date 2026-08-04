@@ -16,6 +16,9 @@ export const EVENT_REGISTRY: EventRegistry = {
   StudentFinishedSession: { type: "StudentFinishedSession", category: "session", milestone: false,
     label: (e) => `أنهى جلسة ${e.metadata.minutes} دقيقة${e.metadata.subject ? ` — ${e.metadata.subject}` : ""}`,
     validate: (m) => Number.isFinite(m.minutes) && m.minutes >= 0 },
+  SessionTaskSkipped: { type: "SessionTaskSkipped", category: "session", milestone: false,
+    label: (e) => `تخطّى ${e.metadata.taskKind === "drill" ? "تدريباً" : e.metadata.taskKind === "errors" ? "مراجعة أخطاء" : "مراجعة"}${e.metadata.subject ? ` — ${e.metadata.subject}` : ""}`,
+    validate: (m) => typeof m.taskKind === "string" && typeof m.reason === "string" },
 
   /* التعلّم */
   QuestionAnswered:  { type: "QuestionAnswered", category: "learning", milestone: false },
@@ -72,6 +75,11 @@ export const EVENT_REGISTRY: EventRegistry = {
 
   /* المستندات */
   DocumentUploaded: { type: "DocumentUploaded", category: "document", milestone: false },
+
+  /* الخزنة */
+  VaultErrorAdded: { type: "VaultErrorAdded", category: "learning", milestone: false,
+    label: (e) => `أضاف خطأً في ${e.metadata.subject}`,
+    validate: (m) => typeof m.subject === "string" && m.subject.length > 0 },
 
   /* ملاحظات الذاكرة */
   MemoryCreated: { type: "MemoryCreated", category: "system", milestone: false },

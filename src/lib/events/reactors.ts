@@ -25,7 +25,8 @@ export function makeMemoryReactor(mem: MemoryEngine): Reactor {
     handles: [
       "StudentRegistered", "GoalChanged", "UniversitySelected",
       "ScoreUpdated", "ExamCompleted", "STEPCompleted",
-      "StudentFinishedSession", "UniversityPhaseEntered", "CareerPhaseEntered",
+      "StudentFinishedSession", "SessionTaskSkipped", "VaultErrorAdded",
+      "UniversityPhaseEntered", "CareerPhaseEntered",
       "DuwairbConversationFinished",
     ],
     react: (e) => {
@@ -68,6 +69,20 @@ export function makeMemoryReactor(mem: MemoryEngine): Reactor {
           break;
         case "StudentFinishedSession":
           mem.remember({ type: "behavior.sessionLength", value: { minutes: e.metadata.minutes }, source: "inferred", educationalStage: stage, evidence: evidence(e) });
+          break;
+        /* التخطّي إشارةُ ضعفٍ في المادّة — لا حكمٌ على الطالب. `severity` منخفضة
+           لأنّ سببَ التخطّي قد يكون الوقتَ لا الصعوبة؛ والتكرارُ يرفع الثقةَ
+           بتراكم الأدلّة لا برفعنا الرقمَ يدوياً. */
+        case "SessionTaskSkipped":
+          if (e.metadata.subject) {
+            mem.remember({ type: "learning.weakSubject", value: { subject: e.metadata.subject, severity: 0.3 },
+              source: "inferred", educationalStage: stage, evidence: evidence(e) });
+          }
+          break;
+        /* خطأٌ مسجَّلٌ بيد الطالب — أقوى دليلٍ على ضعف مادّة، وهو فعلٌ لا رأي. */
+        case "VaultErrorAdded":
+          mem.remember({ type: "learning.weakSubject", value: { subject: e.metadata.subject, severity: 0.5 },
+            source: "event", educationalStage: stage, evidence: evidence(e) });
           break;
         case "UniversityPhaseEntered":
           mem.remember({ type: "identity.studyLevel", value: { level: "جامعي" }, source: "event", educationalStage: "university", evidence: evidence(e) });

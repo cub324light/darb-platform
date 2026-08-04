@@ -46,6 +46,9 @@ export interface EventMetaMap {
   /* ── الجلسات ── */
   "StudentStartedSession":  { sessionKind?: string; subject?: string };
   "StudentFinishedSession": { minutes: number; subject?: string };
+  /* تخطّي مهمّةٍ من خطّة اليوم — كان يُسجَّل في التحليلات وحدها، فلا تعرفه الذاكرة
+     ولا دويرب. والتخطّي إشارةٌ عن الطالب أصدقُ من كثيرٍ ممّا ينجزه. */
+  "SessionTaskSkipped":     { taskKind: string; subject?: string; reason: string };
 
   /* ── التعلّم ── */
   "QuestionAnswered":  { subject?: string; correct: boolean; topic?: string };
@@ -89,6 +92,9 @@ export interface EventMetaMap {
 
   /* ── المستندات ── */
   "DocumentUploaded": { kind?: string; pages?: number };
+
+  /* ── الخزنة (أخطائي) ── */
+  "VaultErrorAdded": { subject: string; category?: string; difficulty?: string };
 
   /* ── ملاحظات الذاكرة (للتدقيق/التحليلات — لا تُغذّي الذاكرة تفادياً للحلقات) ── */
   "MemoryCreated": { memoryId: string; memoryType: string };

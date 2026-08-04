@@ -111,6 +111,12 @@ export default function FileAnalyzer({
           setStage("input");
           return;
         }
+        /* بعد النجاح لا قبله: رفعٌ فاشلٌ ليس حدثاً في حياة الطالب. */
+        import("@/lib/events").then(({ emit }) => emit({
+          eventType: "DocumentUploaded",
+          metadata: { kind: file.name.split(".").pop()?.toLowerCase(), pages },
+          actor: { kind: "student" }, source: "ui",
+        })).catch(() => {});
       } catch {
         clearTimer();
         throw new Error("fetch_failed");

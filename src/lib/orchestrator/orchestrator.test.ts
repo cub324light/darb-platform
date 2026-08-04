@@ -25,6 +25,7 @@ const CTX: DuwairbContext = {
   },
   recentEvents: ["أنهى جلسة 50 دقيقة", "سجّل 80 في تحصيلي"],
   recommendations: [{ title: "التحصيلي — أولوية كاملة", reason: "ركّز على التحصيلي قبل التخرّج", priority: 88, source: "goldenPath" }],
+  activity: {},
   timing: { goodTimeNow: true, fatigue: 0.1, note: "وقت مناسب" },
 };
 

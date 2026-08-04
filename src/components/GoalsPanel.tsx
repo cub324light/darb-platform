@@ -11,10 +11,36 @@ export default function GoalsPanel() {
   const [goals, setGoals] = useState<DarbGoals>(() => (typeof window !== "undefined" ? loadGoals() : {}));
   const [results, setResults] = useState<ExamResult[]>(() => (typeof window !== "undefined" ? loadResults() : []));
 
+  /* أحداثُ السلوك: النوعان مسجَّلان في `events/registry` منذ البداية ولا يُطلقان
+     من أيّ مكان، فلا تعرف الذاكرةُ أنّ الطالب غيّر هدفه أو سجّل درجة. */
+  const fire = (ev: Parameters<typeof import("@/lib/events")["emit"]>[0]) => {
+    import("@/lib/events").then(({ emit }) => emit(ev)).catch(() => {});
+  };
+
   const updateGoals = (partial: Partial<DarbGoals>) =>
-    setGoals((prev) => { const next = { ...prev, ...partial }; saveGoals(next); return next; });
+    setGoals((prev) => {
+      const next = { ...prev, ...partial }; saveGoals(next);
+      if (partial.university && partial.university !== prev.university) {
+        fire({ eventType: "GoalChanged", metadata: { field: "university", value: partial.university, prev: prev.university }, actor: { kind: "student" }, source: "ui" });
+      }
+      if (partial.major && partial.major !== prev.major) {
+        fire({ eventType: "GoalChanged", metadata: { field: "major", value: partial.major, prev: prev.major }, actor: { kind: "student" }, source: "ui" });
+      }
+      return next;
+    });
   const addResult = (r: ExamResult) =>
-    setResults((prev) => { const next = [r, ...prev]; saveResults(next); return next; });
+    setResults((prev) => {
+      const next = [r, ...prev]; saveResults(next);
+      /* الدرجةُ نصٌّ في التخزين — لا نُطلق إلا إن كانت رقماً حقيقياً. */
+      const score = r.score != null ? parseFloat(r.score) : NaN;
+      if (r.exam && Number.isFinite(score)) {
+        const before = prev.find((x) => x.exam === r.exam && x.score != null);
+        const prevScore = before?.score != null ? parseFloat(before.score) : NaN;
+        fire({ eventType: "ScoreUpdated", metadata: { exam: r.exam, score, prev: Number.isFinite(prevScore) ? prevScore : undefined }, actor: { kind: "student" }, source: "ui" });
+        fire({ eventType: "ExamCompleted", metadata: { exam: r.exam, score }, actor: { kind: "student" }, source: "ui" });
+      }
+      return next;
+    });
   const deleteResult = (id: string) =>
     setResults((prev) => { const next = prev.filter((x) => x.id !== id); saveResults(next); return next; });
 

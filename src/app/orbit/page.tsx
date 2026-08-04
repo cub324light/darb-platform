@@ -322,7 +322,14 @@ export default function OrbitPage() {
     } catch {}
     endAtRef.current = Date.now() + focusSecs * 1000;
     setPhase("focus"); timer.set(focusSecs);
-  }, [focusSecs, timer, notifyOn]);
+    /* حدثُ سلوكٍ للذاكرة (لا تحليلات): كان النوعُ مسجَّلاً في `events/registry`
+       ولا يُطلق من أيّ مكان، فلا تعرف الذاكرةُ أنّ الطالبَ ذاكر أصلاً. */
+    import("@/lib/events").then(({ emit }) => emit({
+      eventType: "StudentStartedSession",
+      metadata: { sessionKind: "focus", subject: subject || undefined },
+      actor: { kind: "student" }, source: "ui",
+    })).catch(() => {});
+  }, [focusSecs, timer, notifyOn, subject]);
 
   /* تسليمٌ من مساري: إن كانت المدّة محفوظةً سابقاً نبدأ فوراً بلا سؤال؛
      وإلا يظهر مُنتقي المدّة أوّلاً ثم تبدأ الجلسة بعد اختياره. */
@@ -349,6 +356,11 @@ export default function OrbitPage() {
     /* سجلّ مساري — يغذّي الإحصائيات والجاهزية (مصدرٌ واحد للجلسات) */
     appendSession({ id: `${Date.now()}`, examId: handoff.from === "masari" ? "masari" : "orbit",
       subject, taskKind: "review", startedAt: Date.now() - focusMins * 60000, durationMins: focusMins });
+    import("@/lib/events").then(({ emit }) => emit({
+      eventType: "StudentFinishedSession",
+      metadata: { minutes: focusMins, subject: subject || undefined },
+      actor: { kind: "student" }, source: "ui",
+    })).catch(() => {});
     playBeep();
     vibrate([100, 50, 100]);
     notify("انتهت جلسة التركيز", `أحسنت! خذ راحة ${arabicMins(calcBreak(focusMins))}`);

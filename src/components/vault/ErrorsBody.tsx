@@ -111,6 +111,12 @@ export default function ErrorsBody({ embedded = false }: { embedded?: boolean })
       difficulty: newDiff,
     }, ...p]);
     setNewQ(""); setNewNote(""); setNewDiff("متوسط"); setShowAdd(false);
+    /* أقوى دليلٍ على ضعف مادّة: خطأٌ سجّله الطالبُ بيده — فعلٌ لا رأي. */
+    import("@/lib/events").then(({ emit }) => emit({
+      eventType: "VaultErrorAdded",
+      metadata: { subject: newSubject, category: newCat, difficulty: newDiff },
+      actor: { kind: "student" }, source: "ui",
+    })).catch(() => {});
   };
 
   const deleteError = (id: string) => {
