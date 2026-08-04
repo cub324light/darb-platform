@@ -1,7 +1,7 @@
 "use client";
 
-import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
+import { hasAnalyticsConsent } from "@/lib/consent";
 
 export default function GlobalError({
   error,
@@ -10,8 +10,12 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset?: () => void;
 }) {
+  /* استيرادٌ ديناميكيّ: صفحةُ العطل جزءٌ من الحزمة الأولى، فاستيرادُ Sentry في
+     رأسها يُدخل ٤٢٨ ك.ب على كلّ طالبٍ ليقرأ صفحةً قد لا يراها أبداً. ولا يُرسَل
+     شيءٌ بلا موافقةٍ على التحليلات — والرسالةُ أدناه تقول ذلك بصدق. */
   useEffect(() => {
-    Sentry.captureException(error);
+    if (!hasAnalyticsConsent()) return;
+    import("@sentry/nextjs").then((S) => S.captureException(error)).catch(() => {});
   }, [error]);
 
   return (
@@ -21,7 +25,7 @@ export default function GlobalError({
           <div style={{ fontSize: "44px" }}>🌧️</div>
           <h1 style={{ fontSize: "22px", fontWeight: 800, margin: 0 }}>صار خطأ غير متوقّع</h1>
           <p style={{ fontSize: "15px", opacity: 0.7, maxWidth: "340px", lineHeight: 1.7, margin: 0 }}>
-            سجّلنا المشكلة تلقائياً ونشتغل عليها. جرّب تعيد المحاولة أو حدّث الصفحة.
+            جرّب تعيد المحاولة أو حدّث الصفحة. وإذا تكرّر معك راسلنا على support@usedarb.com.
           </p>
           <button
             onClick={() => (reset ? reset() : window.location.reload())}

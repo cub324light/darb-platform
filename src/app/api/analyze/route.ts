@@ -146,19 +146,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "سجّل الدخول لتحليل الملفات" }, { status: 401 });
   }
 
-  /* H1: المحظور لا يستهلك التحليل (فرض الحظر على الخادم) */
-  const blockDb = await getAdminDbOptional();
+  /* البوّاباتُ الثلاثُ متوازية — لا يعتمد أحدُها على الآخر (انظر `chat/route.ts`). */
+  const [blockDb, rateOk, limits] = await Promise.all([
+    getAdminDbOptional(),
+    checkUserRateLimit(uid, ANALYZE_LIMIT),
+    serverLimits(uid),
+  ]);
+
   if (blockDb && (await isUserBlocked(blockDb, uid))) {
     return NextResponse.json({ error: "الحساب موقوف" }, { status: 403 });
   }
-
-  /* تحديد المعدّل لكل مستخدم (دائم عبر Firestore — يعمل عبر كل instances) */
-  if (!(await checkUserRateLimit(uid, ANALYZE_LIMIT))) {
+  if (!rateOk) {
     return NextResponse.json({ error: "طلبات كثيرة، انتظر دقيقة" }, { status: 429 });
   }
-  /* M-5: حدّ يوميّ لتحليل الملفات (التحليل أثقل — حتى 9 نداءات Groq)، وهو الآن
-     **حسب الباقة** من `planLimits` — الرقمُ نفسُه المعروضُ في صفحة الباقات. */
-  const analyzeDaily = (await serverLimits(uid)).analyzePerDay;
+  /* M-5: حدّ يوميّ لتحليل الملفات (التحليل أثقل — حتى 9 نداءات Groq)، **حسب
+     الباقة** من `planLimits` — الرقمُ نفسُه المعروضُ في صفحة الباقات. */
+  const analyzeDaily = limits.analyzePerDay;
   if (!(await checkDailyLimit("analyze_" + uid, analyzeDaily))) {
     return NextResponse.json(
       { error: `وصلت حدّك اليومي من تحليل الملفات (${analyzeDaily}) — عُد غداً، أو رقِّ باقتك.` },

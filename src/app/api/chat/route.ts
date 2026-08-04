@@ -340,21 +340,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "سجّل الدخول لاستخدام دويرب" }, { status: 401 });
   }
 
-  /* H1: المحظور لا يستهلك الذكاء (فرض الحظر على الخادم لا الواجهة فقط) */
-  const blockDb = await getAdminDbOptional();
+  /* ▓ البوّابات الثلاث الأولى **متوازية**: الحظرُ والمعدّلُ والباقةُ لا يعتمد
+     أحدُها على الآخر، وكانت تُنتظر واحدةً بعد واحدة — أربعُ رحلاتٍ متتابعةٍ إلى
+     Firestore قبل أن يُنادى النموذجُ أصلاً. الطالبُ يدفع مجموعَها لا أطولَها.
+     صارت رحلتين: ثلاثٌ معاً، ثم الحدُّ اليوميّ (وهو وحده يحتاج الباقةَ قبله).
+
+     وترتيبُ الأخطاء كما كان: الحظرُ أوّلاً ثم المعدّل ثم الحدّ اليوميّ. والمحظورُ
+     يستهلك عدّادَ معدّله — ولا ضير: هو محجوبٌ على كلّ حال. */
+  const [blockDb, rateOk, limits] = await Promise.all([
+    getAdminDbOptional(),
+    checkUserRateLimit(uid),
+    serverLimits(uid),
+  ]);
+
   if (blockDb && (await isUserBlocked(blockDb, uid))) {
     return NextResponse.json({ error: "الحساب موقوف" }, { status: 403 });
   }
-
-  /* تحديد المعدّل لكل مستخدم (دائم عبر Firestore — يعمل عبر كل instances) */
-  if (!(await checkUserRateLimit(uid))) {
+  if (!rateOk) {
     return NextResponse.json({ error: "طلبات كثيرة، انتظر دقيقة" }, { status: 429 });
   }
-  /* M-5: حدّ يوميّ لكل مستخدم — يحدّ من استنزاف الميزانية، وهو الآن **حسب الباقة**.
+  /* M-5: حدّ يوميّ لكل مستخدم — يحدّ من استنزاف الميزانية، وهو **حسب الباقة**.
      الباقةُ تُقرأ من Firestore لا من جسم الطلب: قواعدُ الأمان تمنع العميلَ من
      كتابة `plan`، فما نقرؤه لا يُزوَّر. وصفحةُ الباقات تعرض الرقمَ نفسَه من
      `planLimits` — فلا تَعِد الصفحةُ بما لا يفرضه الخادم. */
-  const chatLimit = (await serverLimits(uid)).chatPerDay;
+  const chatLimit = limits.chatPerDay;
   if (!(await checkDailyLimit("chat_" + uid, chatLimit))) {
     return NextResponse.json(
       { error: `وصلت حدّك اليومي من دويرب (${chatLimit} رسالة) — عُد غداً، أو رقِّ باقتك.` },
