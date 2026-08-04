@@ -131,13 +131,18 @@ export default function RoadmapPage() {
   const examNames = new Map(readAllExams(ws).map((e) => [e.id, e.label]));
   const counts = planSubjects.length ? countRemaining(planSubjects) : { remainingLessons: 0, remainingDrills: 0, weakestSubject: null, totalItems: 0, doneItems: 0 };
   const avail = readTodayAvailability();
+  const stats = computeStats({ dayMins: loadStats().dayMins ?? {}, sessions: loadSessions(), today, plannedDailyMins: ((loadUser()?.studyHours ?? 0) * 60) || null });
+  /* الإشارتان المتاحتان في حالة هذه الصفحة أصلاً: `daysLeft` (سطر ١٢١) و
+     `stats.week.commitmentPct`. تُمرَّران كما هما؛ وما لا يوجد يبقى `undefined`
+     والمحرّكُ يعرف كيف يتعامل مع غيابه. */
   const plan = priority ? buildSessionPlan({
     subjects: planSubjects.map((s) => s.name), weakestSubject: counts.weakestSubject,
     remainingLessons: counts.remainingLessons, remainingDrills: counts.remainingDrills,
     activeErrors: vaultCount(), availableMinutes: avail.minutes, mode: loadRoadmapConfig().studyMode,
+    daysUntilExam: daysLeft != null && daysLeft >= 0 ? daysLeft : undefined,
+    commitmentPercentage: stats.week.commitmentPct ?? undefined,
   }) : null;
 
-  const stats = computeStats({ dayMins: loadStats().dayMins ?? {}, sessions: loadSessions(), today, plannedDailyMins: ((loadUser()?.studyHours ?? 0) * 60) || null });
   const solved = solvedQuestions();
   const hasWeek = stats.week.hours > 0 || stats.week.sessions > 0 || solved > 0;
 

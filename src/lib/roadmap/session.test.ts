@@ -111,3 +111,21 @@ test("V2: الأولويةُ مرتَّبةٌ تنازلياً — الترتي�
   const core = p.tasks.filter((t) => !t.optional).map((t) => t.priority ?? 0);
   for (let k = 1; k < core.length; k++) assert.ok(core[k - 1] >= core[k], "غيرُ مرتَّبة");
 });
+
+/* التوصيل: القارئُ يمرّر الإشارتين المتاحتين، فتصلان المحرّكَ ويتغيّر القرار.
+   (اختبارٌ واحدٌ يغطّي الاثنتين — لا اختباراتٍ لبقيّة المشروع.) */
+test("التوصيل: daysUntilExam و scoreBySubject تصلان المحرّك وتغيّران الخطة", () => {
+  const plain = buildSessionPlan(base);
+  const wired = buildSessionPlan({ ...base, daysUntilExam: 3, scoreBySubject: { "لفظي": 92, "كمي": 55 } });
+
+  /* daysUntilExam وصلت: القربُ رفع التدريبَ وصار سبباً مذكوراً بالرقم نفسه. */
+  assert.notEqual(wired.tasks[0].kind, plain.tasks[0].kind, "القرار لم يتغيّر ⇒ الإشارة لم تصل");
+  assert.ok(wired.tasks.some((t) => t.topFactor === "exam-urgency" && t.reason?.includes("3")),
+    "daysUntilExam لم تصل المحرّك");
+
+  /* scoreBySubject وصلت: الأدنى درجةً حاضرٌ في الخطة بفجوة درجته. */
+  assert.ok(wired.tasks.some((t) => t.subject === "كمي"), "scoreBySubject لم تؤثّر في اختيار المادة");
+  const byScore = buildSessionPlan({ ...base, scoreBySubject: { "لفظي": 92, "كمي": 55 } });
+  assert.equal(byScore.tasks[0].subject, "كمي");
+  assert.equal(byScore.tasks[0].topFactor, "score-gap");
+});

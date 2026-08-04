@@ -8,7 +8,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import BackButton from "@/components/BackButton";
-import { loadUser, ensureWorkspace } from "@/lib/storage";
+import { loadUser, ensureWorkspace, loadTrackExamDates, localDayKey } from "@/lib/storage";
+import { daysBetween } from "@/lib/roadmap/metrics";
 import { buildSessionPlan, type SessionPlan, type SessionTask } from "@/lib/roadmap/session";
 import { remainingSteps } from "@/lib/roadmap/remainingSteps";
 import { focusHandoffQuery } from "@/lib/roadmap/handoff";
@@ -61,6 +62,14 @@ export default function SessionPage() {
     return w ? readPlanSubjects(w) : [];
   });
   const [counts] = useState(() => (planSubjects.length ? countRemaining(planSubjects) : { remainingLessons: 0, remainingDrills: 0, weakestSubject: null, totalItems: 0, doneItems: 0 }));
+  /* موعدُ الاختبار المخزَّن — نفسُ قراءة «مساري» (`loadTrackExamDates` + `daysBetween`). */
+  const [daysLeft] = useState<number | null>(() => {
+    if (typeof window === "undefined" || !exam?.examKey) return null;
+    const d = loadTrackExamDates()[exam.examKey];
+    if (!d) return null;
+    const diff = daysBetween(localDayKey(), d);
+    return diff >= 0 ? diff : null;
+  });
   const [plan, setPlan] = useState<SessionPlan | null>(() => {
     if (typeof window === "undefined" || !exam) return null;
     return buildSessionPlan({
@@ -71,6 +80,7 @@ export default function SessionPage() {
       activeErrors: vaultCount(),
       availableMinutes: avail.minutes,
       mode: loadRoadmapConfig().studyMode,
+      daysUntilExam: daysLeft ?? undefined,
     });
   });
 
@@ -209,7 +219,9 @@ export default function SessionPage() {
         <p className="eyebrow mt-6 mb-2.5 px-1">اليوم ستنجز</p>
         <div className="flex flex-col gap-2.5">
           {tasks.map((t, i) => {
-            const why = reasonOf(t, counts.weakestSubject, exam.subjects.map((s) => s.name));
+            /* سببُ المحرّك أوّلاً (من أعلى عاملِ أولوية)، وإلّا فالمنطقُ القديم كما هو.
+               `reasonOf` باقيةٌ بلا تعديل — هي الاحتياطُ حين لا إشارة. */
+            const why = t.reason || reasonOf(t, counts.weakestSubject, exam.subjects.map((s) => s.name));
             return (
               <div key={`${t.kind}-${t.subject}-${i}`} className="rounded-2xl p-4 flex gap-3 items-start rise"
                 style={{ background: "var(--surface)", border: "1.5px solid var(--border)", animationDelay: `${i * 60}ms` }}>
