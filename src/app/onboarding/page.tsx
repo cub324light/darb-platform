@@ -6,6 +6,7 @@
    يبني «ملف الطالب» فقط: الوجهة (targets) تقود recommendedExams ومساري (لا goal اختبار).
    يعيد استخدام المحرّكات القائمة (recommendedExams/darbKnowledge/outlook/saRegions). */
 import { useState, useEffect, type ReactNode } from "react";
+import Link from "next/link";
 import { validateScore, scoreRangeForTitle, type TrackId } from "@/lib/tracks";
 import { findUniversity, findMajor, UNIVERSITIES } from "@/lib/university";
 import { UNIVERSITY_YEARS, collegesAt, majorsIn, categoryOfMajor, hasColleges } from "@/lib/universityColleges";
@@ -76,7 +77,7 @@ type StepKey =
   | "welcome" | "stage" | "track" | "gpa" | "region" | "goal" | "exams" | "scores"
   | "style" | "time" | "summary" | "uni";
 const UNI_STEPS: StepKey[] = ["welcome", "stage", "uni", "style", "time", "summary"];
-/* متكيّف بالمرحلة بعد «stage»: المسار الدراسي لثاني/ثالث ثانوي · حاسبة المعدل للخريج. */
+/* متكيّف بالمرحلة بعد «stage»: المسار الدراسي لثاني/ثالث ثانوي · نسبة الثانوية للخريج. */
 const secondarySteps = (needsTrack: boolean, isGrad: boolean): StepKey[] =>
   ["welcome", "stage",
     ...(needsTrack ? ["track" as const] : []),
@@ -149,10 +150,9 @@ export default function OnboardingPage() {
   const [gradStage, setGradStage] = useState("");
   const [gradRecency, setGradRecency] = useState<"this-year" | "earlier" | "">("");
   const [academicTrack, setAcademicTrack] = useState<AcademicTrack | "">("");
-  /* ── الخريج: حاسبة المعدل (اختيارية) + سنة الفجوة ── */
+  /* ── الخريج: نسبة الثانوية (اختيارية) + سنة الفجوة ── */
   const [wantGpa, setWantGpa] = useState<boolean | null>(null);
-  const [gpaRows, setGpaRows] = useState<{ subject: string; grade: string }[]>(
-    () => Array.from({ length: 5 }, () => ({ subject: "", grade: "" })));
+  const [gpaInput, setGpaInput] = useState("");
   const [gapYear, setGapYear] = useState<boolean | null>(null);
 
   /* ── اختيار الاختبارات (منتقٍ حسب المرحلة، حدّ 3) ── */
@@ -284,9 +284,17 @@ export default function OnboardingPage() {
   /* ── قائمة الخطوات (متكيّفة) — المسار الدراسي لثاني/ثالث ثانوي فقط ── */
   const needsTrack = status === "ثانوي" && (grade === "ثاني ثانوي" || grade === "ثالث ثانوي");
   const steps = status === "جامعي" ? UNI_STEPS : secondarySteps(needsTrack, status === "خريج");
-  /* نسبة الثانوية للخريج: متوسط الدرجات المُدخَلة (0–100). */
-  const gpaValues = gpaRows.map((r) => parseFloat(r.grade)).filter((v) => Number.isFinite(v) && v >= 0 && v <= 100);
-  const gpaPercent = gpaValues.length ? Math.round((gpaValues.reduce((a, b) => a + b, 0) / gpaValues.length) * 10) / 10 : null;
+  /* ▓ نسبةُ الثانوية تُؤخَذ **كما هي من الشهادة** لا تُحسب هنا.
+     كانت الخطوةُ تطلب خمسَ موادٍ ودرجاتِها ثم تُخرج متوسّطَها الحسابيّ وتخزّنه
+     في `secondaryGpa`. وذلك رقمٌ آخرُ غيرُ النسبة الرسمية: الشهادةُ تُحسب على
+     موادّ المرحلة كلِّها بأوزانها، لا على خمسٍ يتذكّرها الطالب. والأسوأ أنّ هذا
+     الرقمَ المُختلَق يدخل `computeWeighted` مع القدرات والتحصيلي، فيقوم تقديرُ
+     القبول كلُّه على مُدخَلٍ لم يصدر عن جهة.
+     والخريجُ يملك نسبتَه أصلاً في شهادته وفي «نور» — فسؤالُه أصدقُ وأقصر. */
+  const gpaPercent = (() => {
+    const v = parseFloat(gpaInput);
+    return Number.isFinite(v) && v >= 0 && v <= 100 ? Math.round(v * 10) / 10 : null;
+  })();
   const idx = Math.max(0, steps.indexOf(current));
   const total = steps.length - 1; // الترحيب = 0
 
@@ -501,6 +509,20 @@ export default function OnboardingPage() {
               </div>
             </div>
           )}
+
+          {/* ▓ مَخرجُ وليّ الأمر. هذه الخطوةُ تسأل «وش صفّك الدراسي؟» وتعرض خمسَ
+             مراحلَ ليس فيها ما يصفه — فالوالدُ الذي فتح الرابطَ ليتابع ابنه يقف
+             هنا بلا جواب ولا رجعة. وسند صفحةٌ قائمةٌ أصلاً، فالنقصُ بابٌ لا ميزة. */}
+          <Link href="/sanad/join"
+            className="mt-6 flex items-center gap-3 rounded-2xl px-4 py-3.5 no-underline transition active:scale-[0.98]"
+            style={{ background: "color-mix(in srgb, var(--success) 8%, var(--surface2))", border: "1px solid color-mix(in srgb, var(--success) 28%, var(--border))" }}>
+            <span className="text-[20px] flex-shrink-0" aria-hidden="true">🤝</span>
+            <span className="flex-1 min-w-0">
+              <span className="block t-small font-black" style={{ color: "var(--text)" }}>وليّ أمر؟</span>
+              <span className="block t-caption" style={{ color: "var(--text-muted)" }}>سجّل في سند وتابع مذاكرة ابنك</span>
+            </span>
+            <span className="t-body flex-shrink-0" style={{ color: "var(--success)" }}>←</span>
+          </Link>
         </div>
       );
 
@@ -537,49 +559,51 @@ export default function OnboardingPage() {
         </div>
       );
 
-      /* ── الخريج: حاسبة المعدل (اختيارية) ── */
+      /* ── الخريج: نسبة الثانوية (اختيارية) ── */
       case "gpa": return (
         <div className="flex flex-col gap-5">
           <div>
-            <p className="t-h1 font-black text-balance mb-2" style={{ color: "var(--text)" }}>حاسبة المعدل</p>
-            <p className="t-body" style={{ color: "var(--text-muted)" }}>تحب نحسب لك نسبتك من درجات موادك؟</p>
+            <p className="t-h1 font-black text-balance mb-2" style={{ color: "var(--text)" }}>نسبة الثانوية</p>
+            <p className="t-body" style={{ color: "var(--text-muted)" }}>تعرف نسبتك في الثانوية العامة؟ نستعملها مع القدرات والتحصيلي لحساب موزونتك.</p>
           </div>
           <div className="grid grid-cols-2 gap-2.5">
-            <button onClick={() => setWantGpa(true)} className="rounded-2xl py-3.5 font-bold t-body transition active:scale-[0.98]" style={chipStyle(wantGpa === true)}>نعم، احسبه لي</button>
-            <button onClick={() => setWantGpa(false)} className="rounded-2xl py-3.5 font-bold t-body transition active:scale-[0.98]" style={chipStyle(wantGpa === false)}>لا، أكمل التسجيل</button>
+            <button onClick={() => setWantGpa(true)} className="rounded-2xl py-3.5 font-bold t-body transition active:scale-[0.98]" style={chipStyle(wantGpa === true)}>نعم، أعرفها</button>
+            <button onClick={() => setWantGpa(false)} className="rounded-2xl py-3.5 font-bold t-body transition active:scale-[0.98]" style={chipStyle(wantGpa === false)}>ما أذكرها الآن</button>
           </div>
           {wantGpa === false && (
-            <p className="t-caption rise" style={{ color: "var(--text-muted)" }}>تمام 👍 — نكمّل تسجيلك، وتقدر تحسب معدلك لاحقاً.</p>
+            <p className="t-caption rise" style={{ color: "var(--text-muted)" }}>تمام 👍 — نكمّل تسجيلك، وتضيفها متى ما شئت من ملفّك.</p>
           )}
           {wantGpa === true && (
             <div className="rise flex flex-col gap-3">
-              <div className="flex flex-col gap-2">
-                {gpaRows.map((row, i) => (
-                  <div key={i} className="flex gap-2">
-                    <input value={row.subject} onChange={(e) => setGpaRows((rs) => rs.map((r, j) => (j === i ? { ...r, subject: e.target.value } : r)))}
-                      placeholder={`المادة ${n(i + 1)}`} maxLength={30}
-                      className="flex-1 min-w-0 rounded-xl px-3 py-2.5 t-body text-[var(--text)] placeholder-[var(--text-muted)] outline-none" style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
-                    <input value={row.grade} inputMode="decimal" onChange={(e) => setGpaRows((rs) => rs.map((r, j) => (j === i ? { ...r, grade: e.target.value } : r)))}
-                      placeholder="الدرجة" maxLength={5}
-                      className="w-24 rounded-xl px-3 py-2.5 t-body text-center text-[var(--text)] placeholder-[var(--text-muted)] outline-none" style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
-                  </div>
-                ))}
-              </div>
-              <button onClick={() => setGpaRows((rs) => [...rs, { subject: "", grade: "" }])}
-                className="self-start t-caption font-bold px-3 py-1.5 rounded-full transition active:scale-95" style={{ background: "var(--surface2)", color: "var(--accent-light)", border: "1px solid var(--border)" }}>＋ إضافة مادة</button>
+              <label className="flex flex-col gap-1.5">
+                <span className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>
+                  نسبتك · تلقاها في شهادتك أو في نظام نور
+                </span>
+                <div className="flex items-center gap-2">
+                  <input value={gpaInput} inputMode="decimal" maxLength={5}
+                    onChange={(e) => setGpaInput(e.target.value)}
+                    placeholder="مثال: 94.5"
+                    className="flex-1 min-w-0 rounded-xl px-4 py-3 t-body text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
+                    style={{ background: "var(--surface2)", border: "1.5px solid var(--border)" }} />
+                  <span className="t-body font-black" style={{ color: "var(--text-muted)" }}>٪</span>
+                </div>
+              </label>
               {gpaPercent != null && (
                 <div className="rounded-2xl px-4 py-4 rise" style={{ background: `color-mix(in srgb, ${gpaColor(gpaPercent)} 10%, var(--surface))`, border: `1.5px solid color-mix(in srgb, ${gpaColor(gpaPercent)} 40%, var(--border))` }}>
                   <div className="flex items-baseline justify-between gap-2">
-                    <span className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>نسبتك التقديرية</span>
+                    <span className="t-caption font-bold" style={{ color: "var(--text-muted)" }}>نسبتك</span>
                     <span className="t-h2 font-black font-mono-nums" style={{ color: gpaColor(gpaPercent) }}>{n(gpaPercent)}٪</span>
                   </div>
                   <div className="mt-2 h-2.5 rounded-full overflow-hidden" style={{ background: "color-mix(in srgb, var(--text-muted) 22%, transparent)" }}>
                     <div className="h-full rounded-full eval-bar-fill" style={{ width: `${Math.min(100, gpaPercent)}%`, background: gpaColor(gpaPercent) }} />
                   </div>
-                  <p className="t-caption font-bold mt-2" style={{ color: "var(--text)" }}>{gpaLabel(gpaPercent)} · من {n(gpaValues.length)} مواد</p>
+                  <p className="t-caption font-bold mt-2" style={{ color: "var(--text)" }}>{gpaLabel(gpaPercent)}</p>
                 </div>
               )}
-              <p className="t-caption" style={{ color: "var(--text-muted)" }}>النسبة تقديرية من متوسط الدرجات المُدخَلة — قد تختلف عن نسبتك الرسمية.</p>
+              {gpaInput.trim() !== "" && gpaPercent == null && (
+                <p className="t-caption" style={{ color: "var(--danger)" }}>اكتب رقماً بين 0 و100.</p>
+              )}
+              <p className="t-caption" style={{ color: "var(--text-muted)" }}>ما نحسب نسبتك من موادّك — الشهادة تحسبها على موادّ المرحلة كلّها بأوزانها، وأي متوسّط نطلعه هنا رقمٌ ثانٍ غير الرسمي.</p>
             </div>
           )}
           {/* سؤالٌ آخر: سنة الفجوة */}
