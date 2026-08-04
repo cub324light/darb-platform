@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } fro
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { TRACKS } from "@/lib/tracks";
+import { n } from "@/lib/format";
 import Logo from "@/components/Logo";
 import { applyTheme } from "@/lib/storage";
 import { useTheme } from "@/lib/useTheme";
@@ -34,30 +35,40 @@ function useReveal(active: boolean) {
   return ref;
 }
 
+/* ▓ أسماءُ الأدوات هنا **هي أسماؤها في التطبيق** حرفاً بحرف. كانت الصفحةُ تسمّي
+   «تركيز» أوربت، و«مساري» خريطةَ المسار، و«بنك المراجعة» بطاقاتي — فيدخل الطالبُ
+   يبحث عن أوربت فلا يجده. اسمٌ في الإعلان لا يوجد في المنتج عيبٌ لا زينة. */
 const FEATURES = [
-  { icon: "⏱", title: "أوربت", tag: "تركيز", desc: "تايمر 50 دقيقة تركيز + 10 راحة. كل جلسة تنتهي تكسب فضة وتبني ستريكك.", color: "#2563EB" },
-  { icon: "🗃", title: "أخطائي", tag: "مراجعة", desc: "أي سؤال تغلط فيه احفظه. دويرب يشرح لك كل خطأ بالضبط — النظام يتابع كم مرة راجعته.", color: "#F59E0B" },
-  { icon: "🧠", title: "بطاقاتي", tag: "تكرار متباعد", desc: "بطاقات سؤال/جواب بخوارزمية Ebbinghaus. النظام يحسب متى تحتاج كل بطاقة بالضبط.", color: "#10B981" },
-  { icon: "🤖", title: "دويرب — المساعد الذكي", tag: "AI", desc: "يعرف مسارك ومستواك وتقدمك: يشرح أخطاءك خطوة بخطوة، يبني جدول يومك حول مشاغيلك، ويجاوبك من داخل التطبيق وقت ما تحتاج.", color: "#8B5CF6" },
-  { icon: "🗺", title: "خريطة المسار", tag: "تقدم", desc: "كل درس من تأسيس لتدريب لتسريبات — مرتّب ومقفول حتى تكمل ما قبله.", color: "#06B6D4" },
-  { icon: "⚔", title: "الأرينا", tag: "تحدي", desc: "1v1 ضد منافس يجاوب بنفسه. أسئلة حقيقية من مسارك، 15 ثانية للسؤال. الفوز = فضة.", color: "#EF4444" },
+  { icon: "⏱", title: "تركيز", tag: "جلسات", desc: "جلسة 25 أو 50 أو 90 دقيقة — أو مدّة تختارها، والراحة تُحسب لك. كل جلسة تكسب فضة وتبني سلسلتك.", color: "#2563EB" },
+  { icon: "🗺", title: "مساري", tag: "خطّتك", desc: "دروس مسارك مرتّبة من التأسيس إلى التدريب، وكل درس مقفول حتى تُتقن ما قبله — وخطّتك موزّعة على أشهرك حتى الاختبار.", color: "#06B6D4" },
+  { icon: "🗃", title: "أخطائي", tag: "مراجعة", desc: "أي سؤال تغلط فيه احفظه. دويرب يشرح لك سبب الغلط، والنظام يتابع كم مرة راجعته.", color: "#F59E0B" },
+  { icon: "🧠", title: "بنك المراجعة", tag: "تكرار متباعد", desc: "بطاقات سؤال/جواب تُعيدها عليك قبل أن تنساها بقليل — النظام يحسب موعد كل بطاقة.", color: "#10B981" },
+  { icon: "🏫", title: "المدرسة", tag: "يومك الدراسي", desc: "واجباتك ومدرّسوك وملاحظاتك، والتقويم الدراسي السعودي: كم بقي على الإجازة، ومتى اختباراتك.", color: "#EC4899" },
+  { icon: "📓", title: "الدفتر", tag: "تدوين ورسم", desc: "اكتب يومك الدراسي أو ارسمه أو جدوِله. ولو أردت، اسأل دويرب عن ورقةٍ بعينها — بضغطة منك وحدك.", color: "#A855F7" },
+  { icon: "🤖", title: "دويرب", tag: "المساعد الذكي", desc: "يعرف مسارك ومستواك وتقدمك: يشرح أخطاءك خطوة بخطوة، ويبني جدول يومك حول مشاغيلك.", color: "#8B5CF6" },
+  { icon: "⚔", title: "الأرينا", tag: "تحدّي", desc: "واحد ضد واحد مع منافس حقيقي. أسئلة من مسارك، خمس عشرة ثانية للسؤال، والفوز فضة.", color: "#EF4444" },
 ];
 
+/* ▓ «بحساب Google» وحدها كانت مكتوبةً في موضعين، والمنتجُ يقبل البريدَ أيضاً
+   ويسمح بالدخول زائراً بلا حساب. */
 const STEPS = [
-  { n: "1", title: "ادخل بثانية", desc: "بحساب Google — يحفظ تقدّمك ويزامنه على كل أجهزتك." },
-  { n: "2", title: "شوف خريطتك", desc: "كل دروس مسارك مرتّبة. ابدأ من التأسيس واقفل كل مرحلة." },
-  { n: "3", title: "ذاكر يومياً", desc: "أوربت للتركيز، أخطائي للأخطاء، بطاقاتي للحفظ — كل شي بمكان." },
+  { title: "ادخل بثانية", desc: "بحساب Google أو ببريدك — أو جرّبه زائراً بلا تسجيل." },
+  { title: "ابنِ خطّتك", desc: "اختر اختبارك وموادّه، فتُرتَّب دروسك وتُوزَّع على أشهرك حتى موعده." },
+  { title: "ذاكر يومياً", desc: "تركيز للجلسات، أخطائي للأخطاء، بنك المراجعة للحفظ — كلها في مكان واحد." },
 ];
 
 const PAIN = [
-  { q: "تذاكر بدون خطة؟", a: "الخريطة توضح كل خطوة من البداية للاختبار." },
-  { q: "تنسى اللي ذاكرته؟", a: "بطاقاتي بالتكرار المتباعد يتابع متى تحتاج كل معلومة قبل ما تنساها." },
+  { q: "تذاكر بدون خطة؟", a: "مساري يوزّع دروسك على أشهرك من اليوم إلى موعد اختبارك." },
+  { q: "تنسى اللي ذاكرته؟", a: "بنك المراجعة يعيد عليك المعلومة قبل أن تنساها بقليل — لا بعد فوات الأوان." },
   { q: "ما تعرف وين غلطاتك؟", a: "أخطائي تحفظ كل سؤال غلطت فيه — ودويرب يشرح لك سببه." },
 ];
 
+/* ▓ الأرقامُ تُشتقّ ولا تُكتب: كان مكتوباً «8 مسارات» والمعروضُ تسعة، و«6 أدوات»
+   والمنتجُ فيه أكثر. رقمٌ يُكتب بيدٍ يشيخ بأوّل إضافة، والمشتقُّ لا يشيخ. */
+const VISIBLE_TRACKS = TRACKS.filter((t) => t.id !== "تحصيلي مبكر");
 const STATS = [
-  { n: "8", l: "مسارات", c: "#3B82F6" },
-  { n: "6", l: "أدوات", c: "#8B5CF6" },
+  { n: n(VISIBLE_TRACKS.length), l: "مسارات", c: "#3B82F6" },
+  { n: n(FEATURES.length), l: "أدوات", c: "#8B5CF6" },
   { n: "AI", l: "جدول ذكي", c: "#10B981" },
 ];
 
@@ -68,8 +79,8 @@ const SERVICES: {
 }[] = [
   {
     icon: "📘", title: "القدرات", color: "#8B5CF6",
-    brief: "تأسيس لفظي وكمي من الصفر، خريطة دروس، تدريب وتسريبات، ومتابعة جاهزية.",
-    full: "خريطة مسار كاملة للفظي والكمي تبدأ من التأسيس وتتدرج للتدريب ثم التسريبات — كل درس مقفول حتى تتقن اللي قبله. أخطاؤك تنحفظ في «أخطائي» ودويرب يشرح لك سبب كل غلطة، وبطاقات التكرار المتباعد تثبّت القوانين والمعاني قبل ما تنساها. ولوحتك توريك جاهزيتك الفعلية قبل موعد الاختبار.",
+    brief: "تأسيس لفظي وكمي من الصفر، خريطة دروس مرتّبة، تدريب، ومتابعة جاهزية.",
+    full: "خريطة مسار كاملة للفظي والكمي تبدأ من التأسيس وتتدرّج إلى التدريب — كل درس مقفول حتى تتقن اللي قبله. أخطاؤك تنحفظ في «أخطائي» ودويرب يشرح لك سبب كل غلطة، وبنك المراجعة بالتكرار المتباعد يثبّت القوانين والمعاني قبل ما تنساها. ولوحتك توريك جاهزيتك الفعلية قبل موعد الاختبار.",
   },
   {
     icon: "📗", title: "التحصيلي", color: "#3B82F6",
@@ -110,7 +121,7 @@ function SectionHead({ eyebrow, title, sub }: { eyebrow: string; title: ReactNod
         {title}
       </h2>
       {sub && (
-        <p className="text-base mt-3 max-w-xl mx-auto leading-relaxed" style={{ color: "var(--text-dim)" }}>{sub}</p>
+        <p className="t-body mt-3 max-w-xl mx-auto leading-relaxed" style={{ color: "var(--text-dim)" }}>{sub}</p>
       )}
     </div>
   );
@@ -141,21 +152,21 @@ function ServiceCard({ s, open, onToggle, delay }: {
             aria-hidden="true">
             {s.icon}
           </div>
-          <p className="flex-1 font-black text-lg leading-tight" style={{ color: s.color }}>{s.title}</p>
-          <span aria-hidden="true" className="flex-shrink-0 text-xs"
+          <p className="flex-1 font-black t-title leading-tight" style={{ color: s.color }}>{s.title}</p>
+          <span aria-hidden="true" className="flex-shrink-0 t-caption"
             style={{ color: "var(--text-muted)", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.25s ease" }}>
             ▼
           </span>
         </div>
-        <p className="text-sm leading-relaxed" style={{ color: "var(--text-dim)" }}>{s.brief}</p>
+        <p className="t-small leading-relaxed" style={{ color: "var(--text-dim)" }}>{s.brief}</p>
       </button>
       <div className="grid" style={{ gridTemplateRows: open ? "1fr" : "0fr", transition: "grid-template-rows 0.3s ease" }}>
         <div className="overflow-hidden">
           <div className="px-5 pb-5">
             <div className="h-px mb-4" style={{ background: `color-mix(in srgb, ${s.color} 25%, var(--border))` }} />
-            <p className="text-sm leading-relaxed" style={{ color: "var(--text-dim)" }}>{s.full}</p>
+            <p className="t-small leading-relaxed" style={{ color: "var(--text-dim)" }}>{s.full}</p>
             {s.href && (
-              <Link href={s.href} className="inline-flex items-center gap-1.5 mt-4 text-sm font-bold"
+              <Link href={s.href} className="inline-flex items-center gap-1.5 mt-4 t-small font-bold"
                 style={{ color: s.color, textDecoration: "none" }}>
                 {s.linkLabel} ←
               </Link>
@@ -260,7 +271,7 @@ export default function LandingPage() {
             <div className="flex flex-col gap-2">
               {onboarded && (
                 <Link href="/dashboard" onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-between px-5 py-4 rounded-2xl font-bold text-base"
+                  className="flex items-center justify-between px-5 py-4 rounded-2xl font-bold t-body"
                   style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)", border: "1.5px solid var(--accent)", color: "var(--accent-light)", textDecoration: "none" }}>
                   <span>ادخل للتطبيق</span><span>←</span>
                 </Link>
@@ -268,7 +279,7 @@ export default function LandingPage() {
               {[{ label: "الأدوات", id: "features" }, { label: "المسارات", id: "tracks" }, { label: "كيف تبدأ", id: "steps" }].map((item) => (
                 <button key={item.id}
                   onClick={() => { setMenuOpen(false); document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth" }); }}
-                  className="flex items-center justify-between px-5 py-4 rounded-2xl font-bold text-base text-right"
+                  className="flex items-center justify-between px-5 py-4 rounded-2xl font-bold t-body text-right"
                   style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>
                   <span>{item.label}</span>
                   <span style={{ color: "var(--text-muted)" }}>↓</span>
@@ -281,7 +292,7 @@ export default function LandingPage() {
                 { label: "قصص نجاح", href: "/success-stories" },
               ].map((item) => (
                 <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-between px-5 py-4 rounded-2xl font-bold text-base text-right"
+                  className="flex items-center justify-between px-5 py-4 rounded-2xl font-bold t-body text-right"
                   style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)", textDecoration: "none" }}>
                   <span>{item.label}</span>
                   <span style={{ color: "var(--text-muted)" }}>←</span>
@@ -340,8 +351,8 @@ export default function LandingPage() {
                 minWidth: "80px",
                 boxShadow: `0 4px 18px color-mix(in srgb, ${s.c} 35%, transparent)`,
               }}>
-              <span className="font-black text-2xl font-mono-nums" style={{ color: s.c }}>{s.n}</span>
-              <span className="text-xs font-bold mt-0.5" style={{ color: "var(--text)" }}>{s.l}</span>
+              <span className="font-black t-h2 font-mono-nums" style={{ color: s.c }}>{s.n}</span>
+              <span className="t-caption font-bold mt-0.5" style={{ color: "var(--text)" }}>{s.l}</span>
             </div>
           ))}
         </div>
@@ -349,7 +360,7 @@ export default function LandingPage() {
         {/* زر الدخول الرئيسي */}
         <div className="relative z-10">
           <Link href={ctaHref}
-            className="btn-shimmer inline-flex items-center gap-3 px-10 py-4 text-lg font-black"
+            className="btn-shimmer inline-flex items-center gap-3 px-10 py-4 t-body-lg font-black"
             style={{ textDecoration: "none", minWidth: "220px", justifyContent: "center" }}>
             ابدأ مجاناً ←
           </Link>
@@ -383,27 +394,28 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════ */}
       <section className="px-5 py-16 landing-section-pad max-w-2xl landing-max mx-auto">
         <SectionHead eyebrow="المشكلة" title="وش يخلّي الطالب يفشل؟" />
-        <div className="grid grid-cols-1 landing-grid-3 gap-3">
+        {/* ▓ ثلاثُ بطاقاتٍ حمراءَ كبقيّة بطاقات الصفحة تُضيّع الفكرة: هنا **سؤالٌ
+           وجوابُه**، والتقابلُ هو المعنى. فصار السؤالُ سطراً كبيراً بعلامته
+           الحمراء، والجوابُ كتلةً خضراءَ ملتصقةً به — تُقرأ الفكرةُ من الشكل
+           قبل الكلمات. */}
+        <div className="flex flex-col gap-4">
           {PAIN.map((p, i) => (
-            <div key={i}
-              className={`reveal reveal-d${i + 1} rounded-2xl p-5 flex items-start gap-4 landing-card`}
-              style={{
-                background: "var(--surface)",
-                border: "1.5px solid color-mix(in srgb, #EF4444 20%, var(--border))",
-                boxShadow: "0 2px 12px rgba(0,0,0,0.1)",
-                ["--card-glow" as string]: "#EF4444",
-              }}>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-black"
-                style={{ background: "color-mix(in srgb, #EF4444 12%, transparent)", color: "#EF4444", border: "1px solid color-mix(in srgb, #EF4444 25%, transparent)" }}>
-                ✕
+            <div key={i} className={`reveal reveal-d${i + 1} rounded-2xl overflow-hidden`}
+              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+              <div className="flex items-center gap-3 px-4 py-3.5">
+                <span className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 t-small font-black"
+                  style={{ background: "color-mix(in srgb, #EF4444 14%, transparent)", color: "#EF4444" }}>✕</span>
+                <p className="font-black t-body-lg" style={{ color: "var(--text)" }}>{p.q}</p>
               </div>
-              <div>
-                <p className="font-black text-base mb-1" style={{ color: "var(--text)" }}>{p.q}</p>
-                <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
-                  <span style={{ color: "var(--success)", fontWeight: 700 }}>درب يحل هذا: </span>
-                  {p.a}
-                </p>
-              </div>
+              <p className="t-small leading-relaxed px-4 py-3.5 m-0"
+                style={{
+                  background: "color-mix(in srgb, var(--success) 7%, transparent)",
+                  borderTop: "1px solid color-mix(in srgb, var(--success) 18%, var(--border))",
+                  color: "var(--text-dim)",
+                }}>
+                <span className="font-black" style={{ color: "var(--success)" }}>✓ في درب: </span>
+                {p.a}
+              </p>
             </div>
           ))}
         </div>
@@ -414,39 +426,31 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════ */}
       <section id="features" className="px-5 py-16 landing-section-pad max-w-2xl landing-max mx-auto">
         <SectionHead eyebrow="أدواتك"
-          title={<><AnimatedGradientText>6 أدوات</AnimatedGradientText>{" "}تحصّلها بمكان واحد</>}
-          sub="كل أداة تشتغل مع الثانية — جلساتك وأخطاؤك وبطاقاتك كلها تصب في تقدمك." />
-        <div className="grid grid-cols-1 md:grid-cols-2 desk-grid-3 gap-3">
+          title={<><AnimatedGradientText>{n(FEATURES.length)} أدوات</AnimatedGradientText>{" "}في مكان واحد</>}
+          sub="كل أداة تشتغل مع الثانية — جلساتك وأخطاؤك ومراجعتك كلها تصبّ في تقدّمك." />
+        {/* ▓ كانت كلُّ بطاقةٍ محاطةً بإطارٍ ملوّنٍ وظلٍّ وتوهّجٍ عند المرور — ثمانيةُ
+           إطاراتٍ متنافسةٍ تصير ضجيجاً لا تمييزاً. صار اللونُ في **الأيقونة
+           والوسم** وحدهما، والإطارُ محايد: العينُ تمسح الأسماءَ بلا مقاومة،
+           ويبقى الثِّقلُ البصريُّ لقسم «الخدمات» الذي يتوسّع بالضغط. */}
+        <div className="grid grid-cols-1 md:grid-cols-2 desk-grid-3 gap-2.5">
           {FEATURES.map((f, i) => (
             <div key={f.title}
-              className={`reveal reveal-d${(i % 3) + 1} rounded-2xl p-5 landing-card group relative overflow-hidden`}
-              style={{
-                background: "var(--surface)",
-                border: `1.5px solid color-mix(in srgb, ${f.color} 22%, var(--border))`,
-                boxShadow: `0 2px 12px rgba(0,0,0,0.1)`,
-                ["--card-glow" as string]: f.color,
-              }}>
-              {/* subtle gradient bg on hover */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl"
-                style={{ background: `radial-gradient(300px at 0% 0%, color-mix(in srgb, ${f.color} 8%, transparent), transparent)` }} />
-              <div className="flex items-center gap-3 mb-3 relative z-10">
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-                  style={{
-                    background: `color-mix(in srgb, ${f.color} 14%, transparent)`,
-                    border: `1.5px solid color-mix(in srgb, ${f.color} 28%, transparent)`,
-                    boxShadow: `0 0 12px color-mix(in srgb, ${f.color} 20%, transparent)`,
-                  }}>
-                  {f.icon}
-                </div>
-                <div className="flex items-center gap-2">
-                  <p className="font-black text-base" style={{ color: f.color }}>{f.title}</p>
-                  <span className="text-[12px] font-bold px-2 py-0.5 rounded-full"
+              className={`reveal reveal-d${(i % 3) + 1} rounded-2xl p-4 flex items-start gap-3.5`}
+              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+                style={{ background: `color-mix(in srgb, ${f.color} 14%, transparent)` }}>
+                {f.icon}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <p className="font-black t-body" style={{ color: "var(--text)" }}>{f.title}</p>
+                  <span className="t-caption font-bold px-2 py-0.5 rounded-full"
                     style={{ background: `color-mix(in srgb, ${f.color} 14%, transparent)`, color: f.color }}>
                     {f.tag}
                   </span>
                 </div>
+                <p className="t-small leading-relaxed" style={{ color: "var(--text-dim)" }}>{f.desc}</p>
               </div>
-              <p className="text-sm leading-relaxed relative z-10" style={{ color: "var(--text-dim)" }}>{f.desc}</p>
             </div>
           ))}
         </div>
@@ -459,7 +463,7 @@ export default function LandingPage() {
         <SectionHead eyebrow="المسارات" title="وش تستعد له؟" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-5">
           {/* التحصيلي المبكر مسار مشتق لا يُعرض للجميع — يُفعَّل من التسجيل لثاني ثانوي */}
-          {TRACKS.filter((t) => t.id !== "تحصيلي مبكر").map((t, i) => (
+          {VISIBLE_TRACKS.map((t, i) => (
             <div key={t.id}
               className={`reveal reveal-d${(i % 3) + 1} rounded-2xl p-4 landing-card group relative overflow-hidden`}
               style={{
@@ -471,9 +475,9 @@ export default function LandingPage() {
                 style={{ background: `linear-gradient(90deg, ${t.color}, transparent)` }} />
               <div className="flex items-center gap-2 mb-1.5">
                 <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: t.color }} />
-                <p className="font-black text-sm leading-tight" style={{ color: "var(--text)" }}>{t.title}</p>
+                <p className="font-black t-small leading-tight" style={{ color: "var(--text)" }}>{t.title}</p>
               </div>
-              <p className="text-xs leading-snug mb-2" style={{ color: "var(--text-muted)" }}>{t.sub}</p>
+              <p className="t-caption leading-snug mb-2" style={{ color: "var(--text-muted)" }}>{t.sub}</p>
               <div className="flex gap-1 flex-wrap">
                 {t.subjects.map((s) => (
                   <span key={s.name} className="w-2 h-2 rounded-full" style={{ background: s.color }} />
@@ -482,8 +486,8 @@ export default function LandingPage() {
             </div>
           ))}
         </div>
-        <p className="reveal text-center text-sm leading-relaxed" style={{ color: "var(--text-dim)" }}>
-          كل مسار بخريطة كاملة من التأسيس إلى التسريبات، مع نقاط مراجعة كل ربع.
+        <p className="reveal text-center t-small leading-relaxed" style={{ color: "var(--text-dim)" }}>
+          كل مسار بخريطة كاملة من التأسيس إلى التدريب، مع نقاط مراجعة كل ربع.
         </p>
       </section>
 
@@ -492,27 +496,37 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════ */}
       <section id="steps" className="px-5 py-16 landing-section-pad max-w-2xl landing-max mx-auto">
         <SectionHead eyebrow="البداية" title="ثلاث خطوات وتكون في دربك" />
-        <div className="grid grid-cols-1 landing-grid-3 gap-3">
+        {/* ▓ هذه **ترتيبٌ حقيقيّ** لا ثلاثُ بطاقاتٍ متجاورة: لا تبني خطّتك قبل أن
+           تدخل، ولا تذاكر قبل أن تبنيها. فرُسم الترتيبُ خطّاً يصل الأرقام —
+           الترقيمُ هنا يحمل معنًى، فيستحقّ أن يُرى. */}
+        <ol className="relative flex flex-col gap-5 ps-0 m-0 list-none">
           {STEPS.map((s, i) => (
-            <div key={i}
-              className={`reveal reveal-d${i + 1} rounded-2xl p-5 flex items-start gap-4 landing-card`}
-              style={{ background: "var(--surface)", border: "1.5px solid var(--border)" }}>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl flex-shrink-0"
+            <li key={i} className={`reveal reveal-d${i + 1} flex items-start gap-4 relative`}>
+              {/* الوصلةُ **بين** خطوتين لا بعد آخرِهما: خطٌّ يتدلّى من الأخيرة
+                 يَعِد بخطوةٍ رابعة لا وجودَ لها. */}
+              {i < STEPS.length - 1 && (
+                <span aria-hidden="true" className="absolute w-px"
+                  style={{
+                    insetInlineStart: "1.25rem", top: "2.5rem", bottom: "-1.25rem",
+                    background: "linear-gradient(color-mix(in srgb, var(--accent) 55%, transparent), color-mix(in srgb, var(--accent) 18%, transparent))",
+                  }} />
+              )}
+              <span className="w-10 h-10 rounded-full flex items-center justify-center font-black t-title flex-shrink-0 relative z-10"
                 style={{
-                  background: "color-mix(in srgb, var(--accent) 12%, transparent)",
+                  background: "var(--bg)",
                   color: "var(--accent-light)",
-                  border: "1.5px solid color-mix(in srgb, var(--accent) 28%, transparent)",
+                  border: "1.5px solid color-mix(in srgb, var(--accent) 45%, transparent)",
                   boxShadow: "0 0 16px color-mix(in srgb, var(--accent) 18%, transparent)",
                 }}>
-                {s.n}
+                {n(i + 1)}
+              </span>
+              <div className="pt-1.5">
+                <p className="font-black t-body mb-1" style={{ color: "var(--text)" }}>{s.title}</p>
+                <p className="t-small leading-relaxed" style={{ color: "var(--text-muted)" }}>{s.desc}</p>
               </div>
-              <div>
-                <p className="font-black text-base mb-1" style={{ color: "var(--text)" }}>{s.title}</p>
-                <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{s.desc}</p>
-              </div>
-            </div>
+            </li>
           ))}
-        </div>
+        </ol>
       </section>
 
       {/* ══════════════════════════════════════════ */}
@@ -527,17 +541,17 @@ export default function LandingPage() {
           <BorderBeam size={250} duration={12} colorFrom="var(--accent-hi)" colorTo="var(--gold)" />
           {theme === "dark" && <Sparkles count={isDesktop ? 5 : 10} color="var(--accent-hi)" />}
 
-          <h2 className="font-black text-2xl mb-3 relative z-10" style={{ color: "var(--text)" }}>جاهز تبدأ دربك؟</h2>
-          <p className="text-base mb-7 leading-relaxed relative z-10" style={{ color: "var(--text-dim)" }}>
-            أقل من دقيقة وأنت بداخل — ادخل بحساب Google واختر مسارك.
+          <h2 className="font-black t-h2 mb-3 relative z-10" style={{ color: "var(--text)" }}>جاهز تبدأ دربك؟</h2>
+          <p className="t-body mb-7 leading-relaxed relative z-10" style={{ color: "var(--text-dim)" }}>
+            أقل من دقيقة وأنت بداخل — بحساب Google أو ببريدك، ثم اختر مسارك.
           </p>
           <Link href={ctaHref}
-            className="btn-shimmer inline-flex items-center gap-3 px-12 py-4 text-lg font-black relative z-10"
+            className="btn-shimmer inline-flex items-center gap-3 px-12 py-4 t-body-lg font-black relative z-10"
             style={{ textDecoration: "none", minWidth: "220px", justifyContent: "center" }}>
             سجّل الآن ←
           </Link>
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 mt-8 text-xs">
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 mt-8 t-caption">
           <Link href="/faq" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
             الأسئلة الشائعة
           </Link>
