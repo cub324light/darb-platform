@@ -222,7 +222,7 @@ const startSessionProducer: Producer = (ctx) => {
     confidence: 0.7,
     reason: offWindow
       ? `ما بدأت اليوم بعد. عادةً تذاكر ${win} — لا ضغط الآن، لكن جلسة قصيرة تكسر الصفر.`
-      : "ما بدأت اليوم بعد — جلسة أوربت واحدة تكسر الصفر وتبني عادتك.",
+      : "ما بدأت اليوم بعد — جلسة تركيزٍ واحدة تكسر الصفر وتبني عادتك.",
     source: "orbit",
     expiresAt: endOfDay(ctx.now),
     action: { kind: "navigate", label: "ابدأ جلسة", href: "/orbit" },

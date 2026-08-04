@@ -26,7 +26,7 @@ export const CHALLENGES: ChallengeDef[] = [
     metric: (c) => Math.min(c.stats.sessionsCount, 1) },
   { id: "streak_7", icon: "🔥", title: "أسبوع منتظم", desc: "ذاكر 7 أيام متتالية", goal: 7, unit: "يوم", reward: 60, period: "once",
     metric: (c) => c.streak },
-  { id: "sessions_10", icon: "💪", title: "عشر جلسات", desc: "أكمل 10 جلسات أوربت", goal: 10, unit: "جلسة", reward: 50, period: "once",
+  { id: "sessions_10", icon: "💪", title: "عشر جلسات", desc: "أكمل 10 جلسات تركيز", goal: 10, unit: "جلسة", reward: 50, period: "once",
     metric: (c) => c.stats.sessionsCount },
   { id: "week_300", icon: "⏱️", title: "خمس ساعات هذا الأسبوع", desc: "ذاكر 300 دقيقة خلال الأسبوع", goal: 300, unit: "دقيقة", reward: 70, period: "weekly",
     metric: (c) => c.weekMins },

@@ -523,7 +523,7 @@ export default function PlanPage() {
           {[
             { href: "/study-plan", icon: "📊", label: "مخطط الدراسة" },
             { href: "/roadmap",    icon: "🗺️", label: "مساري" },
-            { href: "/orbit",      icon: "⏱️", label: "أوربت" },
+            { href: "/orbit",      icon: "⏱️", label: "تركيز" },
           ].map((item) => (
             <Link key={item.href} href={item.href}
               className="ds-card ds-card-tight ds-card-interactive flex flex-col items-center gap-1 text-center"

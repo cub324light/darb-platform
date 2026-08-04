@@ -54,7 +54,7 @@ function ProfileInsightsBase({ data }: { data: InsightsData }) {
         </p>
         <a href="/orbit" className="inline-block px-5 py-2.5 rounded-2xl text-[16px] font-bold no-underline transition active:scale-[0.98]"
           style={{ background: "var(--accent)", color: "#fff" }}>
-          ▶ ابدأ جلسة أوربت
+          ▶ ابدأ جلسة تركيز
         </a>
       </div>
     );

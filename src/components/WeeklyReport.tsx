@@ -16,7 +16,7 @@ export default function WeeklyReport({ compact = false }: { compact?: boolean })
     return (
       <div className="rounded-2xl p-5 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
         <p className="text-[16px] font-bold" style={{ color: "var(--text-muted)" }}>تقريرك الأسبوعي يبدأ بأول جلسة</p>
-        <p className="text-[15px] mt-1" style={{ color: "var(--text-dim)" }}>ابدأ جلسة أوربت ونبني لك ملخّص أسبوعك.</p>
+        <p className="text-[15px] mt-1" style={{ color: "var(--text-dim)" }}>ابدأ جلسة تركيز ونبني لك ملخّص أسبوعك.</p>
       </div>
     );
   }

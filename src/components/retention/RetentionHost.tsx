@@ -99,7 +99,7 @@ export default function RetentionHost() {
     case "welcome":
       emoji = "👋";
       title = `عدت بعد ${ar(view.away)} أيام — اشتقنا لك`;
-      text = "أسهل طريقة للعودة: جلسة أوربت قصيرة اليوم.";
+      text = "أسهل طريقة للعودة: جلسة تركيزٍ قصيرة اليوم.";
       action = { label: "ابدأ جلسة", href: "/orbit" };
       break;
     case "recovery":

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import BackButton from "@/components/BackButton";
 
@@ -7,6 +8,17 @@ export interface LegalSection {
   h: string;
   p?: string | string[];
   list?: string[];
+}
+
+/* نصٌّ قانونيٌّ بلا تشديدٍ يُقرأ كتلةً واحدة، فيضيع فيه ما يجب أن يُرى: «لا
+   نطلب منك بطاقة»، «لا تتبع قياس». تشديدٌ واحدٌ يكفي — `**كذا**` — ولا نحتاج
+   محلّلَ ماركداون كاملاً لسطرٍ في وثيقة. */
+function emphasize(text: string): ReactNode[] {
+  return text.split(/\*\*(.+?)\*\*/g).map((part, i) =>
+    i % 2 === 1
+      ? <strong key={i} style={{ color: "var(--text)", fontWeight: 800 }}>{part}</strong>
+      : <span key={i}>{part}</span>
+  );
 }
 
 const LEGAL_LINKS: { href: string; label: string }[] = [
@@ -51,7 +63,7 @@ export default function LegalDoc({
               {s.p &&
                 (Array.isArray(s.p) ? s.p : [s.p]).map((para, i) => (
                   <p key={i} className="text-[17px] text-[var(--text-dim)] leading-relaxed mb-2 last:mb-0">
-                    {para}
+                    {emphasize(para)}
                   </p>
                 ))}
               {s.list && (
@@ -59,7 +71,7 @@ export default function LegalDoc({
                   {s.list.map((item, i) => (
                     <li key={i} className="text-[17px] text-[var(--text-dim)] leading-relaxed flex gap-2">
                       <span style={{ color: "var(--accent-light)" }} className="flex-shrink-0">•</span>
-                      <span>{item}</span>
+                      <span>{emphasize(item)}</span>
                     </li>
                   ))}
                 </ul>
