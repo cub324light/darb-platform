@@ -9,6 +9,7 @@ import BackButton from "@/components/BackButton";
 import { ThemeToggle } from "@/components/Profile";
 import { Card, SectionHeader, CardGrid } from "@/components/ds";
 import PublicPageCta from "@/components/content/PublicPageCta";
+import NextThread from "@/components/NextThread";
 import {
   UNIVERSITIES,
   universitiesByRegion,
@@ -153,6 +154,10 @@ export default function UniversitiesDirectoryPage() {
             </CardGrid>
           </section>
         ))}
+
+        {/* خيطُ الرحلة للطالب المسجَّل — جزيرةُ عميلٍ لا تُخرِج شيئاً على الخادم،
+            فمحتوى الصفحة المُفهرَس كما هو تماماً. والزائرُ بلا حساب يرى الدعوةَ أدناه. */}
+        <NextThread page="/universities" />
 
         <PublicPageCta current="/universities" />
       </main>

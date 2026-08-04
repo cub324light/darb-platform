@@ -165,3 +165,97 @@ export function uniStage(year?: string, completedHours?: number): UniStage {
 
 /* ملاحظة: قرار «أولويات الطالب» صار في العقل المركزي (lifeEngine.ts) الذي تقرأ
    منه كل الصفحات. uniStage يبقى هنا لأنه من إشارات ذلك العقل. */
+
+/* ════════ 6) قوسُ الرحلة الكاملة — من اكتشاف التخصّص إلى أول وظيفة ════════
+   ▸ العطل: عالَمُ الجامعة في درب إحدى عشرة صفحةً غنيّةً بالبيانات، ولا خيطَ بينها.
+     الطالبُ يفتح دليل الجامعات فيصل إلى نهاية الطريق؛ ويفتح «الفرص» فتنتهي عنده؛
+     ويفتح «أدوات الجامعة» فلا شيء بعدها. فبدت المنصّة أحدَ عشرَ منتجاً لا رحلة.
+
+   ▸ ما تفعله هذه الوحدة **وحدَه**: تقول أين يقف الطالبُ في القوس، وما خطوتُه
+     التالية. لا تعرض شيئاً ولا تقرّر ترتيباً عامّاً — العرضُ لـ`NextThread`
+     القائم، والترتيبُ العام يبقى لـ`lifeEngine`. طبقةُ معرفةٍ لا طبقةُ واجهة.
+
+   ▸ كلُّ مرحلةٍ لها **إشارةٌ حقيقيةٌ واحدة** تُدخِل الطالبَ فيها، وكلُّها من تخزينٍ
+     قائم: `DarbGoals` · `darb_admissions` · `DarbUser`. ولا إشارةَ ⇒ لا مرحلة.
+
+   ▓ «اكتشافُ الميول» ليس مرحلةً هنا: لا يوجد في المشروع أيُّ مصدرٍ يقيس ميلَ
+     الطالب (التقييمُ الذاتيّ في «مهاراتي» رأيٌ لا قياس). فالقوسُ يبدأ من
+     «لم تحدّد وجهتك» ويدلّه على الاستكشاف — ولا نخترع له ميلاً. */
+
+export type ArcStage =
+  | "destination"   // لم يحدّد تخصّصاً ولا جامعة
+  | "major"         // اختار جامعةً ولم يختر تخصّصاً
+  | "university"    // اختار تخصّصاً ولم يختر جامعة
+  | "gap"           // اختار الاثنين ولم يحدّد درجاتٍ مستهدفة
+  | "apply"         // جاهزٌ للتقديم ولم يسجّل تقديماً
+  | "result"        // قدّم وينتظر النتيجة
+  | "campus"        // طالبٌ جامعيّ
+  | "graduation"    // قربَ التخرّج
+  | "career";       // خريجُ جامعة
+
+/** إشاراتُ القوس — كلُّها من تخزينٍ قائم، ويقرؤها المستدعي (طبقةُ الـIO). */
+export interface ArcSignals {
+  phase: "secondary" | "university" | "graduate";
+  isUniversityGraduate: boolean;
+  hasMajor: boolean;
+  hasUniversity: boolean;
+  hasTargets: boolean;          // حدّد درجةً مستهدفةً واحدةً على الأقل
+  applications: number;         // عددُ التقديمات المسجَّلة
+  accepted: boolean;            // قُبل في واحدٍ منها
+  universityYear?: string;
+  creditHoursCompleted?: number | null;
+}
+
+/** الخطوةُ التالية في القوس — بصيغةِ خيطِ الصفحة القائم. */
+export interface ArcStep {
+  stage: ArcStage;
+  icon: string;
+  reason: string;   // أين يقف — من إشارةٍ حقيقية
+  cta: string;      // ما الخطوة
+  href: string;     // أين تُنجَز
+}
+
+/** أين يقف الطالبُ في القوس — من إشاراته وحدَها. */
+export function arcStage(s: ArcSignals): ArcStage {
+  if (s.isUniversityGraduate) return "career";
+  if (s.phase === "university") {
+    return uniStage(s.universityYear, s.creditHoursCompleted ?? undefined) === "senior"
+      ? "graduation" : "campus";
+  }
+  /* ثانويٌّ أو خريجُ ثانوية: قبولٌ مسجَّلٌ يعني أنه عبَر إلى الجامعة فعلاً. */
+  if (s.accepted) return "campus";
+  if (s.applications > 0) return "result";
+  if (!s.hasMajor && !s.hasUniversity) return "destination";
+  if (!s.hasMajor) return "major";
+  if (!s.hasUniversity) return "university";
+  if (!s.hasTargets) return "gap";
+  return "apply";
+}
+
+/* كلُّ مرحلةٍ ← خطوتُها. الوجهاتُ كلُّها صفحاتٌ قائمة، ولا صفحةَ جديدة. */
+const ARC_STEP: Record<ArcStage, Omit<ArcStep, "stage">> = {
+  destination: { icon: "🏛️", reason: "ما حدّدت وجهتك بعد",
+    cta: "استكشف الجامعات وتخصصاتها", href: "/universities" },
+  major: { icon: "🎓", reason: "اخترت جامعتك ولم تختر تخصّصك",
+    cta: "اختر تخصّصك في «هدفي الجامعي»", href: "/plan" },
+  university: { icon: "🏛️", reason: "اخترت تخصّصك ولم تختر جامعتك",
+    cta: "قارن الجامعات واختر وجهتك", href: "/university" },
+  gap: { icon: "🎯", reason: "وجهتك واضحة — وما حدّدت درجاتك المستهدفة",
+    cta: "حدّد أهدافك لأقيس ما ينقصك", href: "/plan" },
+  apply: { icon: "🗂️", reason: "وجهتك وأهدافك جاهزة",
+    cta: "شوف ما يفتح لك وسجّل تقديماتك", href: "/opportunities" },
+  result: { icon: "🗂️", reason: "قدّمت وتنتظر النتيجة",
+    cta: "حدّث حالة تقديماتك", href: "/university" },
+  campus: { icon: "🎓", reason: "أنت في رحلتك الجامعية",
+    cta: "تابع معدّلك وغيابك في أدوات الجامعة", href: "/uni-tools" },
+  graduation: { icon: "🚀", reason: "قربتَ من التخرّج",
+    cta: "جهّز سيرتك وتدريبك في المستقبل", href: "/future" },
+  career: { icon: "💼", reason: "تخرّجت — الخطوة الأخيرة",
+    cta: "ابنِ سيرتك وابحث عن أول وظيفة", href: "/future" },
+};
+
+/** الخطوةُ التالية في القوس — أو `null` إن نقصت الإشارات (لا نخترع مرحلة). */
+export function arcNext(s: ArcSignals): ArcStep {
+  const stage = arcStage(s);
+  return { stage, ...ARC_STEP[stage] };
+}

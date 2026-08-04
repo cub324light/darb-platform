@@ -6,6 +6,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   semesterInfo, gradProgress, buildUniJourney, aiThisWeek, GRAD_TOTAL_HOURS, AI_INTEGRITY_NOTE,
+  arcStage, arcNext, type ArcSignals,
   uniStage,
 } from "./uniJourney";
 
@@ -142,4 +143,64 @@ test("uniStage: سنة أولى → start، ثانية/ثالثة → mid، را
   assert.equal(uniStage("الخامسة+", 140), "senior");
   /* ساعات عالية تُدخِل «قرب التخرّج» ولو تأخّرت السنة */
   assert.equal(uniStage("الثالثة", 100), "senior");
+});
+
+/* ════════ قوسُ الرحلة الكاملة — كلُّ مرحلةٍ بإشارةٍ حقيقيةٍ واحدة ════════ */
+
+const A = (o: Partial<ArcSignals> = {}): ArcSignals => ({
+  phase: "secondary", isUniversityGraduate: false,
+  hasMajor: false, hasUniversity: false, hasTargets: false,
+  applications: 0, accepted: false, ...o,
+});
+
+test("القوس: الثانويُّ يتدرّج بإشاراته — وجهة ← تخصّص/جامعة ← أهداف ← تقديم", () => {
+  assert.equal(arcStage(A()), "destination");
+  assert.equal(arcStage(A({ hasUniversity: true })), "major");
+  assert.equal(arcStage(A({ hasMajor: true })), "university");
+  assert.equal(arcStage(A({ hasMajor: true, hasUniversity: true })), "gap");
+  assert.equal(arcStage(A({ hasMajor: true, hasUniversity: true, hasTargets: true })), "apply");
+});
+
+test("القوس: التقديمُ المسجَّل ينقله إلى الانتظار، والقبولُ إلى الجامعة", () => {
+  const ready = { hasMajor: true, hasUniversity: true, hasTargets: true };
+  assert.equal(arcStage(A({ ...ready, applications: 2 })), "result");
+  assert.equal(arcStage(A({ ...ready, applications: 2, accepted: true })), "campus");
+  /* والقبولُ يسبق كلَّ ما قبله: مَن قُبل لا يُسأل عن أهدافه */
+  assert.equal(arcStage(A({ accepted: true, applications: 1 })), "campus");
+});
+
+test("القوس: الجامعيُّ في الحياة الجامعية، وقربَ التخرّج يتحوّل — بنفس عتبة uniStage", () => {
+  assert.equal(arcStage(A({ phase: "university", universityYear: "الأولى" })), "campus");
+  assert.equal(arcStage(A({ phase: "university", universityYear: "الثالثة", creditHoursCompleted: 70 })), "campus");
+  assert.equal(arcStage(A({ phase: "university", universityYear: "الرابعة" })), "graduation");
+  /* الساعاتُ العالية تُقدّمه ولو تأخّرت سنته — نفسُ قاعدة `uniStage` لا قاعدةٌ ثانية */
+  assert.equal(arcStage(A({ phase: "university", universityYear: "الثالثة", creditHoursCompleted: 100 })), "graduation");
+});
+
+test("القوس: خريجُ الجامعة نهايةُ القوس مهما كانت بقيةُ إشاراته", () => {
+  assert.equal(arcStage(A({ phase: "graduate", isUniversityGraduate: true })), "career");
+  assert.equal(arcStage(A({ phase: "graduate", isUniversityGraduate: true, hasMajor: false, accepted: true })), "career");
+});
+
+test("القوس: لكلِّ مرحلةٍ خطوةٌ كاملةٌ إلى صفحةٍ قائمة — بلا وجهةٍ مخترَعة", () => {
+  const PAGES = ["/universities", "/university", "/plan", "/opportunities", "/uni-tools", "/future"];
+  const seen = new Set<string>();
+  const cases: ArcSignals[] = [
+    A(),
+    A({ hasUniversity: true }),
+    A({ hasMajor: true }),
+    A({ hasMajor: true, hasUniversity: true }),
+    A({ hasMajor: true, hasUniversity: true, hasTargets: true }),
+    A({ hasMajor: true, hasUniversity: true, hasTargets: true, applications: 1 }),
+    A({ accepted: true, applications: 1 }),
+    A({ phase: "university", universityYear: "الرابعة" }),
+    A({ phase: "graduate", isUniversityGraduate: true }),
+  ];
+  for (const c of cases) {
+    const step = arcNext(c);
+    seen.add(step.stage);
+    assert.ok(step.reason.trim() && step.cta.trim() && step.icon.trim(), `${step.stage}: خطوةٌ ناقصة`);
+    assert.ok(PAGES.includes(step.href), `${step.stage}: وجهةٌ خارج الصفحات القائمة (${step.href})`);
+  }
+  assert.equal(seen.size, 9, "المراحلُ التسعُ كلُّها قابلةٌ للوصول بإشاراتٍ حقيقية");
 });

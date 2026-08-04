@@ -13,6 +13,7 @@
 
    ▸ نقيٌّ تماماً: لا localStorage ولا window ولا Date — المدخلات فقط (قاعدة P1). */
 import type { Priority } from "./lifeEngine";
+import type { ArcStep } from "./uniJourney";
 
 export interface ThreadSignals {
   activeErrors: number;      // أخطاءٌ لم تُراجَع بعد
@@ -22,6 +23,9 @@ export interface ThreadSignals {
   homeworkDue: number;       // واجباتٌ مستحقّة
   hasDestination: boolean;   // اختار جامعةً/تخصصاً
   admissionOpen: boolean;    // عالم القبول مفتوحٌ لمرحلته
+  /* خطوةُ الطالب التالية في قوس الرحلة الجامعية (`uniJourney.arcNext`).
+     تُحسب في طبقة الـIO وتصل جاهزةً — هذه الوحدةُ تختار ولا تقرّر. */
+  journey?: ArcStep | null;
 }
 
 export interface PageThread {
@@ -35,7 +39,20 @@ export interface PageThread {
 /* الصفحات التي نصلها — المفتاح مسارُها */
 export type ThreadPage =
   | "/dashboard" | "/plan" | "/roadmap" | "/orbit" | "/vault"
-  | "/school" | "/profile" | "/university" | "/future";
+  | "/school" | "/profile" | "/university" | "/future"
+  /* صفحاتُ عالم الجامعة — كانت كلُّها بلا خيطٍ يُخرج منها */
+  | "/universities" | "/opportunities" | "/career" | "/uni-tools" | "/uni-gear";
+
+/* خطوةُ القوس بصيغة الخيط — بلا حقل المرحلة (لا يعني الطالبَ اسمُها) */
+const stepOf = (a: ArcStep): PageThread =>
+  ({ icon: a.icon, reason: a.reason, cta: a.cta, href: a.href });
+
+/* ▓ `/career` و`/future` مساران لمحتوىً واحد (`CareerCenter` نفسُه). فالخيطُ من
+   أحدهما إلى الآخر يَعِد الطالبَ بصفحةٍ جديدة ويسلّمه الصفحةَ التي هو فيها.
+   (التكرارُ مسجَّلٌ في `docs/backlog.md` ولم يُدمَج — هنا نمنع أثره فقط.) */
+const SAME_CONTENT: Record<string, string> = { "/career": "/future", "/future": "/career" };
+const isHere = (href: string, page: ThreadPage): boolean =>
+  href === page || SAME_CONTENT[page] === href;
 
 const arabicCount = (n: number, one: string, two: string, few: string, many: string): string =>
   n === 1 ? one : n === 2 ? two : n >= 3 && n <= 10 ? `${n} ${few}` : `${n} ${many}`;
@@ -90,10 +107,25 @@ function contextual(page: ThreadPage, s: ThreadSignals): PageThread | null {
       }
       return { icon: "🗺️", reason: "شوف أثر اليوم على جاهزيتك", cta: "افتح مساري", href: "/roadmap" };
 
-    /* وجهتي/المستقبل ← دليل الجامعات (صفحةٌ يتيمة لا يشير إليها أحد) */
+    /* ▓ عالمُ الجامعة كلُّه: خطوةُ القوس أولاً — هي التي تجعل الصفحات رحلةً
+       لا جُزُراً. وحين لا تصل (لا إشارات) يبقى السلوكُ القديم كما هو حرفاً بحرف. */
+    case "/universities":
+    case "/opportunities":
+    case "/career":
+    case "/uni-tools":
+    case "/uni-gear":
+      return s.journey && !isHere(s.journey.href, page) ? stepOf(s.journey) : null;
+
+    /* وجهتي/المستقبل ← خطوةُ القوس، وإلّا السلوكُ القديم كما هو حرفاً بحرف.
+       (وحين تشير الخطوةُ إلى الصفحة نفسها فالطالبُ واقفٌ في مكانها الصحيح.) */
     case "/university":
     case "/future":
-      if (!s.hasDestination && s.admissionOpen) {
+      if (s.journey && !isHere(s.journey.href, page)) return stepOf(s.journey);
+      /* ▓ ولا يُساق إلى «دليل الجامعات» مَن خرج من عالم القبول أصلاً: الجامعيُّ
+         وخريجُ الجامعة وجهتُهما خلفَهما. `admissionOpen` كان يصل `true` دائماً من
+         طبقة الـIO فيرى الخرّيجُ «قارن وجهتك بغيرها» — وهو قد اختار وتخرّج. */
+      if (!s.admissionOpen) return null;
+      if (!s.hasDestination) {
         return { icon: "🏛️", reason: "ما حدّدت وجهتك بعد", cta: "استكشف الجامعات وتخصصاتها", href: "/universities" };
       }
       return { icon: "🏛️", reason: "قارن وجهتك بغيرها", cta: "تصفّح دليل الجامعات", href: "/universities" };
@@ -116,10 +148,10 @@ export function pageThread(
   const ctx = contextual(page, signals);
   /* لا نُرجِع خيطاً يعيد الطالب إلى الصفحة التي هو فيها — كان هذا عطلاً حقيقياً
      في بطاقةٍ سابقة: زرٌّ في «مساري» يؤدّي إلى «مساري». */
-  if (ctx && ctx.href !== page) return ctx;
+  if (ctx && !isHere(ctx.href, page)) return ctx;
 
   /* الرئيسية (ومَن سقط سياقُه): أعلى أولوية من `lifeEngine` تخرج بالطالب من صفحته */
-  const p = priorities.find((x) => x.href && x.href !== page);
+  const p = priorities.find((x) => x.href && !isHere(x.href, page));
   if (!p) return null;
   return { icon: p.icon, reason: p.why, cta: p.cta, href: p.href };
 }

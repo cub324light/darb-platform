@@ -9,7 +9,10 @@ import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { pageThread, type PageThread, type ThreadPage, type ThreadSignals } from "@/lib/pageThread";
 import { readLifeContext, lifeEngine } from "@/lib/lifeEngine";
-import { loadStats, loadList, loadEvents, loadGoals } from "@/lib/storage";
+import { loadStats, loadList, loadEvents, loadGoals, loadUser, loadAdmissions } from "@/lib/storage";
+import { arcNext, type ArcStep } from "@/lib/uniJourney";
+import { phaseExperience } from "@/lib/experience";
+import { isUniversityGraduate } from "@/lib/phase";
 import { loadHomework, homeworkPressure } from "@/lib/homework";
 import { getEventsForDate } from "@/lib/schedule";
 import type { VaultError } from "@/lib/types";
@@ -18,6 +21,30 @@ const localDayKey = (d = new Date()): string => {
   const p = (x: number) => String(x).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 };
+
+/* خطوةُ القوس — تُقرأ من تخزينٍ قائم كلِّه، ولا تُعرض لمن لم يفتح عالمُ القبول له
+   بعد (أول/ثاني ثانوي في وضع الاستكشاف): الرحلةُ تبدأ حين تصير قراراً. */
+function readJourney(): ArcStep | null {
+  const u = loadUser();
+  const exp = phaseExperience(u);
+  const open = exp.admission === "full" || exp.phase === "university" || isUniversityGraduate(u);
+  if (!open) return null;
+
+  const goals = loadGoals();
+  const apps = loadAdmissions();
+  return arcNext({
+    phase: exp.phase,
+    isUniversityGraduate: isUniversityGraduate(u),
+    hasMajor: !!(goals.major || goals.majorId),
+    hasUniversity: !!(goals.universityId || goals.university),
+    hasTargets: [goals.quduratTarget, goals.tahsiliTarget, goals.stepTarget]
+      .some((t) => typeof t === "number" && Number.isFinite(t)),
+    applications: apps.length,
+    accepted: apps.some((a) => a.status === "accepted"),
+    universityYear: u?.universityYear,
+    creditHoursCompleted: u?.creditHoursCompleted ?? null,
+  });
+}
 
 function readSignals(): ThreadSignals {
   const stats = loadStats();
@@ -33,7 +60,10 @@ function readSignals(): ThreadSignals {
     focusMinsToday: stats.todayFocusMins ?? 0,
     homeworkDue: hw.overdue + hw.dueToday,
     hasDestination: !!(goals.universityId || goals.majorId),
-    admissionOpen: true,
+    /* كان ثابتاً `true` — فيرى الجامعيُّ والخرّيجُ خيطاً يعيدهما إلى دليل الجامعات.
+       المصدرُ الصحيح هو نفسُه الذي يحكم الشريطَ السفليّ والقوائم. */
+    admissionOpen: phaseExperience(loadUser()).admission !== "hidden",
+    journey: readJourney(),
   };
 }
 

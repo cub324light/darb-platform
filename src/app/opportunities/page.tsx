@@ -8,6 +8,7 @@ import Link from "next/link";
 import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import PageFooter from "@/components/PageFooter";
+import NextThread from "@/components/NextThread";
 import { loadUser, loadGoals, currentScoreMap } from "@/lib/storage";
 import { isUniversityGraduate } from "@/lib/phase";
 import {
@@ -199,6 +200,7 @@ export default function OpportunitiesPage() {
       </div>
 
       <div className="h-6" />
+      <NextThread page="/opportunities" />
       <PageFooter />
     </div>
   );

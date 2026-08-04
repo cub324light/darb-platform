@@ -7,6 +7,7 @@ import Link from "next/link";
 import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import PageFooter from "@/components/PageFooter";
+import NextThread from "@/components/NextThread";
 import CareerCenter from "./CareerCenter";
 import PriorityHint from "@/components/PriorityHint";
 
@@ -50,6 +51,7 @@ export default function CareerPage() {
       </div>
 
       <div className="h-6" />
+      <NextThread page="/career" />
       <PageFooter />
     </div>
   );

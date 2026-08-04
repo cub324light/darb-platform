@@ -6,6 +6,7 @@ import Link from "next/link";
 import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import PageFooter from "@/components/PageFooter";
+import NextThread from "@/components/NextThread";
 import UniTools from "./UniTools";
 import PriorityHint from "@/components/PriorityHint";
 import Customizable from "@/components/Customizable";
@@ -52,6 +53,7 @@ export default function UniToolsPage() {
       </div>
 
       <div className="h-6" />
+      <NextThread page="/uni-tools" />
       <PageFooter />
     </div>
   );

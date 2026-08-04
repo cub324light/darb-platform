@@ -7,6 +7,7 @@ import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import { ThemeToggle } from "@/components/Profile";
 import GearBrowser from "./GearBrowser";
+import NextThread from "@/components/NextThread";
 
 export const metadata: Metadata = {
   title: "عُدّة تخصصك — أجهزة وبرامج وأدوات AI لتخصصك | درب",
@@ -47,6 +48,9 @@ export default function UniGearPage() {
 
         <GearBrowser />
       </main>
+
+      <NextThread page="/uni-gear" />
+      <div className="h-6" />
     </div>
   );
 }
