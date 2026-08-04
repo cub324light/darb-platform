@@ -8,7 +8,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import BackButton from "@/components/BackButton";
-import { loadUser, ensureWorkspace, loadTrackExamDates, localDayKey } from "@/lib/storage";
+import DismissibleNote from "@/components/DismissibleNote";
+import { loadUser, ensureWorkspace, loadTrackExamDates, localDayKey, loadStats, computeStreak } from "@/lib/storage";
+import { duwairbMoment, explainSessionPlan, type Intervention } from "@/lib/duwairb/moments";
 import { daysBetween } from "@/lib/roadmap/metrics";
 import { buildSessionPlan, type SessionPlan, type SessionTask } from "@/lib/roadmap/session";
 import { remainingSteps } from "@/lib/roadmap/remainingSteps";
@@ -70,6 +72,8 @@ export default function SessionPage() {
     const diff = daysBetween(localDayKey(), d);
     return diff >= 0 ? diff : null;
   });
+  /* قراءةٌ واحدةٌ عند التركيب — يستعملها المحرّكُ ولحظاتُ دويرب معاً. */
+  const [activeErrors] = useState(() => (typeof window !== "undefined" ? vaultCount() : 0));
   const [plan, setPlan] = useState<SessionPlan | null>(() => {
     if (typeof window === "undefined" || !exam) return null;
     return buildSessionPlan({
@@ -77,7 +81,7 @@ export default function SessionPage() {
       weakestSubject: counts.weakestSubject,
       remainingLessons: counts.remainingLessons,
       remainingDrills: counts.remainingDrills,
-      activeErrors: vaultCount(),
+      activeErrors,
       availableMinutes: avail.minutes,
       mode: loadRoadmapConfig().studyMode,
       daysUntilExam: daysLeft ?? undefined,
@@ -91,6 +95,8 @@ export default function SessionPage() {
   });
   const [stage] = useState<Stage>(() => (doneMins > 0 ? "done" : "plan"));
   const [skipIdx, setSkipIdx] = useState<number | null>(null);
+  /* ما يقوله دويرب بعد التخطّي — يُبنى لحظةَ الفعل، فلا يظهر عند فتح الصفحة. */
+  const [skipNote, setSkipNote] = useState<Intervention | null>(null);
 
   if (!exam || !plan) {
     return (
@@ -107,6 +113,13 @@ export default function SessionPage() {
   /* تقديرُ زمن الجلسة: مجموعُ دقائق المهامّ الموقوتة، والأسئلةُ بدقيقةٍ لكلّ سؤال.
      تقديرٌ يُعلَن تقديراً (`~`) — لا وعدٌ يناقض مؤقّتَ «التركيز». */
   const estMins = tasks.reduce((m, t) => m + (t.goalMins ?? t.goalCount ?? 0), 0);
+
+  /* تدخّلُ «قرب الاختبار» أوّلاً — فإن لم يكن الموعدُ قريباً فالشرحُ يأخذ مكانه. */
+  const planNote = duwairbMoment({
+    kind: "exam-near", daysUntilExam: daysLeft,
+    remainingLessons: counts.remainingLessons, remainingDrills: counts.remainingDrills,
+    activeErrors,
+  }) ?? explainSessionPlan(tasks.map((t) => t.topFactor));
 
   /* «ابدأ الآن» — تسليمٌ إلى ⏱️ التركيز (نظام التوقيت الوحيد)، ويعود بـ?done=N.
      نمرّر وزن المهمّة الأولى (task) واسمها (tlabel) ليعرف الطالب — وهو داخل التركيز —
@@ -130,13 +143,22 @@ export default function SessionPage() {
       actor: { kind: "student" }, source: "ui",
     })).catch(() => {});
     let next = tasks.filter((_, i) => i !== skipIdx);
+    let swappedTo: string | null = null;
     if (reason === "swap" && (t.kind === "review" || t.kind === "drill")) {
       const other = exam.subjects.map((s) => s.name).find((s) => s !== t.subject);
-      if (other) next = [...next.slice(0, skipIdx), { ...t, subject: other, label: `${t.kind === "review" ? "مراجعة" : "تدريب"} ${other}` }, ...next.slice(skipIdx)];
+      if (other) {
+        swappedTo = other;
+        next = [...next.slice(0, skipIdx), { ...t, subject: other, label: `${t.kind === "review" ? "مراجعة" : "تدريب"} ${other}` }, ...next.slice(skipIdx)];
+      }
     }
     const totalMins = next.reduce((a, x) => a + (x.goalMins ?? (x.goalCount ?? 0) * ROADMAP_TUNING.session.drillPerQuestionMins), 0);
     setPlan({ ...plan, tasks: next, totalMins });
     setSkipIdx(null);
+    /* ودويرب يردّ على ما فعله الطالبُ الآن — من حالة الخطة بعد التخطّي لا من ظنّ. */
+    setSkipNote(duwairbMoment({
+      kind: "task-skipped", reason, reasonLabel: SKIP_REASONS.find((r) => r.id === reason)?.label ?? "",
+      label: t.label, swappedTo, remainingTasks: next.length,
+    }));
   };
 
   /* ── الحالة: لا وقت اليوم ── */
@@ -159,6 +181,14 @@ export default function SessionPage() {
   if (stage === "done") {
     const fresh = countRemaining(exam.subjects);
     const rest = remainingSteps({ remainingLessons: fresh.remainingLessons, remainingDrills: fresh.remainingDrills, unreviewedErrors: vaultCount() });
+    /* تدخّلُ دويرب بعد الجلسة — من نفس الأرقام التي تراها الشاشة، ولا يتكلّم إلا
+       حين يملك ما تزيده الشاشةُ: قربَ اختبارٍ مسجَّل، أو خلوَّ القائمة، أو سلسلةً قائمة. */
+    const afterSession = duwairbMoment({
+      kind: "session-finished", minutes: doneMins,
+      streakDays: computeStreak(loadStats()),
+      daysUntilExam: daysLeft ?? undefined,
+      remainingCount: rest.length,
+    });
     return (
       <div className="min-h-dvh pb-nav relative z-[1] page-enter">
         <div className="max-w-xl mx-auto w-full px-5 flex flex-col" style={{ minHeight: "88dvh" }}>
@@ -176,6 +206,11 @@ export default function SessionPage() {
             )}
             <p className="t-caption mt-4" style={{ color: "var(--text-dim)" }}>وسيتم تحديث جاهزيتك الآن.</p>
           </div>
+          {afterSession && (
+            <div className="text-right mb-4">
+              <DismissibleNote id={afterSession.id} title={afterSession.text}>{afterSession.why}</DismissibleNote>
+            </div>
+          )}
           <button onClick={() => router.push("/roadmap")} className="mb-8 w-full rounded-2xl py-4 t-body font-black"
             style={{ background: "transparent", color: "var(--accent-light)", border: "1.5px solid color-mix(in srgb, var(--accent) 35%, var(--border))" }}>
             العودة إلى الآن
@@ -219,6 +254,16 @@ export default function SessionPage() {
           <div className="rounded-2xl mt-3 px-4 py-3 t-caption font-bold"
             style={{ background: "color-mix(in srgb, var(--gold) 12%, var(--surface))", border: "1.5px solid color-mix(in srgb, var(--gold) 30%, var(--border))", color: "var(--text)" }}>
             ⏳ وقتك اليوم محدود، فاقترحت جلسة مختصرة.
+          </div>
+        )}
+
+        {/* رسالةُ دويرب — واحدةٌ لا اثنتان: ردُّه على التخطّي (إن حدث الآن) يسبق،
+            وإلّا فقربُ الاختبار مع ما بقي، وإلّا فشرحُ الخطة نفسِها. بلا إشارةٍ لا شيء. */}
+        {(skipNote ?? planNote) && (
+          <div className="mt-3">
+            <DismissibleNote id={(skipNote ?? planNote)!.id} title={(skipNote ?? planNote)!.text}>
+              {(skipNote ?? planNote)!.why}
+            </DismissibleNote>
           </div>
         )}
 

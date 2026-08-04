@@ -8,6 +8,8 @@ import Dome from "@/components/Dome";
 import Sheet from "@/components/Sheet";
 import { n } from "@/lib/format";
 import PageGuide from "@/components/PageGuide";
+import DismissibleNote from "@/components/DismissibleNote";
+import { duwairbMoment, type Intervention } from "@/lib/duwairb/moments";
 import { ERROR_CATEGORIES } from "@/lib/constants";
 import { subjectsForTracks, colorForSubject, type TrackId } from "@/lib/tracks";
 import { activeTrackIds, loadList, saveList } from "@/lib/storage";
@@ -53,6 +55,8 @@ export default function ErrorsBody({ embedded = false }: { embedded?: boolean })
     catch { return new Set(); }
   });
   const [cardMsg, setCardMsg] = useState<string | null>(null);
+  /* تدخّلُ دويرب بعد إضافة خطأ — يُبنى لحظةَ الإضافة، فلا يظهر عند فتح الصفحة. */
+  const [addNote, setAddNote] = useState<Intervention | null>(null);
 
   const convertToCard = (error: VaultError) => {
     const q = error.question.trim();
@@ -111,6 +115,10 @@ export default function ErrorsBody({ embedded = false }: { embedded?: boolean })
       difficulty: newDiff,
     }, ...p]);
     setNewQ(""); setNewNote(""); setNewDiff("متوسط"); setShowAdd(false);
+    /* ودويرب يردّ على ما سجّله للتوّ — من عدد أخطاء هذه المادّة بعد الإضافة. */
+    setAddNote(duwairbMoment({
+      kind: "error-added", subject: newSubject, inSubject: countForSubject(newSubject) + 1,
+    }));
     /* أقوى دليلٍ على ضعف مادّة: خطأٌ سجّله الطالبُ بيده — فعلٌ لا رأي. */
     import("@/lib/events").then(({ emit }) => emit({
       eventType: "VaultErrorAdded",
@@ -212,6 +220,12 @@ export default function ErrorsBody({ embedded = false }: { embedded?: boolean })
           <span className="block font-black t-h3">＋ أضف خطأً جديداً</span>
         </button>
       </div>
+
+      {addNote && (
+        <div className="px-5 mb-4">
+          <DismissibleNote id={addNote.id} title={addNote.text}>{addNote.why}</DismissibleNote>
+        </div>
+      )}
 
       {/* ── شريط البحث ── */}
       <div className="px-5 mb-5 rise rise-1">

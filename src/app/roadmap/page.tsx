@@ -14,6 +14,8 @@ import ModuleWorkspace from "@/components/roadmap/ModuleWorkspace";
 import RoadmapSettings from "@/components/roadmap/RoadmapSettings";
 import ExamPlanTimeline from "@/components/roadmap/ExamPlanTimeline";
 import Customizable from "@/components/Customizable";
+import DismissibleNote from "@/components/DismissibleNote";
+import { duwairbMoment } from "@/lib/duwairb/moments";
 import { loadUser, saveUser, ensureWorkspace, saveWorkspace, loadStats, loadTrackExamDates, localDayKey } from "@/lib/storage";
 import {
   moduleView, memberView, groupMembers, visibleModules,
@@ -146,6 +148,16 @@ export default function RoadmapPage() {
   const solved = solvedQuestions();
   const hasWeek = stats.week.hours > 0 || stats.week.sessions > 0 || solved > 0;
 
+  /* تدخّلُ دويرب عند انخفاض الالتزام — من `commitmentPct` وحدَه، ولا يتكلّم قبل
+     أن يصير للأسبوع محتوى (نفسُ شرط `hasWeek` أعلاه): «التزام ٠٪» لمن لم يبدأ
+     حكمٌ على لا شيء لا معلومة. */
+  const commitmentNote = duwairbMoment({
+    kind: "commitment-drop",
+    commitmentPct: stats.week.commitmentPct,
+    weekHours: stats.week.hours,
+    weekSessions: stats.week.sessions,
+  });
+
   /* 🎯 هدف اليوم — ماذا سأفعل؟ (بلا مدّة: المدّة وظيفة صفحة التركيز) */
   const doneToday = tasksDoneToday();
   const totalTasks = plan?.tasks.length ?? 0;
@@ -211,6 +223,10 @@ export default function RoadmapPage() {
           </div>
           <p className="t-body leading-relaxed" style={{ color: "var(--text-dim)" }}>{daily.message}</p>
         </header>
+
+        {commitmentNote && (
+          <DismissibleNote id={commitmentNote.id} title={commitmentNote.text}>{commitmentNote.why}</DismissibleNote>
+        )}
 
         {/* الأقسامُ يرتّبها الطالبُ ويخفي ما لا يعنيه — والترويسةُ فوقها ثابتة.
             «هذا الأسبوع» أرقامٌ حقيقية تفتح الإحصائيات الكاملة. */}

@@ -6,10 +6,14 @@
 import { useState } from "react";
 import { loadGoals, saveGoals, loadResults, saveResults, type DarbGoals, type ExamResult } from "@/lib/storage";
 import ProfileGoals from "@/components/profile/ProfileGoals";
+import DismissibleNote from "@/components/DismissibleNote";
+import { duwairbMoment, type Intervention } from "@/lib/duwairb/moments";
 
 export default function GoalsPanel() {
   const [goals, setGoals] = useState<DarbGoals>(() => (typeof window !== "undefined" ? loadGoals() : {}));
   const [results, setResults] = useState<ExamResult[]>(() => (typeof window !== "undefined" ? loadResults() : []));
+  /* تدخّلُ دويرب بعد تغيير الهدف — لحظةَ التغيير لا عند فتح الصفحة. */
+  const [goalNote, setGoalNote] = useState<Intervention | null>(null);
 
   /* أحداثُ السلوك: النوعان مسجَّلان في `events/registry` منذ البداية ولا يُطلقان
      من أيّ مكان، فلا تعرف الذاكرةُ أنّ الطالب غيّر هدفه أو سجّل درجة. */
@@ -17,7 +21,7 @@ export default function GoalsPanel() {
     import("@/lib/events").then(({ emit }) => emit(ev)).catch(() => {});
   };
 
-  const updateGoals = (partial: Partial<DarbGoals>) =>
+  const updateGoals = (partial: Partial<DarbGoals>) => {
     setGoals((prev) => {
       const next = { ...prev, ...partial }; saveGoals(next);
       if (partial.university && partial.university !== prev.university) {
@@ -28,6 +32,14 @@ export default function GoalsPanel() {
       }
       return next;
     });
+    /* خارج المُحدِّث عمداً: لا أثرَ جانبيّاً داخل دالّة الحالة. المقارنةُ بلقطة
+       هذه الدورة — وهي التي يراها الطالبُ حين يغيّر. */
+    const changed: ["university" | "major", string] | null =
+      partial.university && partial.university !== goals.university ? ["university", partial.university]
+      : partial.major && partial.major !== goals.major ? ["major", partial.major]
+      : null;
+    if (changed) setGoalNote(duwairbMoment({ kind: "goal-changed", field: changed[0], value: changed[1] }));
+  };
   const addResult = (r: ExamResult) =>
     setResults((prev) => {
       const next = [r, ...prev]; saveResults(next);
@@ -45,7 +57,12 @@ export default function GoalsPanel() {
     setResults((prev) => { const next = prev.filter((x) => x.id !== id); saveResults(next); return next; });
 
   return (
-    <ProfileGoals goals={goals} onGoalsChange={updateGoals}
-      results={results} onAddResult={addResult} onDeleteResult={deleteResult} />
+    <>
+      {goalNote && (
+        <DismissibleNote id={goalNote.id} title={goalNote.text}>{goalNote.why}</DismissibleNote>
+      )}
+      <ProfileGoals goals={goals} onGoalsChange={updateGoals}
+        results={results} onAddResult={addResult} onDeleteResult={deleteResult} />
+    </>
   );
 }
