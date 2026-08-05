@@ -17,6 +17,7 @@ import { InMemoryEventStore } from "../events/store";
 import { MemoryEngine } from "../memory/engine";
 import { InMemoryStore } from "../memory/store";
 import { makeMemoryReactor } from "../events/reactors";
+import { advanceGradeByCalendar } from "../gradeProgression";
 
 /* طالبٌ بملفٍّ ممتلئ — كلُّ ما يجب ألّا يضيع في الانتقال */
 const FULL = (o: Partial<DarbUser> = {}): DarbUser => ({
@@ -249,4 +250,160 @@ test("الترقيةُ بين الصفوف تكتب الصفَّ الجديد و
   assert.equal(g.length, 1);
   assert.deepEqual(g[0].value, { grade: "ثالث ثانوي" });
   assert.equal(g[0].status, "active");
+});
+
+/* ═══════════ المسارُ الكامل — لا تناقضَ في أيّ محطّة ═══════════ */
+
+const FULL_PATH: PhaseId[] = ["hs-2", "hs-3", "grad-hs", "university", "grad-uni"];
+
+test("المسارُ الكامل: ثاني ← ثالث ← خريج ثانوي ← جامعي ← خريج جامعة", () => {
+  const mem = new MemoryEngine(new InMemoryStore());
+  const eng = new EventEngine(new InMemoryEventStore());
+  const r = makeMemoryReactor(mem);
+  eng.subscribe(r.react, r.handles, r.name);
+
+  let user = FULL({ grade: "ثاني ثانوي" });
+  let ws = user.workspace!;
+  const fired: string[] = [];
+
+  /* لقطةُ البداية كما يكتبها التمهيد */
+  mem.remember({ type: "identity.studyLevel", value: { level: "ثانوي" }, source: "onboarding" });
+  mem.remember({ type: "identity.grade", value: { grade: "ثاني ثانوي" }, source: "onboarding" });
+
+  assert.equal(phaseIdOf(user), "hs-2", "نقطةُ البداية");
+
+  for (const to of FULL_PATH.slice(1)) {
+    const res = applyTransition(user, to, { yearId: "1448" });
+    assert.ok(res, `المحطّة ${to}: الانتقالُ مرفوض`);
+    user = res.user;
+    ws = withCoreForPhase(ws, to, 100);
+    for (const ev of res.events) {
+      fired.push(ev.type);
+      if (ev.type === "StudentPhaseChanged") {
+        eng.emit({ eventType: "StudentPhaseChanged",
+          metadata: { from: ev.from, to: ev.to!, studyLevel: ev.studyLevel, grade: ev.grade, clearedGrade: ev.clearedGrade },
+          educationalStage: ev.eduStage as never });
+      } else {
+        eng.emit({ eventType: ev.type, metadata: { from: ev.from }, educationalStage: ev.eduStage as never });
+      }
+    }
+
+    const def = phaseDef(to)!;
+
+    /* ① المرحلة: الملفُّ يُعيد المحطّة نفسَها — لا تناقض بين ما كُتب وما يُقرأ */
+    assert.equal(phaseIdOf(user), to, `${to}: الملفُّ لا يُعيد المرحلة`);
+
+    /* ② الذاكرة: سجلٌّ واحدٌ حيٌّ للمستوى، بقيمة المحطّة */
+    const live = mem.all().filter((m) => m.type === "identity.studyLevel" && m.status === "active");
+    assert.equal(live.length, 1, `${to}: سجلّاتُ مستوىً متعدّدة`);
+    assert.deepEqual(live[0].value, { level: def.profile.studyLevel }, `${to}: الذاكرة تخالف الملفّ`);
+
+    /* ③ الصفّ: حيٌّ ما دام له صف، ومُبطَلٌ حين لم يعد له */
+    const grade = mem.all().find((m) => m.type === "identity.grade");
+    if (def.profile.grade) {
+      assert.equal(grade?.status, "active", `${to}: صفٌّ مُبطَلٌ وله صف`);
+      assert.deepEqual(grade?.value, { grade: def.profile.grade }, `${to}: صفُّ الذاكرة يخالف الملفّ`);
+    } else {
+      assert.equal(grade?.status, "invalidated", `${to}: صفٌّ حيٌّ لمن لا صفَّ له`);
+    }
+
+    /* ④ الصلاحيات: السجلُّ وphaseExperience لا يتفرّقان */
+    const exp = phaseExperience(user);
+    assert.equal(exp.admission === "full", phaseAllows(to, "admission"), `${to}: تعارضُ صلاحية القبول`);
+    assert.equal(exp.showsUniLife, phaseAllows(to, "uni-life"), `${to}: تعارضُ صلاحية الحياة الجامعية`);
+
+    /* ⑤ Workspace: لا شيء يُحذف — القدراتُ وتقدّمُها في كل محطّة */
+    const q = ws.modules.find((m) => m.id === "qudurat");
+    assert.ok(q, `${to}: حُذفت وحدةُ القدرات`);
+    assert.equal(q.progress, 55, `${to}: ضاع تقدّمُ القدرات`);
+
+    /* ⑥ Roadmap: البوابةُ تحكم — لا خطّةَ ثانويةٍ لمن تجاوزها */
+    assert.equal(phaseAllows(to, "secondary-study"), def.allows.includes("secondary-study"), `${to}: بوابةٌ متناقضة`);
+
+    /* ⑦ لا يخسر شيئاً: الأهدافُ والدرجاتُ والاسمُ في كل محطّة */
+    assert.equal(user.name, "سعد");
+    assert.deepEqual(user.targets, ["university"]);
+    assert.equal(user.universityGpa, 4.2);
+  }
+
+  /* ⑧ نهايةُ المسار: خريجُ جامعة، بلا صفٍّ ولا خطّةِ ثانوية، وبعالمٍ مهنيّ */
+  assert.equal(phaseIdOf(user), "grad-uni");
+  assert.equal(user.grade, undefined);
+  assert.equal(phaseAllows("grad-uni", "secondary-study"), false);
+  assert.equal(phaseAllows("grad-uni", "career"), true);
+
+  /* ⑨ الأحداث: تغيّرٌ لكل محطّة + مَعلَمان لا أكثر */
+  assert.equal(fired.filter((t) => t === "StudentPhaseChanged").length, 4, "حدثُ تغيّرٍ لكل محطّة");
+  assert.equal(fired.filter((t) => t === "UniversityPhaseEntered").length, 1);
+  assert.equal(fired.filter((t) => t === "CareerPhaseEntered").length, 1);
+
+  /* ⑩ ولا وحدةَ مكرّرة بعد المسار كلِّه */
+  const ids = ws.modules.map((m) => m.id);
+  assert.equal(new Set(ids).size, ids.length, "وحدةٌ مكرّرة");
+});
+
+/* ═══════════ Idempotent بالكامل ═══════════ */
+
+test("الانتقال إلى المرحلة نفسِها لا يفعل شيئاً — لكلّ مرحلةٍ في السجلّ", () => {
+  for (const id of ALL_PHASE_IDS) {
+    const u = { onboarded: true, ...phaseDef(id)!.profile } as DarbUser;
+    assert.equal(applyTransition(u, id), null, `${id}: انتقلَ إلى نفسه`);
+    assert.equal(canTransition(id, id), false, `${id}: يُسمح بالانتقال إلى نفسه`);
+  }
+});
+
+test("ألفُ نداءٍ لنفس المرحلة = ملفٌّ واحدٌ وذاكرةٌ واحدةٌ وصفرُ أحداثٍ إضافية", () => {
+  const mem = new MemoryEngine(new InMemoryStore());
+  const store = new InMemoryEventStore();
+  const eng = new EventEngine(store);
+  const r = makeMemoryReactor(mem);
+  eng.subscribe(r.react, r.handles, r.name);
+
+  /* الانتقالةُ الحقيقية مرّةً واحدة */
+  const first = applyTransition(FULL(), "university")!;
+  for (const ev of first.events) {
+    eng.emit(ev.type === "StudentPhaseChanged"
+      ? { eventType: "StudentPhaseChanged", metadata: { from: ev.from, to: ev.to!, studyLevel: ev.studyLevel, grade: ev.grade, clearedGrade: ev.clearedGrade }, educationalStage: ev.eduStage as never }
+      : { eventType: ev.type, metadata: { from: ev.from }, educationalStage: ev.eduStage as never });
+  }
+  const userAfterFirst = JSON.stringify(first.user);
+  const eventsAfterFirst = store.getAll().length;
+  const memAfterFirst = JSON.stringify(mem.all());
+
+  /* ثم ألفُ نداءٍ لنفس المرحلة */
+  let attempts = 0;
+  for (let i = 0; i < 1000; i++) {
+    const again = applyTransition(first.user, "university");
+    if (again) attempts++;
+  }
+  assert.equal(attempts, 0, "الانتقالُ تكرّر");
+  assert.equal(JSON.stringify(first.user), userAfterFirst, "تغيّر الملفّ");
+  assert.equal(store.getAll().length, eventsAfterFirst, "أُطلقت أحداثٌ إضافية");
+  assert.equal(JSON.stringify(mem.all()), memAfterFirst, "تغيّرت الذاكرة");
+});
+
+test("تعديلُ الملفّ بعد الانتقال لا يعيد المرحلةَ ولا يفتح انتقالاً للخلف", () => {
+  const uni = applyTransition(FULL(), "university")!.user;
+  /* الطالبُ يعدّل اسمه ومنطقته وساعاته — لا شيء يخصّ المرحلة */
+  const edited: DarbUser = { ...uni, name: "سعود", region: "مكة المكرمة", studyHours: 6 };
+  assert.equal(phaseIdOf(edited), "university", "التعديلُ نقل المرحلة");
+  /* ولا رجوعَ إلى الوراء: الخلفيّاتُ ليست في `next` */
+  for (const back of ["hs-1", "hs-2", "hs-3", "grad-hs"] as PhaseId[]) {
+    assert.equal(applyTransition(edited, back), null, `رجوعٌ مسموحٌ إلى ${back}`);
+  }
+  assert.deepEqual(declarableFrom(edited), ["grad-uni"], "الخطوةُ التالية وحدَها");
+});
+
+test("مرورُ الزمن لا يُرقّي إلا الثانويّ — الجامعيُّ والخرّيجُ ثابتان مهما طال", () => {
+  /* نفسُ عقد `advanceGradeByCalendar`: غيرُ الثانويّ لا يترقّى بالتقويم أبداً.
+     فمرحلةُ الجامعيّ لا تتغيّر بعد أسبوعٍ ولا شهرٍ ولا سنةٍ ولا عشر. */
+  for (const id of ["university", "grad-uni", "grad-hs"] as PhaseId[]) {
+    const def = phaseDef(id)!;
+    const u = { onboarded: true, ...def.profile } as DarbUser;
+    const cal = advanceGradeByCalendar({
+      studyLevel: u.studyLevel, grade: u.grade,
+      anchorYearId: "1440", currentYearId: "1450",
+    });
+    assert.equal(cal.advanced, false, `${id}: ترقّى بالتقويم وهو ليس ثانوياً`);
+  }
 });
