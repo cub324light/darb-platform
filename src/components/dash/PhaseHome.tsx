@@ -11,9 +11,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import UniBoard from "@/components/dash/UniBoard";
-import { studentPersona } from "@/lib/persona";
-import { phaseExperience } from "@/lib/experience";
-import { loadUser, loadGoals } from "@/lib/storage";
+import { currentPhase } from "@/lib/transition";
+import { loadUser } from "@/lib/storage";
 import { targetsFor } from "@/lib/targets";
 
 interface Tile { icon: string; title: string; desc: string; href?: string; event?: string; }
@@ -68,17 +67,16 @@ function WideAction({ href, icon, title, desc, tone = "gold" }: {
 export default function PhaseHome() {
   const [d] = useState(() => {
     if (typeof window === "undefined") return null;
-    const user = loadUser();
-    return { persona: studentPersona(user, loadGoals()), exp: phaseExperience(user), targets: user?.targets ?? [] };
+    return { view: currentPhase(), targets: loadUser()?.targets ?? [] };
   });
   if (!d) return null;
-  const { persona, exp, targets } = d;
+  const { view, targets } = d;
 
   /* الجامعي: لوحة تشغيلية (لا قالب عام، لا قياس/قبول/غياب). */
-  if (persona.phase === "university") return <UniBoard />;
+  if (view.allows("uni-life")) return <UniBoard />;
 
   /* خريج الجامعة: لوحة مهنية بحتة. */
-  if (persona.key === "grad-uni") {
+  if (view.allows("career")) {
     return (
       <div className="flex flex-col gap-4">
         {/* ▓ كانت أولى بطاقاته «الوظائف والفرص → /opportunities»، وتلك الصفحةُ
@@ -90,20 +88,20 @@ export default function PhaseHome() {
           { icon: "🌍", title: "عالم تخصصك", desc: "مساراتك المهنية", href: "/career" },
           { icon: "🧠", title: "مهاراتك", desc: "طوّر وأثبت", href: "/skills" },
         ]} />
-        <p className="t-caption px-0.5" style={{ color: "var(--text-dim)" }}>💼 {exp.duwairbHint}</p>
+        <p className="t-caption px-0.5" style={{ color: "var(--text-dim)" }}>💼 {view.duwairbHint}</p>
       </div>
     );
   }
 
   /* الثانوي (أول/ثاني/ثالث) وخريج الثانوي: مذاكرة + الاختبار القادم، والقبول
      لثالثٍ وخريج الثانوي فقط — بطاقةٌ لكل هدفٍ اختاره الطالب (متعدّد، مرتّب). */
-  const showAdmission = persona.key === "hs-third" || persona.key === "grad-hs";
+  const showAdmission = view.allows("admission");
   const targetCards = targetsFor(targets);
   return (
     <div className="flex flex-col gap-4">
       <Board tiles={STUDY_TILES} />
 
-      {persona.key === "hs-second" && (
+      {view.id === "hs-2" && (
         <TileCard t={{ icon: "🌱", title: "استعد مبكّراً", desc: "ابدأ القدرات قبل دفعتك", href: "/roadmap" }} />
       )}
 

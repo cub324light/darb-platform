@@ -11,8 +11,7 @@ import { pageThread, type PageThread, type ThreadPage, type ThreadSignals } from
 import { readLifeContext, lifeEngine } from "@/lib/lifeEngine";
 import { loadStats, loadList, loadEvents, loadGoals, loadUser, loadAdmissions } from "@/lib/storage";
 import { arcNext, type ArcStep } from "@/lib/uniJourney";
-import { phaseExperience } from "@/lib/experience";
-import { isUniversityGraduate } from "@/lib/phase";
+import { currentPhase } from "@/lib/transition";
 import { loadHomework, homeworkPressure } from "@/lib/homework";
 import { getEventsForDate } from "@/lib/schedule";
 import type { VaultError } from "@/lib/types";
@@ -26,15 +25,15 @@ const localDayKey = (d = new Date()): string => {
    بعد (أول/ثاني ثانوي في وضع الاستكشاف): الرحلةُ تبدأ حين تصير قراراً. */
 function readJourney(): ArcStep | null {
   const u = loadUser();
-  const exp = phaseExperience(u);
-  const open = exp.admission === "full" || exp.phase === "university" || isUniversityGraduate(u);
+  const view = currentPhase();
+  /* القوسُ يبدأ حين يصير عالمُ ما بعد المدرسة قراراً — لا لمن ما زال يستكشف. */
+  const open = view.allows("admission") || view.allows("uni-life") || view.allows("career");
   if (!open) return null;
 
   const goals = loadGoals();
   const apps = loadAdmissions();
   return arcNext({
-    phase: exp.phase,
-    isUniversityGraduate: isUniversityGraduate(u),
+    allows: view.allows,
     hasMajor: !!(goals.major || goals.majorId),
     hasUniversity: !!(goals.universityId || goals.university),
     hasTargets: [goals.quduratTarget, goals.tahsiliTarget, goals.stepTarget]
@@ -61,8 +60,8 @@ function readSignals(): ThreadSignals {
     homeworkDue: hw.overdue + hw.dueToday,
     hasDestination: !!(goals.universityId || goals.majorId),
     /* كان ثابتاً `true` — فيرى الجامعيُّ والخرّيجُ خيطاً يعيدهما إلى دليل الجامعات.
-       المصدرُ الصحيح هو نفسُه الذي يحكم الشريطَ السفليّ والقوائم. */
-    admissionOpen: phaseExperience(loadUser()).admission !== "hidden",
+       والقدرةُ هي المصدر: مَن ما زال في عالم القياس عالمُ القبول مفتوحٌ أمامه. */
+    admissionOpen: currentPhase().allows("secondary-study"),
     journey: readJourney(),
   };
 }

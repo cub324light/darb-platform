@@ -18,6 +18,8 @@ export {
   phaseIdOf, phaseAllows, canTransition, declarableFrom, applyTransition, withCoreForPhase,
 } from "./engine";
 export type { TransitionResult, TransitionEvent } from "./engine";
+export { phaseView, currentPhase } from "./view";
+export type { PhaseView, NavMid } from "./view";
 
 /**
  * ينقل الطالبَ الحاليَّ إلى مرحلةٍ مسموحة. يعيد `true` إن تمّ.

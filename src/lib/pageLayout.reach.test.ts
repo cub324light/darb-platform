@@ -50,13 +50,13 @@ test("صفحةُ المهارات محروسةٌ بالبوابة لا بالب�
 
 /* ═══ العطل: شريطان بمنطقين ═══ */
 
-test("الشريطان يقرآن `navMid` ولا يكتب أحدُهما منطقَه بيده", () => {
+test("الشريطان يقرآن `navMid` من محرّك الانتقال ولا يكتب أحدُهما منطقَه بيده", () => {
   for (const f of ["src/components/BottomNav.tsx", "src/components/DesktopSidebar.tsx"]) {
     const t = text(f);
-    assert.match(t, /phaseExperience\(/, `${f}: لا يقرأ المصدر الواحد`);
+    assert.match(t, /currentPhase\(\)/, `${f}: لا يسأل محرّك الانتقال`);
     assert.match(t, /navMid/, `${f}: لا يستعمل navMid`);
-    assert.ok(!/isUniversityGraduate\(/.test(t),
-      `${f}: ما زال يشتقّ العنصر الأوسط بنفسه`);
+    assert.ok(!/isUniversityGraduate\(|isUniversityPhase\(|phaseExperience\(/.test(t),
+      `${f}: ما زال يشتقّ المرحلة بنفسه`);
   }
 });
 
@@ -64,9 +64,10 @@ test("الشريطان يقرآن `navMid` ولا يكتب أحدُهما منط
 
 test("لوحةُ خريج الجامعة لا تقود إلى صفحةٍ ترفض مرحلتَه", () => {
   const t = text("src/components/dash/PhaseHome.tsx");
-  const gradBoard = t.slice(t.indexOf('persona.key === "grad-uni"'), t.indexOf('const showAdmission'));
+  const gradBoard = t.slice(t.indexOf('view.allows("career")'), t.indexOf('const showAdmission'));
   assert.ok(!gradBoard.includes('"/opportunities"'),
     "«الوظائف والفرص» تقود إلى صفحةٍ تستقبله بـ«هذا القسم لمن هم على أعتاب القبول»");
-  /* و`/opportunities` نفسُها ما زالت ترفضه — فالحارسُ يبقى ذا معنى */
-  assert.match(text("src/app/opportunities/page.tsx"), /isUniversityGraduate\(user\)/);
+  /* و`/opportunities` نفسُها ما زالت ترفض مَن ملك قدرةَ ما بعد التخرّج —
+     فالحارسُ يبقى ذا معنى، والرفضُ صار بالقدرة لا بالحقل. */
+  assert.match(text("src/app/opportunities/page.tsx"), /allows\("career"\)/);
 });

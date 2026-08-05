@@ -6,9 +6,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   semesterInfo, gradProgress, buildUniJourney, aiThisWeek, GRAD_TOTAL_HOURS, AI_INTEGRITY_NOTE,
-  arcStage, arcNext, type ArcSignals,
-  uniStage,
+  arcStage, arcNext, uniStage, type ArcSignals,
 } from "./uniJourney";
+import type { PhaseCapability } from "./transition/registry";
 
 /* ════════ semesterInfo: داخل الفصل ════════ */
 test("semesterInfo: داخل الفصل الثالث يعيد الفصل والأسبوع والفاينل", () => {
@@ -147,11 +147,16 @@ test("uniStage: سنة أولى → start، ثانية/ثالثة → mid، را
 
 /* ════════ قوسُ الرحلة الكاملة — كلُّ مرحلةٍ بإشارةٍ حقيقيةٍ واحدة ════════ */
 
+/* القوسُ يقرأ **القدرات** لا أسماءَ المراحل — فالمثبِّتُ يمرّرها كما يمرّرها
+   محرّكُ الانتقال. `caps()` تحاكي مرحلةً بقدراتها. */
+const caps = (...list: PhaseCapability[]) => (c: PhaseCapability) => list.includes(c);
 const A = (o: Partial<ArcSignals> = {}): ArcSignals => ({
-  phase: "secondary", isUniversityGraduate: false,
+  allows: caps("school", "secondary-study"),
   hasMajor: false, hasUniversity: false, hasTargets: false,
   applications: 0, accepted: false, ...o,
 });
+const UNI = { allows: caps("uni-life") };
+const GRAD_UNI = { allows: caps("career") };
 
 test("القوس: الثانويُّ يتدرّج بإشاراته — وجهة ← تخصّص/جامعة ← أهداف ← تقديم", () => {
   assert.equal(arcStage(A()), "destination");
@@ -170,16 +175,16 @@ test("القوس: التقديمُ المسجَّل ينقله إلى الانت
 });
 
 test("القوس: الجامعيُّ في الحياة الجامعية، وقربَ التخرّج يتحوّل — بنفس عتبة uniStage", () => {
-  assert.equal(arcStage(A({ phase: "university", universityYear: "الأولى" })), "campus");
-  assert.equal(arcStage(A({ phase: "university", universityYear: "الثالثة", creditHoursCompleted: 70 })), "campus");
-  assert.equal(arcStage(A({ phase: "university", universityYear: "الرابعة" })), "graduation");
+  assert.equal(arcStage(A({ ...UNI, universityYear: "الأولى" })), "campus");
+  assert.equal(arcStage(A({ ...UNI, universityYear: "الثالثة", creditHoursCompleted: 70 })), "campus");
+  assert.equal(arcStage(A({ ...UNI, universityYear: "الرابعة" })), "graduation");
   /* الساعاتُ العالية تُقدّمه ولو تأخّرت سنته — نفسُ قاعدة `uniStage` لا قاعدةٌ ثانية */
-  assert.equal(arcStage(A({ phase: "university", universityYear: "الثالثة", creditHoursCompleted: 100 })), "graduation");
+  assert.equal(arcStage(A({ ...UNI, universityYear: "الثالثة", creditHoursCompleted: 100 })), "graduation");
 });
 
 test("القوس: خريجُ الجامعة نهايةُ القوس مهما كانت بقيةُ إشاراته", () => {
-  assert.equal(arcStage(A({ phase: "graduate", isUniversityGraduate: true })), "career");
-  assert.equal(arcStage(A({ phase: "graduate", isUniversityGraduate: true, hasMajor: false, accepted: true })), "career");
+  assert.equal(arcStage(A({ ...GRAD_UNI })), "career");
+  assert.equal(arcStage(A({ ...GRAD_UNI, hasMajor: false, accepted: true })), "career");
 });
 
 test("القوس: لكلِّ مرحلةٍ خطوةٌ كاملةٌ إلى صفحةٍ قائمة — بلا وجهةٍ مخترَعة", () => {
@@ -193,8 +198,8 @@ test("القوس: لكلِّ مرحلةٍ خطوةٌ كاملةٌ إلى صفح�
     A({ hasMajor: true, hasUniversity: true, hasTargets: true }),
     A({ hasMajor: true, hasUniversity: true, hasTargets: true, applications: 1 }),
     A({ accepted: true, applications: 1 }),
-    A({ phase: "university", universityYear: "الرابعة" }),
-    A({ phase: "graduate", isUniversityGraduate: true }),
+    A({ ...UNI, universityYear: "الرابعة" }),
+    A({ ...GRAD_UNI }),
   ];
   for (const c of cases) {
     const step = arcNext(c);

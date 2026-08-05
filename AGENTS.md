@@ -36,3 +36,25 @@ This version has breaking changes — APIs, conventions, and file structure may 
    أحجاماً مباشرة، حوّل أحجامها إلى Tokens ضمن التعديل — لا دفعةً واحدة.
 
 لا نعيد فتح نظام الخطوط إلا عند مشكلةٍ حقيقية من استخدام الطلاب.
+
+# المرحلة والقدرات — الصفحةُ تسأل ولا تقرّر
+
+`src/lib/transition/` هو **مصدرُ الحقيقة الوحيد** لمرحلة الطالب. قاعدةٌ مثبَّتة
+يحرسها `transition/boundary.test.ts` على `src/app` و`src/components` كلِّها:
+
+1. **ممنوعٌ داخل أيّ صفحةٍ أو مكوّن**: `studyLevel === …` · `gradStage === …` ·
+   `computeStudentPhase` · `phaseExperience` · `isUniversityPhase` ·
+   `isUniversityGraduate` · `isGraduatePhase` · `showsUniversityUI` ·
+   `canApplyUniversity` · `studentPersona`. لا استثناءَ إلا `/admin` و`/dev`
+   (أدواتُ تشغيلٍ تعرض حالةَ المحرّكات) و`/onboarding` (يُنشئ الملفَّ ولا ينتقل).
+
+2. **السؤالُ الوحيد**: `currentPhase()` من `@/lib/transition` — يعطي
+   `allows(cap)` · `id` · `label` · `declarable` · `navMid` · `duwairbHint` · `stage`.
+
+3. **رتّب بالقدرات لا بأسماء المراحل**. القدراتُ اليوم: `school` ·
+   `secondary-study` · `admission` · `uni-life` · `career`. لأن الطالب لا يبقى في
+   مرحلته — ثاني ثانويّ يصير ثالثاً، وثالثٌ خرّيجاً، وخرّيجٌ جامعياً — فالترتيبُ
+   المبنيُّ على القدرة يتبعه من نفسه، والمبنيُّ على الاسم يتخلّف عنه.
+
+4. **قدرةٌ جديدة؟** تُضاف في `transition/registry.ts` وحدَه — لا شرطَ جديدٌ في
+   صفحة. وإضافةُ مرحلةٍ كاملة (مبتعث · ماجستير · موظّف) مدخلٌ واحدٌ في السجلّ.

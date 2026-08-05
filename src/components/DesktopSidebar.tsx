@@ -12,8 +12,7 @@ import Logo from "./Logo";
 import { ThemeToggle } from "./Profile";
 import SettingsButton from "./SettingsPanel";
 import { loadUser, type DarbUser } from "@/lib/storage";
-import { isUniversityPhase, isGraduatePhase } from "@/lib/phase";
-import { phaseExperience, type PhaseExperience } from "@/lib/experience";
+import { currentPhase, type NavMid, type PhaseView } from "@/lib/transition";
 
 /* عدّاد البطاقات المستحقّة — نفس منطق BottomNav */
 function calcDue(): number {
@@ -123,8 +122,7 @@ export default function DesktopSidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [user] = useState<DarbUser | null>(() => (typeof window !== "undefined" ? loadUser() : null));
-  const [navMid] = useState<PhaseExperience["navMid"]>(() =>
-    typeof window !== "undefined" ? phaseExperience(loadUser()).navMid : "roadmap");
+  const [view] = useState<PhaseView | null>(() => (typeof window !== "undefined" ? currentPhase() : null));
   const [due, setDue] = useState(calcDue);
 
   /* مزامنة سمة الإزاحة مع الـDOM + تحديث عدّاد البطاقات دورياً */
@@ -150,7 +148,7 @@ export default function DesktopSidebar() {
     });
   };
 
-  const MID_LINK: Record<PhaseExperience["navMid"], NavLink> = {
+  const MID_LINK: Record<NavMid, NavLink> = {
     roadmap: { href: "/roadmap", label: "مساري", icon: I.roadmap },
     admission: { href: "/university", label: "القبول الجامعي", icon: I.university },
     "uni-tools": { href: "/uni-tools", label: "أدوات الجامعة", icon: I.uniTools },
@@ -161,12 +159,12 @@ export default function DesktopSidebar() {
     { href: "/dashboard", label: "الرئيسية", icon: I.home },
     /* العنصرُ الأوسط من `phaseExperience.navMid` — نفسُ مصدر الشريط السفليّ.
        (كان كلٌّ يكتب منطقَه بيده فتفرّقا على ثالث ثانوي وخريج الثانوي.) */
-    MID_LINK[navMid],
+    MID_LINK[view?.navMid ?? "roadmap"],
     { href: "/orbit", label: "تركيز", icon: I.orbit },
     /* المدرسة للثانوي فقط — الجامعي/الخريج يرون «المستقبل» بدلاً منها */
-    (isUniversityPhase(user) || isGraduatePhase(user))
-      ? { href: "/future", label: "المستقبل", icon: I.future }
-      : { href: "/school", label: "المدرسة", icon: I.school },
+    view?.allows("school") ?? true
+      ? { href: "/school", label: "المدرسة", icon: I.school }
+      : { href: "/future", label: "المستقبل", icon: I.future },
     { href: "/plan", label: "خطتي", icon: I.plan },
     { href: "/study-plan", label: "مخطط الدراسة", icon: I.study },
     { href: "/vault", label: "أخطائي", icon: I.vault, badge: true },

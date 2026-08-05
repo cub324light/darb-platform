@@ -9,9 +9,9 @@ import QuizGen from "@/components/QuizGen";
 import ExplainTool from "@/components/ExplainTool";
 import ProgressTool from "@/components/ProgressTool";
 import TopicsTool from "@/components/TopicsTool";
-import { loadUser, activeTrackIds } from "@/lib/storage";
+import { activeTrackIds } from "@/lib/storage";
 import { subjectsForTracks, type TrackId } from "@/lib/tracks";
-import { phaseExperience } from "@/lib/experience";
+import { currentPhase } from "@/lib/transition";
 import { buildDuwairbProfile } from "@/lib/duwairb";
 import { loadCoachMemory, formatMemoryHint } from "@/lib/coachMemory";
 import { trackEvent } from "@/lib/analytics";
@@ -53,7 +53,7 @@ export default function DuirbHub({ subjects: propSubjects, defaultView = "schedu
 
   /* اقتراح دويرب الافتتاحي المختلف لكل مرحلة (من مصدر الحقيقة phaseExperience):
      أول ثانوي «ابدأ بالقدرات» · ثالث «نحسب موزونتك» · جامعي «جهّز سيرتك». */
-  const phaseHint = useMemo(() => phaseExperience(loadUser()).duwairbHint, []);
+  const phaseHint = useMemo(() => currentPhase().duwairbHint, []);
 
   /* تذكير الذاكرة القصيرة */
   const memoryHint = useMemo(() => {

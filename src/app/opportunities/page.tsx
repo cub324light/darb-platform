@@ -10,7 +10,7 @@ import BackButton from "@/components/BackButton";
 import PageFooter from "@/components/PageFooter";
 import NextThread from "@/components/NextThread";
 import { loadUser, loadGoals, currentScoreMap } from "@/lib/storage";
-import { isUniversityGraduate } from "@/lib/phase";
+import { currentPhase } from "@/lib/transition";
 import {
   buildOpportunities, OPPORTUNITIES_DISCLAIMER,
   type OpportunityItem, type OpportunityStatus,
@@ -48,7 +48,8 @@ export default function OpportunitiesPage() {
   const [scoreMap] = useState(() => currentScoreMap());
 
   /* خريج الجامعة خارج عالم القبول — فرص القبول/الابتعاث ليست له */
-  if (isUniversityGraduate(user)) {
+  /* «career» قدرةُ ما بعد التخرّج وحدَها — ومَن ملكها خرج من عالم القبول. */
+  if (currentPhase().allows("career")) {
     return (
       <div className="page desk-wide">
         <Dome compact>

@@ -33,14 +33,14 @@ const GoalRealityCard = dynamic(() => import("@/components/GoalRealityCard"), { 
 import { getEventsForDate, studyMinutesOn, currentEvent, nextEvent } from "@/lib/schedule";
 import {
   loadUser, activeTrackIds, loadEvents, saveEvents, loadExamDate, saveExamDate, loadTrackExamDates, saveTrackExamDates,
-  loadGoals, loadStats, showsUniversityUI, ensureWorkspace, localDayKey, EVENTS_CHANGED,
+  loadGoals, loadStats, ensureWorkspace, localDayKey, EVENTS_CHANGED,
   type ScheduleEvent,
 } from "@/lib/storage";
 import { loadCalendar } from "@/lib/roadmap/calendarStore";
 import { eventsOnDay, kindMeta } from "@/lib/roadmap/calendar";
 import { readAllExams, readPriorityExam, readStagedPlan } from "@/lib/roadmap/nowRead";
 import { focusHandoffQuery } from "@/lib/roadmap/handoff";
-import { isUniversityGraduate } from "@/lib/phase";
+import { currentPhase } from "@/lib/transition";
 import { getTrack, colorForSubject, type TrackId } from "@/lib/tracks";
 import { days as arDays, dur, time } from "@/lib/format";
 
@@ -105,14 +105,13 @@ export default function PlanPage() {
   }, []);
   const nowHour = now ? now.getHours() + now.getMinutes() / 60 : -1;
 
-  /* هل الطالب على أعتاب القبول (ثالث ثانوي/خريج)؟ — يقرّر ظهور «هدفي الجامعي» */
-  const [showUni] = useState(() =>
-    typeof window !== "undefined" ? showsUniversityUI(loadUser()) : false
-  );
-  /* خريج الجامعة: لا أهداف/درجات اختبارات — «خطتي» له تخطيطٌ شخصي فقط */
-  const [gradUni] = useState(() =>
-    typeof window !== "undefined" ? isUniversityGraduate(loadUser()) : false
-  );
+  /* الصفحةُ تسأل ولا تشتقّ: «هدفي الجامعي» لمن يملك قدرةَ القبول، و«خطتي»
+     تصير تخطيطاً شخصياً بحتاً لمن ملك قدرةَ ما بعد التخرّج. */
+  const [{ showUni, gradUni }] = useState(() => {
+    if (typeof window === "undefined") return { showUni: false, gradUni: false };
+    const v = currentPhase();
+    return { showUni: v.allows("admission"), gradUni: v.allows("career") };
+  });
   /* المطويّة تُفتح تلقائياً لمن لم يضع هدفاً بعد — وإلا بقي القُمع مغلقاً للأبد.
      ولا نركّب محتواها قبل فتحها: `GoalsPanel` و`UniversityFuture` يشغّلان محرّكات
      (الاستراتيجية · الجاهزية · تحليل الفجوة) ويضيفان ~200 عنصراً إلى الصفحة، وأكثر

@@ -4,7 +4,7 @@
    القادمة + الجدول + المتطلبات + المشاريع + إعلانات المعلمين. تُقرأ الواجبات من
    lib/homework لتصل Life Engine ودويرب. بيانات حقيقية فقط — ما لا نظام له بعد يُعرض
    بصدق («قريباً») لا ببياناتٍ وهمية. */
-import { useMemo, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import Dome from "@/components/Dome";
 import PageFooter from "@/components/PageFooter";
@@ -13,7 +13,7 @@ import HomeworkPlanner from "@/components/school/HomeworkPlanner";
 import SchoolChecklist from "@/components/school/SchoolChecklist";
 import { loadHomework, dueOn, type Homework } from "@/lib/homework";
 import { localDayKey, loadUser } from "@/lib/storage";
-import { isUniversityPhase, isGraduatePhase } from "@/lib/phase";
+import { currentPhase } from "@/lib/transition";
 import { subjectsFor, trackLabel } from "@/lib/curriculum";
 import SchoolTimelineCard from "@/components/SchoolTimelineCard";
 import DismissibleNote from "@/components/DismissibleNote";
@@ -78,10 +78,9 @@ function CurriculumSubjects() {
 }
 
 export default function SchoolPage() {
-  /* حارس الأهلية — «المدرسة» للثانوي فقط، لا تظهر للجامعي/الخريج إطلاقاً
-     (الشريط السفلي يخفيها، وهذا يمنع الوصول المباشر بالرابط أيضاً) */
-  const user = useMemo(() => loadUser(), []);
-  if (isUniversityPhase(user) || isGraduatePhase(user)) {
+  /* حارسُ الأهلية — «المدرسة» لمن له مقعدٌ فيها وحدَه (قدرةُ `school`).
+     الشريطُ يخفيها، وهذا يمنع الوصولَ المباشر بالرابط أيضاً. */
+  if (!currentPhase().allows("school")) {
     return (
       <div className="page desk-wide">
         <Dome compact>

@@ -4,7 +4,7 @@
    جديدة، ووسام + 30 عند 100٪ (مرّة لكلٍّ). التعديل لاحقاً لا يمنح فضةً من جديد. */
 import { useState } from "react";
 import { loadUser, saveUser, addSilver, loadAdmissions, type DarbUser } from "@/lib/storage";
-import { transitionTo, phaseIdOf, phaseDef, declarableFrom } from "@/lib/transition";
+import { transitionTo, phaseDef, currentPhase } from "@/lib/transition";
 import { profileCompletion, pendingProfileRewards } from "@/lib/profileCompletion";
 import { SA_REGIONS } from "@/lib/saRegions";
 import { SCHOOL_STAGES } from "@/lib/darbKnowledge";
@@ -75,15 +75,17 @@ export default function ProfileEditor() {
     commit({ [key]: arr.length ? arr : undefined });
   };
   const on = (key: "hobbies" | "interests" | "favSubjects", val: string) => (user[key] ?? []).includes(val);
-  const isSchool = !user.studyLevel || user.studyLevel === "ثانوي";
+  /* ▓ عرضُ المرحلة — الصفحةُ تسأل ولا تشتقّ. كلُّ إظهارٍ هنا من قدرةٍ يمنحها
+     محرّكُ الانتقال، فإذا انتقل الطالبُ تغيّرت الشاشةُ من نفسها. */
+  const view = currentPhase();
+  const isSchool = view.allows("school");
 
   /* ═══ مرحلتك — الموضعُ **الوحيد** الذي يُعلن فيه الطالبُ انتقالَه ═══
      لا اقتراحَ تلقائيّ ولا انتقالَ تلقائيّ: قرارٌ صريحٌ منه هنا ولا شيء غيره.
      و«الانتقال إلى عالم الجامعة» لا يظهر إلا لمن عنده قبولٌ مسجَّل فعلاً —
      إشارةٌ كتبها هو بيده في «القبول الجامعي»، لا استنتاجٌ منّا. */
-  const phase = phaseIdOf(user);
   const hasAccepted = loadAdmissions().some((a) => a.status === "accepted");
-  const stageMoves = declarableFrom(user).filter((to) => (to === "university" ? hasAccepted : true));
+  const stageMoves = view.declarable.filter((to) => (to === "university" ? hasAccepted : true));
 
   const declare = (to: string) => {
     const label = phaseDef(to)?.label ?? "";
@@ -168,7 +170,7 @@ export default function ProfileEditor() {
         <Group title="مرحلتك">
           <span className="px-3.5 py-2 rounded-full t-small font-bold"
             style={{ background: "var(--surface2)", color: "var(--text)", border: "1.5px solid var(--border)" }}>
-            {phase ? phaseDef(phase)?.label : "لم تُحدَّد بعد"}
+            {view.id ? view.label : "لم تُحدَّد بعد"}
           </span>
           {stageMoves.map((to) => (
             <button key={to} onClick={() => declare(to)}

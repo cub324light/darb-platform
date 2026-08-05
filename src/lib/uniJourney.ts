@@ -7,6 +7,7 @@
 
 import { resolveCalendar } from "./academicCalendar";
 import { getMajorWorld } from "./majors";
+import type { PhaseCapability } from "./transition/registry";
 
 /* ════════ أدوات تاريخ محلية (تطابق اصطلاح التقويم: منتصف اليوم لثبات الحدود) ════════ */
 const DAY = 86_400_000;
@@ -195,8 +196,8 @@ export type ArcStage =
 
 /** إشاراتُ القوس — كلُّها من تخزينٍ قائم، ويقرؤها المستدعي (طبقةُ الـIO). */
 export interface ArcSignals {
-  phase: "secondary" | "university" | "graduate";
-  isUniversityGraduate: boolean;
+  /** المرحلةُ **بقدراتها** لا باسمها — فمرحلةٌ جديدةٌ لا تُلزم بلمس هذا المحرّك. */
+  allows: (cap: PhaseCapability) => boolean;
   hasMajor: boolean;
   hasUniversity: boolean;
   hasTargets: boolean;          // حدّد درجةً مستهدفةً واحدةً على الأقل
@@ -217,8 +218,8 @@ export interface ArcStep {
 
 /** أين يقف الطالبُ في القوس — من إشاراته وحدَها. */
 export function arcStage(s: ArcSignals): ArcStage {
-  if (s.isUniversityGraduate) return "career";
-  if (s.phase === "university") {
+  if (s.allows("career")) return "career";
+  if (s.allows("uni-life")) {
     return uniStage(s.universityYear, s.creditHoursCompleted ?? undefined) === "senior"
       ? "graduation" : "campus";
   }

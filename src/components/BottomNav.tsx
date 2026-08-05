@@ -2,9 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { loadUser } from "@/lib/storage";
-import { isUniversityPhase, isGraduatePhase } from "@/lib/phase";
-import { phaseExperience, type PhaseExperience } from "@/lib/experience";
+import { currentPhase, type NavMid } from "@/lib/transition";
 
 function calcDue(): number {
   if (typeof window === "undefined") return 0;
@@ -126,7 +124,7 @@ const BASE_ITEMS: (NavItem | "MID" | "SCHOOL")[] = [
 ];
 
 /* خريطةُ `navMid` ← عنصرُ الشريط. مرحلةٌ جديدةٌ تُضاف بقيمةٍ واحدةٍ هنا وهناك. */
-const MID_ITEM: Record<PhaseExperience["navMid"], NavItem> = {
+const MID_ITEM: Record<NavMid, NavItem> = {
   roadmap: ROADMAP_ITEM,
   admission: ADMISSION_ITEM,
   "uni-tools": UNI_TOOLS_ITEM,
@@ -142,11 +140,12 @@ export default function BottomNav() {
      تهيئة كسولة — لا setState داخل effect. */
   const [{ midItem, schoolItem }] = useState<{ midItem: NavItem; schoolItem: NavItem }>(() => {
     if (typeof window === "undefined") return { midItem: ROADMAP_ITEM, schoolItem: SCHOOL_ITEM };
-    const u = loadUser();
-    const mid = MID_ITEM[phaseExperience(u).navMid];
-    /* الثانوي: «المدرسة» · الجامعي والخريج: «المستقبل» */
-    const school = isUniversityPhase(u) || isGraduatePhase(u) ? FUTURE_ITEM : SCHOOL_ITEM;
-    return { midItem: mid, schoolItem: school };
+    const view = currentPhase();
+    /* مَن له مقعدٌ في المدرسة يراها، ومَن تجاوزها يرى «المستقبل» — بالقدرة لا بالاسم */
+    return {
+      midItem: MID_ITEM[view.navMid],
+      schoolItem: view.allows("school") ? SCHOOL_ITEM : FUTURE_ITEM,
+    };
   });
 
   const navItems: NavItem[] = BASE_ITEMS.map((it) =>

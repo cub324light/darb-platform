@@ -25,6 +25,7 @@ import type { EduStage } from "../memory/types";
 
 /** ما تسمح به المرحلة — البوابةُ الواحدة بدل شروطٍ مكرّرةٍ في الصفحات. */
 export type PhaseCapability =
+  | "school"            // مقعدُ المدرسة: المنهجُ والواجباتُ والجدولُ المدرسيّ
   | "secondary-study"   // خطّةُ الثانوية: قدرات/تحصيلي وجلساتُهما
   | "admission"         // عالمُ القبول: الموزونة والمقارنة والتقديم
   | "uni-life"          // الحياةُ الجامعية: المعدّل والساعات والفصل
@@ -64,14 +65,14 @@ const REGISTRY = [
     profile: { studyLevel: "ثانوي", grade: "أول ثانوي" },
     next: ["hs-2"], advance: "calendar",
     boardStage: "first", eduStage: "secondary",
-    allows: ["secondary-study"],
+    allows: ["school", "secondary-study"],
   },
   {
     id: "hs-2", label: "ثاني ثانوي",
     profile: { studyLevel: "ثانوي", grade: "ثاني ثانوي" },
     next: ["hs-3"], advance: "calendar",
     boardStage: "second", eduStage: "secondary",
-    allows: ["secondary-study"],
+    allows: ["school", "secondary-study"],
   },
   {
     id: "hs-3", label: "ثالث ثانوي",
@@ -80,7 +81,7 @@ const REGISTRY = [
        فيُعلن انتقالَه بنفسه. الطريقان مسموحان — والقرارُ له في كليهما. */
     next: ["grad-hs", "university"], advance: "calendar",
     boardStage: "third", eduStage: "secondary",
-    allows: ["secondary-study", "admission"],
+    allows: ["school", "secondary-study", "admission"],
   },
   {
     id: "grad-hs", label: "خريج ثانوي",

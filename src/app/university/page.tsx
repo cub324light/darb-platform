@@ -11,9 +11,10 @@ import NextThread from "@/components/NextThread";
 import PriorityHint from "@/components/PriorityHint";
 import DefCard from "@/components/DefCard";
 import WeightedCalculator from "@/components/WeightedCalculator";
+import { currentPhase } from "@/lib/transition";
 import {
   loadUser, loadGoals, currentScoreMap,
-  loadAdmissions, saveAdmissions, showsUniversityUI,
+  loadAdmissions, saveAdmissions,
   type AdmissionApplication, type AdmissionStatus,
 } from "@/lib/storage";
 import {
@@ -52,7 +53,7 @@ const STATUS_META: Record<AdmissionStatus, { label: string; icon: string; color:
 export default function UniversityPage() {
   const user = useMemo(() => loadUser(), []);
   const goals = useMemo(() => loadGoals(), []);
-  const eligible = showsUniversityUI(user);
+  const eligible = currentPhase().allows("admission");
 
   const scoreMap = useMemo(() => currentScoreMap(), []);
   const studentTrack = trackOfType(user?.trackType);

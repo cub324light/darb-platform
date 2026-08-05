@@ -18,7 +18,7 @@ import { loadUser, loadStats, computeStreak, type DarbUser } from "@/lib/storage
 import { helloFor, tipFor } from "@/lib/greeting";
 import { greetSeed } from "@/lib/greetSeed";
 import Customizable from "@/components/Customizable";
-import { isUniversityPhase, isUniversityGraduate } from "@/lib/phase";
+import { currentPhase } from "@/lib/transition";
 import dynamic from "next/dynamic";
 const RetentionHost = dynamic(() => import("@/components/retention/RetentionHost"), { ssr: false });
 
@@ -34,7 +34,8 @@ export default function DashboardPage() {
       user: u,
       hello: helloFor(now.getHours(), seed.hello),
       tip: tipFor(seed.tip),
-      showPhaseBoard: isUniversityPhase(u) || isUniversityGraduate(u),
+      /* لوحةُ المرحلة لمن تجاوز الثانوية — بالقدرة لا بالاسم */
+      showPhaseBoard: (() => { const v = currentPhase(); return v.allows("uni-life") || v.allows("career"); })(),
     };
   });
   const user: DarbUser | null = init?.user ?? null;

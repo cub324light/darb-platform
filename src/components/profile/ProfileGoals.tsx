@@ -6,7 +6,8 @@ import { loadUser, saveUser } from "@/lib/storage";
 import { TRACKS, scoreRangeForTitle, validateScore } from "@/lib/tracks";
 import { trackEvent } from "@/lib/analytics";
 import { satisfactionForResult, examKeyOf, type Satisfaction, type SatBand } from "@/lib/satisfaction";
-import { phaseExperience, type Stage } from "@/lib/experience";
+import { currentPhase } from "@/lib/transition";
+import type { Stage } from "@/lib/experience";
 import { retakeAvailability, bestNextStep, type FinalityState, type RetakeAvailability } from "@/lib/retake";
 
 const BAND_COLOR: Record<SatBand, string> = { green: "var(--success)", yellow: "var(--gold)", red: "var(--danger)" };
@@ -55,9 +56,9 @@ function ProfileGoalsBase({ goals, onGoalsChange, results, onAddResult, onDelete
 
   /* مرحلة الطالب ووضع القبول — يحكمان أيّ إعادةٍ ممكنة فعلاً (لا نعرض المستحيل) */
   const [stage] = useState<Stage>(() =>
-    typeof window !== "undefined" ? phaseExperience(loadUser()).stage : "first");
+    typeof window !== "undefined" ? currentPhase().stage : "first");
   const [admissionOpen] = useState(() =>
-    typeof window !== "undefined" ? phaseExperience(loadUser()).admission !== "hidden" : true);
+    typeof window !== "undefined" ? currentPhase().allows("secondary-study") : true);
   const today = todayStr();
 
   /* قرار «هل الدرجة نهائية؟» — ثلاث حالات صريحة (نهائية · لم أقرّر · سأعيد).
