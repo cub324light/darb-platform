@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { loadUser } from "@/lib/storage";
-import { isUniversityPhase, isGraduatePhase, isUniversityGraduate } from "@/lib/phase";
+import { isUniversityPhase, isGraduatePhase } from "@/lib/phase";
+import { phaseExperience, type PhaseExperience } from "@/lib/experience";
 
 function calcDue(): number {
   if (typeof window === "undefined") return 0;
@@ -30,6 +31,18 @@ const ROADMAP_ITEM: NavItem = {
   icon: (a: boolean) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 20 3.5 17.5v-13L9 7m0 13 6-3m-6 3V7m6 10 5.5 2.5v-13L15 4m0 13V4M9 7l6-3" />
+    </svg>
+  ),
+};
+
+/* القبول الجامعي — العنصر الأوسط لثالث ثانوي وخريج الثانوي (نفس أيقونة الشريط الجانبيّ) */
+const ADMISSION_ITEM: NavItem = {
+  href: "/university",
+  label: "القبول",
+  icon: (a: boolean) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3 2 8.5l10 5.5 10-5.5L12 3z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 10.8v5.2a8 8 0 0 0 12 0v-5.2" />
     </svg>
   ),
 };
@@ -112,20 +125,25 @@ const BASE_ITEMS: (NavItem | "MID" | "SCHOOL")[] = [
   },
 ];
 
+/* خريطةُ `navMid` ← عنصرُ الشريط. مرحلةٌ جديدةٌ تُضاف بقيمةٍ واحدةٍ هنا وهناك. */
+const MID_ITEM: Record<PhaseExperience["navMid"], NavItem> = {
+  roadmap: ROADMAP_ITEM,
+  admission: ADMISSION_ITEM,
+  "uni-tools": UNI_TOOLS_ITEM,
+  skills: SKILLS_ITEM,
+};
+
 export default function BottomNav() {
   const pathname = usePathname();
   const dueCount = useDueCards();
-  /* العنصر الأوسط حسب المرحلة (نفس المنطق الثلاثي في DesktopSidebar):
-     جامعي → أدوات الجامعة، ثالث ثانوي/خريج → القبول، وإلا مساري.
-     تهيئة كسولة بنمط DesktopSidebar — لا setState داخل effect. */
+  /* ▓ العنصرُ الأوسط من `phaseExperience.navMid` — المصدرُ الواحد الذي يقرؤه
+     الشريطان معاً. كان كلٌّ منهما يكتب منطقَه بيده فتفرّقا: ثالثُ ثانويّ يرى
+     «مساري» هنا و«القبول الجامعي» على الحاسب.
+     تهيئة كسولة — لا setState داخل effect. */
   const [{ midItem, schoolItem }] = useState<{ midItem: NavItem; schoolItem: NavItem }>(() => {
     if (typeof window === "undefined") return { midItem: ROADMAP_ITEM, schoolItem: SCHOOL_ITEM };
     const u = loadUser();
-    /* خريج الجامعة: مهني بحت — لا قبول (admission) ولا مساري (قدرات/تحصيلي) */
-    /* الثانوي والخريج (ثانوي): «مساري» (يضمّ القبول/الجامعات/الاختبارات) · الجامعي: أدوات · خريج الجامعة: مهارات */
-    const mid = isUniversityPhase(u) ? UNI_TOOLS_ITEM
-      : isUniversityGraduate(u) ? SKILLS_ITEM
-      : ROADMAP_ITEM;
+    const mid = MID_ITEM[phaseExperience(u).navMid];
     /* الثانوي: «المدرسة» · الجامعي والخريج: «المستقبل» */
     const school = isUniversityPhase(u) || isGraduatePhase(u) ? FUTURE_ITEM : SCHOOL_ITEM;
     return { midItem: mid, schoolItem: school };

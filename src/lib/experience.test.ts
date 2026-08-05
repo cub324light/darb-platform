@@ -1,7 +1,7 @@
 /* اختبارات مصدر الحقيقة لتجربة المرحلة — تشغيل: npx tsx --test src/lib/experience.test.ts */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { phaseExperience } from "./experience";
+import { phaseExperience, type PhaseExperience } from "./experience";
 import type { DarbUser } from "./storage";
 
 /* بانٍ مختصر لمستخدم اختبار — نملأ الحد الأدنى (الباقي لا يؤثر على المرحلة) */
@@ -79,4 +79,31 @@ test("مستخدم فارغ/بلا صف: يُعامَل كأول ثانوي (ا�
   const noGrade = phaseExperience(mk({ studyLevel: "ثانوي" }));
   assert.equal(noGrade.stage, "first");
   assert.equal(noGrade.admission, "explore");
+});
+
+/* ═══════════ العنصرُ الأوسط — مصدرٌ واحدٌ يقرؤه الشريطان ═══════════
+   العطل الذي أُغلق: كان كلُّ شريطٍ يكتب منطقَه بيده، فيرى ثالثُ ثانويّ «مساري»
+   على جواله و«القبول الجامعي» على حاسبه. وكان `navMid` معرَّفاً هنا ولا يقرؤه
+   أحد — ويخطئ في خريج الجامعة. */
+
+test("navMid يغطّي المراحل الستّ كلَّها بقيمةٍ صحيحة — لا سقوطَ صامت", () => {
+  const cases: [Partial<DarbUser>, PhaseExperience["navMid"]][] = [
+    [{ studyLevel: "ثانوي", grade: "أول ثانوي" }, "roadmap"],
+    [{ studyLevel: "ثانوي", grade: "ثاني ثانوي" }, "roadmap"],
+    [{ studyLevel: "ثانوي", grade: "ثالث ثانوي" }, "admission"],
+    [{ studyLevel: "خريج", gradStage: "خريج ثانوي" }, "admission"],
+    [{ studyLevel: "جامعي" }, "uni-tools"],
+    [{ studyLevel: "خريج", gradStage: "خريج جامعة" }, "skills"],
+  ];
+  for (const [prof, want] of cases) {
+    assert.equal(phaseExperience(mk(prof)).navMid, want, JSON.stringify(prof));
+  }
+});
+
+test("navMid لا يعطي «القبول» لمن أُغلق عنه عالمُ القبول", () => {
+  for (const prof of [{ studyLevel: "جامعي" }, { studyLevel: "خريج", gradStage: "خريج جامعة" }]) {
+    const e = phaseExperience(mk(prof));
+    assert.equal(e.admission, "hidden");
+    assert.notEqual(e.navMid, "admission", `${JSON.stringify(prof)}: يُساق إلى القبول وهو مغلقٌ عنه`);
+  }
 });

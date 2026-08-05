@@ -3,12 +3,14 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import PageFooter from "@/components/PageFooter";
 import Dome from "@/components/Dome";
+import BackButton from "@/components/BackButton";
 import { skillsForTracks, groupedSkills, type GlobalSkill } from "@/lib/globalSkills";
 import {
   loadSkillProgress, setSkillSelfAssessment, skillTier, weakestSkillIds,
   overallStats, type SkillProgress, type SkillTier,
 } from "@/lib/skillProgress";
-import { activeTrackIds } from "@/lib/storage";
+import { activeTrackIds, loadUser } from "@/lib/storage";
+import { phaseIdOf, phaseAllows, phaseDef } from "@/lib/transition";
 import { trackEvent } from "@/lib/analytics";
 import type { TrackId } from "@/lib/tracks";
 
@@ -91,8 +93,17 @@ export default function SkillsPage() {
     typeof window !== "undefined" ? loadSkillProgress() : {}
   );
 
+  /* ▓ بوابةُ المرحلة: مهاراتُ درب الـ٤٣ كلُّها **مهاراتُ اختباراتِ القياس**
+     (قدرات · تحصيلي · ستيب · CPC · ITC · اللغات) — لا مهارةَ واحدةَ لطالبٍ
+     جامعيّ أو خرّيج. وكان الجامعيُّ يفتحها فيجد تحصيلي، لسببين: احتياطُ
+     `activeTrackIds` يُرجع «تحصيلي» حين لا اختبارات، ومَن انتقل من الثانوية
+     يحتفظ بوحداته (ولا نحذفها — قاعدةُ محرّك الانتقال). فالحجبُ بالمرحلة
+     لا بالبيانات، والوحداتُ باقيةٌ كما هي لو عاد. */
+  const [phase] = useState(() => (typeof window !== "undefined" ? phaseIdOf(loadUser()) : null));
+  const allowed = phaseAllows(phase, "secondary-study");
+
   /* المصدر الواحد: المهارات مشتقّة من Workspace (لا activeTracks) */
-  const activeIds = useMemo<TrackId[]>(() => activeTrackIds() as TrackId[], []);
+  const activeIds = useMemo<TrackId[]>(() => (allowed ? (activeTrackIds() as TrackId[]) : []), [allowed]);
 
   const skills = useMemo(() => skillsForTracks(activeIds), [activeIds]);
   const grouped = useMemo(() => groupedSkills(skills), [skills]);
@@ -106,6 +117,41 @@ export default function SkillsPage() {
   };
 
   const weakSkills = weakIds.map((id) => skills.find((s) => s.id === id)).filter(Boolean) as GlobalSkill[];
+
+  /* مرحلةٌ تجاوزت القياس: حالةٌ صادقةٌ تدلّه على عالمه، لا شجرةُ مهاراتٍ ليست له */
+  if (!allowed) {
+    const onward = phase === "university"
+      ? { href: "/uni-tools", label: "أدوات الجامعة" }
+      : { href: "/career", label: "عالم تخصصك" };
+    return (
+      <div className="min-h-screen pb-32 desk-wide" style={{ background: "var(--bg)" }}>
+        <Dome compact>
+          <div className="flex items-center gap-3">
+            <BackButton />
+            <h1 className="text-[23px] font-black text-white">خريطة المهارات</h1>
+          </div>
+        </Dome>
+        <div className="px-5 mt-8 max-w-lg mx-auto">
+          <div className="ds-card ds-card-lg flex flex-col gap-3 text-center">
+            <span className="text-[40px]" aria-hidden="true">🎓</span>
+            <p className="t-title font-black" style={{ color: "var(--text)" }}>
+              خريطةُ المهارات لاختبارات القياس
+            </p>
+            <p className="t-body leading-relaxed" style={{ color: "var(--text-muted)" }}>
+              وأنت الآن {phaseDef(phase ?? "")?.label ?? "خارج مرحلة القياس"} — مهاراتُ القدرات
+              والتحصيلي وستيب تخصّ مرحلة القبول. ولم يُحذف تقدّمُك فيها.
+            </p>
+            <Link href={onward.href}
+              className="t-body font-black px-5 py-3 rounded-2xl no-underline mt-1"
+              style={{ background: "var(--accent)", color: "#fff" }}>
+              {onward.label} ←
+            </Link>
+          </div>
+        </div>
+        <PageFooter />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pb-32 desk-wide" style={{ background: "var(--bg)" }}>

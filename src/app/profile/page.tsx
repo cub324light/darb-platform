@@ -7,6 +7,7 @@ import Dome from "@/components/Dome";
 import BackButton from "@/components/BackButton";
 import PageFooter from "@/components/PageFooter";
 import NextThread from "@/components/NextThread";
+import { phaseIdOf, phaseAllows } from "@/lib/transition";
 import {
   loadUser, saveUser, loadStats, ensureJoinDate,
   type DarbUser, type DarbStats,
@@ -38,6 +39,14 @@ function readVaultCount(): number {
   try { const v = JSON.parse(localStorage.getItem("darb_vault") ?? "[]"); return Array.isArray(v) ? v.length : 0; }
   catch { return 0; }
 }
+
+/* الأربعةُ القائمة — لا ميزةَ جديدة. `examOnly` للأرينا وحدها (مبارياتٌ بالمسار). */
+const COMMUNITY: { href: string; icon: string; label: string; desc: string; examOnly?: boolean }[] = [
+  { href: "/council", label: "المجلس", icon: "🏛️", desc: "أسئلةُ الطلاب وأجوبتهم" },
+  { href: "/challenges", label: "التحديات", icon: "🎯", desc: "مهامٌّ تكسب بها فضّة" },
+  { href: "/leaderboard", label: "لوحة الشرف", icon: "🏆", desc: "ترتيبُ الطلاب" },
+  { href: "/arena", label: "الأرينا", icon: "⚔️", desc: "مبارياتُ اختبارك", examOnly: true },
+];
 
 export default function ProfilePage() {
   const [tab, setTab] = useState<ProfileTab>(() => {
@@ -72,6 +81,7 @@ export default function ProfilePage() {
   /* تهيئة كسولة SSR-safe (لا setState متزامن في effect — يوافق React Compiler) */
   const [user, setUser] = useState<DarbUser | null>(() => (typeof window !== "undefined" ? loadUser() : null));
   const [stats] = useState<DarbStats | null>(() => (typeof window !== "undefined" ? loadStats() : null));
+  const [phase] = useState(() => (typeof window !== "undefined" ? phaseIdOf(loadUser()) : null));
   const [vaultCount] = useState(() => readVaultCount());
   const [joinDate] = useState(() => (typeof window !== "undefined" ? ensureJoinDate() : ""));
   const [planId] = useState<PlanId>(() => (typeof window !== "undefined" ? getPlan() : "free"));
@@ -168,6 +178,29 @@ export default function ProfilePage() {
           </span>
           <span className="t-body font-black flex-shrink-0" style={{ color: "var(--accent-light)" }}>←</span>
         </Link>
+
+        {/* ═══ المجتمع والتحديات ═══
+            ▓ العطل: «المجلس» و«الأرينا» و«لوحة الشرف» و«التحديات» ألفٌ وثلاثمئةُ
+            سطرٍ مبنيّة، ورابطُها الوحيد في المشروع كلِّه هو **الشريط الجانبيّ
+            للحاسب**. ودربُ جوّالٌ أوّلاً — فأربعُ ميزاتٍ كاملةٍ لا يصلها الطالب.
+            هذا مدخلُها على الجوال، بمكوّنات الصفحة نفسِها ولا شيء جديد.
+            ▓ و«الأرينا» مبارياتُ اختباراتٍ تُوزَّع بمسار الطالب (`trackId`)، فلا
+            تُعرض لمن تجاوز مرحلة القياس — بالبوابة نفسِها لا بشرطٍ ثانٍ. */}
+        <section className="flex flex-col gap-2.5">
+          <p className="eyebrow px-0.5" style={{ color: "var(--text-muted)" }}>المجتمع والتحديات</p>
+          <div className="grid grid-cols-2 gap-2.5">
+            {COMMUNITY.filter((c) => !c.examOnly || phaseAllows(phase, "secondary-study")).map((c) => (
+              <Link key={c.href} href={c.href}
+                className="ds-card ds-card-tight ds-card-interactive flex items-center gap-2.5 no-underline">
+                <span className="text-[20px] flex-shrink-0" aria-hidden="true">{c.icon}</span>
+                <span className="flex flex-col min-w-0">
+                  <span className="t-body font-black leading-tight" style={{ color: "var(--text)" }}>{c.label}</span>
+                  <span className="t-caption truncate" style={{ color: "var(--text-muted)" }}>{c.desc}</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
 
         <ProfileTabs active={tab} onChange={setTab} />
 

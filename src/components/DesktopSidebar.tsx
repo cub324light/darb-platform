@@ -11,8 +11,9 @@ import { usePathname } from "next/navigation";
 import Logo from "./Logo";
 import { ThemeToggle } from "./Profile";
 import SettingsButton from "./SettingsPanel";
-import { loadUser, showsUniversityUI, type DarbUser } from "@/lib/storage";
-import { isUniversityPhase, isGraduatePhase, isUniversityGraduate } from "@/lib/phase";
+import { loadUser, type DarbUser } from "@/lib/storage";
+import { isUniversityPhase, isGraduatePhase } from "@/lib/phase";
+import { phaseExperience, type PhaseExperience } from "@/lib/experience";
 
 /* عدّاد البطاقات المستحقّة — نفس منطق BottomNav */
 function calcDue(): number {
@@ -122,7 +123,8 @@ export default function DesktopSidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [user] = useState<DarbUser | null>(() => (typeof window !== "undefined" ? loadUser() : null));
-  const [uniMode] = useState(() => (typeof window !== "undefined" ? showsUniversityUI(loadUser()) : false));
+  const [navMid] = useState<PhaseExperience["navMid"]>(() =>
+    typeof window !== "undefined" ? phaseExperience(loadUser()).navMid : "roadmap");
   const [due, setDue] = useState(calcDue);
 
   /* مزامنة سمة الإزاحة مع الـDOM + تحديث عدّاد البطاقات دورياً */
@@ -148,17 +150,18 @@ export default function DesktopSidebar() {
     });
   };
 
+  const MID_LINK: Record<PhaseExperience["navMid"], NavLink> = {
+    roadmap: { href: "/roadmap", label: "مساري", icon: I.roadmap },
+    admission: { href: "/university", label: "القبول الجامعي", icon: I.university },
+    "uni-tools": { href: "/uni-tools", label: "أدوات الجامعة", icon: I.uniTools },
+    skills: { href: "/skills", label: "مهاراتي", icon: I.skills },
+  };
+
   const primary: NavLink[] = [
     { href: "/dashboard", label: "الرئيسية", icon: I.home },
-    /* العنصر الأوسط حسب المرحلة: جامعي → أدوات · خريج جامعة → مهاراتي (مهني) ·
-       ثالث ثانوي/خريج ثانوي → القبول · وإلا مساري */
-    isUniversityPhase(user)
-      ? { href: "/uni-tools", label: "أدوات الجامعة", icon: I.uniTools }
-      : isUniversityGraduate(user)
-        ? { href: "/skills", label: "مهاراتي", icon: I.skills }
-        : uniMode
-          ? { href: "/university", label: "القبول الجامعي", icon: I.university }
-          : { href: "/roadmap", label: "مساري", icon: I.roadmap },
+    /* العنصرُ الأوسط من `phaseExperience.navMid` — نفسُ مصدر الشريط السفليّ.
+       (كان كلٌّ يكتب منطقَه بيده فتفرّقا على ثالث ثانوي وخريج الثانوي.) */
+    MID_LINK[navMid],
     { href: "/orbit", label: "تركيز", icon: I.orbit },
     /* المدرسة للثانوي فقط — الجامعي/الخريج يرون «المستقبل» بدلاً منها */
     (isUniversityPhase(user) || isGraduatePhase(user))

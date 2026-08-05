@@ -20,7 +20,8 @@ export interface PhaseExperience {
   /* القبول: أول/ثاني ثانوي → استكشاف تعريفي · ثالث/خريج → مفاضلة وتقديم · جامعي → مخفي */
   admission: "hidden" | "explore" | "full";
   showsUniLife: boolean;              // الجامعي فقط: جدول/معدل/مواد/مهنة
-  navMid: "roadmap" | "admission" | "uni-tools"; // العنصر الأوسط في التنقل — يطابق المنطق الحالي
+  /** العنصر الأوسط في التنقل — **المصدر الوحيد** الذي يقرؤه الشريطان معاً. */
+  navMid: "roadmap" | "admission" | "uni-tools" | "skills";
   duwairbHint: string;                // اقتراح دويرب الافتتاحي — مختلف لكل مرحلة
 }
 
@@ -70,10 +71,15 @@ export function phaseExperience(u?: DarbUser | null): PhaseExperience {
     : canApplyUniversity(u) ? "full"
     : "explore";
 
-  /* العنصر الأوسط: يطابق حرفياً منطق BottomNav/DesktopSidebar
-     (جامعي → أدوات · ثالث ثانوي/خريج → القبول · وإلا مساري). */
+  /* ▓ العنصرُ الأوسط — كان معرَّفاً هنا **ولا يقرؤه أحد**، بينما يكتب كلُّ شريطٍ
+     منطقَه بيده. فتفرّقا: ثالثُ ثانويّ يرى «مساري» على جواله و«القبول الجامعي»
+     على حاسبه — الشريطُ الجانبيّ يوافق هذا التعريف والشريطُ السفليّ يخالفه.
+     صار هذا هو المصدر الوحيد، ويقرؤه الشريطان معاً (يحرسه اختبار).
+     وأُكمل: خريجُ الجامعة كان يسقط إلى «مساري» هنا وكلا الشريطين يعطيه
+     «مهاراتي» — فصار التعريفُ يقول ما يفعله المنتجُ فعلاً. */
   const navMid: PhaseExperience["navMid"] =
     isUniversityPhase(u) ? "uni-tools"
+    : isUniversityGraduate(u) ? "skills"
     : canApplyUniversity(u) ? "admission"
     : "roadmap";
 

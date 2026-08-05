@@ -81,8 +81,12 @@ export default function PhaseHome() {
   if (persona.key === "grad-uni") {
     return (
       <div className="flex flex-col gap-4">
+        {/* ▓ كانت أولى بطاقاته «الوظائف والفرص → /opportunities»، وتلك الصفحةُ
+            تستقبل خريجَ الجامعة بجملة «هذا القسم لمن هم على أعتاب القبول».
+            أبرزُ فعلٍ في لوحته يقوده إلى بابٍ مغلقٍ في وجهه. والوظائفُ والتدريبُ
+            في «المستقبل» فعلاً — فصارت تقوده إليه. */}
         <Board tiles={[
-          { icon: "💼", title: "الوظائف والفرص", desc: "تدرّب وتوظّف", href: "/opportunities" },
+          { icon: "💼", title: "الوظائف والفرص", desc: "تدرّب وتوظّف", href: "/future" },
           { icon: "🌍", title: "عالم تخصصك", desc: "مساراتك المهنية", href: "/career" },
           { icon: "🧠", title: "مهاراتك", desc: "طوّر وأثبت", href: "/skills" },
         ]} />
