@@ -5,18 +5,12 @@
    الهوية. وحدة خالية من Firebase (localStorage فقط) كي تُستدعى بشكل متزامن
    من البوابة قبل أي مزامنة، وقابلة للاختبار. */
 
-/* المفاتيح التي تُحفظ في السحابة وتمثّل بيانات المستخدم (كانت في cloud.ts) */
-export const BACKUP_KEYS = [
-  "darb_user", "darb_stats", "darb_vault", "darb_cards", "darb_lessons",
-  "darb_done_lessons", "darb_posts", "darb_schedule", "darb_exam_date",
-  "darb_events", "darb_exam_flow", "darb_stage_reviews",
-  "darb_tadreeb_items", "darb_tadreeb_done", "darb_tasreebat_pct",
-  "darb_subject_exam_dates", "darb_track_exam_dates", "darb_dash_config",
-  "darb_dash_sched_v2", "darb_results", "darb_skills", "darb_skill_progress",
-  "darb_session_log", "darb_leaks_plan", "darb_exam_coord",
-  "darb_prefs", "darb_goals", "darb_daily", "darb_retention", "darb_coach_memory", "darb_calendar",
-  "darb_study_plan", "darb_admissions",
-];
+/* المفاتيح التي تُحفظ في السحابة وتمثّل بيانات المستخدم.
+   ▓ كانت قائمةً مكتوبةً بيدٍ تتفرّق عن الواقع (سقط منها `darb_sessions` و
+     `darb_calendar_events` والمستوى والأوسمة). صارت **مشتقّةً** من سجلّ المفاتيح
+     الواحد: كلُّ ما نطاقُه `student` وليس قديماً. الاسمُ والشكلُ كما هما. */
+export { BACKUP_KEYS } from "./storageKeys";
+import { BACKUP_KEYS } from "./storageKeys";
 
 /* مفتاح يحمل uid مالك البيانات المحلية حالياً — خارج BACKUP_KEYS عمداً */
 const OWNER_KEY = "darb_owner_uid";

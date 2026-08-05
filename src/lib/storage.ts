@@ -6,6 +6,10 @@ import { buildInitialWorkspace, addModule, addMember } from "./modules/workspace
 import { workspaceTrackIds } from "./modules/consume";
 import type { ModuleId, ExamMemberId } from "./modules/types";
 import { toBoardStage } from "./examEligibility";
+import { streakOn } from "./streak";
+import { RESET_KEYS, RESET_PREFIXES, NAMESPACED_KEYS } from "./storageKeys";
+import { nsKey } from "./engineNamespace";
+import { loadSessions, appendSession } from "./roadmap/sessionStore";
 
 export interface DarbUser {
   name: string;
@@ -113,10 +117,21 @@ export function loadUser(): DarbUser | null {
   }
 }
 
+/** يُبَثّ عند كلِّ تغيّرٍ في ملفّ الطالب — أياً كان الكاتب (أمرُ واجهة · ترقيةُ
+    تقويم · محرّكُ انتقال · استرجاعُ سحابة). كانت `saveUser` **صامتة** وحدَها بين
+    أخواتها (`saveStats` و`saveEvents` تبثّان)، فتبقى الشاشاتُ المفتوحة على ملفٍّ
+    قديمٍ حتى إعادة التحميل. */
+export const USER_CHANGED = "darb:userChanged";
+
 export function saveUser(user: DarbUser) {
   try {
     localStorage.setItem(USER_KEY, JSON.stringify(user));
   } catch {}
+  /* البثُّ مؤجَّلٌ إلى مُهمّةٍ دقيقة عمداً: بعضُ الشاشات تحفظ داخل مُهيِّئ `useState`
+     (أثناء الرسم)، وبثٌّ متزامنٌ هناك يُحدِّث مكوّناً وآخرُ يُرسَم. التأجيلُ يجعله
+     يقع بعد انتهاء الرسم دائماً، وقبل الطلاء — فلا وميضَ ولا تحذير. */
+  try { queueMicrotask(() => { try { window.dispatchEvent(new Event(USER_CHANGED)); } catch { /* نافذةٌ مغلقة */ } }); }
+  catch { /* بيئةٌ بلا queueMicrotask */ }
 }
 
 /* يضيف مساراً إلى المسارات النشطة (dedupe) ويحفظ — لزر تفعيل المسار الذهبي.
@@ -249,20 +264,22 @@ function saveStats(s: DarbStats) {
   try { window.dispatchEvent(new Event(STATS_CHANGED)); } catch { /* خادمٌ أو نافذةٌ مغلقة */ }
 }
 
-/* ── سجل الجلسات: كل جلسة Orbit منجزة (المادة، المدة، الوقت) ── */
+/* ── سجل الجلسات: كل جلسة منجزة (المادة، المدة، الوقت) ──
+   ▓ المصدرُ الواحد الآن `roadmap/sessionStore` (`darb_sessions`). هذا **عرضٌ
+     مشتقٌّ** منه بالشكل القديم نفسِه (الأحدثُ أوّلاً، بحدّ مئتين) — فلم يتغيّر
+     على مستهلكيه (بطاقةُ أوربت · التقريرُ الأسبوعيّ · التحدّيات) حرف. */
 export interface SessionLogEntry {
   id: string;
   subject: string;
   focusMins: number;
   ts: number;       // وقت الإنجاز (ms)
 }
-const SESSION_LOG_KEY = "darb_session_log";
-export function loadSessionLog(): SessionLogEntry[] { return loadList<SessionLogEntry>(SESSION_LOG_KEY); }
-export function addSessionLog(subject: string, focusMins: number): void {
-  const list = loadSessionLog();
-  list.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), subject, focusMins, ts: Date.now() });
-  // نحتفظ بآخر 200 جلسة
-  saveList(SESSION_LOG_KEY, list.slice(0, 200));
+const SESSION_VIEW_CAP = 200;
+export function loadSessionLog(): SessionLogEntry[] {
+  return loadSessions()
+    .slice(-SESSION_VIEW_CAP)
+    .reverse()
+    .map((s) => ({ id: s.id, subject: s.subject ?? "", focusMins: s.durationMins, ts: s.startedAt + s.durationMins * 60_000 }));
 }
 
 /* مكافأة بدء أوربت اليومية (مرة واحدة بأول جلسة في اليوم) */
@@ -270,8 +287,15 @@ export const DAILY_ORBIT_BONUS = 10;
 
 /* تُستدعى عند إكمال جلسة Orbit كاملة.
    النقاط = فضة لكل دقيقة تركيز + مكافأة 10 لأول جلسة في اليوم فقط.
-   نُعيد الإحصاءات مع earned (الفضة المكتسبة في هذه الجلسة للعرض). */
-export function recordSession(focusMins: number, subject?: string): DarbStats & { earned: number } {
+   نُعيد الإحصاءات مع earned (الفضة المكتسبة في هذه الجلسة للعرض).
+   ▓ وتكتب الجلسةَ في **سجلٍّ واحد**: كانت تكتب سجلَّها الخاصّ ثم تكتب الصفحةُ
+     سجلاً ثانياً للواقعة نفسِها. `meta` اختياريّ — من لا يمرّرُه يحصل على
+     ما كان يحصل عليه حرفاً بحرف. */
+export function recordSession(
+  focusMins: number,
+  subject?: string,
+  meta?: { examId?: string; taskKind?: "review" | "drill" | "errors"; startedAt?: number },
+): DarbStats & { earned: number } {
   const s = loadStats();
   const day = todayKey();
   const firstToday = s.lastBonusDay !== day;
@@ -289,7 +313,15 @@ export function recordSession(focusMins: number, subject?: string): DarbStats & 
   const keys = Object.keys(s.dayMins).sort();
   if (keys.length > 60) keys.slice(0, keys.length - 60).forEach((k) => delete s.dayMins[k]);
   saveStats(s);
-  addSessionLog(subject ?? "—", focusMins);
+  const now = Date.now();
+  appendSession({
+    id: now.toString(36) + Math.random().toString(36).slice(2, 6),
+    examId: meta?.examId ?? "orbit",
+    subject: subject ?? "—",
+    taskKind: meta?.taskKind ?? "review",
+    startedAt: meta?.startedAt ?? now - focusMins * 60_000,
+    durationMins: focusMins,
+  });
   return { ...s, earned };
 }
 
@@ -351,20 +383,10 @@ export function addSilver(n: number): DarbStats {
   return s;
 }
 
-/* ستريك حقيقي: أيام متتالية تنتهي اليوم أو أمس */
+/* ستريك حقيقي: أيام متتالية تنتهي اليوم أو أمس.
+   الحسابُ في `lib/streak.ts` — محرّكٌ واحدٌ يقرؤه كلُّ من يعرض السلسلة. */
 export function computeStreak(stats: DarbStats): number {
-  const days = new Set(stats.sessionDays);
-  if (days.size === 0) return 0;
-  const d = new Date();
-  const key = (dt: Date) => localDayKey(dt);
-  // لو ما فيه جلسة اليوم، نبدأ العد من أمس
-  if (!days.has(key(d))) d.setDate(d.getDate() - 1);
-  let streak = 0;
-  while (days.has(key(d))) {
-    streak += 1;
-    d.setDate(d.getDate() - 1);
-  }
-  return streak;
+  return streakOn(stats, localDayKey());
 }
 
 /* ── تخزين عام لأي قائمة (الخزنة / المراجعة / الدروس) ── */
@@ -444,21 +466,19 @@ export function saveTrackExamDates(dates: Record<string, string>) {
   try { localStorage.setItem(TRACK_EXAM_DATES_KEY, JSON.stringify(dates)); } catch {}
 }
 
+/* «ابدأ من الصفر» — القائمةُ **مشتقّةٌ** من سجلّ المفاتيح لا مكتوبةً بيد.
+   ▓ كانت تنسى ذاكرةَ المحرّكات وسجلَّ أحداثها وعلمَ بذرتها، فيبدأ الطالبُ من
+     الصفر ثم يفتح دويرب فيناديه باسمه القديم وصفِّه القديم — ولا تُبذَر ذاكرتُه
+     الجديدة أبداً لأنّ العلمَ باقٍ. والمفاتيحُ المنطَّقةُ تُمسح بلاحقتها الصحيحة. */
 export function resetAll() {
   try {
-    ["darb_user","darb_stats","darb_vault","darb_cards","darb_lessons","darb_done_lessons",
-     "darb_posts","darb_schedule","darb_exam_date","darb_events","darb_exam_flow","darb_stage_reviews",
-     "darb_tadreeb_items","darb_tadreeb_done","darb_tasreebat_pct","darb_subject_exam_dates",
-     "darb_track_exam_dates","darb_results","darb_skills","darb_skill_progress",
-     "darb_session_log","darb_leaks_plan","darb_exam_coord","darb_dash_config","darb_dash_sched_v2",
-     "darb_prefs","darb_goals","darb_daily","darb_retention","darb_coach_memory","darb_calendar",
-     "darb_study_plan","darb_admissions","darb_uni_tools","darb_cosmetics","darb_journal","darb_teachers","darb_school_exams","darb_font_scale"].forEach((k) =>
-      localStorage.removeItem(k)
-    );
-    /* تعليمات أول زيارة تظهر من جديد بعد الضبط */
-    Object.keys(localStorage)
-      .filter((k) => k.startsWith("darb_guide_"))
-      .forEach((k) => localStorage.removeItem(k));
+    for (const k of RESET_KEYS) {
+      localStorage.removeItem(k);
+      if (NAMESPACED_KEYS.includes(k)) localStorage.removeItem(nsKey(k));
+    }
+    /* تعليماتُ أوّل زيارة وترتيبُ البطاقات يظهران من جديد بعد الضبط */
+    const prefixed = Object.keys(localStorage).filter((k) => RESET_PREFIXES.some((p) => k.startsWith(p)));
+    for (const k of prefixed) localStorage.removeItem(k);
   } catch {}
 }
 

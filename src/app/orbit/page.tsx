@@ -11,7 +11,6 @@ import { subjectsForTracks, getTrack } from "@/lib/tracks";
 import type { TrackId, Track } from "@/lib/tracks";
 import { useRouter } from "next/navigation";
 import { activeTrackIds, loadStats, recordSession, loadSessionLog, type SessionLogEntry } from "@/lib/storage";
-import { appendSession } from "@/lib/roadmap/sessionStore";
 import { readFocusHandoff, remainingTaskMins, isTaskHandoff, handoffSourceLabel,
   EMPTY_HANDOFF, type FocusHandoff } from "@/lib/roadmap/handoff";
 import { BorderBeam } from "@/components/ui/border-beam";
@@ -346,16 +345,15 @@ export default function OrbitPage() {
   const startBreak = useCallback(() => {
     endAtRef.current = Date.now() + breakSecs * 1000;
     setPhase("break"); timer.set(breakSecs);
-    const s = recordSession(focusMins, subject);
+    /* كتابةٌ واحدةٌ للجلسة: `recordSession` تكتب الإحصاءَ **والسجلَّ** معاً في
+       `darb_sessions`. كانت الصفحةُ تكتب سجلاً ثانياً للواقعة نفسِها. */
+    const s = recordSession(focusMins, subject, { examId: handoff.from === "masari" ? "masari" : "orbit" });
     setSilverTotal(s.silver);
     setLastEarned(s.earned);
     setTotalFocusMins(s.todayFocusMins);
     setSessionsToday((p) => p + 1);
     setSessionLog(loadSessionLog());
     trackEvent("session_completed", { focusMins, silver: s.earned, source: fromMasari ? "masari" : "orbit" });
-    /* سجلّ مساري — يغذّي الإحصائيات والجاهزية (مصدرٌ واحد للجلسات) */
-    appendSession({ id: `${Date.now()}`, examId: handoff.from === "masari" ? "masari" : "orbit",
-      subject, taskKind: "review", startedAt: Date.now() - focusMins * 60000, durationMins: focusMins });
     import("@/lib/events").then(({ emit }) => emit({
       eventType: "StudentFinishedSession",
       metadata: { minutes: focusMins, subject: subject || undefined },

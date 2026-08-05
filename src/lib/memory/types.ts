@@ -80,6 +80,16 @@ export interface MemoryValueMap {
   "conversation.salientFact":{ text: string; topic?: string };
   "conversation.openThread": { question: string; topic?: string };
   "conversation.summary":    { text: string; period?: string; count?: number };
+  /* آخرُ تفاعلٍ مع أدوات دويرب (جدول · تقدّم · أسئلة · شرح) — سجلٌّ واحدٌ يُحدَّث
+     في مكانه، وهو ما كان يعيش في مخزنٍ ثانٍ مستقلٍّ عن الذاكرة (`darb_coach_memory`). */
+  "conversation.coachInteraction": {
+    mode: "schedule" | "progress" | "quiz" | "explain";
+    summary: string;
+    date: string;              // YYYY-MM-DD بمفتاح اليوم المحلّي
+    subjects?: string[];
+    goalLine?: string;
+    recommendation?: string;   // أهمُّ جملةٍ من تحليل التقدّم
+  };
 
   /* ── Relationship ── */
   "relationship.tone":     { tone: TonePreference };

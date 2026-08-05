@@ -4,8 +4,9 @@
    ▸ الهدف: ملخّصٌ أسبوعيّ + خريطة نشاط + قممٌ (أكثر مادة/ساعة/اختبار · أطول سلسلة · أفضل أسبوع).
    ▸ الصدق: أيّ إحصاءٍ بلا بياناتٍ حقيقية ⇒ available:false (لا رقمٌ مخترَع). أكثر مادة/ساعة/اختبار
      تحتاج جلساتٍ مسجّلة؛ قبلها حالةٌ فارغةٌ صادقة. */
-import { daysBetween, addDays } from "./metrics";
+import { addDays } from "./metrics";
 import { ROADMAP_TUNING } from "./config";
+import { streakOn, longestStreakOf } from "../streak";
 import type { StudySessionLog } from "./session";
 
 export interface StatValue<T> { available: boolean; value: T | null; }
@@ -38,7 +39,9 @@ function maxEntry<K extends string>(m: Record<K, number>): { key: K; mins: numbe
 }
 
 export function computeStats(
-  i: { dayMins: Record<string, number>; sessions: StudySessionLog[]; today: string; plannedDailyMins?: number | null },
+  /* `sessionDays` اختياريّ: مصدرُ السلسلة الثاني (استعادةُ سلسلةٍ مكسورة تكتبه وحدَه).
+     غيابُه لا يغيّر شيئاً لمن لا يمرّرُه — إضافةٌ لا كسر. */
+  i: { dayMins: Record<string, number>; sessions: StudySessionLog[]; today: string; plannedDailyMins?: number | null; sessionDays?: string[] },
   cfg = ROADMAP_TUNING.stats,
 ): StatsResult {
   const dm = i.dayMins ?? {};
@@ -51,8 +54,10 @@ export function computeStats(
     const d = new Date(s.startedAt).toISOString().slice(0, 10);
     return d >= weekDays[0] && d <= i.today;
   }).length;
-  let streakDays = 0;
-  for (let k = 0; ; k++) { if (minsOn(addDays(i.today, -k)) > 0) streakDays++; else break; }
+  /* ▓ السلسلةُ من محرّكها الواحد (`lib/streak`) لا من حسابٍ محليّ. كان هنا تعريفٌ
+     **صارم** (يبدأ من اليوم) بينما الرئيسيةُ تستعمل المتسامح (يبدأ من أمس إن لم
+     يذاكر اليوم بعد) — فيرى الطالبُ رقمين مختلفين للسلسلة نفسها في اللحظة نفسها. */
+  const streakDays = streakOn({ dayMins: dm, sessionDays: i.sessionDays }, i.today);
   const commitmentPct = i.plannedDailyMins && i.plannedDailyMins > 0
     ? Math.min(100, Math.round((weekMins / (i.plannedDailyMins * 7)) * 100)) : null;
   const week: WeekSummary = { hours: round1(weekMins / 60), sessions: weekSessions, streakDays, commitmentPct };
@@ -85,9 +90,7 @@ export function computeStats(
   const bestWeek = bestSum > 0 ? some({ start: bestStart, hours: round1(bestSum / 60) }) : none<{ start: string; hours: number }>();
 
   /* ── أطول سلسلة + أيام الانقطاع (آخر 30 يوماً) ── */
-  const activeDays = Object.keys(dm).filter((d) => dm[d] > 0).sort();
-  let longestStreak = 0, run = 0, prev = "";
-  for (const d of activeDays) { run = prev && daysBetween(prev, d) === 1 ? run + 1 : 1; longestStreak = Math.max(longestStreak, run); prev = d; }
+  const longestStreak = longestStreakOf({ dayMins: dm, sessionDays: i.sessionDays });
   let breakDays = 0; let sawActive = false;
   for (let k = 29; k >= 0; k--) { const day = addDays(i.today, -k); const on = minsOn(day) > 0; if (on) sawActive = true; else if (sawActive) breakDays++; }
 

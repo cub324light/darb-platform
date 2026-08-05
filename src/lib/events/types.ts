@@ -97,6 +97,16 @@ export interface EventMetaMap {
   /* ── المحادثات (دويرب) ── */
   "DuwairbConversationStarted":  { topic?: string; tab?: string };
   "DuwairbConversationFinished": { topic?: string; messages?: number };
+  /* استعمالُ أداةٍ من أدوات دويرب (جدول · تقدّم · أسئلة · شرح) — الطريقُ الوحيد
+     الذي تُكتب به «ذاكرةُ المدرّب» بعد دمجها في محرّك الذاكرة. */
+  "CoachInteractionUsed": {
+    mode: "schedule" | "progress" | "quiz" | "explain";
+    summary: string;
+    date: string;
+    subjects?: string[];
+    goalLine?: string;
+    recommendation?: string;
+  };
 
   /* ── المجتمع والتحديات ── */
   "CommunityJoined":   { group: string };

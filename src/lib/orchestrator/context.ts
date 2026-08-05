@@ -88,7 +88,7 @@ function readActivity(now: number): DuwairbContext["activity"] {
     const today = localDayKey(new Date(now));
 
     const week = computeStats({
-      dayMins: stats.dayMins ?? {}, sessions: loadSessions(), today,
+      dayMins: stats.dayMins ?? {}, sessionDays: stats.sessionDays, sessions: loadSessions(), today,
       plannedDailyMins: ((u?.studyHours ?? 0) * 60) || null,
     }).week;
     if (week.commitmentPct != null) out.commitmentPct = week.commitmentPct;

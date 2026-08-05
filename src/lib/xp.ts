@@ -6,7 +6,7 @@
    ▓ مصدرٌ واحد للفتح: `getBadgeCurrent` تُعطي رقمَ الطالب، والشارةُ مفتوحةٌ إن
      بلغ `goal`. كان الفتحُ مكتوباً مرّتين — قائمةٌ للأرقام وقائمةٌ للشروط —
      فمتى غُيّر أحدُهما كذب الآخر. */
-import type { DarbStats } from "./storage";
+import { computeStreak, type DarbStats } from "./storage";
 
 export interface Level {
   name: string;
@@ -109,7 +109,7 @@ export const badgesInTier = (tier: BadgeTier): BadgeDef[] => BADGE_DEFS.filter((
 
 /** القيمة الحالية للطالب تجاه كل شارة (للشريط ولقرار الفتح معاً). */
 export function getBadgeCurrent(id: string, stats: DarbStats, vaultCount: number): number {
-  const streak = computeStreakDays(stats);
+  const streak = computeStreak(stats);
   switch (id) {
     case "first_session":
     case "sessions_5":
@@ -179,16 +179,10 @@ export function xpBreakdown(stats: DarbStats): { src: XpSource; amount: number; 
   return XP_SOURCES.map((src) => ({ src, amount: amounts[src.id] ?? 0, points: (amounts[src.id] ?? 0) * src.points }));
 }
 
-function computeStreakDays(stats: DarbStats): number {
-  const days = new Set(stats.sessionDays);
-  if (!days.size) return 0;
-  const d = new Date();
-  const key = (dt: Date) => dt.toISOString().slice(0, 10);
-  if (!days.has(key(d))) d.setDate(d.getDate() - 1);
-  let streak = 0;
-  while (days.has(key(d))) { streak++; d.setDate(d.getDate() - 1); }
-  return streak;
-}
+/* ▓ كان هنا اشتقاقٌ خامسٌ للسلسلة — نسخةٌ من `computeStreak` بمفتاحِ **UTC**
+   (`toISOString`) بينما تُكتب الأيامُ بمفتاحٍ **محليّ** (`localDayKey`). فبين منتصف
+   الليل والثالثة فجراً بتوقيت السعودية كانت الشاراتُ تقيس يوماً غير اليوم الذي
+   تقيسه الرئيسية. صار المصدرُ واحداً: `computeStreak` المستوردةُ أصلاً في هذا الملف. */
 
 export function getLevel(xp: number): Level & { next?: Level; progress: number } {
   let current = LEVELS[0];

@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { loadUser, saveUser, resetAll } from "@/lib/storage";
+import { loadUser, resetAll } from "@/lib/storage";
+import { updateProfile, type ProfilePatch } from "@/lib/userCommands";
 import { exportData } from "@/lib/dataExport";
 import { EmailVerifyNotice } from "@/components/EmailVerify";
 import type { User } from "firebase/auth";
@@ -107,8 +108,7 @@ export default function SettingsButton() {
     if (!user) return;
     const next = !isPrivate;
     setIsPrivate(next);
-    const updated = { ...user, isPrivate: next } as typeof user & { isPrivate: boolean };
-    saveUser(updated as typeof user);
+    updateProfile({ isPrivate: next } as ProfilePatch);
     import("@/lib/firestore").then(({ syncUser }) => { syncUser({ isPrivate: next }); });
   };
 
@@ -165,6 +165,9 @@ export default function SettingsButton() {
   const reset = () => {
     if (!confirm("متأكد؟ راح ينمسح كل شيء وتبدأ من الصفر.")) return;
     resetAll();
+    /* مثائلُ المحرّكات تحمل نسخةً في الذاكرة من مخازنَ مُسحت — نُسقِطها قبل
+       المغادرة كي لا تُعيد كتابةَ ما مُحي إن سبق أيُّ استدعاءٍ إعادةَ التحميل. */
+    import("@/lib/engineSession").then(({ resetEngineSingletons }) => resetEngineSingletons()).catch(() => {});
     window.location.href = "/onboarding";
   };
 

@@ -188,6 +188,16 @@ export const MEMORY_REGISTRY: MemoryRegistry = {
     validate: (v) => typeof v.text === "string" && v.text.length > 0,
     deriveTags: () => ["conversation", "summary"],
   },
+  /* «آخرُ تفاعل» واحدٌ لا تاريخ: `naturalKey` ثابتٌ فيُدمج في مكانه بلا تكديس.
+     واضمحلالُه سبعةُ أيام لأن التلميحَ نفسَه يسقط بعد أسبوعٍ في `formatMemoryHint`. */
+  "conversation.coachInteraction": {
+    type: "conversation.coachInteraction", category: "conversation",
+    defaultImportance: 0.35, defaultConfidence: 0.7, decayHalfLifeDays: 7 * DAY, pinned: false,
+    naturalKey: () => "self",
+    validate: (v) => ["schedule", "progress", "quiz", "explain"].includes(v.mode)
+      && typeof v.date === "string" && v.date.length > 0,
+    deriveTags: (v) => ["conversation", "coach", v.mode],
+  },
 
   /* ── Relationship — دائمة، عالية الأهمية (دماغ العلاقة) ── */
   "relationship.tone": {

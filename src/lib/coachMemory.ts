@@ -1,7 +1,17 @@
 /* ─── ذاكرة المدرب القصيرة — أحدث تفاعل واحد مع دويرب ───
-   لا تُخزِّن محادثات كاملة، فقط السياق المفيد لجلسة اليوم التالية.
-   مصدر واحد يُحدِّثه كل component بعد كل رد ناجح. */
+   ▓ العطل الذي أُغلق: كان هذا **مخزناً ثانياً للذاكرة** (`darb_coach_memory`)
+     تكتبه أربعةُ مكوّناتٍ بيدها مباشرةً ويقرؤه `DuirbHub` — لا يمرّ بحدثٍ ولا
+     بمُتفاعِل، ولا يعرف محرّكُ الذاكرة بوجوده. فكان لدويرب ذاكرتان لا تعرف
+     إحداهما الأخرى، ولا تُزامَن هذه سحابياً بالمسار الكيانيّ.
+
+   ▓ صار مصدرُ الحقيقة **محرّكَ الذاكرة وحدَه** (`conversation.coachInteraction`)،
+     والكتابةُ تمرّ بالطريق نفسِه الذي تمرّ به كلُّ ذاكرة: حدثٌ ← مُتفاعِل ← ذاكرة.
+     وهذا الملفُّ بقي واجهةً بنفس أسمائه وأنواعه ومخرجاته — لم يتغيّر على
+     مستدعيه حرف، ولا تغيّرت جملةُ التذكير التي يراها الطالب.
+   ▓ والقديمُ يُرحَّل مرّةً بلا فقد: أوّلُ قراءةٍ تجد المخزنَ القديم تمرّره في
+     الطريق الجديد ثم تحذفه. */
 import { localDayKey } from "./storage";
+import { memory } from "./memory";
 
 export type CoachMode = "schedule" | "progress" | "quiz" | "explain";
 
@@ -18,16 +28,58 @@ export interface CoachMemory {
   lastRecommendation?: string; // أهم جملة من تحليل التقدم (لتذكير دقيق)
 }
 
-const MEM_KEY = "darb_coach_memory";
+const LEGACY_KEY = "darb_coach_memory";
+const MEMORY_ID = "conversation.coachInteraction:self";
+
+interface StoredValue {
+  mode: CoachMode; summary: string; date: string;
+  subjects?: string[]; goalLine?: string; recommendation?: string;
+}
+
+/* الكتابةُ الوحيدة — حدثٌ يلتقطه `MemoryReactor`. متزامنٌ في نتيجته لأن
+   `remember` كتابةٌ فورية (write-through)، والاستيرادُ ديناميّ كبقيّة المُطلِقين. */
+function fire(v: StoredValue): void {
+  import("./events").then(({ emit }) => emit({
+    eventType: "CoachInteractionUsed",
+    metadata: v,
+    actor: { kind: "student" }, source: "ui",
+  })).catch(() => { /* فشلُ الإطلاق لا يُسقط ردَّ دويرب */ });
+}
+
+/* ترحيلُ المخزن القديم مرّةً واحدة — يمرّ بالطريق الجديد نفسِه لا بكتابةٍ مباشرة. */
+let migrated = false;
+function migrateLegacy(): CoachMemory | null {
+  if (migrated || typeof window === "undefined") return null;
+  migrated = true;
+  try {
+    const raw = localStorage.getItem(LEGACY_KEY);
+    if (!raw) return null;
+    const old = JSON.parse(raw) as CoachMemory;
+    localStorage.removeItem(LEGACY_KEY);
+    if (!old?.last) return null;
+    fire({
+      mode: old.last.mode, summary: old.last.summary, date: old.last.date,
+      subjects: old.last.subjects, goalLine: old.last.goalLine,
+      recommendation: old.lastRecommendation,
+    });
+    return old;
+  } catch { return null; }
+}
 
 export function loadCoachMemory(): CoachMemory {
   if (typeof window === "undefined") return {};
-  try { return JSON.parse(localStorage.getItem(MEM_KEY) ?? "{}") as CoachMemory; }
-  catch { return {}; }
-}
-
-function saveCoachMemory(m: CoachMemory): void {
-  try { localStorage.setItem(MEM_KEY, JSON.stringify(m)); } catch {}
+  const legacy = migrateLegacy();
+  try {
+    const rec = memory().all().find((m) => m.id === MEMORY_ID);
+    if (rec && rec.status === "active") {
+      const v = rec.value as StoredValue;
+      return {
+        last: { date: v.date, mode: v.mode, summary: v.summary, subjects: v.subjects, goalLine: v.goalLine },
+        lastRecommendation: v.recommendation,
+      };
+    }
+  } catch { /* المحرّكُ غيرُ متاح — نكتفي بما رُحِّل */ }
+  return legacy ?? {};
 }
 
 /* يُستدعى بعد كل رد ناجح من دويرب */
@@ -36,20 +88,21 @@ export function recordCoachInteraction(
   response: string,
   opts?: { subjects?: string[]; goalLine?: string },
 ): void {
-  const m = loadCoachMemory();
-  m.last = {
-    date: localDayKey(),
-    mode,
-    summary: response.replace(/\n+/g, " ").trim().slice(0, 100),
-    subjects: opts?.subjects?.length ? opts.subjects : undefined,
-    goalLine: opts?.goalLine || undefined,
-  };
+  const prev = loadCoachMemory();
   // احفظ أهم جملة من تحليل التقدم — للتذكير في الزيارة التالية
+  let recommendation = prev.lastRecommendation;
   if (mode === "progress") {
     const firstLine = response.split("\n").find((l) => l.trim().length > 10);
-    if (firstLine) m.lastRecommendation = firstLine.trim().slice(0, 120);
+    if (firstLine) recommendation = firstLine.trim().slice(0, 120);
   }
-  saveCoachMemory(m);
+  fire({
+    mode,
+    summary: response.replace(/\n+/g, " ").trim().slice(0, 100),
+    date: localDayKey(),
+    subjects: opts?.subjects?.length ? opts.subjects : undefined,
+    goalLine: opts?.goalLine || undefined,
+    recommendation,
+  });
 }
 
 /* جملة تذكير طبيعية — null إن لا ذاكرة أو قديمة جداً (> 7 أيام) */

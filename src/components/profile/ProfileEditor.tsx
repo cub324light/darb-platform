@@ -3,7 +3,8 @@
    حقولٌ اختيارية تُحفَظ فوراً في DarbUser (مصدرٌ واحد). لعبةٌ تدريجية: +5 فضة مع كل معلومةٍ
    جديدة، ووسام + 30 عند 100٪ (مرّة لكلٍّ). التعديل لاحقاً لا يمنح فضةً من جديد. */
 import { useState } from "react";
-import { loadUser, saveUser, addSilver, loadAdmissions, type DarbUser } from "@/lib/storage";
+import { loadUser, addSilver, loadAdmissions, type DarbUser } from "@/lib/storage";
+import { updateProfile, setSchoolGrade, type ProfilePatch } from "@/lib/userCommands";
 import { transitionTo, phaseDef, currentPhase } from "@/lib/transition";
 import { profileCompletion, pendingProfileRewards } from "@/lib/profileCompletion";
 import { SA_REGIONS } from "@/lib/saRegions";
@@ -52,13 +53,17 @@ export default function ProfileEditor() {
   if (!user) return null;
   const comp = profileCompletion(user);
 
-  const commit = (patch: Partial<DarbUser>) => {
-    const next: DarbUser = { ...(loadUser() ?? user), ...patch };
-    const reward = pendingProfileRewards(next);
+  /* كلُّ كتابةٍ تمرّ بأمرٍ واحد (`updateProfile`) — لا `saveUser` في الواجهة.
+     والمكافأةُ تُحسب على الملفّ بعد الدمج ثم تُضاف إلى نفس الرقعة، فتبقى الكتابةُ
+     واحدةً لا اثنتين. */
+  const commit = (patch: ProfilePatch) => {
+    const merged: DarbUser = { ...(loadUser() ?? user), ...patch };
+    const full: ProfilePatch = { ...patch };
+    const reward = pendingProfileRewards(merged);
     if (reward) {
       if (reward.silver) addSilver(reward.silver);
-      if (reward.newRewardedFields.length) next.rewardedFields = [...(next.rewardedFields ?? []), ...reward.newRewardedFields];
-      if (reward.setCompleteFlag) next.awardedProfileComplete = true;
+      if (reward.newRewardedFields.length) full.rewardedFields = [...(merged.rewardedFields ?? []), ...reward.newRewardedFields];
+      if (reward.setCompleteFlag) full.awardedProfileComplete = true;
       if (reward.badge) {
         /* اكتمل الملف أوّل مرّة: نُسجّل إشارةً عابرة ليعرضها «حفظ» في صفحة احتفالٍ مستقلّة */
         try { sessionStorage.setItem("darb_celebrate_complete", JSON.stringify({ silver: reward.silver })); } catch {}
@@ -67,7 +72,7 @@ export default function ProfileEditor() {
         setCelebrate(reward.message);
       }
     }
-    saveUser(next); setUser(next);
+    setUser(updateProfile(full) ?? { ...merged, ...full });
   };
   const toggle = (key: "hobbies" | "interests" | "favSubjects", val: string) => {
     const cur = user[key] ?? [];
@@ -188,7 +193,7 @@ export default function ProfileEditor() {
             <Group title="صفّك">
               {SCHOOL_STAGES.map((g) => (
                 <Chip key={g} on={user.grade === g}
-                  onClick={() => commit({ grade: user.grade === g ? undefined : g, studyLevel: "ثانوي" })}>{g}</Chip>
+                  onClick={() => { const u = setSchoolGrade(user.grade === g ? null : g); if (u) setUser(u); }}>{g}</Chip>
               ))}
             </Group>
             <Group title="مسارك الدراسي">

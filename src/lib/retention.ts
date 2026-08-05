@@ -6,6 +6,7 @@ import {
   loadStats, localDayKey, computeStreak, addSessionDay,
   type DarbStats,
 } from "./storage";
+import { studyDays, streakOn } from "./streak";
 
 /* ── أدوات تاريخ ── */
 const DAY = 86400000;
@@ -73,7 +74,8 @@ export function recordOpenToday(): void {
 const RECOVERY_COOLDOWN_DAYS = 30;
 /* هل انكسر ستريك حقيقي؟ (فات الأمس فقط، وكان هناك سلسلة ≥ يومين) */
 export function streakBreak(stats: DarbStats): { broke: boolean; missedDay: string | null; priorStreak: number } {
-  const set = new Set(stats.sessionDays);
+  /* أيامُ المذاكرة من محرّك السلسلة — لا مجموعةَ أيامٍ ثانيةً هنا. */
+  const set = studyDays(stats);
   const today = localDayKey();
   const yesterday = dayKeyOffset(1);
   const dayBefore = dayKeyOffset(2);
@@ -81,9 +83,7 @@ export function streakBreak(stats: DarbStats): { broke: boolean; missedDay: stri
   if (set.has(today) || set.has(yesterday)) return { broke: false, missedDay: null, priorStreak: 0 };
   // كسر: آخر جلسة كانت أول أمس (فات الأمس)، ونحسب السلسلة المنتهية عندها
   if (!set.has(dayBefore)) return { broke: false, missedDay: null, priorStreak: 0 };
-  let run = 0;
-  const d = new Date(); d.setDate(d.getDate() - 2);
-  while (set.has(localDayKey(d))) { run++; d.setDate(d.getDate() - 1); }
+  const run = streakOn(stats, dayBefore);
   if (run < 2) return { broke: false, missedDay: null, priorStreak: 0 };
   return { broke: true, missedDay: yesterday, priorStreak: run };
 }

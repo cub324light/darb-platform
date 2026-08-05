@@ -9,6 +9,7 @@ import {
 } from "../modules";
 import { toBoardStage } from "../examEligibility";
 import { phaseIdOf, phaseAllows } from "../transition";
+import { streakOn } from "../streak";
 import { requirementsOf } from "../recommendedExams";
 import { orderByPriority, isOnVacation } from "./model";
 import { loadRoadmapConfig } from "./store";
@@ -199,10 +200,12 @@ export function readDailySignals(ws: Workspace): {
   name?: string; hour: number; rand: number; everStarted: boolean; yesterdayMins: number; streakDays: number; daysToExam: number | null;
 } {
   const today = localDayKey();
-  const dm = loadStats().dayMins ?? {};
+  const st = loadStats();
+  const dm = st.dayMins ?? {};
   const everStarted = Object.values(dm).some((v) => v > 0) || ws.modules.some((m) => (m.progress ?? 0) > 0);
-  let streakDays = 0;
-  for (let k = 0; ; k++) { if ((dm[addDays(today, -k)] ?? 0) > 0) streakDays++; else break; }
+  /* السلسلةُ من محرّكها الواحد — كانت تُحسب هنا بقاعدةٍ صارمةٍ ثالثة، فتقول رسالةُ
+     دويرب «من زمان عنك» صباحَ يومٍ ذاكر فيه أمس تسعين دقيقة. */
+  const streakDays = streakOn(st, today);
   const p = readPriorityExam(ws);
   const examDate = p?.examKey ? (loadTrackExamDates()[p.examKey] ?? null) : null;
   const d = examDate ? daysBetween(today, examDate) : null;

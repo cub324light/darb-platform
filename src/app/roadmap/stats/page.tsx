@@ -34,6 +34,7 @@ function B({ title, value, sub, wide, children }: {
 export default function StatsPage() {
   const [s] = useState(() => computeStats({
     dayMins: typeof window !== "undefined" ? (loadStats().dayMins ?? {}) : {},
+    sessionDays: typeof window !== "undefined" ? loadStats().sessionDays : undefined,
     sessions: typeof window !== "undefined" ? loadSessions() : [],
     today: localDayKey(),
     plannedDailyMins: typeof window !== "undefined" ? (((loadUser()?.studyHours ?? 0) * 60) || null) : null,

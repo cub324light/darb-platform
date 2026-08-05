@@ -2,7 +2,8 @@
 /* ─── الأهداف الأكاديمية — درجات مستهدفة + الجامعة/التخصص + نتائجي ─── */
 import { memo, useState, type CSSProperties } from "react";
 import type { DarbGoals, ExamResult } from "@/lib/storage";
-import { loadUser, saveUser } from "@/lib/storage";
+import { loadUser } from "@/lib/storage";
+import { updateProfile } from "@/lib/userCommands";
 import { TRACKS, scoreRangeForTitle, validateScore } from "@/lib/tracks";
 import { trackEvent } from "@/lib/analytics";
 import { satisfactionForResult, examKeyOf, type Satisfaction, type SatBand } from "@/lib/satisfaction";
@@ -73,8 +74,7 @@ function ProfileGoalsBase({ goals, onGoalsChange, results, onAddResult, onDelete
     const nextFinals = state === "final" ? [...new Set([...finals, exam])] : finals.filter((x) => x !== exam);
     setRetakes(nextRetakes);
     setFinals(nextFinals);
-    const u = loadUser();
-    if (u) saveUser({ ...u, retakeExams: nextRetakes.length ? nextRetakes : undefined, finalizedExams: nextFinals.length ? nextFinals : undefined });
+    updateProfile({ retakeExams: nextRetakes.length ? nextRetakes : undefined, finalizedExams: nextFinals.length ? nextFinals : undefined });
   };
 
   /* مؤشّر الرضا لكل اختبارٍ له نتيجة (أحدث نتيجة لكل اختبار، إن كان له حكم) */

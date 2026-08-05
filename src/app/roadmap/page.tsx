@@ -16,7 +16,8 @@ import ExamPlanTimeline from "@/components/roadmap/ExamPlanTimeline";
 import Customizable from "@/components/Customizable";
 import DismissibleNote from "@/components/DismissibleNote";
 import { duwairbMoment } from "@/lib/duwairb/moments";
-import { loadUser, saveUser, ensureWorkspace, saveWorkspace, loadStats, loadTrackExamDates, localDayKey } from "@/lib/storage";
+import { loadUser, saveWorkspace, loadStats, loadTrackExamDates, localDayKey } from "@/lib/storage";
+import { ensureWorkspaceSaved } from "@/lib/userCommands";
 import {
   moduleView, memberView, groupMembers, visibleModules,
   recordScore, setState as wsSetState, recordMemberScore, setMemberState,
@@ -78,10 +79,7 @@ export default function RoadmapPage() {
   const router = useRouter();
   const [ws, setWs] = useState<Workspace | null>(() => {
     if (typeof window === "undefined") return null;
-    const u = loadUser(); if (!u) return null;
-    const ensured = ensureWorkspace(u);
-    if (!u.workspace && ensured.workspace) saveUser(ensured);
-    return ensured.workspace ?? null;
+    return ensureWorkspaceSaved()?.workspace ?? null;
   });
   const [sel, setSel] = useState<{ kind: "module" | "member"; id: string } | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -133,7 +131,8 @@ export default function RoadmapPage() {
   const examNames = new Map(readAllExams(ws).map((e) => [e.id, e.label]));
   const counts = planSubjects.length ? countRemaining(planSubjects) : { remainingLessons: 0, remainingDrills: 0, weakestSubject: null, totalItems: 0, doneItems: 0 };
   const avail = readTodayAvailability();
-  const stats = computeStats({ dayMins: loadStats().dayMins ?? {}, sessions: loadSessions(), today, plannedDailyMins: ((loadUser()?.studyHours ?? 0) * 60) || null });
+  const st = loadStats();
+  const stats = computeStats({ dayMins: st.dayMins ?? {}, sessionDays: st.sessionDays, sessions: loadSessions(), today, plannedDailyMins: ((loadUser()?.studyHours ?? 0) * 60) || null });
   /* الإشارتان المتاحتان في حالة هذه الصفحة أصلاً: `daysLeft` (سطر ١٢١) و
      `stats.week.commitmentPct`. تُمرَّران كما هما؛ وما لا يوجد يبقى `undefined`
      والمحرّكُ يعرف كيف يتعامل مع غيابه. */

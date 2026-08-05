@@ -9,9 +9,10 @@ import PageFooter from "@/components/PageFooter";
 import NextThread from "@/components/NextThread";
 import { phaseIdOf, phaseAllows } from "@/lib/transition";
 import {
-  loadUser, saveUser, loadStats, ensureJoinDate,
+  loadUser, loadStats, ensureJoinDate,
   type DarbUser, type DarbStats,
 } from "@/lib/storage";
+import { updateProfile, type ProfilePatch } from "@/lib/userCommands";
 import { getTrack } from "@/lib/tracks";
 import { getPlan } from "@/lib/plan";
 import type { PlanId } from "@/lib/types";
@@ -103,10 +104,10 @@ export default function ProfilePage() {
   const unlockedIds = useMemo(() => new Set(stats ? getUnlockedBadgeIds(stats, vaultCount) : []), [stats, vaultCount]);
 
   /* ── أفعال التحرير ── */
-  const updateUser = (partial: Partial<DarbUser>) => {
+  const updateUser = (partial: ProfilePatch) => {
     setUser((prev) => {
       const next = { ...(prev as DarbUser), ...partial };
-      saveUser(next);
+      updateProfile(partial);
       if (partial.name !== undefined) import("@/lib/firestore").then(({ syncUser }) => { syncUser({ name: next.name }); });
       return next;
     });
@@ -114,7 +115,7 @@ export default function ProfilePage() {
   const togglePrivacy = () => {
     setIsPrivate((prev) => {
       const next = !prev;
-      if (user) { const u = { ...user, isPrivate: next } as DarbUser; saveUser(u); }
+      if (user) updateProfile({ isPrivate: next } as ProfilePatch);
       import("@/lib/firestore").then(({ syncUser }) => { syncUser({ isPrivate: next }); });
       return next;
     });

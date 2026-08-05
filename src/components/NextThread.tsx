@@ -9,7 +9,7 @@ import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { pageThread, type PageThread, type ThreadPage, type ThreadSignals } from "@/lib/pageThread";
 import { readLifeContext, lifeEngine } from "@/lib/lifeEngine";
-import { loadStats, loadList, loadEvents, loadGoals, loadUser, loadAdmissions } from "@/lib/storage";
+import { loadStats, loadList, loadEvents, loadGoals, loadUser, loadAdmissions, USER_CHANGED } from "@/lib/storage";
 import { arcNext, type ArcStep } from "@/lib/uniJourney";
 import { currentPhase } from "@/lib/transition";
 import { loadHomework, homeworkPressure } from "@/lib/homework";
@@ -85,14 +85,18 @@ const invalidate = () => {
   for (const l of listeners) l();
 };
 
+/* `storage` لا يُطلَق في التبويب الذي كتب، فتغيُّرُ الملفِّ في نفس الشاشة كان
+   يمرّ بلا إبطال. `USER_CHANGED` يسدّ ذلك — وهو أوّلُ مستهلكٍ لحدث `saveUser`. */
 const subscribe = (cb: () => void) => {
   listeners.add(cb);
   window.addEventListener("darb:eventsChanged", invalidate);
+  window.addEventListener(USER_CHANGED, invalidate);
   window.addEventListener("storage", invalidate);
   return () => {
     listeners.delete(cb);
     if (listeners.size === 0) {
       window.removeEventListener("darb:eventsChanged", invalidate);
+      window.removeEventListener(USER_CHANGED, invalidate);
       window.removeEventListener("storage", invalidate);
     }
   };

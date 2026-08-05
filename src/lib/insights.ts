@@ -2,6 +2,7 @@
    لا UI هنا، ولا تخزين جديد: كله مشتقّ من DarbStats + سجل الجلسات.
    كل دالة قابلة للاختبار باستقلال. */
 import { localDayKey, type DarbStats, type SessionLogEntry } from "./storage";
+import { longestStreakOf } from "./streak";
 
 /* مفاتيح أيام للخلف بدءاً من start بعدد count (بتوقيت الجهاز المحلي) */
 function dayKeysBack(start: number, count: number): string[] {
@@ -42,19 +43,7 @@ export function mostActiveTime(log: SessionLogEntry[]): { period: DayPeriod; min
 /* ── أطول ستريك تاريخي: أطول تسلسل أيام متتالية في sessionDays ──
    يُحسب لحظياً — لا تخزين إضافي. */
 export function longestStreak(stats: DarbStats): number {
-  const days = [...new Set(stats.sessionDays)].sort(); // "YYYY-MM-DD" يفرز نصياً صحيحاً
-  if (!days.length) return 0;
-  const dayNum = (s: string) => Math.round(new Date(s + "T12:00:00").getTime() / 86400000);
-  let best = 1, run = 1;
-  for (let i = 1; i < days.length; i++) {
-    if (dayNum(days[i]) - dayNum(days[i - 1]) === 1) {
-      run += 1;
-      if (run > best) best = run;
-    } else {
-      run = 1;
-    }
-  }
-  return best;
+  return longestStreakOf(stats);
 }
 
 /* عدد الأيام النشطة ضمن آخر n يوم */

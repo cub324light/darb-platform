@@ -69,6 +69,7 @@ export const EVENT_REGISTRY: EventRegistry = {
   /* المحادثات */
   DuwairbConversationStarted:  { type: "DuwairbConversationStarted", category: "conversation", milestone: false },
   DuwairbConversationFinished: { type: "DuwairbConversationFinished", category: "conversation", milestone: false },
+  CoachInteractionUsed:        { type: "CoachInteractionUsed", category: "conversation", milestone: false },
 
   /* المجتمع والتحديات */
   CommunityJoined:   { type: "CommunityJoined", category: "community", milestone: false,

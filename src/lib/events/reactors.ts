@@ -27,7 +27,7 @@ export function makeMemoryReactor(mem: MemoryEngine): Reactor {
       "ScoreUpdated", "ExamCompleted", "STEPCompleted",
       "StudentFinishedSession", "SessionTaskSkipped", "VaultErrorAdded",
       "UniversityPhaseEntered", "CareerPhaseEntered", "StudentPhaseChanged",
-      "DuwairbConversationFinished",
+      "DuwairbConversationFinished", "CoachInteractionUsed",
     ],
     react: (e) => {
       const stage = e.educationalStage as EduStage;
@@ -110,6 +110,19 @@ export function makeMemoryReactor(mem: MemoryEngine): Reactor {
         case "CareerPhaseEntered":
           mem.remember({ type: "relationship.milestone", value: { text: "دخل مرحلة العمل" }, source: "event", educationalStage: "career", dedupeKey: e.id, evidence: evidence(e) });
           break;
+        /* ▓ ذاكرةُ المدرّب كانت مخزناً ثانياً مستقلاً (`darb_coach_memory`) تكتبه
+           أربعةُ مكوّناتٍ بيدها ويقرؤه `DuirbHub` — ذاكرتان لدويرب لا تعرف
+           إحداهما الأخرى. صارت ذاكرةً واحدة، ومَعبرُها هذا المُتفاعِلُ كغيره:
+           سجلٌّ واحدٌ بمفتاحٍ طبيعيٍّ ثابت يُدمج في مكانه بلا تكديس. */
+        case "CoachInteractionUsed": {
+          const m = e.metadata;
+          mem.remember({
+            type: "conversation.coachInteraction",
+            value: { mode: m.mode, summary: m.summary, date: m.date, subjects: m.subjects, goalLine: m.goalLine, recommendation: m.recommendation },
+            source: "duwairb", educationalStage: stage, evidence: evidence(e),
+          });
+          break;
+        }
         case "DuwairbConversationFinished":
           // المحادثات السابقة تُحفظ كحقيقة بارزة (معرّف حتميّ للاستعادة)
           if (e.metadata.topic && (e.metadata.messages ?? 0) > 0) {
