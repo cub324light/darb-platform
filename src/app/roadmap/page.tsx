@@ -228,76 +228,12 @@ export default function RoadmapPage() {
         )}
 
         {/* الأقسامُ يرتّبها الطالبُ ويخفي ما لا يعنيه — والترويسةُ فوقها ثابتة.
-            «هذا الأسبوع» أرقامٌ حقيقية تفتح الإحصائيات الكاملة. */}
+            ▓ الترتيبُ بالإلحاح لا بالبناء (`ROADMAP_SECTION_ORDER`): كانت الصفحةُ
+              تفتح على بطاقةِ إحصاءٍ ثمّ شبكةِ أربعِ بطاقات، وزرُّ «ابدأ المذاكرة»
+              — وهو فعلُ الصفحة كلِّها و`CTA`ها الوحيد — تحتهما. صار أوّلَها،
+              وهو **ثابتٌ** فلا يُزاح ولا يُخفى: صفحةٌ لا تبدأ منها المذاكرةُ
+              ليست «مساري». ثم ما يعين على البدء، ثم حصيلةُ الأسبوع، ثم الأفق. */}
         <Customizable page="roadmap" className="flex flex-col gap-2.5" sections={[
-        { id: "week", label: "هذا الأسبوع", desc: "أرقامُ أسبوعك والتزامك", node: (
-        <button onClick={() => router.push("/roadmap/stats")}
-          className="ds-card ds-card-interactive flex flex-col gap-3 text-right rise rise-1" style={{ ["--tint" as string]: "var(--accent)" }}>
-          <span className="flex items-center gap-2">
-            <span className="eyebrow flex-1" style={{ color: "var(--text-muted)" }}>📊 هذا الأسبوع</span>
-            {/* «التزام ٠٪» لمن لم يبدأ بعد ليست معلومةً — هي حكمٌ على لا شيء.
-                فالرقاقةُ لا تظهر إلا بعد أن يصير للأسبوع محتوى. */}
-            {hasWeek && stats.week.commitmentPct != null && (
-              <span className="t-caption font-black px-2.5 py-1 rounded-full font-mono-nums"
-                style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>
-                التزام {pct(stats.week.commitmentPct)}
-              </span>
-            )}
-            <span className="t-caption" style={{ color: "var(--text-dim)" }}>↗</span>
-          </span>
-          {/* البطاقةُ تحفظ شكلها فارغةً وممتلئة: أربعةُ مقاييسَ بشرطاتٍ قبل أن
-              يبدأ، فيرى **ما الذي سيمتلئ** بدل جملةٍ وحيدةٍ في فراغ. */}
-          <span className="grid grid-cols-4">
-            {weekMetrics.map((m, i) => (
-              <span key={m.l} className="flex flex-col items-center gap-0.5 px-1"
-                style={i > 0 ? { borderInlineStart: "1px solid var(--border)" } : undefined}>
-                <span className="text-[15px] leading-none" aria-hidden="true">{m.icon}</span>
-                <span className="t-h2 font-black font-mono-nums leading-tight"
-                  style={{ color: hasWeek ? "var(--text)" : "var(--text-dim)" }}>{hasWeek ? m.v : "—"}</span>
-                <span className="t-caption text-center leading-tight" style={{ color: "var(--text-dim)" }}>{m.l}</span>
-              </span>
-            ))}
-          </span>
-          {!hasWeek && (
-            <span className="t-caption" style={{ color: "var(--text-muted)" }}>ابدأ أول جلسة، وتمتلئ هذه الأرقام بأسبوعك.</span>
-          )}
-        </button>
-        ) },
-
-        /* الشبكة ٢×٢ — كل بطاقة تجيب سؤالاً واحداً، بلا تكرارٍ مع صفحةٍ أخرى */
-        { id: "tiles", label: "بطاقاتك الأربع", desc: "اختبارك · خطتي · التقويم · المصادر", node: (
-        <div className="grid grid-cols-2 gap-2.5 rise rise-3">
-          <Tile icon="🧠" label="اختبارك" tint={priority?.color ?? "var(--accent)"}
-            value={priority?.label ?? "لا اختبار بعد"}
-            lines={priority
-              ? [daysLeft != null && daysLeft > 0 ? `باقي ${daysWord(daysLeft)}` : daysLeft === 0 ? "موعدك اليوم" : "بلا موعدٍ محدّد", "جاهز تبدأ؟"]
-              : ["أضف اختبارك الأول", ""]}
-            onClick={openExam} />
-
-          <Tile icon="🗓️" label="خطتي" tint="#8B5CF6"
-            value={priority?.label ?? "لا خطة بعد"}
-            lines={[
-              daysLeft != null && daysLeft > 0 ? `باقي ${daysWord(daysLeft)}` : daysLeft === 0 ? "موعدك اليوم" : "حدّد موعد اختبارك",
-              "افتح خطتي ←",
-            ]}
-            onClick={() => router.push("/plan")} />
-
-          <Tile icon="🗓️" label="التقويم" tint="#3B82F6"
-            value={nextEvent ? nextEvent.title : "لا أحداث قريبة"}
-            lines={calLines}
-            onClick={() => router.push("/roadmap/calendar")} />
-
-          <Tile icon="📚" label="المصادر" tint="#10B981"
-            value={shownNames[0] ?? "الجهات الرسمية"}
-            lines={[shownNames.slice(1).join("، "), restCount > 0 ? "+ باقي المصادر ←" : "افتح المواقع الرسمية ↗"]}
-            onClick={() => router.push("/roadmap/resources")} />
-        </div>
-        ) },
-
-        /* ▶ البطل — وفيه **هدفُ اليوم**. كانا بطاقتين: واحدةٌ تقول ماذا عليك
-           وأخرى تقول ابدأ، والطالبُ يقرأ الأولى ثم يضغط الثانية. صارا واحداً:
-           ماذا عليك اليوم · كم أنجزت · وبأيّ مادّةٍ يبدأ — في الزرّ الذي يبدأ.
-           ثابتٌ لا يُخفى: صفحةٌ لا تبدأ منها المذاكرةُ ليست «مساري». */
         { id: "start", label: "ابدأ المذاكرة", desc: "هدفُ اليوم وزرُّ البدء", fixed: true, node: (
         <button onClick={() => {
             /* يبدأ بالمهمّة **التالية** لا بالأولى دائماً: من أنجز اثنتين يكمل
@@ -350,6 +286,74 @@ export default function RoadmapPage() {
         </button>
         ) },
 
+        { id: "tiles", label: "بطاقاتك الأربع", desc: "اختبارك · خطتي · التقويم · المصادر", node: (
+        <div className="grid grid-cols-2 gap-2.5 rise rise-3">
+          <Tile icon="🧠" label="اختبارك" tint={priority?.color ?? "var(--accent)"}
+            value={priority?.label ?? "لا اختبار بعد"}
+            lines={priority
+              ? [daysLeft != null && daysLeft > 0 ? `باقي ${daysWord(daysLeft)}` : daysLeft === 0 ? "موعدك اليوم" : "بلا موعدٍ محدّد", "جاهز تبدأ؟"]
+              : ["أضف اختبارك الأول", ""]}
+            onClick={openExam} />
+
+          <Tile icon="🗓️" label="خطتي" tint="#8B5CF6"
+            value={priority?.label ?? "لا خطة بعد"}
+            lines={[
+              daysLeft != null && daysLeft > 0 ? `باقي ${daysWord(daysLeft)}` : daysLeft === 0 ? "موعدك اليوم" : "حدّد موعد اختبارك",
+              "افتح خطتي ←",
+            ]}
+            onClick={() => router.push("/plan")} />
+
+          <Tile icon="🗓️" label="التقويم" tint="#3B82F6"
+            value={nextEvent ? nextEvent.title : "لا أحداث قريبة"}
+            lines={calLines}
+            onClick={() => router.push("/roadmap/calendar")} />
+
+          <Tile icon="📚" label="المصادر" tint="#10B981"
+            value={shownNames[0] ?? "الجهات الرسمية"}
+            lines={[shownNames.slice(1).join("، "), restCount > 0 ? "+ باقي المصادر ←" : "افتح المواقع الرسمية ↗"]}
+            onClick={() => router.push("/roadmap/resources")} />
+        </div>
+        ) },
+
+        /* ▶ البطل — وفيه **هدفُ اليوم**. كانا بطاقتين: واحدةٌ تقول ماذا عليك
+           وأخرى تقول ابدأ، والطالبُ يقرأ الأولى ثم يضغط الثانية. صارا واحداً:
+           ماذا عليك اليوم · كم أنجزت · وبأيّ مادّةٍ يبدأ — في الزرّ الذي يبدأ.
+           ثابتٌ لا يُخفى: صفحةٌ لا تبدأ منها المذاكرةُ ليست «مساري». */
+        { id: "week", label: "هذا الأسبوع", desc: "أرقامُ أسبوعك والتزامك", node: (
+        <button onClick={() => router.push("/roadmap/stats")}
+          className="ds-card ds-card-interactive flex flex-col gap-3 text-right rise rise-1" style={{ ["--tint" as string]: "var(--accent)" }}>
+          <span className="flex items-center gap-2">
+            <span className="eyebrow flex-1" style={{ color: "var(--text-muted)" }}>📊 هذا الأسبوع</span>
+            {/* «التزام ٠٪» لمن لم يبدأ بعد ليست معلومةً — هي حكمٌ على لا شيء.
+                فالرقاقةُ لا تظهر إلا بعد أن يصير للأسبوع محتوى. */}
+            {hasWeek && stats.week.commitmentPct != null && (
+              <span className="t-caption font-black px-2.5 py-1 rounded-full font-mono-nums"
+                style={{ background: "color-mix(in srgb, var(--accent) 12%, transparent)", color: "var(--accent-light)" }}>
+                التزام {pct(stats.week.commitmentPct)}
+              </span>
+            )}
+            <span className="t-caption" style={{ color: "var(--text-dim)" }}>↗</span>
+          </span>
+          {/* البطاقةُ تحفظ شكلها فارغةً وممتلئة: أربعةُ مقاييسَ بشرطاتٍ قبل أن
+              يبدأ، فيرى **ما الذي سيمتلئ** بدل جملةٍ وحيدةٍ في فراغ. */}
+          <span className="grid grid-cols-4">
+            {weekMetrics.map((m, i) => (
+              <span key={m.l} className="flex flex-col items-center gap-0.5 px-1"
+                style={i > 0 ? { borderInlineStart: "1px solid var(--border)" } : undefined}>
+                <span className="text-[15px] leading-none" aria-hidden="true">{m.icon}</span>
+                <span className="t-h2 font-black font-mono-nums leading-tight"
+                  style={{ color: hasWeek ? "var(--text)" : "var(--text-dim)" }}>{hasWeek ? m.v : "—"}</span>
+                <span className="t-caption text-center leading-tight" style={{ color: "var(--text-dim)" }}>{m.l}</span>
+              </span>
+            ))}
+          </span>
+          {!hasWeek && (
+            <span className="t-caption" style={{ color: "var(--text-muted)" }}>ابدأ أول جلسة، وتمتلئ هذه الأرقام بأسبوعك.</span>
+          )}
+        </button>
+        ) },
+
+        /* الشبكة ٢×٢ — كل بطاقة تجيب سؤالاً واحداً، بلا تكرارٍ مع صفحةٍ أخرى */
         { id: "months", label: "خطّتك عبر الأشهر", desc: "متى تجهز لكلّ اختبار", node: (
           <ExamPlanTimeline plan={staged} pace={pace} labelOf={(id) => examNames.get(id) ?? id} />
         ) },

@@ -119,24 +119,25 @@ export default function SchoolPage() {
       </Dome>
       <div className="h-4" />
       <div className="page-content">
-        {/* الأقسامُ يرتّبها الطالبُ ويخفي ما لا يعنيه — الترتيبُ هنا هو الافتراضيّ */}
+        {/* الأقسامُ يرتّبها الطالبُ ويخفي ما لا يعنيه — والترتيبُ الافتراضيُّ هنا
+            من خريطة الرحلة (`SCHOOL_SECTION_ORDER`): **بالإلحاح الحقيقيّ لا
+            بترتيب البناء**. كانت الصفحةُ تفتح على التقويم والموادّ قبل الواجب
+            المستحقّ؛ صارت تفتح على ما عليه اليوم وغداً، ثم ما يُقاس، ثم ما
+            يُحضَّر، ثم ما يُذكَر. */}
         <Customizable page="school" sections={[
+          /* بطاقةٌ تُطوى بعد قراءتها — تُعرّف الصفحة ولا تنازع فعلاً */
           { id: "intro", label: "بطاقة التعريف", desc: "شرحٌ قصيرٌ لما في الصفحة", node: (
             <DismissibleNote id="school-intro" title="يومك الدراسي">
               واجباتك ودروسك واختباراتك ومتطلباتك في مكانٍ واحد — تُنظّم ضغطك الحقيقي، لا الاختبارات وحدها.
             </DismissibleNote>
           ) },
-          /* التقويم: «كم باقي؟» أولاً — سؤالُ الطالب الأول عند فتح المدرسة */
+          /* فعلُ الصفحة: المستحقُّ والمتأخّر — ثم غدٌ بعده لأنه يحيل إليه («أضِفها من المذكرة أعلاه») */
+          { id: "homework", label: "مذكرة الواجبات", desc: "واجباتك ومواعيدها", node: <HomeworkPlanner /> },
+          { id: "tomorrow", label: "المطلوب غداً", desc: "واجباتُ الغد", node: <DueTomorrow /> },
+          /* ثم ما يُقاس: اختباراتُه بمواعيدها، ثم «كم باقٍ»، ثم موادُّ فصله */
+          { id: "exams", label: "اختباراتك المدرسية", desc: "الموعد والتحديد ووش قال المدرّس", node: <SchoolExams /> },
           { id: "timeline", label: "التقويم الدراسي", desc: "كم باقٍ على الاختبارات والإجازة", node: <SchoolTimelineCard /> },
           { id: "subjects", label: "موادّك", desc: "موادُّ صفّك وفصلك", node: <CurriculumSubjects /> },
-          { id: "homework", label: "مذكرة الواجبات", desc: "واجباتك ومواعيدها", node: <HomeworkPlanner /> },
-          /* دفترُ اليوم: يرسم أو يجدول أو يكتب — والصورُ في ألبوم جوّاله */
-          { id: "journal", label: "دفتر يومك", desc: "ارسم أو جدول أو اكتب", node: <DayJournal /> },
-          { id: "memories", label: "ذكرياتك الدراسية", desc: "ألبومُ صورك في جوّالك", node: <MemoriesAlbum /> },
-          /* اختباراتُ المدرسة بتفاصيلها الحقيقية — حلّت محلّ بطاقةٍ كانت تعرض
-             مواعيدَ قياس تحت اسم «الاختبارات القادمة». */
-          { id: "exams", label: "اختباراتك المدرسية", desc: "الموعد والتحديد ووش قال المدرّس", node: <SchoolExams /> },
-          { id: "tomorrow", label: "المطلوب غداً", desc: "واجباتُ الغد", node: <DueTomorrow /> },
           { id: "plan-link", label: "الجدول الدراسي", desc: "رابطٌ إلى جدولك", node: (
             <Link href="/plan" className="ds-card ds-card-interactive flex items-center gap-3 no-underline">
               <span className="text-[25px]">📅</span>
@@ -153,8 +154,11 @@ export default function SchoolPage() {
           { id: "projects", label: "المشاريع", desc: "مشاريعُ موادّك", node: (
             <SchoolChecklist storageKey="darb_school_projects" title="المشاريع" icon="📂" placeholder="مشروع + المادة (مثل: بحث الأحياء)…" />
           ) },
-          /* مدرّسوك: دليلٌ ودفترُ ملاحظاتٍ لكلٍّ منهم. */
+          /* مرجعٌ يُفتح عند الحاجة: دليلُ مدرّسيه ودفترُ ملاحظاتٍ لكلٍّ منهم */
           { id: "teachers", label: "مدرّسوك", desc: "أسماؤهم وتواصلهم وملاحظاتك", node: <TeachersCard /> },
+          /* ولا إلحاحَ في الأخيرين — ذاكرةُ سنةٍ لا مهمّةُ يوم */
+          { id: "journal", label: "دفتر يومك", desc: "ارسم أو جدول أو اكتب", node: <DayJournal /> },
+          { id: "memories", label: "ذكرياتك الدراسية", desc: "ألبومُ صورك في جوّالك", node: <MemoriesAlbum /> },
         ]} />
       </div>
       <div className="h-6" />

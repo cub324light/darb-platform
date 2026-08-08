@@ -13,6 +13,7 @@ import { ThemeToggle } from "./Profile";
 import SettingsButton from "./SettingsPanel";
 import { loadUser, type DarbUser } from "@/lib/storage";
 import { currentPhase, type NavMid, type PhaseView } from "@/lib/transition";
+import { navOrder, type NavSlotId } from "@/lib/journeyOrder";
 
 /* عدّاد البطاقات المستحقّة — نفس منطق BottomNav */
 function calcDue(): number {
@@ -155,19 +156,26 @@ export default function DesktopSidebar() {
     skills: { href: "/skills", label: "مهاراتي", icon: I.skills },
   };
 
-  const primary: NavLink[] = [
-    { href: "/dashboard", label: "الرئيسية", icon: I.home },
+  /* ▓ الخمسةُ الأولى **هي عينُها** عناصرُ الشريط السفليّ وبترتيبه حرفاً بحرف
+     (`navOrder` — مصدرٌ واحد). كان يخالفه في الخامس: «خطتي» هنا و«أخطائي» هناك.
+     ثمّ ما لا يتّسع له شريطُ الجوّال يأتي بعدها — لا وجهةَ تُحذف ولا تُضاف. */
+  const SLOT: Record<NavSlotId, NavLink> = {
+    home: { href: "/dashboard", label: "الرئيسية", icon: I.home },
     /* العنصرُ الأوسط من `phaseExperience.navMid` — نفسُ مصدر الشريط السفليّ.
        (كان كلٌّ يكتب منطقَه بيده فتفرّقا على ثالث ثانوي وخريج الثانوي.) */
-    MID_LINK[view?.navMid ?? "roadmap"],
-    { href: "/orbit", label: "تركيز", icon: I.orbit },
+    mid: MID_LINK[view?.navMid ?? "roadmap"],
+    focus: { href: "/orbit", label: "تركيز", icon: I.orbit },
     /* المدرسة للثانوي فقط — الجامعي/الخريج يرون «المستقبل» بدلاً منها */
-    view?.allows("school") ?? true
+    world: (view?.allows("school") ?? true)
       ? { href: "/school", label: "المدرسة", icon: I.school }
       : { href: "/future", label: "المستقبل", icon: I.future },
+    vault: { href: "/vault", label: "أخطائي", icon: I.vault, badge: true },
+  };
+
+  const primary: NavLink[] = [
+    ...navOrder(view).map((slot) => SLOT[slot]),
     { href: "/plan", label: "خطتي", icon: I.plan },
     { href: "/study-plan", label: "مخطط الدراسة", icon: I.study },
-    { href: "/vault", label: "أخطائي", icon: I.vault, badge: true },
   ];
 
   const community: NavLink[] = [

@@ -26,8 +26,9 @@ export default function UniToolsPage() {
           <BackButton />
           <h1 className="title-lg grad-title">أدوات الجامعة</h1>
         </div>
+        {/* الوصفُ يذكرها بترتيبها الجديد — فلا يقول سطرٌ ما لا تفعله الصفحة */}
         <p className="text-[15px] mt-1" style={{ color: "var(--text-muted)" }}>
-          المعدل والغياب والفاينل وتحويل المعدل — استرشادي، والقرار للوائح جامعتك
+          الغياب والفاينل والمعدل وتحويل المعدل — استرشادي، والقرار للوائح جامعتك
         </p>
       </Dome>
       <div className="h-4" />

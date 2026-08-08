@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { currentPhase, type NavMid } from "@/lib/transition";
+import { navOrder, type NavSlotId } from "@/lib/journeyOrder";
 
 function calcDue(): number {
   if (typeof window === "undefined") return 0;
@@ -91,37 +92,35 @@ const FUTURE_ITEM: NavItem = {
   ),
 };
 
-const BASE_ITEMS: (NavItem | "MID" | "SCHOOL")[] = [
-  {
-    href: "/dashboard",
-    label: "الرئيسية",
-    icon: (a: boolean) => (
-      <svg viewBox="0 0 24 24" fill={a ? "currentColor" : "none"} stroke="currentColor" strokeWidth={a ? 0 : 1.9} className="w-6 h-6">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3.5 10.5 12 3l8.5 7.5V20a1.5 1.5 0 0 1-1.5 1.5h-4.5V14h-5v7.5H5A1.5 1.5 0 0 1 3.5 20v-9.5z" />
-      </svg>
-    ),
-  },
-  "MID",
-  {
-    href: "/orbit",
-    label: "تركيز",
-    icon: (a: boolean) => (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
-        <circle cx="12" cy="13" r="8" /><path strokeLinecap="round" d="M12 9.5V13l2.5 2M10 2h4" />
-      </svg>
-    ),
-  },
-  "SCHOOL",
-  {
-    href: "/vault",
-    label: "أخطائي",
-    icon: (a: boolean) => (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
-        <rect x="5" y="4" width="14" height="17" rx="2.5" /><path strokeLinecap="round" d="M9 4.5V3m6 1.5V3M9 12l2 2 4-4.5" />
-      </svg>
-    ),
-  },
-];
+const HOME_ITEM: NavItem = {
+  href: "/dashboard",
+  label: "الرئيسية",
+  icon: (a: boolean) => (
+    <svg viewBox="0 0 24 24" fill={a ? "currentColor" : "none"} stroke="currentColor" strokeWidth={a ? 0 : 1.9} className="w-6 h-6">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.5 10.5 12 3l8.5 7.5V20a1.5 1.5 0 0 1-1.5 1.5h-4.5V14h-5v7.5H5A1.5 1.5 0 0 1 3.5 20v-9.5z" />
+    </svg>
+  ),
+};
+
+const FOCUS_ITEM: NavItem = {
+  href: "/orbit",
+  label: "تركيز",
+  icon: (a: boolean) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
+      <circle cx="12" cy="13" r="8" /><path strokeLinecap="round" d="M12 9.5V13l2.5 2M10 2h4" />
+    </svg>
+  ),
+};
+
+const VAULT_ITEM: NavItem = {
+  href: "/vault",
+  label: "أخطائي",
+  icon: (a: boolean) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.4 : 1.9} className="w-6 h-6">
+      <rect x="5" y="4" width="14" height="17" rx="2.5" /><path strokeLinecap="round" d="M9 4.5V3m6 1.5V3M9 12l2 2 4-4.5" />
+    </svg>
+  ),
+};
 
 /* خريطةُ `navMid` ← عنصرُ الشريط. مرحلةٌ جديدةٌ تُضاف بقيمةٍ واحدةٍ هنا وهناك. */
 const MID_ITEM: Record<NavMid, NavItem> = {
@@ -137,19 +136,21 @@ export default function BottomNav() {
   /* ▓ العنصرُ الأوسط من `phaseExperience.navMid` — المصدرُ الواحد الذي يقرؤه
      الشريطان معاً. كان كلٌّ منهما يكتب منطقَه بيده فتفرّقا: ثالثُ ثانويّ يرى
      «مساري» هنا و«القبول الجامعي» على الحاسب.
+     ▓ والترتيبُ كذلك من مصدرٍ واحد (`navOrder`) — الوجهاتُ والبواباتُ كما هي،
+     والترتيبُ وحده يتبع سؤالَ المرحلة.
      تهيئة كسولة — لا setState داخل effect. */
-  const [{ midItem, schoolItem }] = useState<{ midItem: NavItem; schoolItem: NavItem }>(() => {
-    if (typeof window === "undefined") return { midItem: ROADMAP_ITEM, schoolItem: SCHOOL_ITEM };
-    const view = currentPhase();
-    /* مَن له مقعدٌ في المدرسة يراها، ومَن تجاوزها يرى «المستقبل» — بالقدرة لا بالاسم */
-    return {
-      midItem: MID_ITEM[view.navMid],
-      schoolItem: view.allows("school") ? SCHOOL_ITEM : FUTURE_ITEM,
+  const [navItems] = useState<NavItem[]>(() => {
+    const view = typeof window === "undefined" ? null : currentPhase();
+    const slots: Record<NavSlotId, NavItem> = {
+      home: HOME_ITEM,
+      mid: view ? MID_ITEM[view.navMid] : ROADMAP_ITEM,
+      focus: FOCUS_ITEM,
+      /* مَن له مقعدٌ في المدرسة يراها، ومَن تجاوزها يرى «المستقبل» — بالقدرة لا بالاسم */
+      world: (view?.allows("school") ?? true) ? SCHOOL_ITEM : FUTURE_ITEM,
+      vault: VAULT_ITEM,
     };
+    return navOrder(view).map((slot) => slots[slot]);
   });
-
-  const navItems: NavItem[] = BASE_ITEMS.map((it) =>
-    it === "MID" ? midItem : it === "SCHOOL" ? schoolItem : it) as NavItem[];
 
   return (
     <nav className="float-nav flex items-stretch px-2" aria-label="التنقل الرئيسي">

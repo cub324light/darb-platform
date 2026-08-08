@@ -23,13 +23,17 @@ const C_ACTION = "var(--accent)";      // أزرق = أدوات/إجراء (بر
 const C_CERT = "var(--gold)";          // ذهبي = شهادات
 const C_INFO = "var(--text-muted)";    // رمادي = معلومة (مسارات/مشاريع/مراجع)
 
-/* شرائح التبويب في «خطواتك المهنية» — الشهادات انتقلت لعالم التخصص فحُذف تبويبها */
-type TabId = "training" | "resume" | "linkedin" | "opportunities" | "grad";
+/* شرائح التبويب في «خطواتك المهنية» — الشهادات انتقلت لعالم التخصص فحُذف تبويبها.
+   ▓ الترتيبُ بترتيب رحلة **خريج الجامعة** (`FUTURE_TAB_ORDER` في `lib/journeyOrder`):
+   السيرةُ ورقتُه الأولى ولا يتقدّم لشيءٍ بدونها، ثم الفرصُ (التقديم نفسُه)، ثم
+   شبكتُه المهنية. وكان «التدريب» أوّلَ تبويبٍ **والمفتوحَ افتراضياً** — ونصُّه
+   «التدريب التعاوني والصيفي … قبل التخرّج»، فيستقبل الخرّيجَ بما فات وقتُه. */
+type TabId = "resume" | "opportunities" | "linkedin" | "training" | "grad";
 const TABS: { id: TabId; label: string; icon: string }[] = [
-  { id: "training",      label: "التدريب",         icon: "🧭" },
   { id: "resume",        label: "السيرة الذاتية",  icon: "📄" },
-  { id: "linkedin",      label: "لينكدإن",         icon: "🔗" },
   { id: "opportunities", label: "الفرص",           icon: "💼" },
+  { id: "linkedin",      label: "لينكدإن",         icon: "🔗" },
+  { id: "training",      label: "التدريب",         icon: "🧭" },
   { id: "grad",          label: "الدراسات العليا", icon: "🧪" },
 ];
 
@@ -232,7 +236,8 @@ export default function CareerCenter() {
     const u = loadUser();
     return { majorId: g.majorId ?? null, cat: resolveCategory(g.majorId, u?.trackType) };
   });
-  const [tab, setTab] = useState<TabId>("training");
+  /* التبويبُ المفتوح يتبع الترتيب — فلا يُكتب مرّتين ولا يتخلّف عنه */
+  const [tab, setTab] = useState<TabId>(TABS[0].id);
 
   /* تخصص دقيق معرّف له عالم؟ («other»/غير محدّد = لا — نعرض احتياطياً عاماً بلا تخصيص البطل) */
   const specific = hasMajorWorld(init.majorId);

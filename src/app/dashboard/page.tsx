@@ -19,6 +19,7 @@ import { helloFor, tipFor } from "@/lib/greeting";
 import { greetSeed } from "@/lib/greetSeed";
 import Customizable from "@/components/Customizable";
 import { currentPhase } from "@/lib/transition";
+import { homeSectionOrder, orderBy } from "@/lib/journeyOrder";
 import dynamic from "next/dynamic";
 const RetentionHost = dynamic(() => import("@/components/retention/RetentionHost"), { ssr: false });
 
@@ -36,6 +37,8 @@ export default function DashboardPage() {
       tip: tipFor(seed.tip),
       /* لوحةُ المرحلة لمن تجاوز الثانوية — بالقدرة لا بالاسم */
       showPhaseBoard: (() => { const v = currentPhase(); return v.allows("uni-life") || v.allows("career"); })(),
+      /* ترتيبُ أقسامها من خريطة الرحلة — الصفحةُ تتبع ولا تقرّر */
+      order: homeSectionOrder(currentPhase()),
     };
   });
   const user: DarbUser | null = init?.user ?? null;
@@ -92,12 +95,15 @@ export default function DashboardPage() {
           /* الجامعي/خريج الجامعة: لوحاتهم التشغيلية/المهنية كما هي */
           <PhaseHome />
         ) : (
-          /* ثلاثةُ أسئلةٍ بترتيبها: ماذا الآن؟ ← هل أنا مستمرّ؟ ← ما الذي لا أملكه؟ */
-          <Customizable page="dashboard" className="flex flex-col gap-4" sections={[
-            { id: "today", label: "يومك", desc: "بماذا تبدأ الآن، ومهامُّ يومك", node: <TodayBlock /> },
-            { id: "achievements", label: "إيقاعك", desc: "أسبوعُك وسلسلتُك", node: <Achievements /> },
-            { id: "signals", label: "الرسميّ", desc: "اختباراتك ومواعيد الجهات الرسمية", node: <HomeSignals /> },
-          ]} />
+          /* ثلاثةُ أسئلةٍ بترتيبٍ يتبع المرحلة: «ماذا الآن؟» أوّلاً دائماً، ثم
+             — لمن فُتح له بابُ القبول — «أين أنا من الرسميّ؟» قبل «هل أنا
+             مستمرّ؟». الترتيبُ من `homeSectionOrder`، والبطلُ واحدٌ لا ينازعه أحد. */
+          <Customizable page="dashboard" className="flex flex-col gap-4"
+            sections={orderBy([
+              { id: "today", label: "يومك", desc: "بماذا تبدأ الآن، ومهامُّ يومك", node: <TodayBlock /> },
+              { id: "achievements", label: "إيقاعك", desc: "أسبوعُك وسلسلتُك", node: <Achievements /> },
+              { id: "signals", label: "الرسميّ", desc: "اختباراتك ومواعيد الجهات الرسمية", node: <HomeSignals /> },
+            ], init?.order ?? [])} />
         )}
       </div>
 
