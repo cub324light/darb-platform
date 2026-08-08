@@ -57,6 +57,16 @@ export function setSchoolGrade(grade: string | null): DarbUser | null {
   const next: DarbUser = { ...u, grade: grade ?? undefined, studyLevel: "ثانوي" };
   if (phaseIdOf(next) === null) return null;   // مرحلةٌ مجهولة ⇒ لا تُكتب
   saveUser(next);
+  /* ▓ الذاكرةُ تعرف بالتصحيح — عبر حدثٍ ومُتفاعِل، لا بكتابةٍ مباشرة. كان
+     الملفُّ يقول «ثالث ثانوي» وبرومبتُ دويرب يقول «(أول ثانوي)» بلا مسارٍ يشفيه.
+     وهو تصحيحُ بياناتٍ لا انتقالُ مرحلة: لا `StudentPhaseChanged` ولا وحدات. */
+  if (next.grade || next.studyLevel) {
+    import("./events").then(({ emit }) => emit({
+      eventType: "StudentProfileCorrected",
+      metadata: { grade: next.grade, studyLevel: "ثانوي" },
+      actor: { kind: "student" }, source: "ui",
+    })).catch(() => { /* فشلُ الإطلاق لا يُسقط التصحيح */ });
+  }
   return next;
 }
 

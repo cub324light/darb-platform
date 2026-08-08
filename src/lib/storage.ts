@@ -686,6 +686,9 @@ export interface DarbGoals {
   majorId?: string;         // التصنيف الخشن من MAJORS — مشتقٌّ من التخصص الدقيق، قد يغيب
   college?: string;         // الكلية (للجامعي): «كلية العمارة والتخطيط»
   highschoolPct?: number;   // نسبة الثانوية العامة (لحساب الموزونة)
+  /** متى كُتب هذا الهدف — ختمٌ حقيقيٌّ يكتبه `saveGoals`، به وحدَه تُحسم
+      «أيُّ الهدفين أحدث» عند المزامنة. غيابُه (بياناتٌ سابقة) يعني: لا مقارنة. */
+  updatedAt?: number;
 }
 
 const GOALS_KEY = "darb_goals";
@@ -697,7 +700,11 @@ export function loadGoals(): DarbGoals {
   } catch { return {}; }
 }
 export function saveGoals(g: DarbGoals) {
-  try { localStorage.setItem(GOALS_KEY, JSON.stringify(g)); } catch {}
+  /* ختمُ الكتابة — به وحدَه تُحسم «أيُّ الهدفين أحدث» عند المزامنة، ولا تُخترع
+     مقارنةٌ زمنيةٌ من لا شيء. يُجدَّد في كلّ حفظٍ لأنّ المستدعين يمرّرون الهدفَ
+     المحمَّل كاملاً (`{...loadGoals(), university}`) فيحملون ختمَه القديم معه. */
+  const stamped: DarbGoals = { ...g, updatedAt: Date.now() };
+  try { localStorage.setItem(GOALS_KEY, JSON.stringify(stamped)); } catch {}
   /* الهدفُ يقوده خيطُ الصفحة (`hasDestination` وقوسُ الرحلة) — فيُبطَل معه */
   announceContent(GOALS_KEY);
 }

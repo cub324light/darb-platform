@@ -108,6 +108,27 @@ export interface EventMetaMap {
     recommendation?: string;
   };
 
+  /* تصحيحُ بياناتٍ أساسيةٍ في ملفٍّ **قائم** — لا تسجيلٌ أوّل ولا انتقالُ مرحلة.
+     ▓ لماذا نوعٌ مستقلّ: `StudentRegistered` دلالتُه «هذه أوّلُ لقطةٍ للطالب»
+       ومُتفاعِلُه يكتب الهويةَ **والأهدافَ والدرجات**؛ فإعادةُ استعماله لتصحيح
+       صفٍّ تُعيد كتابةَ ما لم يُصحَّح. وهذا يحمل **الهويةَ وحدَها**.
+     ▓ ولا يمسّ المرحلة: `phaseId` يُشتقّ من `DarbUser` لا من الذاكرة، وحدثُ
+       المرحلة يبقى ملكَ `transition` وحدَه. */
+  "StudentProfileCorrected": {
+    name?: string;
+    age?: number;
+    region?: string;
+    school?: string;
+    studyLevel?: "ثانوي" | "جامعي" | "خريج";
+    grade?: string;
+    /** صار بلا صفٍّ (خرّيج) — يُبطَل صفُّه ولا يُحذف. */
+    clearedGrade?: boolean;
+  };
+
+  /* حذفُ نتيجةٍ سجّلها الطالبُ بنفسه. السجلُّ append-only فلا يُحذف حدثُ التسجيل؛
+     يُلحَق هذا بعده فيبقى التاريخُ صادقاً، وتُبطَل الذاكرةُ التي تعتمد عليها. */
+  "ResultDeleted": { resultId: string; exam: string; score?: number };
+
   /* ── المجتمع والتحديات ── */
   "CommunityJoined":   { group: string };
   "ChallengeCompleted":{ challenge: string; reward?: number };

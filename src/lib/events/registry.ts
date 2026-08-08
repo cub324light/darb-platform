@@ -8,6 +8,8 @@ import type { EventRegistry, EventType, EventCategory } from "./types";
 export const EVENT_REGISTRY: EventRegistry = {
   /* دورة الحياة */
   StudentRegistered:      { type: "StudentRegistered", category: "lifecycle", milestone: true, label: () => "انضمّ إلى درب" },
+  /* تصحيحُ بياناتٍ لا مَعلَمَ فيه — لا يُزاحم مَعالِمَ الطالب في جدوله الزمنيّ. */
+  StudentProfileCorrected: { type: "StudentProfileCorrected", category: "lifecycle", milestone: false },
   UniversityPhaseEntered: { type: "UniversityPhaseEntered", category: "lifecycle", milestone: true, label: () => "دخل المرحلة الجامعية" },
   CareerPhaseEntered:     { type: "CareerPhaseEntered", category: "lifecycle", milestone: true, label: () => "دخل مرحلة العمل" },
   StudentPhaseChanged:    { type: "StudentPhaseChanged", category: "lifecycle", milestone: false,
@@ -39,6 +41,10 @@ export const EVENT_REGISTRY: EventRegistry = {
   ScoreUpdated:  { type: "ScoreUpdated", category: "exam", milestone: true,
     label: (e) => `سجّل ${e.metadata.score} في ${e.metadata.exam}`,
     validate: (m) => !!m.exam && Number.isFinite(m.score) },
+  /* الحذفُ واقعةٌ كغيرها — تُلحَق ولا تمحو ما قبلها، فيقرأ دويربُ الأحدثَ منهما. */
+  ResultDeleted: { type: "ResultDeleted", category: "exam", milestone: true,
+    label: (e) => `حذف نتيجة ${e.metadata.exam}`,
+    validate: (m) => !!m.resultId && !!m.exam },
   STEPStarted:   { type: "STEPStarted", category: "exam", milestone: true, label: () => "بدأ STEP" },
   STEPCompleted: { type: "STEPCompleted", category: "exam", milestone: true, label: () => "أكمل STEP" },
 

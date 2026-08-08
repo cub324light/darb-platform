@@ -28,6 +28,7 @@ export function makeMemoryReactor(mem: MemoryEngine): Reactor {
       "StudentFinishedSession", "SessionTaskSkipped", "VaultErrorAdded",
       "UniversityPhaseEntered", "CareerPhaseEntered", "StudentPhaseChanged",
       "DuwairbConversationFinished", "CoachInteractionUsed",
+      "StudentProfileCorrected", "ResultDeleted",
     ],
     react: (e) => {
       const stage = e.educationalStage as EduStage;
@@ -101,6 +102,32 @@ export function makeMemoryReactor(mem: MemoryEngine): Reactor {
           } else if (m.clearedGrade) {
             mem.invalidateMemory("identity.grade:self", `انتقل إلى ${m.to} — لم يعد له صفٌّ دراسيّ`);
           }
+          break;
+        }
+        /* ▓ تصحيحُ بياناتٍ في ملفٍّ قائم — **الهويةُ وحدَها**. قِسنا العطل: طالبٌ
+           يصحّح صفَّه من «أول» إلى «ثالث» فيقول ملفُّه ثالثاً ويقول برومبت دويرب
+           «الهوية: … (أول ثانوي)» إلى الأبد (بذرةُ الذاكرة محروسةٌ بعلَمٍ فلا تُعاد).
+           والمفاتيحُ الطبيعيةُ تجعله متماثلاً: ألفُ تصحيحٍ بنفس القيمة = سجلٌّ واحد.
+           ولا يمسّ هدفاً ولا درجةً ولا مرحلةً ولا وحدة. */
+        case "StudentProfileCorrected": {
+          const m = e.metadata;
+          if (m.name) mem.remember({ type: "identity.name", value: { name: m.name }, source: "explicit", educationalStage: stage, evidence: evidence(e) });
+          if (typeof m.age === "number") mem.remember({ type: "identity.age", value: { age: m.age }, source: "explicit", evidence: evidence(e) });
+          if (m.region) mem.remember({ type: "identity.region", value: { region: m.region }, source: "explicit", evidence: evidence(e) });
+          if (m.school) mem.remember({ type: "identity.school", value: { school: m.school }, source: "explicit", evidence: evidence(e) });
+          if (m.studyLevel) mem.remember({ type: "identity.studyLevel", value: { level: m.studyLevel }, source: "explicit", educationalStage: stage, evidence: evidence(e) });
+          if (m.grade) mem.remember({ type: "identity.grade", value: { grade: m.grade }, source: "explicit", educationalStage: stage, evidence: evidence(e) });
+          else if (m.clearedGrade) mem.invalidateMemory("identity.grade:self", "صحّح ملفَّه — لم يعد له صفٌّ دراسيّ");
+          break;
+        }
+        /* ▓ حذفُ نتيجة: السجلُّ append-only فلا يُمحى حدثُ التسجيل — يبقى تاريخاً
+           صادقاً، ويُلحَق الحذفُ بعده فيصير هو **الأحدث** في «آخر النشاط».
+           وتُبطَل الذاكرةُ التي تعتمد على النتيجة بمعرّفٍ حتميٍّ مشتقٍّ من اسم
+           الاختبار — لا مطابقةَ لنصّ عرض. (الإبطالُ لا يحذف: يبقى بتاريخه ودليله
+           ويخرج من كلّ قراءةٍ حيّة.) */
+        case "ResultDeleted": {
+          mem.invalidateMemory(`learning.subjectMastery:${e.metadata.exam}`,
+            `حذف الطالبُ نتيجةَ ${e.metadata.exam}`);
           break;
         }
         case "UniversityPhaseEntered":

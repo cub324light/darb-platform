@@ -144,13 +144,48 @@ export function mergeStats(local: DarbStats | null, cloud: DarbStats | null): Da
   };
 }
 
+/* ─────────── ③ الأهداف — قرارٌ لا يتراجع ─────────── */
+
+/**
+ * حقولُ **القرار** في `darb_goals` وحدَها: الجامعةُ المستهدفة وتخصّصُها وكليّتُها.
+ * ▓ قِسنا العطل: نسخةٌ سحابيةٌ أقدم أرجعت «الملك سعود/طب» إلى «الملك فهد/هندسة».
+ * ▓ وما عداها في `darb_goals` (الدرجاتُ المستهدفة · نسبةُ الثانوية) يبقى LWW —
+ *   لا نعمّم القاعدةَ بلا دليل.
+ */
+export const GOAL_DECISION_FIELDS = ["university", "universityId", "major", "majorId", "college"] as const;
+
+interface GoalsLike { updatedAt?: number; [k: string]: unknown }
+
+/**
+ * الأحدثُ ختماً يفوز بحقول القرار. وحين لا يكون الختمُ موثوقاً (غائبٌ في أحد
+ * الطرفين أو متساوٍ) **لا نخترع مقارنةً زمنية**: نُبقي قرارَ `mine` — فالطالبُ
+ * لا يُرجَع إلى هدفٍ تركه.
+ */
+export function mergeGoals(mine: GoalsLike | null, theirs: GoalsLike | null): GoalsLike | null {
+  if (!mine) return theirs;
+  if (!theirs) return mine;
+  const a = typeof mine.updatedAt === "number" ? mine.updatedAt : null;
+  const b = typeof theirs.updatedAt === "number" ? theirs.updatedAt : null;
+  const theirsIsNewer = a != null && b != null && b > a;
+  const decisionSource = theirsIsNewer ? theirs : mine;
+  const out: GoalsLike = { ...mine, ...theirs };
+  for (const f of GOAL_DECISION_FIELDS) {
+    const v = decisionSource[f];
+    if (v === undefined) delete out[f]; else out[f] = v;
+  }
+  const ts = maxOf(a ?? undefined, b ?? undefined);
+  if (ts != null) out.updatedAt = ts;
+  return out;
+}
+
 /* ─────────── جدولُ العائلات ─────────── */
-type Rule = "user" | "stats" | "by-id" | "string-set" | "max-number";
+type Rule = "user" | "stats" | "goals" | "by-id" | "string-set" | "max-number";
 
 /** لكلِّ مفتاحٍ دلالتُه. وما ليس هنا يبقى على LWW — لا نخترع له قاعدة. */
 export const MERGE_RULES: Readonly<Record<string, Rule>> = {
   darb_user: "user",
   darb_stats: "stats",
+  darb_goals: "goals",
   /* مجموعاتٌ لكلِّ عنصرٍ فيها معرّفٌ ثابت */
   darb_results: "by-id",
   darb_vault: "by-id",
@@ -173,38 +208,63 @@ export const MERGE_RULES: Readonly<Record<string, Rule>> = {
   darb_rp: "max-number",
 };
 
+/** أيُّ الطرفين يفوز حين لا قاعدةَ للمفتاح (LWW) وحين يتساوى الطرفان؟
+    · `"theirs"` (الافتراضيّ) = سلوكُ **السحب** كما كان: نسخةُ السحابة تفوز.
+    · `"mine"`   = سلوكُ **الرفع**: حالةُ الجهاز الرافع تفوز — فلا يرفع جهازٌ
+      حالةً سحابيةً محلَّ حالته هو. والعائلاتُ التراكميةُ متماثلةٌ في الاتجاهين
+      (اتّحادٌ وأعلى قيمة) فلا يغيّرها هذا. */
+export type MergePrefer = "theirs" | "mine";
+
 /**
- * يدمج قيمةَ مفتاحٍ واحد. `local` قيمةُ الجهاز و`cloud` قيمةُ النسخة.
- * يعيد النصَّ الذي يُكتب، أو `cloud` كما هو إن لم تكن للمفتاح قاعدة (LWW).
+ * يدمج قيمةَ مفتاحٍ واحد. `mine` قيمةُ صاحب النداء و`theirs` القيمةُ الواردة.
+ * يعيد النصَّ الذي يُكتب، أو الطرفَ المفضَّل إن لم تكن للمفتاح قاعدة (LWW).
+ * (الاسمان `local`/`cloud` سابقاً — نفسُ الترتيب ونفسُ السلوك الافتراضيّ.)
  */
-export function mergeKey(key: string, local: string | null, cloud: string): string {
+export function mergeKey(key: string, mine: string | null, theirs: string, prefer: MergePrefer = "theirs"): string {
   const rule = MERGE_RULES[key];
-  if (!rule || local == null) return cloud;
+  const fallback = prefer === "mine" ? (mine ?? theirs) : theirs;
+  if (!rule || mine == null) return fallback;
+  /* الطرفُ الذي يفوز بحقول LWW داخل العائلات المركَّبة */
+  const [a, b] = prefer === "mine" ? [theirs, mine] : [mine, theirs];
   try {
     switch (rule) {
       case "user": {
-        const m = mergeUser(parse<DarbUser>(local), parse<DarbUser>(cloud));
-        return m ? JSON.stringify(m) : cloud;
+        const m = mergeUser(parse<DarbUser>(a), parse<DarbUser>(b));
+        return m ? JSON.stringify(m) : fallback;
       }
       case "stats": {
-        const m = mergeStats(parse<DarbStats>(local), parse<DarbStats>(cloud));
-        return m ? JSON.stringify(m) : cloud;
+        const m = mergeStats(parse<DarbStats>(a), parse<DarbStats>(b));
+        return m ? JSON.stringify(m) : fallback;
+      }
+      case "goals": {
+        /* حقولُ القرار تُحسم بالختم لا بالاتجاه؛ وعند غيابه يبقى قرارُ `mine`. */
+        const m = mergeGoals(parse<GoalsLike>(mine), parse<GoalsLike>(theirs));
+        return m ? JSON.stringify(m) : fallback;
       }
       case "by-id": {
-        const a = parse<{ id: string }[]>(local), b = parse<{ id: string }[]>(cloud);
-        if (!Array.isArray(a) || !Array.isArray(b)) return cloud;
-        return JSON.stringify(mergeById(a, b));
+        const x = parse<{ id: string }[]>(a), y = parse<{ id: string }[]>(b);
+        if (!Array.isArray(x) || !Array.isArray(y)) return fallback;
+        return JSON.stringify(mergeById(x, y));
       }
       case "string-set": {
-        const a = parse<string[]>(local), b = parse<string[]>(cloud);
-        if (!Array.isArray(a) || !Array.isArray(b)) return cloud;
-        return JSON.stringify(unionStrings(a, b));
+        const x = parse<string[]>(a), y = parse<string[]>(b);
+        if (!Array.isArray(x) || !Array.isArray(y)) return fallback;
+        return JSON.stringify(unionStrings(x, y));
       }
       case "max-number": {
-        const a = Number(local), b = Number(cloud);
-        if (!Number.isFinite(a) || !Number.isFinite(b)) return cloud;
-        return String(Math.max(a, b));
+        const x = Number(a), y = Number(b);
+        if (!Number.isFinite(x) || !Number.isFinite(y)) return fallback;
+        return String(Math.max(x, y));
       }
     }
-  } catch { return cloud; }   // تلفٌ في أيّ طرف ⇒ لا نُسقط الاسترجاع
+  } catch { return fallback; }   // تلفٌ في أيّ طرف ⇒ لا نُسقط العملية
+}
+
+/**
+ * قيمةُ المفتاح **قبل الرفع**: تُدمج مع ما في السحابة فلا يمحو جهازٌ عملَ آخر.
+ * وما لا قاعدةَ له يبقى LWW — تُرفع حالةُ هذا الجهاز كما كانت تُرفع تماماً.
+ */
+export function mergeForUpload(key: string, mine: string, theirs: string | null): string {
+  if (theirs == null) return mine;
+  return mergeKey(key, mine, theirs, "mine");
 }

@@ -53,8 +53,20 @@ export default function GoalsPanel() {
       }
       return next;
     });
+  /* الحذفُ واقعةٌ تُسجَّل ولا تمحو تاريخاً: حدثُ التسجيل يبقى، ويُلحَق `ResultDeleted`
+     بعده — فيصير هو الأحدثَ في «آخر النشاط»، وتُبطَل الذاكرةُ المعتمدةُ على النتيجة. */
   const deleteResult = (id: string) =>
-    setResults((prev) => { const next = prev.filter((x) => x.id !== id); saveResults(next); return next; });
+    setResults((prev) => {
+      const gone = prev.find((x) => x.id === id);
+      const next = prev.filter((x) => x.id !== id); saveResults(next);
+      if (gone?.exam) {
+        const score = gone.score != null ? parseFloat(gone.score) : NaN;
+        fire({ eventType: "ResultDeleted",
+          metadata: { resultId: gone.id, exam: gone.exam, score: Number.isFinite(score) ? score : undefined },
+          actor: { kind: "student" }, source: "ui" });
+      }
+      return next;
+    });
 
   return (
     <>

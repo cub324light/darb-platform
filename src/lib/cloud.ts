@@ -23,7 +23,7 @@ import {
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import { loadUser, saveUser, loadStats, computeStreak, RESET_PENDING_KEY } from "./storage";
-import { mergeKey } from "./backupMerge";
+import { mergeKey, mergeForUpload } from "./backupMerge";
 import { normalizePlan } from "./plan";
 import { BACKUP_KEYS, ensureLocalOwnership } from "./accountScope";
 import {
@@ -203,7 +203,7 @@ export async function initialSync(): Promise<boolean> {
      لا تُمسح إلا بعد رفعٍ ناجح، فلو انقطعت الشبكةُ لم تعد البياناتُ في المرّة
      التالية. والزائرُ لا يمرّ من هنا أصلاً — لا مصادقةَ له. */
   if (consumeResetPending()) {
-    const pushed = await pushBackup();
+    const pushed = await pushBackup({ merge: false });
     if (pushed) clearResetPending();
     markInitialSyncDone();
     return true;
@@ -245,12 +245,40 @@ function collectBackup(): Record<string, string> {
   return out;
 }
 
+/** كتلةُ الرفع بعد دمجها مع ما في السحابة — مفتاحاً مفتاحاً بجدول العائلات. */
+async function mergedBackupForUpload(uid: string): Promise<Record<string, string>> {
+  const mine = collectBackup();
+  let theirs: Record<string, string> = {};
+  try {
+    const snap = await getDoc(doc(db, "users", uid));
+    theirs = (snap.exists() ? (snap.data().backup as Record<string, string>) : {}) ?? {};
+  } catch {
+    return mine;   // تعذّرت القراءة ⇒ ارفع المحلّيَّ كما كان يُرفع
+  }
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(mine)) {
+    const remote = typeof theirs[k] === "string" ? theirs[k] : null;
+    out[k] = mergeForUpload(k, v, remote);
+  }
+  /* ما في السحابة ولم يعد على هذا الجهاز يبقى كما هو — الرفعُ لا يحذف */
+  for (const [k, v] of Object.entries(theirs)) if (!(k in out) && typeof v === "string") out[k] = v;
+  return out;
+}
+
 /* ─── رفع نسخة كاملة للسحابة ─── */
-export async function pushBackup(): Promise<boolean> {
+export async function pushBackup(opts?: { merge?: boolean }): Promise<boolean> {
   const u = auth.currentUser;
   if (!u || typeof window === "undefined") return false;
   try {
-    const backup = collectBackup();
+    /* ▓ ادمج قبل الرفع. كان الرفعُ يكتب كتلةَ هذا الجهاز فوق كتلة السحابة، فجهازٌ
+       يرفع بعد آخرَ يمحو عملَه (قِسناه: تقدّمُ وحدةٍ · دقائقُ يومٍ · فضّةٌ · نتائج).
+       والسحبُ صار يدمج، لكنّ رفعاً بلا سحبٍ سابقٍ في الجلسة (زرُّ «احفظ الآن» ·
+       تسجيلُ الخروج) كان يبقى عمياء. الآن: **محلّيّ + سحابة ← دمج ← رفع**،
+       بجدول العائلات نفسِه؛ وما لا قاعدةَ له يبقى LWW فتُرفع حالةُ هذا الجهاز
+       كما كانت تماماً. وفشلُ القراءة لا يُسقط الرفع — نرفع المحلّيَّ كما كان. */
+    /* `merge: false` لمسارٍ واحدٍ فقط: «ابدأ من الصفر». الدمجُ هناك يُعيد ما
+       طلب الطالبُ محوَه، فالرفعُ يستبدل استبدالاً — وهو أصلُ ما كان قبل الدمج. */
+    const backup = opts?.merge === false ? collectBackup() : await mergedBackupForUpload(u.uid);
     const usr = loadUser();
     const st = loadStats();
     // حقول منظّمة للوحة الأدمن + النسخة الكاملة للاسترجاع.

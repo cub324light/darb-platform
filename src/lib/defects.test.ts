@@ -164,7 +164,10 @@ test("ع-٧ب · العلامةُ تنجو من المسح نفسِه ولا ت�
 test("ع-٧ب · الإقلاعُ التالي يرفع ولا يسحب، ولا يُمسح العلمُ إلا بنجاح", () => {
   const c = src("src/lib/cloud.ts");
   const block = c.match(/if \(consumeResetPending\(\)\)[\s\S]{0,320}?\n  \}/)![0];
-  assert.ok(/pushBackup\(\)/.test(block), "لا يرفع الحالةَ الجديدة");
+  assert.ok(/pushBackup\(/.test(block), "لا يرفع الحالةَ الجديدة");
+  /* وبعد أن صار الرفعُ العاديُّ يدمج مع السحابة، وجب أن يستثنيَ هذا المسارُ
+     الدمجَ صراحةً — وإلا أعاد الدمجُ ما طلب الطالبُ محوَه. */
+  assert.ok(/pushBackup\(\{ merge: false \}\)/.test(block), "المسحُ يدمج فيُعيد ما مُحي");
   assert.ok(!/pullBackup|pullEngineState/.test(block), "ما زال يسحب النسخةَ القديمة");
   assert.ok(/if \(pushed\) clearResetPending\(\)/.test(block), "يمسح العلامةَ ولو فشل الرفع");
 });
