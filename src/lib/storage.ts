@@ -7,7 +7,7 @@ import { workspaceTrackIds } from "./modules/consume";
 import type { ModuleId, ExamMemberId } from "./modules/types";
 import { toBoardStage } from "./examEligibility";
 import { streakOn } from "./streak";
-import { RESET_KEYS, RESET_PREFIXES, NAMESPACED_KEYS } from "./storageKeys";
+import { RESET_KEYS, RESET_PREFIXES, NAMESPACED_KEYS, LIVE_CONTENT_KEYS } from "./storageKeys";
 import { nsKey } from "./engineNamespace";
 import { loadSessions, appendSession } from "./roadmap/sessionStore";
 
@@ -400,10 +400,28 @@ export function loadList<T>(key: string): T[] {
   }
 }
 
+/** يُبَثّ حين يتغيّر **محتوى عمل الطالب** الذي تعرضه شاشةٌ مفتوحةٌ الآن.
+    ▓ لماذا وُجد: خيطُ الصفحة يقرأ خزنةً على مستوى الوحدة لا تُبطَل إلا بتنقّلٍ
+      أو بحدثٍ. فكان الطالبُ يراجع خطأيه في «أخطائي» ويبقى الخيطُ أسفلَ الصفحة
+      يقول «عندك خطآن لم تراجعهما» — جملةٌ كاذبةٌ في الصفحة التي فعل فيها الفعل.
+      (قِسناه في المتصفّح.) وليس في المشروع حدثُ DOM يحمل هذا المعنى:
+      `statsChanged` للإحصاء، و`eventsChanged` لأحداث الجدول، و`userChanged`
+      للملفّ — فهذا رابعُها لا بديلٌ عنها. */
+export const CONTENT_CHANGED = "darb:contentChanged";
+
+/* أيُّ المفاتيح تُعرض لحظياً؟ **من السجلّ** (`live`) لا من قائمةٍ ثانيةٍ هنا. */
+const LIVE = new Set(LIVE_CONTENT_KEYS);
+
+function announceContent(key: string): void {
+  if (!LIVE.has(key)) return;
+  try { window.dispatchEvent(new Event(CONTENT_CHANGED)); } catch { /* خادمٌ أو نافذةٌ مغلقة */ }
+}
+
 export function saveList<T>(key: string, list: T[]) {
   try {
     localStorage.setItem(key, JSON.stringify(list));
   } catch {}
+  announceContent(key);
 }
 
 /* ── الثيم ── */
@@ -470,6 +488,12 @@ export function saveTrackExamDates(dates: Record<string, string>) {
    ▓ كانت تنسى ذاكرةَ المحرّكات وسجلَّ أحداثها وعلمَ بذرتها، فيبدأ الطالبُ من
      الصفر ثم يفتح دويرب فيناديه باسمه القديم وصفِّه القديم — ولا تُبذَر ذاكرتُه
      الجديدة أبداً لأنّ العلمَ باقٍ. والمفاتيحُ المنطَّقةُ تُمسح بلاحقتها الصحيحة. */
+/** علامةٌ تنجو من المسح عمداً: تقول للإقلاع التالي «هذا الطالبُ بدأ من الصفر
+    فلا تُرجع له نسخته». مقيسٌ أنّ المسحَ المحلّيَّ وحدَه لا يكفي لمن له حساب —
+    `resetAll` تُعيد التحميل، فيعود `_initialSyncDone` إلى `false`، فيسحب
+    `initialSync` الكتلةَ القديمةَ والذاكرةَ فتعود بياناتُه كلُّها. */
+export const RESET_PENDING_KEY = "darb_reset_pending";
+
 export function resetAll() {
   try {
     for (const k of RESET_KEYS) {
@@ -479,6 +503,7 @@ export function resetAll() {
     /* تعليماتُ أوّل زيارة وترتيبُ البطاقات يظهران من جديد بعد الضبط */
     const prefixed = Object.keys(localStorage).filter((k) => RESET_PREFIXES.some((p) => k.startsWith(p)));
     for (const k of prefixed) localStorage.removeItem(k);
+    localStorage.setItem(RESET_PENDING_KEY, "1");
   } catch {}
 }
 
@@ -673,6 +698,8 @@ export function loadGoals(): DarbGoals {
 }
 export function saveGoals(g: DarbGoals) {
   try { localStorage.setItem(GOALS_KEY, JSON.stringify(g)); } catch {}
+  /* الهدفُ يقوده خيطُ الصفحة (`hasDestination` وقوسُ الرحلة) — فيُبطَل معه */
+  announceContent(GOALS_KEY);
 }
 
 /* ── خريطة المهارات: معرّفات المهارات المُتقنة ── */

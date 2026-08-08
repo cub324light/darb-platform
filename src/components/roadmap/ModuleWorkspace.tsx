@@ -91,6 +91,19 @@ export default function ModuleWorkspace({
     const prev = loadResults();
     saveResults([{ id: `${Date.now()}`, exam: label, score: String(g), date: d || todayStr() }, ...prev]);
     trackEvent("exam_completed", { exam: label, attemptNumber: prev.filter((r) => r.exam.trim() === label).length + 1 });
+    /* ▓ الحدثان القائمان — بنفس دلالات «نتائجي» حرفاً بحرف. كانت هذه الشاشةُ
+       تكتب الدرجةَ وتكتفي بالتحليلات، فيُنتج الفعلُ الواحدُ حالتين مختلفتين
+       للذاكرة بحسب الشاشة التي سجّل منها الطالب: من «نتائجي» يعرف دويربُ
+       إتقانَ المادّة ومَعلَمَ إكمال الاختبار، ومن هنا لا يعرف شيئاً.
+       ولا حدثَ جديد: النوعان مسجَّلان ولهما مُتفاعِلٌ منذ البداية. */
+    if (Number.isFinite(g)) {
+      const before = prev.find((x) => x.exam === label && x.score != null);
+      const prevScore = before?.score != null ? parseFloat(before.score) : NaN;
+      import("@/lib/events").then(({ emit }) => {
+        emit({ eventType: "ScoreUpdated", metadata: { exam: label, score: g, prev: Number.isFinite(prevScore) ? prevScore : undefined }, actor: { kind: "student" }, source: "ui" });
+        emit({ eventType: "ExamCompleted", metadata: { exam: label, score: g }, actor: { kind: "student" }, source: "ui" });
+      }).catch(() => { /* فشلُ الإطلاق لا يُسقط تسجيلَ الدرجة */ });
+    }
     setScores(currentScoreMap());
     setScoreInput("");
     onRecordScore(String(g));

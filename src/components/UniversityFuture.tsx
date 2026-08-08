@@ -40,13 +40,31 @@ function nearestExamDays(): { days: number; label: string } | null {
   return best;
 }
 
+/* استيرادٌ ديناميّ كما في بقية مُطلِقي الأحداث — لا يُدخل محرّكَ الأحداث في حزمة الصفحة */
+const fire = (ev: Parameters<typeof import("@/lib/events")["emit"]>[0]) => {
+  import("@/lib/events").then(({ emit }) => emit(ev)).catch(() => {});
+};
+
 export default function UniversityFuture() {
   const [goals, setGoals] = useState<DarbGoals>(() => loadGoals());
   const [uniQuery, setUniQuery] = useState("");
   const [otherUni, setOtherUni] = useState(() => (loadGoals().universityId === "other" ? loadGoals().university ?? "" : ""));
 
+  /* ▓ الحدثُ القائم — بنفس دلالات «نتائجي» حرفاً بحرف. كانت هذه الشاشةُ تكتب
+     الهدفَ الجديد في `darb_goals` وتصمت، فتعرض الواجهةُ جامعةً ويظلّ دويربُ
+     يخاطب الطالبَ بجامعةٍ تركها — قِسناه. ولا حدثَ جديد: `GoalChanged` مسجَّلٌ
+     وله مُتفاعِلٌ يكتب `goal.targetUniversity` و`goal.targetMajor`. */
   const update = (partial: Partial<DarbGoals>) => {
-    setGoals((prev) => { const next = { ...prev, ...partial }; saveGoals(next); return next; });
+    setGoals((prev) => {
+      const next = { ...prev, ...partial }; saveGoals(next);
+      if (partial.university && partial.university !== prev.university) {
+        fire({ eventType: "GoalChanged", metadata: { field: "university", value: partial.university, prev: prev.university }, actor: { kind: "student" }, source: "ui" });
+      }
+      if (partial.major && partial.major !== prev.major) {
+        fire({ eventType: "GoalChanged", metadata: { field: "major", value: partial.major, prev: prev.major }, actor: { kind: "student" }, source: "ui" });
+      }
+      return next;
+    });
   };
 
   const selectedUni = findUniversity(goals.universityId);

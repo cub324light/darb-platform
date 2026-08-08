@@ -71,8 +71,14 @@ test("`saveUser` تبثّ حدثاً واحداً موحّداً", () => {
   assert.ok(/export const USER_CHANGED = "darb:userChanged"/.test(storage), "لا حدثَ موحّداً للملفّ");
   const body = storage.match(/export function saveUser[\s\S]*?\n}/)![0];
   assert.ok(/dispatchEvent\(new Event\(USER_CHANGED\)\)/.test(body), "`saveUser` ما زالت صامتة");
-  /* ومستهلكٌ واحدٌ على الأقلّ، وإلا صار حدثاً لا يسمعه أحد. */
-  const consumers = walk("src").filter((f) =>
-    /addEventListener\(USER_CHANGED/.test(readFileSync(f, "utf8")));
+  /* ومستهلكٌ واحدٌ على الأقلّ، وإلا صار حدثاً لا يسمعه أحد. (الاشتراكُ قد يكون
+     مباشراً أو عبر قائمةِ قنواتٍ تُمرَّر إلى `addEventListener` — يهمّنا أن
+     `USER_CHANGED` مشتركٌ فيه فعلاً لا كيف كُتب الاشتراك.) */
+  const consumers = walk("src").filter((f) => {
+    const code = readFileSync(f, "utf8");
+    if (!/USER_CHANGED/.test(code) || f.endsWith("src/lib/storage.ts")) return false;
+    return /addEventListener\(USER_CHANGED/.test(code)
+      || (/addEventListener\(/.test(code) && /CHANNELS[\s\S]{0,200}USER_CHANGED|USER_CHANGED[^\n]*\]/.test(code));
+  });
   assert.ok(consumers.length >= 1, "حدثٌ بلا مستهلك");
 });

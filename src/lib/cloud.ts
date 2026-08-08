@@ -22,7 +22,8 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
-import { loadUser, saveUser, loadStats, computeStreak } from "./storage";
+import { loadUser, saveUser, loadStats, computeStreak, RESET_PENDING_KEY } from "./storage";
+import { mergeKey } from "./backupMerge";
 import { normalizePlan } from "./plan";
 import { BACKUP_KEYS, ensureLocalOwnership } from "./accountScope";
 import {
@@ -176,6 +177,15 @@ export function authErrorMsg(code: string): string {
   }
 }
 
+/* علامةُ «ابدأ من الصفر» — تُقرأ ولا تُمسح إلا بعد رفعٍ ناجح (انظر `initialSync`) */
+function consumeResetPending(): boolean {
+  if (typeof window === "undefined") return false;
+  try { return localStorage.getItem(RESET_PENDING_KEY) === "1"; } catch { return false; }
+}
+function clearResetPending(): void {
+  try { localStorage.removeItem(RESET_PENDING_KEY); } catch { /* تجاهل */ }
+}
+
 /* ─── المزامنة الأولية: مرة واحدة بعد ثبوت تسجيل الدخول ─── */
 /* تُستدعى من البوابة بعد تسجيل الدخول:
    اسحب من السحابة؛ وإن لم توجد نسخة وعندك بيانات محلية ارفعها (ترحيل حساب مجهول قديم). */
@@ -184,6 +194,21 @@ export async function initialSync(): Promise<boolean> {
      قراءة pullBackup الفاشلة أو تجاوز المهلة → confirmed=false، فلا ترمي البوابة
      المستخدمَ العائد إلى onboarding بناءً على «غياب» غير مؤكّد (وتطمس بياناته). */
   let confirmed = false;
+
+  /* ▓ «ابدأ من الصفر» يعني صفراً حقيقياً. كان المسحُ المحلّيُّ يعقبه تحميلٌ كامل
+     يُصفّر `_initialSyncDone`، فيسحب هذا الاستدعاءُ الكتلةَ القديمةَ ويدمج
+     الذاكرةَ والأحداثَ — فتعود بياناتُه كلُّها بعد ثوانٍ (قِسناه: خمسةَ عشرَ
+     مفتاحاً عادت). فإن كانت العلامةُ قائمةً: **لا نسحب**، بل نرفع المحلّيَّ
+     الفارغَ لتتبع السحابةُ قرارَ الطالب الصريح (سُئل مرّتين قبله). والعلامةُ
+     لا تُمسح إلا بعد رفعٍ ناجح، فلو انقطعت الشبكةُ لم تعد البياناتُ في المرّة
+     التالية. والزائرُ لا يمرّ من هنا أصلاً — لا مصادقةَ له. */
+  if (consumeResetPending()) {
+    const pushed = await pushBackup();
+    if (pushed) clearResetPending();
+    markInitialSyncDone();
+    return true;
+  }
+
   try {
     /* استرجاع ملف السحابة (getDoc واحد) بمهلته الخاصة — هو ما يحسم onboarding */
     const pull = await Promise.race([
@@ -279,8 +304,15 @@ export async function pullBackup(): Promise<{ ok: boolean; restored: boolean }> 
     const backup = data.backup as Record<string, string> | undefined;
     const hasBackup = !!backup && Object.keys(backup).length > 0;
     if (hasBackup) {
+      /* ▓ كان هذا يكتب كلَّ مفتاحٍ فوق المحلّيّ بلا نظر، فتُمحى بالكتلة بياناتٌ
+         **تتراكم**: تقدّمُ وحدةٍ في جهازٍ آخر · دقائقُ يومٍ · فضّةٌ · يومٌ من
+         السلسلة · أوسمةٌ. وأخطرُ من ذلك أنّه كان يُرجع **المرحلة** للخلف فيتناقض
+         الملفُّ مع الذاكرة ويُعاد إطلاقُ حدثِ المرحلة.
+         الآن لكلِّ عائلةٍ دلالتُها في `backupMerge`، وما لا قاعدةَ له يبقى كما
+         كان (السحابةُ تفوز) — لا دمجَ عامٌّ ساذج. */
       for (const [k, v] of Object.entries(backup!)) {
-        if (typeof v === "string") localStorage.setItem(k, v);
+        if (typeof v !== "string") continue;
+        localStorage.setItem(k, mergeKey(k, localStorage.getItem(k), v));
       }
     }
 

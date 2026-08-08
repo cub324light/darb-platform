@@ -37,6 +37,13 @@ export interface StorageKeyDef {
   readonly namespaced?: boolean;
   /** مفتاحٌ قديمٌ يُرحَّل مرّةً ثم يُحذف — يُمحى ولا يُرفع. */
   readonly legacy?: boolean;
+  /**
+   * تعرضه شاشةٌ مفتوحةٌ **فور تغيّره**، فكتابتُه تبثّ `CONTENT_CHANGED`.
+   * قائمةٌ مقصودةٌ لا عامّة: أكثرُ المفاتيح كتالوجاتٌ وقوائمُ تقدّمٍ لا عارضَ
+   * لحظيَّ لها، والبثُّ لها كلِّها إبطالٌ عشوائيّ. يُعلَّم مفتاحٌ هنا حين يظهر
+   * له عارضٌ يقرؤه في الصفحة نفسِها التي يُكتب فيها.
+   */
+  readonly live?: boolean;
   /** لماذا هو هنا — للقارئ لا للمحرّك. */
   readonly note?: string;
 }
@@ -45,15 +52,15 @@ export interface StorageKeyDef {
 const REGISTRY: readonly StorageKeyDef[] = [
   /* ══ الملفُّ والأهدافُ والنتائج ══ */
   { key: "darb_user",              scope: "student", note: "ملفُّ الطالب — مصدرُ الحقيقة لبياناته" },
-  { key: "darb_goals",             scope: "student" },
+  { key: "darb_goals",             scope: "student", live: true },
   { key: "darb_results",           scope: "student" },
-  { key: "darb_admissions",        scope: "student" },
+  { key: "darb_admissions",        scope: "student", live: true },
   { key: "darb_stats",             scope: "student" },
   { key: "darb_prefs",             scope: "student", legacy: true, note: "رُحِّل إلى DarbUser — يبقى للنسخ والمسح حتى يُرحَّل كلُّ جهاز" },
   { key: "darb_coach_memory",      scope: "student", legacy: true, note: "ذاكرةُ المدرّب القديمة — دُمجت في محرّك الذاكرة، وتبقى حتى تُرحَّل كلُّ الأجهزة" },
 
   /* ══ المذاكرة والتقدّم ══ */
-  { key: "darb_vault",             scope: "student" },
+  { key: "darb_vault",             scope: "student", live: true },
   { key: "darb_cards",             scope: "student" },
   { key: "darb_lessons",           scope: "student" },
   { key: "darb_done_lessons",      scope: "student" },
@@ -92,7 +99,7 @@ const REGISTRY: readonly StorageKeyDef[] = [
   { key: "darb_retention",         scope: "student" },
 
   /* ══ المدرسة ══ */
-  { key: "darb_homework",          scope: "student" },
+  { key: "darb_homework",          scope: "student", live: true },
   { key: "darb_school_exams",      scope: "student" },
   { key: "darb_school_projects",   scope: "student" },
   { key: "darb_school_requirements", scope: "student" },
@@ -137,6 +144,7 @@ const REGISTRY: readonly StorageKeyDef[] = [
   { key: "darb_visitor",           scope: "device" },
   { key: "darb_tour_done",         scope: "device" },
   { key: "darb_owner_uid",         scope: "device", note: "مالكُ البيانات المحلية — خارجَ كلِّ قائمةٍ عمداً" },
+  { key: "darb_reset_pending",     scope: "device", note: "علامةُ «ابدأ من الصفر» — تنجو من المسح عمداً لتمنع الإقلاعَ التالي من استرجاع النسخة القديمة" },
   { key: "darb_analytics_consent", scope: "device" },
   { key: "darb_seen_broadcasts",   scope: "device", note: "«شوهد» للإشعارات — يمسحه accountScope وحدَه" },
   { key: "darb_content_backend",   scope: "device" },
@@ -183,6 +191,11 @@ export const RESET_PREFIXES: readonly string[] = REGISTRY
 /** المفاتيحُ التي تُنطَّق بفضاء المستخدم — يعرفها الماسحُ ليمسح الصحيحَ منها. */
 export const NAMESPACED_KEYS: readonly string[] = REGISTRY
   .filter((d) => d.namespaced)
+  .map((d) => d.key);
+
+/** ما تعرضه شاشةٌ مفتوحةٌ فور تغيّره — تبثّ كتابتُه `CONTENT_CHANGED`. */
+export const LIVE_CONTENT_KEYS: readonly string[] = REGISTRY
+  .filter((d) => d.live)
   .map((d) => d.key);
 
 /** مفاتيحُ الترحيل: قديمةٌ تُقرأ مرّةً ثم تُحذف. */

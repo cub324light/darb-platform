@@ -9,7 +9,7 @@ import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { pageThread, type PageThread, type ThreadPage, type ThreadSignals } from "@/lib/pageThread";
 import { readLifeContext, lifeEngine } from "@/lib/lifeEngine";
-import { loadStats, loadList, loadEvents, loadGoals, loadUser, loadAdmissions, USER_CHANGED } from "@/lib/storage";
+import { loadStats, loadList, loadEvents, loadGoals, loadUser, loadAdmissions, USER_CHANGED, STATS_CHANGED, CONTENT_CHANGED } from "@/lib/storage";
 import { arcNext, type ArcStep } from "@/lib/uniJourney";
 import { currentPhase } from "@/lib/transition";
 import { loadHomework, homeworkPressure } from "@/lib/homework";
@@ -85,19 +85,23 @@ const invalidate = () => {
   for (const l of listeners) l();
 };
 
-/* `storage` لا يُطلَق في التبويب الذي كتب، فتغيُّرُ الملفِّ في نفس الشاشة كان
-   يمرّ بلا إبطال. `USER_CHANGED` يسدّ ذلك — وهو أوّلُ مستهلكٍ لحدث `saveUser`. */
+/* `storage` لا يُطلَق في التبويب الذي كتب، فتغيُّرُ البيانات في نفس الشاشة كان
+   يمرّ بلا إبطال. المستمعون الأربعة يغطّون **مسارات الكتابة التي يقرؤها الخيط
+   فعلاً** ولا شيء غيرها:
+     · `eventsChanged` — أحداثُ الجدول (`hasPlanToday`)
+     · `userChanged`   — الملفُّ والمرحلة (`admissionOpen` وقوسُ الرحلة)
+     · `statsChanged`  — دقائقُ اليوم (`focusMinsToday`) بعد كلّ جلسة
+     · `contentChanged`— الخزنةُ والواجباتُ والقبولُ والأهداف
+   لا استجوابَ دوريّ، ولا مستمعَ عامٌّ لكلّ كتابةٍ في التخزين. */
+const CHANNELS = ["darb:eventsChanged", USER_CHANGED, STATS_CHANGED, CONTENT_CHANGED, "storage"];
+
 const subscribe = (cb: () => void) => {
   listeners.add(cb);
-  window.addEventListener("darb:eventsChanged", invalidate);
-  window.addEventListener(USER_CHANGED, invalidate);
-  window.addEventListener("storage", invalidate);
+  for (const ch of CHANNELS) window.addEventListener(ch, invalidate);
   return () => {
     listeners.delete(cb);
     if (listeners.size === 0) {
-      window.removeEventListener("darb:eventsChanged", invalidate);
-      window.removeEventListener(USER_CHANGED, invalidate);
-      window.removeEventListener("storage", invalidate);
+      for (const ch of CHANNELS) window.removeEventListener(ch, invalidate);
     }
   };
 };
